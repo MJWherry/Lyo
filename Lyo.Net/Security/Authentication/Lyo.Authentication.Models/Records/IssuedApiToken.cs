@@ -8,6 +8,5 @@ namespace Lyo.Authentication.Models.Records;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record IssuedApiToken(string Plaintext, ApiTokenRecord Record)
 {
-    public override string ToString()
-        => $"IssuedApiToken: id={Record.Id}, kind={Record.Kind}, ring={Record.Ring}";
+    public override string ToString() => $"IssuedApiToken: id={Record.Id}, kind={Record.Kind}, ring={Record.Ring}";
 }

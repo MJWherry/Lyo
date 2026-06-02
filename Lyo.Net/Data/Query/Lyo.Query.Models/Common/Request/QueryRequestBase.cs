@@ -28,6 +28,5 @@ public abstract class QueryRequestBase
     public List<SortBy> SortBy { get; set; } = [];
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"Start={Start}, Amount={Amount}, Keys={Keys.Count}, Includes={Include.Count}, SortBys={SortBy.Count}";
+    public override string ToString() => $"Start={Start}, Amount={Amount}, Keys={Keys.Count}, Includes={Include.Count}, SortBys={SortBy.Count}";
 }

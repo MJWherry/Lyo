@@ -38,6 +38,5 @@ public class ContactPhoneNumber
     public PhoneNumber? PhoneNumber { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"ContactPhoneNumber: person={PersonId}, phone={PhoneNumber?.Number ?? PhoneNumberId.ToString()}, type={Type}, primary={IsPrimary}";
+    public override string ToString() => $"ContactPhoneNumber: person={PersonId}, phone={PhoneNumber?.Number ?? PhoneNumberId.ToString()}, type={Type}, primary={IsPrimary}";
 }

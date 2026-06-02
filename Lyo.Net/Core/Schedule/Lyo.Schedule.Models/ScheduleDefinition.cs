@@ -81,6 +81,5 @@ public record ScheduleDefinition(
         }
     }
 
-    public override string ToString()
-        => $"ScheduleDefinition: type={Type}, enabled={Enabled}, cron={CronExpression ?? "(none)"}";
+    public override string ToString() => $"ScheduleDefinition: type={Type}, enabled={Enabled}, cron={CronExpression ?? "(none)"}";
 }

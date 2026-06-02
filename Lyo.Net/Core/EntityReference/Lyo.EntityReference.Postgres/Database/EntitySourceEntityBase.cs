@@ -17,7 +17,5 @@ public abstract class EntitySourceEntityBase
 
     /// <inheritdoc />
     public override string ToString()
-        => string.IsNullOrEmpty(SourceEntityType)
-            ? $"{GetType().Name}: unsourced"
-            : $"{GetType().Name}: {SourceEntityType}/{SourceEntityId}, ImportedAt={ImportedAt}";
+        => string.IsNullOrEmpty(SourceEntityType) ? $"{GetType().Name}: unsourced" : $"{GetType().Name}: {SourceEntityType}/{SourceEntityId}, ImportedAt={ImportedAt}";
 }

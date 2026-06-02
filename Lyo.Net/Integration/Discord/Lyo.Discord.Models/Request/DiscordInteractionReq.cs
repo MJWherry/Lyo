@@ -17,6 +17,5 @@ public sealed class DiscordInteractionReq
 
     public DateTime InteractionCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordInteractionReq: id={Id}, author={AuthorId}, guild={GuildId}";
+    public override string ToString() => $"DiscordInteractionReq: id={Id}, author={AuthorId}, guild={GuildId}";
 }

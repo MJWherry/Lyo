@@ -13,6 +13,5 @@ namespace Lyo.Authentication.Models.Records;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ApiTokenPrincipal(string TokenId, string Subject, Guid? OwnerUserId, string Kind, string Ring, IReadOnlyList<string> Scopes, DateTime ValidatedAt)
 {
-    public override string ToString()
-        => $"ApiTokenPrincipal: id={TokenId}, kind={Kind}, ring={Ring}, scopes={Scopes.Count}";
+    public override string ToString() => $"ApiTokenPrincipal: id={TokenId}, kind={Kind}, ring={Ring}, scopes={Scopes.Count}";
 }

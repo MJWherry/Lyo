@@ -25,6 +25,5 @@ public sealed record ComicPageRes
     /// <summary>Resolved URL for the page image. Populated when <see cref="ImageRef" /> is a valid file storage GUID.</summary>
     public string? ImageUrl => ImageRef != null && Guid.TryParse(ImageRef, out var id) ? $"/files/{id}" : null;
 
-    public override string ToString()
-        => $"ComicPageRes: page={PageNumber}, chapter={ChapterId}, {Width}x{Height}";
+    public override string ToString() => $"ComicPageRes: page={PageNumber}, chapter={ChapterId}, {Width}x{Height}";
 }

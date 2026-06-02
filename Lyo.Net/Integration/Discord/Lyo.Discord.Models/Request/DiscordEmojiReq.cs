@@ -23,6 +23,5 @@ public sealed class DiscordEmojiReq
 
     public DateTime EmojiCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordEmojiReq: id={Id}, name={Name}, guild={GuildId}, animated={IsAnimated}";
+    public override string ToString() => $"DiscordEmojiReq: id={Id}, name={Name}, guild={GuildId}, animated={IsAnimated}";
 }

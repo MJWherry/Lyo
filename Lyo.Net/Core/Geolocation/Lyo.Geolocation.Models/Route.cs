@@ -33,6 +33,5 @@ public class Route
 
     public IDictionary<string, string>? Metadata { get; set; }
 
-    public override string ToString()
-        => $"Route: {StartPoint} -> {EndPoint}, {TotalDistanceMeters:0.#}m, {EstimatedDuration}, mode={TransportMode}";
+    public override string ToString() => $"Route: {StartPoint} -> {EndPoint}, {TotalDistanceMeters:0.#}m, {EstimatedDuration}, mode={TransportMode}";
 }

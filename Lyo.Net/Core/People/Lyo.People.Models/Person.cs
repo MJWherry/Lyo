@@ -169,6 +169,5 @@ public class Person : IEntitySourceDerived
     public IEnumerable<ContactEmailAddress> GetCurrentEmailAddresses() => EmailAddresses.Where(e => e.IsCurrent);
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"Person: id={Id}, name={Name?.DisplayName ?? "?"}, emails={EmailAddresses.Count}, phones={PhoneNumbers.Count}";
+    public override string ToString() => $"Person: id={Id}, name={Name.DisplayName ?? "?"}, emails={EmailAddresses.Count}, phones={PhoneNumbers.Count}";
 }

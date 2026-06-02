@@ -33,6 +33,5 @@ public sealed class ComicChapterReq
     /// <summary>Gets or sets an opaque reference to the chapter cover image (e.g. file storage id).</summary>
     public string? CoverImageRef { get; set; }
 
-    public override string ToString()
-        => $"ComicChapterReq: series={SeriesId}, chapter={ChapterNumber}, title={Title}, lang={Language}";
+    public override string ToString() => $"ComicChapterReq: series={SeriesId}, chapter={ChapterNumber}, title={Title}, lang={Language}";
 }

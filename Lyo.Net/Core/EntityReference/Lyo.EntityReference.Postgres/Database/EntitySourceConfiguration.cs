@@ -18,12 +18,8 @@ public abstract class EntitySourceConfiguration<TEntity> : IEntityTypeConfigurat
     }
 
     /// <inheritdoc />
-    public virtual void Configure(EntityTypeBuilder<TEntity> builder)
-    {
-        MapSourceColumns(builder);
-    }
+    public virtual void Configure(EntityTypeBuilder<TEntity> builder) => MapSourceColumns(builder);
 
     /// <summary>Maps shared source columns; invoke from <see cref="Configure" /> after <c>ToTable</c> / <c>HasKey</c>.</summary>
-    protected void MapSourceColumns(EntityTypeBuilder<TEntity> builder)
-        => builder.ConfigureEntitySourceColumns(_indexPrefix);
+    protected void MapSourceColumns(EntityTypeBuilder<TEntity> builder) => builder.ConfigureEntitySourceColumns(_indexPrefix);
 }

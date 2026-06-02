@@ -11,32 +11,28 @@ public readonly record struct EntitySourceRecord(EntityRef Source, DateTime Impo
     public override string ToString() => $"Source={Source}, ImportedAt={ImportedAt:O}";
 
     /// <summary>Creates a provenance record for import; owner is determined from the parent aggregate on persist.</summary>
-    public static EntitySourceRecord From(EntityRef source, DateTime importedAt)
-        => new(source, importedAt);
+    public static EntitySourceRecord From(EntityRef source, DateTime importedAt) => new(source, importedAt);
 
     /// <summary>Creates a provenance record using the logical type of <typeparamref name="T" /> and a <see cref="Guid" /> source key.</summary>
     /// <typeparam name="T">CLR type used to resolve the stored source entity type discriminator.</typeparam>
     /// <param name="sourceId">External source identifier stored using the GUID's default string format.</param>
     /// <param name="importedAt">When this source link was recorded (UTC).</param>
     /// <returns>A new <see cref="EntitySourceRecord" />.</returns>
-    public static EntitySourceRecord From<T>(Guid sourceId, DateTime importedAt)
-        => From(EntityRef.For<T>(sourceId), importedAt);
+    public static EntitySourceRecord From<T>(Guid sourceId, DateTime importedAt) => From(EntityRef.For<T>(sourceId), importedAt);
 
     /// <summary>Creates a provenance record using the logical type of <typeparamref name="T" /> and a string source key.</summary>
     /// <typeparam name="T">CLR type used to resolve the stored source entity type discriminator.</typeparam>
     /// <param name="sourceId">Non-empty external source identifier string.</param>
     /// <param name="importedAt">When this source link was recorded (UTC).</param>
     /// <returns>A new <see cref="EntitySourceRecord" />.</returns>
-    public static EntitySourceRecord From<T>(string sourceId, DateTime importedAt)
-        => From(EntityRef.For<T>(sourceId), importedAt);
+    public static EntitySourceRecord From<T>(string sourceId, DateTime importedAt) => From(EntityRef.For<T>(sourceId), importedAt);
 
     /// <summary>Creates a provenance record using the logical type of <typeparamref name="T" /> and one or more source key segments.</summary>
     /// <typeparam name="T">CLR type used to resolve the stored source entity type discriminator.</typeparam>
     /// <param name="importedAt">When this source link was recorded (UTC).</param>
     /// <param name="keys">One or more non-empty key segments; multiple segments form a composite source id.</param>
     /// <returns>A new <see cref="EntitySourceRecord" />.</returns>
-    public static EntitySourceRecord From<T>(DateTime importedAt, params object[] keys)
-        => From(EntityRef.For<T>(keys), importedAt);
+    public static EntitySourceRecord From<T>(DateTime importedAt, params object[] keys) => From(EntityRef.For<T>(keys), importedAt);
 
     /// <summary>Creates a provenance record from an entity instance and a selector that extracts the source key or keys.</summary>
     /// <typeparam name="T">CLR type used to resolve the stored source entity type discriminator.</typeparam>

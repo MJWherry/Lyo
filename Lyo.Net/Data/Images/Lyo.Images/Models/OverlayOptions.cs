@@ -30,6 +30,5 @@ public sealed class OverlayOptions
     /// <summary>If set (positive), the background is resized to this square pixel size before compositing. Must be the actual target canvas size.</summary>
     public int? BackgroundSquareSize { get; set; }
 
-    public override string ToString()
-        => $"OverlayOptions: position={Position}, size={OverlaySizePercent}%, border={DrawBorder}";
+    public override string ToString() => $"OverlayOptions: position={Position}, size={OverlaySizePercent}%, border={DrawBorder}";
 }

@@ -22,6 +22,5 @@ public sealed record ApiTokenIssueRequest(
     IReadOnlyDictionary<string, object?>? Metadata = null,
     string? RotatedFromId = null)
 {
-    public override string ToString()
-        => $"ApiTokenIssueRequest: kind={Kind}, name={DisplayName}, user={UserId}, scopes={Scopes.Count}";
+    public override string ToString() => $"ApiTokenIssueRequest: kind={Kind}, name={DisplayName}, user={UserId}, scopes={Scopes.Count}";
 }

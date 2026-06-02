@@ -31,6 +31,5 @@ public class Place
 
     public BoundingBox? Viewport { get; set; }
 
-    public override string ToString()
-        => $"Place: {Name}, placeId={PlaceId}, {Coordinate}, rating={Rating?.ToString() ?? "n/a"}";
+    public override string ToString() => $"Place: {Name}, placeId={PlaceId}, {Coordinate}, rating={Rating?.ToString() ?? "n/a"}";
 }

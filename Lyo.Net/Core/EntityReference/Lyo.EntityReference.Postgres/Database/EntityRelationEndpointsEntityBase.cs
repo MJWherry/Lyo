@@ -19,6 +19,5 @@ public abstract class EntityRelationEndpointsEntityBase
     public string? ActorEntityId { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"{SubjectEntityType}:{SubjectEntityId} | {ActorEntityType}:{ActorEntityId}";
+    public override string ToString() => $"{SubjectEntityType}:{SubjectEntityId} | {ActorEntityType}:{ActorEntityId}";
 }

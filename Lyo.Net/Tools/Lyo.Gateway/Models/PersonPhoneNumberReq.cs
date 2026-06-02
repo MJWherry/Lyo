@@ -13,6 +13,5 @@ public sealed class PersonPhoneNumberReq
 
     public DateOnly UpdatedDate { get; set; }
 
-    public override string ToString()
-        => $"PersonPhoneNumberReq: number={Number}, type={Type}";
+    public override string ToString() => $"PersonPhoneNumberReq: number={Number}, type={Type}";
 }

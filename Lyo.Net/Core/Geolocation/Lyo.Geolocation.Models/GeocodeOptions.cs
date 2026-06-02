@@ -15,6 +15,5 @@ public class GeocodeOptions
 
     public IEnumerable<string>? ComponentRestrictions { get; set; }
 
-    public override string ToString()
-        => $"GeocodeOptions: lang={Language}, region={Region}, max={MaxResults?.ToString() ?? "default"}";
+    public override string ToString() => $"GeocodeOptions: lang={Language}, region={Region}, max={MaxResults?.ToString() ?? "default"}";
 }

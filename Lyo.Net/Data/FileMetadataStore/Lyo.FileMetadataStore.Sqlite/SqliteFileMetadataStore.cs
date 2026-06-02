@@ -9,9 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileMetadataStore.Sqlite;
 
-/// <summary>
-/// File metadata store backed by SQLite via Entity Framework Core. Mirrors <see cref="Postgres.PostgresFileMetadataStore" /> behavior for embedded and local-dev scenarios.
-/// </summary>
+/// <summary>File metadata store backed by SQLite via Entity Framework Core. Mirrors <see cref="Postgres.PostgresFileMetadataStore" /> behavior for embedded and local-dev scenarios.</summary>
 public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
 {
     private readonly SqliteFileMetadataStoreDbContext _dbContext;
@@ -108,7 +106,6 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(hash);
         _logger.LogDebug("Searching for metadata by hash");
-
         var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(
                 e => e.OriginalFileHash == hash && e.DeletedAt == null && (e.Availability == null || e.Availability != nameof(FileAvailability.PendingDirectUpload)), ct)
             .ConfigureAwait(false);

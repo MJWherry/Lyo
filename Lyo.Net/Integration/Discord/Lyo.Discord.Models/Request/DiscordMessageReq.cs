@@ -21,6 +21,5 @@ public sealed class DiscordMessageReq
 
     public DateTime MessageCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordMessageReq: id={Id}, channel={ChannelId}, author={AuthorId}";
+    public override string ToString() => $"DiscordMessageReq: id={Id}, channel={ChannelId}, author={AuthorId}";
 }

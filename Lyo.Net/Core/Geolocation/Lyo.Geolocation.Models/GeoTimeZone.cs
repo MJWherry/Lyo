@@ -19,6 +19,5 @@ public class GeoTimeZone
 
     public DateTime? DstEnd { get; set; }
 
-    public override string ToString()
-        => $"GeoTimeZone: {TimeZoneId} ({TimeZoneName}), UTC{UtcOffset:hh\\:mm}, dst={IsDaylightSavingTime}";
+    public override string ToString() => $"GeoTimeZone: {TimeZoneId} ({TimeZoneName}), UTC{UtcOffset:hh\\:mm}, dst={IsDaylightSavingTime}";
 }

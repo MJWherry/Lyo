@@ -42,6 +42,5 @@ public sealed class CaptionOptions
     /// <summary>Rounded corners on the outer edge of the caption band (header: top corners; footer: bottom corners). Default: 0 (square).</summary>
     public int CornerRadiusPx { get; set; }
 
-    public override string ToString()
-        => $"CaptionOptions: text={Text}, placement={Placement}, bandHeight={BandHeightPx}px";
+    public override string ToString() => $"CaptionOptions: text={Text}, placement={Placement}, bandHeight={BandHeightPx}px";
 }

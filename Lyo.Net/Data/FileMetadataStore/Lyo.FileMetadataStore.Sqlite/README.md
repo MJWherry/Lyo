@@ -1,16 +1,17 @@
 # Lyo.FileMetadataStore.Sqlite
 
-SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with [`Lyo.FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) for embedded, offline-first, and local-dev scenarios.
+SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with [
+`Lyo.FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) for embedded, offline-first, and local-dev scenarios.
 
 ## What is included
 
-| Component | Role |
-|-----------|------|
-| **`SqliteFileMetadataStore`** | `IFileMetadataStore` + `IHealth` |
-| **`SqliteFileAuditSink`** | `IFileAuditEventHandler` — append-only audit rows |
-| **`SqliteMultipartUploadSessionStore`** | `IMultipartUploadSessionStore` |
-| **`SqliteFileDownloadAccessService`** | Time-boxed download access tokens |
-| **`SqliteFileMetadataStoreDbContext`** | EF Core context (5 tables, same shape as Postgres) |
+| Component                               | Role                                               |
+|-----------------------------------------|----------------------------------------------------|
+| **`SqliteFileMetadataStore`**           | `IFileMetadataStore` + `IHealth`                   |
+| **`SqliteFileAuditSink`**               | `IFileAuditEventHandler` — append-only audit rows  |
+| **`SqliteMultipartUploadSessionStore`** | `IMultipartUploadSessionStore`                     |
+| **`SqliteFileDownloadAccessService`**   | Time-boxed download access tokens                  |
+| **`SqliteFileMetadataStoreDbContext`**  | EF Core context (5 tables, same shape as Postgres) |
 
 Schema tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `file_download_access_links`.
 
@@ -58,7 +59,8 @@ services.AddS3FileStorageServiceKeyed("my-files")
 
 ## Migrations
 
-Migrations ship in this package. Enable **`EnableAutoMigrations`** (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using `SqliteFileMetadataStoreDbContextFactory`.
+Migrations ship in this package. Enable **`EnableAutoMigrations`** (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using
+`SqliteFileMetadataStoreDbContextFactory`.
 
 Design-time connection string: `FILEMETADATASTORE_CONNECTION_STRING` or `FILESTORE_CONNECTION_STRING` (defaults to `Data Source=./filestore-design.db`).
 

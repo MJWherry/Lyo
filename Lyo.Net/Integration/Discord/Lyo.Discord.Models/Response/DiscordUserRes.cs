@@ -16,6 +16,5 @@ public sealed record DiscordUserRes(
     string? PremiumLevel,
     DateTime UserCreatedDate)
 {
-    public override string ToString()
-        => $"DiscordUserRes: id={Id}, username={Username}, bot={IsBot}";
+    public override string ToString() => $"DiscordUserRes: id={Id}, username={Username}, bot={IsBot}";
 }

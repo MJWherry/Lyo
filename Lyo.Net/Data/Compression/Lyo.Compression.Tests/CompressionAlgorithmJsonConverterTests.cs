@@ -15,10 +15,8 @@ public class CompressionAlgorithmJsonConverterTests
     {
         var algorithm = CompressionAlgorithm.TryFromName(name);
         Assert.NotNull(algorithm);
-
         var json = JsonSerializer.Serialize(algorithm, Options);
         Assert.Equal($"\"{name}\"", json);
-
         var roundTripped = JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options);
         Assert.Same(algorithm, roundTripped);
     }
@@ -31,10 +29,8 @@ public class CompressionAlgorithmJsonConverterTests
     {
         var algorithm = CompressionAlgorithm.TryFromName(name);
         Assert.NotNull(algorithm);
-
         var json = JsonSerializer.Serialize(algorithm, Options);
         Assert.Equal($"\"{name}\"", json);
-
         var roundTripped = JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options);
         Assert.Same(algorithm, roundTripped);
     }
@@ -46,16 +42,12 @@ public class CompressionAlgorithmJsonConverterTests
         CompressionAlgorithm algorithm = Lz4CompressionAlgorithm.Instance;
         var json = JsonSerializer.Serialize(algorithm, Options);
         Assert.Equal("\"LZ4\"", json);
-
         var roundTripped = JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options);
         Assert.Same(Lz4CompressionAlgorithm.Instance, roundTripped);
     }
 
     [Fact]
-    public void Deserialize_Null_ReturnsNull()
-    {
-        Assert.Null(JsonSerializer.Deserialize<CompressionAlgorithm>("null", Options));
-    }
+    public void Deserialize_Null_ReturnsNull() => Assert.Null(JsonSerializer.Deserialize<CompressionAlgorithm>("null", Options));
 
     [Fact]
     public void Serialize_Null_WritesNull()
@@ -65,10 +57,7 @@ public class CompressionAlgorithmJsonConverterTests
     }
 
     [Fact]
-    public void Deserialize_UnknownName_ReturnsNull()
-    {
-        Assert.Null(JsonSerializer.Deserialize<CompressionAlgorithm>("\"NotARealAlgorithm\"", Options));
-    }
+    public void Deserialize_UnknownName_ReturnsNull() => Assert.Null(JsonSerializer.Deserialize<CompressionAlgorithm>("\"NotARealAlgorithm\"", Options));
 
     [Theory]
     [InlineData("{\"Name\":\"GZip\",\"Extension\":\".gz\"}")]
@@ -85,7 +74,6 @@ public class CompressionAlgorithmJsonConverterTests
         var dto = new MetadataWithCompression(true, CompressionAlgorithm.GZip);
         var json = JsonSerializer.Serialize(dto, Options);
         Assert.Contains("\"CompressionAlgorithm\":\"GZip\"", json);
-
         var roundTripped = JsonSerializer.Deserialize<MetadataWithCompression>(json, Options);
         Assert.NotNull(roundTripped);
         Assert.Same(CompressionAlgorithm.GZip, roundTripped.CompressionAlgorithm);

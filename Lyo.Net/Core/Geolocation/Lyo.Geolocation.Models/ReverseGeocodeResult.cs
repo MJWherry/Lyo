@@ -19,6 +19,5 @@ public class ReverseGeocodeResult
 
     public IDictionary<string, string>? Metadata { get; set; }
 
-    public override string ToString()
-        => $"ReverseGeocodeResult: {Coordinate}, {Address}, conf={ConfidenceScore:0.##}, placeId={PlaceId}";
+    public override string ToString() => $"ReverseGeocodeResult: {Coordinate}, {Address}, conf={ConfidenceScore:0.##}, placeId={PlaceId}";
 }

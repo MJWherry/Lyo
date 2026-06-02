@@ -118,7 +118,8 @@ for the full policy matrix and `appsettings.json` snippet.
 
 Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).
 
-- **favorite.favorite** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`,
+- **favorite.favorite** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable
+  varchar 128/256), `tenant_id`, `context`, `visibility`,
   `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
   `deleted_by_id`, and `metadata` (jsonb).
 

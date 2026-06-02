@@ -37,6 +37,5 @@ public sealed record LyoUser(
     /// <summary>True if the user is currently disabled and all of their credentials must be rejected.</summary>
     public bool IsDisabled => DisabledAt.HasValue;
 
-    public override string ToString()
-        => $"LyoUser: id={Id}, email={Email}, name={DisplayName}, disabled={IsDisabled}";
+    public override string ToString() => $"LyoUser: id={Id}, email={Email}, name={DisplayName}, disabled={IsDisabled}";
 }

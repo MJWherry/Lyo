@@ -1,11 +1,11 @@
+using System.Diagnostics;
+using Lyo.Common.Enums;
+using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
-using System.Diagnostics;
-using Lyo.Common.Enums;
-using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Request;
 

@@ -41,6 +41,5 @@ public class ContactEmailAddress
     public EmailAddress? EmailAddress { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"ContactEmailAddress: person={PersonId}, email={EmailAddress?.Email ?? EmailAddressId.ToString()}, type={Type}, primary={IsPrimary}";
+    public override string ToString() => $"ContactEmailAddress: person={PersonId}, email={EmailAddress?.Email ?? EmailAddressId.ToString()}, type={Type}, primary={IsPrimary}";
 }

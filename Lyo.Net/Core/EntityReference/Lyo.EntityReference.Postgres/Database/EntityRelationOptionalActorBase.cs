@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.EntityReference.Postgres.Database;
 
 /// <summary>
-/// EF columns for a string-keyed subject entity plus optional actor (for example audit / change history).
-/// Not the tenant-scoped <see cref="EntityRelationEntityBase" /> row with lifecycle columns.
+/// EF columns for a string-keyed subject entity plus optional actor (for example audit / change history). Not the tenant-scoped <see cref="EntityRelationEntityBase" /> row
+/// with lifecycle columns.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public abstract class EntityRelationOptionalActorBase : EntityRelationEndpointsEntityBase

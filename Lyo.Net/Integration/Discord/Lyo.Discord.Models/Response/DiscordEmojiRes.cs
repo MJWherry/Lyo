@@ -14,6 +14,5 @@ public sealed record DiscordEmojiRes(
     bool RequiresColons,
     DateTime EmojiCreatedDate)
 {
-    public override string ToString()
-        => $"DiscordEmojiRes: :{Name}: id={Id}, animated={IsAnimated}";
+    public override string ToString() => $"DiscordEmojiRes: :{Name}: id={Id}, animated={IsAnimated}";
 }

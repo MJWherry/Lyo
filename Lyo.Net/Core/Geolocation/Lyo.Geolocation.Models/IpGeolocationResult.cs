@@ -41,6 +41,5 @@ public class IpGeolocationResult
 
     public double? AccuracyRadius { get; set; }
 
-    public override string ToString()
-        => $"IpGeolocationResult: {IpAddress}, {City}, {Country ?? CountryCodeString}, {Coordinate}";
+    public override string ToString() => $"IpGeolocationResult: {IpAddress}, {City}, {Country ?? CountryCodeString}, {Coordinate}";
 }

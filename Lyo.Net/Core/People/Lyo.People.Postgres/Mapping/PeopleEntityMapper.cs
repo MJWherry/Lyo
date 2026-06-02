@@ -35,7 +35,6 @@ internal static class PeopleEntityMapper
 
         person.Source = EntitySourceMapping.ToRecord(entity);
         person.LocallyModifiedAt = entity.LocallyModifiedAt;
-
         return person;
     }
 

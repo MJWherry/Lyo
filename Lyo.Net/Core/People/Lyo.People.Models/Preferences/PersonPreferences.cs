@@ -24,6 +24,5 @@ public class PersonPreferences
     public PrivacyPreferences Privacy { get; set; } = new();
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"PersonPreferences: contact={PreferredContactMethod ?? "?"}, timezone={TimeZone ?? "?"}";
+    public override string ToString() => $"PersonPreferences: contact={PreferredContactMethod ?? "?"}, timezone={TimeZone ?? "?"}";
 }

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Lyo.Authentication.Client;
-using Lyo.Common.Extensions;
 using Lyo.Authentication.Web.Components.Abstractions;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;

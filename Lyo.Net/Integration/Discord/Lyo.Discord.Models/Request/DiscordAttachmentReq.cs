@@ -23,6 +23,5 @@ public sealed class DiscordAttachmentReq
 
     public DateTime AttachmentCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordAttachmentReq: id={Id}, filename={Filename}, size={FileSize}";
+    public override string ToString() => $"DiscordAttachmentReq: id={Id}, filename={Filename}, size={FileSize}";
 }

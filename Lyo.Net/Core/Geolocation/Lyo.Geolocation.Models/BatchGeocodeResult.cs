@@ -15,6 +15,5 @@ public class BatchGeocodeResult
 
     public TimeSpan ProcessingTime { get; set; }
 
-    public override string ToString()
-        => $"BatchGeocodeResult: {SuccessfulResults}/{TotalRequests} ok, {FailedResults} failed, {ProcessingTime.TotalMilliseconds:0.#}ms";
+    public override string ToString() => $"BatchGeocodeResult: {SuccessfulResults}/{TotalRequests} ok, {FailedResults} failed, {ProcessingTime.TotalMilliseconds:0.#}ms";
 }

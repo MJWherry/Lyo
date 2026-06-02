@@ -79,8 +79,7 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
             resolvedDeserialized = await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize).ConfigureAwait(false);
 #else
         await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-        var resolvedDeserialized =
-            await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize, ct).ConfigureAwait(false);
+        var resolvedDeserialized = await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize, ct).ConfigureAwait(false);
 #endif
         OperationHelpers.ThrowIfNull(resolvedDeserialized, "Resolved config deserialization returned null.");
         return new(ConfigResolveOutcome.Ok, etag, resolvedDeserialized);

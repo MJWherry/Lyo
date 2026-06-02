@@ -158,7 +158,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             return;
 
         var existing = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         var reactionTypeInt = (int)reactionType;
@@ -210,7 +211,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var existing = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         if (existing == null)
@@ -238,7 +240,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var entity = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : ToReactionRecord(entity);
@@ -270,7 +273,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             c.DeletedAt = utc;
 
         var idSet = ids.Select(i => i.ToString()).ToHashSet();
-        var reactionsToDelete = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && idSet.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var reactionsToDelete = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && idSet.Contains(r.SubjectEntityId))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         context.CommentReactions.RemoveRange(reactionsToDelete);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in toSoftDelete)

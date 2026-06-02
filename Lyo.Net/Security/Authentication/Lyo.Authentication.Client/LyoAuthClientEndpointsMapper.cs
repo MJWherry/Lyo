@@ -17,43 +17,6 @@ public static class LyoAuthClientEndpointsMapper
     /// <summary>The query-string parameter that the API's callback uses to deliver the handoff code (mirrors <c>AuthEndpointsMapper.HandoffQueryParameter</c>).</summary>
     public const string HandoffQueryParameter = "lyo_handoff";
 
-    extension(IEndpointRouteBuilder endpoints)
-    {
-        /// <summary>Maps <c>GET {SignInPath}/{provider}</c> → 302 to the API's <c>/auth/login/{provider}</c> with the consumer's chosen post-login URL.</summary>
-        public IEndpointConventionBuilder MapLyoAuthSignIn()
-        {
-            ArgumentHelpers.ThrowIfNull(endpoints);
-            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-            return endpoints.MapGet(
-                    opts.SignInPath.TrimEnd('/') + "/{provider}", (string provider, string? returnUrl, HttpContext ctx) => {
-                        var safeReturn = SanitizeLocalReturn(returnUrl);
-                        var callbackOrigin = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
-                        var callbackUrl = callbackOrigin + opts.HandoffCallbackPath + (safeReturn == "/" ? string.Empty : "?return=" + Uri.EscapeDataString(safeReturn));
-                        var encodedReturn = Uri.EscapeDataString(callbackUrl);
-                        var target = $"{opts.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
-                        return Results.Redirect(target);
-                    })
-                .WithName("LyoAuthClientSignIn")
-                .AllowAnonymous();
-        }
-
-        /// <summary>Maps <c>GET {HandoffCallbackPath}</c> which redeems the <c>?lyo_handoff=...</c> code, drops the session cookie, and redirects to the consumer-local post-login URL.</summary>
-        public IEndpointConventionBuilder MapLyoAuthHandoffCallback()
-        {
-            ArgumentHelpers.ThrowIfNull(endpoints);
-            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-            return endpoints.MapGet(opts.HandoffCallbackPath, HandoffCallbackAsync).WithName("LyoAuthClientHandoff").AllowAnonymous();
-        }
-
-        /// <summary>Maps <c>POST {SignOutPath}</c> which revokes the refresh token at the API, removes the local session, and clears the cookie.</summary>
-        public IEndpointConventionBuilder MapLyoAuthSignOut()
-        {
-            ArgumentHelpers.ThrowIfNull(endpoints);
-            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-            return endpoints.MapPost(opts.SignOutPath, SignOutAsync).WithName("LyoAuthClientSignOut").AllowAnonymous();
-        }
-    }
-
     private static async Task<IResult> HandoffCallbackAsync(
         HttpContext ctx,
         string? @return,
@@ -138,5 +101,42 @@ public static class LyoAuthClientEndpointsMapper
             return "/";
 
         return raw.StartsWith("/", StringComparison.Ordinal) && !raw.StartsWith("//", StringComparison.Ordinal) ? raw : "/";
+    }
+
+    extension(IEndpointRouteBuilder endpoints)
+    {
+        /// <summary>Maps <c>GET {SignInPath}/{provider}</c> → 302 to the API's <c>/auth/login/{provider}</c> with the consumer's chosen post-login URL.</summary>
+        public IEndpointConventionBuilder MapLyoAuthSignIn()
+        {
+            ArgumentHelpers.ThrowIfNull(endpoints);
+            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
+            return endpoints.MapGet(
+                    opts.SignInPath.TrimEnd('/') + "/{provider}", (string provider, string? returnUrl, HttpContext ctx) => {
+                        var safeReturn = SanitizeLocalReturn(returnUrl);
+                        var callbackOrigin = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
+                        var callbackUrl = callbackOrigin + opts.HandoffCallbackPath + (safeReturn == "/" ? string.Empty : "?return=" + Uri.EscapeDataString(safeReturn));
+                        var encodedReturn = Uri.EscapeDataString(callbackUrl);
+                        var target = $"{opts.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
+                        return Results.Redirect(target);
+                    })
+                .WithName("LyoAuthClientSignIn")
+                .AllowAnonymous();
+        }
+
+        /// <summary>Maps <c>GET {HandoffCallbackPath}</c> which redeems the <c>?lyo_handoff=...</c> code, drops the session cookie, and redirects to the consumer-local post-login URL.</summary>
+        public IEndpointConventionBuilder MapLyoAuthHandoffCallback()
+        {
+            ArgumentHelpers.ThrowIfNull(endpoints);
+            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
+            return endpoints.MapGet(opts.HandoffCallbackPath, HandoffCallbackAsync).WithName("LyoAuthClientHandoff").AllowAnonymous();
+        }
+
+        /// <summary>Maps <c>POST {SignOutPath}</c> which revokes the refresh token at the API, removes the local session, and clears the cookie.</summary>
+        public IEndpointConventionBuilder MapLyoAuthSignOut()
+        {
+            ArgumentHelpers.ThrowIfNull(endpoints);
+            var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
+            return endpoints.MapPost(opts.SignOutPath, SignOutAsync).WithName("LyoAuthClientSignOut").AllowAnonymous();
+        }
     }
 }

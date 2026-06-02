@@ -43,7 +43,8 @@ public sealed class ResolvedConfigRecord
             if (item.Value != null)
                 continue;
 
-            OperationHelpers.ThrowIf(true, $"Required config key '{item.Definition.Key}' for entity type '{SubjectEntityType}' (id '{SubjectEntityId}') has no binding and no default.");
+            OperationHelpers.ThrowIf(
+                true, $"Required config key '{item.Definition.Key}' for entity type '{SubjectEntityType}' (id '{SubjectEntityId}') has no binding and no default.");
         }
     }
 

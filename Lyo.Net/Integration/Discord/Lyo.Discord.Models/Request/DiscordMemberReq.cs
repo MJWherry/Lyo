@@ -15,6 +15,5 @@ public sealed class DiscordMemberReq
 
     public string? ExtraJson { get; set; }
 
-    public override string ToString()
-        => $"DiscordMemberReq: user={UserId}, guild={GuildId}, nickname={Nickname}";
+    public override string ToString() => $"DiscordMemberReq: user={UserId}, guild={GuildId}, nickname={Nickname}";
 }

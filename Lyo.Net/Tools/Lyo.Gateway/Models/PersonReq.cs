@@ -23,6 +23,5 @@ public sealed class PersonReq
 
     public List<PersonAddressReq> PersonAddresses { get; set; } = [];
 
-    public override string ToString()
-        => $"PersonReq: name={FirstName} {LastName}, source={Source}, addresses={PersonAddresses.Count}";
+    public override string ToString() => $"PersonReq: name={FirstName} {LastName}, source={Source}, addresses={PersonAddresses.Count}";
 }

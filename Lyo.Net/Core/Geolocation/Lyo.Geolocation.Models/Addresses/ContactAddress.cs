@@ -27,6 +27,5 @@ public class ContactAddress
 
     public string? Notes { get; set; }
 
-    public override string ToString()
-        => $"ContactAddress: person={PersonId}, address={AddressId}, type={Type}, primary={IsPrimary}";
+    public override string ToString() => $"ContactAddress: person={PersonId}, address={AddressId}, type={Type}, primary={IsPrimary}";
 }

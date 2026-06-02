@@ -14,6 +14,5 @@ public class ValidationIssue
 
     public string Code { get; set; } = string.Empty;
 
-    public override string ToString()
-        => $"ValidationIssue: [{Severity}] {Field} ({Code}): {Message}";
+    public override string ToString() => $"ValidationIssue: [{Severity}] {Field} ({Code}): {Message}";
 }

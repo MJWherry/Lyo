@@ -11,6 +11,5 @@ public class PlaceHoursPeriod
 
     public TimeSpan CloseTime { get; set; }
 
-    public override string ToString()
-        => $"PlaceHoursPeriod: {Day} {OpenTime:hh\\:mm}-{CloseTime:hh\\:mm}";
+    public override string ToString() => $"PlaceHoursPeriod: {Day} {OpenTime:hh\\:mm}-{CloseTime:hh\\:mm}";
 }

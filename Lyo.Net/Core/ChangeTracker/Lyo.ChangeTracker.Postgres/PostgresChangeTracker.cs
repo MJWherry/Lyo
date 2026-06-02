@@ -109,7 +109,10 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Changes.Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Changes.Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forEntity.EntityId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         if (entities.Count == 0)
             return;
 

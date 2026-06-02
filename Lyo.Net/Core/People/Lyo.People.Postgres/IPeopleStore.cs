@@ -1,7 +1,7 @@
 using Lyo.EntityReference.Models;
 using Lyo.People.Models;
 
-namespace Lyo.People;
+namespace Lyo.People.Postgres;
 
 /// <summary>Persists people domain data and provenance source rows.</summary>
 public interface IPeopleStore

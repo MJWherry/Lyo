@@ -30,6 +30,5 @@ public sealed record ImageMetadataResult : Result<ImageMetadata>
         return new(false, null, [error]);
     }
 
-    public override string ToString()
-        => IsSuccess ? $"ImageMetadataResult: {Data}" : $"ImageMetadataResult: failed, errors={Errors?.Count ?? 0}";
+    public override string ToString() => IsSuccess ? $"ImageMetadataResult: {Data}" : $"ImageMetadataResult: failed, errors={Errors?.Count ?? 0}";
 }

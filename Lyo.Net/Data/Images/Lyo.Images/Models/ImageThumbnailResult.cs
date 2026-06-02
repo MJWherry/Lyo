@@ -47,7 +47,5 @@ public sealed record ImageThumbnailResult : Result<byte[]>
     }
 
     public override string ToString()
-        => IsSuccess
-            ? $"ImageThumbnailResult: {Data?.Length ?? 0} bytes, {MaxWidth}x{MaxHeight}, format={Format}"
-            : $"ImageThumbnailResult: failed, errors={Errors?.Count ?? 0}";
+        => IsSuccess ? $"ImageThumbnailResult: {Data?.Length ?? 0} bytes, {MaxWidth}x{MaxHeight}, format={Format}" : $"ImageThumbnailResult: failed, errors={Errors?.Count ?? 0}";
 }

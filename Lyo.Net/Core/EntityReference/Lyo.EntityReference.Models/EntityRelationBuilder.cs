@@ -11,8 +11,7 @@ public sealed class EntityRelationBuilder
     /// <typeparam name="T">CLR type used to resolve the subject entity type discriminator.</typeparam>
     /// <param name="keys">One or more non-empty key segments.</param>
     /// <returns>A builder awaiting an actor endpoint via <see cref="From{T}(object[])" />.</returns>
-    public static EntityRelationBuilder For<T>(params object[] keys)
-        => new(EntityRef.For<T>(keys));
+    public static EntityRelationBuilder For<T>(params object[] keys) => new(EntityRef.For<T>(keys));
 
     /// <summary>Starts a relation pair with a subject reference built from an entity instance.</summary>
     /// <typeparam name="T">CLR type used to resolve the subject entity type discriminator.</typeparam>
@@ -35,29 +34,25 @@ public sealed class EntityRelationBuilder
     /// <summary>Starts a relation pair with an existing subject reference.</summary>
     /// <param name="subject">Entity the relation applies to.</param>
     /// <returns>A builder awaiting an actor endpoint via <see cref="From{T}(object[])" />.</returns>
-    public static EntityRelationBuilder For(EntityRef subject)
-        => new(subject);
+    public static EntityRelationBuilder For(EntityRef subject) => new(subject);
 
     /// <summary>Completes the relation pair with an actor reference built from the logical type of <typeparamref name="T" /> and a <see cref="Guid" /> key.</summary>
     /// <typeparam name="T">CLR type used to resolve the actor entity type discriminator.</typeparam>
     /// <param name="actorId">Identifier stored using the GUID's default string format.</param>
     /// <returns>The subject/actor endpoint pair.</returns>
-    public EntityRelationEndpoints From<T>(Guid actorId)
-        => From(EntityRef.For<T>(actorId));
+    public EntityRelationEndpoints From<T>(Guid actorId) => From(EntityRef.For<T>(actorId));
 
     /// <summary>Completes the relation pair with an actor reference built from the logical type of <typeparamref name="T" /> and a string key.</summary>
     /// <typeparam name="T">CLR type used to resolve the actor entity type discriminator.</typeparam>
     /// <param name="actorId">Non-empty identifier string.</param>
     /// <returns>The subject/actor endpoint pair.</returns>
-    public EntityRelationEndpoints From<T>(string actorId)
-        => From(EntityRef.For<T>(actorId));
+    public EntityRelationEndpoints From<T>(string actorId) => From(EntityRef.For<T>(actorId));
 
     /// <summary>Completes the relation pair with an actor reference built from the logical type of <typeparamref name="T" /> and key(s).</summary>
     /// <typeparam name="T">CLR type used to resolve the actor entity type discriminator.</typeparam>
     /// <param name="keys">One or more non-empty key segments.</param>
     /// <returns>The subject/actor endpoint pair.</returns>
-    public EntityRelationEndpoints From<T>(params object[] keys)
-        => From(EntityRef.For<T>(keys));
+    public EntityRelationEndpoints From<T>(params object[] keys) => From(EntityRef.For<T>(keys));
 
     /// <summary>Completes the relation pair with an actor reference built from an entity instance.</summary>
     /// <typeparam name="T">CLR type used to resolve the actor entity type discriminator.</typeparam>
@@ -80,6 +75,5 @@ public sealed class EntityRelationBuilder
     /// <summary>Completes the relation pair with an existing actor reference.</summary>
     /// <param name="actor">Entity that performed or owns the relation.</param>
     /// <returns>The subject/actor endpoint pair.</returns>
-    public EntityRelationEndpoints From(EntityRef actor)
-        => new(_subject, actor);
+    public EntityRelationEndpoints From(EntityRef actor) => new(_subject, actor);
 }

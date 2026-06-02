@@ -24,6 +24,5 @@ public class GeocodeResult
 
     public IDictionary<string, string>? Metadata { get; set; }
 
-    public override string ToString()
-        => $"GeocodeResult: {Address}, conf={ConfidenceScore:0.##}, placeId={PlaceId}, match={MatchType}";
+    public override string ToString() => $"GeocodeResult: {Address}, conf={ConfidenceScore:0.##}, placeId={PlaceId}, match={MatchType}";
 }

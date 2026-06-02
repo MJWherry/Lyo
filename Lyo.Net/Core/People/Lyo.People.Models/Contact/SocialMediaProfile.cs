@@ -38,6 +38,5 @@ public class SocialMediaProfile
     public DateTime? AddedAt { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"SocialMediaProfile: id={Id}, platform={Platform}, username={Username}";
+    public override string ToString() => $"SocialMediaProfile: id={Id}, platform={Platform}, username={Username}";
 }

@@ -112,12 +112,11 @@ public class InMemoryStoreTests
     private static ApiTokenRecord NewTokenRecord(Guid? userId = null)
     {
         var (_, id, hash) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
-        return new(
-            id, hash, ApiTokenKind.Pat, ApiTokenRing.Live, userId ?? Guid.NewGuid(), "test", [], null, DateTime.UtcNow, null, null, null, null, null, null);
+        return new(id, hash, ApiTokenKind.Pat, ApiTokenRing.Live, userId ?? Guid.NewGuid(), "test", [], null, DateTime.UtcNow, null, null, null, null, null, null);
     }
 
     private static LyoUser NewUser()
         => new(
-            Guid.NewGuid(), "Test " + Guid.NewGuid().ToString("N").Substring(0, 8), $"user-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null,
-            DateTime.UtcNow, null, null, null, null);
+            Guid.NewGuid(), "Test " + Guid.NewGuid().ToString("N").Substring(0, 8), $"user-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null,
+            null, null, null);
 }

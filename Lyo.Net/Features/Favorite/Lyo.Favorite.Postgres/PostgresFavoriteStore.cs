@@ -35,13 +35,19 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(favorite);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var targetId = !string.IsNullOrWhiteSpace(favorite.SubjectEntityId) ? favorite.SubjectEntityId : throw new ArgumentException("FavoriteRecord.SubjectEntityId is required.", nameof(favorite));
-        var appliedId = !string.IsNullOrWhiteSpace(favorite.ActorEntityId) ? favorite.ActorEntityId : throw new ArgumentException("FavoriteRecord.ActorEntityId is required.", nameof(favorite));
+        var targetId = !string.IsNullOrWhiteSpace(favorite.SubjectEntityId)
+            ? favorite.SubjectEntityId
+            : throw new ArgumentException("FavoriteRecord.SubjectEntityId is required.", nameof(favorite));
+
+        var appliedId = !string.IsNullOrWhiteSpace(favorite.ActorEntityId)
+            ? favorite.ActorEntityId
+            : throw new ArgumentException("FavoriteRecord.ActorEntityId is required.", nameof(favorite));
+
         var existing = await contextDb.Favorites.WhereActive()
             .WhereTenant(resolvedTenant)
             .FirstOrDefaultAsync(
-                f => f.SubjectEntityType == favorite.SubjectEntityType && f.SubjectEntityId == targetId && f.ActorEntityType == favorite.ActorEntityType && f.ActorEntityId == appliedId &&
-                    (context == null ? f.Context == null : f.Context == context), ct)
+                f => f.SubjectEntityType == favorite.SubjectEntityType && f.SubjectEntityId == targetId && f.ActorEntityType == favorite.ActorEntityType &&
+                    f.ActorEntityId == appliedId && (context == null ? f.Context == null : f.Context == context), ct)
             .ConfigureAwait(false);
 
         if (existing != null)
@@ -198,8 +204,7 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            foreach (var row in rows)
-            {
+            foreach (var row in rows) {
                 if (row.SubjectEntityId != null && Guid.TryParse(row.SubjectEntityId, out var parsedId))
                     result[parsedId] = row.Count;
             }

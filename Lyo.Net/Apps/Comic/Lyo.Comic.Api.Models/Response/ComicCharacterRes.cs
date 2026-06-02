@@ -22,6 +22,5 @@ public sealed record ComicCharacterRes
 
     public DateTime? UpdatedTimestamp { get; init; }
 
-    public override string ToString()
-        => $"ComicCharacterRes: {Name}, series={SeriesId}, role={Role}";
+    public override string ToString() => $"ComicCharacterRes: {Name}, series={SeriesId}, role={Role}";
 }

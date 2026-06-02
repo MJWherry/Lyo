@@ -235,6 +235,5 @@ public sealed class CronExpression
         return val;
     }
 
-    public override string ToString()
-        => $"CronExpression: months={_months.Count}, dom={_daysOfMonth.Count}, dow={_daysOfWeek.Count}, hours={_hours.Count}";
+    public override string ToString() => $"CronExpression: months={_months.Count}, dom={_daysOfMonth.Count}, dow={_daysOfWeek.Count}, hours={_hours.Count}";
 }

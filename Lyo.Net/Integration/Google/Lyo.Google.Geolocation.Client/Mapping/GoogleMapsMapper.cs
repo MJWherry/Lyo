@@ -52,9 +52,8 @@ internal static class GoogleMapsMapper
             GeocodeConfidence = MapConfidence(googleResult.Geometry?.LocationType)
         };
 
-        if (!string.IsNullOrWhiteSpace(googleResult.PlaceId)) {
+        if (!string.IsNullOrWhiteSpace(googleResult.PlaceId))
             address.Source = EntitySourceRecord.From(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId), DateTime.UtcNow);
-        }
 
         foreach (var component in addressComponents) {
             var types = component.Types ?? [];

@@ -1,6 +1,8 @@
 # Lyo.Barcode.Native
 
-Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to **BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net + ImageSharp) through **`ReadFromImageAsync`**.
+Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to *
+*BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net +
+ImageSharp) through **`ReadFromImageAsync`**.
 
 ## Features
 
@@ -71,14 +73,14 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
-| `SixLabors.Fonts`                                       | `2.*`   |
-| `SixLabors.ImageSharp`                                  | `3.*`   |
-| `SixLabors.ImageSharp.Drawing`                          | `2.*`   |
+| Package                                                 | Version   |
+|---------------------------------------------------------|-----------|
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`   |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
+| `SixLabors.Fonts`                                       | `2.*`     |
+| `SixLabors.ImageSharp`                                  | `3.*`     |
+| `SixLabors.ImageSharp.Drawing`                          | `2.*`     |
 | `ZXing.Net`                                             | `0.16.11` |
 | `ZXing.Net.Bindings.ImageSharp.V3`                      | `0.16.15` |
 

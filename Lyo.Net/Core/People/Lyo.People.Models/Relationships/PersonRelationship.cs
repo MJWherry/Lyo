@@ -35,6 +35,5 @@ public class PersonRelationship
     public string? Notes { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"PersonRelationship: person={PersonId}, related={RelatedPersonId}, type={Type}, active={IsActive}";
+    public override string ToString() => $"PersonRelationship: person={PersonId}, related={RelatedPersonId}, type={Type}, active={IsActive}";
 }

@@ -11,7 +11,10 @@ public static class EntityRelationEndpointConfigurationExtensions
     public const int EntityIdMaxLength = 256;
 
     /// <summary>Maps nullable subject/actor endpoint columns (persisted as for_entity_* / from_entity_*).</summary>
-    public static void ConfigureEntityRelationEndpointColumns<TEntity>(this EntityTypeBuilder<TEntity> builder, int entityTypeMaxLength = EntityTypeMaxLength, int entityIdMaxLength = EntityIdMaxLength)
+    public static void ConfigureEntityRelationEndpointColumns<TEntity>(
+        this EntityTypeBuilder<TEntity> builder,
+        int entityTypeMaxLength = EntityTypeMaxLength,
+        int entityIdMaxLength = EntityIdMaxLength)
         where TEntity : EntityRelationEndpointsEntityBase
     {
         builder.Property(e => e.SubjectEntityType).HasMaxLength(entityTypeMaxLength).HasColumnName("for_entity_type");

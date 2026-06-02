@@ -11,6 +11,5 @@ namespace Lyo.Authentication.Models.Records;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record IssuedLyoJwt(string AccessToken, string AccessTokenJti, DateTime AccessTokenExpiresAt, string? RefreshToken, DateTime? RefreshTokenExpiresAt)
 {
-    public override string ToString()
-        => $"IssuedLyoJwt: jti={AccessTokenJti}, accessExpires={AccessTokenExpiresAt:O}, hasRefresh={RefreshToken is not null}";
+    public override string ToString() => $"IssuedLyoJwt: jti={AccessTokenJti}, accessExpires={AccessTokenExpiresAt:O}, hasRefresh={RefreshToken is not null}";
 }

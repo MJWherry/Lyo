@@ -25,6 +25,5 @@ public class CommunicationPreferences
     public List<string> PreferredContactTimes { get; set; } = new();
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"CommunicationPreferences: email={AllowEmail}, sms={AllowSms}, phone={AllowPhoneCalls}, marketing={AllowMarketingEmails}";
+    public override string ToString() => $"CommunicationPreferences: email={AllowEmail}, sms={AllowSms}, phone={AllowPhoneCalls}, marketing={AllowMarketingEmails}";
 }

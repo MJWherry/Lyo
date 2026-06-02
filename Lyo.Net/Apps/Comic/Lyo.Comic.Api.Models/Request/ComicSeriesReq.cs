@@ -52,8 +52,7 @@ public sealed class ComicSeriesReq
     /// <summary>Optional tags to attach after the series is created (create / upsert-create only; ignored on update).</summary>
     public IReadOnlyList<AddTagReq>? Tags { get; set; }
 
-    public override string ToString()
-        => $"ComicSeriesReq: title={Title}, slug={Slug}, type={ComicType}, status={Status}";
+    public override string ToString() => $"ComicSeriesReq: title={Title}, slug={Slug}, type={ComicType}, status={Status}";
 }
 
 /// <summary>An alternate or translated title within a series request.</summary>
@@ -66,6 +65,5 @@ public sealed class ComicAlternateTitleReq
     /// <summary>Gets or sets the BCP 47 language tag for this title, or null if unknown.</summary>
     public string? Language { get; set; }
 
-    public override string ToString()
-        => $"ComicAlternateTitleReq: title={Title}, lang={Language}";
+    public override string ToString() => $"ComicAlternateTitleReq: title={Title}, lang={Language}";
 }

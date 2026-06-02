@@ -55,9 +55,11 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 Both tables use **`EntityRelationOptionalActorBase`** from `Lyo.EntityReference.Postgres`:
 
-- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `old_values_json` (jsonb),
+- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid),
+  `old_values_json` (jsonb),
   `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
-- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `message?`,
+- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (
+  uuid), `message?`,
   `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
 
 `for_entity_*` columns hold the subject of the change/event; `from_entity_*` columns hold the optional actor that caused it.

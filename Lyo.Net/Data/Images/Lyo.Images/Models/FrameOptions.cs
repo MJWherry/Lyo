@@ -21,6 +21,5 @@ public sealed class FrameOptions
     /// <summary>Padding (pixels) between the input image and the stroke. Default: 24.</summary>
     public int PaddingPx { get; set; } = 24;
 
-    public override string ToString()
-        => $"FrameOptions: stroke={StrokeWidthPx}px {StrokeColorHex}, padding={PaddingPx}px, radius={CornerRadiusPx}px";
+    public override string ToString() => $"FrameOptions: stroke={StrokeWidthPx}px {StrokeColorHex}, padding={PaddingPx}px, radius={CornerRadiusPx}px";
 }

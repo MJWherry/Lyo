@@ -117,6 +117,5 @@ public class Ed25519LyoJwtTests
         return (issuer, validator, users, keys);
     }
 
-    private static LyoUser NewUser()
-        => new(Guid.NewGuid(), "Test", $"u-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+    private static LyoUser NewUser() => new(Guid.NewGuid(), "Test", $"u-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
 }

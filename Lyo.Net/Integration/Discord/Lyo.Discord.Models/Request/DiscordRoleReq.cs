@@ -27,6 +27,5 @@ public sealed class DiscordRoleReq
 
     public DateTime RoleCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordRoleReq: id={Id}, name={Name}, guild={GuildId}, position={Position}";
+    public override string ToString() => $"DiscordRoleReq: id={Id}, name={Name}, guild={GuildId}, position={Position}";
 }

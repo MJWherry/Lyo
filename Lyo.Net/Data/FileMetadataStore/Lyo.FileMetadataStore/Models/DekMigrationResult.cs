@@ -9,6 +9,5 @@ public record DekMigrationResult(int TotalFilesFound, int SuccessfullyMigrated, 
     /// <summary>Indicates whether all files were successfully migrated.</summary>
     public bool AllSucceeded => Failed == 0;
 
-    public override string ToString()
-        => $"DekMigrationResult: found={TotalFilesFound}, migrated={SuccessfullyMigrated}, failed={Failed}, skipped={Skipped}";
+    public override string ToString() => $"DekMigrationResult: found={TotalFilesFound}, migrated={SuccessfullyMigrated}, failed={Failed}, skipped={Skipped}";
 }

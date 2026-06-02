@@ -37,7 +37,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         if (definition.Id != default)
             entity = await context.ConfigDefinitions.FindAsync([definition.Id], ct).ConfigureAwait(false);
 
-        entity ??= await context.ConfigDefinitions.FirstOrDefaultAsync(x => x.SubjectEntityType == definition.SubjectEntityType && x.Key == definition.Key, ct).ConfigureAwait(false);
+        entity ??= await context.ConfigDefinitions.FirstOrDefaultAsync(x => x.SubjectEntityType == definition.SubjectEntityType && x.Key == definition.Key, ct)
+            .ConfigureAwait(false);
+
         if (entity != null) {
             entity.SubjectEntityType = definition.SubjectEntityType;
             entity.Key = definition.Key;
@@ -140,7 +142,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             entity = await context.ConfigBindings.FindAsync([binding.Id], ct).ConfigureAwait(false);
 
         entity ??= await context.ConfigBindings.FirstOrDefaultAsync(
-                x => x.DefinitionId == definition.Id && x.SubjectEntityType == binding.SubjectEntityType && x.SubjectEntityId == binding.SubjectEntityId && x.TenantId == resolvedTenant, ct)
+                x => x.DefinitionId == definition.Id && x.SubjectEntityType == binding.SubjectEntityType && x.SubjectEntityId == binding.SubjectEntityId &&
+                    x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
         if (entity != null) {
@@ -278,7 +281,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings.Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var entities = await context.ConfigBindings
+            .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .OrderBy(x => x.Key)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -318,7 +322,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings.Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var entities = await context.ConfigBindings
+            .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -339,7 +344,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var definitions = await context.ConfigDefinitions.Where(x => x.SubjectEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
-        var bindings = await context.ConfigBindings.Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var bindings = await context.ConfigBindings
+            .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 

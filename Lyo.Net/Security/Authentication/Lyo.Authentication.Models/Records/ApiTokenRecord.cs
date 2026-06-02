@@ -42,6 +42,5 @@ public sealed record ApiTokenRecord(
     /// <summary>True if <see cref="ExpiresAt" /> is set and in the past relative to <paramref name="now" />.</summary>
     public bool IsExpired(DateTime now) => ExpiresAt.HasValue && ExpiresAt.Value <= now;
 
-    public override string ToString()
-        => $"ApiTokenRecord: id={Id}, kind={Kind}, ring={Ring}, user={UserId}, name={DisplayName}";
+    public override string ToString() => $"ApiTokenRecord: id={Id}, kind={Kind}, ring={Ring}, user={UserId}, name={DisplayName}";
 }

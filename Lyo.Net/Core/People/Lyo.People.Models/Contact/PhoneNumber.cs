@@ -37,6 +37,12 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IEntitySourceDerived
     public string? Label { get; set; }
 
     /// <inheritdoc />
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
+
+    /// <inheritdoc />
     public bool Equals(PhoneNumber? other)
     {
         if (other == null)
@@ -44,12 +50,6 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IEntitySourceDerived
 
         return Number == other.Number && CountryCode == other.CountryCode;
     }
-
-    /// <inheritdoc />
-    public EntitySourceRecord? Source { get; set; }
-
-    /// <inheritdoc />
-    public DateTime? LocallyModifiedAt { get; set; }
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is PhoneNumber other && Equals(other);

@@ -21,6 +21,5 @@ public sealed record PersonAddressRes(
     DateOnly CreatedDate,
     DateOnly UpdatedDate)
 {
-    public override string ToString()
-        => $"PersonAddressRes: {HouseNumber} {StreetName}, {City}, {State} {Zipcode}";
+    public override string ToString() => $"PersonAddressRes: {HouseNumber} {StreetName}, {City}, {State} {Zipcode}";
 }

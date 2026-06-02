@@ -14,6 +14,5 @@ public class ProximitySearchResult<T>
 
     public double DistanceMiles => DistanceMeters * 0.000621371;
 
-    public override string ToString()
-        => $"ProximitySearchResult: {DistanceMeters:0.#}m, item={Item}";
+    public override string ToString() => $"ProximitySearchResult: {DistanceMeters:0.#}m, item={Item}";
 }

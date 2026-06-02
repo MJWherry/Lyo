@@ -10,6 +10,5 @@ namespace Lyo.Authentication.Models.Scopes;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Scope(string Name, string Description, IReadOnlyList<string> Implies, IReadOnlyCollection<string> TransitiveImplies)
 {
-    public override string ToString()
-        => $"Scope: name={Name}, implies={Implies.Count}, transitive={TransitiveImplies.Count}";
+    public override string ToString() => $"Scope: name={Name}, implies={Implies.Count}, transitive={TransitiveImplies.Count}";
 }

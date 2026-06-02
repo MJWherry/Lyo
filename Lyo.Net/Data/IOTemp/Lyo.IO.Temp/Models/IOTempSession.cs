@@ -37,10 +37,6 @@ public sealed class IOTempSession : IIOTempSession
     private bool _disposed;
     private long _totalBytesUsed;
 
-    /// <inheritdoc />
-    public override string ToString()
-        => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
-
     /// <summary>Creates a session under <see cref="IOTempSessionOptions.RootDirectory" />, creating the session directory on disk.</summary>
     /// <param name="options">Layout, limits, and naming; defaults when null.</param>
     /// <param name="logger">Optional logger.</param>
@@ -114,6 +110,9 @@ public sealed class IOTempSession : IIOTempSession
     }
 
 #endregion
+
+    /// <inheritdoc />
+    public override string ToString() => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
 
     /// <summary>
     /// Convenience factory for tests: creates a session under <c>{TempPath}/lyo-io-temp-tests/{subdirectoryName ?? new Guid}</c>. The root is auto-created so test classes don't

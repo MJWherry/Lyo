@@ -33,6 +33,5 @@ public sealed class PersonAddressReq
 
     public DateOnly UpdatedDate { get; set; }
 
-    public override string ToString()
-        => $"PersonAddressReq: city={City}, state={State}, zip={Zipcode}";
+    public override string ToString() => $"PersonAddressReq: city={City}, state={State}, zip={Zipcode}";
 }

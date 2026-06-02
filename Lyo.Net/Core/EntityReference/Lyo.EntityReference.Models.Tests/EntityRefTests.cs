@@ -49,16 +49,10 @@ public class EntityRefTests
     }
 
     [Fact]
-    public void LogicalTypeName_UsesFullTypeName()
-    {
-        Assert.Equal(typeof(TestEntity).FullName, EntityRef.LogicalTypeName<TestEntity>());
-    }
+    public void LogicalTypeName_UsesFullTypeName() => Assert.Equal(typeof(TestEntity).FullName, EntityRef.LogicalTypeName<TestEntity>());
 
     [Fact]
-    public void LogicalTypeName_Uses_EntityRefLogicalTypeAttribute_WhenPresent()
-    {
-        Assert.Equal("Stable.Order", EntityRef.LogicalTypeName<AttributedEntity>());
-    }
+    public void LogicalTypeName_Uses_EntityRefLogicalTypeAttribute_WhenPresent() => Assert.Equal("Stable.Order", EntityRef.LogicalTypeName<AttributedEntity>());
 
     [Fact]
     public void For_WithEntityAndSelector_NullEntity_Throws()

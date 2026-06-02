@@ -4,10 +4,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.EntityReference.Postgres.Database;
 
 /// <summary>EF entity base mapping the canonical relation row (PostgreSQL).</summary>
-/// <remarks>
-/// Change-tracker and similar modules that keep arbitrary string keys and optional actors should use
-/// <see cref="EntityRelationOptionalActorBase" /> instead.
-/// </remarks>
+/// <remarks>Change-tracker and similar modules that keep arbitrary string keys and optional actors should use <see cref="EntityRelationOptionalActorBase" /> instead.</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public abstract class EntityRelationEntityBase : EntityRelationEndpointsEntityBase
 {

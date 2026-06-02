@@ -1,7 +1,8 @@
 # Lyo.Note
 
 Abstractions for storing and retrieving notes attached to arbitrary entities.
-Each note has a **subject** (what it is about) and an **actor** (who wrote it), expressed as `EntityRef` at the API. The default Postgres store maps **`for_entity_*`** / **`from_entity_*`** (nullable varchar) and applies soft-delete semantics.
+Each note has a **subject** (what it is about) and an **actor** (who wrote it), expressed as `EntityRef` at the API. The default Postgres store maps **`for_entity_*`** / *
+*`from_entity_*`** (nullable varchar) and applies soft-delete semantics.
 
 ## Surface
 

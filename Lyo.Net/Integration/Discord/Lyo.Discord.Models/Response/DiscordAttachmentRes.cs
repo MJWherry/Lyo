@@ -14,6 +14,5 @@ public sealed record DiscordAttachmentRes(
     string Url,
     DateTime AttachmentCreatedDate)
 {
-    public override string ToString()
-        => $"DiscordAttachmentRes: {Filename}, {FileSize} bytes, {MediaType}";
+    public override string ToString() => $"DiscordAttachmentRes: {Filename}, {FileSize} bytes, {MediaType}";
 }

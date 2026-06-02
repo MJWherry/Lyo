@@ -34,6 +34,5 @@ public sealed record LinkedIdentity(
     /// <summary>True if the link is still active (not soft-deleted).</summary>
     public bool IsActive => !UnlinkedAt.HasValue;
 
-    public override string ToString()
-        => $"LinkedIdentity: provider={Provider}, subject={Subject}, user={UserId}, active={IsActive}";
+    public override string ToString() => $"LinkedIdentity: provider={Provider}, subject={Subject}, user={UserId}, active={IsActive}";
 }

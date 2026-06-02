@@ -129,6 +129,5 @@ public sealed class FileMetadataEntity
             OwnerId = result.OwnerId
         };
 
-    public override string ToString()
-        => $"FileMetadataEntity: {Id}, {OriginalFileName}, size={OriginalFileSize}, encrypted={IsEncrypted}, compressed={IsCompressed}";
+    public override string ToString() => $"FileMetadataEntity: {Id}, {OriginalFileName}, size={OriginalFileSize}, encrypted={IsEncrypted}, compressed={IsCompressed}";
 }

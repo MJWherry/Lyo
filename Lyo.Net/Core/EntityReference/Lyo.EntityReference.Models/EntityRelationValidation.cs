@@ -11,6 +11,5 @@ public static class EntityRelationValidation
     }
 
     /// <summary>Requires both relation endpoints from an <see cref="EntityRelationEndpoints" /> value.</summary>
-    public static void RequireSubjectActor(EntityRelationEndpoints endpoints)
-        => RequireSubjectActor(endpoints.Subject, endpoints.Actor);
+    public static void RequireSubjectActor(EntityRelationEndpoints endpoints) => RequireSubjectActor(endpoints.Subject, endpoints.Actor);
 }

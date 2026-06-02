@@ -31,9 +31,9 @@ public sealed class ChangeTrackerPostgresFixture : PostgresContainerFixtureBase
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
         var trackerFactory = ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        ChangeTracker = new PostgresChangeTracker(trackerFactory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresChangeTrackerOptions {
-            Tenancy = new() { Mode = TenancyMode.MultiTenantOptional }
-        }));
+        ChangeTracker = new PostgresChangeTracker(
+            trackerFactory, Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantOptional } }));
     }
 
     protected override ValueTask OnContainerDisposingAsync(CancellationToken cancellationToken)

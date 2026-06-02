@@ -78,7 +78,8 @@ Derives from **`EntityRelationRow`** (subject/actor + `TenantId` / `Context` / `
 
 ### `CommentReactionRecord`
 
-Standalone row (not **`EntityRelationRow`**) with subject/actor columns (`SubjectEntityType` / `SubjectEntityId` → parent comment; `ActorEntityType` / `ActorEntityId` → reactor; DB `for_entity_*` / `from_entity_*`), plus `ReactionType` and `CreatedTimestamp`.
+Standalone row (not **`EntityRelationRow`**) with subject/actor columns (`SubjectEntityType` / `SubjectEntityId` → parent comment; `ActorEntityType` / `ActorEntityId` → reactor; DB
+`for_entity_*` / `from_entity_*`), plus `ReactionType` and `CreatedTimestamp`.
 
 ## Related projects
 

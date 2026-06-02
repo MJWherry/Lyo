@@ -27,6 +27,5 @@ public sealed class DiscordUserReq
 
     public DateTime UserCreatedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordUserReq: id={Id}, username={Username}, bot={IsBot}";
+    public override string ToString() => $"DiscordUserReq: id={Id}, username={Username}, bot={IsBot}";
 }

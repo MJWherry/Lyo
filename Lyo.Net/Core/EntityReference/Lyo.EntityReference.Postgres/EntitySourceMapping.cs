@@ -11,9 +11,7 @@ public static class EntitySourceMapping
         if (string.IsNullOrEmpty(entity.SourceEntityType) || string.IsNullOrEmpty(entity.SourceEntityId) || entity.ImportedAt is null)
             return null;
 
-        return EntitySourceRecord.From(
-            EntityRef.ForKey(entity.SourceEntityType, entity.SourceEntityId),
-            entity.ImportedAt.Value);
+        return EntitySourceRecord.From(EntityRef.ForKey(entity.SourceEntityType, entity.SourceEntityId), entity.ImportedAt.Value);
     }
 
     public static void ApplySource(EntitySourceEntityBase entity, EntitySourceRecord? record)

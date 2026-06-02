@@ -78,6 +78,7 @@ public static class FileHelpers
     {
         if (string.IsNullOrWhiteSpace(value))
             return "";
+
         return value.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
     }
 

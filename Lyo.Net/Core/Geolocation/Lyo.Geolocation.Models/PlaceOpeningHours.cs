@@ -11,6 +11,5 @@ public class PlaceOpeningHours
 
     public IEnumerable<PlaceHoursPeriod>? Periods { get; set; }
 
-    public override string ToString()
-        => $"PlaceOpeningHours: open={IsOpen}, periods={Periods?.Count() ?? 0}";
+    public override string ToString() => $"PlaceOpeningHours: open={IsOpen}, periods={Periods?.Count() ?? 0}";
 }

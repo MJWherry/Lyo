@@ -161,7 +161,9 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
             return;
 
         var existing = await context.RatingReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId,
+                ct)
             .ConfigureAwait(false);
 
         var reactionTypeInt = (int)reactionType;
@@ -213,7 +215,9 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         var ratingId = EntityRefPersistedGuid.RequirePersistedGuid(ratingRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var existing = await context.RatingReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId,
+                ct)
             .ConfigureAwait(false);
 
         if (existing == null)
@@ -241,7 +245,9 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         var ratingId = EntityRefPersistedGuid.RequirePersistedGuid(ratingRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var entity = await context.RatingReactions.FirstOrDefaultAsync(
-                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
+                r => r.SubjectEntityType == ratingRef.EntityType && r.SubjectEntityId == ratingId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
+                    r.ActorEntityId == fromId,
+                ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : ToReactionRecord(entity);

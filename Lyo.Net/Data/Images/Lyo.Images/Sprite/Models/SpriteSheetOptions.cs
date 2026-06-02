@@ -45,6 +45,5 @@ public sealed class SpriteSheetOptions
     /// <summary>Zero-based frame indices to skip when iterating the grid.</summary>
     public IReadOnlyCollection<int>? ExcludedFrames { get; init; }
 
-    public override string ToString()
-        => $"SpriteSheetOptions: {SourceWidth}x{SourceHeight}, rows={RowCount}, framesPerRow={FramesPerRow}, fps={FramesPerSecond}";
+    public override string ToString() => $"SpriteSheetOptions: {SourceWidth}x{SourceHeight}, rows={RowCount}, framesPerRow={FramesPerRow}, fps={FramesPerSecond}";
 }

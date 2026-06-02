@@ -29,9 +29,8 @@ public sealed class AuditPostgresFixture : PostgresContainerFixtureBase
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
         var recorderFactory = ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        Recorder = new PostgresAuditRecorder(recorderFactory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresAuditOptions {
-            Tenancy = new() { Mode = TenancyMode.MultiTenantOptional }
-        }));
+        Recorder = new PostgresAuditRecorder(
+            recorderFactory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantOptional } }));
     }
 
     protected override ValueTask OnContainerDisposingAsync(CancellationToken cancellationToken)

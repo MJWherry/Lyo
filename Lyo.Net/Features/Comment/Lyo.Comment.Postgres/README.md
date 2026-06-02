@@ -104,7 +104,8 @@ await commentStore.RemoveReactionAsync(commentRef, userRef);
 
 Schema name: `comment` (`PostgresCommentOptions.Schema`).
 
-- **comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`,
+- **comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable
+  varchar 128/256), `tenant_id`, `context`, `visibility`,
   `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
   `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`,
   `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`,

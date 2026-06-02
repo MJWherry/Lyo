@@ -25,6 +25,5 @@ public class RouteStep
 
     public IEnumerable<GeoCoordinate>? PathPoints { get; set; }
 
-    public override string ToString()
-        => $"RouteStep #{StepNumber}: {StartLocation} -> {EndLocation}, {DistanceMeters:0.#}m, {Maneuver}";
+    public override string ToString() => $"RouteStep #{StepNumber}: {StartLocation} -> {EndLocation}, {DistanceMeters:0.#}m, {Maneuver}";
 }

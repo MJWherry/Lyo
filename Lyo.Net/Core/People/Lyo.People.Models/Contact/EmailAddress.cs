@@ -23,13 +23,13 @@ public class EmailAddress : IEquatable<EmailAddress>, IEntitySourceDerived
     public string? Label { get; set; }
 
     /// <inheritdoc />
-    public bool Equals(EmailAddress? other) => other != null && string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
-
-    /// <inheritdoc />
     public EntitySourceRecord? Source { get; set; }
 
     /// <inheritdoc />
     public DateTime? LocallyModifiedAt { get; set; }
+
+    /// <inheritdoc />
+    public bool Equals(EmailAddress? other) => other != null && string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is EmailAddress other && Equals(other);

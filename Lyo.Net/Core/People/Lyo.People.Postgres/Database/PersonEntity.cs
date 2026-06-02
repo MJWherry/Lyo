@@ -96,5 +96,4 @@ public class PersonEntity : EntitySourceDerivedEntityBase
     public virtual ICollection<ContactPhoneNumberEntity> ContactPhoneNumbers { get; set; } = new List<ContactPhoneNumberEntity>();
 
     public virtual ICollection<ContactAddressEntity> ContactAddresses { get; set; } = new List<ContactAddressEntity>();
-
 }

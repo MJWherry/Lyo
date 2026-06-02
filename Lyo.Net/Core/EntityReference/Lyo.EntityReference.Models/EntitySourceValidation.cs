@@ -11,6 +11,5 @@ public static class EntitySourceValidation
     }
 
     /// <summary>Requires a non-empty external source on a provenance record.</summary>
-    public static void RequireSource(EntitySourceRecord record)
-        => RequireSource(record.Source);
+    public static void RequireSource(EntitySourceRecord record) => RequireSource(record.Source);
 }

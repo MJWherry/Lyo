@@ -16,6 +16,5 @@ public sealed record DiscordGuildRes(
     DateTime GuildCreatedDate,
     DateTime JoinedDate)
 {
-    public override string ToString()
-        => $"DiscordGuildRes: id={Id}, name={Name}, members={MemberCount}";
+    public override string ToString() => $"DiscordGuildRes: id={Id}, name={Name}, members={MemberCount}";
 }

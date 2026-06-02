@@ -5,7 +5,7 @@ using Lyo.Compression.Models;
 namespace Lyo.Compression.JsonConverters;
 
 /// <summary>JSON converter for <see cref="CompressionAlgorithm" /> that serializes/deserializes using the stable algorithm <see cref="CompressionAlgorithm.Name" />.</summary>
-public sealed class CompressionAlgorithmJsonConverter : JsonConverter<CompressionAlgorithm>
+public sealed class CompressionAlgorithmJsonConverter : JsonConverter<CompressionAlgorithm?>
 {
     private const string NameProperty = "Name";
 
@@ -23,7 +23,7 @@ public sealed class CompressionAlgorithmJsonConverter : JsonConverter<Compressio
         throw new JsonException($"Unexpected token {reader.TokenType} when parsing CompressionAlgorithm.");
     }
 
-    public override void Write(Utf8JsonWriter writer, CompressionAlgorithm value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, CompressionAlgorithm? value, JsonSerializerOptions options)
     {
         if (value == null) {
             writer.WriteNullValue();

@@ -62,6 +62,5 @@ public class Employment
     public double? DurationMonths => Duration?.TotalDays / 30.44;
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"Employment: id={Id}, company={CompanyName}, title={JobTitle ?? "?"}, current={IsCurrent}";
+    public override string ToString() => $"Employment: id={Id}, company={CompanyName}, title={JobTitle ?? "?"}, current={IsCurrent}";
 }

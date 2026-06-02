@@ -2,7 +2,8 @@
 
 Abstractions for "X favorited Y" relationships across any two entities. The API
 accepts `EntityRef` at the boundary (so any feature can produce a favorite);
-the default Postgres store persists subject/actor as **nullable varchar** (`for_entity_*` / `from_entity_*` columns), using **`EntityRefPersistedGuid.PersistedEntityId()`** when callers pass Guid strings in `EntityRef.EntityId`.
+the default Postgres store persists subject/actor as **nullable varchar** (`for_entity_*` / `from_entity_*` columns), using **`EntityRefPersistedGuid.PersistedEntityId()`** when
+callers pass Guid strings in `EntityRef.EntityId`.
 
 ## Surface
 
@@ -51,7 +52,8 @@ scoping to a workspace / personal / module-specific bucket.
 
 ### `FavoriteRecord`
 
-Derives from **`EntityRelationRow`** (subject/actor endpoints: `SubjectEntityType` / `SubjectEntityId`, `ActorEntityType` / `ActorEntityId`; DB columns `for_entity_*` / `from_entity_*`), plus `TenantId`, `Context`, `Visibility`, and lifecycle fields. **`SubjectRef`** / **`ActorRef`** project `EntityRef` at the boundary.
+Derives from **`EntityRelationRow`** (subject/actor endpoints: `SubjectEntityType` / `SubjectEntityId`, `ActorEntityType` / `ActorEntityId`; DB columns `for_entity_*` /
+`from_entity_*`), plus `TenantId`, `Context`, `Visibility`, and lifecycle fields. **`SubjectRef`** / **`ActorRef`** project `EntityRef` at the boundary.
 
 ## Related projects
 

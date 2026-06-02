@@ -47,6 +47,5 @@ public sealed class DiscordGuildSettings
         Version = CurrentSchemaVersion;
     }
 
-    public override string ToString()
-        => $"DiscordGuildSettings: v{Version}, commandChannel={CommandChannelId}, logChannel={LogChannelId}";
+    public override string ToString() => $"DiscordGuildSettings: v{Version}, commandChannel={CommandChannelId}, logChannel={LogChannelId}";
 }

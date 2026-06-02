@@ -20,6 +20,5 @@ public sealed record PersonRes(
 
     public string FullName => $"{FirstName}{(string.IsNullOrEmpty(MiddleName) ? " " : $" {MiddleName} ")}{LastName}";
 
-    public override string ToString()
-        => $"PersonRes: id={Id}, name={FullName}, source={Source}, addresses={Addresses?.Count ?? 0}";
+    public override string ToString() => $"PersonRes: id={Id}, name={FullName}, source={Source}, addresses={Addresses?.Count ?? 0}";
 }

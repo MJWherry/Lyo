@@ -136,6 +136,5 @@ public sealed class ScheduleDefinitionBuilder
     public ScheduleDefinition Build()
         => new(_type, _dayFlags, _monthFlags, _times, _startTime, _endTime, _intervalMinutes, _executeAt, _timeZone, _enabled, _description, _cronExpression);
 
-    public override string ToString()
-        => $"ScheduleDefinitionBuilder: type={_type}, enabled={_enabled}, cron={_cronExpression ?? "(none)"}";
+    public override string ToString() => $"ScheduleDefinitionBuilder: type={_type}, enabled={_enabled}, cron={_cronExpression ?? "(none)"}";
 }

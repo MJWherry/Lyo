@@ -16,6 +16,5 @@ public sealed record DiscordRoleRes(
     int Position,
     DateTime RoleCreatedDate)
 {
-    public override string ToString()
-        => $"DiscordRoleRes: {Name}, guild={GuildId}, position={Position}";
+    public override string ToString() => $"DiscordRoleRes: {Name}, guild={GuildId}, position={Position}";
 }

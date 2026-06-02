@@ -11,6 +11,5 @@ public sealed class PersonEmailAddressReq
 
     public DateOnly UpdatedDate { get; set; }
 
-    public override string ToString()
-        => $"PersonEmailAddressReq: address={Address}";
+    public override string ToString() => $"PersonEmailAddressReq: address={Address}";
 }

@@ -103,12 +103,12 @@ the same payload.
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
-| `SixLabors.ImageSharp`                                  | `3.*`   |
+| Package                                                 | Version   |
+|---------------------------------------------------------|-----------|
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`   |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
+| `SixLabors.ImageSharp`                                  | `3.*`     |
 | `ZXing.Net`                                             | `0.16.11` |
 | `ZXing.Net.Bindings.ImageSharp.V3`                      | `0.16.15` |
 

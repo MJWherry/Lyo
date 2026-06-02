@@ -16,6 +16,5 @@ public class PrivacyPreferences
     public bool ShowInPublicDirectory { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"PrivacyPreferences: thirdParty={ShareDataWithThirdParties}, analytics={AllowDataAnalytics}, directory={ShowInPublicDirectory}";
+    public override string ToString() => $"PrivacyPreferences: thirdParty={ShareDataWithThirdParties}, analytics={AllowDataAnalytics}, directory={ShowInPublicDirectory}";
 }

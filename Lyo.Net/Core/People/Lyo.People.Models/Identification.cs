@@ -45,6 +45,5 @@ public class Identification
     public int? DaysUntilExpiration => ExpiryDate.HasValue ? (int)(ExpiryDate.Value - DateTime.UtcNow).TotalDays : null;
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"Identification: id={Id}, type={Type}, number={Number}, verified={IsVerified}";
+    public override string ToString() => $"Identification: id={Id}, type={Type}, number={Number}, verified={IsVerified}";
 }

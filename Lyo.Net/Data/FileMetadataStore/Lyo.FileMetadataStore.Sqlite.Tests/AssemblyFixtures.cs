@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.FileMetadataStore.Sqlite.Tests.FileMetadataSqliteFixture))]
+using Lyo.FileMetadataStore.Sqlite.Tests;
+
+[assembly: AssemblyFixture(typeof(FileMetadataSqliteFixture))]

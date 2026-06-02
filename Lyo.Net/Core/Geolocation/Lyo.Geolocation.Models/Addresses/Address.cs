@@ -124,6 +124,12 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
     /// <summary>Date when address was last validated</summary>
     public DateTime? LastValidated { get; set; }
 
+    /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
+
     public bool Equals(Address? other)
     {
         if (other == null)
@@ -131,12 +137,6 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
 
         return GetCanonicalForm() == other.GetCanonicalForm();
     }
-
-    /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
-    public EntitySourceRecord? Source { get; set; }
-
-    /// <inheritdoc />
-    public DateTime? LocallyModifiedAt { get; set; }
 
     /// <summary>Gets formatted street address</summary>
     public string GetFormattedStreet()

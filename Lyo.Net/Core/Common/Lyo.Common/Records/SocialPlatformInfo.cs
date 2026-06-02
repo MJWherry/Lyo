@@ -8,27 +8,17 @@ namespace Lyo.Common.Records;
 
 /// <summary>Represents metadata about a social media platform, using <see cref="Slug" /> as the canonical identifier.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record SocialPlatformInfo(
-    string Name,
-    string Slug,
-    string Description,
-    string? WebsiteUri,
-    string? ProfileUriTemplate,
-    bool IsFederated,
-    string[] Aliases)
+public sealed record SocialPlatformInfo(string Name, string Slug, string Description, string? WebsiteUri, string? ProfileUriTemplate, bool IsFederated, string[] Aliases)
 {
-    public static readonly SocialPlatformInfo Unknown = new(
-        "Unknown", "unknown", "Unknown or unspecified social platform", null, null, false, ["unknown", "unspecified"]);
+    public static readonly SocialPlatformInfo Unknown = new("Unknown", "unknown", "Unknown or unspecified social platform", null, null, false, ["unknown", "unspecified"]);
 
-    public static readonly SocialPlatformInfo Other = new(
-        "Other", "other", "Other social platform not listed in the registry", null, null, false, []);
+    public static readonly SocialPlatformInfo Other = new("Other", "other", "Other social platform not listed in the registry", null, null, false, []);
 
     public static readonly SocialPlatformInfo LinkedIn = new(
         "LinkedIn", "linkedin", "Professional networking platform", "https://www.linkedin.com", "https://www.linkedin.com/in/{username}", false, []);
 
     public static readonly SocialPlatformInfo X = new(
-        "X", "x", "Microblogging and social networking platform (formerly Twitter)", "https://x.com", "https://x.com/{username}", false,
-        ["twitter"]);
+        "X", "x", "Microblogging and social networking platform (formerly Twitter)", "https://x.com", "https://x.com/{username}", false, ["twitter"]);
 
     public static readonly SocialPlatformInfo Facebook = new(
         "Facebook", "facebook", "Social networking platform", "https://www.facebook.com", "https://www.facebook.com/{username}", false, ["fb"]);
@@ -60,8 +50,7 @@ public sealed record SocialPlatformInfo(
     public static readonly SocialPlatformInfo Reddit = new(
         "Reddit", "reddit", "Community discussion and content aggregation platform", "https://www.reddit.com", "https://www.reddit.com/user/{username}", false, []);
 
-    public static readonly SocialPlatformInfo Discord = new(
-        "Discord", "discord", "Voice, video, and text communication platform", "https://discord.com", null, false, []);
+    public static readonly SocialPlatformInfo Discord = new("Discord", "discord", "Voice, video, and text communication platform", "https://discord.com", null, false, []);
 
     public static readonly SocialPlatformInfo GitHub = new(
         "GitHub", "github", "Software development and version control platform", "https://github.com", "https://github.com/{username}", false, []);
@@ -79,8 +68,7 @@ public sealed record SocialPlatformInfo(
     public static readonly SocialPlatformInfo Substack = new(
         "Substack", "substack", "Newsletter publishing platform", "https://substack.com", "https://{username}.substack.com", false, []);
 
-    public static readonly SocialPlatformInfo Twitch = new(
-        "Twitch", "twitch", "Live streaming platform", "https://www.twitch.tv", "https://www.twitch.tv/{username}", false, []);
+    public static readonly SocialPlatformInfo Twitch = new("Twitch", "twitch", "Live streaming platform", "https://www.twitch.tv", "https://www.twitch.tv/{username}", false, []);
 
     public static readonly SocialPlatformInfo Behance = new(
         "Behance", "behance", "Creative portfolio platform by Adobe", "https://www.behance.net", "https://www.behance.net/{username}", false, []);
@@ -88,8 +76,7 @@ public sealed record SocialPlatformInfo(
     public static readonly SocialPlatformInfo Dribbble = new(
         "Dribbble", "dribbble", "Design portfolio and community platform", "https://dribbble.com", "https://dribbble.com/{username}", false, []);
 
-    public static readonly SocialPlatformInfo Vimeo = new(
-        "Vimeo", "vimeo", "Video hosting and sharing platform", "https://vimeo.com", "https://vimeo.com/{username}", false, []);
+    public static readonly SocialPlatformInfo Vimeo = new("Vimeo", "vimeo", "Video hosting and sharing platform", "https://vimeo.com", "https://vimeo.com/{username}", false, []);
 
     private static readonly Dictionary<string, SocialPlatformInfo> BySlug = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, SocialPlatformInfo> ByName = new(StringComparer.OrdinalIgnoreCase);
@@ -115,7 +102,6 @@ public sealed record SocialPlatformInfo(
             ByName[Normalize(platform.Name)] = platform;
             ByAlias[Normalize(platform.Slug)] = platform;
             ByAlias[Normalize(platform.Name)] = platform;
-
             foreach (var alias in platform.Aliases.Where(a => !a.IsNullOrWhitespace()))
                 ByAlias[Normalize(alias)] = platform;
         }
@@ -177,9 +163,7 @@ public sealed record SocialPlatformInfo(
         if (localUser.IsNullOrWhitespace() || instance.IsNullOrWhitespace())
             return null;
 
-        return ProfileUriTemplate!
-            .Replace("{username}", localUser)
-            .Replace("{instance}", instance);
+        return ProfileUriTemplate!.Replace("{username}", localUser).Replace("{instance}", instance);
     }
 
     private static string NormalizeHandle(string username)

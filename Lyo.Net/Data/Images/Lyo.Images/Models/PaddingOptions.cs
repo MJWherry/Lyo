@@ -27,6 +27,5 @@ public sealed class PaddingOptions
     /// <summary>Card corner radius in pixels. Default: 0 (square card).</summary>
     public int CornerRadiusPx { get; set; }
 
-    public override string ToString()
-        => $"PaddingOptions: padding={PaddingPx}px, margin={MarginPx}px, radius={CornerRadiusPx}px";
+    public override string ToString() => $"PaddingOptions: padding={PaddingPx}px, margin={MarginPx}px, radius={CornerRadiusPx}px";
 }

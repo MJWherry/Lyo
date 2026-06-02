@@ -33,6 +33,5 @@ public sealed record ImageOperationResult : Result<bool>
         return new(false, false, [error]) { OperationType = operationType };
     }
 
-    public override string ToString()
-        => IsSuccess ? $"ImageOperationResult: {OperationType ?? "operation"} ok" : $"ImageOperationResult: {OperationType ?? "operation"} failed";
+    public override string ToString() => IsSuccess ? $"ImageOperationResult: {OperationType ?? "operation"} ok" : $"ImageOperationResult: {OperationType ?? "operation"} failed";
 }

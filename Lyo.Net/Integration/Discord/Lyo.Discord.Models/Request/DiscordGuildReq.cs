@@ -27,6 +27,5 @@ public sealed class DiscordGuildReq
 
     public DateTime JoinedDate { get; set; }
 
-    public override string ToString()
-        => $"DiscordGuildReq: id={Id}, name={Name}, members={MemberCount}";
+    public override string ToString() => $"DiscordGuildReq: id={Id}, name={Name}, members={MemberCount}";
 }

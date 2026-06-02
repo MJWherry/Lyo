@@ -30,6 +30,5 @@ public sealed record ImageExifInfo(
     ushort? IsoSpeed = null,
     ushort? Orientation = null)
 {
-    public override string ToString()
-        => $"ImageExifInfo: {CameraMake} {CameraModel}, taken={DateTimeTaken?.ToString("O") ?? "n/a"}, gps={Latitude},{Longitude}";
+    public override string ToString() => $"ImageExifInfo: {CameraMake} {CameraModel}, taken={DateTimeTaken?.ToString("O") ?? "n/a"}, gps={Latitude},{Longitude}";
 }

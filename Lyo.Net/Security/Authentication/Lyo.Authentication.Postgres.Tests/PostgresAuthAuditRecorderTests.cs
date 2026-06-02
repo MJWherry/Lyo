@@ -97,7 +97,9 @@ public sealed class PostgresAuthAuditRecorderTests
     {
         var recorder = NewRecorder();
         var ctxAccessor = new FakeAccessor("203.0.113.7", "ua/postgres-test", "trace-" + Guid.NewGuid().ToString("N"));
-        await recorder.RecordAsync(ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(
+            ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestContext.Current.CancellationToken);
+
         await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var row = await ctx.Events.AsNoTracking().Where(e => e.CorrelationId == ctxAccessor.CorrelationId).FirstOrDefaultAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(row);

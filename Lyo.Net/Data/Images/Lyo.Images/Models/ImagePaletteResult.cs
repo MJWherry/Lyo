@@ -30,6 +30,5 @@ public sealed record ImagePaletteResult : Result<ImagePalette>
         return new(false, null, [error]);
     }
 
-    public override string ToString()
-        => IsSuccess ? $"ImagePaletteResult: success, colors={Data?.Colors.Count ?? 0}" : $"ImagePaletteResult: failed, errors={Errors?.Count ?? 0}";
+    public override string ToString() => IsSuccess ? $"ImagePaletteResult: success, colors={Data?.Colors.Count ?? 0}" : $"ImagePaletteResult: failed, errors={Errors?.Count ?? 0}";
 }

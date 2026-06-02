@@ -54,7 +54,6 @@ internal static class AddressEntityMapper
 
         address.Source = EntitySourceMapping.ToRecord(entity);
         address.LocallyModifiedAt = entity.LocallyModifiedAt;
-
         return address;
     }
 

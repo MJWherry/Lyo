@@ -11,6 +11,5 @@ public class ValidationWarning
 
     public string? Suggestion { get; set; }
 
-    public override string ToString()
-        => $"ValidationWarning: {Field}: {Message}";
+    public override string ToString() => $"ValidationWarning: {Field}: {Message}";
 }

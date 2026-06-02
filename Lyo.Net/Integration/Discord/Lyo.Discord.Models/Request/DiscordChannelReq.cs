@@ -29,6 +29,5 @@ public sealed class DiscordChannelReq
 
     public DateTime ChannelCreated { get; set; }
 
-    public override string ToString()
-        => $"DiscordChannelReq: id={Id}, name={Name}, guild={GuildId}, type={ChannelType}";
+    public override string ToString() => $"DiscordChannelReq: id={Id}, name={Name}, guild={GuildId}, type={ChannelType}";
 }

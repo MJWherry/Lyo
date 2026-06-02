@@ -22,8 +22,7 @@ public class ImageProcessRequest
     /// <summary>Lossy quality 1–100 when <see cref="TargetFormat" /> is JPEG or similar; null uses service defaults.</summary>
     public int? Quality { get; set; }
 
-    public override string ToString()
-        => $"ImageProcessRequest: operation={Operation}, format={TargetFormat}, quality={Quality}";
+    public override string ToString() => $"ImageProcessRequest: operation={Operation}, format={TargetFormat}, quality={Quality}";
 }
 
 /// <summary>Base class for image operations.</summary>
@@ -46,8 +45,7 @@ public class ResizeOperation : ImageOperation
     /// <summary>How width/height constrain the result.</summary>
     public ResizeMode Mode { get; set; } = ResizeMode.Max;
 
-    public override string ToString()
-        => $"ResizeOperation: {Width}x{Height}, mode={Mode}";
+    public override string ToString() => $"ResizeOperation: {Width}x{Height}, mode={Mode}";
 }
 
 /// <summary>Crop operation.</summary>
@@ -66,8 +64,7 @@ public class CropOperation : ImageOperation
     /// <summary>Crop height in pixels.</summary>
     public int Height { get; set; }
 
-    public override string ToString()
-        => $"CropOperation: ({X},{Y}) {Width}x{Height}";
+    public override string ToString() => $"CropOperation: ({X},{Y}) {Width}x{Height}";
 }
 
 /// <summary>Rotate operation.</summary>
@@ -77,8 +74,7 @@ public class RotateOperation : ImageOperation
     /// <summary>Clockwise rotation angle in degrees.</summary>
     public float Degrees { get; set; }
 
-    public override string ToString()
-        => $"RotateOperation: {Degrees}°";
+    public override string ToString() => $"RotateOperation: {Degrees}°";
 }
 
 /// <summary>Watermark operation.</summary>
@@ -91,8 +87,7 @@ public class WatermarkOperation : ImageOperation
     /// <summary>Font, color, position, and opacity; null uses implementation defaults.</summary>
     public WatermarkOptions? Options { get; set; }
 
-    public override string ToString()
-        => $"WatermarkOperation: text={WatermarkText}, position={Options?.Position}";
+    public override string ToString() => $"WatermarkOperation: text={WatermarkText}, position={Options?.Position}";
 }
 
 /// <summary>Compress operation.</summary>
@@ -102,8 +97,7 @@ public class CompressOperation : ImageOperation
     /// <summary>Target quality for lossy re-encode (1–100).</summary>
     public int Quality { get; set; }
 
-    public override string ToString()
-        => $"CompressOperation: quality={Quality}";
+    public override string ToString() => $"CompressOperation: quality={Quality}";
 }
 
 /// <summary>Convert format operation.</summary>
@@ -113,6 +107,5 @@ public class ConvertFormatOperation : ImageOperation
     /// <summary>Destination container/codec.</summary>
     public ImageFormat TargetFormat { get; set; }
 
-    public override string ToString()
-        => $"ConvertFormatOperation: format={TargetFormat}";
+    public override string ToString() => $"ConvertFormatOperation: format={TargetFormat}";
 }

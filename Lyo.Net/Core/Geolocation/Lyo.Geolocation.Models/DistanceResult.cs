@@ -19,6 +19,5 @@ public class DistanceResult
 
     public DistanceCalculationMethod Method { get; set; }
 
-    public override string ToString()
-        => $"DistanceResult: {From} -> {To}, {DistanceMeters:0.#}m ({Method})";
+    public override string ToString() => $"DistanceResult: {From} -> {To}, {DistanceMeters:0.#}m ({Method})";
 }

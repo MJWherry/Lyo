@@ -15,8 +15,7 @@ public sealed class AddTagReq
     /// <summary>Optional URL-friendly slug for this tag assignment; stored empty when omitted.</summary>
     public string? Slug { get; set; }
 
-    public override string ToString()
-        => $"AddTagReq: name={Name}, type={TagType}";
+    public override string ToString() => $"AddTagReq: name={Name}, type={TagType}";
 }
 
 /// <summary>Request to add or update a rating on a comic entity.</summary>
@@ -39,8 +38,7 @@ public sealed class AddRatingReq
     /// <summary>Optional written review message.</summary>
     public string? Message { get; set; }
 
-    public override string ToString()
-        => $"AddRatingReq: actor={ActorEntityType}:{ActorEntityId}, value={Value}, subject={Subject}";
+    public override string ToString() => $"AddRatingReq: actor={ActorEntityType}:{ActorEntityId}, value={Value}, subject={Subject}";
 }
 
 /// <summary>Request to add a comment to a comic entity.</summary>
@@ -56,8 +54,7 @@ public sealed class AddCommentReq
     /// <summary>The comment this is a reply to, or null if top-level.</summary>
     public Guid? ReplyToCommentId { get; set; }
 
-    public override string ToString()
-        => $"AddCommentReq: actor={ActorEntityType}:{ActorEntityId}, replyTo={ReplyToCommentId}";
+    public override string ToString() => $"AddCommentReq: actor={ActorEntityType}:{ActorEntityId}, replyTo={ReplyToCommentId}";
 }
 
 /// <summary>Request to favorite a comic entity.</summary>
@@ -68,8 +65,7 @@ public sealed class AddFavoriteReq
 
     public string ActorEntityId { get; set; } = string.Empty;
 
-    public override string ToString()
-        => $"AddFavoriteReq: actor={ActorEntityType}:{ActorEntityId}";
+    public override string ToString() => $"AddFavoriteReq: actor={ActorEntityType}:{ActorEntityId}";
 }
 
 /// <summary>Request to remove a favorite from a comic entity.</summary>
@@ -80,6 +76,5 @@ public sealed class RemoveFavoriteReq
 
     public string ActorEntityId { get; set; } = string.Empty;
 
-    public override string ToString()
-        => $"RemoveFavoriteReq: actor={ActorEntityType}:{ActorEntityId}";
+    public override string ToString() => $"RemoveFavoriteReq: actor={ActorEntityType}:{ActorEntityId}";
 }

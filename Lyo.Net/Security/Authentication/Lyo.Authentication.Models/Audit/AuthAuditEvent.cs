@@ -36,6 +36,5 @@ public sealed record AuthAuditEvent(
     IReadOnlyDictionary<string, object?>? Metadata = null,
     Guid? TenantId = null)
 {
-    public override string ToString()
-        => $"AuthAuditEvent: kind={Kind}, user={UserId}, outcome={Outcome ?? "?"}";
+    public override string ToString() => $"AuthAuditEvent: kind={Kind}, user={UserId}, outcome={Outcome ?? "?"}";
 }

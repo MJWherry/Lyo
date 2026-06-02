@@ -21,6 +21,5 @@ public sealed class ComicVolumeReq
     /// <summary>Gets or sets the original publication date of this volume.</summary>
     public DateTime? PublishedDate { get; set; }
 
-    public override string ToString()
-        => $"ComicVolumeReq: series={SeriesId}, volume={VolumeNumber}, title={Title}";
+    public override string ToString() => $"ComicVolumeReq: series={SeriesId}, volume={VolumeNumber}, title={Title}";
 }

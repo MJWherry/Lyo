@@ -17,6 +17,5 @@ public sealed record DiscordChannelRes(
     long? ParentId,
     DateTime ChannelCreated)
 {
-    public override string ToString()
-        => $"DiscordChannelRes: #{Name}, guild={GuildId}, type={ChannelType}";
+    public override string ToString() => $"DiscordChannelRes: #{Name}, guild={GuildId}, type={ChannelType}";
 }

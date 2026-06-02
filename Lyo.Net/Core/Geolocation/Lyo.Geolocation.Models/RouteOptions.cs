@@ -27,6 +27,5 @@ public class RouteOptions
 
     public DistanceUnit Unit { get; set; }
 
-    public override string ToString()
-        => $"RouteOptions: mode={Mode}, unit={Unit}, avoidTolls={AvoidTolls}, avoidHighways={AvoidHighways}";
+    public override string ToString() => $"RouteOptions: mode={Mode}, unit={Unit}, avoidTolls={AvoidTolls}, avoidHighways={AvoidHighways}";
 }

@@ -21,6 +21,5 @@ public sealed class ComicPageReq
     /// <summary>Gets or sets the pixel height of the page image, if known.</summary>
     public int? Height { get; set; }
 
-    public override string ToString()
-        => $"ComicPageReq: chapter={ChapterId}, page={PageNumber}, size={Width}x{Height}";
+    public override string ToString() => $"ComicPageReq: chapter={ChapterId}, page={PageNumber}, size={Width}x{Height}";
 }

@@ -1,7 +1,9 @@
+using Lyo.Sqlite;
+
 namespace Lyo.FileMetadataStore.Sqlite;
 
 /// <summary>Configuration options for SQLite file metadata store service.</summary>
-public sealed class SqliteFileMetadataStoreOptions : Lyo.Sqlite.ISqliteMigrationConfig
+public sealed class SqliteFileMetadataStoreOptions : ISqliteMigrationConfig
 {
     public const string SectionName = "SqliteFileMetadataStore";
 

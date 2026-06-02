@@ -17,10 +17,7 @@ public static class EntitySourceLinkConfigurationExtensions
         builder.Property(e => e.SourceEntityType).HasMaxLength(SourceEntityTypeMaxLength).HasColumnName("source_entity_type");
         builder.Property(e => e.SourceEntityId).HasMaxLength(SourceEntityIdMaxLength).HasColumnName("source_entity_id");
         builder.Property(e => e.ImportedAt).HasColumnType("timestamp with time zone").HasColumnName("imported_at");
-
-        builder.HasIndex(e => new { e.SourceEntityType, e.SourceEntityId })
-            .HasDatabaseName($"ix_{indexPrefix}_source_lookup");
-
+        builder.HasIndex(e => new { e.SourceEntityType, e.SourceEntityId }).HasDatabaseName($"ix_{indexPrefix}_source_lookup");
         builder.HasIndex(e => new { e.SourceEntityType, e.SourceEntityId })
             .IsUnique()
             .HasDatabaseName($"uq_{indexPrefix}_source")

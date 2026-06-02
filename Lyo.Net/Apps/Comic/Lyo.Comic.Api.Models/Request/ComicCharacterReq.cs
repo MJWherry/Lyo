@@ -21,6 +21,5 @@ public sealed class ComicCharacterReq
     /// <summary>Gets or sets the character's role (e.g. "Protagonist", "Antagonist", "Supporting", "Minor").</summary>
     public string? Role { get; set; }
 
-    public override string ToString()
-        => $"ComicCharacterReq: series={SeriesId}, name={Name}, role={Role}";
+    public override string ToString() => $"ComicCharacterReq: series={SeriesId}, name={Name}, role={Role}";
 }
