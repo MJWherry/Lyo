@@ -121,7 +121,7 @@ public static class AuthEndpointsMapper
 
         ctx.Response.Cookies.Delete(StateCookieName, new() { Path = paths.StateCookiePath, Secure = ctx.Request.IsHttps });
         try {
-            var result = await coordinator.HandleCallbackAsync(provider, code!, sealedState!, state ?? string.Empty, ctx.RequestAborted).ConfigureAwait(false);
+            var result = await coordinator.HandleCallbackAsync(provider, code, sealedState!, state ?? string.Empty, ctx.RequestAborted).ConfigureAwait(false);
             var issued = result.Issued;
             if (string.Equals(result.Mode, "api", StringComparison.OrdinalIgnoreCase))
                 return Results.Json(BuildTokenResponse(issued));
@@ -291,13 +291,13 @@ public static class AuthEndpointsMapper
         ArgumentHelpers.ThrowIfNull(allowed);
         ArgumentHelpers.ThrowIfNull(defaultUrl);
         if (string.IsNullOrWhiteSpace(raw)) {
-            if (!string.IsNullOrWhiteSpace(referer) && IsOriginAllowed(referer!, allowed))
-                return referer!;
+            if (!string.IsNullOrWhiteSpace(referer) && IsOriginAllowed(referer, allowed))
+                return referer;
 
             return defaultUrl;
         }
 
-        if (raw!.StartsWith("/", StringComparison.Ordinal) && !raw.StartsWith("//", StringComparison.Ordinal))
+        if (raw.StartsWith("/", StringComparison.Ordinal) && !raw.StartsWith("//", StringComparison.Ordinal))
             return raw;
 
         if (Uri.TryCreate(raw, UriKind.Absolute, out var uri) && IsOriginAllowed(uri, allowed))

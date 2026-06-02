@@ -59,7 +59,7 @@ For multi-tenant systems, prepend tenant key to logical file ids **outside** int
 Concrete implementations:
 
 - [`FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) (**production OLTP schema** — includes optional audit/multipart adjunct stores).
-- [`FileMetadataStore.Sqlite`](../Lyo.FileMetadataStore.Sqlite/README.md) (**placeholder**, no SQLite code yet).
+- [`FileMetadataStore.Sqlite`](../Lyo.FileMetadataStore.Sqlite/README.md) (**embedded / local-dev SQLite** — same adjunct services as Postgres).
 
 ## See also
 

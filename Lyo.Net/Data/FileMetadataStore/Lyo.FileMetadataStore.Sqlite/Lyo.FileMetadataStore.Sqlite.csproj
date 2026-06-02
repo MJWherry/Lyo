@@ -2,8 +2,29 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <Description>SQLite implementation of the Lyo FileMetadataStore service (placeholder package).</Description>
-        <PackageTags>file-store sqlite</PackageTags>
+        <Description>SQLite implementation of the Lyo FileMetadataStore service using Entity Framework Core.</Description>
+        <PackageTags>file-store sqlite entity-framework ef-core</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
+        <ProjectReference Include="..\..\Sqlite\Lyo.Sqlite\Lyo.Sqlite.csproj"/>
+        <ProjectReference Include="..\..\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="[10,)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

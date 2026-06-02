@@ -218,11 +218,13 @@
     </Folder>
     <Folder Name="/Data/Postgres/">
         <Project Path="Data/Postgres/Lyo.Postgres/Lyo.Postgres.csproj"/>
+        <Project Path="Data/Sqlite/Lyo.Sqlite/Lyo.Sqlite.csproj"/>
     </Folder>
     <Folder Name="/Data/FileMetadataStore/">
         <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/Lyo.FileMetadataStore.Postgres.csproj"/>
         <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres.Tests/Lyo.FileMetadataStore.Postgres.Tests.csproj"/>
         <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite/Lyo.FileMetadataStore.Sqlite.csproj"/>
+        <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite.Tests/Lyo.FileMetadataStore.Sqlite.Tests.csproj"/>
         <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore/Lyo.FileMetadataStore.csproj"/>
     </Folder>
     <Folder Name="/Data/FileSystemWatcher/">

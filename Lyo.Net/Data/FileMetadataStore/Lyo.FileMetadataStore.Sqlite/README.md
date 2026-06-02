@@ -1,26 +1,76 @@
 # Lyo.FileMetadataStore.Sqlite
 
-**Status:** *Placeholder package.*
+SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with [`Lyo.FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) for embedded, offline-first, and local-dev scenarios.
 
-The `.csproj` description explicitly marks this NuGet-compatible split as reserving the ID for a future **`SqliteFileMetadataStore`** implementation—but **today there are no SQLite
-sources** referenced (project compiles essentially empty besides assembly metadata targets).
+## What is included
 
-Why keep the package?
+| Component | Role |
+|-----------|------|
+| **`SqliteFileMetadataStore`** | `IFileMetadataStore` + `IHealth` |
+| **`SqliteFileAuditSink`** | `IFileAuditEventHandler` — append-only audit rows |
+| **`SqliteMultipartUploadSessionStore`** | `IMultipartUploadSessionStore` |
+| **`SqliteFileDownloadAccessService`** | Time-boxed download access tokens |
+| **`SqliteFileMetadataStoreDbContext`** | EF Core context (5 tables, same shape as Postgres) |
 
-- Prevents squatting/conflicting identities on NuGet feeds for internal restores.
-- Provides a deterministic namespace slot if you prototype offline-first clients or WASM-side caches later.
+Schema tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `file_download_access_links`.
 
-Until code lands:
+## Registration
 
-| Need                                                             | Instead use                                                                                                  |
-|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Local dev ergonomics faster than PostgreSQL ephemeral containers | Run lightweight Postgres via compose **or** an in-memory test double mocking **`IFileMetadataStore`**.       |
-| Embedded single-user scenario                                    | Embed **LiteDB**/SQLite manually behind a handcrafted `IFileMetadataStore` in your app—not this package yet. |
+```csharp
+using Lyo.FileMetadataStore.Sqlite;
 
-When implementing:
+// Simple
+services.AddSqliteFileMetadataStore("Data Source=./filestore.db");
 
-1. Map **`FileStoreResult`** fields to pragmatic SQLite column types (**BLOB for hashes**, **TEXT for JSON** fragments).
-2. Provide migrations via **`Microsoft.EntityFrameworkCore.Sqlite`** (likely share entity classes with Postgres via table splitting—DRY thoughtfully).
-3. Document concurrency limitations (SQLite single-writer)—not suitable for high-concurrency ingestion without WAL tuning.
+// With auto-migrations at host startup
+services.AddSqliteFileMetadataStoreDbContextFactoryFromConfiguration(configuration);
+services.AddSqliteFileMetadataStore();
+services.AddSqliteFileAuditSink();
+services.AddSqliteFileDownloadAccessService();
 
-Track removal/modification of the placeholder description in `.csproj` when real code merges so consumers stop seeing “placeholder” in IDE package tooltips.
+// Keyed (multi-store hosts)
+services.AddSqliteFileMetadataStoreKeyed("sqlite-metadata")
+    .ConfigureSqliteFileStore(options => {
+        options.ConnectionString = "Data Source=./filestore.db";
+        options.EnableAutoMigrations = true;
+    })
+    .Build();
+```
+
+`appsettings.json`:
+
+```json
+{
+  "SqliteFileMetadataStore": {
+    "ConnectionString": "Data Source=./filestore.db",
+    "EnableAutoMigrations": true
+  }
+}
+```
+
+Wire blob storage to the keyed metadata store the same way as Postgres:
+
+```csharp
+services.AddS3FileStorageServiceKeyed("my-files")
+    .UseFileMetadataStore("sqlite-metadata")
+    .Build(configuration);
+```
+
+## Migrations
+
+Migrations ship in this package. Enable **`EnableAutoMigrations`** (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using `SqliteFileMetadataStoreDbContextFactory`.
+
+Design-time connection string: `FILEMETADATASTORE_CONNECTION_STRING` or `FILESTORE_CONNECTION_STRING` (defaults to `Data Source=./filestore-design.db`).
+
+## Concurrency
+
+SQLite is single-writer. Suitable for embedded clients, local tools, and low-concurrency dev hosts. For high-throughput multi-instance ingestion use Postgres.
+
+Enable WAL at the connection level if your host opens many concurrent readers (`PRAGMA journal_mode=WAL`).
+
+## Dependencies
+
+- [`Lyo.FileMetadataStore`](../Lyo.FileMetadataStore/README.md)
+- [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)
+- [`Lyo.FileStorage`](../../FileStorage/Lyo.FileStorage/README.md)
+- `Microsoft.EntityFrameworkCore.Sqlite`

@@ -80,14 +80,14 @@ public sealed class OidcIdTokenValidator
         }
 
         var discovery = await _discovery.GetAsync(provider.DiscoveryUrl, ct).ConfigureAwait(false);
-        var key = await _jwks.ResolveAsync(discovery.JwksUri, kid!, ct).ConfigureAwait(false);
+        var key = await _jwks.ResolveAsync(discovery.JwksUri, kid, ct).ConfigureAwait(false);
         if (key is null) {
             _logger.LogDebug("id_token rejected: unknown kid {Kid}", kid);
             return null;
         }
 
         var signingInput = Encoding.ASCII.GetBytes($"{parts[0]}.{parts[1]}");
-        if (!VerifySignature(alg!, key, signingInput, signature)) {
+        if (!VerifySignature(alg, key, signingInput, signature)) {
             _logger.LogDebug("id_token rejected: signature");
             return null;
         }
