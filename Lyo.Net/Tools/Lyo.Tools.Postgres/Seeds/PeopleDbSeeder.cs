@@ -1,4 +1,5 @@
 using Bogus;
+using Lyo.Common.Records;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public sealed class PeopleDbSeeder
     private static readonly string[] PhoneTypes = ["Mobile", "Home", "Work", "Fax", "Other"];
     private static readonly string[] EmailTypes = ["Personal", "Work", "Other"];
     private static readonly string[] AddressTypes = ["Home", "Work", "Billing", "Mailing", "Other"];
-    private static readonly string[] SocialPlatforms = ["LinkedIn", "Twitter", "Instagram", "Facebook", "GitHub", "TikTok", "YouTube"];
+    private static readonly SocialPlatformInfo[] SeedSocialPlatforms = SocialPlatformInfo.All.Where(p => p != SocialPlatformInfo.Other).ToArray();
     private static readonly string[] EmployTypes = ["FullTime", "PartTime", "Contract", "Freelance", "Internship"];
     private static readonly string[] RelationTypes = ["Spouse", "Parent", "Child", "Sibling", "Partner", "Friend", "Colleague"];
     private readonly ConnectionStringProvider _connStr;
@@ -202,7 +203,7 @@ public sealed class PeopleDbSeeder
         => new() {
             Id = Guid.NewGuid(),
             PersonId = personId,
-            Platform = f.PickRandom(SocialPlatforms),
+            Platform = f.PickRandom(SeedSocialPlatforms).Slug,
             Username = f.Internet.UserName(),
             ProfileUrl = f.Random.Bool(0.7f) ? f.Internet.Url() : null,
             AddedAt = f.Date.Past(2).ToUniversalTime(),
