@@ -1,8 +1,6 @@
 # Lyo.Barcode.Native
 
-Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to *
-*BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes via **`Lyo.Codes.ZXing`** through *
-*`ReadFromImageAsync`**.
+Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to **BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net + ImageSharp) through **`ReadFromImageAsync`**.
 
 ## Features
 
@@ -14,7 +12,7 @@ Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-
 - **Border:** `BarcodeOptions.ShowBorder` + `BorderWidthPixels` + `BorderColorHex` add a frame; output grows by `2 × BorderWidthPixels` on each axis. SVG draws an outer fill plus
   inner background rect; BMP composites strips. Width is clamped between `BarcodeServiceOptions.MinBorderWidthPixels` and `MaxBorderWidthPixels` (defaults **1–64**).
   `BorderColorHex` must be `#RGB` or `#RRGGBB`.
-- **Decode:** `ReadFromImageAsync(byte[])` delegates to `ZxingCodeImageDecoder.DecodeBarcode` (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).
+- **Decode:** `ReadFromImageAsync(byte[])` delegates to **`BarcodeZxingRead.Decode`** (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).
 - **Metrics / logging / cancellation:** when `BarcodeServiceOptions.EnableMetrics` is true and an `IMetrics` is registered, generation timings and success/failure/cancellation
   counters under `Lyo.Barcode.Constants.Metrics` are emitted.
 
@@ -81,10 +79,11 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 | `SixLabors.Fonts`                                       | `2.*`   |
 | `SixLabors.ImageSharp`                                  | `3.*`   |
 | `SixLabors.ImageSharp.Drawing`                          | `2.*`   |
+| `ZXing.Net`                                             | `0.16.11` |
+| `ZXing.Net.Bindings.ImageSharp.V3`                      | `0.16.15` |
 
 ### Project references
 
 - [`Lyo.Barcode`](../Lyo.Barcode/README.md)
-- [`Lyo.Codes.ZXing`](../../Codes/Lyo.Codes.ZXing/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)

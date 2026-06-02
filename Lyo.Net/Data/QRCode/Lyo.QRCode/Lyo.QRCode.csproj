@@ -23,10 +23,12 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.*"/>
+        <PackageReference Include="ZXing.Net" Version="0.16.11"/>
+        <PackageReference Include="ZXing.Net.Bindings.ImageSharp.V3" Version="0.16.15"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Codes\Lyo.Codes.ZXing\Lyo.Codes.ZXing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>

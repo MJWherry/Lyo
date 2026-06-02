@@ -22,7 +22,6 @@
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Barcode.Native\Lyo.Barcode.Native.csproj"/>
         <ProjectReference Include="..\Lyo.Barcode\Lyo.Barcode.csproj"/>
-        <ProjectReference Include="..\..\Codes\Lyo.Codes.ZXing\Lyo.Codes.ZXing.csproj"/>
     </ItemGroup>
 
 </Project>

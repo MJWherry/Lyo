@@ -1,6 +1,5 @@
 using Lyo.Barcode.Models;
 using Lyo.Barcode.Native;
-using Lyo.Codes.ZXing;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -28,7 +27,7 @@ public class NativeBarcodeZxingRoundTripTests
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess, result.Errors?[0].Message);
         Assert.NotNull(br.ImageBytes);
-        var decode = ZxingCodeImageDecoder.DecodeBarcode(br.ImageBytes!);
+        var decode = BarcodeZxingRead.Decode(br.ImageBytes!);
         Assert.True(decode.IsSuccess, decode.Errors?[0].Message);
         Assert.Equal(data, decode.Data!.Text);
     }

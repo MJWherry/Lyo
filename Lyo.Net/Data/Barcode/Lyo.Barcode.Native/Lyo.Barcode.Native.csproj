@@ -13,10 +13,11 @@
         <PackageReference Include="SixLabors.Fonts" Version="2.*"/>
         <PackageReference Include="SixLabors.ImageSharp" Version="3.*"/>
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.*"/>
+        <PackageReference Include="ZXing.Net" Version="0.16.11"/>
+        <PackageReference Include="ZXing.Net.Bindings.ImageSharp.V3" Version="0.16.15"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Codes\Lyo.Codes.ZXing\Lyo.Codes.ZXing.csproj"/>
         <ProjectReference Include="..\Lyo.Barcode\Lyo.Barcode.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>

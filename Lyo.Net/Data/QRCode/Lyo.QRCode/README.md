@@ -108,10 +108,12 @@ the same payload.
 | `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| `SixLabors.ImageSharp`                                  | `3.*`   |
+| `ZXing.Net`                                             | `0.16.11` |
+| `ZXing.Net.Bindings.ImageSharp.V3`                      | `0.16.15` |
 
 ### Project references
 
-- [`Lyo.Codes.ZXing`](../../Codes/Lyo.Codes.ZXing/README.md)
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

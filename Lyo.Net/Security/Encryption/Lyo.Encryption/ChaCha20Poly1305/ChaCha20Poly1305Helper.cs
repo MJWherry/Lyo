@@ -1,10 +1,7 @@
-#if NET10_0_OR_GREATER
-#endif
-
-using System.Security.Cryptography;
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
+using System.Security.Cryptography;
 #endif
 
 namespace Lyo.Encryption.ChaCha20Poly1305;

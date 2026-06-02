@@ -51,7 +51,7 @@ services.AddQRCoderQrCodeServiceFromConfiguration(builder.Configuration);
 ## Notes
 
 - **JPEG / Bitmap** outputs go through `System.Drawing` and are only fully supported on **Windows**; PNG/SVG paths run cross-platform.
-- Decoding (`ReadFromImageAsync`) reuses `Lyo.Codes.ZXing` exactly like the built-in service.
+- Decoding (`ReadFromImageAsync`) uses **`QRCodeZxingRead`** in this package (ZXing.Net + ImageSharp), same as the built-in service.
 - **Decoration is out of scope**: the QRCoder service no longer applies center logos or frames. Pipe the returned bytes through
   `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the
   [`Lyo.Images` README](../../Images/Lyo.Images/README.md)).

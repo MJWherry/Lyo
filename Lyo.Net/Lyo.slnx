@@ -189,9 +189,6 @@
         <Project Path="Data/Barcode/Lyo.Barcode.Web.Components/Lyo.Barcode.Web.Components.csproj"/>
         <Project Path="Data/Barcode/Lyo.Barcode/Lyo.Barcode.csproj"/>
     </Folder>
-    <Folder Name="/Data/Codes/">
-        <Project Path="Data/Codes/Lyo.Codes.ZXing/Lyo.Codes.ZXing.csproj"/>
-    </Folder>
     <Folder Name="/Data/Query/">
         <Project Path="Data/Query/Lyo.Query/Lyo.Query.csproj"/>
         <Project Path="Data/Query/Lyo.Query.Models/Lyo.Query.Models.csproj"/>
