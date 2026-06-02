@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
@@ -15,6 +17,7 @@ namespace Lyo.Authentication.Models.Records;
 /// <param name="UpdatedAt">When the link was last updated (typically on each login).</param>
 /// <param name="LastUsedAt">When the link most recently produced a successful login.</param>
 /// <param name="UnlinkedAt">When the link was soft-deleted. While non-null, the link is inactive and the (provider, subject) pair can be re-linked.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LinkedIdentity(
     Guid Id,
     Guid UserId,
@@ -30,4 +33,7 @@ public sealed record LinkedIdentity(
 {
     /// <summary>True if the link is still active (not soft-deleted).</summary>
     public bool IsActive => !UnlinkedAt.HasValue;
+
+    public override string ToString()
+        => $"LinkedIdentity: provider={Provider}, subject={Subject}, user={UserId}, active={IsActive}";
 }

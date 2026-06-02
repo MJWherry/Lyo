@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Base email address model containing the actual email address data</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class EmailAddress : IEquatable<EmailAddress>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the email address</summary>
@@ -34,6 +36,9 @@ public class EmailAddress : IEquatable<EmailAddress>, IEntitySourceDerived
 
     /// <inheritdoc />
     public override int GetHashCode() => Email.ToLowerInvariant().GetHashCode();
+
+    /// <inheritdoc />
+    public override string ToString() => $"EmailAddress: id={Id}, email={Email}";
 
     /// <summary>Equality operator</summary>
     public static bool operator ==(EmailAddress? left, EmailAddress? right) => Equals(left, right);

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
@@ -9,6 +10,7 @@ using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 namespace Lyo.Schedule.Models;
 
 /// <summary>Fluent builder for creating ScheduleDefinition instances.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ScheduleDefinitionBuilder
 {
     private string? _cronExpression;
@@ -133,4 +135,7 @@ public sealed class ScheduleDefinitionBuilder
     /// <summary>Builds the ScheduleDefinition.</summary>
     public ScheduleDefinition Build()
         => new(_type, _dayFlags, _monthFlags, _times, _startTime, _endTime, _intervalMinutes, _executeAt, _timeZone, _enabled, _description, _cronExpression);
+
+    public override string ToString()
+        => $"ScheduleDefinitionBuilder: type={_type}, enabled={_enabled}, cron={_cronExpression ?? "(none)"}";
 }

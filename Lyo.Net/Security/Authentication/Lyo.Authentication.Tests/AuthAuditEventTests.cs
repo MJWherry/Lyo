@@ -26,7 +26,7 @@ public class AuthAuditEventTests
     public async Task RecordAsync_NullContext_DoesNotThrow()
     {
         var recorder = new CapturingRecorder();
-        await recorder.RecordAsync(null, null, AuthAuditEventKind.SignedOut, outcome: "success");
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.SignedOut, outcome: "success", ct: TestContext.Current.CancellationToken);
         var evt = Assert.Single(recorder.Events);
         Assert.Null(evt.IpAddress);
         Assert.Null(evt.UserAgent);
@@ -47,7 +47,7 @@ public class AuthAuditEventTests
     public async Task NullAuthAuditRecorder_IsNoOp()
     {
         var evt = new AuthAuditEvent(Guid.NewGuid(), DateTime.UtcNow, AuthAuditEventKind.HandoffCodeConsumed);
-        await NullAuthAuditRecorder.Instance.RecordAsync(evt, CancellationToken.None);
+        await NullAuthAuditRecorder.Instance.RecordAsync(evt, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class AuthAuditEventTests
         await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, metadata: metadata, ct: TestContext.Current.CancellationToken);
         var evt = Assert.Single(recorder.Events);
         Assert.NotNull(evt.Metadata);
-        Assert.Equal(3, evt.Metadata!.Count);
+        Assert.Equal(3, evt.Metadata.Count);
         Assert.Equal("abc", evt.Metadata["jti"]);
         Assert.Equal(1234, evt.Metadata["exp"]);
     }

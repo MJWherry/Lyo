@@ -26,7 +26,7 @@ public sealed class PostgresExternalIdentityStoreTests
         await _fixture.IdentityStore.LinkAsync(user.Id, "google", sub, null, [], null, null, TestContext.Current.CancellationToken);
         var found = await _fixture.IdentityStore.FindByProviderSubjectAsync("google", sub, null, TestContext.Current.CancellationToken);
         Assert.NotNull(found);
-        Assert.Equal(user.Id, found!.UserId);
+        Assert.Equal(user.Id, found.UserId);
     }
 
     [Fact]

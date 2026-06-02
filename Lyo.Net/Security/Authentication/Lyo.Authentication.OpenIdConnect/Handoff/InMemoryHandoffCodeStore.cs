@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Lyo.Authentication.Models.Format;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Handoff;
@@ -46,7 +47,7 @@ public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
     /// <inheritdoc />
     public Task<LyoHandoffCode?> ConsumeAsync(string id, string callerOrigin, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(callerOrigin))
+        if (id.IsNullOrWhitespace() || callerOrigin.IsNullOrWhitespace())
             return Task.FromResult<LyoHandoffCode?>(null);
 
         if (!_entries.TryRemove(id, out var entry))

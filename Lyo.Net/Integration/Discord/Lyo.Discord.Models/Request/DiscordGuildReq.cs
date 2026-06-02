@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordGuildReq
 {
     public long Id { get; set; }
@@ -23,4 +26,7 @@ public sealed class DiscordGuildReq
     public DateTime GuildCreatedDate { get; set; }
 
     public DateTime JoinedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordGuildReq: id={Id}, name={Name}, members={MemberCount}";
 }

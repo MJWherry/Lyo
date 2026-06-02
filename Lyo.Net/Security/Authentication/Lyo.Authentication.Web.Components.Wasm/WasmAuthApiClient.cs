@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
@@ -51,7 +52,7 @@ public sealed class WasmAuthApiClient
     /// <summary>POSTs <c>{ refresh_token }</c> to <c>/auth/logout</c>. Best-effort: returns <c>true</c> on 2xx.</summary>
     public async Task<bool> LogoutAsync(string? refreshToken, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(refreshToken))
+        if (refreshToken.IsNullOrWhitespace())
             return true;
 
         using var response = await _http.PostAsJsonAsync("/auth/logout", new { refresh_token = refreshToken }, JsonOptions, ct).ConfigureAwait(false);

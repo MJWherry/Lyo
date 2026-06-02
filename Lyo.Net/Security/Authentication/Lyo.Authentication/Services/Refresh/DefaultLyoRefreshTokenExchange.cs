@@ -6,6 +6,7 @@ using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 
@@ -52,7 +53,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
     /// <inheritdoc />
     public async Task<IssuedLyoJwt?> ExchangeAsync(string presentedRefreshToken, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(presentedRefreshToken))
+        if (presentedRefreshToken.IsNullOrWhitespace())
             return null;
 
         if (!ApiTokenCodec.TryParse(presentedRefreshToken, out var parsed) || parsed is null) {
@@ -126,11 +127,11 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
 
     private async Task<IReadOnlyList<string>> ResolveEffectiveScopesAsync(LyoUser user, string provider, string? externalSubject, CancellationToken ct)
     {
-        if (_identities is null || string.IsNullOrWhiteSpace(externalSubject) || string.Equals(provider, "local", StringComparison.Ordinal))
+        if (_identities is null || externalSubject.IsNullOrWhitespace() || string.Equals(provider, "local", StringComparison.Ordinal))
             return user.Scopes;
 
         try {
-            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject!, null, ct).ConfigureAwait(false);
+            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject, null, ct).ConfigureAwait(false);
             if (link is null || link.UserId != user.Id || !link.IsActive)
                 return user.Scopes;
 
@@ -159,7 +160,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
 
         var provider = record.Metadata.TryGetValue(DefaultLyoRefreshTokenIssuer.ProviderMetadataKey, out var pRaw) ? pRaw?.ToString() : null;
         var subject = record.Metadata.TryGetValue(DefaultLyoRefreshTokenIssuer.ExternalSubjectMetadataKey, out var sRaw) ? sRaw?.ToString() : null;
-        return (string.IsNullOrWhiteSpace(provider) ? "local" : provider!, string.IsNullOrWhiteSpace(subject) ? null : subject);
+        return (provider.IsNullOrWhitespace() ? "local" : provider, subject.IsNullOrWhitespace() ? null : subject);
     }
 
     private async Task HandlePossibleTheftAsync(string tokenId, CancellationToken ct)

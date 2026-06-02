@@ -1,5 +1,3 @@
-using Lyo.EntityReference.Postgres;
-using Lyo.EntityReference.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

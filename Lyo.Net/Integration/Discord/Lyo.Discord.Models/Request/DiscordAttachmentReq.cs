@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordAttachmentReq
 {
     public long Id { get; set; }
@@ -19,4 +22,7 @@ public sealed class DiscordAttachmentReq
     public string Url { get; set; } = null!;
 
     public DateTime AttachmentCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordAttachmentReq: id={Id}, filename={Filename}, size={FileSize}";
 }

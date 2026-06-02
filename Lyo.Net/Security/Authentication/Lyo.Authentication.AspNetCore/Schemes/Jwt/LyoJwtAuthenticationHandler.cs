@@ -1,5 +1,6 @@
 using System.Text.Encodings.Web;
 using Lyo.Authentication.Services.Jwt;
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,7 +21,7 @@ public sealed class LyoJwtAuthenticationHandler : AuthenticationHandler<LyoJwtAu
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var header = Request.Headers[Options.HeaderName].ToString();
-        if (string.IsNullOrWhiteSpace(header))
+        if (header.IsNullOrWhitespace())
             return AuthenticateResult.NoResult();
 
         var prefix = Options.Scheme + " ";
@@ -28,7 +29,7 @@ public sealed class LyoJwtAuthenticationHandler : AuthenticationHandler<LyoJwtAu
             return AuthenticateResult.NoResult();
 
         var token = header.Substring(prefix.Length).Trim();
-        if (string.IsNullOrEmpty(token))
+        if (token.IsNullOrEmpty())
             return AuthenticateResult.NoResult();
 
         var principal = await _validator.ValidateAsync(token, Context.RequestAborted).ConfigureAwait(false);

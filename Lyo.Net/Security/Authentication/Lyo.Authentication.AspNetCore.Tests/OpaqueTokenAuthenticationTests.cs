@@ -5,11 +5,13 @@ namespace Lyo.Authentication.AspNetCore.Tests;
 
 public sealed class OpaqueTokenAuthenticationTests
 {
+    private CancellationToken TCT => TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task SecureEndpoint_RejectsAnonymous()
     {
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
-        var response = await harness.Client.GetAsync("/secure");
+        var response = await harness.Client.GetAsync("/secure", TCT);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
@@ -20,7 +22,7 @@ public sealed class OpaqueTokenAuthenticationTests
         var token = await harness.IssueOpaqueAsync("people.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/secure");
         request.Headers.Authorization = new("Bearer", token);
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -30,7 +32,7 @@ public sealed class OpaqueTokenAuthenticationTests
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         var request = new HttpRequestMessage(HttpMethod.Get, "/secure");
         request.Headers.Authorization = new("Bearer", "lyo_pat_live_AAAAAAAAAAA_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
@@ -41,7 +43,7 @@ public sealed class OpaqueTokenAuthenticationTests
         var token = await harness.IssueOpaqueAsync();
         var request = new HttpRequestMessage(HttpMethod.Get, "/secure");
         request.Headers.Add("X-Api-Key", token);
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -52,7 +54,7 @@ public sealed class OpaqueTokenAuthenticationTests
         var token = await harness.IssueOpaqueAsync("orders.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
         request.Headers.Authorization = new("Bearer", token);
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -63,7 +65,7 @@ public sealed class OpaqueTokenAuthenticationTests
         var token = await harness.IssueOpaqueAsync("people.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
         request.Headers.Authorization = new("Bearer", token);
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -71,7 +73,7 @@ public sealed class OpaqueTokenAuthenticationTests
     public async Task AnonymousEndpoint_AllowsMissingCredential()
     {
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
-        var response = await harness.Client.GetAsync("/anon");
+        var response = await harness.Client.GetAsync("/anon", TCT);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -86,7 +88,7 @@ public sealed class OpaqueTokenAuthenticationTests
         var token = await harness.IssueOpaqueAsync("admin");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
         request.Headers.Authorization = new("Bearer", token);
-        var response = await harness.Client.SendAsync(request);
+        var response = await harness.Client.SendAsync(request, TCT);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

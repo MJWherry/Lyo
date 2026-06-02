@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Request;
 
 /// <summary>Request model for creating or updating a comic volume.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicVolumeReq
 {
     /// <summary>Gets or sets the series this volume belongs to.</summary>
@@ -17,4 +20,7 @@ public sealed class ComicVolumeReq
 
     /// <summary>Gets or sets the original publication date of this volume.</summary>
     public DateTime? PublishedDate { get; set; }
+
+    public override string ToString()
+        => $"ComicVolumeReq: series={SeriesId}, volume={VolumeNumber}, title={Title}";
 }

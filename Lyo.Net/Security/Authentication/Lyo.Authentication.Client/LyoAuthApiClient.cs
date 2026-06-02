@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
@@ -44,7 +45,8 @@ public sealed class LyoAuthApiClient
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(handoffCode);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(consumerOrigin);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/auth/handoff/exchange") { Content = JsonContent.Create(new { code = handoffCode }, options: JsonOptions) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/auth/handoff/exchange");
+        request.Content = JsonContent.Create(new { code = handoffCode }, options: JsonOptions);
         request.Headers.TryAddWithoutValidation("Origin", consumerOrigin);
         request.Headers.TryAddWithoutValidation("X-Lyo-Caller-Origin", consumerOrigin);
         using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
@@ -68,7 +70,7 @@ public sealed class LyoAuthApiClient
     /// <summary>POSTs <c>{"refresh_token": ...}</c> to <c>/auth/logout</c>. Best-effort — returns <c>true</c> on 2xx, <c>false</c> otherwise.</summary>
     public async Task<bool> LogoutAsync(string? refreshToken, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(refreshToken))
+        if (refreshToken.IsNullOrWhitespace())
             return true;
 
         using var response = await _http.PostAsJsonAsync("/auth/logout", new { refresh_token = refreshToken }, JsonOptions, ct).ConfigureAwait(false);

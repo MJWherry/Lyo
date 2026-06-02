@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Storage;
@@ -129,7 +130,7 @@ public sealed class IOTempSession : IIOTempSession
         IMetrics? metrics = null,
         IIOTempStorageProvider? storageProvider = null)
     {
-        var leaf = string.IsNullOrWhiteSpace(subdirectoryName) ? Guid.NewGuid().ToString("N") : subdirectoryName!;
+        var leaf = subdirectoryName.IsNullOrWhitespace() ? Guid.NewGuid().ToString("N") : subdirectoryName;
         var rootDirectory = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests", leaf);
         return new(new() { RootDirectory = rootDirectory }, logger, metrics, storageProvider: storageProvider);
     }

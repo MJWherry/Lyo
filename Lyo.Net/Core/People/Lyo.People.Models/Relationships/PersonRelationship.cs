@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models.Relationships;
 
 /// <summary>Represents a relationship between two people</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PersonRelationship
 {
     /// <summary>Unique identifier for the relationship</summary>
@@ -31,4 +33,8 @@ public class PersonRelationship
 
     /// <summary>Optional notes about the relationship</summary>
     public string? Notes { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"PersonRelationship: person={PersonId}, related={RelatedPersonId}, type={Type}, active={IsActive}";
 }

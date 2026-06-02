@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Records;
 using Lyo.People.Models.Contact;
 
 namespace Lyo.People.Models.Preferences;
 
 /// <summary>General preferences for a person including contact and communication settings</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PersonPreferences
 {
     /// <summary>Preferred contact method (e.g., "Email", "Phone", "SMS")</summary>
@@ -20,4 +22,8 @@ public class PersonPreferences
 
     /// <summary>Privacy and data sharing preferences</summary>
     public PrivacyPreferences Privacy { get; set; } = new();
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"PersonPreferences: contact={PreferredContactMethod ?? "?"}, timezone={TimeZone ?? "?"}";
 }

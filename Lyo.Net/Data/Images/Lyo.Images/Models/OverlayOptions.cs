@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>
 /// Layout and styling for <see cref="IImageDecorationService.OverlayAsync" />. Generalizes the legacy "center overlay" knobs into a position-aware shape. Defaults match the
 /// QR-logo use case (centered, light pad, optional stroke).
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class OverlayOptions
 {
     /// <summary>Placement of the overlay relative to the background. Default: <see cref="OverlayPosition.Center" />.</summary>
@@ -26,4 +29,7 @@ public sealed class OverlayOptions
 
     /// <summary>If set (positive), the background is resized to this square pixel size before compositing. Must be the actual target canvas size.</summary>
     public int? BackgroundSquareSize { get; set; }
+
+    public override string ToString()
+        => $"OverlayOptions: position={Position}, size={OverlaySizePercent}%, border={DrawBorder}";
 }

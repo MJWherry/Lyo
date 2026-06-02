@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Comic.Enums;
 
 namespace Lyo.Comic.Api.Models.Request;
 
 /// <summary>Request model for creating or updating a comic series.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicSeriesReq
 {
     /// <summary>Gets or sets the primary display title.</summary>
@@ -49,9 +51,13 @@ public sealed class ComicSeriesReq
 
     /// <summary>Optional tags to attach after the series is created (create / upsert-create only; ignored on update).</summary>
     public IReadOnlyList<AddTagReq>? Tags { get; set; }
+
+    public override string ToString()
+        => $"ComicSeriesReq: title={Title}, slug={Slug}, type={ComicType}, status={Status}";
 }
 
 /// <summary>An alternate or translated title within a series request.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicAlternateTitleReq
 {
     /// <summary>Gets or sets the alternate title text.</summary>
@@ -59,4 +65,7 @@ public sealed class ComicAlternateTitleReq
 
     /// <summary>Gets or sets the BCP 47 language tag for this title, or null if unknown.</summary>
     public string? Language { get; set; }
+
+    public override string ToString()
+        => $"ComicAlternateTitleReq: title={Title}, lang={Language}";
 }

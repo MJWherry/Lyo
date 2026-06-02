@@ -14,7 +14,7 @@ public class ApiTokenCodecTests
         Assert.Equal(32, hash.Length);
         Assert.True(ApiTokenCodec.TryParse(plaintext, out var parsed));
         Assert.NotNull(parsed);
-        Assert.Equal(id, parsed!.Id);
+        Assert.Equal(id, parsed.Id);
         Assert.Equal(ApiTokenKind.Pat, parsed.Kind);
         Assert.Equal(ApiTokenRing.Live, parsed.Ring);
         Assert.Equal(43, parsed.Secret.Length);
@@ -35,7 +35,8 @@ public class ApiTokenCodecTests
     {
         var (plaintext, _, hash) = ApiTokenCodec.Mint(ApiTokenKind.Svc, ApiTokenRing.Test);
         Assert.True(ApiTokenCodec.TryParse(plaintext, out var parsed));
-        var recomputed = ApiTokenCodec.ComputeSecretHash(parsed!.Secret);
+        Assert.NotNull(parsed);
+        var recomputed = ApiTokenCodec.ComputeSecretHash(parsed.Secret);
         Assert.Equal(hash, recomputed);
     }
 

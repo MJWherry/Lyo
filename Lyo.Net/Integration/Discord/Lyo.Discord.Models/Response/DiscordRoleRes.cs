@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiscordRoleRes(
     long Id,
     long GuildId,
@@ -11,4 +14,8 @@ public sealed record DiscordRoleRes(
     bool IsManaged,
     bool IsMentionable,
     int Position,
-    DateTime RoleCreatedDate);
+    DateTime RoleCreatedDate)
+{
+    public override string ToString()
+        => $"DiscordRoleRes: {Name}, guild={GuildId}, position={Position}";
+}

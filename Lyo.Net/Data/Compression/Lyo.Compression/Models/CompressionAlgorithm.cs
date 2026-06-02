@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
+using Lyo.Compression.JsonConverters;
 
 namespace Lyo.Compression.Models;
 
@@ -18,10 +21,11 @@ namespace Lyo.Compression.Models;
 /// <see cref="TryFromName" /> as soon as their assembly is loaded (typically via the addon's <c>services.Add{Algo}Compressor()</c> DI extension).
 /// </para>
 /// </remarks>
+[JsonConverter(typeof(CompressionAlgorithmJsonConverter))]
 public abstract record CompressionAlgorithm
 {
-    private static readonly ConcurrentDictionary<string, CompressionAlgorithm> _byExt = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly ConcurrentDictionary<string, CompressionAlgorithm> _byName = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByExt = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByName = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Stable display name (e.g. <c>"GZip"</c>, <c>"LZ4"</c>). Used as the discriminator key for addon registrars and error messages.</summary>
     public string Name { get; }
@@ -35,18 +39,18 @@ public abstract record CompressionAlgorithm
     {
         Name = name;
         Extension = extension;
-        _byName.TryAdd(name, this);
-        _byExt.TryAdd(extension, this);
+        ByName.TryAdd(name, this);
+        ByExt.TryAdd(extension, this);
     }
 
     /// <summary>Looks up a registered algorithm by file extension. Case-insensitive. Only returns algorithms whose assemblies are loaded.</summary>
-    public static CompressionAlgorithm? TryFromExtension(string? extension) => !string.IsNullOrEmpty(extension) && _byExt.TryGetValue(extension!, out var algo) ? algo : null;
+    public static CompressionAlgorithm? TryFromExtension(string? extension) => !extension.IsNullOrEmpty() && ByExt.TryGetValue(extension, out var algo) ? algo : null;
 
     /// <summary>Looks up a registered algorithm by <see cref="Name" />. Case-insensitive. Only returns algorithms whose assemblies are loaded.</summary>
-    public static CompressionAlgorithm? TryFromName(string? name) => !string.IsNullOrEmpty(name) && _byName.TryGetValue(name!, out var algo) ? algo : null;
+    public static CompressionAlgorithm? TryFromName(string? name) => !name.IsNullOrEmpty() && ByName.TryGetValue(name, out var algo) ? algo : null;
 
     /// <summary>All algorithms whose assemblies have been loaded into the current AppDomain.</summary>
-    public static IReadOnlyCollection<CompressionAlgorithm> All => _byName.Values.ToArray();
+    public static IReadOnlyCollection<CompressionAlgorithm> All => ByName.Values.ToArray();
 
     public sealed override string ToString() => Name;
 

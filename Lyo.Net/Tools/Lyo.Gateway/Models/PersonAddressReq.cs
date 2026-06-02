@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Gateway.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PersonAddressReq
 {
     public string? HouseNumber { get; set; }
@@ -29,4 +32,7 @@ public sealed class PersonAddressReq
     public DateOnly CreatedDate { get; set; }
 
     public DateOnly UpdatedDate { get; set; }
+
+    public override string ToString()
+        => $"PersonAddressReq: city={City}, state={State}, zip={Zipcode}";
 }

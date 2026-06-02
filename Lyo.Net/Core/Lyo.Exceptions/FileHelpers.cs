@@ -2,8 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
-
-// ReSharper disable RedundantSuppressNullableWarningExpression
 #endif
 
 namespace Lyo.Exceptions;
@@ -76,7 +74,12 @@ public static class FileHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string NormalizePathPrefix(string? value) => string.IsNullOrWhiteSpace(value) ? "" : value!.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
+    public static string NormalizePathPrefix(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "";
+        return value.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
+    }
 
     /// <summary>
     /// Throws <see cref="ArgumentException" /> when <paramref name="value" /> contains a path-traversal pattern when interpreted as a multi-segment path prefix. Rejects any
@@ -95,7 +98,7 @@ public static class FileHelpers
             return;
 
         ArgumentHelpers.ThrowIf(
-            value!.Contains("..") || value.Contains("//") || value.Contains("\\\\") || value.IndexOf('\0') >= 0,
+            value.Contains("..") || value.Contains("//") || value.Contains("\\\\") || value.IndexOf('\0') >= 0,
             $"Path prefix '{value}' contains a traversal pattern ('..', '//', '\\\\', or NULL).", paramName);
 
         foreach (var segment in value.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))

@@ -11,7 +11,7 @@ public sealed class ScopeAuthorizationTests
         var provider = new ScopeAuthorizationPolicyProvider(Microsoft.Extensions.Options.Options.Create(new AuthorizationOptions()));
         var policy = await provider.GetPolicyAsync("scope:people.read");
         Assert.NotNull(policy);
-        Assert.Contains(policy!.Requirements, r => r is ScopeAuthorizationRequirement req && req.Scope == "people.read");
+        Assert.Contains(policy.Requirements, r => r is ScopeAuthorizationRequirement req && req.Scope == "people.read");
     }
 
     [Fact]

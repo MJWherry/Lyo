@@ -8,6 +8,7 @@ using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -110,33 +111,33 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
         if (!string.Equals(pkceState.Provider, providerName, StringComparison.Ordinal))
             throw new ExternalLoginRejectedException("OidcStateInvalid", "provider mismatch between state cookie and callback");
 
-        if (string.IsNullOrWhiteSpace(returnedState))
+        if (returnedState.IsNullOrWhitespace())
             throw new ExternalLoginRejectedException("OidcStateInvalid", "missing state on callback");
 
         if (!FixedTimeStringEquals(pkceState.State, returnedState))
             throw new ExternalLoginRejectedException("OidcStateInvalid", "callback state does not match the value bound to the state cookie");
 
         var tokens = await _exchange.ExchangeAsync(provider, code, pkceState.Verifier, ct).ConfigureAwait(false);
-        if (string.IsNullOrEmpty(tokens.IdToken))
+        if (tokens.IdToken.IsNullOrEmpty())
             throw new ExternalLoginRejectedException("OidcSignatureInvalid", "provider returned no id_token");
 
-        var claims = await _idTokenValidator.ValidateAsync(provider, tokens.IdToken!, pkceState.Nonce, ct).ConfigureAwait(false) ??
+        var claims = await _idTokenValidator.ValidateAsync(provider, tokens.IdToken, pkceState.Nonce, ct).ConfigureAwait(false) ??
             throw new ExternalLoginRejectedException("OidcSignatureInvalid", "id_token failed validation");
 
         var subject = claims.TryGetValue("sub", out var subEl) ? subEl?.ToString() : null;
-        if (string.IsNullOrWhiteSpace(subject))
+        if (subject.IsNullOrWhitespace())
             throw new ExternalLoginRejectedException("OidcSignatureInvalid", "id_token has no sub");
 
         var mapping = provider.MapClaims(claims);
         if (_options.RequireVerifiedEmail && !mapping.EmailVerified)
             throw new ExternalLoginRejectedException("EmailNotVerified", $"{provider.Name} reported email_verified=false");
 
-        var link = await _identities.FindByProviderSubjectAsync(provider.Name, subject!, null, ct).ConfigureAwait(false);
+        var link = await _identities.FindByProviderSubjectAsync(provider.Name, subject, null, ct).ConfigureAwait(false);
         LyoUser user;
         var newlyProvisioned = false;
         if (link is null) {
             user = await ResolveOrProvisionAsync(provider, mapping, claims, ct).ConfigureAwait(false);
-            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, null, ct).ConfigureAwait(false);
+            link = await _identities.LinkAsync(user.Id, provider.Name, subject, mapping.Email, mapping.ProviderScopes, claims, null, ct).ConfigureAwait(false);
             _logger.LogInformation("Provisioned and linked Lyo user {UserId} for {Provider}", user.Id, provider.Name);
             newlyProvisioned = true;
             await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.UserProvisioned, user.Id, subject, provider.Name, "success", ct: ct).ConfigureAwait(false);
@@ -149,7 +150,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
             if (user.IsDisabled)
                 throw new ExternalLoginRejectedException("UserDisabled", "Lyo user is disabled");
 
-            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, null, ct).ConfigureAwait(false);
+            link = await _identities.LinkAsync(user.Id, provider.Name, subject, mapping.Email, mapping.ProviderScopes, claims, null, ct).ConfigureAwait(false);
         }
 
         await _users.UpdateLastLoginAsync(user.Id, DateTime.UtcNow, null, ct).ConfigureAwait(false);
@@ -188,10 +189,10 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
     {
         switch (_options.Policy) {
             case ExternalLoginPolicy.RequireExistingUser: {
-                if (string.IsNullOrWhiteSpace(mapping.Email))
+                if (mapping.Email.IsNullOrWhitespace())
                     throw new ExternalLoginRejectedException("UserNotProvisioned", "no email and policy=RequireExistingUser");
 
-                return await _users.GetByEmailAsync(mapping.Email!, null, ct).ConfigureAwait(false) ??
+                return await _users.GetByEmailAsync(mapping.Email, null, ct).ConfigureAwait(false) ??
                     throw new ExternalLoginRejectedException("UserNotProvisioned", "no pre-existing Lyo user with that email");
             }
             case ExternalLoginPolicy.JitFromAllowedClaim: {
@@ -208,10 +209,10 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
 
     private bool IsAllowedByClaim(IReadOnlyDictionary<string, object?> claims)
     {
-        if (string.IsNullOrWhiteSpace(_options.AllowedClaimName) || _options.AllowedClaimValues.Count == 0)
+        if (_options.AllowedClaimName.IsNullOrWhitespace() || _options.AllowedClaimValues.Count == 0)
             return false;
 
-        if (!claims.TryGetValue(_options.AllowedClaimName!, out var raw) || raw is null)
+        if (!claims.TryGetValue(_options.AllowedClaimName, out var raw) || raw is null)
             return false;
 
         var value = raw.ToString();
@@ -220,17 +221,17 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
 
     private async Task<LyoUser> ProvisionAsync(OidcClaimMappingResult mapping, string providerName, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(mapping.Email))
+        if (mapping.Email.IsNullOrWhitespace())
             throw new ExternalLoginRejectedException("UserNotProvisioned", $"{providerName} returned no email; cannot provision");
 
-        var existing = await _users.GetByEmailAsync(mapping.Email!, null, ct).ConfigureAwait(false);
+        var existing = await _users.GetByEmailAsync(mapping.Email, null, ct).ConfigureAwait(false);
         if (existing is not null)
             return existing;
 
         var now = DateTime.UtcNow;
         var baselineScopes = _options.DefaultUserScopes.Count == 0 ? Array.Empty<string>() : _options.DefaultUserScopes.Distinct(StringComparer.Ordinal).ToArray();
         var user = new LyoUser(
-            Guid.NewGuid(), string.IsNullOrWhiteSpace(mapping.DisplayName) ? mapping.Email! : mapping.DisplayName, mapping.Email!, mapping.EmailVerified, mapping.AvatarUrl,
+            Guid.NewGuid(), mapping.DisplayName.IsNullOrWhitespace() ? mapping.Email : mapping.DisplayName, mapping.Email, mapping.EmailVerified, mapping.AvatarUrl,
             mapping.PreferredLanguageBcp47, baselineScopes, null, null, now, null, null, null, null);
 
         return await _users.CreateAsync(user, null, ct).ConfigureAwait(false);

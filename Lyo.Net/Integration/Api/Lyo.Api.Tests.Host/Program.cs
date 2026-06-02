@@ -81,7 +81,7 @@ app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes,
     .WithUpsert(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
     .WithUpsertBulk(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
     .WithDelete()
-    .WithDeleteBulk(ctx => { }, ctx => { })
+    .WithDeleteBulk(_ => { }, _ => { })
     .Build();
 
 app.MapDynamicCrudEndpoints<JobContext>(c => c.WithDefaults(d => {

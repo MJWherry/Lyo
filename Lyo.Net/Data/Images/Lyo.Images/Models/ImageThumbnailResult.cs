@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.Result;
 
 namespace Lyo.Images.Models;
 
 /// <summary>Result of a thumbnail generation operation with image-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ImageThumbnailResult : Result<byte[]>
 {
     /// <summary>The maximum width of the thumbnail.</summary>
@@ -43,4 +45,9 @@ public sealed record ImageThumbnailResult : Result<byte[]>
         var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
         return new(false, null, [error]);
     }
+
+    public override string ToString()
+        => IsSuccess
+            ? $"ImageThumbnailResult: {Data?.Length ?? 0} bytes, {MaxWidth}x{MaxHeight}, format={Format}"
+            : $"ImageThumbnailResult: failed, errors={Errors?.Count ?? 0}";
 }

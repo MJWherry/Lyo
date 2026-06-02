@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The request shape for <see cref="Services.Opaque.IApiTokenIssuer.IssueAsync" />.</summary>
@@ -9,6 +11,7 @@ namespace Lyo.Authentication.Models.Records;
 /// <param name="Lifetime">Override the default lifetime. <c>null</c> means "use the kind's default"; <see cref="TimeSpan.Zero" /> means "no expiry".</param>
 /// <param name="Metadata">Optional metadata bag. Persisted as <c>metadata_json</c>.</param>
 /// <param name="RotatedFromId">When this issuance replaces a previous token, set this so the audit chain can be reconstructed.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ApiTokenIssueRequest(
     string Kind,
     string DisplayName,
@@ -17,4 +20,8 @@ public sealed record ApiTokenIssueRequest(
     string? Ring = null,
     TimeSpan? Lifetime = null,
     IReadOnlyDictionary<string, object?>? Metadata = null,
-    string? RotatedFromId = null);
+    string? RotatedFromId = null)
+{
+    public override string ToString()
+        => $"ApiTokenIssueRequest: kind={Kind}, name={DisplayName}, user={UserId}, scopes={Scopes.Count}";
+}

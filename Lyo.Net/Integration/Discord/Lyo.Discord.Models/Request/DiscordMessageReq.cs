@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordMessageReq
 {
     public long Id { get; set; }
@@ -17,4 +20,7 @@ public sealed class DiscordMessageReq
     public bool IsDeleted { get; set; }
 
     public DateTime MessageCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordMessageReq: id={Id}, channel={ChannelId}, author={AuthorId}";
 }

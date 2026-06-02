@@ -5,6 +5,7 @@ using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Keystore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,8 +23,8 @@ public sealed class ExternalLoginCoordinatorTests
         var result = await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal("/home", result.ReturnUrl);
-        Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
-        Assert.False(string.IsNullOrEmpty(result.Issued.RefreshToken));
+        Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
+        Assert.False(result.Issued.RefreshToken.IsNullOrEmpty());
         var user = await fx.UserStore.GetByEmailAsync("alice@example.com", null, TestContext.Current.CancellationToken);
         Assert.NotNull(user);
         var links = await fx.IdentityStore.ListForUserAsync(user.Id, null, TestContext.Current.CancellationToken);
@@ -51,7 +52,7 @@ public sealed class ExternalLoginCoordinatorTests
         var code = fx.IssueCode("user-3", "carol@example.com", nonce);
         var result = await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
+        Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
         var links = await fx.IdentityStore.ListForUserAsync(preExisting.Id, null, TestContext.Current.CancellationToken);
         Assert.Single(links);
     }
@@ -110,7 +111,7 @@ public sealed class ExternalLoginCoordinatorTests
         var code = fx.IssueCodeWithClaims(claims);
         var result = await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
+        Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
     }
 
     [Fact]
@@ -154,14 +155,14 @@ public sealed class ExternalLoginCoordinatorTests
         public async ValueTask DisposeAsync()
         {
             if (_host is not null) {
-                await _host.StopAsync();
+                await _host.StopAsync(TestContext.Current.CancellationToken);
                 _host.Dispose();
             }
         }
 
         public async Task<(string sealedState, string nonce, string state)> BuildRedirectAsync(string providerName)
         {
-            var redirect = await Coordinator.BuildLoginRedirectAsync(providerName, "/home");
+            var redirect = await Coordinator.BuildLoginRedirectAsync(providerName, "/home", ct: TestContext.Current.CancellationToken);
             var unsealed = _protector.Unseal(redirect.SealedState) ?? throw new InvalidOperationException("could not unseal state in test");
             return (redirect.SealedState, unsealed.Nonce, unsealed.State);
         }
@@ -213,7 +214,7 @@ public sealed class ExternalLoginCoordinatorTests
             hostBuilder.Services.AddHttpClient<OidcJwksResolver>().ConfigurePrimaryHttpMessageHandler(() => fx._idp.CreateHandler());
             hostBuilder.Services.AddHttpClient<OidcTokenExchangeClient>().ConfigurePrimaryHttpMessageHandler(() => fx._idp.CreateHandler());
             fx._host = hostBuilder.Build();
-            await fx._host.StartAsync();
+            await fx._host.StartAsync(TestContext.Current.CancellationToken);
             fx.Coordinator = fx._host.Services.GetRequiredService<IExternalLoginCoordinator>();
             fx.UserStore = fx._host.Services.GetRequiredService<IUserStore>();
             fx.IdentityStore = fx._host.Services.GetRequiredService<IExternalIdentityStore>();

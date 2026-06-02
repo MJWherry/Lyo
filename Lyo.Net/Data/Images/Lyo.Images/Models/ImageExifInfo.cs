@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>Structured EXIF metadata extracted from images (camera info, location, date taken, etc.).</summary>
@@ -13,6 +15,7 @@ namespace Lyo.Images.Models;
 /// <param name="FNumber">F-number / aperture (e.g., 2.8). Null if not present.</param>
 /// <param name="IsoSpeed">ISO speed rating. Null if not present.</param>
 /// <param name="Orientation">Image orientation (1=Normal, 3=180°, 6=90° CW, 8=90° CCW). Null if not present.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ImageExifInfo(
     string? CameraMake = null,
     string? CameraModel = null,
@@ -25,4 +28,8 @@ public sealed record ImageExifInfo(
     double? ExposureTime = null,
     double? FNumber = null,
     ushort? IsoSpeed = null,
-    ushort? Orientation = null);
+    ushort? Orientation = null)
+{
+    public override string ToString()
+        => $"ImageExifInfo: {CameraMake} {CameraModel}, taken={DateTimeTaken?.ToString("O") ?? "n/a"}, gps={Latitude},{Longitude}";
+}

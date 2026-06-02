@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models;
 
 /// <summary>Represents an identification document (passport, driver's license, etc.)</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class Identification
 {
     /// <summary>Unique identifier for the identification</summary>
@@ -41,4 +43,8 @@ public class Identification
 
     /// <summary>Days until expiration (negative if expired)</summary>
     public int? DaysUntilExpiration => ExpiryDate.HasValue ? (int)(ExpiryDate.Value - DateTime.UtcNow).TotalDays : null;
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"Identification: id={Id}, type={Type}, number={Number}, verified={IsVerified}";
 }

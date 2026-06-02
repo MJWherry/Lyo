@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>Caption band (text strip above or below the input image) drawn by <see cref="IImageDecorationService.AddCaptionAsync" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CaptionOptions
 {
     /// <summary>Caption text. Required; <see cref="IImageDecorationService.AddCaptionAsync" /> rejects empty values.</summary>
@@ -38,4 +41,7 @@ public sealed class CaptionOptions
 
     /// <summary>Rounded corners on the outer edge of the caption band (header: top corners; footer: bottom corners). Default: 0 (square).</summary>
     public int CornerRadiusPx { get; set; }
+
+    public override string ToString()
+        => $"CaptionOptions: text={Text}, placement={Placement}, bandHeight={BandHeightPx}px";
 }

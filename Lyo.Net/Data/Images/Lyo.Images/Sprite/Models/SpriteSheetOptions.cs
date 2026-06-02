@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Sprite.Models;
 
 /// <summary>Describes a uniform spritesheet layout for calculators and exporters (source dimensions, trims, grid).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SpriteSheetOptions
 {
     /// <summary>Total width of the source strip or sheet in pixels.</summary>
@@ -41,4 +44,7 @@ public sealed class SpriteSheetOptions
 
     /// <summary>Zero-based frame indices to skip when iterating the grid.</summary>
     public IReadOnlyCollection<int>? ExcludedFrames { get; init; }
+
+    public override string ToString()
+        => $"SpriteSheetOptions: {SourceWidth}x{SourceHeight}, rows={RowCount}, framesPerRow={FramesPerRow}, fps={FramesPerSecond}";
 }

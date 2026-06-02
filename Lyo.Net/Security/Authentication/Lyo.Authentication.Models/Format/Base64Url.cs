@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Models.Format;
@@ -34,10 +35,10 @@ public static class Base64Url
     /// <summary>True if <paramref name="input" /> is non-empty and only contains base64url characters.</summary>
     public static bool IsValid(string? input)
     {
-        if (string.IsNullOrEmpty(input))
+        if (input.IsNullOrEmpty())
             return false;
 
-        foreach (var c in input!) {
+        foreach (var c in input) {
             if (c >= 'A' && c <= 'Z')
                 continue;
 

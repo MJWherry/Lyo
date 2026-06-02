@@ -4,6 +4,7 @@ using System.Text.Json;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -42,7 +43,7 @@ public sealed class OidcIdTokenValidator
     public async Task<IReadOnlyDictionary<string, object?>?> ValidateAsync(IOpenIdConnectProvider provider, string idToken, string expectedNonce, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(provider);
-        if (string.IsNullOrWhiteSpace(idToken))
+        if (idToken.IsNullOrWhitespace())
             return null;
 
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(expectedNonce);
@@ -69,12 +70,12 @@ public sealed class OidcIdTokenValidator
 
         var alg = header.TryGetValue("alg", out var algEl) ? algEl.GetString() : null;
         var kid = header.TryGetValue("kid", out var kidEl) ? kidEl.GetString() : null;
-        if (string.IsNullOrEmpty(alg) || string.Equals(alg, "none", StringComparison.OrdinalIgnoreCase)) {
+        if (alg.IsNullOrEmpty() || string.Equals(alg, "none", StringComparison.OrdinalIgnoreCase)) {
             _logger.LogDebug("id_token rejected: alg={Alg}", alg);
             return null;
         }
 
-        if (string.IsNullOrEmpty(kid)) {
+        if (kid.IsNullOrEmpty()) {
             _logger.LogDebug("id_token rejected: missing kid");
             return null;
         }
@@ -186,17 +187,17 @@ public sealed class OidcIdTokenValidator
 
     private static bool VerifyRsa(OidcJsonWebKey key, byte[] data, byte[] signature, HashAlgorithmName hash, RSASignaturePadding padding)
     {
-        if (!string.Equals(key.Kty, "RSA", StringComparison.Ordinal) || string.IsNullOrEmpty(key.N) || string.IsNullOrEmpty(key.E))
+        if (!string.Equals(key.Kty, "RSA", StringComparison.Ordinal) || key.N.IsNullOrEmpty() || key.E.IsNullOrEmpty())
             return false;
 
         using var rsa = RSA.Create();
-        rsa.ImportParameters(new() { Modulus = Base64Url.Decode(key.N!), Exponent = Base64Url.Decode(key.E!) });
+        rsa.ImportParameters(new() { Modulus = Base64Url.Decode(key.N), Exponent = Base64Url.Decode(key.E) });
         return rsa.VerifyData(data, signature, hash, padding);
     }
 
     private static bool VerifyEcdsa(OidcJsonWebKey key, byte[] data, byte[] signature, HashAlgorithmName hash)
     {
-        if (!string.Equals(key.Kty, "EC", StringComparison.Ordinal) || string.IsNullOrEmpty(key.X) || string.IsNullOrEmpty(key.Y) || string.IsNullOrEmpty(key.Crv))
+        if (!string.Equals(key.Kty, "EC", StringComparison.Ordinal) || key.X.IsNullOrEmpty() || key.Y.IsNullOrEmpty() || key.Crv.IsNullOrEmpty())
             return false;
 
         var curve = key.Crv switch {
@@ -208,16 +209,16 @@ public sealed class OidcIdTokenValidator
         if (curve.Oid is null)
             return false;
 
-        using var ecdsa = ECDsa.Create(new ECParameters { Curve = curve, Q = new() { X = Base64Url.Decode(key.X!), Y = Base64Url.Decode(key.Y!) } });
+        using var ecdsa = ECDsa.Create(new ECParameters { Curve = curve, Q = new() { X = Base64Url.Decode(key.X), Y = Base64Url.Decode(key.Y) } });
         return ecdsa.VerifyData(data, signature, hash);
     }
 
     private static bool VerifyEd25519(OidcJsonWebKey key, byte[] data, byte[] signature)
     {
-        if (!string.Equals(key.Kty, "OKP", StringComparison.Ordinal) || !string.Equals(key.Crv, "Ed25519", StringComparison.Ordinal) || string.IsNullOrEmpty(key.X))
+        if (!string.Equals(key.Kty, "OKP", StringComparison.Ordinal) || !string.Equals(key.Crv, "Ed25519", StringComparison.Ordinal) || key.X.IsNullOrEmpty())
             return false;
 
-        var pub = new Ed25519PublicKeyParameters(Base64Url.Decode(key.X!), 0);
+        var pub = new Ed25519PublicKeyParameters(Base64Url.Decode(key.X), 0);
         var signer = new Ed25519Signer();
         signer.Init(false, pub);
         signer.BlockUpdate(data, 0, data.Length);

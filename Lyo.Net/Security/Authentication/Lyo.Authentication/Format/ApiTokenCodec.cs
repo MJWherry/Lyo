@@ -1,5 +1,6 @@
 using System.Text;
 using Lyo.Authentication.Models.Format;
+using Lyo.Common.Extensions;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
 using Lyo.Hashing;
@@ -71,10 +72,10 @@ public static class ApiTokenCodec
     public static bool TryParse(string? input, out ApiToken? token)
     {
         token = null;
-        if (string.IsNullOrWhiteSpace(input))
+        if (input.IsNullOrWhitespace())
             return false;
 
-        var s = input!;
+        var s = input;
         var sep1 = s.IndexOf(Separator);
         if (sep1 != 3)
             return false;

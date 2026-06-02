@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Gateway.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PersonReq
 {
     public Guid? EndatoEnrichedPersonId { get; set; }
@@ -19,4 +22,7 @@ public sealed class PersonReq
     public string Source { get; set; } = "Manual";
 
     public List<PersonAddressReq> PersonAddresses { get; set; } = [];
+
+    public override string ToString()
+        => $"PersonReq: name={FirstName} {LastName}, source={Source}, addresses={PersonAddresses.Count}";
 }

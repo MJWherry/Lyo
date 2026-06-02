@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Response;
 
 /// <summary>Enriched volume response combining comic domain data with cross-domain metadata (tags, ratings, comments).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ComicVolumeRes
 {
     public Guid Id { get; init; }
@@ -39,4 +42,7 @@ public sealed record ComicVolumeRes
 
     /// <summary>Resolved URL for the volume cover image. Populated when <see cref="CoverImageRef" /> is a valid file storage GUID.</summary>
     public string? CoverImageUrl => CoverImageRef != null && Guid.TryParse(CoverImageRef, out var id) ? $"/files/{id}" : null;
+
+    public override string ToString()
+        => $"ComicVolumeRes: vol={VolumeNumber}, title={Title ?? "(untitled)"}, series={SeriesId}";
 }

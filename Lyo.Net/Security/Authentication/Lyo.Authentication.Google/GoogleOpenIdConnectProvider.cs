@@ -1,4 +1,5 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
@@ -46,7 +47,7 @@ public sealed class GoogleOpenIdConnectProvider : IOpenIdConnectProvider
     /// <inheritdoc />
     public string? PreflightReject(IReadOnlyDictionary<string, object?> claims)
     {
-        if (string.IsNullOrWhiteSpace(_options.HostedDomain))
+        if (_options.HostedDomain.IsNullOrWhitespace())
             return null;
 
         if (!claims.TryGetValue("hd", out var raw) || raw is null)

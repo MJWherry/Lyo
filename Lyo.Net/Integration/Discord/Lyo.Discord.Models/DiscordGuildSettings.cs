@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models;
 
 /// <summary>Per-guild bot configuration stored in the config store, keyed by <c>EntityRef.For&lt;DiscordGuild&gt;(guildId)</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordGuildSettings
 {
     /// <summary>Current persisted schema version; bump when adding migrations in <see cref="NormalizeForRead" />.</summary>
@@ -43,4 +46,7 @@ public sealed class DiscordGuildSettings
         NormalizeForRead();
         Version = CurrentSchemaVersion;
     }
+
+    public override string ToString()
+        => $"DiscordGuildSettings: v{Version}, commandChannel={CommandChannelId}, logChannel={LogChannelId}";
 }

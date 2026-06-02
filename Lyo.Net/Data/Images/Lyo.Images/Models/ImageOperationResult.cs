@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Images.Models;
 
 /// <summary>Result of an image operation that writes to a stream (no return value).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ImageOperationResult : Result<bool>
 {
     /// <summary>The operation type performed.</summary>
@@ -30,4 +32,7 @@ public sealed record ImageOperationResult : Result<bool>
         var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
         return new(false, false, [error]) { OperationType = operationType };
     }
+
+    public override string ToString()
+        => IsSuccess ? $"ImageOperationResult: {OperationType ?? "operation"} ok" : $"ImageOperationResult: {OperationType ?? "operation"} failed";
 }

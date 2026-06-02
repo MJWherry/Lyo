@@ -1,6 +1,4 @@
-using Lyo.EntityReference.Postgres;
 using Lyo.EntityReference.Models;
-using Lyo.EntityReference.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -31,7 +29,7 @@ public abstract class EntityRelationConfiguration<TEntity> : IEntityTypeConfigur
     protected void MapColumns(EntityTypeBuilder<TEntity> builder)
     {
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
-        builder.ConfigureEntityRelationEndpointColumns(EntityRelationEndpointConfigurationExtensions.EntityTypeMaxLength, EntityRelationEndpointConfigurationExtensions.EntityIdMaxLength);
+        builder.ConfigureEntityRelationEndpointColumns();
         builder.Property(e => e.TenantId).IsRequired().HasColumnName("tenant_id").HasColumnType("uuid");
         builder.Property(e => e.Context).HasMaxLength(200).HasColumnName("context");
         builder.Property(e => e.CreatedAt).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_at");

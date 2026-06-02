@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Audit;
 
 /// <summary>
@@ -18,6 +20,7 @@ namespace Lyo.Authentication.Models.Audit;
 /// <param name="CorrelationId">Trace/request id (W3C traceparent or otherwise) that the event participates in.</param>
 /// <param name="Metadata">Open-ended extra context. Recorders typically persist as <c>jsonb</c>.</param>
 /// <param name="TenantId">Optional tenant scope. <c>null</c> means system / no tenant; non-null indicates a tenant-scoped event.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthAuditEvent(
     Guid Id,
     DateTime Timestamp,
@@ -31,4 +34,8 @@ public sealed record AuthAuditEvent(
     string? UserAgent = null,
     string? CorrelationId = null,
     IReadOnlyDictionary<string, object?>? Metadata = null,
-    Guid? TenantId = null);
+    Guid? TenantId = null)
+{
+    public override string ToString()
+        => $"AuthAuditEvent: kind={Kind}, user={UserId}, outcome={Outcome ?? "?"}";
+}

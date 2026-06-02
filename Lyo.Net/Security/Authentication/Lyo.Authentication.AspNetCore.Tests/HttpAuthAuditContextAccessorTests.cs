@@ -26,8 +26,9 @@ public sealed class HttpAuthAuditContextAccessorTests
     [Fact]
     public void IpAndUserAgent_SourcedFromHttpContext()
     {
-        var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext { Connection = { RemoteIpAddress = IPAddress.Parse("203.0.113.5") } } };
-        httpContextAccessor.HttpContext!.Request.Headers.UserAgent = "ua/test";
+        var httpContext = new DefaultHttpContext { Connection = { RemoteIpAddress = IPAddress.Parse("203.0.113.5") } };
+        httpContext.Request.Headers.UserAgent = "ua/test";
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = httpContext };
         var accessor = new HttpAuthAuditContextAccessor(httpContextAccessor, new StubResolver("ignored"));
         Assert.Equal("203.0.113.5", accessor.IpAddress);
         Assert.Equal("ua/test", accessor.UserAgent);

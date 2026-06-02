@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The persistent shape of a Format-B token. Backed by the <c>[user].[token]</c> table when persisted via <c>Lyo.Authentication.Postgres</c>.</summary>
@@ -16,6 +18,7 @@ namespace Lyo.Authentication.Models.Records;
 /// <param name="RevokedAt">Hard stop. When non-null and in the past, validators reject the token.</param>
 /// <param name="RevokedReason">Optional audit context.</param>
 /// <param name="RotatedFromId">Audit trail when this token replaced another via rotate.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ApiTokenRecord(
     string Id,
     byte[] SecretHash,
@@ -38,4 +41,7 @@ public sealed record ApiTokenRecord(
 
     /// <summary>True if <see cref="ExpiresAt" /> is set and in the past relative to <paramref name="now" />.</summary>
     public bool IsExpired(DateTime now) => ExpiresAt.HasValue && ExpiresAt.Value <= now;
+
+    public override string ToString()
+        => $"ApiTokenRecord: id={Id}, kind={Kind}, ring={Ring}, user={UserId}, name={DisplayName}";
 }

@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiscordUserRes(
     long Id,
     string Username,
@@ -11,4 +14,8 @@ public sealed record DiscordUserRes(
     bool? IsSystem,
     bool? IsMfaEnabled,
     string? PremiumLevel,
-    DateTime UserCreatedDate);
+    DateTime UserCreatedDate)
+{
+    public override string ToString()
+        => $"DiscordUserRes: id={Id}, username={Username}, bot={IsBot}";
+}

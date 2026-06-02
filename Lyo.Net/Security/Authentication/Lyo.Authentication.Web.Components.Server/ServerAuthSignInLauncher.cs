@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Authentication.Client;
+using Lyo.Common.Extensions;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Components;
@@ -34,7 +35,7 @@ public sealed class ServerAuthSignInLauncher : IAuthSignInLauncher
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         var basePath = _options.SignInPath.TrimEnd('/') + "/" + Uri.EscapeDataString(provider);
-        var target = string.IsNullOrWhiteSpace(returnUrl) ? basePath : basePath + "?returnUrl=" + Uri.EscapeDataString(returnUrl!);
+        var target = returnUrl.IsNullOrWhitespace() ? basePath : basePath + "?returnUrl=" + Uri.EscapeDataString(returnUrl);
         _navigation.NavigateTo(target, true);
         return Task.CompletedTask;
     }

@@ -1,7 +1,10 @@
-using System.Diagnostics;
 using System.Globalization;
 using Lyo.Common.Records;
 using Lyo.IO.Temp.Enums;
+
+#if  NETSTANDARD2_0
+using System.Diagnostics;
+#endif
 
 namespace Lyo.IO.Temp.Models;
 

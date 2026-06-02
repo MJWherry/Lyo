@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>Options for watermark operations.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class WatermarkOptions
 {
     /// <summary>Gets or sets the font size in pixels.</summary>
@@ -20,6 +23,9 @@ public class WatermarkOptions
 
     /// <summary>Gets or sets the padding from edges in pixels.</summary>
     public int Padding { get; set; } = 10;
+
+    public override string ToString()
+        => $"WatermarkOptions: position={Position}, fontSize={FontSize}, opacity={Opacity}";
 }
 
 /// <summary>Anchor corner or center for watermark text.</summary>

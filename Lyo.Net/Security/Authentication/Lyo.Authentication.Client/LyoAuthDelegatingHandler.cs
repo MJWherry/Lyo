@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -44,7 +45,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         var session = ResolveSession();
         if (session is not null) {
             var now = DateTime.UtcNow;
-            if (session.AccessTokenExpiresAt - _options.AccessTokenSkew <= now && !string.IsNullOrWhiteSpace(session.RefreshToken)) {
+            if (session.AccessTokenExpiresAt - _options.AccessTokenSkew <= now && !session.RefreshToken.IsNullOrWhitespace()) {
                 _logger.LogDebug("Pre-emptively refreshing Lyo session {SessionId} (expires {Expires:O})", session.SessionId, session.AccessTokenExpiresAt);
                 await TryRefreshAsync(session, cancellationToken).ConfigureAwait(false);
             }
@@ -53,7 +54,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode != HttpStatusCode.Unauthorized || session is null || string.IsNullOrWhiteSpace(session.RefreshToken))
+        if (response.StatusCode != HttpStatusCode.Unauthorized || session is null || session.RefreshToken.IsNullOrWhitespace())
             return response;
 
         response.Dispose();
@@ -71,10 +72,10 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
     private async Task<bool> TryRefreshAsync(LyoAuthSession session, CancellationToken ct)
     {
         var refresh = session.RefreshToken;
-        if (string.IsNullOrWhiteSpace(refresh))
+        if (refresh.IsNullOrWhitespace())
             return false;
 
-        var refreshed = await _authApi.RefreshAsync(refresh!, ct).ConfigureAwait(false);
+        var refreshed = await _authApi.RefreshAsync(refresh, ct).ConfigureAwait(false);
         if (refreshed is null) {
             _logger.LogInformation("Refresh failed for session {SessionId}; clearing", session.SessionId);
             _sessions.Remove(session.SessionId);
@@ -92,11 +93,11 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         if (ctx is null)
             return null;
 
-        if (!ctx.Request.Cookies.TryGetValue(_options.CookieName, out var sealedId) || string.IsNullOrWhiteSpace(sealedId))
+        if (!ctx.Request.Cookies.TryGetValue(_options.CookieName, out var sealedId) || sealedId.IsNullOrWhitespace())
             return null;
 
         try {
-            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId!));
+            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId));
             var raw = Encoding.UTF8.GetString(bytes);
             if (!Guid.TryParse(raw, out var sessionId))
                 return null;

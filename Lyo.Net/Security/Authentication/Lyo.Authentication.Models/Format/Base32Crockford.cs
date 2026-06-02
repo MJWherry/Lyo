@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Models.Format;
@@ -44,7 +45,7 @@ public static class Base32Crockford
     /// <summary>True if <paramref name="value" /> is exactly <see cref="EncodedRandomLength" /> characters of lowercase Crockford base32 alphabet.</summary>
     public static bool IsValidId(string? value)
     {
-        if (string.IsNullOrEmpty(value) || value!.Length != EncodedRandomLength)
+        if (value.IsNullOrEmpty() || value.Length != EncodedRandomLength)
             return false;
 
         foreach (var c in value) {

@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Services.Refresh;
@@ -32,7 +33,7 @@ public sealed class DefaultLyoRefreshTokenIssuer : ILyoRefreshTokenIssuer
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(parentJti);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         var metadata = new Dictionary<string, object?> { [ParentJtiMetadataKey] = parentJti, ["user_id"] = userId.ToString("D"), [ProviderMetadataKey] = provider };
-        if (!string.IsNullOrWhiteSpace(externalSubject))
+        if (!externalSubject.IsNullOrWhitespace())
             metadata[ExternalSubjectMetadataKey] = externalSubject;
 
         var request = new ApiTokenIssueRequest(ApiTokenKind.Internal, "Lyo refresh token", [LyoRefreshTokenScopes.Refresh], userId, Lifetime: lifetime, Metadata: metadata);

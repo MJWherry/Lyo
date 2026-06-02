@@ -17,7 +17,7 @@ public sealed class PostgresApiTokenStoreTests
         await _fixture.TokenStore.InsertAsync(token, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
-        Assert.Equal(token.Id, loaded!.Id);
+        Assert.Equal(token.Id, loaded.Id);
         Assert.Equal(token.SecretHash, loaded.SecretHash);
         Assert.Equal(token.Kind, loaded.Kind);
         Assert.Equal(token.Ring, loaded.Ring);
@@ -42,7 +42,7 @@ public sealed class PostgresApiTokenStoreTests
         await _fixture.TokenStore.RevokeAsync(token.Id, revokedAt, "by-user", null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
-        Assert.NotNull(loaded!.RevokedAt);
+        Assert.NotNull(loaded.RevokedAt);
         Assert.Equal("by-user", loaded.RevokedReason);
     }
 
@@ -54,7 +54,8 @@ public sealed class PostgresApiTokenStoreTests
         var now = DateTime.UtcNow;
         await _fixture.TokenStore.TouchLastUsedAsync(token.Id, now, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken);
-        Assert.NotNull(loaded!.LastUsedAt);
+        Assert.NotNull(loaded);
+        Assert.NotNull(loaded.LastUsedAt);
     }
 
     [Fact]
@@ -100,7 +101,8 @@ public sealed class PostgresApiTokenStoreTests
         var second = NewToken(NewId(), rotatedFromId: first.Id);
         await _fixture.TokenStore.InsertAsync(second, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.TokenStore.GetByIdAsync(second.Id, null, TestContext.Current.CancellationToken);
-        Assert.Equal(first.Id, loaded!.RotatedFromId);
+        Assert.NotNull(loaded);
+        Assert.Equal(first.Id, loaded.RotatedFromId);
     }
 
     [Fact]

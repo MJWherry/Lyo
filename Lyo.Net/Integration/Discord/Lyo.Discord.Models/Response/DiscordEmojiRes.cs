@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiscordEmojiRes(
     long Id,
     long? GuildId,
@@ -9,4 +12,8 @@ public sealed record DiscordEmojiRes(
     bool IsAvailable,
     bool IsManaged,
     bool RequiresColons,
-    DateTime EmojiCreatedDate);
+    DateTime EmojiCreatedDate)
+{
+    public override string ToString()
+        => $"DiscordEmojiRes: :{Name}: id={Id}, animated={IsAnimated}";
+}

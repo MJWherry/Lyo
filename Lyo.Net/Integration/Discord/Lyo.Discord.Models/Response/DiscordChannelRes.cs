@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiscordChannelRes(
     long Id,
     long GuildId,
@@ -12,4 +15,8 @@ public sealed record DiscordChannelRes(
     bool IsThread,
     int Position,
     long? ParentId,
-    DateTime ChannelCreated);
+    DateTime ChannelCreated)
+{
+    public override string ToString()
+        => $"DiscordChannelRes: #{Name}, guild={GuildId}, type={ChannelType}";
+}

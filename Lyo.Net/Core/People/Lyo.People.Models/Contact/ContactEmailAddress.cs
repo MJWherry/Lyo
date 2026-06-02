@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Links a person to an email address with relationship type (personal, work, etc.). Allows a person to have multiple email addresses of different types.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class ContactEmailAddress
 {
     /// <summary>Unique identifier for the contact-email association</summary>
@@ -37,4 +39,8 @@ public class ContactEmailAddress
 
     /// <summary>Navigation property to the email address</summary>
     public EmailAddress? EmailAddress { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"ContactEmailAddress: person={PersonId}, email={EmailAddress?.Email ?? EmailAddressId.ToString()}, type={Type}, primary={IsPrimary}";
 }

@@ -2,6 +2,7 @@ using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -30,10 +31,10 @@ public static class TokenManagementEndpointsMapper
         ArgumentHelpers.ThrowIfNull(endpoints);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(prefix);
         var group = endpoints.MapGroup(prefix).WithTags("LyoTokens");
-        group.MapGet("", (Delegate)ListAsync).WithName("LyoTokensList").RequireScope(ReadScope);
-        group.MapGet("/kinds", (Delegate)KindsAsync).WithName("LyoTokensListKinds").RequireScope(ReadScope);
-        group.MapPost("", (Delegate)CreateAsync).WithName("LyoTokensCreate").RequireScope(WriteScope);
-        group.MapDelete("/{id}", (Delegate)RevokeAsync).WithName("LyoTokensRevoke").RequireScope(WriteScope);
+        group.MapGet("", ListAsync).WithName("LyoTokensList").RequireScope(ReadScope);
+        group.MapGet("/kinds", KindsAsync).WithName("LyoTokensListKinds").RequireScope(ReadScope);
+        group.MapPost("", CreateAsync).WithName("LyoTokensCreate").RequireScope(WriteScope);
+        group.MapDelete("/{id}", RevokeAsync).WithName("LyoTokensRevoke").RequireScope(WriteScope);
         return group;
     }
 
@@ -57,7 +58,7 @@ public static class TokenManagementEndpointsMapper
 
     private static async Task<IResult> CreateAsync(HttpContext ctx, IApiTokenIssuer issuer, CreateTokenRequest? body)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.DisplayName))
+        if (body is null || body.DisplayName.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "missing_display_name" });
 
         if (!TryResolveUser(ctx, out var userId))
@@ -71,21 +72,21 @@ public static class TokenManagementEndpointsMapper
         if (!KindIsAllowed(kind, callerScopes))
             return Results.Json(new { error = "kind_not_permitted", kind, required_scope = KindScopePrefix + kind }, statusCode: StatusCodes.Status403Forbidden);
 
-        var requestedScopes = body.Scopes ?? Array.Empty<string>();
+        var requestedScopes = body.Scopes ?? [];
         var grantedScopes = requestedScopes.Where(callerScopes.Contains).ToArray();
         // Webhook tokens are signature-only and conventionally carry no scopes; for every other kind we require at least one grantable scope so the token does something.
         if (grantedScopes.Length == 0 && kind != ApiTokenKind.Webhook)
             return Results.BadRequest(new { error = "no_grantable_scopes" });
 
         var issued = await issuer.IssueAsync(
-                new(kind, body.DisplayName!, grantedScopes, userId, Lifetime: body.LifetimeSeconds is { } s ? TimeSpan.FromSeconds(s) : null, Metadata: body.Metadata),
+                new(kind, body.DisplayName, grantedScopes, userId, Lifetime: body.LifetimeSeconds is { } s ? TimeSpan.FromSeconds(s) : null, Metadata: body.Metadata),
                 ctx.RequestAborted)
             .ConfigureAwait(false);
 
         return Results.Json(new CreateTokenResponse(issued.Plaintext, MapForDisplay(issued.Record)));
     }
 
-    private static string NormalizeKind(string? raw) => string.IsNullOrWhiteSpace(raw) ? ApiTokenKind.Pat : raw!.Trim().ToLowerInvariant();
+    private static string NormalizeKind(string? raw) => raw.IsNullOrWhitespace() ? ApiTokenKind.Pat : raw.Trim().ToLowerInvariant();
 
     private static bool KindIsAllowed(string kind, ISet<string> callerScopes)
     {
@@ -125,10 +126,10 @@ public static class TokenManagementEndpointsMapper
     {
         userId = Guid.Empty;
         var claim = ctx.User.FindFirst("lyo:user")?.Value ?? ctx.User.FindFirst("sub")?.Value;
-        if (string.IsNullOrEmpty(claim))
+        if (claim.IsNullOrEmpty())
             return false;
 
-        var raw = claim!.StartsWith("lyo_user:", StringComparison.Ordinal) ? claim["lyo_user:".Length..] : claim;
+        var raw = claim.StartsWith("lyo_user:", StringComparison.Ordinal) ? claim["lyo_user:".Length..] : claim;
         return Guid.TryParse(raw, out userId);
     }
 

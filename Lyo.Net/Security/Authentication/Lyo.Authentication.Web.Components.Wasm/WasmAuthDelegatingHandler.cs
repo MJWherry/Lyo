@@ -1,4 +1,5 @@
 using System.Net;
+using Lyo.Common.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -30,7 +31,7 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
         var session = await _sessions.GetAsync(cancellationToken).ConfigureAwait(false);
         if (session is not null) {
             var now = DateTime.UtcNow;
-            if (session.AccessTokenExpiresAt - _options.AccessTokenSkew <= now && !string.IsNullOrWhiteSpace(session.RefreshToken)) {
+            if (session.AccessTokenExpiresAt - _options.AccessTokenSkew <= now && !session.RefreshToken.IsNullOrWhitespace()) {
                 _logger.LogDebug("Pre-emptively refreshing WASM session (expires {Expires:O})", session.AccessTokenExpiresAt);
                 session = await TryRefreshAsync(session, cancellationToken).ConfigureAwait(false) ?? session;
             }
@@ -39,7 +40,7 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode != HttpStatusCode.Unauthorized || session is null || string.IsNullOrWhiteSpace(session.RefreshToken))
+        if (response.StatusCode != HttpStatusCode.Unauthorized || session is null || session.RefreshToken.IsNullOrWhitespace())
             return response;
 
         response.Dispose();
@@ -58,10 +59,10 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
     private async Task<WasmAuthPersistedSession?> TryRefreshAsync(WasmAuthPersistedSession session, CancellationToken ct)
     {
         var refresh = session.RefreshToken;
-        if (string.IsNullOrWhiteSpace(refresh))
+        if (refresh.IsNullOrWhitespace())
             return null;
 
-        var refreshed = await _authApi.RefreshAsync(refresh!, ct).ConfigureAwait(false);
+        var refreshed = await _authApi.RefreshAsync(refresh, ct).ConfigureAwait(false);
         if (refreshed is null) {
             _logger.LogInformation("WASM refresh failed; clearing session");
             await _sessions.ClearAsync(ct).ConfigureAwait(false);

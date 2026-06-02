@@ -7,6 +7,7 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Refresh;
+using Lyo.Common.Extensions;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -68,7 +69,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         OperationHelpers.ThrowIfNullOrWhiteSpace(version, $"No current signing key version found for '{_options.SigningKeyId}'.");
         var seed = await _keys.GetCurrentKeyAsync(_options.SigningKeyId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(seed, $"No current signing key bytes found for '{_options.SigningKeyId}'.");
-        if (seed!.Length != Ed25519Constants.PrivateSeedLength) {
+        if (seed.Length != Ed25519Constants.PrivateSeedLength) {
             throw new InvalidOperationException(
                 $"Signing key '{_options.SigningKeyId}' v{version} is {seed.Length} bytes; expected {Ed25519Constants.PrivateSeedLength} for Ed25519.");
         }
@@ -89,7 +90,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
             [LyoJwtClaims.Scope] = string.Join(" ", scopes.Distinct(StringComparer.Ordinal))
         };
 
-        if (!string.IsNullOrWhiteSpace(externalSubject))
+        if (!externalSubject.IsNullOrWhitespace())
             payload[LyoJwtClaims.LyoExternalSub] = externalSubject;
 
         var headerJson = JsonSerializer.SerializeToUtf8Bytes(header);

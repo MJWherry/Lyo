@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The successfully-validated form of a Format-B token. Consumed by the ASP.NET Core handler to project into a <see cref="System.Security.Claims.ClaimsPrincipal" />.</summary>
@@ -8,4 +10,9 @@ namespace Lyo.Authentication.Models.Records;
 /// <param name="Ring">Token ring (e.g. <c>live</c>).</param>
 /// <param name="Scopes">Snapshotted scopes from the token.</param>
 /// <param name="ValidatedAt">When the validator produced this result.</param>
-public sealed record ApiTokenPrincipal(string TokenId, string Subject, Guid? OwnerUserId, string Kind, string Ring, IReadOnlyList<string> Scopes, DateTime ValidatedAt);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record ApiTokenPrincipal(string TokenId, string Subject, Guid? OwnerUserId, string Kind, string Ring, IReadOnlyList<string> Scopes, DateTime ValidatedAt)
+{
+    public override string ToString()
+        => $"ApiTokenPrincipal: id={TokenId}, kind={Kind}, ring={Ring}, scopes={Scopes.Count}";
+}

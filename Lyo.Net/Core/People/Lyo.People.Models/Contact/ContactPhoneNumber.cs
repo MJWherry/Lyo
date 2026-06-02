@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Links a person to a phone number with relationship type (home, work, etc.). Allows a person to have multiple phone numbers of different types.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class ContactPhoneNumber
 {
     /// <summary>Unique identifier for the contact-phone association</summary>
@@ -34,4 +36,8 @@ public class ContactPhoneNumber
 
     /// <summary>Navigation property to the phone number</summary>
     public PhoneNumber? PhoneNumber { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"ContactPhoneNumber: person={PersonId}, phone={PhoneNumber?.Number ?? PhoneNumberId.ToString()}, type={Type}, primary={IsPrimary}";
 }

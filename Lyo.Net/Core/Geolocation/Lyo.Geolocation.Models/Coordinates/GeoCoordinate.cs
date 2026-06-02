@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Enums;
@@ -5,6 +6,7 @@ using Lyo.Geolocation.Models.Enums;
 namespace Lyo.Geolocation.Models.Coordinates;
 
 /// <summary>Represents a geographic coordinate (latitude, longitude) with optional altitude and accuracy</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class GeoCoordinate : IEquatable<GeoCoordinate>
 {
     private double _latitude;

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Images.Models;
 
 /// <summary>Result of an image metadata retrieval operation with image-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ImageMetadataResult : Result<ImageMetadata>
 {
     /// <summary>A human-readable message describing the result.</summary>
@@ -27,4 +29,7 @@ public sealed record ImageMetadataResult : Result<ImageMetadata>
         var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
         return new(false, null, [error]);
     }
+
+    public override string ToString()
+        => IsSuccess ? $"ImageMetadataResult: {Data}" : $"ImageMetadataResult: failed, errors={Errors?.Count ?? 0}";
 }

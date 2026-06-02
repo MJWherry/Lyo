@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Geolocation.Models.Addresses;
 
 namespace Lyo.People.Models;
 
 /// <summary>Represents an employment record for a person</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class Employment
 {
     /// <summary>Unique identifier for the employment record</summary>
@@ -58,4 +60,8 @@ public class Employment
 
     /// <summary>Duration in months</summary>
     public double? DurationMonths => Duration?.TotalDays / 30.44;
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"Employment: id={Id}, company={CompanyName}, title={JobTitle ?? "?"}, current={IsCurrent}";
 }

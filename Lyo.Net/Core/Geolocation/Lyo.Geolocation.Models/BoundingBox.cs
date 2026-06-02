@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Coordinates;
@@ -5,6 +6,7 @@ using Lyo.Geolocation.Models.Coordinates;
 namespace Lyo.Geolocation.Models;
 
 /// <summary>Represents a bounding box for geographic areas defined by southwest and northeast corners</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class BoundingBox : IEquatable<BoundingBox>
 {
     /// <summary>Southwest corner of the bounding box</summary>
@@ -97,6 +99,8 @@ public class BoundingBox : IEquatable<BoundingBox>
     public override bool Equals(object? obj) => obj is BoundingBox other && Equals(other);
 
     public override int GetHashCode() => HashCodeHelpers.Combine(Southwest, Northeast);
+
+    public override string ToString() => $"BoundingBox: SW={Southwest}, NE={Northeast}";
 
     public static bool operator ==(BoundingBox? left, BoundingBox? right) => Equals(left, right);
 

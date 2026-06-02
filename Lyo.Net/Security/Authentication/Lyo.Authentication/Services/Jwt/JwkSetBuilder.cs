@@ -1,5 +1,6 @@
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Options;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 using Microsoft.Extensions.Options;
@@ -42,7 +43,7 @@ public sealed class JwkSetBuilder
         else {
             var current = await _keys.GetCurrentKeyAsync(_options.SigningKeyId, ct).ConfigureAwait(false);
             var version = await _keys.GetCurrentVersionAsync(_options.SigningKeyId, ct).ConfigureAwait(false);
-            if (current is not null && current.Length == Ed25519Constants.PrivateSeedLength && !string.IsNullOrWhiteSpace(version))
+            if (current is not null && current.Length == Ed25519Constants.PrivateSeedLength && !version.IsNullOrWhitespace())
                 keys.Add(BuildJwk(current, $"{_options.SigningKeyId}:{version}"));
         }
 

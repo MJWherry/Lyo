@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Request;
 
 /// <summary>Request model for creating or updating a comic chapter.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicChapterReq
 {
     /// <summary>Gets or sets the series this chapter belongs to.</summary>
@@ -29,4 +32,7 @@ public sealed class ComicChapterReq
 
     /// <summary>Gets or sets an opaque reference to the chapter cover image (e.g. file storage id).</summary>
     public string? CoverImageRef { get; set; }
+
+    public override string ToString()
+        => $"ComicChapterReq: series={SeriesId}, chapter={ChapterNumber}, title={Title}, lang={Language}";
 }

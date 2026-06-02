@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.EntityReference.Models;
@@ -6,6 +7,7 @@ using Lyo.Geolocation.Models.Coordinates;
 namespace Lyo.Geolocation.Models.Addresses;
 
 /// <summary>Unified address model that handles both US and international addresses</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class Address : IEquatable<Address>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the address</summary>
@@ -140,31 +142,31 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
     public string GetFormattedStreet()
     {
         // If StreetAddress is provided, use it
-        if (!string.IsNullOrEmpty(StreetAddress))
+        if (!StreetAddress.IsNullOrEmpty())
             return StreetAddress;
 
         // Otherwise, build from components
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(HouseNumber))
-            parts.Add(HouseNumber);
+        if (!HouseNumber.IsNullOrEmpty())
+            parts.Add(HouseNumber!);
 
-        if (!string.IsNullOrEmpty(StreetPreDirection))
-            parts.Add(StreetPreDirection);
+        if (!StreetPreDirection.IsNullOrEmpty())
+            parts.Add(StreetPreDirection!);
 
-        if (!string.IsNullOrEmpty(StreetName))
-            parts.Add(StreetName);
+        if (!StreetName.IsNullOrEmpty())
+            parts.Add(StreetName!);
 
-        if (!string.IsNullOrEmpty(StreetPostDirection))
-            parts.Add(StreetPostDirection);
+        if (!StreetPostDirection.IsNullOrEmpty())
+            parts.Add(StreetPostDirection!);
 
-        if (!string.IsNullOrEmpty(StreetType))
-            parts.Add(StreetType);
+        if (!StreetType.IsNullOrEmpty())
+            parts.Add(StreetType!);
 
         var street = string.Join(" ", parts);
 
         // Add unit if present
-        if (!string.IsNullOrEmpty(Unit)) {
-            var unitStr = string.IsNullOrEmpty(UnitType) ? $"Apt {Unit}" : $"{UnitType} {Unit}";
+        if (!Unit.IsNullOrEmpty()) {
+            var unitStr = UnitType.IsNullOrEmpty() ? $"Apt {Unit}" : $"{UnitType} {Unit}";
             street += $" {unitStr}";
         }
 
@@ -194,29 +196,32 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
 
         // Street address
         var street = GetFormattedStreet();
-        if (!string.IsNullOrEmpty(street))
+        if (!street.IsNullOrEmpty())
             parts.Add(street);
 
-        if (!string.IsNullOrEmpty(StreetAddressLine2))
-            parts.Add(StreetAddressLine2);
+        if (!StreetAddressLine2.IsNullOrEmpty())
+            parts.Add(StreetAddressLine2!);
 
         // City
-        if (!string.IsNullOrEmpty(City))
-            parts.Add(City);
+        if (!City.IsNullOrEmpty())
+            parts.Add(City!);
 
         // State/Province
-        var stateProvince = !string.IsNullOrEmpty(State) ? State : Province;
-        if (!string.IsNullOrEmpty(stateProvince))
+        var stateProvince = !State.IsNullOrEmpty() ? State : Province;
+        if (!stateProvince.IsNullOrEmpty())
             parts.Add(stateProvince);
 
         // Postal code
-        var postalCode = !string.IsNullOrEmpty(Zipcode) ? !string.IsNullOrEmpty(Zipcode4) ? $"{Zipcode}-{Zipcode4}" : Zipcode : PostalCode;
-        if (!string.IsNullOrEmpty(postalCode))
+        var postalCode = !Zipcode.IsNullOrEmpty() ? !Zipcode4.IsNullOrEmpty() ? $"{Zipcode}-{Zipcode4}" : Zipcode : PostalCode;
+        if (!postalCode.IsNullOrEmpty())
             parts.Add(postalCode);
 
         // Country
-        if (CountryCode != CountryCode.UU)
-            parts.Add(CountryCode.GetDescription());
+        if (CountryCode != CountryCode.UU) {
+            var country = CountryCode.GetDescription();
+            if (!country.IsNullOrEmpty())
+                parts.Add(country);
+        }
 
         return string.Join(", ", parts);
     }
@@ -229,29 +234,32 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
     {
         var lines = new List<string>();
         var street = GetFormattedStreet();
-        if (!string.IsNullOrEmpty(street))
+        if (!street.IsNullOrEmpty())
             lines.Add(street);
 
-        if (!string.IsNullOrEmpty(StreetAddressLine2))
-            lines.Add(StreetAddressLine2);
+        if (!StreetAddressLine2.IsNullOrEmpty())
+            lines.Add(StreetAddressLine2!);
 
         var cityStateZip = new List<string>();
-        if (!string.IsNullOrEmpty(City))
-            cityStateZip.Add(City);
+        if (!City.IsNullOrEmpty())
+            cityStateZip.Add(City!);
 
-        var stateProvince = !string.IsNullOrEmpty(State) ? State : Province;
-        if (!string.IsNullOrEmpty(stateProvince))
+        var stateProvince = !State.IsNullOrEmpty() ? State : Province;
+        if (!stateProvince.IsNullOrEmpty())
             cityStateZip.Add(stateProvince);
 
-        var postalCode = !string.IsNullOrEmpty(Zipcode) ? !string.IsNullOrEmpty(Zipcode4) ? $"{Zipcode}-{Zipcode4}" : Zipcode : PostalCode;
-        if (!string.IsNullOrEmpty(postalCode))
+        var postalCode = !Zipcode.IsNullOrEmpty() ? !Zipcode4.IsNullOrEmpty() ? $"{Zipcode}-{Zipcode4}" : Zipcode : PostalCode;
+        if (!postalCode.IsNullOrEmpty())
             cityStateZip.Add(postalCode);
 
         if (cityStateZip.Any())
             lines.Add(string.Join(" ", cityStateZip));
 
-        if (CountryCode != CountryCode.UU)
-            lines.Add(CountryCode.GetDescription());
+        if (CountryCode != CountryCode.UU) {
+            var country = CountryCode.GetDescription();
+            if (!country.IsNullOrEmpty())
+                lines.Add(country);
+        }
 
         return string.Join(Environment.NewLine, lines);
     }
@@ -321,7 +329,7 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
 
     private static string? NormalizeStreetType(string? streetType)
     {
-        if (string.IsNullOrEmpty(streetType))
+        if (streetType.IsNullOrEmpty())
             return streetType;
 
         var abbreviations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -339,12 +347,13 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
             { "terrace", "Ter" }
         };
 
-        return abbreviations.TryGetValue(streetType.Trim(), out var abbrev) ? abbrev : streetType.Trim();
+        var trimmed = streetType.Trim();
+        return abbreviations.TryGetValue(trimmed, out var abbrev) ? abbrev : trimmed;
     }
 
     private static string? NormalizeUnitType(string? unitType)
     {
-        if (string.IsNullOrEmpty(unitType))
+        if (unitType.IsNullOrEmpty())
             return unitType;
 
         var abbreviations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -356,7 +365,8 @@ public class Address : IEquatable<Address>, IEntitySourceDerived
             { "room", "Rm" }
         };
 
-        return abbreviations.TryGetValue(unitType.Trim(), out var abbrev) ? abbrev : unitType.Trim();
+        var trimmed = unitType.Trim();
+        return abbreviations.TryGetValue(trimmed, out var abbrev) ? abbrev : trimmed;
     }
 
     private static string? NormalizeCity(string? city)

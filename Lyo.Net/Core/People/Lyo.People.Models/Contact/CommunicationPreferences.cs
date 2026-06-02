@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Communication channel preferences for a person</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class CommunicationPreferences
 {
     /// <summary>Whether the person allows contact via email</summary>
@@ -20,4 +23,8 @@ public class CommunicationPreferences
 
     /// <summary>Preferred times for contact (e.g., "9am-5pm", "weekdays only")</summary>
     public List<string> PreferredContactTimes { get; set; } = new();
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"CommunicationPreferences: email={AllowEmail}, sms={AllowSms}, phone={AllowPhoneCalls}, marketing={AllowMarketingEmails}";
 }

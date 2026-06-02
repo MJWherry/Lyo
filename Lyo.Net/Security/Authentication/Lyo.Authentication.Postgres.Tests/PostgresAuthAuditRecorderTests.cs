@@ -26,7 +26,7 @@ public sealed class PostgresAuthAuditRecorderTests
         await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(row);
-        Assert.Equal(evt.Kind, row!.Kind);
+        Assert.Equal(evt.Kind, row.Kind);
         Assert.Equal(evt.Subject, row.Subject);
     }
 
@@ -97,11 +97,11 @@ public sealed class PostgresAuthAuditRecorderTests
     {
         var recorder = NewRecorder();
         var ctxAccessor = new FakeAccessor("203.0.113.7", "ua/postgres-test", "trace-" + Guid.NewGuid().ToString("N"));
-        await recorder.RecordAsync(ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated");
+        await recorder.RecordAsync(ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestContext.Current.CancellationToken);
         await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var row = await ctx.Events.AsNoTracking().Where(e => e.CorrelationId == ctxAccessor.CorrelationId).FirstOrDefaultAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(row);
-        Assert.Equal("203.0.113.7", row!.IpAddress);
+        Assert.Equal("203.0.113.7", row.IpAddress);
         Assert.Equal("ua/postgres-test", row.UserAgent);
         Assert.Equal("success", row.Outcome);
         Assert.Equal("user_initiated", row.Reason);
@@ -156,8 +156,9 @@ public sealed class PostgresAuthAuditRecorderTests
         try {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'user' AND table_name = 'event'";
-            var count = (long)(await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
-            Assert.Equal(1L, count);
+            var scalar = await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+            Assert.NotNull(scalar);
+            Assert.Equal(1L, (long)scalar);
         }
         finally {
             await conn.CloseAsync();

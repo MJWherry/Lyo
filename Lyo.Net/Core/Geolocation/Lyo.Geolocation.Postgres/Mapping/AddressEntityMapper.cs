@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Common.Enums;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Postgres.Database;

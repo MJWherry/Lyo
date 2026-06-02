@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordRoleReq
 {
     public long Id { get; set; }
@@ -23,4 +26,7 @@ public sealed class DiscordRoleReq
     public int Position { get; set; }
 
     public DateTime RoleCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordRoleReq: id={Id}, name={Name}, guild={GuildId}, position={Position}";
 }

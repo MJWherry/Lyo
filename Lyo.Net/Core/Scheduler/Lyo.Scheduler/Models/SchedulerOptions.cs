@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Scheduler.Models;
 
 /// <summary>Options for the scheduler service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SchedulerOptions
 {
     /// <summary>
@@ -27,4 +30,7 @@ public sealed class SchedulerOptions
     /// specific month requires looking up to ~365 days ahead).
     /// </summary>
     public int MaxDaysLookAhead { get; set; } = 366;
+
+    public override string ToString()
+        => $"SchedulerOptions: checkIntervalMs={CheckIntervalMs}, metrics={EnableMetrics}, background={RunInBackground}, timeout={ActionTimeout}, lookAheadDays={MaxDaysLookAhead}";
 }

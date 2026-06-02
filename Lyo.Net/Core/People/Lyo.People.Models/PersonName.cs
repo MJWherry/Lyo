@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.People.Models.Enum;
@@ -5,6 +6,7 @@ using Lyo.People.Models.Enum;
 namespace Lyo.People.Models;
 
 /// <summary>Represents a person's name with various components and formatting options</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PersonName
 {
     /// <summary>Name prefix (Mr., Mrs., Dr., etc.)</summary>
@@ -90,4 +92,7 @@ public class PersonName
             NameFormat.Initials => GetInitials(),
             var _ => FullName
         };
+
+    /// <inheritdoc />
+    public override string ToString() => $"PersonName: {DisplayName}";
 }

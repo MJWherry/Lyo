@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordInteractionReq
 {
     public long Id { get; set; }
@@ -13,4 +16,7 @@ public sealed class DiscordInteractionReq
     public string Content { get; set; } = null!;
 
     public DateTime InteractionCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordInteractionReq: id={Id}, author={AuthorId}, guild={GuildId}";
 }

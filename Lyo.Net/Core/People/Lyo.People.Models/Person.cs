@@ -2,6 +2,7 @@
 #else
 using DateOnly = Lyo.DateAndTime.DateOnlyModel;
 #endif
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
 using Lyo.EntityReference.Models;
@@ -15,6 +16,7 @@ using Lyo.People.Models.Relationships;
 namespace Lyo.People.Models;
 
 /// <summary>Core person model representing an individual with contact info, demographics, and relationships</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class Person : IEntitySourceDerived
 {
     /// <summary>Unique identifier for the person</summary>
@@ -165,4 +167,8 @@ public class Person : IEntitySourceDerived
 
     /// <summary>Gets all current email addresses</summary>
     public IEnumerable<ContactEmailAddress> GetCurrentEmailAddresses() => EmailAddresses.Where(e => e.IsCurrent);
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"Person: id={Id}, name={Name?.DisplayName ?? "?"}, emails={EmailAddresses.Count}, phones={PhoneNumbers.Count}";
 }

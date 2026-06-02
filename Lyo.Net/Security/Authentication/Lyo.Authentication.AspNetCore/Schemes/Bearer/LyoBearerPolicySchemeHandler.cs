@@ -1,4 +1,5 @@
 using Lyo.Authentication.AspNetCore.Defaults;
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Authentication.AspNetCore.Schemes.Bearer;
@@ -16,15 +17,15 @@ public static class LyoBearerPolicySchemeHandler
     private static string ExtractCredential(HttpRequest request, LyoBearerPolicySchemeOptions options)
     {
         var header = request.Headers[options.HeaderName].ToString();
-        if (!string.IsNullOrEmpty(header)) {
+        if (!header.IsNullOrEmpty()) {
             var prefix = options.Scheme + " ";
             if (header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return header.Substring(prefix.Length).Trim();
         }
 
-        if (!string.IsNullOrEmpty(options.AlsoAccept)) {
-            var raw = request.Headers[options.AlsoAccept!].ToString();
-            if (!string.IsNullOrEmpty(raw))
+        if (!options.AlsoAccept.IsNullOrEmpty()) {
+            var raw = request.Headers[options.AlsoAccept].ToString();
+            if (!raw.IsNullOrEmpty())
                 return raw.Trim();
         }
 

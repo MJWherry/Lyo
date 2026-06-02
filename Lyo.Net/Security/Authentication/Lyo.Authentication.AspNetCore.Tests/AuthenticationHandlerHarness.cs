@@ -19,7 +19,7 @@ internal sealed class AuthenticationHandlerHarness : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _host.StopAsync();
+        await _host.StopAsync(TestContext.Current.CancellationToken);
         _host.Dispose();
     }
 
@@ -48,7 +48,7 @@ internal sealed class AuthenticationHandlerHarness : IAsyncDisposable
                         });
                     });
             })
-            .StartAsync();
+            .StartAsync(TestContext.Current.CancellationToken);
 
         return new(host);
     }
@@ -56,7 +56,7 @@ internal sealed class AuthenticationHandlerHarness : IAsyncDisposable
     public async Task<string> IssueOpaqueAsync(params string[] scopes)
     {
         var issuer = _host.Services.GetRequiredService<IApiTokenIssuer>();
-        var issued = await issuer.IssueAsync(new(ApiTokenKind.Pat, "test", scopes, Ring: ApiTokenRing.Live));
+        var issued = await issuer.IssueAsync(new(ApiTokenKind.Pat, "test", scopes, Ring: ApiTokenRing.Live), TestContext.Current.CancellationToken);
         return issued.Plaintext;
     }
 }

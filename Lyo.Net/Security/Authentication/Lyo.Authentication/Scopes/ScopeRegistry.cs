@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lyo.Authentication.Exceptions;
 using Lyo.Authentication.Models.Scopes;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Scopes;
@@ -32,7 +33,7 @@ public sealed class ScopeRegistry : IScopeRegistry
         ArgumentHelpers.ThrowIfNull(names);
         var result = new HashSet<string>(StringComparer.Ordinal);
         foreach (var n in names) {
-            if (string.IsNullOrEmpty(n))
+            if (n.IsNullOrEmpty())
                 continue;
 
             if (!_scopes.TryGetValue(n, out var scope))

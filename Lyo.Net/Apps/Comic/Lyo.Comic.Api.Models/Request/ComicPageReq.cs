@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Request;
 
 /// <summary>Request model for creating or updating a comic page.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicPageReq
 {
     /// <summary>Gets or sets the chapter this page belongs to.</summary>
@@ -17,4 +20,7 @@ public sealed class ComicPageReq
 
     /// <summary>Gets or sets the pixel height of the page image, if known.</summary>
     public int? Height { get; set; }
+
+    public override string ToString()
+        => $"ComicPageReq: chapter={ChapterId}, page={PageNumber}, size={Width}x{Height}";
 }

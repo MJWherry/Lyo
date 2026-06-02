@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Gateway.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonAddressRes(
     Guid Id,
     Guid PersonId,
@@ -18,5 +21,6 @@ public sealed record PersonAddressRes(
     DateOnly CreatedDate,
     DateOnly UpdatedDate)
 {
-    public override string ToString() => $"{HouseNumber}";
+    public override string ToString()
+        => $"PersonAddressRes: {HouseNumber} {StreetName}, {City}, {State} {Zipcode}";
 }

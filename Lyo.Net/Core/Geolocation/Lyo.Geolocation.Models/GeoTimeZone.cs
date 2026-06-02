@@ -1,10 +1,13 @@
+using System.Diagnostics;
+
 namespace Lyo.Geolocation.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public class GeoTimeZone
 {
-    public string TimeZoneId { get; set; } // IANA time zone ID
+    public string TimeZoneId { get; set; } = string.Empty;
 
-    public string TimeZoneName { get; set; }
+    public string TimeZoneName { get; set; } = string.Empty;
 
     public TimeSpan UtcOffset { get; set; }
 
@@ -15,4 +18,7 @@ public class GeoTimeZone
     public DateTime? DstStart { get; set; }
 
     public DateTime? DstEnd { get; set; }
+
+    public override string ToString()
+        => $"GeoTimeZone: {TimeZoneId} ({TimeZoneName}), UTC{UtcOffset:hh\\:mm}, dst={IsDaylightSavingTime}";
 }

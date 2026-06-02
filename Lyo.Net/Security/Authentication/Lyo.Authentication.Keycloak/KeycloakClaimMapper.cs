@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Authentication.Keycloak;
 
@@ -31,7 +32,7 @@ public static class KeycloakClaimMapper
         foreach (var role in roles) {
             if (rolesToScopes.TryGetValue(role, out var mapped)) {
                 foreach (var scope in mapped) {
-                    if (!string.IsNullOrWhiteSpace(scope))
+                    if (!scope.IsNullOrWhitespace())
                         set.Add(scope);
                 }
             }
@@ -53,8 +54,8 @@ public static class KeycloakClaimMapper
                     foreach (var item in rolesEl.EnumerateArray()) {
                         if (item.ValueKind == JsonValueKind.String) {
                             var s = item.GetString();
-                            if (!string.IsNullOrWhiteSpace(s))
-                                roles.Add(s!);
+                            if (!s.IsNullOrWhitespace())
+                                roles.Add(s);
                         }
                     }
 
@@ -65,7 +66,7 @@ public static class KeycloakClaimMapper
             case IDictionary<string, object?> dict when dict.TryGetValue("roles", out var inner) && inner is IEnumerable<object?> seq:
                 var fromDict = new List<string>();
                 foreach (var item in seq) {
-                    if (item is string s && !string.IsNullOrWhiteSpace(s))
+                    if (item is string s && !s.IsNullOrWhitespace())
                         fromDict.Add(s);
                 }
 
@@ -94,7 +95,7 @@ public static class KeycloakClaimMapper
     private static string? FirstNonBlank(params string?[] candidates)
     {
         foreach (var c in candidates) {
-            if (!string.IsNullOrWhiteSpace(c))
+            if (!c.IsNullOrWhitespace())
                 return c;
         }
 

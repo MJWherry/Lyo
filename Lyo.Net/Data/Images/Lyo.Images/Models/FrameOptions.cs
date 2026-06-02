@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>Stroked outline (with optional rounded corners and inner fill) drawn around an existing image by <see cref="IImageDecorationService.AddFrameAsync" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FrameOptions
 {
     /// <summary>Stroke color (hex). Default: <c>#000000</c>.</summary>
@@ -17,4 +20,7 @@ public sealed class FrameOptions
 
     /// <summary>Padding (pixels) between the input image and the stroke. Default: 24.</summary>
     public int PaddingPx { get; set; } = 24;
+
+    public override string ToString()
+        => $"FrameOptions: stroke={StrokeWidthPx}px {StrokeColorHex}, padding={PaddingPx}px, radius={CornerRadiusPx}px";
 }

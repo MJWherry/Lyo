@@ -6,6 +6,7 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -63,7 +64,7 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
                 throw new LyoUserDisabledException(user.Id, user.DisabledReason);
         }
 
-        var ring = string.IsNullOrWhiteSpace(request.Ring) ? _options.Ring : request.Ring!;
+        var ring = request.Ring.IsNullOrWhitespace() ? _options.Ring : request.Ring;
         var now = DateTime.UtcNow;
         DateTime? expiresAt = null;
         if (request.Lifetime is { } lifetime) {
@@ -99,7 +100,7 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
 
     private static bool IsDuplicateKey(Exception ex)
     {
-        var message = ex.Message ?? string.Empty;
+        var message = ex.Message;
         return message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) || message.Contains("23505", StringComparison.Ordinal) ||
             ex.GetType().Name.Contains("Duplicate", StringComparison.OrdinalIgnoreCase) ||
             (ex is InvalidOperationException && message.Contains("already exists", StringComparison.OrdinalIgnoreCase));

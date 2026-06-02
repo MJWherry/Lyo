@@ -12,13 +12,13 @@ public sealed class InMemoryUserStore : IUserStore
     private readonly ConcurrentDictionary<Guid, LyoUser> _byId = new();
 
     /// <inheritdoc />
-    public Task<LyoUser?> GetByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default) => Task.FromResult<LyoUser?>(_byId.TryGetValue(id, out var u) ? u : null);
+    public Task<LyoUser?> GetByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default) => Task.FromResult(_byId.TryGetValue(id, out var u) ? u : null);
 
     /// <inheritdoc />
     public Task<LyoUser?> GetByEmailAsync(string email, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(email);
-        return Task.FromResult<LyoUser?>(_byEmail.TryGetValue(email, out var id) && _byId.TryGetValue(id, out var u) ? u : null);
+        return Task.FromResult(_byEmail.TryGetValue(email, out var id) && _byId.TryGetValue(id, out var u) ? u : null);
     }
 
     /// <inheritdoc />

@@ -24,7 +24,7 @@ public sealed class InMemoryApiTokenStore : IApiTokenStore
     public Task<ApiTokenRecord?> GetByIdAsync(string id, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
-        return Task.FromResult<ApiTokenRecord?>(_records.TryGetValue(id, out var r) ? r : null);
+        return Task.FromResult(_records.TryGetValue(id, out var r) ? r : null);
     }
 
     /// <inheritdoc />

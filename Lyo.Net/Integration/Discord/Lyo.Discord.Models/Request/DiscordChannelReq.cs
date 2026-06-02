@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordChannelReq
 {
     public long Id { get; set; }
@@ -25,4 +28,7 @@ public sealed class DiscordChannelReq
     public long? ParentId { get; set; }
 
     public DateTime ChannelCreated { get; set; }
+
+    public override string ToString()
+        => $"DiscordChannelReq: id={Id}, name={Name}, guild={GuildId}, type={ChannelType}";
 }

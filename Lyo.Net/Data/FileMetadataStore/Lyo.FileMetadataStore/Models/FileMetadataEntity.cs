@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Encryption;
 
 namespace Lyo.FileMetadataStore.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileMetadataEntity
 {
     public string Id { get; set; } = null!;
@@ -126,4 +128,7 @@ public sealed class FileMetadataEntity
             DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null,
             OwnerId = result.OwnerId
         };
+
+    public override string ToString()
+        => $"FileMetadataEntity: {Id}, {OriginalFileName}, size={OriginalFileSize}, encrypted={IsEncrypted}, compressed={IsCompressed}";
 }

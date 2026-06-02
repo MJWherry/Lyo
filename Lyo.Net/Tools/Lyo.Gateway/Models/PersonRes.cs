@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Gateway.Models;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonRes(
     Guid Id,
     Guid? EndatoPersonId,
@@ -16,4 +19,7 @@ public sealed record PersonRes(
     public PersonAddressRes? MostRecentAddress => Addresses?.OrderByDescending(a => a.UpdatedDate).FirstOrDefault();
 
     public string FullName => $"{FirstName}{(string.IsNullOrEmpty(MiddleName) ? " " : $" {MiddleName} ")}{LastName}";
+
+    public override string ToString()
+        => $"PersonRes: id={Id}, name={FullName}, source={Source}, addresses={Addresses?.Count ?? 0}";
 }

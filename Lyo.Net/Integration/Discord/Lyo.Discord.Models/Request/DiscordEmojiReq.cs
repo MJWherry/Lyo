@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordEmojiReq
 {
     public long Id { get; set; }
@@ -19,4 +22,7 @@ public sealed class DiscordEmojiReq
     public bool RequiresColons { get; set; }
 
     public DateTime EmojiCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordEmojiReq: id={Id}, name={Name}, guild={GuildId}, animated={IsAnimated}";
 }

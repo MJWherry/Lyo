@@ -1,4 +1,5 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
@@ -20,7 +21,7 @@ public sealed class KeycloakOpenIdConnectProvider : IOpenIdConnectProvider
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.ClientId, nameof(_options.ClientId));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.ClientSecret, nameof(_options.ClientSecret));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.RedirectUri, nameof(_options.RedirectUri));
-        Name = string.IsNullOrWhiteSpace(_options.Name) ? $"keycloak:{_options.Realm}" : _options.Name!;
+        Name = _options.Name.IsNullOrWhitespace() ? $"keycloak:{_options.Realm}" : _options.Name;
         DiscoveryUrl = $"{_options.BaseUrl.TrimEnd('/')}/realms/{_options.Realm}/.well-known/openid-configuration";
         _rolesToScopes = new(_options.RolesToScopes, StringComparer.Ordinal);
     }

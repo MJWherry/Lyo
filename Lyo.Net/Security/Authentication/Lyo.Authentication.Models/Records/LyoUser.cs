@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>A Lyo-internal user. Backed by the <c>[user].[user]</c> table when persisted via <c>Lyo.Authentication.Postgres</c>.</summary>
@@ -15,6 +17,7 @@ namespace Lyo.Authentication.Models.Records;
 /// <param name="LastLoginAt">When the user most recently completed a login or refreshed a JWT.</param>
 /// <param name="DisabledAt">When set, ALL existing tokens AND JWTs for this user are rejected immediately (Option C kill-switch).</param>
 /// <param name="DisabledReason">Optional human-readable reason for the disable (audit/UX).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoUser(
     Guid Id,
     string DisplayName,
@@ -33,4 +36,7 @@ public sealed record LyoUser(
 {
     /// <summary>True if the user is currently disabled and all of their credentials must be rejected.</summary>
     public bool IsDisabled => DisabledAt.HasValue;
+
+    public override string ToString()
+        => $"LyoUser: id={Id}, email={Email}, name={DisplayName}, disabled={IsDisabled}";
 }

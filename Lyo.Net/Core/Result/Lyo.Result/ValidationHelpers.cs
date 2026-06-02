@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Lyo.Common.Extensions;
 using Lyo.Result.Enums;
-
-// ReSharper disable RedundantSuppressNullableWarningExpression
 
 namespace Lyo.Result;
 
@@ -77,7 +76,7 @@ public static class ValidationHelpers
     /// <param name="errorMessage">The error message to use if validation fails. If null, uses a default message.</param>
     /// <returns>A Result containing the string if not null or empty, or an error otherwise.</returns>
     public static Result<string> ValidateNotEmpty(string? value, string errorCode = ValidationErrorCodes.EmptyString, string? errorMessage = null)
-        => string.IsNullOrEmpty(value) ? Result<string>.Failure(errorMessage ?? "String cannot be null or empty", errorCode) : Result<string>.Success(value!);
+        => value.IsNullOrEmpty() ? Result<string>.Failure(errorMessage ?? "String cannot be null or empty", errorCode) : Result<string>.Success(value);
 
     /// <summary>Validates that a string is not null, empty, or whitespace.</summary>
     /// <param name="value">The string to validate.</param>
@@ -85,7 +84,7 @@ public static class ValidationHelpers
     /// <param name="errorMessage">The error message to use if validation fails. If null, uses a default message.</param>
     /// <returns>A Result containing the string if not null, empty, or whitespace, or an error otherwise.</returns>
     public static Result<string> ValidateNotWhitespace(string? value, string errorCode = ValidationErrorCodes.WhitespaceString, string? errorMessage = null)
-        => string.IsNullOrWhiteSpace(value) ? Result<string>.Failure(errorMessage ?? "String cannot be null, empty, or whitespace", errorCode) : Result<string>.Success(value!);
+        => value.IsNullOrWhitespace() ? Result<string>.Failure(errorMessage ?? "String cannot be null, empty, or whitespace", errorCode) : Result<string>.Success(value);
 
     /// <summary>Validates that a collection is not null or empty.</summary>
     /// <typeparam name="TCollection">The type of collection to validate (must implement ICollection).</typeparam>
@@ -123,17 +122,17 @@ public static class ValidationHelpers
 
     /// <summary>Validates that a string matches the email format.</summary>
     public static Result<string> ValidateEmail(string? value, string errorCode = ValidationErrorCodes.InvalidEmail, string? errorMessage = null)
-        => string.IsNullOrWhiteSpace(value) ? Result<string>.Failure(errorMessage ?? "Email cannot be null or empty", ValidationErrorCodes.EmptyString) :
-            RegexPatterns.EmailRegex.IsMatch(value) ? Result<string>.Success(value!) : Result<string>.Failure(errorMessage ?? "Invalid email format", errorCode);
+        => value.IsNullOrWhitespace() ? Result<string>.Failure(errorMessage ?? "Email cannot be null or empty", ValidationErrorCodes.EmptyString) :
+            RegexPatterns.EmailRegex.IsMatch(value) ? Result<string>.Success(value) : Result<string>.Failure(errorMessage ?? "Invalid email format", errorCode);
 
     /// <summary>Validates that a string matches a phone number format.</summary>
     public static Result<string> ValidatePhone(string? value, string errorCode = ValidationErrorCodes.InvalidPhone, string? errorMessage = null)
-        => string.IsNullOrWhiteSpace(value) ? Result<string>.Failure(errorMessage ?? "Phone cannot be null or empty", ValidationErrorCodes.EmptyString) :
-            RegexPatterns.PhoneNumberRegex.IsMatch(value) ? Result<string>.Success(value!) : Result<string>.Failure(errorMessage ?? "Invalid phone number format", errorCode);
+        => value.IsNullOrWhitespace() ? Result<string>.Failure(errorMessage ?? "Phone cannot be null or empty", ValidationErrorCodes.EmptyString) :
+            RegexPatterns.PhoneNumberRegex.IsMatch(value) ? Result<string>.Success(value) : Result<string>.Failure(errorMessage ?? "Invalid phone number format", errorCode);
 
     /// <summary>Validates that a string is a valid URI.</summary>
     public static Result<string> ValidateUri(string? value, UriKind kind = UriKind.Absolute, string errorCode = ValidationErrorCodes.InvalidUri, string? errorMessage = null)
-        => string.IsNullOrWhiteSpace(value) ? Result<string>.Failure(errorMessage ?? "URI cannot be null or empty", ValidationErrorCodes.EmptyString) :
+        => value.IsNullOrWhitespace() ? Result<string>.Failure(errorMessage ?? "URI cannot be null or empty", ValidationErrorCodes.EmptyString) :
             Uri.TryCreate(value, kind, out var _) ? Result<string>.Success(value!) : Result<string>.Failure(errorMessage ?? "Invalid URI format", errorCode);
 
     /// <summary>Validates that a string length is within the specified range.</summary>

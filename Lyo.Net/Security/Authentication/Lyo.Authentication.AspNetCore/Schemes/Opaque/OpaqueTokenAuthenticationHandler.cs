@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using Lyo.Authentication.AspNetCore.Defaults;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,10 +25,10 @@ public sealed class OpaqueTokenAuthenticationHandler : AuthenticationHandler<Opa
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var token = ExtractCredential();
-        if (string.IsNullOrEmpty(token))
+        if (token.IsNullOrEmpty())
             return AuthenticateResult.NoResult();
 
-        var principal = await _validator.ValidateAsync(token!, Context.RequestAborted).ConfigureAwait(false);
+        var principal = await _validator.ValidateAsync(token, Context.RequestAborted).ConfigureAwait(false);
         if (principal is null)
             return AuthenticateResult.Fail("Invalid Lyo API token.");
 
@@ -39,15 +40,15 @@ public sealed class OpaqueTokenAuthenticationHandler : AuthenticationHandler<Opa
     private string? ExtractCredential()
     {
         var header = Request.Headers[Options.HeaderName].ToString();
-        if (!string.IsNullOrWhiteSpace(header)) {
+        if (!header.IsNullOrWhitespace()) {
             var prefix = Options.Scheme + " ";
             if (header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return header.Substring(prefix.Length).Trim();
         }
 
-        if (!string.IsNullOrEmpty(Options.AlsoAccept)) {
-            var raw = Request.Headers[Options.AlsoAccept!].ToString();
-            if (!string.IsNullOrWhiteSpace(raw))
+        if (!Options.AlsoAccept.IsNullOrEmpty()) {
+            var raw = Request.Headers[Options.AlsoAccept].ToString();
+            if (!raw.IsNullOrWhitespace())
                 return raw.Trim();
         }
 

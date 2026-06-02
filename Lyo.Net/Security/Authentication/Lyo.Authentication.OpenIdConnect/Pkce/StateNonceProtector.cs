@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Lyo.Authentication.Models.Format;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -48,11 +49,11 @@ public sealed class StateNonceProtector
     /// <summary>Reverses <see cref="Seal" />. Returns <c>null</c> on tampering, expiry, or any other failure (caller treats this as <c>OidcStateInvalid</c>).</summary>
     public PkceState? Unseal(string? sealedValue)
     {
-        if (string.IsNullOrWhiteSpace(sealedValue))
+        if (sealedValue.IsNullOrWhitespace())
             return null;
 
         try {
-            var encrypted = Convert.FromBase64String(sealedValue!);
+            var encrypted = Convert.FromBase64String(sealedValue);
             var json = _protector.Unprotect(encrypted);
             return JsonSerializer.Deserialize<PkceState>(json);
         }

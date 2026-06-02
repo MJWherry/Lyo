@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.EntityReference.Models;
@@ -5,6 +6,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Base phone number model containing the actual phone number data</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PhoneNumber : IEquatable<PhoneNumber>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the phone number</summary>
@@ -54,6 +56,9 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IEntitySourceDerived
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCodeHelpers.Combine(Number, CountryCode);
+
+    /// <inheritdoc />
+    public override string ToString() => $"PhoneNumber: id={Id}, number={Number}";
 
     /// <summary>Equality operator</summary>
     public static bool operator ==(PhoneNumber? left, PhoneNumber? right) => Equals(left, right);

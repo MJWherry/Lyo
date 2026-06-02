@@ -1,4 +1,5 @@
 using Lyo.Authentication.Web.Components.Abstractions;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
@@ -35,7 +36,7 @@ public sealed class WasmAuthSignInLauncher : IAuthSignInLauncher
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         var origin = ExtractOrigin(_navigation.BaseUri);
         var handoff = origin + _options.HandoffCallbackPath.TrimStart('/');
-        var consumerReturn = string.IsNullOrWhiteSpace(returnUrl) ? handoff : handoff + "?return=" + Uri.EscapeDataString(returnUrl!);
+        var consumerReturn = returnUrl.IsNullOrWhitespace() ? handoff : handoff + "?return=" + Uri.EscapeDataString(returnUrl);
         var target = $"{_options.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={Uri.EscapeDataString(consumerReturn)}&mode=browser";
         _navigation.NavigateTo(target, true);
         return Task.CompletedTask;

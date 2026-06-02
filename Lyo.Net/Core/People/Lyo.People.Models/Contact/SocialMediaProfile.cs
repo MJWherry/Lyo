@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Common.JsonConverters;
 using Lyo.Common.Records;
@@ -5,6 +6,7 @@ using Lyo.Common.Records;
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Represents a person's social media profile on a platform</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class SocialMediaProfile
 {
     /// <summary>Unique identifier for the profile</summary>
@@ -34,4 +36,8 @@ public class SocialMediaProfile
 
     /// <summary>When the person added this profile</summary>
     public DateTime? AddedAt { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"SocialMediaProfile: id={Id}, platform={Platform}, username={Username}";
 }

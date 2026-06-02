@@ -31,7 +31,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             services.AddOptions<AuthenticationOptions>();
             services.AddOptions<LyoJwtOptions>();
-            services.AddSingleton<ScopeRegistry>(new ScopeRegistry());
+            services.AddSingleton(new ScopeRegistry());
             services.AddSingleton<IScopeRegistry>(sp => sp.GetRequiredService<ScopeRegistry>());
             services.AddSingleton<IApiTokenIssuer, DefaultApiTokenIssuer>();
             services.AddSingleton<IApiTokenValidator, DefaultApiTokenValidator>();

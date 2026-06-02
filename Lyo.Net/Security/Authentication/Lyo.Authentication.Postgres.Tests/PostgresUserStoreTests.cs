@@ -18,7 +18,7 @@ public sealed class PostgresUserStoreTests
         await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
-        Assert.Equal(user.Email, loaded!.Email);
+        Assert.Equal(user.Email, loaded.Email);
         Assert.Equal(user.DisplayName, loaded.DisplayName);
     }
 
@@ -29,7 +29,7 @@ public sealed class PostgresUserStoreTests
         await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.UserStore.GetByEmailAsync(user.Email.ToLowerInvariant(), null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
-        Assert.Equal(user.Id, loaded!.Id);
+        Assert.Equal(user.Id, loaded.Id);
     }
 
     [Fact]
@@ -49,7 +49,8 @@ public sealed class PostgresUserStoreTests
         await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
         await _fixture.UserStore.SetScopesAsync(user.Id, ["admin", "people.read"], null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
-        Assert.Equal(["admin", "people.read"], loaded!.Scopes);
+        Assert.NotNull(loaded);
+        Assert.Equal(["admin", "people.read"], loaded.Scopes);
     }
 
     [Fact]
@@ -60,7 +61,8 @@ public sealed class PostgresUserStoreTests
         var when = DateTime.UtcNow;
         await _fixture.UserStore.SetDisabledAsync(user.Id, when, "policy", null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
-        Assert.True(loaded!.IsDisabled);
+        Assert.NotNull(loaded);
+        Assert.True(loaded.IsDisabled);
         Assert.Equal("policy", loaded.DisabledReason);
     }
 
@@ -72,7 +74,8 @@ public sealed class PostgresUserStoreTests
         var now = DateTime.UtcNow;
         await _fixture.UserStore.UpdateLastLoginAsync(user.Id, now, null, TestContext.Current.CancellationToken);
         var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
-        Assert.NotNull(loaded!.LastLoginAt);
+        Assert.NotNull(loaded);
+        Assert.NotNull(loaded.LastLoginAt);
     }
 
     [Fact]
@@ -98,7 +101,7 @@ public sealed class PostgresUserStoreTests
         await systemStore.CreateAsync(user, Guid.NewGuid(), TestContext.Current.CancellationToken);
         var loaded = await systemStore.GetByIdAsync(user.Id, Guid.NewGuid(), TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
-        Assert.Equal(user.Email, loaded!.Email);
+        Assert.Equal(user.Email, loaded.Email);
     }
 
     private static LyoUser NewUser(string email) => new(Guid.NewGuid(), "Alice", email, true, null, "en-US", ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);

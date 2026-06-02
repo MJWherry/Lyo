@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 
@@ -33,17 +34,17 @@ public sealed class WasmAuthSessionAccessor : IAuthSessionAccessor
 
         var claims = LyoJwtClaimsParser.Parse(session.AccessToken);
         var scopes = claims.Where(c => string.Equals(c.Type, LyoJwtClaims.Scope, StringComparison.Ordinal)).Select(c => c.Value).Distinct(StringComparer.Ordinal).ToArray();
-        return new(session.AccessToken, session.AccessTokenExpiresAt, !string.IsNullOrWhiteSpace(session.RefreshToken), null, claims, scopes);
+        return new(session.AccessToken, session.AccessTokenExpiresAt, !session.RefreshToken.IsNullOrWhitespace(), null, claims, scopes);
     }
 
     /// <inheritdoc />
     public async Task<bool> RefreshAsync(CancellationToken ct = default)
     {
         var session = await _sessions.GetAsync(ct).ConfigureAwait(false);
-        if (session is null || string.IsNullOrWhiteSpace(session.RefreshToken))
+        if (session is null || session.RefreshToken.IsNullOrWhitespace())
             return false;
 
-        var refreshed = await _authApi.RefreshAsync(session.RefreshToken!, ct).ConfigureAwait(false);
+        var refreshed = await _authApi.RefreshAsync(session.RefreshToken, ct).ConfigureAwait(false);
         if (refreshed is null) {
             _logger.LogInformation("WASM session refresh failed; clearing");
             await _sessions.ClearAsync(ct).ConfigureAwait(false);

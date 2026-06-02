@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Response;
 
 /// <summary>Response model for a comic character.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ComicCharacterRes
 {
     public Guid Id { get; init; }
@@ -18,4 +21,7 @@ public sealed record ComicCharacterRes
     public DateTime CreatedTimestamp { get; init; }
 
     public DateTime? UpdatedTimestamp { get; init; }
+
+    public override string ToString()
+        => $"ComicCharacterRes: {Name}, series={SeriesId}, role={Role}";
 }

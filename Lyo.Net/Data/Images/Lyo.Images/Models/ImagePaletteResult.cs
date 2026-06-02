@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Images.Models;
 
 /// <summary>Result of an image palette extraction operation.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ImagePaletteResult : Result<ImagePalette>
 {
     /// <summary>A human-readable message describing the result.</summary>
@@ -27,4 +29,7 @@ public sealed record ImagePaletteResult : Result<ImagePalette>
         var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
         return new(false, null, [error]);
     }
+
+    public override string ToString()
+        => IsSuccess ? $"ImagePaletteResult: success, colors={Data?.Colors.Count ?? 0}" : $"ImagePaletteResult: failed, errors={Errors?.Count ?? 0}";
 }

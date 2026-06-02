@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Provider;
@@ -41,7 +42,7 @@ public sealed class OpenIdConnectProviderRegistry
     /// <summary>Returns the provider with the given name, or <c>null</c> if unknown.</summary>
     public IOpenIdConnectProvider? TryGet(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (name.IsNullOrWhitespace())
             return null;
 
         return _providers.TryGetValue(name, out var provider) ? provider : null;

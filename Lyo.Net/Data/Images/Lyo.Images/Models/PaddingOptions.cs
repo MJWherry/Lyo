@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Models;
 
 /// <summary>Outer canvas margin around an input image with optional rounded card fill and drop shadow, applied by <see cref="IImageDecorationService.AddOuterPaddingAsync" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PaddingOptions
 {
     /// <summary>Padding (pixels) between the input image and the inner edge of the card fill. Default: 24.</summary>
@@ -23,4 +26,7 @@ public sealed class PaddingOptions
 
     /// <summary>Card corner radius in pixels. Default: 0 (square card).</summary>
     public int CornerRadiusPx { get; set; }
+
+    public override string ToString()
+        => $"PaddingOptions: padding={PaddingPx}px, margin={MarginPx}px, radius={CornerRadiusPx}px";
 }

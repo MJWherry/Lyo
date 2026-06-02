@@ -9,6 +9,7 @@ using Lyo.Authentication.OpenIdConnect.Handoff;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Refresh;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -50,14 +51,14 @@ public static class AuthEndpointsMapper
         var basePath = NormalizePrefix(prefix);
         var paths = new AuthCookiePathOptions { StateCookiePath = basePath + "/callback" };
         var group = endpoints.MapGroup(basePath).WithTags("LyoAuth").WithMetadata(paths);
-        group.MapGet("/login/{provider}", (Delegate)LoginAsync).WithName("LyoAuthLogin").AllowAnonymous();
-        group.MapGet("/callback/{provider}", (Delegate)CallbackAsync).WithName("LyoAuthCallback").AllowAnonymous();
-        group.MapPost("/handoff/exchange", (Delegate)HandoffExchangeAsync).WithName("LyoAuthHandoffExchange").AllowAnonymous();
-        group.MapPost("/token", (Delegate)TokenAsync).WithName("LyoAuthToken").AllowAnonymous();
-        group.MapPost("/refresh", (Delegate)RefreshAsync).WithName("LyoAuthRefresh").AllowAnonymous();
-        group.MapPost("/logout", (Delegate)LogoutAsync).WithName("LyoAuthLogout").AllowAnonymous();
-        group.MapGet("/me", (Delegate)MeAsync).WithName("LyoAuthMe").RequireAuthorization();
-        group.MapGet("/users/{id:guid}", (Delegate)UserByIdAsync).WithName("LyoAuthUserById").RequireAuthorization(UsersReadScopePolicy);
+        group.MapGet("/login/{provider}", LoginAsync).WithName("LyoAuthLogin").AllowAnonymous();
+        group.MapGet("/callback/{provider}", CallbackAsync).WithName("LyoAuthCallback").AllowAnonymous();
+        group.MapPost("/handoff/exchange", HandoffExchangeAsync).WithName("LyoAuthHandoffExchange").AllowAnonymous();
+        group.MapPost("/token", TokenAsync).WithName("LyoAuthToken").AllowAnonymous();
+        group.MapPost("/refresh", RefreshAsync).WithName("LyoAuthRefresh").AllowAnonymous();
+        group.MapPost("/logout", LogoutAsync).WithName("LyoAuthLogout").AllowAnonymous();
+        group.MapGet("/me", MeAsync).WithName("LyoAuthMe").RequireAuthorization();
+        group.MapGet("/users/{id:guid}", UserByIdAsync).WithName("LyoAuthUserById").RequireAuthorization(UsersReadScopePolicy);
         return group;
     }
 
@@ -74,7 +75,7 @@ public static class AuthEndpointsMapper
         var opts = bffOptions.Value;
         try {
             var safeReturn = SanitizeReturn(returnUrl, opts.AllowedReturnOrigins, opts.DefaultReturnUrl, ctx.Request.Headers.Referer.ToString());
-            if (!string.IsNullOrWhiteSpace(returnUrl) && !string.Equals(safeReturn, returnUrl, StringComparison.Ordinal)) {
+            if (!returnUrl.IsNullOrWhitespace() && !string.Equals(safeReturn, returnUrl, StringComparison.Ordinal)) {
                 var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
                 logger.LogWarning(
                     "Caller-supplied returnUrl {Requested} was rejected and downgraded to {SafeReturn}. Add the origin to LyoOidcBff:AllowedReturnOrigins (currently [{Allowed}]) if you want the post-login redirect to land there. The handoff code will be stamped with the API's own origin, so the consumer's exchange POST will fail with 'invalid_or_consumed_code'.",
@@ -113,15 +114,15 @@ public static class AuthEndpointsMapper
     {
         var paths = ResolvePaths(ctx);
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
-        if (string.IsNullOrWhiteSpace(code))
+        if (code.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "missing_code" });
 
-        if (!ctx.Request.Cookies.TryGetValue(StateCookieName, out var sealedState) || string.IsNullOrWhiteSpace(sealedState))
+        if (!ctx.Request.Cookies.TryGetValue(StateCookieName, out var sealedState) || sealedState.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "missing_state_cookie" });
 
         ctx.Response.Cookies.Delete(StateCookieName, new() { Path = paths.StateCookiePath, Secure = ctx.Request.IsHttps });
         try {
-            var result = await coordinator.HandleCallbackAsync(provider, code, sealedState!, state ?? string.Empty, ctx.RequestAborted).ConfigureAwait(false);
+            var result = await coordinator.HandleCallbackAsync(provider, code, sealedState, state ?? string.Empty, ctx.RequestAborted).ConfigureAwait(false);
             var issued = result.Issued;
             if (string.Equals(result.Mode, "api", StringComparison.OrdinalIgnoreCase))
                 return Results.Json(BuildTokenResponse(issued));
@@ -149,7 +150,7 @@ public static class AuthEndpointsMapper
         HandoffExchangeRequest? body)
     {
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
-        if (body is null || string.IsNullOrWhiteSpace(body.Code)) {
+        if (body is null || body.Code.IsNullOrWhitespace()) {
             await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, outcome: "failure", reason: "MissingCode", ct: ctx.RequestAborted)
                 .ConfigureAwait(false);
 
@@ -157,7 +158,7 @@ public static class AuthEndpointsMapper
         }
 
         var origin = ctx.Request.Headers.Origin.ToString();
-        if (string.IsNullOrWhiteSpace(origin)) {
+        if (origin.IsNullOrWhitespace()) {
             await audit.RecordAsync(
                     auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "MissingOrigin", ct: ctx.RequestAborted)
                 .ConfigureAwait(false);
@@ -165,7 +166,7 @@ public static class AuthEndpointsMapper
             return Results.BadRequest(new { error = "missing_origin" });
         }
 
-        var code = await store.ConsumeAsync(body.Code!, origin, ctx.RequestAborted).ConfigureAwait(false);
+        var code = await store.ConsumeAsync(body.Code, origin, ctx.RequestAborted).ConfigureAwait(false);
         if (code is null) {
             await audit.RecordAsync(
                     auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "InvalidOrConsumed", ct: ctx.RequestAborted)
@@ -188,16 +189,16 @@ public static class AuthEndpointsMapper
 
     private static async Task<IResult> TokenAsync(HttpContext ctx, ILyoRefreshTokenExchange exchange, TokenRequest? body)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.GrantType))
+        if (body is null || body.GrantType.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "invalid_request" });
 
         if (!string.Equals(body.GrantType, "refresh_token", StringComparison.Ordinal))
             return Results.BadRequest(new { error = "unsupported_grant_type" });
 
-        if (string.IsNullOrWhiteSpace(body.RefreshToken))
+        if (body.RefreshToken.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "invalid_request" });
 
-        var issued = await exchange.ExchangeAsync(body.RefreshToken!, ctx.RequestAborted).ConfigureAwait(false);
+        var issued = await exchange.ExchangeAsync(body.RefreshToken, ctx.RequestAborted).ConfigureAwait(false);
         if (issued is null)
             return Results.Unauthorized();
 
@@ -206,10 +207,10 @@ public static class AuthEndpointsMapper
 
     private static async Task<IResult> RefreshAsync(HttpContext ctx, ILyoRefreshTokenExchange exchange, RefreshRequest? body)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.RefreshToken))
+        if (body is null || body.RefreshToken.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "missing_refresh_token" });
 
-        var issued = await exchange.ExchangeAsync(body.RefreshToken!, ctx.RequestAborted).ConfigureAwait(false);
+        var issued = await exchange.ExchangeAsync(body.RefreshToken, ctx.RequestAborted).ConfigureAwait(false);
         if (issued is null)
             return Results.Unauthorized();
 
@@ -224,11 +225,11 @@ public static class AuthEndpointsMapper
         ILoggerFactory loggerFactory,
         LogoutRequest? body)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.RefreshToken))
+        if (body is null || body.RefreshToken.IsNullOrWhitespace())
             return Results.NoContent();
 
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
-        if (ApiTokenCodec.TryParse(body.RefreshToken!, out var parsed) && parsed is not null && string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
+        if (ApiTokenCodec.TryParse(body.RefreshToken, out var parsed) && parsed is not null && string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
             Guid? ownerUserId = null;
             try {
                 var record = await store.GetByIdAsync(parsed.Id, null, ctx.RequestAborted).ConfigureAwait(false);
@@ -252,7 +253,7 @@ public static class AuthEndpointsMapper
     private static async Task<IResult> MeAsync(HttpContext ctx, IUserStore users, IExternalIdentityStore identities)
     {
         var lyoUserClaim = ctx.User.FindFirst("lyo:user")?.Value ?? ctx.User.FindFirst("sub")?.Value;
-        if (string.IsNullOrEmpty(lyoUserClaim) || !TryExtractUserId(lyoUserClaim, out var userId))
+        if (lyoUserClaim.IsNullOrEmpty() || !TryExtractUserId(lyoUserClaim, out var userId))
             return Results.Unauthorized();
 
         var user = await users.GetByIdAsync(userId, null, ctx.RequestAborted).ConfigureAwait(false);
@@ -290,8 +291,8 @@ public static class AuthEndpointsMapper
     {
         ArgumentHelpers.ThrowIfNull(allowed);
         ArgumentHelpers.ThrowIfNull(defaultUrl);
-        if (string.IsNullOrWhiteSpace(raw)) {
-            if (!string.IsNullOrWhiteSpace(referer) && IsOriginAllowed(referer, allowed))
+        if (raw.IsNullOrWhitespace()) {
+            if (!referer.IsNullOrWhitespace() && IsOriginAllowed(referer, allowed))
                 return referer;
 
             return defaultUrl;

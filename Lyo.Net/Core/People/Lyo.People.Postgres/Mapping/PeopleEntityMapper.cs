@@ -1,6 +1,5 @@
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
@@ -43,7 +42,7 @@ internal static class PeopleEntityMapper
     public static PersonEntity ToPersonEntity(Person person)
     {
         var entity = new PersonEntity {
-            Id = person.Id == default ? Guid.NewGuid() : person.Id,
+            Id = person.Id,
             NamePrefix = person.Name.Prefix?.GetDescription(),
             FirstName = person.Name.FirstName,
             MiddleName = person.Name.MiddleName,

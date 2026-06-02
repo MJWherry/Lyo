@@ -3,6 +3,7 @@ using Lyo.Authentication.Client;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -57,17 +58,17 @@ public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
 
         var scopes = session.Claims.Where(c => string.Equals(c.Type, LyoJwtClaims.Scope, StringComparison.Ordinal)).Select(c => c.Value).Distinct(StringComparer.Ordinal).ToArray();
         return Task.FromResult<AuthSessionSnapshot?>(
-            new(session.AccessToken, session.AccessTokenExpiresAt, !string.IsNullOrWhiteSpace(session.RefreshToken), session.RefreshTokenExpiresAt, session.Claims, scopes));
+            new(session.AccessToken, session.AccessTokenExpiresAt, !session.RefreshToken.IsNullOrWhitespace(), session.RefreshTokenExpiresAt, session.Claims, scopes));
     }
 
     /// <inheritdoc />
     public async Task<bool> RefreshAsync(CancellationToken ct = default)
     {
         var session = ResolveSession();
-        if (session is null || string.IsNullOrWhiteSpace(session.RefreshToken))
+        if (session is null || session.RefreshToken.IsNullOrWhitespace())
             return false;
 
-        var refreshed = await _authApi.RefreshAsync(session.RefreshToken!, ct).ConfigureAwait(false);
+        var refreshed = await _authApi.RefreshAsync(session.RefreshToken, ct).ConfigureAwait(false);
         if (refreshed is null) {
             _logger.LogInformation("Refresh failed for session {SessionId}; clearing", session.SessionId);
             _sessions.Remove(session.SessionId);
@@ -85,11 +86,11 @@ public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
         if (ctx is null)
             return null;
 
-        if (!ctx.Request.Cookies.TryGetValue(_options.CookieName, out var sealedId) || string.IsNullOrWhiteSpace(sealedId))
+        if (!ctx.Request.Cookies.TryGetValue(_options.CookieName, out var sealedId) || sealedId.IsNullOrWhitespace())
             return null;
 
         try {
-            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId!));
+            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId));
             var raw = Encoding.UTF8.GetString(bytes);
             if (!Guid.TryParse(raw, out var sessionId))
                 return null;

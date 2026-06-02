@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Lyo.Authentication.Models.Records;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -27,7 +28,7 @@ public sealed class WasmAuthStateProvider : AuthenticationStateProvider
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         var session = await _sessions.GetAsync().ConfigureAwait(false);
-        if (session is null || string.IsNullOrWhiteSpace(session.AccessToken))
+        if (session is null || session.AccessToken.IsNullOrWhitespace())
             return new(new(new ClaimsIdentity()));
 
         var claims = LyoJwtClaimsParser.Parse(session.AccessToken);

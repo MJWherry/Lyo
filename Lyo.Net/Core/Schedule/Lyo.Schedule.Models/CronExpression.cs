@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Schedule.Models;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace Lyo.Schedule.Models;
 /// (n-m), steps (*/n or n-m/n), comma-separated lists, named months (JAN-DEC) and days (SUN-SAT), and <c>?</c> as an alias for <c>*</c>. When both day-of-month and day-of-week are
 /// restricted, OR logic is applied (Vixie cron behaviour).
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CronExpression
 {
     // Index matches the numeric value (index 0 is unused for months).
@@ -231,4 +234,7 @@ public sealed class CronExpression
 
         return val;
     }
+
+    public override string ToString()
+        => $"CronExpression: months={_months.Count}, dom={_daysOfMonth.Count}, dow={_daysOfWeek.Count}, hours={_hours.Count}";
 }

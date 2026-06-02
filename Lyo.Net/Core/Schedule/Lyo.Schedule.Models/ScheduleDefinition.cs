@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 #if NET6_0_OR_GREATER
@@ -22,6 +23,7 @@ namespace Lyo.Schedule.Models;
 /// <param name="Enabled">Whether the schedule is active.</param>
 /// <param name="Description">Optional description.</param>
 /// <param name="CronExpression">Standard cron expression string (Cron type only). Supports 5-field (minute precision) and 6-field (second precision) formats.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public record ScheduleDefinition(
     ScheduleType Type,
     DayFlags DayFlags,
@@ -78,4 +80,7 @@ public record ScheduleDefinition(
                 throw new ArgumentOutOfRangeException(nameof(Type), Type, "Unknown schedule type.");
         }
     }
+
+    public override string ToString()
+        => $"ScheduleDefinition: type={Type}, enabled={Enabled}, cron={CronExpression ?? "(none)"}";
 }

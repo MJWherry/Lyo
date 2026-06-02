@@ -1,4 +1,5 @@
 using Lyo.Authentication.Audit;
+using Lyo.Common.Extensions;
 using Lyo.Diagnostic.Correlation;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Http;
@@ -40,7 +41,7 @@ public sealed class HttpAuthAuditContextAccessor : IAuthAuditContextAccessor
                 return null;
 
             var ua = ctx.Request.Headers.UserAgent.ToString();
-            return string.IsNullOrEmpty(ua) ? null : ua;
+            return ua.IsNullOrEmpty() ? null : ua;
         }
     }
 
@@ -53,7 +54,7 @@ public sealed class HttpAuthAuditContextAccessor : IAuthAuditContextAccessor
     public string? CorrelationId {
         get {
             var id = _correlationIdResolver.Resolve();
-            return string.IsNullOrEmpty(id) ? null : id;
+            return id.IsNullOrEmpty() ? null : id;
         }
     }
 }

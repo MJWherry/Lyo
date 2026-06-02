@@ -11,7 +11,9 @@ public class ScopeRegistryTests
         var r = new ScopeRegistry();
         r.Register("people.read", "Read");
         Assert.True(r.IsRegistered("people.read"));
-        Assert.Equal("Read", r.TryGet("people.read")!.Description);
+        var scope = r.TryGet("people.read");
+        Assert.NotNull(scope);
+        Assert.Equal("Read", scope.Description);
     }
 
     [Fact]
@@ -31,7 +33,7 @@ public class ScopeRegistryTests
     public void Expand_UnknownScope_Throws()
     {
         var r = new ScopeRegistry();
-        Assert.Throws<ScopeNotRegisteredException>(() => r.Expand(new[] { "ghost" }));
+        Assert.Throws<ScopeNotRegisteredException>(() => r.Expand(["ghost"]));
     }
 
     [Fact]
@@ -49,6 +51,6 @@ public class ScopeRegistryTests
         r.Register("b.read", "");
         r.Register("c.read", "");
         var names = r.All.Select(s => s.Name).ToArray();
-        Assert.Equal(new[] { "a.read", "b.read", "c.read" }, names);
+        Assert.Equal(["a.read", "b.read", "c.read"], names);
     }
 }

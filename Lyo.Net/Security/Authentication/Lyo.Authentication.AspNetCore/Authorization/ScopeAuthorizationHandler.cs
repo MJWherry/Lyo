@@ -20,7 +20,7 @@ public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthor
     /// <inheritdoc />
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ScopeAuthorizationRequirement requirement)
     {
-        if (context.User?.Identity?.IsAuthenticated != true)
+        if (context.User.Identity?.IsAuthenticated != true)
             return Task.CompletedTask;
 
         foreach (var claim in context.User.FindAll(LyoJwtClaims.Scope)) {

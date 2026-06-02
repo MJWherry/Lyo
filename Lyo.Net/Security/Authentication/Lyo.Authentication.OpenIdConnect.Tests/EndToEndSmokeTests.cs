@@ -10,6 +10,7 @@ using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Options;
+using Lyo.Common.Extensions;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -22,6 +23,8 @@ namespace Lyo.Authentication.OpenIdConnect.Tests;
 
 public sealed class EndToEndSmokeTests
 {
+    private CancellationToken TCT => TestContext.Current.CancellationToken;
+
     /// <summary>End-to-end smoke: BFF login → JWT-protected endpoint → mint PAT → call same endpoint with PAT.</summary>
     [Fact]
     public async Task FullFlow_Login_Jwt_MintPat_CallWithPat()
@@ -42,28 +45,28 @@ public sealed class EndToEndSmokeTests
             });
 
         var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
-        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state);
+        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TCT);
         Assert.NotNull(result);
-        Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
+        Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
         using (var meRequest = new HttpRequestMessage(HttpMethod.Get, "/protected")) {
             meRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var resp = await fx.Client.SendAsync(meRequest);
+            var resp = await fx.Client.SendAsync(meRequest, TCT);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
-            Assert.False(string.IsNullOrEmpty(json.GetProperty("sub").GetString()));
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TCT);
+            Assert.False(json.GetProperty("sub").GetString().IsNullOrEmpty());
         }
 
         using (var createTokenRequest = new HttpRequestMessage(HttpMethod.Post, "/tokens")) {
             createTokenRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
             createTokenRequest.Content = JsonContent.Create(new { displayName = "smoke-pat", scopes = new[] { "people.read" } });
-            var resp = await fx.Client.SendAsync(createTokenRequest);
+            var resp = await fx.Client.SendAsync(createTokenRequest, TCT);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>();
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TCT);
             var plaintext = json.GetProperty("plaintext").GetString();
-            Assert.False(string.IsNullOrEmpty(plaintext));
+            Assert.False(plaintext.IsNullOrEmpty());
             using var patRequest = new HttpRequestMessage(HttpMethod.Get, "/protected");
             patRequest.Headers.Authorization = new("Bearer", plaintext);
-            var patResp = await fx.Client.SendAsync(patRequest);
+            var patResp = await fx.Client.SendAsync(patRequest, TCT);
             Assert.Equal(HttpStatusCode.OK, patResp.StatusCode);
         }
     }
@@ -80,7 +83,7 @@ public sealed class EndToEndSmokeTests
         public async ValueTask DisposeAsync()
         {
             if (Host is not null) {
-                await Host.StopAsync();
+                await Host.StopAsync(TestContext.Current.CancellationToken);
                 Host.Dispose();
             }
         }
@@ -135,7 +138,7 @@ public sealed class EndToEndSmokeTests
                             });
                         });
                 })
-                .StartAsync();
+                .StartAsync(TestContext.Current.CancellationToken);
 
             fx.Host = host;
             return fx;

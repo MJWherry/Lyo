@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
@@ -41,12 +42,12 @@ public sealed class LyoAuthCookieAuthenticationHandler : AuthenticationHandler<L
     /// <inheritdoc />
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Cookies.TryGetValue(_clientOptions.CookieName, out var sealedId) || string.IsNullOrWhiteSpace(sealedId))
+        if (!Request.Cookies.TryGetValue(_clientOptions.CookieName, out var sealedId) || sealedId.IsNullOrWhitespace())
             return Task.FromResult(AuthenticateResult.NoResult());
 
         Guid sessionId;
         try {
-            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId!));
+            var bytes = _protector.Unprotect(Convert.FromBase64String(sealedId));
             var raw = Encoding.UTF8.GetString(bytes);
             if (!Guid.TryParse(raw, out sessionId))
                 return Task.FromResult(AuthenticateResult.NoResult());

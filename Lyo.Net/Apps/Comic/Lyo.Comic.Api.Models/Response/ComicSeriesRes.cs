@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Comic.Enums;
 
 namespace Lyo.Comic.Api.Models.Response;
 
 /// <summary>Enriched series response combining comic domain data with cross-domain metadata (tags, ratings, comments, favorites).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ComicSeriesRes
 {
     public Guid Id { get; init; }
@@ -59,9 +61,13 @@ public sealed record ComicSeriesRes
 
     /// <summary>Resolved URL for the series cover image. Populated when <see cref="CoverImageRef" /> is a valid file storage GUID.</summary>
     public string? CoverImageUrl => CoverImageRef != null && Guid.TryParse(CoverImageRef, out var id) ? $"/files/{id}" : null;
+
+    public override string ToString()
+        => $"ComicSeriesRes: {Title} ({Slug}), type={ComicType}, ratings={RatingCount}, favorites={FavoriteCount}";
 }
 
 /// <summary>An alternate or translated title within a series response.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ComicAlternateTitleRes
 {
     public Guid Id { get; init; }
@@ -69,4 +75,7 @@ public sealed record ComicAlternateTitleRes
     public string Title { get; init; } = string.Empty;
 
     public string? Language { get; init; }
+
+    public override string ToString()
+        => $"ComicAlternateTitleRes: {Title}, lang={Language}";
 }

@@ -5,6 +5,7 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,7 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
     /// <inheritdoc />
     public async Task<ClaimsPrincipal?> ValidateAsync(string jwt, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(jwt))
+        if (jwt.IsNullOrWhitespace())
             return null;
 
         var parts = jwt.Split('.');
@@ -83,7 +84,12 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
             return null;
         }
 
-        var kid = kidEl.GetString()!;
+        var kid = kidEl.GetString();
+        if (kid.IsNullOrEmpty()) {
+            _logger.LogDebug("JWT rejected: empty kid");
+            return null;
+        }
+
         var (signingKeyId, version) = SplitKid(kid);
         if (!string.Equals(signingKeyId, _options.SigningKeyId, StringComparison.Ordinal)) {
             _logger.LogDebug("JWT rejected: unknown signing key id '{Kid}'", kid);

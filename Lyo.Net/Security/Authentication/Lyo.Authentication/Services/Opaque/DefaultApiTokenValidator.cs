@@ -1,4 +1,6 @@
+#if !NETSTANDARD2_0
 using System.Security.Cryptography;
+#endif
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
@@ -97,7 +99,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
             return null;
         }
 
-        var scopes = (IReadOnlyList<string>)record.Scopes;
+        var scopes = record.Scopes;
         if (record.UserId.HasValue) {
             var user = await _users.GetByIdAsync(record.UserId.Value, null, ct).ConfigureAwait(false);
             if (user is null) {

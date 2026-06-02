@@ -1,10 +1,15 @@
+using System.Diagnostics;
+
 namespace Lyo.EntityReference.Models;
 
 /// <summary>Provenance for an ingested row: external source key and when the link was recorded.</summary>
 /// <param name="Source">External entity this row was imported from (e.g. Endato PS person).</param>
 /// <param name="ImportedAt">When this source link was recorded (UTC).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct EntitySourceRecord(EntityRef Source, DateTime ImportedAt)
 {
+    public override string ToString() => $"Source={Source}, ImportedAt={ImportedAt:O}";
+
     /// <summary>Creates a provenance record for import; owner is determined from the parent aggregate on persist.</summary>
     public static EntitySourceRecord From(EntityRef source, DateTime importedAt)
         => new(source, importedAt);

@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Discord.Models.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiscordUserReq
 {
     public long Id { get; set; }
@@ -23,4 +26,7 @@ public sealed class DiscordUserReq
     public string? PremiumLevel { get; set; }
 
     public DateTime UserCreatedDate { get; set; }
+
+    public override string ToString()
+        => $"DiscordUserReq: id={Id}, username={Username}, bot={IsBot}";
 }

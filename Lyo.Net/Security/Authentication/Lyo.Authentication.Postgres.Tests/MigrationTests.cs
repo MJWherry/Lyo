@@ -33,8 +33,9 @@ public sealed class MigrationTests
         try {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'user' AND table_name = '__EFMigrationsHistory'";
-            var count = (long)(await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
-            Assert.Equal(1L, count);
+            var scalar = await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+            Assert.NotNull(scalar);
+            Assert.Equal(1L, (long)scalar);
         }
         finally {
             await conn.CloseAsync();

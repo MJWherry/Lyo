@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
@@ -22,7 +23,7 @@ public sealed class ScopeAuthorizationPolicyProvider : DefaultAuthorizationPolic
     /// <inheritdoc />
     public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        if (!string.IsNullOrEmpty(policyName) && policyName.StartsWith(PolicyPrefix, StringComparison.Ordinal)) {
+        if (!policyName.IsNullOrEmpty() && policyName.StartsWith(PolicyPrefix, StringComparison.Ordinal)) {
             var scope = policyName.Substring(PolicyPrefix.Length);
             if (scope.Length == 0)
                 return null;

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Comic.Api.Models.Request;
 
 /// <summary>Request model for creating or updating a comic character.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicCharacterReq
 {
     /// <summary>Gets or sets the series this character primarily belongs to.</summary>
@@ -17,4 +20,7 @@ public sealed class ComicCharacterReq
 
     /// <summary>Gets or sets the character's role (e.g. "Protagonist", "Antagonist", "Supporting", "Minor").</summary>
     public string? Role { get; set; }
+
+    public override string ToString()
+        => $"ComicCharacterReq: series={SeriesId}, name={Name}, role={Role}";
 }

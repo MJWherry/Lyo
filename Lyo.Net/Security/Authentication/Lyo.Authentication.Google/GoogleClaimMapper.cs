@@ -1,4 +1,5 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Authentication.Google;
 
@@ -10,7 +11,7 @@ public static class GoogleClaimMapper
     {
         var name = ReadString(claims, "name");
         var email = ReadString(claims, "email");
-        var displayName = string.IsNullOrWhiteSpace(name) ? string.IsNullOrWhiteSpace(email) ? "Google user" : email! : name!;
+        var displayName = name.IsNullOrWhitespace() ? email.IsNullOrWhitespace() ? "Google user" : email : name;
         var emailVerified = ReadBool(claims, "email_verified", false);
         var picture = ReadString(claims, "picture");
         var locale = ReadString(claims, "locale");
