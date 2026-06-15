@@ -20,7 +20,6 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

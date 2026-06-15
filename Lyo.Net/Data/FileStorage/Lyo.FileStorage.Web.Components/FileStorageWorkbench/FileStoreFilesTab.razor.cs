@@ -222,6 +222,11 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task OpenAccessLinkDialogFromRowAsync(object? row)
     {
+        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
+            Workbench.SetStatus("Access links cannot be created for deleted files.", Severity.Info);
+            return;
+        }
+
         if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
             Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
             return;
@@ -247,7 +252,15 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            var result = await storage.GetMetadataAsync(fileId);
+            FileStoreResult result;
+            if (FileStorageGridRowHelper.IsRowDeleted(row)) {
+                var uri = $"{Workbench.FileStorageApiRoutePrefix.TrimEnd('/')}/files/{fileId:D}/metadata?includeDeleted=true";
+                result = await Workbench.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false)
+                    ?? throw new InvalidOperationException($"Metadata for deleted file {fileId} was not returned.");
+            }
+            else
+                result = await storage.GetMetadataAsync(fileId).ConfigureAwait(false);
+
             await ShowFileMetadataDialogAsync(result);
             Workbench.SetStatus($"Loaded metadata for {fileId}.", Severity.Success);
         }
@@ -261,6 +274,11 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task DownloadFileFromRowAsync(object? row)
     {
+        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
+            Workbench.SetStatus("Deleted files cannot be downloaded; the backing object was removed.", Severity.Info);
+            return;
+        }
+
         var storage = Workbench.FileStorage;
         if (storage == null) {
             Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
@@ -296,6 +314,11 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task DeleteFileFromRowAsync(object? row)
     {
+        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
+            Workbench.SetStatus("This file is already deleted.", Severity.Info);
+            return;
+        }
+
         var storage = Workbench.FileStorage;
         if (storage == null) {
             Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);

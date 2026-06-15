@@ -12,6 +12,10 @@
                     <td>@Metadata.Id</td>
                 </tr>
                 <tr>
+                    <td><strong>Status</strong></td>
+                    <td>@(Metadata.DeletedAt.HasValue ? $"Deleted ({Metadata.DeletedAt.Value.ToUniversalTime():u})" : "Active")</td>
+                </tr>
+                <tr>
                     <td><strong>Original name</strong></td>
                     <td>@(Metadata.OriginalFileName ?? "-")</td>
                 </tr>

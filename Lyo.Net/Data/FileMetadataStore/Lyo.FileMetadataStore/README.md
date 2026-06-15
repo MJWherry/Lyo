@@ -18,7 +18,7 @@ Clients depend on **`IFileMetadataStore`** only where they manipulate **canonica
 | **`FindByHashAsync(byte[] hash)`**                                 | Duplicate detection shortcut — ignores soft-deleted rows (often combined with **`Lyo.Hashing`**).                                                                                                                                                          |
 | **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits — active (non–soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair.                                                                                                                                             |
 
-`FileStoreResult` exposes optional **`DeletedAt`** (UTC) when present in storage; callers treat metadata without it as active.
+`FileStoreResult` exposes optional **`DeletedAt`** (UTC) when present in storage; callers treat metadata without it as active. **`GetMetadataAsync`** and **`FindByHashAsync`** omit tombstones; admin grids and workbench **`QueryProject`** surfaces may include soft-deleted rows and should gate mutating actions on **`DeletedAt`**.
 
 ### `FileAvailability` states
 

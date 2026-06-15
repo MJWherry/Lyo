@@ -1,7 +1,7 @@
 # K6 Benchmark Analysis — Lyo Query API
 
-**Date**: April 19, 2026  
-**Results**: `k6/framework-person/results/20260419-190727/`  
+**Date**: April 22, 2026  
+**Results**: `k6/framework-person/results/20260422-015048/`  
 **Environment**: Local development (API + PostgreSQL + k6 on same machine)
 
 ---
@@ -68,17 +68,17 @@ related records across 6 child/grandchild tables.
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 18.1 ms                     |
-| **Median latency**    | 17.3 ms                     |
-| **p95 latency**       | 29.3 ms                     |
-| **p99 latency**       | 40.5 ms                     |
-| **Max latency**       | 145 ms                      |
+| **Avg latency**       | 15.6 ms                     |
+| **Median latency**    | 13.8 ms                     |
+| **p95 latency**       | 22.9 ms                     |
+| **p99 latency**       | 32.2 ms                     |
+| **Max latency**       | 325 ms                      |
 | **Throughput**        | 20.0 req/s (3,600 requests) |
 | **Success rate**      | **100%**                    |
-| **Avg response size** | 247 KB                      |
+| **Avg response size** | 253 KB                      |
 
 **Assessment**: Excellent. Five different query types — including dynamically compiled expression trees, query node filters, sort chains, and regex-based subqueries — stay in a
-tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass.
+tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass. Slightly faster than the April 19 archive on avg/p95.
 
 ---
 
@@ -86,18 +86,17 @@ tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cac
 
 | Metric                | Value                         |
 |-----------------------|-------------------------------|
-| **Avg latency**       | 92.6 ms                       |
-| **Median latency**    | 71.9 ms                       |
-| **p95 latency**       | 244 ms                        |
-| **p99 latency**       | 372 ms                        |
-| **Max latency**       | 1,059 ms                      |
-| **Throughput**        | 181.4 req/s (87,087 requests) |
+| **Avg latency**       | 111.2 ms                      |
+| **Median latency**    | 85.2 ms                       |
+| **p95 latency**       | 302 ms                        |
+| **p99 latency**       | 510 ms                        |
+| **Max latency**       | 1,162 ms                      |
+| **Throughput**        | 160.5 req/s (77,078 requests) |
 | **Success rate**      | **100%**                      |
-| **Avg response size** | 601 KB                        |
+| **Avg response size** | 615 KB                        |
 
-**Assessment**: Strong under concurrent load. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). This archive completes more stress-stage
-iterations than the April 2026 baseline (higher aggregate throughput); API, Postgres, and k6 still share CPU while ramping to 40 VUs — use this scenario for **stress**, not
-apples-to-apples with single-request localhost timings.
+**Assessment**: Strong under concurrent load. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). p95 is higher than the April 19 archive (~244 ms)
+but remains well within the 2.5 s SLA. API, Postgres, and k6 still share CPU while ramping to 40 VUs.
 
 ---
 
@@ -105,16 +104,17 @@ apples-to-apples with single-request localhost timings.
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 6.1 ms                      |
-| **Median latency**    | 5.6 ms                      |
-| **p95 latency**       | 8.9 ms                      |
-| **p99 latency**       | 11.8 ms                     |
-| **Max latency**       | 70 ms                       |
+| **Avg latency**       | 6.0 ms                      |
+| **Median latency**    | 5.5 ms                      |
+| **p95 latency**       | 8.5 ms                      |
+| **p99 latency**       | 13.6 ms                     |
+| **Max latency**       | 50 ms                       |
 | **Throughput**        | 56.2 req/s (6,750 requests) |
 | **Success rate**      | **100%**                    |
-| **Avg response size** | 205 KB                      |
+| **Avg response size** | 210 KB                      |
 
-**Assessment**: Excellent. Handles a high arrival-rate spike with sub–9 ms p95 latency. Select projection (five fields including a nested navigation path) remains efficient.
+**Assessment**: Excellent. Handles a high arrival-rate spike with sub–9 ms p95 latency. Select projection (five fields including a nested navigation path) remains efficient and
+consistent with prior archives.
 
 ---
 
@@ -122,19 +122,18 @@ apples-to-apples with single-request localhost timings.
 
 | Metric                | Value                                |
 |-----------------------|--------------------------------------|
-| **Avg latency**       | 85.4 ms                              |
-| **Median latency**    | 32.3 ms                              |
-| **p95 latency**       | 395 ms                               |
-| **p99 latency**       | 1,113 ms                             |
-| **Max latency**       | 4,199 ms                             |
-| **Throughput**        | 42.2 req/s (303,896 requests)        |
+| **Avg latency**       | 80.2 ms                              |
+| **Median latency**    | 21.0 ms                              |
+| **p95 latency**       | 337 ms                               |
+| **p99 latency**       | 1,148 ms                             |
+| **Max latency**       | 5,328 ms                             |
+| **Throughput**        | 43.1 req/s (310,665 requests)        |
 | **Duration**          | 2 hours (configured)                 |
-| **Success rate**      | **100%** (all k6 checks passed)      |
-| **Avg response size** | 607 KB (range varies by query shape) |
+| **Success rate**      | **99.999%** (621,323 / 621,330 checks passed; 7 SLA misses) |
+| **Avg response size** | 622 KB (range varies by query shape) |
 
-**Assessment**: Very strong. Long soak with mixed load and periodic heavy-include spikes; hundreds of thousands of requests with no failed checks. Randomized queries limit
-hot-cache repeat hits. Average latency is lower than some prior archives; **p95 is higher** than the April 2026 baseline because the mix includes more time in heavier shapes —
-compare tails across runs with care.
+**Assessment**: Very strong. Long soak with mixed load and periodic heavy-include spikes; **310k+** requests with only **7** check failures (all SLA timing, not HTTP errors).
+Median latency improved vs the April 19 archive; p95 is comparable. Randomized queries limit hot-cache repeat hits.
 
 ---
 
@@ -142,17 +141,17 @@ compare tails across runs with care.
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 13.3 ms                     |
-| **Median latency**    | 12.2 ms                     |
-| **p95 latency**       | 17.9 ms                     |
-| **p99 latency**       | 23.5 ms                     |
-| **Max latency**       | 74 ms                       |
-| **Throughput**        | 20.0 req/s (3,600 requests) |
+| **Avg latency**       | 12.8 ms                     |
+| **Median latency**    | 11.9 ms                     |
+| **p95 latency**       | 17.5 ms                     |
+| **p99 latency**       | 24.2 ms                     |
+| **Max latency**       | 102 ms                      |
+| **Throughput**        | 20.0 req/s (3,601 requests) |
 | **Success rate**      | **100%**                    |
-| **Avg response size** | 231 KB                      |
+| **Avg response size** | 236 KB                      |
 
 **Assessment**: Excellent. The most complex query structure in the suite — a two-level `QueryNode` tree with a `SubQuery` containing nested `And`/`Or` logical operators and a regex
-comparator — holds ~18 ms p95 at sustained 20 req/s. The SQL-first subquery pushdown strategy translates the nested query efficiently. Randomized start/amount for cache bypass.
+comparator — holds ~17.5 ms p95 at sustained 20 req/s. Randomized start/amount for cache bypass.
 
 ---
 
@@ -162,7 +161,7 @@ comparator — holds ~18 ms p95 at sustained 20 req/s. The SQL-first subquery pu
 
 | System / Stack                                                         | Comparable Workload                                  | Typical p95 Latency                                                                                        |
 |------------------------------------------------------------------------|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| **Lyo Query API** (this run, EF Core + dynamic expressions)            | Mixed / spike / subquery workloads (see scenarios)   | **~9–29 ms** scenario-dependent                                                                            |
+| **Lyo Query API** (this run, EF Core + dynamic expressions)            | Mixed / spike / subquery workloads (see scenarios)   | **~8–23 ms** scenario-dependent                                                                            |
 | **Hasura / PostgREST** (direct PG → JSON, no ORM)                      | Filters + sorts + pagination                         | 5–30 ms                                                                                                    |
 | **GraphQL** (Hasura — same stack as above)                             | Auto-generated GraphQL over PostgreSQL               | 5–30 ms                                                                                                    |
 | **GraphQL** (Apollo / Hot Chocolate / gqlgen + hand-written resolvers) | List + filter + sort + pagination as field resolvers | **40–250 ms** with solid batching (DataLoader, lookahead); **200 ms–2s+** with N+1 or cold resolver chains |
@@ -182,7 +181,7 @@ round trip with a single SQL plan** for the tested shapes, which is closer to Ha
 
 | System / Stack                               | Comparable Workload                                              | Typical Behavior                                          |
 |----------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------|
-| **Lyo Query API** (this run)                 | 3 tables, 100–300 rows, ~601 KB, up to 40 VUs                    | **~93 ms avg, p95 ~244 ms, 100% within 2.5 s SLA**        |
+| **Lyo Query API** (this run)                 | 3 tables, 100–300 rows, ~615 KB, up to 40 VUs                    | **~111 ms avg, p95 ~302 ms, 100% within 2.5 s SLA**      |
 | **EF Core API** (typical)                    | 5–7 table includes, 500–2000 rows                                | 2–10s depending on depth and row count                    |
 | **Django + select_related/prefetch_related** | 2000 rows + 3 FK joins                                           | 3–10s                                                     |
 | **Rails + includes (eager load)**            | 2000 rows + 3 associations                                       | 5–15s                                                     |
@@ -199,11 +198,20 @@ include depth in public APIs.
 
 | Category                                                        | Grade | Notes                                                                                                   |
 |-----------------------------------------------------------------|-------|---------------------------------------------------------------------------------------------------------|
-| Simple queries (filters, sorts, pagination)                     | **A** | ~18 ms avg mixed load; aligns with strong ORM-class APIs                                                |
-| Complex query compilation (subqueries, regex, expression trees) | **A** | ~13 ms avg / ~18 ms p95 subquery scenario                                                               |
-| Spike/burst handling                                            | **A** | ~9 ms p95 on spike scenario; no errors                                                                  |
-| Sustained load stability                                        | **A** | 2 h soak, 304K+ requests, 100% k6 checks                                                                |
-| Realistic include loads (3-table, 100–300 rows, high VUs)       | **A** | 100% within SLA; stress stage throughput higher than older archives — compare duration/iteration counts |
+| Simple queries (filters, sorts, pagination)                     | **A** | ~16 ms avg mixed load; aligns with strong ORM-class APIs                                                |
+| Complex query compilation (subqueries, regex, expression trees) | **A** | ~13 ms avg / ~17.5 ms p95 subquery scenario                                                             |
+| Spike/burst handling                                            | **A** | ~8.5 ms p95 on spike scenario; no errors                                                                  |
+| Sustained load stability                                        | **A** | 2 h soak, 310K+ requests, 99.999% k6 checks                                                               |
+| Realistic include loads (3-table, 100–300 rows, high VUs)       | **A** | 100% within SLA; p95 ~302 ms under 40 VUs                                                                 |
+
+---
+
+## Run history (recent archives)
+
+| Date | Results folder | Mixed p95 | Spike p95 | Subquery p95 | Soak requests | Soak check rate |
+|------|----------------|----------:|----------:|-------------:|--------------:|----------------:|
+| **2026-04-22** | `20260422-015048` | 22.9 ms | 8.5 ms | 17.5 ms | 310,665 | 99.999% |
+| 2026-04-19 | `20260419-190727` | 29.3 ms | 8.9 ms | 17.9 ms | 303,896 | 100% |
 
 ---
 
@@ -224,3 +232,5 @@ include depth in public APIs.
 7. **Query cache tag granularity**: This run uses **`Broad`** (the library default) — type-wide tags only. **`Granular`** adds per-row instance tags (more CPU when storing cache
    entries, finer invalidation). A prior stressed laptop run with **`Granular`** showed heavy cache-tag overhead under load; **`Broad`** is the safer default for
    throughput-oriented hosts unless you rely on surgical invalidation.
+8. **Soak SLA misses**: The April 22 archive logged **7** timing check failures out of 621,330 — all on heavy-shape SLA thresholds, not HTTP 4xx/5xx. Treat as tail latency under
+   mixed load, not functional regression.

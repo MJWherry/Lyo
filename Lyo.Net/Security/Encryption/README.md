@@ -746,6 +746,8 @@ using Lyo.Compression.Models;
 
 services.AddCompressionService(options => options.DefaultAlgorithm = CompressionAlgorithm.Brotli);
 services.AddDefaultCompressionService<CompressionService>();
+// AddCompressionService also registers ICompressionResolver (same CompressionService instance).
+// File storage reads use metadata CompressionAlgorithm via the resolver — register addon factories for historical codecs.
 // Or: AddCompressionServiceFromConfiguration(configuration, CompressionServiceOptions.SectionName);
 ```
 
@@ -1006,16 +1008,50 @@ updatedHeader.Write(buffer);
 
 ## 🔍 Performance
 
-Approximate performance on typical hardware:
+BenchmarkDotNet suite: [`Lyo.Encryption.Benchmarks`](Lyo.Encryption.Benchmarks/) — full write-up in [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (last run **June 14, 2026 @ 19:02**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U, **AES-NI**). Payloads use **random bytes**.
 
-- **AES-GCM**: 200-800 MB/s
-- **ChaCha20Poly1305**: 300-1000 MB/s
-- **RSA**: 100-500 MB/s (depends on key size)
-- **AES-GCM-RSA**: 100-500 MB/s
+### Benchmark coverage
 
-For large files, use `EncryptToStreamAsync` / `DecryptToStreamAsync` to avoid memory issues. These methods use *
-*single-pass streaming** with **no temporary files**, processing data efficiently through compression → encryption →
-output in one pass.
+| Algorithm / pattern | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
+|---------------------|:---------------:|:-------------------------------------:|
+| **AES-GCM** | ✅ | ✅ |
+| **ChaCha20-Poly1305** | ✅ | ✅ |
+| **AES-CCM** | ✅ | ✅ |
+| **AES-SIV** | ✅ | ✅ |
+| **XChaCha20-Poly1305** | ✅ | ✅ |
+| **RSA** (2048 OAEP-SHA256) | ✅ | ✅ |
+| **AES-GCM-RSA hybrid** | ✅ | ✅ |
+| **Two-key envelope** (AES or ChaCha DEK/KEK) | ✅ | ✅ (incl. mixed DEK/KEK combos) |
+| **Large-file streaming** | ✅ | — |
+
+### Benchmark highlights (June 2026, this hardware)
+
+**Symmetric @ 1 MB (in-memory, encrypt / decrypt):**
+
+| Algorithm | Encrypt | Decrypt | vs AES-GCM (encrypt) |
+|-----------|--------:|--------:|---------------------:|
+| **AES-GCM** | **667 µs** (~1.5 GB/s) | **621 µs** | 1.00× |
+| **ChaCha20-Poly1305** | 920 µs | 899 µs | 1.38× |
+| **XChaCha20-Poly1305** | 2.54 ms | 2.34 ms | 3.8× |
+| **AES-CCM** | 12.2 ms | 11.1 ms | 18× |
+| **AES-SIV** | 17.0 ms | 16.4 ms | 25× |
+
+**Other patterns:**
+
+| Workload | Result | Notes |
+|----------|--------|-------|
+| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms |
+| Two-key encrypt 1 MB (AES-GCM) | **880 µs** | ~1.3× single-key |
+| Two-key encrypt 1 KB | **7.0 µs** | ~2.7× single-key |
+| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs** | Near pure GCM |
+| Hybrid decrypt 1 KB | **468 µs** | RSA unwrap dominates |
+| RSA decrypt 1 MB | **2.51 s** | Chunked; not for bulk |
+
+On systems **with AES-NI**, **AES-GCM is the default production choice** for bulk data. ChaCha20-Poly1305 is ~30–40% slower here. XChaCha, CCM, and SIV trade throughput for nonce/protocol properties. RSA and hybrid are for key wrapping and small secrets — use hybrid (AES-GCM-RSA) when encrypting large blobs to a public key.
+
+Two-key adds modest overhead at 1 MB+; avoid envelope mode for high-frequency sub-4 KB payloads if latency-sensitive.
+
+For large files, use `EncryptToStreamAsync` / `DecryptToStreamAsync` to avoid memory issues. These methods use **single-pass streaming** with **no temporary files**, processing data efficiently through compression → encryption → output in one pass.
 
 ## 🧪 Testing
 
@@ -1035,9 +1071,10 @@ Each operation uses its own cryptographic context (nonce, key material).
 
 ## 📚 Additional Resources
 
+- [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) — BenchmarkDotNet results (all symmetric AEAD, RSA, hybrid, two-key, streaming; June 2026)
 - See `PRODUCTION_REVIEW.md` for detailed security analysis
 - See XML documentation in code for detailed API documentation
-- See test projects for usage examples
+- See `Lyo.Encryption.Tests` for usage examples (all symmetric add-ons + RSA/hybrid)
 
 ## 🔧 Advanced Usage
 

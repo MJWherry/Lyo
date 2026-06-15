@@ -7,6 +7,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.AesCcm\Lyo.Encryption.AesCcm.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.XChaCha20Poly1305\Lyo.Encryption.XChaCha20Poly1305.csproj"/>
         <ProjectReference Include="..\Lyo.Keystore\Lyo.Keystore.csproj"/>
     </ItemGroup>
 

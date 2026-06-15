@@ -21,4 +21,6 @@ services.AddCompressionServiceFromConfiguration(configuration, CompressionServic
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for keyed services and `CompressionOptions` in appsettings.json.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for keyed services, `ICompressionResolver`, and `CompressionOptions` in appsettings.json.
+
+**File storage reads:** register `AddBZip2Compressor()` when stored metadata may reference BZip2; [`ICompressionResolver`](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) decompresses by metadata on read.

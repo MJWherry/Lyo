@@ -5,16 +5,13 @@ namespace Lyo.Authentication.AspNetCore.Tests;
 
 public sealed class JwksEndpointTests
 {
-    private CancellationToken TCT => TestContext.Current.CancellationToken;
-
-    [Fact]
     public async Task JwksEndpoint_ReturnsKeys()
     {
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         await harness.IssueOpaqueAsync();
-        var response = await harness.Client.GetAsync("/.well-known/jwks.json", TCT);
+        var response = await harness.Client.GetAsync("/.well-known/jwks.json", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync(TCT);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var keys = doc.RootElement.GetProperty("keys");
         Assert.Equal(JsonValueKind.Array, keys.ValueKind);

@@ -11,7 +11,7 @@ A standard `WebApplication` with the following pipeline:
 - **OpenAPI / Scalar** — `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so `/scalar/v1` (or whatever Scalar picks) shows every endpoint.
 - **Compression** — Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can ship Brotli payloads.
 - **JSON** — `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.
-- **Infra** — `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService`, `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster
+- **Infra** — `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster
   via `ConfigureMapster()`.
 - **Locks** — `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.
 - **Messaging** — `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).

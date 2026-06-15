@@ -40,8 +40,9 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         IFileMalwareScanner? malwareScanner = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), metadataService ?? new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory),
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
-            options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy, malwareScanner)
+            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService,
+            twoKeyEncryptionService, options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers,
+            contentPolicy, malwareScanner)
     {
         _options = options;
         _ownsMetadataService = metadataService == null;

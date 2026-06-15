@@ -262,9 +262,20 @@ public static class SetupFileStorageWorkbenchEndpoints
                 });
 
             group.MapGet(
-                "files/{fileId:guid}/metadata", async (Guid fileId, IServiceProvider services, CancellationToken ct) => {
+                "files/{fileId:guid}/metadata", async (
+                    Guid fileId,
+                    IServiceProvider services,
+                    IDbContextFactory<FileMetadataStoreDbContext> dbFactory,
+                    CancellationToken ct,
+                    bool? includeDeleted) => {
+                    if (includeDeleted == true) {
+                        await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+                        var entity = await db.FileMetadata.AsNoTracking().FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
+                        return entity == null ? Results.NotFound() : Results.Ok(entity.ToFileStoreResult());
+                    }
+
                     var fileStorage = GetFileStorage(services);
-                    return Results.Ok(await fileStorage.GetMetadataAsync(fileId, ct));
+                    return Results.Ok(await fileStorage.GetMetadataAsync(fileId, ct).ConfigureAwait(false));
                 });
 
             group.MapGet(
@@ -284,7 +295,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                     }
 
                     // Encrypted/compressed or no presigned support: stream decrypted bytes from storage.
-                    var stream = await fileStorage.GetFileStreamAsync(fileId, ct);
+                    var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct);
                     if (stream == null)
                         return Results.NotFound();
 
@@ -313,7 +324,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                         catch (NotSupportedException) { }
                     }
 
-                    var stream = await fileStorage.GetFileStreamAsync(fileId, ct);
+                    var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct);
                     if (stream == null)
                         return Results.NotFound();
 

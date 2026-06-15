@@ -146,15 +146,24 @@ public partial class FileStorageWorkbench : ComponentBase
             return;
         }
 
-        var keyIds = (await InventoryStore.GetAvailableKeyIdsAsync()).Distinct(StringComparer.Ordinal).OrderBy(keyId => keyId).ToList();
-        var versionsByKey = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (var keyId in keyIds) {
-            var versions = (await InventoryStore.GetAvailableVersionsAsync(keyId)).Distinct(StringComparer.Ordinal).OrderBy(version => version).ToList();
-            versionsByKey[keyId] = versions;
+        try {
+            var keyIds = (await InventoryStore.GetAvailableKeyIdsAsync()).Distinct(StringComparer.Ordinal).OrderBy(keyId => keyId).ToList();
+            var versionsByKey = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            foreach (var keyId in keyIds) {
+                var versions = (await InventoryStore.GetAvailableVersionsAsync(keyId)).Distinct(StringComparer.Ordinal).OrderBy(version => version).ToList();
+                versionsByKey[keyId] = versions;
+            }
+
+            _availableKeyIds = keyIds;
+            _availableKeyVersions = versionsByKey;
+        }
+        catch (HttpRequestException ex) {
+            _availableKeyIds = [];
+            _availableKeyVersions = new(StringComparer.Ordinal);
+            var apiBase = ApiClient.GetClient().BaseAddress?.ToString().TrimEnd('/') ?? "the configured API";
+            SetStatus($"Key inventory unavailable ({apiBase}): {ex.Message}. Start Lyo.TestApi or fix ApiClient:BaseUrl.", Severity.Warning);
         }
 
-        _availableKeyIds = keyIds;
-        _availableKeyVersions = versionsByKey;
         await InvokeAsync(StateHasChanged);
     }
 }

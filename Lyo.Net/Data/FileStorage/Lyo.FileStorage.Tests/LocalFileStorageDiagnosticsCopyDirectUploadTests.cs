@@ -50,7 +50,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         var copy = await service.CopyFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
         Assert.NotEqual(saved.Id, copy.Id);
         Assert.Equal(saved.OriginalFileHash, copy.OriginalFileHash);
-        Assert.Equal(plain, await service.GetFileAsync(copy.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(plain, await service.GetFileAsync(copy.Id, ct: TestContext.Current.CancellationToken));
         var copyMeta = await service.GetMetadataAsync(copy.Id, TestContext.Current.CancellationToken);
         Assert.Equal(saved.SourceFileHash, copyMeta.SourceFileHash);
     }
@@ -63,7 +63,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         var copy = await service.CopyFileAsync(saved.Id, new() { PathPrefix = "archive" }, TestContext.Current.CancellationToken);
         var copyMeta = await service.GetMetadataAsync(copy.Id, TestContext.Current.CancellationToken);
         Assert.Equal("archive", copyMeta.PathPrefix);
-        Assert.Equal("x"u8.ToArray(), await service.GetFileAsync(copy.Id, TestContext.Current.CancellationToken));
+        Assert.Equal("x"u8.ToArray(), await service.GetFileAsync(copy.Id, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(FileAvailability.Available, done.Availability);
         Assert.Equal(payload.LongLength, done.OriginalFileSize);
-        Assert.Equal(payload, await service.GetFileAsync(begin.FileId, TestContext.Current.CancellationToken));
+        Assert.Equal(payload, await service.GetFileAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]

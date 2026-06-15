@@ -10,6 +10,9 @@ public class CompressionServiceOptions
     /// <summary>Recommended appsettings section key when binding this type.</summary>
     public const string SectionName = "CompressionOptions";
 
+    /// <summary>Default options for <see cref="ICompressionResolver" /> / <see cref="CompressionService" /> when none are supplied.</summary>
+    public static CompressionServiceOptions Default { get; } = new();
+
     /// <summary>Maximum concurrent file operations in batch compress/decompress APIs.</summary>
     public int MaxParallelFileOperations { get; set; } = Environment.ProcessorCount;
 

@@ -25,4 +25,6 @@ services.AddCompressionServiceFromConfiguration(configuration, CompressionServic
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full registration tree, keyed services, and `CompressionServiceOptions` binding.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full registration tree, keyed services, `ICompressionResolver`, and `CompressionServiceOptions` binding.
+
+**File storage reads:** register `AddZstdCompressor()` when historical metadata may reference Zstd; decompression uses `ICompressionResolver`, not only `ICompressionService.DefaultAlgorithm`.

@@ -61,8 +61,25 @@ internal sealed class FileStorageStreamingPipelines
     /// Writes decrypted and/or decompressed plaintext into <paramref name="plainWriter" /> based on <paramref name="metadata" /> compression and encryption flags, leveraging
     /// <see cref="Pipe" /> backpressure to avoid buffering entire files in memory.
     /// </summary>
-    internal async Task RunStreamingDecodePipelineAsync(Stream storageStream, FileStoreResult metadata, PipeWriter plainWriter, int? chunkSize, CancellationToken ct)
+    internal async Task RunStreamingDecodePipelineAsync(
+        Stream storageStream,
+        FileStoreResult metadata,
+        PipeWriter plainWriter,
+        int? chunkSize,
+        CompressionAlgorithm? compressionAlgorithmOverride,
+        CancellationToken ct)
     {
+        CompressionAlgorithm? decompressAlgorithm = null;
+        if (metadata.IsCompressed) {
+            OperationHelpers.ThrowIfNull(
+                _compressionService,
+                $"File {metadata.Id} is compressed but no compression service is configured. " +
+                "Provide an ICompressionService when creating FileStorageService to decompress compressed files.");
+
+            decompressAlgorithm = FileStorageCompression.ResolveDecompressionAlgorithm(
+                metadata, compressionAlgorithmOverride, _options.DecompressionAlgorithmOverride, _compressionService, _logger, metadata.Id);
+        }
+
         using (storageStream) {
             if (metadata.IsEncrypted && metadata.IsCompressed) {
                 OperationHelpers.ThrowIfNull(
@@ -70,18 +87,13 @@ internal sealed class FileStorageStreamingPipelines
                     $"File {metadata.Id} is encrypted but no encryption service is configured. " +
                     "Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
 
-                OperationHelpers.ThrowIfNull(
-                    _compressionService,
-                    $"File {metadata.Id} is compressed but no compression service is configured. " +
-                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
-
                 if (storageStream.CanSeek)
                     storageStream.Position = 0;
 
                 var pipeCompressed = new Pipe();
                 await Task.WhenAll(
                         DecryptStorageIntoCompressedPipeAsync(storageStream, pipeCompressed, _twoKeyEncryptionService!, ct),
-                        DecompressCompressedPipeToPlainAsync(pipeCompressed, plainWriter, _compressionService!, chunkSize, ct))
+                        DecompressCompressedPipeToPlainAsync(pipeCompressed, plainWriter, decompressAlgorithm!, chunkSize, ct))
                     .ConfigureAwait(false);
 
                 _logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt + decompress)", metadata.Id);
@@ -113,17 +125,12 @@ internal sealed class FileStorageStreamingPipelines
             }
 
             if (metadata.IsCompressed) {
-                OperationHelpers.ThrowIfNull(
-                    _compressionService,
-                    $"File {metadata.Id} is compressed but no compression service is configured. " +
-                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
-
                 if (storageStream.CanSeek)
                     storageStream.Position = 0;
 
                 try {
                     using (var plainOut = plainWriter.AsStream(true))
-                        await _compressionService!.DecompressAsync(storageStream, plainOut, chunkSize, ct).ConfigureAwait(false);
+                        await _compressionService!.Resolver.DecompressAsync(storageStream, plainOut, decompressAlgorithm!, chunkSize, ct).ConfigureAwait(false);
 
                     await plainWriter.CompleteAsync().ConfigureAwait(false);
                 }
@@ -152,14 +159,14 @@ internal sealed class FileStorageStreamingPipelines
         string? normalizedPathPrefix,
         int chunkSize,
         long originalSize,
+        CompressionAlgorithm compressionAlgorithm,
         CancellationToken ct)
     {
         OperationHelpers.ThrowIfNull(_compressionService, "Compression service required for pipeline.");
         OperationHelpers.ThrowIfNull(_twoKeyEncryptionService, "Encryption service required for pipeline.");
-        var compressionExt = _compressionService.FileExtension;
+        var compressionExt = compressionAlgorithm.Extension;
         var fileExtension = _twoKeyEncryptionService.FileExtension;
         var sourceFileName = fileId + fileExtension;
-        var compressionAlgorithm = FileStorageServiceBase.DetermineCompressionAlgorithm(compressionExt);
         var pipe = new Pipe();
         var hashAlg = _options.HashAlgorithm;
         using var compressedHashAlgo = hashAlg.Create();
@@ -170,7 +177,7 @@ internal sealed class FileStorageStreamingPipelines
         using var encryptedHashAlgo = hashAlg.Create();
         using var encryptedHashStream = new HashingStream(outputStream, encryptedHashAlgo);
         var pipeReaderStream = pipe.Reader.AsStream(true);
-        var compressionTask = RunCompressIntoPipeWriterAsync(_compressionService!, inputForHash, compressedHashStream, chunkSize, pipe, ct);
+        var compressionTask = RunCompressIntoPipeWriterAsync(_compressionService.Resolver, compressionAlgorithm, inputForHash, compressedHashStream, chunkSize, pipe, ct);
         var encryptionTask = RunEncryptFromPipeReaderAsync(_twoKeyEncryptionService!, pipeReaderStream, encryptedHashStream, keyId, chunkSize, ct);
         await Task.WhenAll(compressionTask, encryptionTask).ConfigureAwait(false);
         await encryptedHashStream.FlushAsync(ct).ConfigureAwait(false);
@@ -197,7 +204,8 @@ internal sealed class FileStorageStreamingPipelines
     }
 
     private static async Task RunCompressIntoPipeWriterAsync(
-        ICompressionService compressionService,
+        ICompressionResolver compressionResolver,
+        CompressionAlgorithm algorithm,
         HashingStream inputForHash,
         HashingStream compressedHashStream,
         int chunkSize,
@@ -205,11 +213,14 @@ internal sealed class FileStorageStreamingPipelines
         CancellationToken ct)
     {
         try {
-            await compressionService.CompressAsync(inputForHash, compressedHashStream, chunkSize, ct).ConfigureAwait(false);
+            await compressionResolver.CompressAsync(inputForHash, compressedHashStream, algorithm, chunkSize, ct).ConfigureAwait(false);
             await compressedHashStream.FlushAsync(ct).ConfigureAwait(false);
-        }
-        finally {
+            await inputForHash.FlushAsync(ct).ConfigureAwait(false);
             await pipe.Writer.CompleteAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            await pipe.Writer.CompleteAsync(ex).ConfigureAwait(false);
+            throw;
         }
     }
 
@@ -236,18 +247,17 @@ internal sealed class FileStorageStreamingPipelines
         }
     }
 
-    private static async Task DecompressCompressedPipeToPlainAsync(
+    private async Task DecompressCompressedPipeToPlainAsync(
         Pipe pipeCompressed,
         PipeWriter plainWriter,
-        ICompressionService compression,
+        CompressionAlgorithm algorithm,
         int? chunkSize,
         CancellationToken ct)
     {
         try {
             using var compressedRead = pipeCompressed.Reader.AsStream(true);
-            using (var plainOut = plainWriter.AsStream(true))
-                await compression.DecompressAsync(compressedRead, plainOut, chunkSize, ct).ConfigureAwait(false);
-
+            using var plainOut = plainWriter.AsStream(true);
+            await _compressionService!.Resolver.DecompressAsync(compressedRead, plainOut, algorithm, chunkSize, ct).ConfigureAwait(false);
             await plainWriter.CompleteAsync().ConfigureAwait(false);
         }
         catch (Exception ex) {

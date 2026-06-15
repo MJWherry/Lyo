@@ -1,3 +1,4 @@
+using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
@@ -114,17 +115,19 @@ public interface IFileStorageService : IHealth
 
     /// <summary>Gets a file from storage.</summary>
     /// <param name="fileId">The unique identifier of the file to retrieve</param>
+    /// <param name="compressionAlgorithmOverride">When set, decompress with this algorithm instead of file metadata.</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>The file data as a byte array. Returns empty array if file not found and ThrowOnFileNotFound is false.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the file is not found and ThrowOnFileNotFound is true (default)</exception>
-    Task<byte[]> GetFileAsync(Guid fileId, CancellationToken ct = default);
+    Task<byte[]> GetFileAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default);
 
     /// <summary>Gets a file from storage as a stream. Caller must dispose the returned stream.</summary>
     /// <param name="fileId">The unique identifier of the file to retrieve</param>
+    /// <param name="compressionAlgorithmOverride">When set, decompress with this algorithm instead of file metadata.</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>A stream containing the file data (decrypted and decompressed if applicable), or null if file not found and ThrowOnFileNotFound is false.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the file is not found and ThrowOnFileNotFound is true (default)</exception>
-    Task<Stream?> GetFileStreamAsync(Guid fileId, CancellationToken ct = default);
+    Task<Stream?> GetFileStreamAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default);
 
     /// <summary>Deletes a file from storage.</summary>
     /// <param name="fileId">The unique identifier of the file to delete</param>

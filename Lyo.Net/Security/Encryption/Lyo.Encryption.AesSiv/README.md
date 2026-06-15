@@ -33,3 +33,7 @@ services.AddAesSivEncryptionServiceKeyed("primary", "ks", AesSivKeySizeBits.Bits
 ```
 
 See [`Lyo.Encryption`](../Lyo.Encryption/README.md) for the full registration table and core `AddEncryptionServiceKeyed` overloads.
+
+## Performance
+
+BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **17.0 ms encrypt / 16.4 ms decrypt @ 1 MB** (~25× slower than AES-GCM). Deterministic SIV mode; choose for nonce-misuse resistance, not peak throughput. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).

@@ -8,8 +8,6 @@ namespace Lyo.Authentication.Tests;
 
 public class InMemoryStoreTests
 {
-    private CancellationToken TCT => TestContext.Current.CancellationToken;
-
     [Fact]
     public async Task InMemoryApiTokenStore_InsertGetTouchRevoke_RoundTrips()
     {
@@ -18,16 +16,16 @@ public class InMemoryStoreTests
         var record = new ApiTokenRecord(
             id, hash, ApiTokenKind.Pat, ApiTokenRing.Live, Guid.NewGuid(), "test", ["people.read"], null, DateTime.UtcNow, null, null, null, null, null, null);
 
-        await store.InsertAsync(record, null, TCT);
-        var fetched = await store.GetByIdAsync(id, null, TCT);
+        await store.InsertAsync(record, null, TestContext.Current.CancellationToken);
+        var fetched = await store.GetByIdAsync(id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(fetched);
         Assert.Equal(id, fetched.Id);
-        await store.TouchLastUsedAsync(id, DateTime.UtcNow, null, TCT);
-        fetched = await store.GetByIdAsync(id, null, TCT);
+        await store.TouchLastUsedAsync(id, DateTime.UtcNow, null, TestContext.Current.CancellationToken);
+        fetched = await store.GetByIdAsync(id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(fetched);
         Assert.NotNull(fetched.LastUsedAt);
-        await store.RevokeAsync(id, DateTime.UtcNow, "test", null, TCT);
-        fetched = await store.GetByIdAsync(id, null, TCT);
+        await store.RevokeAsync(id, DateTime.UtcNow, "test", null, TestContext.Current.CancellationToken);
+        fetched = await store.GetByIdAsync(id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(fetched);
         Assert.NotNull(fetched.RevokedAt);
         Assert.Equal("test", fetched.RevokedReason);
@@ -39,8 +37,8 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryApiTokenStore();
         var record = NewTokenRecord();
-        await store.InsertAsync(record, null, TCT);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, null, TCT));
+        await store.InsertAsync(record, null, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -49,10 +47,10 @@ public class InMemoryStoreTests
         var store = new InMemoryApiTokenStore();
         var u1 = Guid.NewGuid();
         var u2 = Guid.NewGuid();
-        await store.InsertAsync(NewTokenRecord(u1), null, TCT);
-        await store.InsertAsync(NewTokenRecord(u1), null, TCT);
-        await store.InsertAsync(NewTokenRecord(u2), null, TCT);
-        var list = await store.ListForUserAsync(u1, false, null, TCT);
+        await store.InsertAsync(NewTokenRecord(u1), null, TestContext.Current.CancellationToken);
+        await store.InsertAsync(NewTokenRecord(u1), null, TestContext.Current.CancellationToken);
+        await store.InsertAsync(NewTokenRecord(u2), null, TestContext.Current.CancellationToken);
+        var list = await store.ListForUserAsync(u1, false, null, TestContext.Current.CancellationToken);
         Assert.Equal(2, list.Count);
     }
 
@@ -61,14 +59,14 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var user = NewUser();
-        await store.CreateAsync(user, null, TCT);
-        var byId = await store.GetByIdAsync(user.Id, null, TCT);
+        await store.CreateAsync(user, null, TestContext.Current.CancellationToken);
+        var byId = await store.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(byId);
         Assert.Equal(user.Id, byId.Id);
-        var byEmail = await store.GetByEmailAsync(user.Email, null, TCT);
+        var byEmail = await store.GetByEmailAsync(user.Email, null, TestContext.Current.CancellationToken);
         Assert.NotNull(byEmail);
         Assert.Equal(user.Id, byEmail.Id);
-        Assert.Null(await store.GetByEmailAsync("ghost@example.com", null, TCT));
+        Assert.Null(await store.GetByEmailAsync("ghost@example.com", null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -77,8 +75,8 @@ public class InMemoryStoreTests
         var store = new InMemoryUserStore();
         var a = NewUser();
         var b = NewUser() with { Email = a.Email };
-        await store.CreateAsync(a, null, TCT);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, null, TCT));
+        await store.CreateAsync(a, null, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -86,9 +84,9 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var u = NewUser();
-        await store.CreateAsync(u, null, TCT);
-        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked", null, TCT);
-        var disabled = await store.GetByIdAsync(u.Id, null, TCT);
+        await store.CreateAsync(u, null, TestContext.Current.CancellationToken);
+        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked", null, TestContext.Current.CancellationToken);
+        var disabled = await store.GetByIdAsync(u.Id, null, TestContext.Current.CancellationToken);
         Assert.NotNull(disabled);
         Assert.True(disabled.IsDisabled);
         Assert.Equal("kicked", disabled.DisabledReason);
@@ -99,13 +97,13 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryExternalIdentityStore();
         var userId = Guid.NewGuid();
-        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", ["admin"], null, null, TCT);
+        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", ["admin"], null, null, TestContext.Current.CancellationToken);
         Assert.NotEqual(Guid.Empty, link.Id);
-        var found = await store.FindByProviderSubjectAsync("google", "sub-1", null, TCT);
+        var found = await store.FindByProviderSubjectAsync("google", "sub-1", null, TestContext.Current.CancellationToken);
         Assert.NotNull(found);
-        await store.UnlinkAsync(link.Id, DateTime.UtcNow, null, TCT);
-        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1", null, TCT));
-        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", [], null, null, TCT);
+        await store.UnlinkAsync(link.Id, DateTime.UtcNow, null, TestContext.Current.CancellationToken);
+        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1", null, TestContext.Current.CancellationToken));
+        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", [], null, null, TestContext.Current.CancellationToken);
         Assert.NotEqual(link.Id, relink.Id);
     }
 

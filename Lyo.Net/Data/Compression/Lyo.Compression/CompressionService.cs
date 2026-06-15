@@ -27,7 +27,7 @@ namespace Lyo.Compression;
 /// addon packages such as <c>Lyo.Compression.LZ4</c> register their own factories via their <c>services.Add{Algo}Compressor()</c> extension.
 /// </para>
 /// </remarks>
-public sealed class CompressionService : ICompressionService
+public sealed class CompressionService : ICompressionService, ICompressionResolver
 {
     private readonly ILogger<CompressionService> _logger;
 
@@ -35,24 +35,38 @@ public sealed class CompressionService : ICompressionService
 
     private readonly ICompressor _compressor;
 
+    private readonly ConcurrentDictionary<CompressionAlgorithm, ICompressor> _compressorCache = new();
+
     private readonly IMetrics _metrics;
 
     private readonly IReadOnlyDictionary<CompressionAlgorithm, ICompressorFactory> _factories;
 
+    private readonly Func<ICompressionResolver>? _resolveResolver;
+
+    private readonly ICompressionAlgorithmSelector? _algorithmSelector;
+
     /// <inheritdoc />
-    public CompressionAlgorithm Algorithm { get; private set; } = null!;
+    public CompressionAlgorithm Algorithm { get; private set; }
 
     /// <inheritdoc />
     public string FileExtension => Algorithm.Extension;
+
+    /// <inheritdoc />
+    public ICompressionResolver Resolver => _resolveResolver?.Invoke() ?? this;
+
+    /// <inheritdoc />
+    public ICompressionAlgorithmSelector? AlgorithmSelector => _algorithmSelector;
 
     public CompressionService(
         IEnumerable<ICompressorFactory>? factories = null,
         ILogger<CompressionService>? logger = null,
         CompressionServiceOptions? options = null,
-        IMetrics? metrics = null)
+        IMetrics? metrics = null,
+        Func<ICompressionResolver>? resolveResolver = null,
+        ICompressionAlgorithmSelector? algorithmSelector = null)
     {
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<CompressionService>();
-        _options = options ?? new CompressionServiceOptions();
+        _options = options ?? CompressionServiceOptions.Default;
         ArgumentHelpers.ThrowIfNullOrNotInRange(
             _options.MaxParallelFileOperations, 1, int.MaxValue, nameof(options) + "." + nameof(CompressionServiceOptions.MaxParallelFileOperations));
 
@@ -64,22 +78,64 @@ public sealed class CompressionService : ICompressionService
 
         // Last-writer-wins if two factories advertise the same algorithm; addons can therefore override built-in implementations.
         _factories = (factories ?? []).GroupBy(f => f.Algorithm).ToDictionary(g => g.Key, g => g.Last());
-        _compressor = CreateCompressor(_options.DefaultAlgorithm, _options.DefaultCompressionLevel);
+        Algorithm = _options.DefaultAlgorithm;
+        _compressor = GetCompressor(Algorithm);
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
+        _resolveResolver = resolveResolver;
+        _algorithmSelector = algorithmSelector;
     }
 
-    private ICompressor CreateCompressor(CompressionAlgorithm algorithm, CompressionLevel level)
+    /// <inheritdoc />
+    public CompressionSelectionResult ResolveForCompress(CompressionSelectionContext context)
+    {
+        ArgumentHelpers.ThrowIfNull(context);
+        if (_algorithmSelector != null)
+            return _algorithmSelector.ResolveForCompress(context);
+
+        return new CompressionSelectionResult(true, Algorithm);
+    }
+
+    /// <inheritdoc />
+    public ICompressor GetCompressor(CompressionAlgorithm algorithm)
     {
         ArgumentHelpers.ThrowIfNull(algorithm);
+        return _compressorCache.GetOrAdd(algorithm, CreateCompressorInstance);
+    }
+
+    private ICompressor CreateCompressorInstance(CompressionAlgorithm algorithm)
+    {
         if (!_factories.TryGetValue(algorithm, out var factory)) {
             throw new NotSupportedException(
                 $"No compressor registered for algorithm '{algorithm.Name}'. " + $"Did you forget to install/register the Lyo.Compression.{algorithm.Name} addon package " +
                 $"(e.g. services.Add{algorithm.Name}Compressor())?");
         }
 
-        Algorithm = algorithm;
-        return factory.Create(level);
+        return factory.Create(_options.DefaultCompressionLevel);
     }
+
+    /// <inheritdoc />
+    public CompressionInfo Compress(byte[] bytes, CompressionAlgorithm algorithm, out byte[] compressed)
+        => CompressWithCompressor(bytes, GetCompressor(algorithm), out compressed);
+
+    /// <inheritdoc />
+    public DecompressionInfo Decompress(byte[] compressedBytes, CompressionAlgorithm algorithm, out byte[] decompressed)
+        => DecompressWithCompressor(compressedBytes, GetCompressor(algorithm), out decompressed);
+
+    /// <inheritdoc />
+    public void Compress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm)
+        => CompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
+
+    /// <inheritdoc />
+    public void Decompress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm)
+        => DecompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
+
+    /// <inheritdoc />
+    public Task CompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CancellationToken ct = default)
+        => CompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm), chunkSize, ct);
+
+    /// <inheritdoc />
+    public Task DecompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CancellationToken ct = default)
+        => DecompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm), chunkSize, ct);
 
     private string GetCompressedFilePath(string inputFilePath)
     {
@@ -224,7 +280,9 @@ public sealed class CompressionService : ICompressionService
     public void SetCompressionAlgorithm(CompressionAlgorithm algorithm, CompressionLevel level) { }
 
     /// <inheritdoc />
-    public CompressionInfo Compress(byte[] bytes, out byte[] compressed)
+    public CompressionInfo Compress(byte[] bytes, out byte[] compressed) => CompressWithCompressor(bytes, _compressor, out compressed);
+
+    private CompressionInfo CompressWithCompressor(byte[] bytes, ICompressor compressor, out byte[] compressed)
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.CompressDuration);
         ValidateInput(bytes, nameof(bytes));
@@ -232,7 +290,7 @@ public sealed class CompressionService : ICompressionService
         var stopwatch = Stopwatch.StartNew();
         try {
             // Use span for internal operations - EasyCompressor still needs array, but we avoid extra copies
-            compressed = _compressor.Compress(bytes);
+            compressed = compressor.Compress(bytes);
             stopwatch.Stop();
             var info = new CompressionInfo(bytes.Length, compressed.Length, stopwatch.ElapsedMilliseconds);
             _logger.LogDebug(
@@ -258,13 +316,16 @@ public sealed class CompressionService : ICompressionService
 
     /// <inheritdoc />
     public DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed)
+        => DecompressWithCompressor(compressedBytes, _compressor, out decompressed);
+
+    private DecompressionInfo DecompressWithCompressor(byte[] compressedBytes, ICompressor compressor, out byte[] decompressed)
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.DecompressDuration);
         ValidateInput(compressedBytes, nameof(compressedBytes));
         _logger.LogDebug("Decompressing data of length {Length}", compressedBytes.Length);
         var stopwatch = Stopwatch.StartNew();
         try {
-            decompressed = _compressor.Decompress(compressedBytes);
+            decompressed = compressor.Decompress(compressedBytes);
 
             // Validate decompressed size to prevent decompression bombs
             OperationHelpers.ThrowIf(
@@ -292,7 +353,9 @@ public sealed class CompressionService : ICompressionService
         }
     }
 
-    public void Compress(Stream inputStream, Stream outputStream)
+    public void Compress(Stream inputStream, Stream outputStream) => CompressWithCompressor(inputStream, outputStream, _compressor);
+
+    private void CompressWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
@@ -306,7 +369,7 @@ public sealed class CompressionService : ICompressionService
                 _logger.LogDebug("Reset input stream position to 0");
             }
 
-            _compressor.Compress(inputStream, outputStream);
+            compressor.Compress(inputStream, outputStream);
             _logger.LogDebug("Stream compression complete");
         }
         catch (Exception ex) {
@@ -315,7 +378,9 @@ public sealed class CompressionService : ICompressionService
         }
     }
 
-    public void Decompress(Stream inputStream, Stream outputStream)
+    public void Decompress(Stream inputStream, Stream outputStream) => DecompressWithCompressor(inputStream, outputStream, _compressor);
+
+    private void DecompressWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
@@ -330,7 +395,7 @@ public sealed class CompressionService : ICompressionService
             }
 
             var initialPosition = outputStream.CanSeek ? outputStream.Position : 0L;
-            _compressor.Decompress(inputStream, outputStream);
+            compressor.Decompress(inputStream, outputStream);
 
             // Validate decompressed size to prevent decompression bombs
             if (outputStream.CanSeek) {
@@ -347,7 +412,15 @@ public sealed class CompressionService : ICompressionService
         }
     }
 
-    public async Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
+    public Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
+        => CompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
+
+    private async Task CompressAsyncWithCompressor(
+        Stream inputStream,
+        Stream outputStream,
+        ICompressor compressor,
+        int? chunkSize,
+        CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
@@ -368,7 +441,7 @@ public sealed class CompressionService : ICompressionService
             // Use ArrayPool for buffering if we need to process in chunks
             // Note: EasyCompressor may not support chunk size directly, but we pass it for future use
             // If the compressor supports it, it will be used; otherwise it's ignored
-            await _compressor.CompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
+            await compressor.CompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
             _logger.LogDebug("Async compression complete");
         }
         catch (OperationCanceledException) {
@@ -381,7 +454,15 @@ public sealed class CompressionService : ICompressionService
         }
     }
 
-    public async Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
+    public Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
+        => DecompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
+
+    private async Task DecompressAsyncWithCompressor(
+        Stream inputStream,
+        Stream outputStream,
+        ICompressor compressor,
+        int? chunkSize,
+        CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
@@ -400,7 +481,7 @@ public sealed class CompressionService : ICompressionService
             }
 
             var initialPosition = outputStream.CanSeek ? outputStream.Position : 0L;
-            await _compressor.DecompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
+            await compressor.DecompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
 
             // Validate decompressed size to prevent decompression bombs
             if (outputStream.CanSeek) {

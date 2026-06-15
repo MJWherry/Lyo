@@ -21,4 +21,6 @@ services.AddCompressionServiceFromConfiguration(configuration, CompressionServic
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview and configuration file example.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview, `ICompressionResolver`, and configuration file example.
+
+**File storage reads:** register `AddXzCompressor()` when stored metadata may reference XZ; reads dispatch through `ICompressionResolver` by `CompressionAlgorithm` metadata.

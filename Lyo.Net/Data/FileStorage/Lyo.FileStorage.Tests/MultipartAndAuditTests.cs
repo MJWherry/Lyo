@@ -19,7 +19,7 @@ public class MultipartAndAuditTests
             new() { SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "n/a" } } }, TestContext.Current.CancellationToken);
 
         Assert.Equal(begin.TargetFileId, meta.Id);
-        var got = await scope.Storage.GetFileAsync(meta.Id, TestContext.Current.CancellationToken);
+        var got = await scope.Storage.GetFileAsync(meta.Id, ct: TestContext.Current.CancellationToken);
         Assert.Equal(payload, got);
     }
 

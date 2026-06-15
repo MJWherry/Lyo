@@ -21,4 +21,6 @@ services.AddCompressionServiceFromConfiguration(configuration, CompressionServic
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full DI and configuration guide.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full DI, `ICompressionResolver`, and configuration guide.
+
+**File storage reads:** register `AddSnappierCompressor()` when stored metadata may reference Snappy; decompression uses `ICompressionResolver`, not only the service default codec.

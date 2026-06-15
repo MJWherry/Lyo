@@ -9,6 +9,9 @@ namespace Lyo.Compression;
 /// Implementations are typically registered as singletons. File outputs use atomic write-to-temp-then-rename where applicable. Respect
 /// <see cref="Models.CompressionServiceOptions.MaxInputSize" /> for both compressed input size and maximum decompressed output size.
 /// </para>
+/// <para>
+/// <see cref="Resolver" /> provides per-algorithm dispatch; <see cref="ResolveForCompress" /> delegates to <see cref="AlgorithmSelector" /> when registered.
+/// </para>
 /// </remarks>
 public interface ICompressionService
 {
@@ -17,6 +20,15 @@ public interface ICompressionService
 
     /// <summary>Algorithm selected when the service was constructed.</summary>
     CompressionAlgorithm Algorithm { get; }
+
+    /// <summary>Per-algorithm dispatch for metadata-driven or policy-selected codecs.</summary>
+    ICompressionResolver Resolver { get; }
+
+    /// <summary>Write-time policy selector when registered in DI; otherwise null.</summary>
+    ICompressionAlgorithmSelector? AlgorithmSelector { get; }
+
+    /// <summary>Resolves whether and how to compress for a save operation.</summary>
+    CompressionSelectionResult ResolveForCompress(CompressionSelectionContext context);
 
     /// <summary>Compresses a byte array in memory.</summary>
     /// <param name="bytes">Uncompressed input; must be non-empty and within configured max size.</param>

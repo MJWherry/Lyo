@@ -287,8 +287,8 @@
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">File metadata</MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject). Use <strong>View</strong> for full metadata,
-                    <strong>Access link…</strong> for a time- or count-limited share URL, or download or delete from the row menu.
+                    Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject), including soft-deleted tombstones.
+                    <strong>View</strong> works for deleted rows; other row actions are disabled when <strong>Deleted at</strong> is set.
                 </MudText>
                 <LyoDataGridProjected @ref="_fileMetadataGrid"
                                       ApiClient="Workbench.ApiClient"
@@ -299,6 +299,7 @@
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
                                       RowMenuControls="@GetFileRowMenuControls()">
                     <Columns>
+                        <LyoProjectedColumn Field="DeletedAt" Title="Deleted at" FormattedValue="@FileStorageGridRowHelper.FormatDeletedAtCell"/>
                         <LyoProjectedColumn Field="OriginalFileName" Title="Name" QuickSearchPropertyName="OriginalFileName"/>
                         <LyoTypedProjectedColumn TValue="long" Field="OriginalFileSize" Title="Original size" Format="@(size => FileSizeUnitInfo.FormatBestFitAbbreviation(size))"/>
                         <LyoProjectedColumn Field="DataEncryptionKeyAlgorithm" Title="Encryption"/>
@@ -319,11 +320,14 @@
 @code {
 
     private RenderFragment<object?> GetFileRowMenuControls()
-        => row => @<span style="display:contents">
-        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewFileMetadataFromRowAsync(row))">View</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Link" OnClick="@(() => OpenAccessLinkDialogFromRowAsync(row))">Access link…</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" OnClick="@(() => DownloadFileFromRowAsync(row))">Download</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteFileFromRowAsync(row))">Delete</MudMenuItem>
-    </span>;
+        => row => {
+            var deleted = FileStorageGridRowHelper.IsRowDeleted(row);
+            return @<span style="display:contents">
+            <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewFileMetadataFromRowAsync(row))">View</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@deleted" OnClick="@(() => OpenAccessLinkDialogFromRowAsync(row))">Access link…</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" Disabled="@deleted" OnClick="@(() => DownloadFileFromRowAsync(row))">Download</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.Delete" Disabled="@deleted" OnClick="@(() => DeleteFileFromRowAsync(row))">Delete</MudMenuItem>
+        </span>;
+        };
 
 }

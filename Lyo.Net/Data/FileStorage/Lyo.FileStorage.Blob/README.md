@@ -18,7 +18,7 @@ Architecture, duplicate handling, and threat-model context for storage live in *
 
 - **Same contract as Local / S3** — Save, stream save, multipart, presigned reads (SAS GET), direct PUT begin/complete, server-side copy, DEK migrate/rotate, health, *
   *`IFileStorageDiagnosticsService`** listing keys under container prefix (normalized + traversal-guarded by **`Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`**)
-- **Optional compression & two-key encryption** — Same pipeline as **`Lyo.FileStorage`** when **`ICompressionService`** / **`ITwoKeyEncryptionService`** are registered
+- **Optional compression & two-key encryption** — Same pipeline as **`Lyo.FileStorage`** when **`ICompressionService`** / **`ICompressionResolver`** / **`ITwoKeyEncryptionService`** are registered (reads use metadata **`CompressionAlgorithm`** via the resolver)
 - **SSE** — Optional **encryption scope** and **customer-provided key** (SSE-C via base64 key on options); applied to single-blob writes, multipart staging, **header range updates
   **, and DEK migrations. See XML docs on **`BlobFileStorageOptions`** for presigned/SSE limits.
 - **Multipart** — Register **`AddBlobMultipartUploadService()`** after **`AddBlobFileStorageService`**. Final commit uses **`SyncCopyFromUriAsync`** rather than download+re-upload.

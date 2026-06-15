@@ -2,243 +2,150 @@
 
 ## Overview
 
-This document summarizes the performance benchmarks for the Lyo.Compression library, comparing different compression
-algorithms across various data sizes and use cases.
+Performance benchmarks for the Lyo.Compression library, comparing compression algorithms across data sizes and use cases.
 
-**Test Environment:**
+**Test environment (latest run):**
 
+- **Date:** June 14, 2026
 - **Platform:** Linux Mint 22.1 (Xia)
-- **CPU:** Intel Core Ultra 7 155U 1.27GHz (14 logical cores, 12 physical cores)
-- **Runtime:** .NET 10.0.0 (X64 RyuJIT x86-64-v3)
-- **Benchmark Tool:** BenchmarkDotNet v0.15.8
+- **CPU:** Intel Core Ultra 7 155U (14 logical cores, 12 physical cores)
+- **Runtime:** .NET 10.0.9 (X64 RyuJIT x86-64-v3)
+- **Benchmark tool:** BenchmarkDotNet v0.15.8
+- **Data:** Random bytes (`RandomNumberGenerator.Fill`) — worst case for ratio; speed rankings still apply
+
+Full reports: `BenchmarkDotNet.Artifacts/results/` in this project.
 
 ---
 
 ## 1. Algorithm Comparison Benchmarks
 
-### Test Configuration
+### Test configuration
 
-Compares six compression algorithms across four data sizes:
+Ten algorithms across four in-memory sizes (GZip = baseline ratio 1.00):
 
-- **1 KB** (1,024 bytes)
-- **1 MB** (1,048,576 bytes)
-- **10 MB** (10,485,760 bytes)
-- **100 MB** (104,857,600 bytes)
+| Size | Bytes |
+|------|------:|
+| 1 KB | 1,024 |
+| 1 MB | 1,048,576 |
+| 10 MB | 10,485,760 |
+| 100 MB | 104,857,600 |
 
-**Algorithms tested:**
+**Algorithms:** GZip (baseline), Deflate, Zstd, Snappier, LZ4, Brotli, ZLib, LZMA, BZip2, XZ
 
-- GZip (baseline)
-- Deflate
-- Zstd (ZstdSharp)
-- Snappier
-- Brotli
-- ZLib
+### Compression speed (mean time, GZip = 1.00)
 
-### Key Findings
+| Algorithm | 1 KB | 1 MB | 10 MB | 100 MB |
+|-----------|-----:|-----:|------:|-------:|
+| **LZ4** | 0.09 | **0.006** | **0.009** | **0.009** |
+| Snappier | **0.05** | 0.009 | 0.017 | 0.021 |
+| Zstd | 0.13 | 0.022 | 0.023 | 0.019 |
+| Brotli | 1.05 | 0.129 | 0.168 | 0.204 |
+| GZip | 1.00 | 1.00 | 1.00 | 1.00 |
+| Deflate | 0.94 | 1.00 | 1.00 | 0.99 |
+| ZLib | 0.99 | 1.11 | 1.05 | 0.96 |
+| LZMA | 37.5 | 16.5 | 15.5 | 14.6 |
+| BZip2 | 38.1 | 7.2 | 6.7 | 6.7 |
+| XZ | 72.1 | 10.9 | 18.4 | 22.3 |
 
-#### Compression Performance
+**Leaders:** **LZ4** fastest compress at 1 MB+; **Snappier** edges LZ4 at 1 KB. **Zstd** close behind on large payloads.
 
-**Small Files (1 KB):**
+### Decompression speed (mean time, vs GZip at same size)
 
-- **Snappier** is the fastest: **410.4 ns** (50x faster than GZip baseline)
-- **Zstd** is second: **1,732.9 ns** (10x faster than GZip)
-- **GZip/Deflate/Brotli/ZLib** are similar: ~17-18k ns
+| Algorithm | 1 KB | 1 MB | 10 MB | 100 MB |
+|-----------|-----:|-----:|------:|-------:|
+| **LZ4** | **0.02** | 0.007 | 0.008 | 0.008 |
+| Zstd | 0.03 | **0.004** | **0.007** | **0.007** |
+| Snappier | 0.02 | 0.010 | 0.016 | 0.020 |
+| Deflate | 0.05 | 0.011 | 0.038 | 0.035 |
+| Brotli | 0.05 | 0.037 | 0.044 | 0.039 |
+| GZip | 0.06 | 0.020 | 0.045 | 0.039 |
+| XZ | 1.78 | 0.031 | 0.048 | 0.039 |
+| LZMA | 7.96 | 7.8 | 7.4 | 6.8 |
+| BZip2 | 11.8 | 2.9 | 2.8 | 2.7 |
 
-**Medium Files (1 MB):**
+**Leader:** **Zstd** best large-file decompress from ~1 MB upward; **LZ4** wins at 1 KB.
 
-- **Snappier** remains fastest: **210,932.5 ns** (87x faster than GZip)
-- **Zstd** is second: **401,311.3 ns** (46x faster than GZip)
-- **Brotli** is slower: **2,488,933.4 ns** (7x slower than GZip)
-- **GZip/Deflate/ZLib** are similar: ~18M ns
+### Representative absolute times
 
-**Large Files (10 MB):**
+| Operation | Algorithm | 1 MB | 10 MB | 100 MB |
+|-----------|-----------|-----:|------:|-------:|
+| Compress | LZ4 | 117 µs | 1.75 ms | 18.4 ms |
+| Compress | Zstd | 418 µs | 4.49 ms | 38.9 ms |
+| Compress | GZip | 18.6 ms | 197 ms | 2.0 s |
+| Compress | Brotli | 2.4 ms | 33 ms | 407 ms |
+| Decompress | Zstd | 70 µs | 1.31 ms | 13.1 ms |
+| Decompress | GZip | 381 µs | 9.0 ms | 77.7 ms |
 
-- **Snappier** fastest: **3,759,881.7 ns** (48x faster than GZip)
-- **Zstd** second: **5,239,446.9 ns** (34x faster than GZip)
-- **Brotli** slower: **32,350,211.3 ns** (5.5x slower than GZip)
-- **GZip/Deflate/ZLib** similar: ~180M ns
+### Memory allocation (managed, random data)
 
-**Very Large Files (100 MB):**
+| Algorithm | 1 MB compress | 10 MB compress | Notes |
+|-----------|--------------:|---------------:|-------|
+| LZ4 / Snappier / Zstd | ~1 MB | ~10–20 MB | Low, scales with output |
+| GZip / Deflate / ZLib / Brotli | ~5 MB | ~43 MB | Moderate |
+| LZMA / XZ | ~5–7 MB | ~43–45 MB | Fixed block buffers |
+| **BZip2** | **~764 MB** | **~6.8 GB** | SharpZipLib `QSort3` heap alloc on incompressible data; **~8 MB on compressible text/zeros** |
 
-- **Zstd** and **Snappier** are comparable: ~48-50M ns (38x faster than GZip)
-- **Brotli** slower: **523,719,518.7 ns** (3.5x slower than GZip)
-- **GZip/Deflate/ZLib** similar: ~1.8-1.9B ns
+> **BZip2 caveat:** High numbers reflect SharpZipLib allocating a sort stack per quicksort call when random data forces full `MainSort`. Real archival payloads (text, logs) stay near fixed block-buffer cost (~8 MB at level 6). Avoid BZip2 for pre-compressed or high-entropy blobs.
 
-#### Decompression Performance
+### Summary table
 
-**Small Files (1 KB):**
-
-- **Snappier** fastest: **236.2 ns** (31x faster than GZip)
-- **Zstd** second: **470.0 ns** (15x faster than GZip)
-- **GZip/Deflate/Brotli/ZLib** similar: ~680-770 ns
-
-**Medium Files (1 MB):**
-
-- **Zstd** fastest: **140,296.0 ns** (2.6x faster than GZip)
-- **Snappier** second: **201,746.9 ns** (1.8x faster than GZip)
-- **Brotli** slower: **981,833.5 ns** (2.7x slower than GZip)
-- **GZip/Deflate/ZLib** similar: ~366-381k ns
-
-**Large Files (10 MB):**
-
-- **Zstd** fastest: **2,250,621.4 ns** (4.4x faster than GZip)
-- **Snappier** second: **4,481,752.5 ns** (2.2x faster than GZip)
-- **Brotli** slower: **11,638,195.7 ns** (1.2x slower than GZip)
-- **GZip/ZLib** similar: ~9.9-10.8M ns
-- **Deflate** failed at 10 MB (benchmark issue)
-
-**Very Large Files (100 MB):**
-
-- **Zstd** fastest: **17,031,139.1 ns** (5x faster than GZip)
-- **Snappier** second: **46,908,469.3 ns** (1.8x faster than GZip)
-- **Brotli** slower: **96,405,282.9 ns** (1.1x slower than GZip)
-- **GZip/Deflate/ZLib** similar: ~85-87M ns
-
-#### Memory Allocation
-
-**Compression:**
-
-- **Snappier** uses least memory: ~1-10 MB (20-28% of GZip)
-- **Zstd** uses moderate memory: ~2-20 MB (40-56% of GZip)
-- **GZip/Deflate/ZLib** use most: ~1.9-365 MB
-- **Brotli** uses similar to GZip: ~1.5-364 MB
-
-**Decompression:**
-
-- **Snappier** and **Zstd** use least: ~1-10 MB (20-28% of GZip)
-- **GZip/Deflate/ZLib** use most: ~1.7-364 MB
-- **Brotli** uses similar to GZip: ~1.5-364 MB
-
-### Performance Summary Table
-
-| Algorithm    | Compression Speed  | Decompression Speed | Memory Usage | Best For                          |
-|--------------|--------------------|---------------------|--------------|-----------------------------------|
-| **Snappier** | ⭐⭐⭐⭐⭐ Fastest      | ⭐⭐⭐⭐ Very Fast      | ⭐⭐⭐⭐⭐ Lowest | Small-medium files, low latency   |
-| **Zstd**     | ⭐⭐⭐⭐ Very Fast     | ⭐⭐⭐⭐⭐ Fastest       | ⭐⭐⭐⭐ Low     | Large files, balanced performance |
-| **GZip**     | ⭐⭐ Baseline        | ⭐⭐⭐ Good            | ⭐⭐ Moderate  | Compatibility, standard use       |
-| **Deflate**  | ⭐⭐ Similar to GZip | ⭐⭐⭐ Good            | ⭐⭐ Moderate  | Similar to GZip                   |
-| **Brotli**   | ⭐ Slower           | ⭐⭐ Moderate         | ⭐⭐ Moderate  | Web compression (better ratio)    |
-| **ZLib**     | ⭐⭐ Similar to GZip | ⭐⭐⭐ Good            | ⭐⭐ Moderate  | Similar to GZip                   |
+| Algorithm | Compress | Decompress | Memory | Best for |
+|-----------|----------|------------|--------|----------|
+| **LZ4** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Lowest latency, streaming, policy `FastAlgorithm` |
+| **Snappier** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Small payloads, low latency |
+| **Zstd** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Large files, streaming, policy `ArchivalAlgorithm` |
+| **Brotli** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | HTTP / web default, good ratio |
+| **GZip / Deflate / ZLib** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | Compatibility |
+| **LZMA / XZ** | ⭐ | ⭐ | ⭐⭐⭐ | Offline archival, max ratio |
+| **BZip2** | ⭐ | ⭐⭐ | ⚠️ pathological on random | `.tar.bz2` interop; compressible data only |
 
 ---
 
 ## 2. GZip-Specific Benchmarks
 
-### Test Configuration
+| Operation | 1 KB | 1 MB | 10 MB |
+|-----------|-----:|-----:|------:|
+| **Compress** | 17.0 µs | 19.5 ms | 197 ms |
+| **Decompress** | 1.08 µs | 494 µs | 9.5 ms |
+| **Allocated (compress)** | 2.9 KB | 5.1 MB | 43 MB |
+| **Allocated (decompress)** | 2.1 KB | 1.9 MB | 43 MB |
 
-Focused benchmarks for GZip compression across three data sizes:
-
-- **1 KB**
-- **1 MB**
-- **10 MB**
-
-### Results
-
-| Operation      | Data Size | Mean Time                  | Allocated Memory      |
-|----------------|-----------|----------------------------|-----------------------|
-| **Compress**   | 1 KB      | 20,684.3 ns                | 1.89 KB               |
-| **Compress**   | 1 MB      | 21,052,727.0 ns (~21 ms)   | 5,113.18 KB (~5 MB)   |
-| **Compress**   | 10 MB     | 210,930,705.8 ns (~211 ms) | 43,004.02 KB (~43 MB) |
-| **Decompress** | 1 KB      | 919.4 ns                   | 1.73 KB               |
-| **Decompress** | 1 MB      | 413,341.2 ns (~0.4 ms)     | 1,920.85 KB (~1.9 MB) |
-| **Decompress** | 10 MB     | 10,273,162.2 ns (~10 ms)   | 42,881.26 KB (~43 MB) |
-
-### Observations
-
-- Decompression is consistently **20-50x faster** than compression
-- Memory allocation scales linearly with input size
-- Compression requires ~4x more memory than decompression
+Decompression remains **~20–40× faster** than compression. Memory scales roughly linearly with input size.
 
 ---
 
 ## 3. Large File Streaming Benchmarks
 
-### Test Configuration
+Streaming `CompressAsync` / `DecompressAsync` on disk-backed payloads (GZip vs Zstd):
 
-Streaming compression/decompression benchmarks for very large files:
+| Operation | 100 MB | 1 GB | 2 GB |
+|-----------|-------:|-----:|-----:|
+| **GZip compress** | 1.91 s | 19.9 s | 39.2 s |
+| **Zstd compress** | 65 ms | 1.0 s | 2.0 s |
+| **Zstd vs GZip (compress)** | **29×** | **20×** | **20×** |
+| **GZip decompress** | 65 ms | 963 ms | 1.99 s |
+| **Zstd decompress** | 58 ms | 836 ms | 1.69 s |
+| **Allocated @ 100 MB** | ~256 MB | ~1–2 MB @ 1–2 GB | (true streaming) |
 
-- **100 MB**
-- **1 GB** (failed - see issues below)
-- **2 GB** (failed - see issues below)
-
-**Algorithms tested:**
-
-- GZip
-- Zstd
-
-### Results (100 MB only)
-
-| Operation      | Algorithm | Mean Time            | Allocated Memory |
-|----------------|-----------|----------------------|------------------|
-| **Compress**   | GZip      | 1,843.51 ms (~1.8 s) | 255.99 MB        |
-| **Compress**   | Zstd      | 75.10 ms (~0.08 s)   | 256.89 MB        |
-| **Decompress** | GZip      | 65.56 ms (~0.07 s)   | 255.88 MB        |
-| **Decompress** | Zstd      | 69.93 ms (~0.07 s)   | 255.87 MB        |
-
-### Key Findings
-
-- **Zstd compression is 24.5x faster** than GZip for 100 MB files
-- Decompression speeds are similar between GZip and Zstd (~65-70 ms)
-- Memory usage is similar (~256 MB) for both algorithms
-
-### Issues
-
-⚠️ **Benchmarks for 1 GB and 2 GB files failed** (returned NA). This may be due to:
-
-- Timeout issues
-- Memory constraints
-- File system limitations
-- Benchmark configuration issues
+1 GB and 2 GB cases **complete successfully** (fixed since January 2025 runs that returned NA).
 
 ---
 
 ## Recommendations
 
-### Use Cases by Algorithm
+1. **LZ4** — hot paths, small/medium payloads, file-storage `FastAlgorithm`.
+2. **Zstd** — large files, streaming writes, balanced ratio + speed; best large decompress.
+3. **Brotli** — default HTTP / API response compression (.NET 10+ default codec).
+4. **GZip / Deflate / ZLib** — legacy compatibility.
+5. **LZMA / XZ** — offline archival when CPU time is cheap.
+6. **BZip2** — Linux `.tar.bz2` interop only; skip incompressible or pre-compressed content.
 
-1. **Snappier** - Best for:
-    - Small to medium files (< 10 MB)
-    - Low-latency applications
-    - Memory-constrained environments
-    - When speed is critical
+### Trade-offs
 
-2. **Zstd** - Best for:
-    - Large files (> 10 MB)
-    - Balanced compression/decompression performance
-    - Streaming scenarios
-    - When you need good compression ratio with speed
-
-3. **GZip/Deflate/ZLib** - Best for:
-    - Maximum compatibility requirements
-    - Standard use cases
-    - When compression ratio is more important than speed
-    - Legacy system integration
-
-4. **Brotli** - Best for:
-    - Web applications (HTTP compression)
-    - When compression ratio is critical
-    - Acceptable slower compression for better ratios
-
-### Performance Trade-offs
-
-- **Speed vs. Ratio:** Snappier and Zstd prioritize speed; Brotli prioritizes ratio
-- **Memory vs. Speed:** Snappier uses least memory; GZip uses most
-- **Compatibility vs. Performance:** GZip/Deflate/ZLib offer best compatibility; Snappier/Zstd offer best performance
+- **Speed vs ratio:** LZ4/Zstd/Snappier favor speed; Brotli/LZMA/XZ favor ratio.
+- **Benchmark data:** Random bytes understate compression ratio and overstate BZip2 allocation.
+- **Production:** Match codec to content type via `ICompressionAlgorithmSelector` policy.
 
 ---
 
-## Notes
-
-- All benchmarks use random data, which may not compress well
-- Real-world performance may vary based on data characteristics
-- Memory allocations shown are approximate and may vary
-- One benchmark failure observed: `Deflate_Decompress` at 10 MB data size
-- Large file streaming benchmarks (1 GB, 2 GB) failed to complete
-
----
-
-*Generated from BenchmarkDotNet results - Last updated: January 25, 2025*
-
-**Note:** Compression benchmarks were last run on January 23, 2025. No new benchmark results are available at this time.
-The summary above reflects the most recent available benchmark data.
-
+*Last updated: June 14, 2026 — BenchmarkDotNet results in `BenchmarkDotNet.Artifacts/results/`.*

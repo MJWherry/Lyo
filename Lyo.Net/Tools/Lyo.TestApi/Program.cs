@@ -83,6 +83,7 @@ builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddCompressionService();
 builder.Services.AddDefaultCompressionService<CompressionService>();
+builder.Services.AddCompressionPolicySelector(builder.Configuration);
 builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => {
     LyoJsonSerializerOptions.ApplyTo(options.SerializerOptions);

@@ -46,8 +46,7 @@ is requested — see **`GetPreSignedReadUrlAsync`** and related remarks on **`IF
 Grouped by concern (see xmldoc for parameters and exceptions):
 
 - **Writes** — **`SaveFileAsync`**, **`SaveFromStreamAsync`**
-- **Reads** — **`GetFileAsync`**, **`GetFileStreamAsync`** (compressed payloads are unwrapped through **`MaxBytesWriteStream`** to reject decompression bombs above *
-  *`MaxDecompressedFileSize`**)
+- **Reads** — **`GetFileAsync`**, **`GetFileStreamAsync`** (compressed payloads are decompressed via **`ICompressionService.Resolver`** using stored **`CompressionAlgorithm`** metadata; optional per-call **`compressionAlgorithmOverride`** or **`FileStorageServiceBaseOptions.DecompressionAlgorithmOverride`**; bounded by **`MaxDecompressedFileSize`** through **`MaxBytesWriteStream`**)
 - **Metadata / delete** — **`GetMetadataAsync`**, **`DeleteFileAsync(Guid, FileDeletionMode, CancellationToken)`** (deletes the backing object then, depending on *
   *`FileDeletionMode`**, either *tombstones* metadata (`RemoveObjectAndTombstoneMetadata`, default) or *purges* it via **`IFileMetadataStore.PurgeMetadataAsync`** (
   `RemoveObjectAndPurgeMetadata` — operator/governance flows only; never accept this mode from end-user input)
@@ -115,7 +114,7 @@ These are internal — consumers do not instantiate them directly. They are list
 
 | **`HealthCheckMode`** | Lightweight vs fuller health probes |
 
-| **`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`** | Dedup semantics |
+| **`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`** | Dedup by plaintext `originalFileHash`; see [Duplicate detection](#duplicate-detection) |
 
 | **`ThrowOnFileNotFound`**, **`ThrowOnDeleteNotFound`**, **`ThrowOnHashMismatch`** | Failure-vs-null behaviour |
 
@@ -125,6 +124,28 @@ to streamed saves; an **empty** `AllowedContentTypes` list **denies** all upload
 | **`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`** | Availability + **`IFileMalwareScanner`** integration. When
 `RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`**
 caps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated). |
+
+| **`DecompressionAlgorithmOverride`** | When set, all reads decompress with this codec instead of per-file metadata (migration/recovery). |
+
+### Compression (resolver)
+
+| Concern | Behaviour |
+|---------|-----------|
+| **Write** | When `compress: true`, **`ICompressionService.ResolveForCompress`** picks the codec (delegates to **`ICompressionAlgorithmSelector`** when registered in compression DI). **`ICompressionService.Resolver`** performs the compress; **`FileStoreResult.CompressionAlgorithm`** records the codec. |
+| **Read** | **`metadata.CompressionAlgorithm`** → **`ICompressionService.Resolver.DecompressAsync`**. Override order: per-call `compressionAlgorithmOverride` → **`DecompressionAlgorithmOverride`** → metadata → **`ICompressionService.Algorithm`** (legacy rows with `IsCompressed` but null algorithm). |
+| **DI** | File storage depends on **`ICompressionService`** only. Register **`AddCompressionService`** + **`AddCompressionPolicySelector`** in the host; register addon factories (LZ4, Zstd, …) for every algorithm you may **read**. See [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md). |
+
+### Duplicate detection
+
+When **`EnableDuplicateDetection`** is true, saves hash plaintext and call **`IFileMetadataStore.FindByHashAsync`** before persisting transformed bytes.
+
+| **`DuplicateStrategy`** | Behaviour |
+|-------------------------|-----------|
+| **`ReturnExisting`** | If an active row exists for the hash **and** the requested storage profile matches the stored row (`IsCompressed`, `IsEncrypted`, `CompressionAlgorithm` when compressed, `DataEncryptionKeyId` when encrypted — compared after write-time compression policy resolution), return that row’s metadata and skip writing. If the hash matches but the profile differs, throw **`ConflictException`** (HTTP 409). Soft-deleted rows are excluded from hash lookup. |
+| **`Overwrite`** | Delete the prior blob, reuse the existing file id, and save again using the **new** request’s compress/encrypt options (profile may change: plain ↔ compressed, unencrypted ↔ encrypted, different `keyId`, etc.). |
+| **`AllowDuplicate`** | Always allocate a new file id even when the hash matches; profiles may differ. |
+
+Reads are unchanged: **`GetFileAsync`** / **`GetFileStreamAsync`** decode according to stored metadata, not per-request compress/encrypt flags.
 
 Legacy appsettings **`LocalFileStorage`** vs **`DiskFileStorage`** binder details are documented on **`DiskFileStorageOptions.LegacySectionName`** and *
 *`DiskFileStorageConfigurationBinder`**. The internal `BindDiskFileStorage(IServiceProvider, string? preferredSection)` is invoked by the keyed-disk **`AddFileStorageServiceKeyed`
@@ -167,7 +188,7 @@ Dependency injection for disk is usually **`Extensions.AddFileStorageServiceKeye
 ## Features (overview)
 
 - **Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.Blob`**
-- **Compression & encryption** — Optional **`ICompressionService`**, **`ITwoKeyEncryptionService`**
+- **Compression & encryption** — Optional **`ICompressionService`** (exposes **`Resolver`** and **`ResolveForCompress`**; policy via **`AddCompressionPolicySelector`**), **`ITwoKeyEncryptionService`**
 - **Metadata** — **`IFileMetadataStore`** (**`FileStoreResult`**)
 - **Duplicate detection** — Configurable hashing strategies (**`DuplicateHandlingStrategy`**)
 - **Streaming** — **`SaveFromStreamAsync`**, pipeline reads via **`GetFileStreamAsync`**

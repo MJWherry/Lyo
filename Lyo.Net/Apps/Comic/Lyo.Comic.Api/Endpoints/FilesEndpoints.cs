@@ -24,7 +24,7 @@ public static class FilesEndpoints
     {
         try {
             var metadata = await fileStorage.GetMetadataAsync(id, ct);
-            var bytes = await fileStorage.GetFileAsync(id, ct);
+            var bytes = await fileStorage.GetFileAsync(id, ct: ct);
             return Results.Bytes(bytes, metadata.ContentType ?? DefaultContentType);
         }
         catch (FileNotFoundException) {
@@ -137,7 +137,7 @@ public static class FilesEndpoints
     {
         try {
             var metadata = await fileStorage.GetMetadataAsync(id, ct);
-            var bytes = await fileStorage.GetFileAsync(id, ct);
+            var bytes = await fileStorage.GetFileAsync(id, ct: ct);
             return new(id, metadata.ContentType ?? DefaultContentType, Convert.ToBase64String(bytes));
         }
         catch (FileNotFoundException) {

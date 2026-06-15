@@ -1,3 +1,4 @@
+using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileStorage.Models;
@@ -55,4 +56,7 @@ public abstract class FileStorageServiceBaseOptions
 
     /// <summary>When true, Get and presigned read can access Quarantined files (e.g. admin tooling).</summary>
     public bool AllowReadQuarantinedForAdmin { get; set; }
+
+    /// <summary>When set, all decompress operations use this algorithm instead of per-file metadata (migration/recovery tooling).</summary>
+    public CompressionAlgorithm? DecompressionAlgorithmOverride { get; set; }
 }

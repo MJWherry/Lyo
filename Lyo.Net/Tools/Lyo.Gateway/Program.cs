@@ -61,6 +61,7 @@ builder.Services.AddLocalLock(options => options.EnableMetrics = true);
 builder.Services.AddLocalKeyedSemaphore(options => options.EnableMetrics = true);
 builder.Services.AddCompressionService();
 builder.Services.AddDefaultCompressionService<CompressionService>();
+builder.Services.AddCompressionPolicySelector(builder.Configuration);
 builder.Services.AddImageSharpImageServiceFromConfiguration(builder.Configuration);
 builder.Services.AddQRCodeServiceFromConfiguration(builder.Configuration);
 builder.Services.AddNativeBarcodeServiceFromConfiguration(builder.Configuration);
@@ -168,7 +169,7 @@ app.MapGet(
             var prefix = fsw.Value.ApiRoutePrefix.Trim().Trim('/');
             FileStoreResult? metadata;
             try {
-                metadata = await apiClient.GetAsAsync<FileStoreResult>($"{prefix}/files/{fileId:D}/metadata", ct: ct).ConfigureAwait(false);
+                metadata = await apiClient.GetAsAsync<FileStoreResult>($"{prefix}/files/{fileId:D}/metadata?includeDeleted=false", ct: ct).ConfigureAwait(false);
             }
             catch {
                 return Results.NotFound();

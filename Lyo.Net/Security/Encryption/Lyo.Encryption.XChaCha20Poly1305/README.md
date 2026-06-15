@@ -39,3 +39,7 @@ services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEnc
 ```
 
 See [`Lyo.Encryption`](../Lyo.Encryption/README.md) for RSA helpers and `AddDefaultTwoKeyEncryptionService<T>()`.
+
+## Performance
+
+BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **2.54 ms encrypt / 2.34 ms decrypt @ 1 MB** (~3.8× AES-GCM; HChaCha20 + BouncyCastle). Benchmarks use explicit key material. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).

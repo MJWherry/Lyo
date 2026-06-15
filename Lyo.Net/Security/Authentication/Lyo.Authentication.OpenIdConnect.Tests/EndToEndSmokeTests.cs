@@ -23,8 +23,6 @@ namespace Lyo.Authentication.OpenIdConnect.Tests;
 
 public sealed class EndToEndSmokeTests
 {
-    private CancellationToken TCT => TestContext.Current.CancellationToken;
-
     /// <summary>End-to-end smoke: BFF login → JWT-protected endpoint → mint PAT → call same endpoint with PAT.</summary>
     [Fact]
     public async Task FullFlow_Login_Jwt_MintPat_CallWithPat()
@@ -45,28 +43,28 @@ public sealed class EndToEndSmokeTests
             });
 
         var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
-        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TCT);
+        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
         using (var meRequest = new HttpRequestMessage(HttpMethod.Get, "/protected")) {
             meRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var resp = await fx.Client.SendAsync(meRequest, TCT);
+            var resp = await fx.Client.SendAsync(meRequest, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TCT);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
             Assert.False(json.GetProperty("sub").GetString().IsNullOrEmpty());
         }
 
         using (var createTokenRequest = new HttpRequestMessage(HttpMethod.Post, "/tokens")) {
             createTokenRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
             createTokenRequest.Content = JsonContent.Create(new { displayName = "smoke-pat", scopes = new[] { "people.read" } });
-            var resp = await fx.Client.SendAsync(createTokenRequest, TCT);
+            var resp = await fx.Client.SendAsync(createTokenRequest, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TCT);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
             var plaintext = json.GetProperty("plaintext").GetString();
             Assert.False(plaintext.IsNullOrEmpty());
             using var patRequest = new HttpRequestMessage(HttpMethod.Get, "/protected");
             patRequest.Headers.Authorization = new("Bearer", plaintext);
-            var patResp = await fx.Client.SendAsync(patRequest, TCT);
+            var patResp = await fx.Client.SendAsync(patRequest, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, patResp.StatusCode);
         }
     }

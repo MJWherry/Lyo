@@ -163,7 +163,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
         return new(issued, pkceState.ReturnUrl, NormalizeMode(pkceState.Mode), provider.Name);
     }
 
-    private static bool FixedTimeStringEquals(string a, string b)
+    private static bool FixedTimeStringEquals(string? a, string? b)
     {
         var ab = Encoding.UTF8.GetBytes(a ?? string.Empty);
         var bb = Encoding.UTF8.GetBytes(b ?? string.Empty);

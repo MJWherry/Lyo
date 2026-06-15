@@ -237,8 +237,8 @@ public sealed class S3FileStorageServiceBuilder
                 var contentPolicy = provider.GetService<IFileContentPolicy>();
                 var malwareScanner = provider.GetService<IFileMalwareScanner>();
                 return new(
-                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics, operationContextAccessor, auditHandlers, contentPolicy,
-                    malwareScanner);
+                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics,
+                    operationContextAccessor, auditHandlers, contentPolicy, malwareScanner);
             });
 
         _services.AddKeyedScoped<IFileStorageService>(

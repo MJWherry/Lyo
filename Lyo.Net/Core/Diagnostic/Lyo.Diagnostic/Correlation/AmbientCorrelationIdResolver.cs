@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Diagnostic.Correlation;
 
@@ -16,9 +17,6 @@ public sealed class AmbientCorrelationIdResolver : ICorrelationIdResolver
     public string Resolve()
     {
         var activityId = Activity.Current?.Id;
-        if (!string.IsNullOrWhiteSpace(activityId))
-            return activityId!;
-
-        return Guid.NewGuid().ToString("N");
+        return !activityId.IsNullOrWhitespace() ? activityId : Guid.NewGuid().ToString("N");
     }
 }

@@ -69,7 +69,7 @@ Service keys default to `gateway-filestorage` (and `gateway-filestorage-metadata
 
 A single `WebApplication` builder registers the entire surface used across workbenches:
 
-- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService`, `AddLyoMetrics`, `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`,
+- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetrics`, `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`,
   `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.
 - Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`,
   `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.

@@ -10,6 +10,8 @@ S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, 
 | **`Lyo.FileStorage.Blob/README.md`**                            | Azure Blob analogue for SAS/direct-upload/copy                                                                         |
 | **This file**                                                   | **`S3FileStorageService`**, **`S3FileStorageOptions`**, DI builders (**`AddS3FileStorageServiceKeyed*`**), SSE helpers |
 
+Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICompressionResolver`** (metadata-driven decompress on read; see [`Lyo.FileStorage` — Compression (resolver)](../Lyo.FileStorage/README.md#compression-resolver)) and **`ITwoKeyEncryptionService`**.
+
 ## **`S3FileStorageOptions`** (extends **`FileStorageServiceBaseOptions`**)
 
 | Property                                                          | Typical use                                                                              |

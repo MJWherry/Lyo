@@ -1,5 +1,6 @@
 using System.Globalization;
 using Lyo.Api.Client;
+using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
@@ -40,9 +41,10 @@ public sealed class TestApiFileStorageService : IFileStorageService
         => await _apiClient.GetAsAsync<HealthResult>(BuildUri("health"), ct: ct).ConfigureAwait(false) ??
             HealthResult.Unhealthy(TimeSpan.Zero, "Health endpoint returned no payload.");
 
-    public async Task<byte[]> GetFileAsync(Guid fileId, CancellationToken ct = default)
+    public async Task<byte[]> GetFileAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default)
     {
-        await using var stream = await GetFileStreamAsync(fileId, ct).ConfigureAwait(false);
+        _ = compressionAlgorithmOverride;
+        await using var stream = await GetFileStreamAsync(fileId, ct: ct).ConfigureAwait(false);
         if (stream == null)
             return [];
 
@@ -51,8 +53,9 @@ public sealed class TestApiFileStorageService : IFileStorageService
         return ms.ToArray();
     }
 
-    public async Task<Stream?> GetFileStreamAsync(Guid fileId, CancellationToken ct = default)
+    public async Task<Stream?> GetFileStreamAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default)
     {
+        _ = compressionAlgorithmOverride;
         var (stream, _, contentLength) = await _apiClient.GetFileStreamAsync(BuildUri($"files/{fileId:D}/download"), ct: ct).ConfigureAwait(false);
         FileRetrieved?.Invoke(this, new(fileId, contentLength ?? 0, false, false));
         return stream;
@@ -70,7 +73,7 @@ public sealed class TestApiFileStorageService : IFileStorageService
 
     public async Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default)
     {
-        var result = await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata"), ct: ct).ConfigureAwait(false) ??
+        var result = await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata?includeDeleted=false"), ct: ct).ConfigureAwait(false) ??
             throw new InvalidOperationException($"Metadata endpoint returned no payload for file '{fileId}'.");
 
         FileMetadataRetrieved?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result)));

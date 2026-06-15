@@ -1,5 +1,6 @@
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
+using Lyo.Compression.Policy;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -15,35 +16,27 @@ namespace Lyo.Compression;
 /// </summary>
 public static class Extensions
 {
-    /// <summary>
-    /// Registers the built-in <see cref="ICompressorFactory" /> implementations shipped in the base <c>Lyo.Compression</c> package (GZip, Deflate, and on net10+ Brotli/ZLib).
-    /// Idempotent.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddBuiltInCompressors(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, GZipCompressorFactory>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, DeflateCompressorFactory>());
-#if !NETSTANDARD2_0
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, BrotliCompressorFactory>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, ZLibCompressorFactory>());
-#endif
-        return services;
-    }
+    private static CompressionService CreateCompressionService(IServiceProvider sp, CompressionServiceOptions options, Func<ICompressionResolver>? resolveResolver = null)
+        => new(
+            sp.GetServices<ICompressorFactory>(),
+            sp.GetService<ILogger<CompressionService>>(),
+            options,
+            sp.GetService<IMetrics>(),
+            resolveResolver ?? (() => sp.GetRequiredService<ICompressionResolver>()),
+            sp.GetService<ICompressionAlgorithmSelector>());
 
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="CompressionServiceOptions" /> (defaults), built-in compressor factories, and <see cref="CompressionService" /> as singletons.</summary>
+        /// <summary>Adds <see cref="CompressionServiceOptions" /> (defaults), built-in compressor factories, <see cref="CompressionService" />, and <see cref="ICompressionResolver" /> as singletons.</summary>
         /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionService()
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.AddBuiltInCompressors();
             services.AddSingleton(_ => new CompressionServiceOptions());
-            services.AddSingleton<CompressionService>();
+            services.AddCompressionResolver();
+            services.AddSingleton(sp => CreateCompressionService(sp, sp.GetRequiredService<CompressionServiceOptions>()));
             return services;
         }
 
@@ -61,7 +54,8 @@ public static class Extensions
                 return options;
             });
 
-            services.AddSingleton<CompressionService>();
+            services.AddCompressionResolver();
+            services.AddSingleton(sp => CreateCompressionService(sp, sp.GetRequiredService<CompressionServiceOptions>()));
             return services;
         }
 
@@ -84,7 +78,45 @@ public static class Extensions
                 return options;
             });
 
-            services.AddSingleton<CompressionService>();
+            services.AddCompressionResolver();
+            services.AddSingleton(sp => CreateCompressionService(sp, sp.GetRequiredService<CompressionServiceOptions>()));
+            return services;
+        }
+
+        /// <summary>Registers <see cref="ICompressionResolver" /> backed by <see cref="CompressionService" />. Idempotent; already invoked by <see cref="AddCompressionService" />.</summary>
+        public IServiceCollection AddCompressionResolver()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddSingleton<ICompressionResolver>(sp => sp.GetRequiredService<CompressionService>());
+            return services;
+        }
+
+        /// <summary>
+        /// Binds <paramref name="policySectionPath" /> to <see cref="CompressionPolicyOptions" /> and registers <see cref="ICompressionAlgorithmSelector" /> as
+        /// <see cref="CompressionPolicyAlgorithmSelector" />.
+        /// </summary>
+        /// <param name="configuration">Application configuration root.</param>
+        /// <param name="policySectionPath">Section path (default <c>CompressionOptions:Policy</c>).</param>
+        public IServiceCollection AddCompressionPolicySelector(IConfiguration configuration, string policySectionPath = "CompressionOptions:Policy")
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(policySectionPath);
+            services.AddOptions<CompressionPolicyOptions>().Bind(configuration.GetSection(policySectionPath));
+            services.TryAddSingleton<ICompressionAlgorithmSelector, CompressionPolicyAlgorithmSelector>();
+            return services;
+        }
+
+        /// <summary>Registers <see cref="CompressionPolicyAlgorithmSelector" /> with programmatic <see cref="CompressionPolicyOptions" /> configuration.</summary>
+        public IServiceCollection AddCompressionPolicySelector(Action<CompressionPolicyOptions>? configure = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            if (configure != null)
+                services.AddOptions<CompressionPolicyOptions>().Configure(configure);
+            else
+                services.AddOptions<CompressionPolicyOptions>();
+
+            services.TryAddSingleton<ICompressionAlgorithmSelector, CompressionPolicyAlgorithmSelector>();
             return services;
         }
 
@@ -120,11 +152,29 @@ public static class Extensions
 
             services.AddKeyedSingleton<CompressionService>(
                 keyedServiceName,
-                (provider, key) => new(
-                    provider.GetServices<ICompressorFactory>(), provider.GetService<ILogger<CompressionService>>(),
-                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key), provider.GetService<IMetrics>()));
+                (provider, key) => CreateCompressionService(
+                    provider,
+                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
+                    () => provider.GetRequiredKeyedService<CompressionService>(key)));
 
             services.AddKeyedSingleton<ICompressionService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
+            return services;
+        }
+
+        /// <summary>
+        /// Registers the built-in <see cref="ICompressorFactory" /> implementations shipped in the base <c>Lyo.Compression</c> package (GZip, Deflate, and on net10+ Brotli/ZLib).
+        /// Idempotent.
+        /// </summary>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddBuiltInCompressors()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, GZipCompressorFactory>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, DeflateCompressorFactory>());
+#if !NETSTANDARD2_0
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, BrotliCompressorFactory>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, ZLibCompressorFactory>());
+#endif
             return services;
         }
     }

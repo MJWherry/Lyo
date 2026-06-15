@@ -13,7 +13,9 @@ using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Compression.Policy;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Compression.Tests;
 
@@ -62,6 +64,45 @@ public class CompressionServiceTests : IDisposable
     }
 
     private CompressionService NewService(CompressionServiceOptions? options = null, ILogger<CompressionService>? logger = null) => new(AllFactories, logger ?? _logger, options);
+
+    [Fact]
+    public void Resolver_WithoutFactory_ReturnsSelf()
+    {
+        var service = NewService();
+        Assert.Same(service, service.Resolver);
+        Assert.Null(service.AlgorithmSelector);
+    }
+
+    [Fact]
+    public void ResolveForCompress_WithoutSelector_UsesDefaultAlgorithm()
+    {
+        var service = NewService(new() { DefaultAlgorithm = CompressionAlgorithm.GZip });
+        var result = service.ResolveForCompress(new() { ByteLength = 10_000, ContentType = "text/plain" });
+        Assert.True(result.ShouldCompress);
+        Assert.Equal(CompressionAlgorithm.GZip, result.Algorithm);
+    }
+
+    [Fact]
+    public void ResolveForCompress_WithSelector_DelegatesToPolicy()
+    {
+        var selector = new CompressionPolicyAlgorithmSelector(
+            new CompressionPolicyOptions {
+                BuiltInDefaultsEnabled = false,
+                Rules = [new() { Categories = [Lyo.Common.Enums.FileTypeCategory.Images], Compress = false }]
+            },
+            new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip },
+            NullLogger<CompressionPolicyAlgorithmSelector>.Instance);
+
+        var service = new CompressionService(AllFactories, _logger, new() { DefaultAlgorithm = CompressionAlgorithm.GZip }, algorithmSelector: selector);
+        var result = service.ResolveForCompress(new() {
+            ByteLength = 100_000,
+            ContentType = "image/png",
+            OriginalFileName = "photo.png"
+        });
+
+        Assert.False(result.ShouldCompress);
+        Assert.Same(selector, service.AlgorithmSelector);
+    }
 
     [Theory]
     [MemberData(nameof(AllAlgorithms))]

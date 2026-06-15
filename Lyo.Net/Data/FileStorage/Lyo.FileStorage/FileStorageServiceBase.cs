@@ -8,6 +8,7 @@ using Lyo.Encryption;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -128,7 +129,7 @@ public abstract class FileStorageServiceBase
             var testData = Guid.NewGuid().ToByteArray();
             var result = await SaveFileAsync(testData, "health-check.tmp", false, false, null, ".lyo-health", null, null, null, ct).ConfigureAwait(false);
             var fileId = result.Id;
-            var retrieved = await GetFileAsync(fileId, ct).ConfigureAwait(false);
+            var retrieved = await GetFileAsync(fileId, ct: ct).ConfigureAwait(false);
             await DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
             sw.Stop();
             var ok = retrieved.Length == testData.Length;
@@ -673,6 +674,11 @@ public abstract class FileStorageServiceBase
         CancellationToken ct)
     {
         contentType = ResolveStoredContentType(contentType, originalFileName);
+        var selectionContext = FileStorageCompression.BuildSelectionContext(originalSize, contentType, originalFileName, tenantId);
+        var (shouldCompress, selectedCompressAlgorithm) = FileStorageCompression.ResolveForSave(
+            compress, selectionContext, CompressionService, Logger);
+
+        compress = shouldCompress;
         // Single-pass streaming pipeline: input -> compression -> encryption -> storage
         long? compressedSize = null;
         byte[]? compressedHash = null;
@@ -696,8 +702,8 @@ public abstract class FileStorageServiceBase
         // Determine file extension early
         if (encrypt && TwoKeyEncryptionService != null)
             fileExtension = TwoKeyEncryptionService.FileExtension;
-        else if (compress && CompressionService != null)
-            fileExtension = CompressionService.FileExtension;
+        else if (compress && selectedCompressAlgorithm != null)
+            fileExtension = selectedCompressAlgorithm.Extension;
 
         // Pipeline path: compress -> pipe -> encrypt when both enabled and duplicate detection is off
         if (compress && encrypt && !Options.EnableDuplicateDetection) {
@@ -707,7 +713,7 @@ public abstract class FileStorageServiceBase
             var pipelineOutputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
             try {
                 var pipelineResult = await _streamingPipelines.SaveWithCompressEncryptPipelineAsync(
-                        inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, ct)
+                        inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, selectedCompressAlgorithm!, ct)
                     .ConfigureAwait(false);
 
                 // SaveWithCompressEncryptPipelineAsync flushes and disposes the output stream as part of its commit; avoid a double dispose in the finally below.
@@ -754,22 +760,23 @@ public abstract class FileStorageServiceBase
             // Compression stage
             using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
             if (compress) {
+                OperationHelpers.ThrowIfNull(selectedCompressAlgorithm, "Compression was requested but no compression algorithm was resolved.");
                 OperationHelpers.ThrowIfNull(
                     CompressionService,
-                    "Compression was requested but no compression service is configured. Provide an ICompressionService instance when creating FileStorageService.");
+                    "Compression was requested but no compression service is configured. Provide an ICompressionService when creating FileStorageService.");
 
                 using var inputHashStream = new HashingStream(processingStream, originalHashAlgo);
                 using var compressedHashAlgo = hashAlg.Create();
                 using var compressedHashStream = new HashingStream(intermediateStream, compressedHashAlgo);
-                await CompressionService.CompressAsync(inputHashStream, compressedHashStream, chunkSize, ct).ConfigureAwait(false);
+                await CompressionService.Resolver.CompressAsync(inputHashStream, compressedHashStream, selectedCompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
                 await compressedHashStream.FlushAsync(ct).ConfigureAwait(false);
                 await inputHashStream.FlushAsync(ct).ConfigureAwait(false);
                 compressedSize = intermediateStream.Length;
                 compressedHash = compressedHashStream.GetHash();
                 originalHash = inputHashStream.GetHash();
-                fileExtension = CompressionService.FileExtension;
+                fileExtension = selectedCompressAlgorithm.Extension;
                 sourceFileName += fileExtension;
-                compressionAlgorithm = DetermineCompressionAlgorithm(fileExtension);
+                compressionAlgorithm = selectedCompressAlgorithm;
                 processingStream = intermediateStream;
                 processingStream.Position = 0;
                 Logger.LogDebug("Compressed file {FileId}: {OriginalSize} -> {CompressedSize} bytes", fileId, originalSize, compressedSize);
@@ -788,7 +795,9 @@ public abstract class FileStorageServiceBase
             if (Options.EnableDuplicateDetection) {
                 var existingMetadata = await MetadataService.FindByHashAsync(originalHash, ct).ConfigureAwait(false);
                 if (existingMetadata != null) {
-                    var duplicateResult = await HandleDuplicateAsync(existingMetadata, fileId, originalSize, normalizedPathPrefix, ct).ConfigureAwait(false);
+                    var duplicateResult = await HandleDuplicateAsync(
+                            existingMetadata, fileId, originalSize, normalizedPathPrefix, compress, encrypt, keyId, selectedCompressAlgorithm, ct)
+                        .ConfigureAwait(false);
                     if (duplicateResult != null)
                         return duplicateResult;
 
@@ -927,7 +936,7 @@ public abstract class FileStorageServiceBase
 #region Retrieve
 
     /// <inheritdoc />
-    public async Task<byte[]> GetFileAsync(Guid fileId, CancellationToken ct = default)
+    public async Task<byte[]> GetFileAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default)
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.GetDuration)]);
         var sw = Stopwatch.StartNew();
@@ -1014,17 +1023,20 @@ public abstract class FileStorageServiceBase
             OperationHelpers.ThrowIfNull(
                 CompressionService,
                 $"File {fileId} is compressed but no compression service is configured. " +
-                "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
+                "Provide an ICompressionService when creating FileStorageService to decompress compressed files.");
+
+            var decompressAlgorithm = FileStorageCompression.ResolveDecompressionAlgorithm(
+                metadata, compressionAlgorithmOverride, Options.DecompressionAlgorithmOverride, CompressionService, Logger, fileId);
 
             int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
             var decompressedStream = new MemoryStream();
             if (Options.MaxDecompressedFileSize is { } maxDecompressedBytes) {
                 // Bound during decompression rather than after, so malicious payloads cannot exhaust memory before the size check.
                 var bounded = new MaxBytesWriteStream(decompressedStream, maxDecompressedBytes, fileId);
-                await CompressionService.DecompressAsync(processingStream, bounded, chunkSize, ct).ConfigureAwait(false);
+                await CompressionService.Resolver.DecompressAsync(processingStream, bounded, decompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
             }
             else
-                await CompressionService.DecompressAsync(processingStream, decompressedStream, chunkSize, ct).ConfigureAwait(false);
+                await CompressionService.Resolver.DecompressAsync(processingStream, decompressedStream, decompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
 
             decompressedStream.Position = 0;
             processingStream = decompressedStream;
@@ -1074,7 +1086,7 @@ public abstract class FileStorageServiceBase
     }
 
     /// <inheritdoc />
-    public async Task<Stream?> GetFileStreamAsync(Guid fileId, CancellationToken ct = default)
+    public async Task<Stream?> GetFileStreamAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default)
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.GetDuration)]);
         var sw = Stopwatch.StartNew();
@@ -1137,7 +1149,8 @@ public abstract class FileStorageServiceBase
         int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
         var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var pipePlain = new Pipe();
-        var pipelineTask = _streamingPipelines.RunStreamingDecodePipelineAsync(storageStream, metadata, pipePlain.Writer, chunkSize, linkedCts.Token);
+        var pipelineTask = _streamingPipelines.RunStreamingDecodePipelineAsync(
+            storageStream, metadata, pipePlain.Writer, chunkSize, compressionAlgorithmOverride, linkedCts.Token);
         Stream decoded = new PipelineFileReadStream(pipePlain.Reader.AsStream(), pipelineTask, linkedCts);
         if (Options.MaxDecompressedFileSize is { } maxDecompressed)
             decoded = new MaxDecompressedBytesReadStream(decoded, maxDecompressed, fileId);
@@ -1260,10 +1273,23 @@ public abstract class FileStorageServiceBase
         Guid newFileId,
         long originalSize,
         string? normalizedPathPrefix,
+        bool compress,
+        bool encrypt,
+        string? keyId,
+        CompressionAlgorithm? compressionAlgorithm,
         CancellationToken ct)
     {
         switch (Options.DuplicateStrategy) {
             case DuplicateHandlingStrategy.ReturnExisting:
+                if (!FileStorageDuplicateProfile.Matches(existingMetadata, compress, encrypt, keyId, compressionAlgorithm)) {
+                    await CleanupPartialFileAsync(newFileId, normalizedPathPrefix, ct).ConfigureAwait(false);
+                    var message = FileStorageDuplicateProfile.BuildMismatchMessage(
+                        existingMetadata.Id, existingMetadata, compress, encrypt, keyId, compressionAlgorithm);
+                    Logger.LogWarning(
+                        "Duplicate file detected for hash but storage profile does not match. Existing file ID: {FileId}", existingMetadata.Id);
+                    throw new ConflictException(message);
+                }
+
                 Logger.LogInformation("Duplicate file detected for hash. Returning existing file ID: {FileId}", existingMetadata.Id);
 
                 // Clean up any file we started creating
