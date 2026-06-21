@@ -1,6 +1,7 @@
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -119,6 +120,9 @@ public sealed class PostgresFileMetadataStoreBuilder
 
         if (!_services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))
             _services.AddPostgresMultipartUploadSessionStore();
+
+        if (!_services.Any(s => s.ServiceType == typeof(IStagedFileUploadStore)))
+            _services.AddPostgresStagedFileUploadStore();
 
         return _services;
     }

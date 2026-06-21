@@ -14,7 +14,7 @@ documented members.
 | Document                                                                      | Scope                                                                                                                                              |
 |-------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | **This README**                                                               | Core **`IFileStorageService`**, **`LocalFileStorageService`**, options/DTOs, backend capability matrix                                             |
-| [`FileStorageArchitecture.drawio`](FileStorageArchitecture.drawio)            | Three-page diagram: overview (split abstractions + persisted concerns), upload flow (save / multipart / direct PUT), delete flow (tombstone-first) |
+| [`FileStorageArchitecture.drawio`](FileStorageArchitecture.drawio)            | Multi-page diagram: **overview**, upload (general), **save (compress·encrypt)**, **staged upload**, **read**, **copy**, **DEK migrate**, **DEK rotate**, delete |
 | **`Lyo.FileStorage.S3/README.md`**: S3-compatible storage (AWS, B2, MinIO, …) | [`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), **`S3FileStorageOptions`**, DI builders                                |
 | **`Lyo.FileStorage.Blob/README.md`**: Azure Blob                              | [`BlobFileStorageService.cs`](../Lyo.FileStorage.Blob/BlobFileStorageService.cs), **`BlobFileStorageOptions`**, SAS / SSE notes                    |
 | **`Lyo.FileStorage.Web.Components`**: Workbench UI                            | Blazor grids and dialogs that call a configured Test API                                                                                           |
@@ -30,9 +30,12 @@ For multipart session stores and Postgres metadata, follow references from your 
 | **Server-sideCopy** (**`CopyFileAsync`**)                                | Yes (filesystem copy + metadata)                                                                                                 | Yes (`CopyObject`)                        | Yes (same API)                        |
 | **Diagnostics listing** (**`IFileStorageDiagnosticsService`**)           | Yes (relative paths under **`RootDirectoryPath`**)                                                                               | Yes (combined **`KeyPrefix`**)            | Yes                                   |
 | **Multipart** (**`AddLocalMultipartUploadService` / …S3/Blob**)          | Yes (server-staged parts)                                                                                                        | Yes                                       | Yes                                   |
+| **Staged upload** (**`IStagedFileUploadService` / `AddLocalStagedFileUploadService` / …S3/Blob**) | Yes when **`DirectUploadReceiveBaseUri`** is set (API PUT to `.stage/`); otherwise **`NotSupportedException`** | Yes (presigned PUT to `.stage/{id}/object`) | Yes (SAS PUT; not with SSE-C customer key) |
 
 Plaintext direct uploads (**`BeginDirectUpload`**) deliberately **exclude** encryption/compression on the edge PUT; finalized metadata runs through normal
 policy/malware/availability flags.
+
+**Staged uploads** use a separate **`staged_file_upload`** table (not **`file_metadata`** until **commit**). **Complete** verifies and hashes the staged object; **commit** runs the normal compress/encrypt pipeline (API or job worker via **`UploadCompleted`** events).
 
 ### **`CancellationToken`** and cloud signing
 
@@ -69,6 +72,21 @@ rejects `..` segments, doubled separators, and embedded `\0` with **`ArgumentExc
 
 Large-file client-part uploads; register multipart services together with keyed **`IFileStorageService`** (**`Extensions.AddLocalMultipartUploadService`** or S3/Blob equivalents).
 
+### **`IStagedFileUploadService`**
+
+Two-phase uploads for large or untrusted client payloads: **begin** → client PUT to a staging key (`…/.stage/{stageId}/object`) → **complete** (verify/hash) → **commit** (compress/encrypt into canonical storage). Session state lives in **`IStagedFileUploadStore`** / **`staged_file_upload`** — not **`file_metadata`** until commit.
+
+| Step | Method | Notes |
+|------|--------|-------|
+| 1 | **`BeginAsync`** | Returns presigned/SAS PUT URL + **`RequiredPutHeaders`**. |
+| 2 | Client PUT | S3/Blob: direct to cloud URL. Local: **`PUT …/stage/{stageId}/put`** via Test API when **`DirectUploadReceiveBaseUri`** is set. |
+| 3 | **`CompleteAsync`** | Confirms object exists, hashes bytes, sets status **`Uploaded`**. |
+| 4 | **`CommitAsync`** | Runs normal save pipeline; optional **`StagedUploadCommitRequest.Compress`** / **`Encrypt`**. |
+| — | **`AbortAsync`** | Deletes staging object best-effort. |
+| — | **`GetAsync`** | Current stage snapshot. |
+
+Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register **`PostgresStagedFileUploadStore`** / **`SqliteStagedFileUploadStore`** when no store is present. Hook **`IStagedFileUploadEventHandler`** (or service events) to enqueue async commit workers after **`UploadCompleted`**.
+
 ## Service matrix (**`Lyo.FileStorage`** assembly)
 
 | Type                                               | Role                                                                                                                  |
@@ -86,6 +104,8 @@ Large-file client-part uploads; register multipart services together with keyed 
 | **`IFileContentPolicy`**                                                                                                             | Register a single implementation (`services.AddScoped<IFileContentPolicy, MyPolicy>()`).                                                                                                         | Optional pre-save gate that can reject by content (extension/MIME/header sniffing); rejections raise **`FilePolicyRejectedException`**.                                  |
 | **`IFileMalwareScanner`** / **`CompositeFileMalwareScanner`** / **`ContentThreatMalwareScanner`** (from **`Lyo.ContentThreatScan`**) | Register the chosen scanner; **`CompositeFileMalwareScanner`** composes multiple.                                                                                                                | Per-byte scan integration. `RequireScanBeforeAvailable` + missing scanner = fail-closed across save / stream / direct-upload paths.                                      |
 | **`IMultipartUploadSessionStore`**                                                                                                   | **`AddInMemoryMultipartUploadSessionStore()`** / **`TryAddInMemoryMultipartUploadSessionStoreIfMissing()`** in-process default; **`AddPostgresMultipartUploadSessionStore()`** for Postgres.     | Tracks staged multipart upload sessions; required by `Local`/`S3`/`Blob` multipart services.                                                                             |
+| **`IStagedFileUploadStore`**                                                                                                         | **`AddInMemoryStagedFileUploadStore()`** / **`TryAddInMemoryStagedFileUploadStoreIfMissing()`**; **`AddPostgresStagedFileUploadStore()`** / **`AddSqliteStagedFileUploadStore()`** via metadata builders. | Persists in-flight staged uploads in **`staged_file_upload`** until **commit**.                                                                                          |
+| **`IStagedFileUploadEventHandler`**                                                                                                  | Register implementations (`services.AddScoped<IStagedFileUploadEventHandler, MyPublisher>()`).                                                                                                   | Optional lifecycle fan-out (e.g. RabbitMQ commit worker after **`UploadCompleted`**).                                                                                    |
 
 ## Multipart, direct upload, DEK operations
 
@@ -96,6 +116,7 @@ Two non-public coordinators live in the assembly and are activated automatically
 - **`FileStorageStreamingPipelines`** — composes compression / encryption / hash / max-size guards over streamed save and read paths.
 - **`PlainDirectUploadCoordinator`** — finalizes plaintext direct-upload PUTs into a normal **`SaveFileAsync`** outcome (policy, scan, availability) and runs only when the caller
   used **`BeginDirectUploadAsync`** without compression/encryption hints.
+- **`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIo`** (presigned PUT, stat, read, delete).
 
 These are internal — consumers do not instantiate them directly. They are listed here so reviewers can trace audit/policy/scan behavior to the right file.
 
@@ -278,9 +299,9 @@ Use **`await fileStorage.CheckHealthAsync(ct)`**; backends choose lightweight vs
 
 | Project                          | Scope                                                                                                                                                                                              |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`Lyo.FileStorage.Tests`**      | Local backend end-to-end (streaming, hashing, multipart, direct upload, audit, scan policies, duplicate strategies, cancellation, deletion modes) plus `FileHelpers` path-prefix coverage          |
-| **`Lyo.FileStorage.S3.Tests`**   | Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream` (single PUT + multipart + abort + SSE forwarding), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants |
-| **`Lyo.FileStorage.Blob.Tests`** | Isolated coverage for `BlobFileStorageOptions` (CPK, section names), `CloudObjectKeyBuilder`                                                                                                       |
+| **`Lyo.FileStorage.Tests`**      | Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes) plus `FileHelpers` path-prefix coverage          |
+| **`Lyo.FileStorage.S3.Tests`**   | Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream`, **`S3StagedFileUploadService`** (presigned PUT via `FakeAmazonS3`), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants |
+| **`Lyo.FileStorage.Blob.Tests`** | Isolated coverage for `BlobFileStorageOptions`, **`BlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder`                                                                                                       |
 
 Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; deeper end-to-end coverage would need LocalStack/Azurite.
 

@@ -25,4 +25,10 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
     /// route group used by Test API (<c>Workbench/FileStorage/direct-upload</c>).
     /// </summary>
     public string DirectUploadPutRouteRelativePath { get; set; } = "Workbench/FileStorage/direct-upload";
+
+    /// <summary>
+    /// Slash-separated route prefix (no leading slash) appended after <see cref="DirectUploadReceiveBaseUri" /> to form <c>PUT …/{{stage-id}}/put</c> for staged uploads.
+    /// Defaults to the Workbench route group used by Test API (<c>Workbench/FileStorage/stage</c>).
+    /// </summary>
+    public string StagePutRouteRelativePath { get; set; } = "Workbench/FileStorage/stage";
 }

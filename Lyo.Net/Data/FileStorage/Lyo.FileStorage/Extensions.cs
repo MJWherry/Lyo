@@ -6,6 +6,7 @@ using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.OperationContext;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,35 @@ public static class Extensions
             services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
             services.AddScoped<LocalMultipartUploadService>();
             services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<LocalMultipartUploadService>());
+            return services;
+        }
+
+        /// <summary>Registers an in-memory staged upload store (single-node / tests).</summary>
+        public IServiceCollection AddInMemoryStagedFileUploadStore()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<InMemoryStagedFileUploadStore>();
+            services.AddSingleton<IStagedFileUploadStore>(sp => sp.GetRequiredService<InMemoryStagedFileUploadStore>());
+            return services;
+        }
+
+        /// <summary>Registers <see cref="InMemoryStagedFileUploadStore" /> only when no <see cref="IStagedFileUploadStore" /> is already registered.</summary>
+        public IServiceCollection TryAddInMemoryStagedFileUploadStoreIfMissing()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            if (!services.Any(s => s.ServiceType == typeof(IStagedFileUploadStore)))
+                services.AddInMemoryStagedFileUploadStore();
+
+            return services;
+        }
+
+        /// <summary>Registers <see cref="LocalStagedFileUploadService" /> for staged uploads to local disk.</summary>
+        public IServiceCollection AddLocalStagedFileUploadService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddInMemoryStagedFileUploadStoreIfMissing();
+            services.AddScoped<LocalStagedFileUploadService>();
+            services.AddScoped<IStagedFileUploadService>(sp => sp.GetRequiredService<LocalStagedFileUploadService>());
             return services;
         }
     }

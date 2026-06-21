@@ -6,9 +6,11 @@ using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.S3.Multipart;
+using Lyo.FileStorage.S3.Staged;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -251,6 +253,10 @@ public sealed class S3FileStorageServiceBuilder
         // S3-compatible multipart uses the same IAmazonS3 client and API as single-part storage; register unless already present.
         if (!_services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(_keyName) && s.ServiceType == typeof(S3MultipartUploadService)))
             _services.AddKeyedS3MultipartUploadService(_keyName);
+
+        _services.TryAddInMemoryStagedFileUploadStoreIfMissing();
+        if (!_services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(_keyName) && s.ServiceType == typeof(S3StagedFileUploadService)))
+            _services.AddKeyedS3StagedFileUploadService(_keyName);
 
         return _services;
     }

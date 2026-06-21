@@ -2,6 +2,7 @@ using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -230,6 +231,15 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             services.AddScoped<PostgresFileDownloadAccessService>();
             services.AddScoped<IFileDownloadAccessService>(sp => sp.GetRequiredService<PostgresFileDownloadAccessService>());
+            return services;
+        }
+
+        /// <summary>Registers <see cref="PostgresStagedFileUploadStore" /> as <see cref="IStagedFileUploadStore" />.</summary>
+        public IServiceCollection AddPostgresStagedFileUploadStore()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddScoped<PostgresStagedFileUploadStore>();
+            services.AddScoped<IStagedFileUploadStore>(sp => sp.GetRequiredService<PostgresStagedFileUploadStore>());
             return services;
         }
     }

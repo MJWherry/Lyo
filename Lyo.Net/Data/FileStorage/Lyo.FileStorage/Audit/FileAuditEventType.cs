@@ -16,5 +16,10 @@ public enum FileAuditEventType
     DirectUploadBegin = 11,
     DirectUploadComplete = 12,
     DirectUploadFailed = 13,
-    Copy = 14
+    Copy = 14,
+    StagedUploadBegin = 15,
+    StagedUploadComplete = 16,
+    StagedUploadFailed = 17,
+    StagedUploadCommit = 18,
+    StagedUploadAbort = 19
 }

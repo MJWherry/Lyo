@@ -73,6 +73,12 @@ where available) under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-fil
 | `POST`   | `direct-upload/begin`                            | `BeginDirectUploadAsync` (presigned/PUT contract)                                                                       |
 | `PUT`    | `direct-upload/{fileId:guid}/put`                | Only when keyed service is `LocalFileStorageService` — `ReceiveWorkbenchDirectPutAsync`; otherwise 501                  |
 | `POST`   | `direct-upload/{fileId:guid}/complete`           | `CompleteDirectUploadAsync`                                                                                             |
+| `POST`   | `stage/begin`                                    | `IStagedFileUploadService.BeginAsync` (presigned PUT to staging key)                                                    |
+| `PUT`    | `stage/{stageId:guid}/put`                       | Local only — `ReceiveWorkbenchStagePutAsync`; otherwise 501                                                             |
+| `POST`   | `stage/{stageId:guid}/complete`                  | `CompleteAsync` (verify/hash staged object)                                                                             |
+| `POST`   | `stage/{stageId:guid}/commit`                    | `CommitAsync` (compress/encrypt → `file_metadata`)                                                                      |
+| `POST`   | `stage/{stageId:guid}/abort`                     | `AbortAsync`                                                                                                            |
+| `GET`    | `stage/{stageId:guid}`                           | `GetAsync`                                                                                                              |
 | `POST`   | `multipart/begin`                                | `IMultipartUploadService.BeginAsync` from `BeginMultipartWorkbenchRequest`                                              |
 | `GET`    | `multipart/{sessionId:guid}/part-url?partNumber` | `GetPresignedPartUploadAsync`                                                                                           |
 | `POST`   | `multipart/complete`                             | `CompleteAsync(SessionId, Parts[])`                                                                                     |
@@ -95,7 +101,7 @@ where available) under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-fil
 `IFileDownloadAccessService.ValidateAndConsumeDownloadAsync(token, user, remoteIp)` and translate `FileDownloadAccessConsumeFailureReason` to 400/403/404/410/429 via
 `MapFailureStatusCode`.
 
-After every mutating call (`save`, `save-stream`, `direct-upload/complete`, `multipart/complete`, `copy`, `DELETE files/{id}`) the handler calls
+After every mutating call (`save`, `save-stream`, `direct-upload/complete`, `stage/commit`, `multipart/complete`, `copy`, `DELETE files/{id}`) the handler calls
 `cache.InvalidateQueryCacheAsync<FileMetadataEntity>()` so the read-only QueryProject endpoint stays consistent. `FileMetadataQueryCacheInvalidationHandler` performs the same
 invalidation when audit events flow in from the file storage layer.
 
@@ -104,6 +110,10 @@ invalidation when audit events flow in from the file storage layer.
 `BuildDirectFileUploadEndpoint` adds `POST upload/file` (`Constants.DirectFileUpload.FilePath`, tagged `DirectFileUpload`) which shares `SaveStreamFromFormAsync` with
 `Workbench/FileStorage/files/save-stream`. Same query string contract (`originalFileName`, `compress`, `encrypt`, `keyId`, `pathPrefix`, `chunkSize`, `contentType`, `tenantId`),
 anti-forgery disabled, useful when callers don't want to nest under the workbench prefix.
+
+## Staged file upload
+
+Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table above). State is stored in **`staged_file_upload`**, not **`file_metadata`**, until **`stage/{id}/commit`**. Local backends accept **`PUT stage/{stageId}/put`** on this host; S3/Blob return presigned URLs from **`stage/begin`**. Register **`IStagedFileUploadStore`** via Postgres/Sqlite metadata builders (or in-memory for dev). Hook **`IStagedFileUploadEventHandler`** to enqueue async commit workers after **`UploadCompleted`**.
 
 ## FileMetadata Query/QueryProject
 

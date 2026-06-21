@@ -7,6 +7,7 @@ using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,9 @@ public static class SetupFileStorageWorkbenchEndpoints
 
     private static IMultipartUploadService GetMultipartUploadService(IServiceProvider services)
         => services.GetRequiredKeyedService<IMultipartUploadService>(Constants.FileStorageWorkbench.ServiceKey);
+
+    private static IStagedFileUploadService GetStagedFileUploadService(IServiceProvider services)
+        => services.GetRequiredKeyedService<IStagedFileUploadService>(Constants.FileStorageWorkbench.ServiceKey);
 
     private static IKeyStore GetKeyStore(IServiceProvider services) => services.GetRequiredKeyedService<IKeyStore>(Constants.FileStorageWorkbench.ServiceKey);
 
@@ -191,6 +195,68 @@ public static class SetupFileStorageWorkbenchEndpoints
                         return Results.NoContent();
                     })
                 .DisableAntiforgery();
+
+            group.MapPost(
+                "stage/begin", async ([FromBody] StagedUploadBeginRequest request, IServiceProvider services, CancellationToken ct) => {
+                    var staged = GetStagedFileUploadService(services);
+                    var result = await staged.BeginAsync(request, ct);
+                    return Results.Ok(result);
+                });
+
+            group.MapPut(
+                    "stage/{stageId:guid}/put", async (Guid stageId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
+                        var staged = GetStagedFileUploadService(services);
+                        if (staged is not LocalStagedFileUploadService local) {
+                            return Results.Json(
+                                new ProblemDetails {
+                                    Title = "Staged upload PUT not supported",
+                                    Detail = "PUT receiver is only available when the keyed IStagedFileUploadService is LocalStagedFileUploadService.",
+                                    Status = StatusCodes.Status501NotImplemented
+                                }, statusCode: StatusCodes.Status501NotImplemented);
+                        }
+
+                        await local.ReceiveWorkbenchStagePutAsync(stageId, http.Request.Body, ct).ConfigureAwait(false);
+                        return Results.NoContent();
+                    })
+                .DisableAntiforgery();
+
+            group.MapPost(
+                "stage/{stageId:guid}/complete", async (
+                    Guid stageId,
+                    [FromBody] StagedUploadCompleteRequest? request,
+                    IServiceProvider services,
+                    CancellationToken ct) => {
+                    var staged = GetStagedFileUploadService(services);
+                    var result = await staged.CompleteAsync(stageId, request, ct);
+                    return Results.Ok(result);
+                });
+
+            group.MapPost(
+                "stage/{stageId:guid}/commit", async (
+                    Guid stageId,
+                    [FromBody] StagedUploadCommitRequest request,
+                    IServiceProvider services,
+                    ICacheService cache,
+                    CancellationToken ct) => {
+                    var staged = GetStagedFileUploadService(services);
+                    var result = await staged.CommitAsync(stageId, request, ct);
+                    await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
+                    return Results.Ok(result);
+                });
+
+            group.MapPost(
+                "stage/{stageId:guid}/abort", async (Guid stageId, IServiceProvider services, CancellationToken ct) => {
+                    var staged = GetStagedFileUploadService(services);
+                    await staged.AbortAsync(stageId, ct);
+                    return Results.Ok();
+                });
+
+            group.MapGet(
+                "stage/{stageId:guid}", async (Guid stageId, IServiceProvider services, CancellationToken ct) => {
+                    var staged = GetStagedFileUploadService(services);
+                    var result = await staged.GetAsync(stageId, ct);
+                    return Results.Ok(result);
+                });
 
             group.MapPost(
                 "files/copy", async ([FromBody] CopyFileWorkbenchRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {

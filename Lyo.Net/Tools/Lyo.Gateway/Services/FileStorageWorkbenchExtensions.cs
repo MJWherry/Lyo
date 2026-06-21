@@ -2,6 +2,7 @@ using Lyo.Api.Client;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.S3;
+using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Keystore;
 using Lyo.Keystore.Aws;
@@ -27,6 +28,11 @@ public static class FileStorageWorkbenchExtensions
 
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyStoreKey) && s.ServiceType == typeof(IKeyStore)))
                 services.AddKeyedScoped<IKeyStore>(keyStoreKey, (provider, _) => new TestApiKeyStore(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));
+
+            if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(fileStorageKey) && s.ServiceType == typeof(IStagedFileUploadService)))
+                services.AddKeyedScoped<IStagedFileUploadService>(
+                    fileStorageKey,
+                    (provider, _) => new TestApiStagedFileUploadService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));
 
             services.AddScoped<IFileStorageWorkbenchQueryService>(provider
                 => new TestApiFileStorageWorkbenchQueryService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));

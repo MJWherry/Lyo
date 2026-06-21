@@ -33,6 +33,7 @@ Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICom
   `IMultipartUploadSessionStore` is registered yet, an in-memory store is added (use `AddPostgresFileMetadataStoreKeyed(...).Build()` **before** S3 when using PostgreSQL so
   sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default; total upload limit aligns with `MaxUploadSizeBytes`. Server-side copy is used for the
   final commit (no download+re-upload round trip).
+- ✅ **Staged uploads** — keyed `S3StagedFileUploadService` is registered with the same key when you call `S3FileStorageServiceBuilder.Build` (unless already registered). Presigned PUT targets `.stage/{stageId}/object`; SSE headers flow through `S3UploadServerSideEncryption.BuildRequiredPutHeaders` like direct upload. Requires `IStagedFileUploadStore` (Postgres/Sqlite or in-memory fallback).
 - ✅ **Streamed PUT spilling** — `S3UploadStream` keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via single PUT under 64 MiB
   or multipart above that, aborting cleanly on any per-part failure
 - ✅ **Region Support** - Configurable AWS regions
@@ -133,7 +134,7 @@ it touches:
 | `ConfigureS3FileStorage(string configSectionName = S3FileStorageOptions.SectionName)` | Bind `S3FileStorageOptions` from configuration (singleton).                                                                                                                                   |
 | `ConfigureS3FileStorage(Action<S3FileStorageOptions>)`                                | Configure options inline.                                                                                                                                                                     |
 | `UseKeyStore(keyName)` / `ConfigureKeyStore(configSectionName)`                       | Reference an existing key store — actual key-store registration is performed by `Lyo.Keystore` extensions.                                                                                    |
-| `Build(IConfiguration configuration)`                                                 | Finalizes registration: ensures `IAmazonS3` (via `AddAmazonS3FromConfiguration`), an `IMultipartUploadSessionStore` (in-memory fallback), and a keyed `S3MultipartUploadService` are present. |
+| `Build(IConfiguration configuration)`                                                 | Finalizes registration: ensures `IAmazonS3` (via `AddAmazonS3FromConfiguration`), an `IMultipartUploadSessionStore` (in-memory fallback), keyed `S3MultipartUploadService`, and keyed `S3StagedFileUploadService` when not already registered. |
 
 ```csharp
 services
@@ -150,6 +151,7 @@ services
 |------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)`           | Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey`, `Region`, `ServiceUrl` (forces path-style addressing when set). |
 | `services.AddKeyedS3MultipartUploadService(string serviceKey)`                                                         | Registers the keyed multipart service alone (e.g. when replacing the default registration created by `Build`).                                                                           |
+| `services.AddKeyedS3StagedFileUploadService(string serviceKey)`                                                      | Registers keyed `S3StagedFileUploadService` + `IStagedFileUploadService` (also invoked automatically by `Build`).                                                                      |
 | `services.AddKeyedAwsMultipartUploadService(string serviceKey)`                                                        | Alias for `AddKeyedS3MultipartUploadService`, named for callers thinking in terms of the AWS SDK.                                                                                        |
 | `S3FileStorageBackblazeExtensions.ApplyBackblazeB2Defaults()` and `S3FileStorageS3CompatibleExtensions.Apply*Defaults` | See the provider matrix below — they only set `ServiceUrl`/`Region` defaults when those fields are unset.                                                                                |
 

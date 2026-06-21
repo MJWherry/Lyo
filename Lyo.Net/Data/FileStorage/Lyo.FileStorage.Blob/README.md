@@ -22,6 +22,7 @@ Architecture, duplicate handling, and threat-model context for storage live in *
 - **SSE** — Optional **encryption scope** and **customer-provided key** (SSE-C via base64 key on options); applied to single-blob writes, multipart staging, **header range updates
   **, and DEK migrations. See XML docs on **`BlobFileStorageOptions`** for presigned/SSE limits.
 - **Multipart** — Register **`AddBlobMultipartUploadService()`** after **`AddBlobFileStorageService`**. Final commit uses **`SyncCopyFromUriAsync`** rather than download+re-upload.
+- **Staged upload** — Register **`AddBlobStagedFileUploadService()`** after blob storage. Issues SAS PUT URLs under `.stage/{stageId}/object` with required `x-ms-blob-type: BlockBlob` (and optional encryption scope headers). **Not supported** when **`CustomerProvidedKeyBase64`** (SSE-C) is configured — fail fast at **`BeginAsync`**.
 - **Resolved suffix cache** — Saved metadata persists the storage extension/suffix so subsequent reads/copies skip the legacy N+1 "try base then `.gz`/`.lyo.gz`/…" probes (the
   shared `CloudObjectKeyBuilder` produces the candidate key directly).
 - **Shared traversal guard** — Container/blob prefix normalization and traversal rejection live in `Lyo.Exceptions.FileHelpers` so the same rules apply across diagnostics listing
@@ -67,6 +68,9 @@ services.AddBlobFileStorageService(BlobFileStorageOptions.SectionName);
 
 // Multipart uploads (uses in-memory session store unless you replace it)
 services.AddBlobMultipartUploadService();
+
+// Staged uploads (uses in-memory store unless Postgres/Sqlite metadata builder registered first)
+services.AddBlobStagedFileUploadService();
 ```
 
 > **Keyed / multi-tenant DI** — `Lyo.FileStorage.Blob` does not currently ship the keyed builder pattern that `Lyo.FileStorage.S3` exposes via `AddS3FileStorageServiceKeyed`. Use *
@@ -122,9 +126,8 @@ with your DI lifetimes.
 
 ## Tests
 
-`Lyo.FileStorage.Blob.Tests` provides isolated unit coverage for `BlobFileStorageOptions` (CPK resolution, section names, base defaults) and the shared `CloudObjectKeyBuilder`.
-Path-prefix traversal coverage lives in `Lyo.FileStorage.Tests` against the shared `Lyo.Exceptions.FileHelpers` helper. The `BlobContainerClient` SDK surface is sealed/concrete, so
-deeper end-to-end coverage of presigned signing and live container I/O would need Azurite.
+`Lyo.FileStorage.Blob.Tests` provides isolated unit coverage for `BlobFileStorageOptions` (CPK resolution, section names, base defaults), **`BlobStagedFileUploadService`** (offline SAS PUT generation), and the shared `CloudObjectKeyBuilder`.
+Path-prefix traversal coverage lives in `Lyo.FileStorage.Tests` against the shared `Lyo.Exceptions.FileHelpers` helper. Live container I/O would need Azurite.
 
 ## Dependencies
 

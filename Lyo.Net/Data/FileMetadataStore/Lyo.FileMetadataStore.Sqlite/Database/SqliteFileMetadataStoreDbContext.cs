@@ -15,6 +15,8 @@ public class SqliteFileMetadataStoreDbContext : DbContext
 
     public DbSet<FileDownloadAccessLinkEntity> FileDownloadAccessLinks { get; set; } = null!;
 
+    public DbSet<StagedFileUploadEntity> StagedFileUploads { get; set; } = null!;
+
     public SqliteFileMetadataStoreDbContext(DbContextOptions<SqliteFileMetadataStoreDbContext> options)
         : base(options) { }
 
@@ -25,5 +27,6 @@ public class SqliteFileMetadataStoreDbContext : DbContext
         modelBuilder.ApplyConfiguration(new FileAuditEventEntityConfiguration());
         modelBuilder.ApplyConfiguration(new MultipartUploadSessionEntityConfiguration());
         modelBuilder.ApplyConfiguration(new FileDownloadAccessLinkEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new StagedFileUploadEntityConfiguration());
     }
 }

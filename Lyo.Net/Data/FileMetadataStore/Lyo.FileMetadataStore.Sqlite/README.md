@@ -10,10 +10,11 @@ SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. F
 | **`SqliteFileMetadataStore`**           | `IFileMetadataStore` + `IHealth`                   |
 | **`SqliteFileAuditSink`**               | `IFileAuditEventHandler` — append-only audit rows  |
 | **`SqliteMultipartUploadSessionStore`** | `IMultipartUploadSessionStore`                     |
+| **`SqliteStagedFileUploadStore`**       | `IStagedFileUploadStore`                           |
 | **`SqliteFileDownloadAccessService`**   | Time-boxed download access tokens                  |
-| **`SqliteFileMetadataStoreDbContext`**  | EF Core context (5 tables, same shape as Postgres) |
+| **`SqliteFileMetadataStoreDbContext`**  | EF Core context (6 tables, same shape as Postgres) |
 
-Schema tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `file_download_access_links`.
+Schema tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `staged_file_upload`, `file_download_access_links`.
 
 ## Registration
 
@@ -28,6 +29,7 @@ services.AddSqliteFileMetadataStoreDbContextFactoryFromConfiguration(configurati
 services.AddSqliteFileMetadataStore();
 services.AddSqliteFileAuditSink();
 services.AddSqliteFileDownloadAccessService();
+services.AddSqliteStagedFileUploadStore(); // optional — builder adds when missing
 
 // Keyed (multi-store hosts)
 services.AddSqliteFileMetadataStoreKeyed("sqlite-metadata")

@@ -441,6 +441,106 @@ namespace Lyo.FileMetadataStore.Sqlite.Migrations
 
                     b.ToTable("multipart_upload_session", (string)null);
                 });
+
+            modelBuilder.Entity("Lyo.FileMetadataStore.Sqlite.Database.StagedFileUploadEntity", b =>
+                {
+                    b.Property<Guid>("StageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("stage_id");
+
+                    b.Property<Guid?>("CommittedFileId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("committed_file_id");
+
+                    b.Property<byte[]>("ContentHash")
+                        .HasColumnType("BLOB")
+                        .HasColumnName("content_hash");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_utc");
+
+                    b.Property<long>("DeclaredMaxSizeBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("declared_max_size_bytes");
+
+                    b.Property<DateTime>("ExpiresUtc")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("expires_utc");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<string>("HashAlgorithm")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("hash_algorithm");
+
+                    b.Property<long?>("ObservedSizeBytes")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("observed_size_bytes");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("PathPrefix")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("path_prefix");
+
+                    b.Property<string>("ProviderKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("provider_kind");
+
+                    b.Property<string>("ProviderState")
+                        .IsRequired()
+                        .HasMaxLength(8192)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("provider_state");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StorageLocation")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("storage_location");
+
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("StageId");
+
+                    b.HasIndex("Status", "ExpiresUtc")
+                        .HasDatabaseName("ix_staged_file_upload_status_expires");
+
+                    b.HasIndex("TenantId", "CreatedUtc")
+                        .HasDatabaseName("ix_staged_file_upload_tenant_created");
+
+                    b.ToTable("staged_file_upload", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

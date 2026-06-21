@@ -19,7 +19,7 @@ public sealed class FileMetadataPostgresFixture : PostgresContainerFixtureBase
             b.SetMinimumLevel(LogLevel.Debug);
         });
 
-        services.AddDbContext<FileMetadataStoreDbContext>(opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "filestore")));
+        services.AddFileMetadataStoreDbContext(connectionString);
         services.AddLocalLock();
         services.AddPostgresFileDownloadAccessService();
         ServiceProvider = services.BuildServiceProvider();

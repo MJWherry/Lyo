@@ -1,3 +1,4 @@
+using System.Net;
 using System.Reflection;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -21,6 +22,14 @@ public class FakeAmazonS3 : DispatchProxy
 
     public List<AbortMultipartUploadRequest> AbortRequests { get; } = [];
 
+    public List<GetPreSignedUrlRequest> PreSignedUrlRequests { get; } = [];
+
+    public List<GetObjectMetadataRequest> GetObjectMetadataRequests { get; } = [];
+
+    public List<DeleteObjectRequest> DeleteObjectRequests { get; } = [];
+
+    public List<GetObjectRequest> GetObjectRequests { get; } = [];
+
     public Func<PutObjectRequest, PutObjectResponse>? OnPutObject { get; set; }
 
     public Func<InitiateMultipartUploadRequest, InitiateMultipartUploadResponse>? OnInitiateMultipart { get; set; }
@@ -30,6 +39,14 @@ public class FakeAmazonS3 : DispatchProxy
     public Func<CompleteMultipartUploadRequest, CompleteMultipartUploadResponse>? OnCompleteMultipart { get; set; }
 
     public Func<AbortMultipartUploadRequest, AbortMultipartUploadResponse>? OnAbortMultipart { get; set; }
+
+    public Func<GetPreSignedUrlRequest, string>? OnGetPreSignedUrl { get; set; }
+
+    public Func<GetObjectMetadataRequest, GetObjectMetadataResponse>? OnGetObjectMetadata { get; set; }
+
+    public Func<DeleteObjectRequest, DeleteObjectResponse>? OnDeleteObject { get; set; }
+
+    public Func<GetObjectRequest, GetObjectResponse>? OnGetObject { get; set; }
 
     /// <summary>If non-null, the next call to the matching <c>On*</c> handler throws this exception (and is then cleared).</summary>
     public Exception? ThrowOnNextUploadPart { get; set; }
@@ -84,6 +101,33 @@ public class FakeAmazonS3 : DispatchProxy
                 AbortRequests.Add(abort);
                 var response = OnAbortMultipart?.Invoke(abort) ?? new AbortMultipartUploadResponse();
                 return Task.FromResult(response);
+            }
+            case "GetPreSignedURLAsync" when args is { Length: 1 } && args[0] is GetPreSignedUrlRequest presign: {
+                PreSignedUrlRequests.Add(presign);
+                var url = OnGetPreSignedUrl?.Invoke(presign) ?? $"https://s3.test/{presign.BucketName}/{presign.Key}?X-Amz-Signature=fake";
+                return Task.FromResult(url);
+            }
+            case "GetObjectMetadataAsync" when args is { Length: 3 } && args[0] is string bucket && args[1] is string key: {
+                var metaReq = new GetObjectMetadataRequest { BucketName = bucket, Key = key };
+                GetObjectMetadataRequests.Add(metaReq);
+                if (OnGetObjectMetadata?.Invoke(metaReq) is { } meta)
+                    return Task.FromResult(meta);
+
+                return Task.FromException<GetObjectMetadataResponse>(new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound });
+            }
+            case "DeleteObjectAsync" when args is { Length: 3 } && args[0] is string delBucket && args[1] is string delKey: {
+                var delReq = new DeleteObjectRequest { BucketName = delBucket, Key = delKey };
+                DeleteObjectRequests.Add(delReq);
+                var response = OnDeleteObject?.Invoke(delReq) ?? new DeleteObjectResponse();
+                return Task.FromResult(response);
+            }
+            case "GetObjectAsync" when args is { Length: 3 } && args[0] is string getBucket && args[1] is string getKey: {
+                var getReq = new GetObjectRequest { BucketName = getBucket, Key = getKey };
+                GetObjectRequests.Add(getReq);
+                if (OnGetObject?.Invoke(getReq) is { } obj)
+                    return Task.FromResult(obj);
+
+                return Task.FromResult(new GetObjectResponse { ResponseStream = new MemoryStream(new byte[64]) });
             }
         }
 

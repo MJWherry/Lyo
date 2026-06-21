@@ -56,8 +56,8 @@ Two minimal-API endpoints sit in front of the Blazor app:
 `AddFileStorageWorkbenchSupport(IConfiguration)` (in `Services/FileStorageWorkbenchExtensions.cs`) is the switch between the two hosting modes for `/filestorage-workbench`. It
 binds `FileStorageWorkbenchOptions` from `FileStorageWorkbench` and:
 
-- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed `IKeyStore` →
-  `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All three call back into the Test API using `IApiClient`, prefixed by
+- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed **`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` →
+  `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by
   `ApiRoutePrefix` (default `Workbench/FileStorage`).
 - **In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`),
   Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the

@@ -1,6 +1,7 @@
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -102,6 +103,9 @@ public sealed class SqliteFileMetadataStoreBuilder
 
         if (!_services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))
             _services.AddSqliteMultipartUploadSessionStore();
+
+        if (!_services.Any(s => s.ServiceType == typeof(IStagedFileUploadStore)))
+            _services.AddSqliteStagedFileUploadStore();
 
         return _services;
     }

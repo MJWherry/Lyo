@@ -2,6 +2,7 @@ using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -212,6 +213,15 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             services.AddScoped<SqliteFileDownloadAccessService>();
             services.AddScoped<IFileDownloadAccessService>(sp => sp.GetRequiredService<SqliteFileDownloadAccessService>());
+            return services;
+        }
+
+        /// <summary>Registers <see cref="SqliteStagedFileUploadStore" /> as <see cref="IStagedFileUploadStore" />.</summary>
+        public IServiceCollection AddSqliteStagedFileUploadStore()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddScoped<SqliteStagedFileUploadStore>();
+            services.AddScoped<IStagedFileUploadStore>(sp => sp.GetRequiredService<SqliteStagedFileUploadStore>());
             return services;
         }
     }

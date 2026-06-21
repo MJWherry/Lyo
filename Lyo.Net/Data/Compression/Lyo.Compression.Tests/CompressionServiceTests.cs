@@ -88,7 +88,7 @@ public class CompressionServiceTests : IDisposable
         var selector = new CompressionPolicyAlgorithmSelector(
             new CompressionPolicyOptions {
                 BuiltInDefaultsEnabled = false,
-                Rules = [new() { Categories = [Lyo.Common.Enums.FileTypeCategory.Images], Compress = false }]
+                Rules = [new() { Categories = [Common.Enums.FileTypeCategory.Images], Compress = false }]
             },
             new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip },
             NullLogger<CompressionPolicyAlgorithmSelector>.Instance);

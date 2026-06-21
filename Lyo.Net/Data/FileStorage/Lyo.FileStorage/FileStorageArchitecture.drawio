@@ -16,7 +16,7 @@
         </mxCell>
 
         <!-- Tests (top-right) -->
-        <mxCell id="tests" value="&lt;b&gt;Test projects&lt;/b&gt;&#xa;· Lyo.FileStorage.Tests — end-to-end Local backend, scan/policy/dup matrices, multipart, direct upload, audit + FileHelpers path-prefix coverage&#xa;· Lyo.FileStorage.S3.Tests — DispatchProxy FakeAmazonS3, S3UploadStream, GetObject wrapper, options/SSE invariants, CloudObjectKeyBuilder&#xa;· Lyo.FileStorage.Blob.Tests — BlobFileStorageOptions (CPK / scope), CloudObjectKeyBuilder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#888888;dashed=1;fontStyle=0;align=left;spacingLeft=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+        <mxCell id="tests" value="&lt;b&gt;Test projects&lt;/b&gt;&#xa;· Lyo.FileStorage.Tests — Local backend, multipart, direct upload, &lt;b&gt;staged upload&lt;/b&gt;, scan/policy/dup matrices, audit + FileHelpers&#xa;· Lyo.FileMetadataStore.*.Tests — Postgres/Sqlite &lt;b&gt;StagedFileUploadStore&lt;/b&gt; CRUD + status transitions&#xa;· Lyo.FileStorage.S3.Tests — FakeAmazonS3, S3UploadStream, &lt;b&gt;S3StagedFileUploadService&lt;/b&gt;, SSE, CloudObjectKeyBuilder&#xa;· Lyo.FileStorage.Blob.Tests — BlobFileStorageOptions, &lt;b&gt;BlobStagedFileUploadService&lt;/b&gt; (offline SAS), CloudObjectKeyBuilder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#888888;dashed=1;fontStyle=0;align=left;spacingLeft=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
           <mxGeometry x="1100" y="68" width="560" height="120" as="geometry" />
         </mxCell>
 
@@ -29,12 +29,12 @@
         </mxCell>
 
         <!-- Public surface block -->
-        <mxCell id="orc_public" value="&lt;b&gt;Public surface (IFileStorageService)&lt;/b&gt;&#xa;· SaveStreamAsync · SaveBytesAsync · SaveFileAsync · CopyFileAsync&#xa;· GetMetadataAsync · GetFileStreamAsync · GetFileAsync · ExistsAsync&#xa;· DeleteAsync (Soft | HardDelete) · UpdateFileHeaderAsync&#xa;· MultipartBegin / UploadPart / Complete / Abort&#xa;· BeginDirectUpload / CompleteDirectUpload&#xa;· GetPreSignedReadUrlAsync (with PreSignedReadUrlOptions)&#xa;· MigrateDeksAsync · RotateDeksAsync · GetStorageSizeAsync · HealthCheckAsync&#xa;&#xa;&lt;b&gt;Events&lt;/b&gt; (redacted FileStoreSnapshot payload):&#xa;FileSaved · FileMetadataRetrieved · FileRetrieved · FileDeleted&#xa;FileAuditOccurred (multipart · direct upload · DEK migrate/rotate · scan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;fontStyle=0;" vertex="1" parent="1">
+        <mxCell id="orc_public" value="&lt;b&gt;Public surface (IFileStorageService + IStagedFileUploadService)&lt;/b&gt;&#xa;· SaveStreamAsync · SaveBytesAsync · SaveFileAsync · CopyFileAsync&#xa;· GetMetadataAsync · GetFileStreamAsync · GetFileAsync · ExistsAsync&#xa;· DeleteAsync (Soft | HardDelete) · UpdateFileHeaderAsync&#xa;· MultipartBegin / UploadPart / Complete / Abort&#xa;· BeginDirectUpload / CompleteDirectUpload&#xa;· &lt;b&gt;Staged:&lt;/b&gt; Begin / Complete / Commit / Abort / Get (IStagedFileUploadService)&#xa;· GetPreSignedReadUrlAsync (with PreSignedReadUrlOptions)&#xa;· MigrateDeksAsync · RotateDeksAsync · GetStorageSizeAsync · HealthCheckAsync&#xa;&#xa;&lt;b&gt;Events&lt;/b&gt; (redacted FileStoreSnapshot payload):&#xa;FileSaved · FileMetadataRetrieved · FileRetrieved · FileDeleted&#xa;Staged: PresignedCreated · UploadCompleted · UploadFailed · Committed&#xa;FileAuditOccurred (multipart · direct · staged · DEK migrate/rotate · scan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="60" y="256" width="790" height="280" as="geometry" />
         </mxCell>
 
         <!-- Internal helpers / abstractions block -->
-        <mxCell id="orc_internals" value="&lt;b&gt;Split abstractions (Lyo.FileStorage/Abstractions)&lt;/b&gt;&#xa;· IFileStoragePhysicalIo — backend byte plumbing&#xa;· IFileStorageMetadataLookup — read-side metadata access&#xa;· IFileStorageMetadataNormalization — name / MIME / suffix resolution&#xa;· IFileStorageDiagnosticsService — operator key listing&#xa;· IFileAuditPublisher — fan-out to IFileAuditEventHandler[s]&#xa;&#xa;&lt;b&gt;Shared helpers (Lyo.FileStorage)&lt;/b&gt;&#xa;· CloudObjectKeyBuilder — S3/Blob key shape with persisted suffix&#xa;· FileStorageStreamingPipelines — compose hash → compress → encrypt&#xa;· PlainDirectUploadCoordinator — Begin/Complete direct-PUT lifecycle&#xa;· FileStorageDekOperations — MigrateDeksAsync / RotateDeksAsync&#xa;· HashVerifyingReadStream · MaxBytesWriteStream · MaxDecompressedBytesReadStream · PipelineFileReadStream&#xa;&#xa;&lt;b&gt;Input guard&lt;/b&gt; (Lyo.Exceptions)&#xa;· FileHelpers.ThrowIfPathPrefixTraversal / NormalizeAndValidatePathPrefix — shared by every save / direct-upload / diagnostics entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;fontStyle=0;" vertex="1" parent="1">
+        <mxCell id="orc_internals" value="&lt;b&gt;Split abstractions (Lyo.FileStorage/Abstractions)&lt;/b&gt;&#xa;· IFileStoragePhysicalIo — backend byte plumbing&#xa;· IFileStorageMetadataLookup — read-side metadata access&#xa;· IFileStorageMetadataNormalization — name / MIME / suffix resolution&#xa;· IFileStorageDiagnosticsService — operator key listing&#xa;· IFileAuditPublisher — fan-out to IFileAuditEventHandler[s]&#xa;&#xa;&lt;b&gt;Shared helpers (Lyo.FileStorage)&lt;/b&gt;&#xa;· CloudObjectKeyBuilder · StagedObjectKeyBuilder (.stage/{id}/object)&#xa;· FileStorageStreamingPipelines — compose hash → compress → encrypt&#xa;· PlainDirectUploadCoordinator — Begin/Complete direct-PUT lifecycle&#xa;· StagedUploadCoordinator + IStagedFilePhysicalIo — staged begin/complete/commit&#xa;· FileStorageDekOperations — MigrateDeksAsync / RotateDeksAsync&#xa;· HashVerifyingReadStream · MaxBytesWriteStream · MaxDecompressedBytesReadStream · PipelineFileReadStream&#xa;&#xa;&lt;b&gt;Input guard&lt;/b&gt; (Lyo.Exceptions)&#xa;· FileHelpers.ThrowIfPathPrefixTraversal / NormalizeAndValidatePathPrefix — shared by every save / direct-upload / diagnostics entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="870" y="256" width="780" height="280" as="geometry" />
         </mxCell>
 
@@ -76,7 +76,7 @@
         <mxCell id="metaimpl" value="&lt;b&gt;Concrete stores&lt;/b&gt;&#xa;· PostgresFileMetadataStore (prod) — EF Core, hash index, tombstone column&#xa;· LocalFileMetadataStore (dev / single-host) — JSON sidecars per file id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b8dfb8;strokeColor=#5b9f5c;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
           <mxGeometry x="580" y="791" width="460" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="adjunct" value="&lt;b&gt;Postgres adjuncts&lt;/b&gt; (same package, opt-in via DI)&#xa;· PostgresMultipartUploadSessionStore → IMultipartUploadSessionStore&#xa;· PostgresFileDownloadAccessService — direct-PUT access tracking&#xa;· PostgresFileAuditSink → IFileAuditEventHandler&#xa;Dev/in-process default: InMemoryMultipartUploadSessionStore + in-memory audit log." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#94d694;strokeColor=#447f44;dashed=1;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
+        <mxCell id="adjunct" value="&lt;b&gt;Postgres adjuncts&lt;/b&gt; (same package, opt-in via DI)&#xa;· PostgresMultipartUploadSessionStore → IMultipartUploadSessionStore&#xa;· PostgresStagedFileUploadStore → IStagedFileUploadStore (staged_file_upload table)&#xa;· PostgresFileDownloadAccessService — direct-PUT access tracking&#xa;· PostgresFileAuditSink → IFileAuditEventHandler&#xa;Dev/in-process default: InMemory* stores for multipart + staged sessions." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#94d694;strokeColor=#447f44;dashed=1;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
           <mxGeometry x="580" y="891" width="460" height="120" as="geometry" />
         </mxCell>
 
@@ -93,7 +93,7 @@
         <mxCell id="blobimpl" value="&lt;b&gt;Backends&lt;/b&gt;&#xa;· LocalFileStorageService → disk (sharded /xx/yy/&lt;id&gt; paths, atomic rename, EnsureUnderRoot)&#xa;· S3FileStorageService → IAmazonS3 (S3UploadStream PUT≤5 MiB / multipart; S3GetObjectResponseStream wrapper)&#xa;· BlobFileStorageService (Lyo.FileStorage.Blob, renamed from .Azure) → Azure BlockBlobClient (encryption scope / CPK)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfb3eb;strokeColor=#5947a3;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
           <mxGeometry x="1100" y="756" width="540" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="multipart" value="&lt;b&gt;IMultipartUploadService&lt;/b&gt; per-backend implementations&#xa;LocalMultipartUploadService (temp folder + final rename) · S3MultipartUploadService · BlobMultipartUploadService&#xa;Session state via IMultipartUploadSessionStore (in-memory or Postgres adjunct).&#xa;Commit order: SaveMetadataAsync &lt;b&gt;then&lt;/b&gt; server-side copy / CompleteMultipart / CommitBlockList.&#xa;Failure path emits MultipartAbort audit and tears down session + staged parts." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eae4ff;strokeColor=#8670c4;dashed=1;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
+        <mxCell id="multipart" value="&lt;b&gt;IMultipartUploadService&lt;/b&gt; per-backend implementations&#xa;LocalMultipartUploadService · S3MultipartUploadService · BlobMultipartUploadService&#xa;Session state via IMultipartUploadSessionStore (in-memory or Postgres adjunct).&#xa;&#xa;&lt;b&gt;IStagedFileUploadService&lt;/b&gt; — Local / S3 / Blob staged services&#xa;Staging key: …/.stage/{stageId}/object · state in IStagedFileUploadStore until CommitAsync writes file_metadata." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eae4ff;strokeColor=#8670c4;dashed=1;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
           <mxGeometry x="1100" y="896" width="540" height="170" as="geometry" />
         </mxCell>
 
@@ -130,24 +130,24 @@
         <mxCell id="wf_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#888888;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="40" y="1110" width="1620" height="260" as="geometry" />
         </mxCell>
-        <mxCell id="wf_title" value="Representative workflows — see other tabs for detailed swim-lane breakdowns" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=13;fontStyle=1;fontColor=#444444;" vertex="1" parent="1">
+        <mxCell id="wf_title" value="Representative workflows — see dedicated tabs: Save (compress·encrypt) · Staged upload · Read · Copy · DEK migrate · DEK rotate · Upload (general) · Delete" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=13;fontStyle=1;fontColor=#444444;" vertex="1" parent="1">
           <mxGeometry x="54" y="1120" width="900" height="24" as="geometry" />
         </mxCell>
 
-        <mxCell id="wf_upload" value="&lt;b&gt;Upload&lt;/b&gt; — see &lt;i&gt;Upload flow&lt;/i&gt; tab&#xa;path-prefix guard → content policy → malware scan (fail-closed) →&#xa;SaveCoreAsync (hash + optional compress + encrypt + max-bytes + backend sink) →&#xa;duplicate strategy resolution → SaveMetadataAsync → FileSaved audit/event&#xa;Variants: streaming · buffered · multipart (Begin/Part/Complete) · direct PUT&#xa;(PlainDirectUploadCoordinator with presigned signed-content-type URL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
+        <mxCell id="wf_upload" value="&lt;b&gt;Save upload&lt;/b&gt; — see &lt;i&gt;Save upload (compress · encrypt)&lt;/i&gt; tab&#xa;SaveStreamAsync/SaveFileAsync with compress + encrypt flags&#xa;hash → compress (ICompressionService) → encrypt (ITwoKeyEncryptionService) → backend sink&#xa;duplicate strategy → SaveMetadataAsync → FileSaved audit&#xa;&#xa;&lt;b&gt;Staged upload&lt;/b&gt; — see &lt;i&gt;Staged upload flow&lt;/i&gt; tab&#xa;Begin → client PUT to .stage/{id}/object → Complete (hash) → Commit (optional compress/encrypt)&#xa;State in staged_file_upload until commit; worker handoff via UploadCompleted events." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
           <mxGeometry x="54" y="1150" width="520" height="200" as="geometry" />
         </mxCell>
 
-        <mxCell id="wf_read" value="&lt;b&gt;Read&lt;/b&gt;&#xa;GetMetadataAsync → availability gate →&#xa;backend ReadFromStorageAsync (suffix-resolved, no N+1) →&#xa;decrypt pipeline (parse header → unwrap DEK → decrypt) →&#xa;optional decompress wrapped in MaxDecompressedBytesReadStream →&#xa;HashVerifyingReadStream (fixed-time compare on EOF) →&#xa;FileRetrieved audit + event.&#xa;GetPreSignedReadUrlAsync provides direct-from-storage URL where supported." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#558b54;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
+        <mxCell id="wf_read" value="&lt;b&gt;Read&lt;/b&gt; — see &lt;i&gt;Read flow&lt;/i&gt; tab&#xa;GetMetadataAsync → availability gate → backend read →&#xa;decrypt (unwrap DEK) → decompress → HashVerifyingReadStream&#xa;GetPreSignedReadUrlAsync for direct-from-storage reads.&#xa;&#xa;&lt;b&gt;Copy&lt;/b&gt; — see &lt;i&gt;Copy flow&lt;/i&gt; tab&#xa;CopyFileAsync: metadata clone + server-side copy (S3 CopyObject / Blob sync copy / local fs copy)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#558b54;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
           <mxGeometry x="590" y="1150" width="500" height="200" as="geometry" />
         </mxCell>
 
-        <mxCell id="wf_delete" value="&lt;b&gt;Delete&lt;/b&gt; — see &lt;i&gt;Delete flow&lt;/i&gt; tab&#xa;GetMetadata → tombstone via MarkDeletedAsync &lt;b&gt;first&lt;/b&gt; →&#xa;DeleteFromStorageAsync (narrow catch on NotFound) →&#xa;optional hard delete (drops the row) → FileDeleted audit&#xa;Tombstone-first ordering means a failed backend delete leaves a recoverable orphan blob, never orphan metadata.&#xa;&#xa;&lt;b&gt;DEK maintenance&lt;/b&gt;&#xa;FileStorageDekOperations.Migrate / Rotate iterates eligible files,&#xa;rewrites the header in place, emits per-file audit events." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#b54848;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
+        <mxCell id="wf_delete" value="&lt;b&gt;Delete&lt;/b&gt; — see &lt;i&gt;Delete flow&lt;/i&gt; tab&#xa;Tombstone metadata first → DeleteFromStorageAsync → optional hard purge.&#xa;&#xa;&lt;b&gt;DEK migrate&lt;/b&gt; — see &lt;i&gt;DEK migrate&lt;/i&gt; tab&#xa;FindByKeyIdAndVersion → ReEncryptDek (re-wrap only) → UpdateFileHeaderAsync → SaveMetadataAsync.&#xa;Ciphertext unchanged; header + metadata key refs updated.&#xa;&#xa;&lt;b&gt;DEK rotate&lt;/b&gt; — see &lt;i&gt;DEK rotate&lt;/i&gt; tab&#xa;Full decrypt → fresh DEK + re-encrypt payload → rewrite blob + metadata hashes." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#b54848;verticalAlign=top;spacingTop=6;spacingLeft=8;fontStyle=0;align=left;" vertex="1" parent="1">
           <mxGeometry x="1106" y="1150" width="540" height="200" as="geometry" />
         </mxCell>
 
         <!-- Consistency note -->
-        <mxCell id="consistency" value="&lt;b&gt;Consistency / ordering rules&lt;/b&gt;&#xa;· Save: bytes → metadata; metadata-commit failure triggers CleanupPartialFileAsync (no orphan blobs).&#xa;· Multipart complete: SaveMetadataAsync &lt;b&gt;before&lt;/b&gt; server-side commit (no half-published files).&#xa;· Delete: tombstone metadata &lt;b&gt;before&lt;/b&gt; backend delete (orphan blobs recoverable, orphan metadata impossible).&#xa;· Direct PUT complete: backend HEAD verify → SaveMetadataAsync → audit.&#xa;· All failure paths emit FileAuditOccurred(…, Outcome.Failure) with sanitized error + correlation id." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffd0;strokeColor=#cbb300;size=18;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
+        <mxCell id="consistency" value="&lt;b&gt;Consistency / ordering rules&lt;/b&gt;&#xa;· Save: bytes → metadata; metadata failure → CleanupPartialFileAsync.&#xa;· Multipart complete: SaveMetadataAsync &lt;b&gt;before&lt;/b&gt; server-side commit.&#xa;· Staged: staged_file_upload row on Begin; file_metadata only on Commit; TryTransitionStatus Uploaded→Committing for worker claims.&#xa;· Delete: tombstone metadata &lt;b&gt;before&lt;/b&gt; backend delete.&#xa;· Direct PUT complete: HEAD verify → SaveMetadataAsync (plaintext only on edge PUT).&#xa;· All failure paths emit FileAuditOccurred(…, Outcome.Failure) with sanitized error." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffd0;strokeColor=#cbb300;size=18;fontStyle=0;verticalAlign=top;spacingTop=6;spacingLeft=8;align=left;" vertex="1" parent="1">
           <mxGeometry x="510" y="68" width="580" height="120" as="geometry" />
         </mxCell>
 
@@ -478,4 +478,281 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram id="SaveCompressEncryptFlow" name="Save upload (compress · encrypt)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sce_title" value="&lt;b&gt;Save upload (compress · encrypt)&lt;/b&gt; — SaveStreamAsync / SaveFileAsync with compress=true and encrypt=true (same pipeline as buffered saves; distinct from plaintext direct PUT)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1620" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_l1" value="Caller" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="220" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_l2" value="FileStorageServiceBase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="60" width="560" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_l3" value="Crypto · Compression" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff4e6;strokeColor=#d79b00;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="60" width="360" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_l4" value="Backend · Metadata" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf6e8;strokeColor=#5b9f5c;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="60" width="420" height="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_start" value="POST files/save-stream&#xa;or SaveFileAsync(path)&#xa;compress=true&#xa;encrypt=true&#xa;keyId=…" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s1" value="&lt;b&gt;1 · Validate&lt;/b&gt;&#xa;Path prefix guard · MaxUploadSizeBytes · keyId required when encrypt=true · content policy · optional malware scan (RequireScanBeforeAvailable)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="110" width="520" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s2" value="&lt;b&gt;2 · Hash plaintext&lt;/b&gt;&#xa;HashingStream (configured HashAlgorithm, default SHA-256)&#xa;Captures originalFileHash for duplicate detection &amp; read verification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e0f5;strokeColor=#5d7ec0;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="220" width="520" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s3" value="&lt;b&gt;3 · Compress (optional flag)&lt;/b&gt;&#xa;ICompressionService.Resolver compresses stream&#xa;Algorithm from policy selector or default (LZ4/GZip/Zstd…)&#xa;Records CompressionAlgorithm + compressed sizes on metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="320" width="520" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s4" value="&lt;b&gt;4 · Encrypt (optional flag)&lt;/b&gt;&#xa;ITwoKeyEncryptionService: generate per-file DEK · encrypt payload&#xa;Wrap DEK with KEK from IKeyStore (keyId + current version)&#xa;Prepend file-encryption header (algo · wrappedDek · IV · key refs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbd0ee;strokeColor=#4d6caa;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="435" width="520" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s5" value="&lt;b&gt;5 · Write backend&lt;/b&gt;&#xa;CreateOutputStreamAsync → Local temp+rename · S3UploadStream · Blob OpenWrite&#xa;Persist storage suffix (.gz · .lyo.gz · etc.) on metadata for suffix-resolved reads" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="565" width="520" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s6" value="&lt;b&gt;6 · Duplicate strategy&lt;/b&gt;&#xa;FindByHashAsync on plaintext hash&#xa;ReturnExisting / Overwrite / AllowDuplicate (profile-aware)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="680" width="520" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_s7" value="&lt;b&gt;7 · SaveMetadataAsync + audit&lt;/b&gt;&#xa;FileStoreResult: original + stored sizes/hashes · IsCompressed · IsEncrypted · keyId/version · pathPrefix · availability&#xa;FileAuditOccurred(FileSaved) · FileSaved event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c5dec5;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="780" width="520" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_note" value="&lt;b&gt;Contrast: direct PUT&lt;/b&gt;&#xa;BeginDirectUploadAsync issues a plaintext presigned URL — compress/encrypt are &lt;i&gt;not&lt;/i&gt; applied on the edge PUT.&#xa;Use staged CommitAsync or in-band SaveStreamAsync when transforms are required." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffd0;strokeColor=#cbb300;size=16;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="900" width="520" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_comp" value="ICompressionService&#xa;Resolver.CompressAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="880" y="330" width="320" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_enc" value="ITwoKeyEncryptionService&#xa;+ IKeyStore wrap DEK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd9b6;strokeColor=#cc8500;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="880" y="450" width="320" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_meta" value="IFileMetadataStore.SaveMetadataAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b8dfb8;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="800" width="360" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="sce_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="sce_start" target="sce_s1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s1" target="sce_s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s2" target="sce_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s3" target="sce_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s4" target="sce_s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s5" target="sce_s6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="sce_s6" target="sce_s7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_ec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;" edge="1" parent="1" source="sce_s3" target="sce_comp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_ee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;" edge="1" parent="1" source="sce_s4" target="sce_enc"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="sce_em" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5b9f5c;" edge="1" parent="1" source="sce_s7" target="sce_meta"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="StagedUploadFlow" name="Staged upload flow">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="st_title" value="&lt;b&gt;Staged upload flow&lt;/b&gt; — bytes land in a staging key; canonical file_metadata is written only on Commit (sync API or async worker after UploadCompleted)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1620" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="st_l1" value="Client / Browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="220" height="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="st_l2" value="IStagedFileUploadService · StagedUploadCoordinator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="60" width="520" height="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="st_l3" value="Staging I/O (IStagedFilePhysicalIo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0eef9;strokeColor=#5947a3;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="60" width="400" height="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="st_l4" value="IStagedFileUploadStore · IFileStorageService (commit)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf6e8;strokeColor=#5b9f5c;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="60" width="420" height="1180" as="geometry" />
+        </mxCell>
+        <mxCell id="st_s1" value="&lt;b&gt;1 · BeginAsync&lt;/b&gt;&#xa;Validate declared size · content policy · create stageId&#xa;Insert staged_file_upload row (status=PendingUpload)&#xa;Issue presigned/SAS PUT URL → …/.stage/{stageId}/object&#xa;Local: API receive URL when DirectUploadReceiveBaseUri set&#xa;Audit StagedUploadBegin · PresignedCreated event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="100" width="480" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="st_s2" value="&lt;b&gt;2 · Client PUT (out of band)&lt;/b&gt;&#xa;Upload raw bytes to PresignedPutUrl with RequiredPutHeaders&#xa;S3/Blob: direct to cloud · Local: PUT …/stage/{stageId}/put (TestApi)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="260" width="200" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="st_s3" value="&lt;b&gt;3 · CompleteAsync&lt;/b&gt;&#xa;ObjectExists + size check · optional ExpectedByteLength&#xa;Spool stage object · hash · optional malware scan&#xa;Update staged row → status=Uploaded&#xa;Audit StagedUploadComplete · UploadCompleted event&#xa;(Worker may subscribe here instead of immediate Commit)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e0f5;strokeColor=#5d7ec0;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="260" width="480" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="st_s4" value="&lt;b&gt;4 · CommitAsync&lt;/b&gt; (sync or worker)&#xa;TryTransitionStatus Uploaded → Committing (optimistic claim)&#xa;OpenReadStream from staging key → IFileStorageService.SaveFromStreamAsync&#xa;  with StagedUploadCommitRequest (compress · encrypt · keyId · pathPrefix)&#xa;Delete staging object · update staged row → Committed + committedFileId&#xa;SaveMetadataAsync on canonical file · StagedUploadCommit audit · Committed event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbd0ee;strokeColor=#4d6caa;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="430" width="480" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="st_s5" value="&lt;b&gt;AbortAsync (alternate path)&lt;/b&gt;&#xa;Best-effort DeleteStageObject · status=Aborted&#xa;Not allowed when Committing or Committed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#b54848;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="610" width="480" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="st_io" value="Local: {Root}/.stage/{id}/object&#xa;S3: presigned PUT + Head/Get/Delete&#xa;Blob: SAS PUT + Exists/Download/Delete&#xa;(SSE-C Blob: Begin throws — no staged SAS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="840" y="120" width="360" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="st_store" value="staged_file_upload table&#xa;(Postgres/Sqlite/InMemory)&#xa;NOT file_metadata until commit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c5dec5;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="120" width="380" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="st_commit" value="Commit runs full Save pipeline&#xa;(see Save upload tab for compress/encrypt detail)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b8dfb8;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="460" width="380" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="st_e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="st_s1" target="st_s2"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="160" y="165" /></Array></mxGeometry></mxCell>
+        <mxCell id="st_e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="st_s2" target="st_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="st_e34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#4386c9;" edge="1" parent="1" source="st_s3" target="st_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="st_e1io" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#5947a3;" edge="1" parent="1" source="st_s1" target="st_io"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="st_e1db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#5b9f5c;" edge="1" parent="1" source="st_s1" target="st_store"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="st_e4save" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5b9f5c;" edge="1" parent="1" source="st_s4" target="st_commit"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="st_legend" value="Two tables: staged_file_upload tracks the in-flight session; file_metadata is created only when CommitAsync succeeds. IStagedFileUploadEventHandler enables RabbitMQ/worker handoff after UploadCompleted." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=2;fontColor=#666666;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="720" width="1340" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="DekMigrateFlow" name="DEK migrate (re-wrap KEK)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dm_title" value="&lt;b&gt;DEK migrate (MigrateDeksAsync)&lt;/b&gt; — re-wrap wrapped DEKs under a new KEK id/version; &lt;i&gt;ciphertext bytes unchanged&lt;/i&gt; (header + metadata only)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1420" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_start" value="Operator / job invokes&#xa;MigrateDeksAsync(sourceKeyId, sourceKeyVersion?, targetKeyId?, targetKeyVersion?)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="280" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s1" value="&lt;b&gt;1 · Discover candidates&lt;/b&gt;&#xa;IFileMetadataStore.FindByKeyIdAndVersionAsync(sourceKeyId, sourceKeyVersion)&#xa;Skips tombstoned rows · empty set → DekMigrationResult(0)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="680" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s2" value="&lt;b&gt;2 · Per file (batched)&lt;/b&gt;&#xa;Skip if already on target keyId+version&#xa;Skip if not encrypted / missing wrapped DEK metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e0f5;strokeColor=#5d7ec0;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="270" width="680" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s3" value="&lt;b&gt;3 · ReEncryptDekAsync&lt;/b&gt;&#xa;ITwoKeyEncryptionService unwraps DEK with old KEK · re-wraps with target KEK/version&#xa;Returns new wrapped DEK blob (same plaintext DEK, new envelope)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="365" width="680" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s4" value="&lt;b&gt;4 · UpdateFileHeaderAsync&lt;/b&gt;&#xa;IFileStoragePhysicalIo patches in-place encryption header on stored blob&#xa;(range update on S3/Blob · local file header rewrite)&#xa;Fails if blob missing or header truncated" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="475" width="680" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s5" value="&lt;b&gt;5 · SaveMetadataAsync&lt;/b&gt;&#xa;Update EncryptedDataEncryptionKey · DataEncryptionKeyId/Version · KeyEncryptionKeySalt&#xa;Original/stored ciphertext hashes unchanged" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c5dec5;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="590" width="680" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_s6" value="&lt;b&gt;6 · Aggregate result + audit&lt;/b&gt;&#xa;DekMigrationResult: migrated · skipped · failed counts + failed file ids&#xa;FileAuditOccurred(MigrateDeks) — partial failures → Outcome.Failure detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="695" width="680" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_note" value="&lt;b&gt;Migrate vs Rotate&lt;/b&gt;&#xa;Migrate = KEK rotation on existing ciphertext (cheap, in-place header patch).&#xa;Rotate = full decrypt + re-encrypt with fresh DEK (see DEK rotate tab)." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffd0;strokeColor=#cbb300;size=18;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="780" y="170" width="640" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dm_e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#b06500;" edge="1" parent="1" source="dm_start" target="dm_s1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dm_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dm_s1" target="dm_s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dm_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dm_s2" target="dm_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dm_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dm_s3" target="dm_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dm_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dm_s4" target="dm_s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dm_e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dm_s5" target="dm_s6"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="DekRotateFlow" name="DEK rotate (re-encrypt)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dr_title" value="&lt;b&gt;DEK rotate (RotateDeksAsync)&lt;/b&gt; — decrypt each file fully, re-seal with a fresh DEK (optional new KEK id/version); rewrites stored blob + metadata hashes" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1420" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_start" value="Operator invokes&#xa;RotateDeksAsync(fileIds[], targetKeyId?, targetKeyVersion?)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="280" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_s1" value="&lt;b&gt;1 · Load + validate metadata&lt;/b&gt;&#xa;GetMetadataAsync per fileId · must be encrypted with complete DEK fields" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="165" width="680" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_s2" value="&lt;b&gt;2 · ReadEncryptedPayloadAsync&lt;/b&gt;&#xa;Backend read → parse header → unwrap DEK → decrypt to plaintext stream&#xa;(honours compression suffix on stored blob)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="255" width="680" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_s3" value="&lt;b&gt;3 · RewriteEncryptedFileAsync&lt;/b&gt;&#xa;Generate new DEK · encrypt plaintext · wrap with resolved target KEK/version&#xa;Replace stored object (same fileId) via streaming pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="360" width="680" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_s4" value="&lt;b&gt;4 · SaveMetadataAsync&lt;/b&gt;&#xa;Update wrapped DEK · key refs · encrypted hash/size fields" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c5dec5;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="475" width="680" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_s5" value="&lt;b&gt;5 · Per-file isolation + aggregate audit&lt;/b&gt;&#xa;Failure on one fileId does not stop the batch&#xa;DekMigrationResult-style counters · FileAuditOccurred(RotateDeks)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="565" width="680" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_note" value="Use &lt;b&gt;Migrate&lt;/b&gt; when only the KEK version changed and ciphertext can stay put.&#xa;Use &lt;b&gt;Rotate&lt;/b&gt; when policy requires a brand-new DEK per file or algorithm refresh." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffd0;strokeColor=#cbb300;size=18;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="780" y="165" width="640" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="dr_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dr_start" target="dr_s1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dr_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dr_s1" target="dr_s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dr_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dr_s2" target="dr_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dr_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dr_s3" target="dr_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="dr_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="dr_s4" target="dr_s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="ReadFlow" name="Read flow (decrypt · decompress)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="r_title" value="&lt;b&gt;Read flow&lt;/b&gt; — GetFileStreamAsync / GetFileAsync: availability gate → storage read → decrypt → decompress → hash verify" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1420" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s1" value="&lt;b&gt;1 · GetMetadataAsync&lt;/b&gt;&#xa;Load FileStoreResult · check tombstone · availability (PendingScan / Quarantined → FileNotAvailableException unless admin override)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="680" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s2" value="&lt;b&gt;2 · ReadFromStorageAsync&lt;/b&gt;&#xa;Resolve key via persisted storage suffix (no N+1 suffix probes)&#xa;Local · S3 GetObject · Blob DownloadStreaming" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="680" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s3" value="&lt;b&gt;3 · Decrypt (if encrypted)&lt;/b&gt;&#xa;Parse file header · unwrap DEK via IKeyStore · decrypt ciphertext stream" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="270" width="680" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s4" value="&lt;b&gt;4 · Decompress (if compressed)&lt;/b&gt;&#xa;ICompressionService.Resolver from metadata CompressionAlgorithm&#xa;MaxDecompressedBytesReadStream enforces ceiling" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="365" width="680" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s5" value="&lt;b&gt;5 · HashVerifyingReadStream&lt;/b&gt;&#xa;Fixed-time compare of streamed hash vs metadata originalFileHash on EOF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="460" width="680" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="r_s6" value="&lt;b&gt;6 · Audit + event&lt;/b&gt;&#xa;FileAuditOccurred(FileRetrieved) · FileRetrieved event with redacted snapshot" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="545" width="680" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="r_alt" value="&lt;b&gt;Alternative: presigned read&lt;/b&gt;&#xa;GetPreSignedReadUrlAsync returns SAS/S3 URL (optional Content-Disposition/Type overrides)&#xa;Client reads directly from storage — service does not proxy bytes." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e6ff;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="70" width="640" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#558b54;" edge="1" parent="1" source="r_s1" target="r_s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="r_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="r_s2" target="r_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="r_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="r_s3" target="r_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="r_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="r_s4" target="r_s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="r_e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="r_s5" target="r_s6"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="CopyFlow" name="Copy flow (server-side)">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c_title" value="&lt;b&gt;Copy flow&lt;/b&gt; — CopyFileAsync clones metadata to a new Guid and copies stored bytes server-side (no download/re-upload through the host)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1420" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="c_s1" value="&lt;b&gt;1 · GetMetadataAsync(sourceId)&lt;/b&gt;&#xa;Validate availability · read encryption/compression/suffix/pathPrefix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="680" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="c_s2" value="&lt;b&gt;2 · Allocate new fileId&lt;/b&gt;&#xa;Clone FileStoreResult with new Guid · optional pathPrefix override" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e0f5;strokeColor=#5d7ec0;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="155" width="680" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="c_s3" value="&lt;b&gt;3 · CopyServerSideAsync&lt;/b&gt;&#xa;S3 CopyObject · Blob SyncCopyFromUri · Local filesystem copy&#xa;Same stored representation (compressed/encrypted bytes copied verbatim)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="235" width="680" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="c_s4" value="&lt;b&gt;4 · SaveMetadataAsync(newId)&lt;/b&gt;&#xa;Persist cloned metadata pointing at new storage key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c5dec5;strokeColor=#5b9f5c;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="340" width="680" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="c_s5" value="&lt;b&gt;5 · FileSaved audit + return&lt;/b&gt;&#xa;New FileStoreResult for destination id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4386c9;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="420" width="680" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="c_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="c_s1" target="c_s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="c_s2" target="c_s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="c_s3" target="c_s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="c_s4" target="c_s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
 </mxfile>

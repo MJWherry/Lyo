@@ -1,3 +1,4 @@
+using Lyo.FileMetadataStore.Sqlite;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Lock;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ public sealed class FileMetadataSqliteFixture : IAsyncLifetime
             b.SetMinimumLevel(LogLevel.Debug);
         });
 
-        services.AddDbContext<SqliteFileMetadataStoreDbContext>(opts => opts.UseSqlite(connectionString));
+        services.AddSqliteFileMetadataStoreDbContext(connectionString);
         services.AddLocalLock();
         services.AddSqliteFileDownloadAccessService();
         ServiceProvider = services.BuildServiceProvider();

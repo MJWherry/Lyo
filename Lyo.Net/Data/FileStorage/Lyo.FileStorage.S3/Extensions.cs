@@ -7,6 +7,8 @@ using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.S3.Multipart;
+using Lyo.FileStorage.S3.Staged;
+using Lyo.FileStorage.Staged;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +48,34 @@ public static class Extensions
         /// Wasabi, R2, etc.).
         /// </summary>
         public IServiceCollection AddKeyedAwsMultipartUploadService(string serviceKey) => services.AddKeyedS3MultipartUploadService(serviceKey);
+
+        /// <summary>Registers <see cref="S3StagedFileUploadService" /> as a keyed <see cref="IStagedFileUploadService" />.</summary>
+        public IServiceCollection AddKeyedS3StagedFileUploadService(string serviceKey)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceKey);
+            services.TryAddInMemoryStagedFileUploadStoreIfMissing();
+            services.AddKeyedScoped<S3StagedFileUploadService>(
+                serviceKey, (provider, _) => {
+                    var opts = provider.GetRequiredService<S3FileStorageOptions>();
+                    var metrics = opts.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                    return new(
+                        provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey),
+                        opts,
+                        provider.GetRequiredService<IAmazonS3>(),
+                        provider.GetRequiredService<IStagedFileUploadStore>(),
+                        provider.GetService<IFileMalwareScanner>(),
+                        provider.GetService<IFileContentPolicy>(),
+                        provider.GetServices<IFileAuditEventHandler>(),
+                        provider.GetServices<IStagedFileUploadEventHandler>(),
+                        provider.GetService<IFileOperationContextAccessor>(),
+                        provider.GetService<ILoggerFactory>(),
+                        metrics);
+                });
+
+            services.AddKeyedScoped<IStagedFileUploadService>(serviceKey, (provider, _) => provider.GetRequiredKeyedService<S3StagedFileUploadService>(serviceKey));
+            return services;
+        }
 
         /// <summary>Adds a keyed S3 file storage service (AWS, Backblaze B2, MinIO, etc.) to the service collection using a builder pattern.</summary>
         /// <param name="keyName">The key name for the keyed file storage service</param>

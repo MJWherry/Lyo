@@ -5,7 +5,9 @@ using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Blob.Multipart;
+using Lyo.FileStorage.Blob.Staged;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Metrics;
@@ -94,6 +96,32 @@ public static class Extensions
             });
 
             services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<BlobMultipartUploadService>());
+            return services;
+        }
+
+        /// <summary>Registers staged uploads with Azure Blob SAS PUT URLs.</summary>
+        public IServiceCollection AddBlobStagedFileUploadService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddInMemoryStagedFileUploadStoreIfMissing();
+            services.AddScoped<BlobStagedFileUploadService>(sp => {
+                var opts = sp.GetRequiredService<BlobFileStorageOptions>();
+                var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                return new(
+                    sp.GetRequiredService<BlobFileStorageService>(),
+                    opts,
+                    sp.GetRequiredService<IStagedFileUploadStore>(),
+                    null,
+                    sp.GetService<IFileMalwareScanner>(),
+                    sp.GetService<IFileContentPolicy>(),
+                    sp.GetServices<IFileAuditEventHandler>(),
+                    sp.GetServices<IStagedFileUploadEventHandler>(),
+                    sp.GetService<IFileOperationContextAccessor>(),
+                    sp.GetService<ILoggerFactory>(),
+                    metrics);
+            });
+
+            services.AddScoped<IStagedFileUploadService>(sp => sp.GetRequiredService<BlobStagedFileUploadService>());
             return services;
         }
     }

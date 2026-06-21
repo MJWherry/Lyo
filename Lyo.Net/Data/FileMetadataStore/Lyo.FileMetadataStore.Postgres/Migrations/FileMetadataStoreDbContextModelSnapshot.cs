@@ -26,7 +26,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
             modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileMetadataEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .IsRequired()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -71,6 +70,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     b.Property<byte?>("DekKeyMaterialBytes")
                         .HasColumnType("smallint")
                         .HasColumnName("dek_key_material_bytes");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<byte[]>("EncryptedDataEncryptionKey")
                         .HasColumnType("bytea")
@@ -153,12 +156,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("tenant_id");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
                     b.Property<DateTime>("Timestamp")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
 
@@ -217,7 +215,8 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
-                        .HasColumnName("event_type");
+                        .HasColumnName("event_type")
+                        .HasJsonPropertyName("event_type");
 
                     b.Property<Guid?>("FileId")
                         .HasColumnType("uuid")
@@ -227,7 +226,8 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
-                        .HasColumnName("outcome");
+                        .HasColumnName("outcome")
+                        .HasJsonPropertyName("outcome");
 
                     b.Property<string>("TenantId")
                         .HasMaxLength(256)
@@ -235,9 +235,9 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("tenant_id");
 
                     b.Property<DateTime>("Timestamp")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
+                        .HasColumnName("timestamp")
+                        .HasJsonPropertyName("timestamp");
 
                     b.HasKey("Id");
 
@@ -350,15 +350,15 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     b.HasIndex("FileId")
                         .HasDatabaseName("ix_file_download_access_links_file_id");
 
-                    b.HasIndex("IsRevoked", "ExpiresAtUtc")
-                        .HasDatabaseName("ix_file_download_access_links_revoked_expires");
-
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_file_download_access_links_tenant_id");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
                         .HasDatabaseName("ix_file_download_access_links_token_hash");
+
+                    b.HasIndex("IsRevoked", "ExpiresAtUtc")
+                        .HasDatabaseName("ix_file_download_access_links_revoked_expires");
 
                     b.ToTable("file_download_access_links", "filestore");
                 });
@@ -371,7 +371,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("session_id");
 
                     b.Property<bool>("Compress")
-                        .IsRequired()
                         .HasColumnType("boolean")
                         .HasColumnName("compress");
 
@@ -381,7 +380,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("content_type");
 
                     b.Property<DateTime>("CreatedUtc")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_utc");
 
@@ -390,12 +388,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("declared_content_length");
 
                     b.Property<bool>("Encrypt")
-                        .IsRequired()
                         .HasColumnType("boolean")
                         .HasColumnName("encrypt");
 
                     b.Property<DateTime>("ExpiresUtc")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_utc");
 
@@ -410,7 +406,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("original_file_name");
 
                     b.Property<int>("PartSizeBytes")
-                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("part_size_bytes");
 
@@ -420,7 +415,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("path_prefix");
 
                     b.Property<int>("ProviderKind")
-                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("provider_kind");
 
@@ -431,7 +425,6 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("provider_state");
 
                     b.Property<int>("Status")
-                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
@@ -453,6 +446,106 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasDatabaseName("ix_multipart_upload_session_target_file_id");
 
                     b.ToTable("multipart_upload_session", "filestore");
+                });
+
+            modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.StagedFileUploadEntity", b =>
+                {
+                    b.Property<Guid>("StageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("stage_id");
+
+                    b.Property<Guid?>("CommittedFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("committed_file_id");
+
+                    b.Property<byte[]>("ContentHash")
+                        .HasColumnType("bytea")
+                        .HasColumnName("content_hash");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
+                    b.Property<long>("DeclaredMaxSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("declared_max_size_bytes");
+
+                    b.Property<DateTime>("ExpiresUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_utc");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<string>("HashAlgorithm")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("hash_algorithm");
+
+                    b.Property<long?>("ObservedSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("observed_size_bytes");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("PathPrefix")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("path_prefix");
+
+                    b.Property<string>("ProviderKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("provider_kind");
+
+                    b.Property<string>("ProviderState")
+                        .IsRequired()
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
+                        .HasColumnName("provider_state");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StorageLocation")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("storage_location");
+
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("StageId");
+
+                    b.HasIndex("Status", "ExpiresUtc")
+                        .HasDatabaseName("ix_staged_file_upload_status_expires");
+
+                    b.HasIndex("TenantId", "CreatedUtc")
+                        .HasDatabaseName("ix_staged_file_upload_tenant_created");
+
+                    b.ToTable("staged_file_upload", "filestore");
                 });
 #pragma warning restore 612, 618
         }
