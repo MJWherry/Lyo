@@ -184,7 +184,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     private static string? TryGetColorHex(XLColor? color)
     {
-        if (color == null)
+        if (color == null || color.ColorType == XLColorType.Theme)
             return null;
 
         try {

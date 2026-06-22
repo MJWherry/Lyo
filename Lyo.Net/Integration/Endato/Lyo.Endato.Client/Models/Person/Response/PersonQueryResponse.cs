@@ -1,33 +1,23 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
+using Lyo.Endato.Client.Models;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+/// <summary>Top-level response envelope for Endato Person Search.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonQueryResponse(
     IReadOnlyList<Person> Persons,
-    /*"smartSearchStatistics": {
-        "userInput": null,
-        "criteriaGroupId": null,
-        "isSuccessful": false,
-        "successfulPattern": null,
-        "totalTimeInMS": 0,
-        "resultCount": 0,
-        "patterns": [],
-        "searches": []
-    },
-    "searchCriteria": [],*/
     int TotalRequestExecutionTimeMs,
     Guid RequestId,
     string RequestType,
     DateTime RequestTime,
-    bool IsError
-    /*"error": {
-        "inputErrors": [],
-        "warnings": []
-    }*/
-)
+    bool IsError,
+    Pagination? Pagination = null,
+    Counts? Counts = null,
+    [property: JsonPropertyName("searchCriteria")] IReadOnlyList<CriteriaType>? SearchCriteria = null,
+    EndatoErrorDetails? Error = null)
 {
     public override string ToString()
-        => $"PersonQueryResponse: Persons={Persons.Count}, RequestId={RequestId}, Type='{RequestType}', " +
-            $"TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}";
+        => $"PersonQueryResponse: Persons={Persons.Count}, RequestId={RequestId}, Type='{RequestType}', TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}, Pagination={Pagination}, Counts={Counts}";
 }

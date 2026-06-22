@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+/// <summary>Aggregate counts of nested record types on a Person Search response.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Counts(
     int SearchResults,
@@ -24,6 +25,5 @@ public sealed record Counts(
     int ExpectedCount)
 {
     public override string ToString()
-        => $"Counts: SearchResults={SearchResults}, Overflow={SearchResultsOverflow}, Expected={ExpectedCount}, " +
-            $"Names={Names}, Addresses={Addresses}, Phones={PhoneNumbers}, Emails={EmailAddresses}, Associates={Associates}";
+        => $"Counts: SearchResults={SearchResults}, Overflow={SearchResultsOverflow}, Expected={ExpectedCount}, Names={Names}, Addresses={Addresses}, Phones={PhoneNumbers}, Emails={EmailAddresses}, Associates={Associates}";
 }

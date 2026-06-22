@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using Lyo.Endato.Client.Models;
 
 namespace Lyo.Endato.Client.Models.Enrichment.Response;
 
+/// <summary>Top-level response envelope for Endato Contact Enrichment.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record EnrichmentResponse(
     Person? Person,
@@ -10,14 +12,9 @@ public sealed record EnrichmentResponse(
     Guid RequestId,
     string RequestType,
     DateTime RequestTime,
-    bool IsError
-    /*"error": {
-        "inputErrors": [],
-        "warnings": []
-    }*/
-)
+    bool IsError,
+    EndatoErrorDetails? Error = null)
 {
     public override string ToString()
-        => $"EnrichmentResponse: Person={(Person == null ? "null" : "present")}, IdentityScore={IdentityScore}, " +
-            $"RequestId={RequestId}, Type='{RequestType}', TimeMs={TotalRequestExecutionTimeMs}, " + $"RequestTime={RequestTime:O}, Error={IsError}";
+        => $"EnrichmentResponse: Person={(Person == null ? "null" : Person.ToString())}, IdentityScore={IdentityScore}, RequestId={RequestId}, Type='{RequestType}', TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}";
 }

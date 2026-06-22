@@ -9,24 +9,21 @@ namespace Lyo.Geolocation.Models.Coordinates;
 [DebuggerDisplay("{ToString(),nq}")]
 public class GeoCoordinate : IEquatable<GeoCoordinate>
 {
-    private double _latitude;
-    private double _longitude;
-
     /// <summary>Latitude in decimal degrees (-90 to 90)</summary>
     public double Latitude {
-        get => _latitude;
+        get;
         set {
             ArgumentHelpers.ThrowIfNotInRange(value, -90.0, 90.0, nameof(Latitude), "Latitude must be between -90 and 90 degrees");
-            _latitude = value;
+            field = value;
         }
     }
 
     /// <summary>Longitude in decimal degrees (-180 to 180)</summary>
     public double Longitude {
-        get => _longitude;
+        get;
         set {
             ArgumentHelpers.ThrowIfNotInRange(value, -180.0, 180.0, nameof(Longitude), "Longitude must be between -180 and 180 degrees");
-            _longitude = value;
+            field = value;
         }
     }
 
@@ -63,7 +60,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     }
 
     /// <summary>Whether the coordinate is valid (within valid ranges)</summary>
-    public bool IsValid() => Latitude >= -90 && Latitude <= 90 && Longitude >= -180 && Longitude <= 180;
+    public bool IsValid() => Latitude is >= -90 and <= 90 && Longitude is >= -180 and <= 180;
 
     /// <summary>Calculates the distance to another coordinate using the Haversine formula</summary>
     /// <param name="other">The other coordinate</param>
@@ -132,9 +129,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(dms);
         var parts = dms.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2)
-            throw new FormatException("DMS string must contain latitude and longitude segments.");
-
+        FormatHelpers.ThrowIf(parts.Length < 2, "DMS string must contain latitude and longitude segments.");
         return new(ParseDmsSegment(parts[0], true), ParseDmsSegment(parts[1], false));
     }
 

@@ -1,10 +1,15 @@
 using System.Diagnostics;
-using System.Text.Json.Serialization;
 
 namespace Lyo.Endato.Client.Models.Enrichment.Response;
 
+/// <summary>Email address returned by Contact Enrichment.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record Email([property: JsonPropertyName("Email")] string EmailAddress, bool IsValidated, bool IsBusiness)
+public sealed record Email(
+    string EmailAddress,
+    string FirstReportedDate,
+    string LastReportedDate,
+    string? SourceSummary = null)
 {
-    public override string ToString() => $"Email: '{EmailAddress}', Validated={IsValidated}, Business={IsBusiness}";
+    public override string ToString()
+        => $"Email: '{EmailAddress}', Reported {FirstReportedDate}–{LastReportedDate}, SourceSummary='{SourceSummary}'";
 }

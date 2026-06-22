@@ -11,12 +11,17 @@ using Lyo.Cache.Fusion;
 using Lyo.Comic.Postgres;
 using Lyo.Comment.Postgres;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Compression;
 using Lyo.Csv;
+using Lyo.Csv.Models;
 using Lyo.DateAndTime.Json;
 using Lyo.Discord.Bot;
 using Lyo.Email;
 using Lyo.Email.Postgres;
+using Lyo.Endato.Client;
+using Lyo.Endato.Client.Models.Person.Request;
+using Lyo.Endato.Client.Models.Person.Response;
 using Lyo.Endato.Postgres;
 using Lyo.Espn.Fantasy.Football;
 using Lyo.Ffmpeg;
@@ -60,6 +65,7 @@ using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
+using Lyo.Xlsx.Models;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,6 +99,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddXlsxService(); // xlsx + tabular preview
         services.AddSkiaImageServiceFromConfiguration(context.Configuration); // image processing (SkiaSharp)
         services.AddScheduler(o => o.CheckIntervalMs = 1000); //scheduler
+        services.AddEndatoClientFromConfiguration(context.Configuration); //endato
         services.AddTypecastClientFromConfiguration(context.Configuration); //typecast
         services.AddTypecastTtsServiceFromConfiguration(context.Configuration); //tts Typecast
         services.AddAwsPollyTtsServiceFromConfiguration(context.Configuration); //tts Polly
@@ -190,7 +197,7 @@ var host = Host.CreateDefaultBuilder(args)
             }, _ => new LocalFileMetadataStore(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestore")), "two-key-aws");
 
         services.AddTransient<IApiClient>(_ => new ApiClient(serializerOptions: LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()));
-        services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" });
+        //services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" });
         services.AddFusionCacheFromConfiguration(context.Configuration);
         services.AddLyoQueryServices();
         services.AddLyoDiscordBot<LyoDiscordBot>(context.Configuration);
@@ -202,10 +209,11 @@ using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
 var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
-var pws = pw.CreateSession();
-await pws.StartBrowserAsync();
-await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");
+//var pws = pw.CreateSession();
+//await pws.StartBrowserAsync();
+//await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");
 Console.ReadLine();
+
 //var spp = sp.GetService<ISeleniumBrowserService>();
 //var tr = spp.CreateSession();
 // await tr.StartBrowserAsync();

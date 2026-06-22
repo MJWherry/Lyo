@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+/// <summary>Matched search-criteria flags describing how a Person Search was resolved.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record CriteriaType(
     bool Ssn,

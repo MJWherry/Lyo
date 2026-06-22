@@ -41,6 +41,8 @@
         <ProjectReference Include="..\..\Features\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components.Server\Lyo.Authentication.Web.Components.Server.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Client\Lyo.Endato.Client.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Web.Components\Lyo.Endato.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Client\Lyo.Authentication.Client.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components\Lyo.Authentication.Web.Components.csproj"/>

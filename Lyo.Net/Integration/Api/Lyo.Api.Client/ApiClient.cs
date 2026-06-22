@@ -542,7 +542,14 @@ public class ApiClient : IApiClient
         if (content.Length == 0)
             return default;
 
-        return JsonSerializer.Deserialize<TResult>(content, SerializerOptions);
+        try {
+            return JsonSerializer.Deserialize<TResult>(content, SerializerOptions);
+        }
+        catch (Exception ex) {
+            Logger.LogError(ex, "Couldn't deserialize type {ResponseType} from response", typeof(TResult).FullName);
+        }
+
+        return default;
     }
 
     private async Task<TResult> DeserializeResponseAsync<TResult>(HttpResponseMessage response, CancellationToken ct)

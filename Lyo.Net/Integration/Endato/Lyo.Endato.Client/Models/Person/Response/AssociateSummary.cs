@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+/// <summary>Associate summary row linked to a Person Search result.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record AssociateSummary(
     string TahoeId,
@@ -17,6 +18,5 @@ public sealed record AssociateSummary(
     int Score)
 {
     public override string ToString()
-        => $"AssociateSummary: TahoeId={TahoeId}, Name='{Prefix} {FirstName} {MiddleName} {LastName} {Suffix}', " +
-            $"Score={Score}, Private={IsPrivate}, OptOut={IsOptedOut}, Deceased={IsDeceased}, Dob='{Dob}'";
+        => $"AssociateSummary: TahoeId={TahoeId}, Name='{Prefix} {FirstName} {MiddleName} {LastName} {Suffix}', Score={Score}, Private={IsPrivate}, OptOut={IsOptedOut}, Deceased={IsDeceased}, Dob='{Dob}'";
 }

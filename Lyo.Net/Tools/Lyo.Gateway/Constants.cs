@@ -62,5 +62,7 @@ public static class Constants
         public const string ComicsVolume = "comics/volume";
 
         public const string IdGenerator = "id-generator";
+
+        public const string Endato = "endato";
     }
 }

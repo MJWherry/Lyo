@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Compression;
 
@@ -103,6 +104,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(policySectionPath);
             services.AddOptions<CompressionPolicyOptions>().Bind(configuration.GetSection(policySectionPath));
+            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<CompressionPolicyOptions>>().Value);
             services.TryAddSingleton<ICompressionAlgorithmSelector, CompressionPolicyAlgorithmSelector>();
             return services;
         }
@@ -116,6 +118,7 @@ public static class Extensions
             else
                 services.AddOptions<CompressionPolicyOptions>();
 
+            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<CompressionPolicyOptions>>().Value);
             services.TryAddSingleton<ICompressionAlgorithmSelector, CompressionPolicyAlgorithmSelector>();
             return services;
         }

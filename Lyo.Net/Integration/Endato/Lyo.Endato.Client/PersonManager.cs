@@ -5,9 +5,13 @@ namespace Lyo.Endato.Client;
 
 public class PersonManager(EndatoClient client)
 {
+    public Task<PersonQueryResponse> QueryPersonsAsync(PersonQueryBuilder builder, CancellationToken ct = default)
+        => QueryPersonsAsync(builder.Build(), ct);
+
     public async Task<PersonQueryResponse> QueryPersonsAsync(PersonQuery query, CancellationToken ct = default)
     {
-        var response = await client.PostAsAsync<PersonQuery, PersonQueryResponse>("/PersonSearch", query, request => request.Headers.Add("galaxy-search-type", "Person"), ct)
+        var response = await client.PostAsAsync<PersonQuery, PersonQueryResponse>("/PersonSearch", query,
+                request => request.Headers.Add("galaxy-search-type", "Person"), ct)
             .ConfigureAwait(false);
 
         return response;

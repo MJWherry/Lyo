@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+/// <summary>Record-type indicator flags returned with a Person Search result.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Indicators(
     int HasBankruptcyRecords,
@@ -32,6 +33,5 @@ public sealed record Indicators(
     int HasDebtRecords)
 {
     public override string ToString()
-        => $"Indicators: bankruptcy={HasBankruptcyRecords}, liens={HasLienRecords}, judgments={HasJudgmentRecords}, " +
-            $"property={HasPropertyRecords}, emails={HasEmails}, mobile={HasMobilePhones}, landlines={HasLandLines}, " + $"addresses={HasAddresses}, debt={HasDebtRecords}";
+        => $"Indicators: bankruptcy={HasBankruptcyRecords}, liens={HasLienRecords}, judgments={HasJudgmentRecords}, property={HasPropertyRecords}, emails={HasEmails}, mobile={HasMobilePhones}, landlines={HasLandLines}, addresses={HasAddresses}, debt={HasDebtRecords}";
 }

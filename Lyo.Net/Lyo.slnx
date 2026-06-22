@@ -386,8 +386,10 @@
     <Folder Name="/Integration/"/>
     <Folder Name="/Integration/Endato/">
         <Project Path="Integration/Endato/Lyo.Endato.Client/Lyo.Endato.Client.csproj"/>
+        <Project Path="Integration/Endato/Lyo.Endato.Client.Tests/Lyo.Endato.Client.Tests.csproj"/>
         <Project Path="Integration/Endato/Lyo.Endato.Postgres/Lyo.Endato.Postgres.csproj"/>
         <Project Path="Integration/Endato/Lyo.Endato.Postgres.Tests/Lyo.Endato.Postgres.Tests.csproj"/>
+        <Project Path="Integration/Endato/Lyo.Endato.Web.Components/Lyo.Endato.Web.Components.csproj"/>
     </Folder>
     <Folder Name="/Integration/Google/">
         <Project Path="Integration/Google/Lyo.Google.Geolocation.Client/Lyo.Google.Geolocation.Client.csproj"/>
