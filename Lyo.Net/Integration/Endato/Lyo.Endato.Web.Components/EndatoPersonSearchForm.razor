@@ -1,0 +1,142 @@
+<MudStack Spacing="3">
+    <MudText Typo="Typo.subtitle1">Person Search</MudText>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.FirstName" Label="First name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.MiddleName" Label="Middle name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.LastName" Label="Last name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.DateOfBirth" Label="Date of birth (MM/dd/yyyy)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudNumericField @bind-Value="Query.Age" Label="Age" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" Max="120"/>
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudNumericField @bind-Value="Query.Page" Label="Page" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"/>
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudNumericField @bind-Value="Query.ResultsPerPage" Label="Results / page" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="100"/>
+        </MudItem>
+    </MudGrid>
+
+    <MudExpansionPanels Elevation="0" Outlined="true">
+        <MudExpansionPanel Text="Advanced criteria">
+            <MudGrid Spacing="2" Class="pt-2">
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Query.Phone" Label="Phone" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Query.Email" Label="Email" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="_tahoeIdsText" Label="Tahoe IDs (comma-separated)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Query.AgeRange" Label="Age range" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField @bind-Value="Query.AgeRangeMinAge" Label="Age range min" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField @bind-Value="Query.AgeRangeMaxAge" Label="Age range max" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="_includesText" Label="Includes (comma-separated)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="_filterOptionsText" Label="Filter options (comma-separated)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField @bind-Value="Query.MaxAddressYears" Label="Max address years" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField @bind-Value="Query.MaxPhoneYears" Label="Max phone years" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="Query.DobFormat" Label="DOB format" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+            </MudGrid>
+        </MudExpansionPanel>
+
+        <MudExpansionPanel Text="@AddressPanelTitle">
+            <MudStack Spacing="2" Class="pt-2">
+                @for (var i = 0; i < _addressRows.Count; i++) {
+                    var index = i;
+                    <MudPaper Elevation="0" Outlined="true" Class="pa-3">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.caption">Address @(index + 1)</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveAddress(index))"/>
+                            </MudStack>
+                            <MudTextField @bind-Value="_addressRows[index].AddressLine1" Label="Address line 1" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            <MudTextField @bind-Value="_addressRows[index].AddressLine2" Label="Address line 2" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            <MudTextField @bind-Value="_addressRows[index].County" Label="County" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudStack>
+                    </MudPaper>
+                }
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAddress">Add address</MudButton>
+            </MudStack>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired]
+    public PersonQuery Query { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<PersonQuery> QueryChanged { get; set; }
+
+    private readonly List<PersonQueryAddress> _addressRows = [];
+    private string _tahoeIdsText = string.Empty;
+    private string _includesText = string.Empty;
+    private string _filterOptionsText = string.Empty;
+
+    private string AddressPanelTitle => $"Addresses ({_addressRows.Count})";
+
+    protected override void OnParametersSet()
+    {
+        if (_addressRows.Count == 0 && Query.Addresses is { Count: > 0 })
+            _addressRows.AddRange(Query.Addresses.Select(a => new PersonQueryAddress {
+                AddressLine1 = a.AddressLine1,
+                AddressLine2 = a.AddressLine2,
+                County = a.County
+            }));
+
+        _tahoeIdsText = Query.TahoeIds == null ? string.Empty : string.Join(", ", Query.TahoeIds);
+        _includesText = Query.Includes == null ? string.Empty : string.Join(", ", Query.Includes);
+        _filterOptionsText = Query.FilterOptions == null ? string.Empty : string.Join(", ", Query.FilterOptions);
+    }
+
+    public PersonQuery ApplyToQuery()
+    {
+        Query.Addresses = _addressRows.Count == 0 ? null : _addressRows.ToList();
+        Query.TahoeIds = SplitCsv(_tahoeIdsText);
+        Query.Includes = SplitCsv(_includesText);
+        Query.FilterOptions = SplitCsv(_filterOptionsText);
+        return Query;
+    }
+
+    private void AddAddress() => _addressRows.Add(new PersonQueryAddress());
+
+    private void RemoveAddress(int index)
+    {
+        if (index >= 0 && index < _addressRows.Count)
+            _addressRows.RemoveAt(index);
+    }
+
+    private static IReadOnlyList<string>? SplitCsv(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        var items = text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return items.Length == 0 ? null : items;
+    }
+}

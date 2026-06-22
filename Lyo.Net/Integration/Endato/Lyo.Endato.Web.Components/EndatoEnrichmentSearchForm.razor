@@ -1,0 +1,95 @@
+<MudStack Spacing="3">
+    <MudText Typo="Typo.subtitle1">Contact Enrichment</MudText>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.FirstName" Label="First name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.MiddleName" Label="Middle name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.LastName" Label="Last name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.DateOfBirth" Label="Date of birth (MM/dd/yyyy)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudNumericField @bind-Value="Query.Age" Label="Age" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" Max="120"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.Phone" Label="Phone" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="Query.Email" Label="Email" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+    </MudGrid>
+
+    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Address</MudText>
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="_addressLine1" Label="Address line 1" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="_addressLine2" Label="Address line 2" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudItem>
+    </MudGrid>
+
+    @if (IdentifierCount < 2) {
+        <MudAlert Severity="Severity.Info" Dense="true">
+            Contact Enrichment requires at least two identifiers among name, phone, email, and address (@IdentifierCount of 2 set).
+        </MudAlert>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired]
+    public EnrichmentQuery Query { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<EnrichmentQuery> QueryChanged { get; set; }
+
+    private string? _addressLine1;
+    private string? _addressLine2;
+
+    private int IdentifierCount
+    {
+        get
+        {
+            var count = 0;
+            if (HasName())
+                count++;
+            if (!string.IsNullOrWhiteSpace(Query.Phone))
+                count++;
+            if (!string.IsNullOrWhiteSpace(Query.Email))
+                count++;
+            if (HasAddress())
+                count++;
+            return count;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _addressLine1 = Query.Address?.AddressLine1;
+        _addressLine2 = Query.Address?.AddressLine2;
+    }
+
+    public EnrichmentQuery ApplyToQuery()
+    {
+        if (HasAddress())
+            Query.Address = new EnrichmentRequestAddress { AddressLine1 = _addressLine1, AddressLine2 = _addressLine2 };
+        else
+            Query.Address = null;
+
+        return Query;
+    }
+
+    private bool HasName()
+        => !string.IsNullOrWhiteSpace(Query.FirstName)
+            || !string.IsNullOrWhiteSpace(Query.LastName)
+            || !string.IsNullOrWhiteSpace(Query.MiddleName);
+
+    private bool HasAddress()
+        => !string.IsNullOrWhiteSpace(_addressLine1) || !string.IsNullOrWhiteSpace(_addressLine2);
+}

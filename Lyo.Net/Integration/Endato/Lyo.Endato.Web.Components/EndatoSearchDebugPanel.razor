@@ -1,0 +1,144 @@
+@using System.Text.Json
+@inject JsonSerializerOptions JsonOptions
+
+<MudStack Spacing="3">
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   StartIcon="@(_busy ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.PlayArrow)"
+                   OnClick="RunAsync"
+                   Disabled="@_busy">
+            @(_busy ? "Running…" : "Run from debug")
+        </MudButton>
+        @if (LastElapsedMs.HasValue) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@LastElapsedMs.Value ms</MudText>
+        }
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(Error)) {
+        <MudAlert Severity="Severity.Error" Dense="true">@Error</MudAlert>
+    }
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Request</MudText>
+                @if (SearchMode == EndatoSearchMode.Person) {
+                    <JsonEditor @key="@($"debug-person-req-{SearchMode}")"
+                                T="PersonQuery"
+                                Value="@PersonQuery"
+                                ValueChanged="OnPersonQueryChanged"
+                                JsonOptions="@JsonOptions"
+                                AllowTreeEditing="true"
+                                DefaultViewMode="JsonEditorViewMode.Tree"
+                                ParseErrorChanged="OnRequestParseErrorChanged"/>
+                }
+                else {
+                    <JsonEditor @key="@($"debug-enrich-req-{SearchMode}")"
+                                T="EnrichmentQuery"
+                                Value="@EnrichmentQuery"
+                                ValueChanged="OnEnrichmentQueryChanged"
+                                JsonOptions="@JsonOptions"
+                                AllowTreeEditing="true"
+                                DefaultViewMode="JsonEditorViewMode.Tree"
+                                ParseErrorChanged="OnRequestParseErrorChanged"/>
+                }
+                @if (!string.IsNullOrWhiteSpace(_requestParseError)) {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">@_requestParseError</MudAlert>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Response</MudText>
+                @if (_responseJson.ValueKind != JsonValueKind.Undefined && !_busy) {
+                    <JsonEditor @key="@($"debug-resp-{_responseEditorKey}")"
+                                T="JsonElement"
+                                Value="@_responseJson"
+                                ValueChanged="@(_ => { })"
+                                JsonOptions="@JsonOptions"
+                                Editable="false"
+                                AllowTreeEditing="false"
+                                DefaultViewMode="JsonEditorViewMode.Tree"/>
+                }
+                else if (_busy) {
+                    <MudProgressLinear Indeterminate="true" Class="my-4"/>
+                }
+                else {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Run a search to populate the response.</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudStack>
+
+@code {
+    [Parameter]
+    public EndatoSearchMode SearchMode { get; set; }
+
+    [Parameter, EditorRequired]
+    public PersonQuery PersonQuery { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<PersonQuery> PersonQueryChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public EnrichmentQuery EnrichmentQuery { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<EnrichmentQuery> EnrichmentQueryChanged { get; set; }
+
+    [Parameter]
+    public PersonQueryResponse? PersonResponse { get; set; }
+
+    [Parameter]
+    public EnrichmentResponse? EnrichmentResponse { get; set; }
+
+    [Parameter]
+    public EventCallback OnRunRequested { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public string? Error { get; set; }
+
+    [Parameter]
+    public long? LastElapsedMs { get; set; }
+
+    private bool _busy;
+    private string? _requestParseError;
+    private int _responseEditorKey;
+    private JsonElement _responseJson;
+
+    protected override void OnParametersSet()
+    {
+        _busy = Busy;
+        if (SearchMode == EndatoSearchMode.Person && PersonResponse != null)
+            _responseJson = JsonSerializer.SerializeToElement(PersonResponse, JsonOptions);
+        else if (SearchMode == EndatoSearchMode.Enrichment && EnrichmentResponse != null)
+            _responseJson = JsonSerializer.SerializeToElement(EnrichmentResponse, JsonOptions);
+    }
+
+    private Task OnPersonQueryChanged(PersonQuery query)
+        => PersonQueryChanged.HasDelegate ? PersonQueryChanged.InvokeAsync(query) : Task.CompletedTask;
+
+    private Task OnEnrichmentQueryChanged(EnrichmentQuery query)
+        => EnrichmentQueryChanged.HasDelegate ? EnrichmentQueryChanged.InvokeAsync(query) : Task.CompletedTask;
+
+    private Task OnRequestParseErrorChanged(string? error)
+    {
+        _requestParseError = error;
+        return Task.CompletedTask;
+    }
+
+    private async Task RunAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_requestParseError))
+            return;
+
+        await OnRunRequested.InvokeAsync();
+        _responseEditorKey++;
+    }
+}

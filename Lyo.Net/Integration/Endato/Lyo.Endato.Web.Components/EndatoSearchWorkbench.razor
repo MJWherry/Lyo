@@ -1,0 +1,186 @@
+@using System.Text.Json
+@inject EndatoClient EndatoClient
+@inject JsonSerializerOptions JsonOptions
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Endato Search</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Person search and contact enrichment via <code>Lyo.Endato.Client</code>.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" @bind-ActivePanelIndex="_activeTab">
+            <MudTabPanel Text="Search" Icon="@Icons.Material.Filled.Search">
+                <MudStack Spacing="3" Class="pa-2">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
+                            <MudButton OnClick="@(() => SetSearchMode(EndatoSearchMode.Person))"
+                                       Variant="@(_searchMode == EndatoSearchMode.Person ? Variant.Filled : Variant.Outlined)"
+                                       Color="@(_searchMode == EndatoSearchMode.Person ? Color.Primary : Color.Default)">
+                                Person Search
+                            </MudButton>
+                            <MudButton OnClick="@(() => SetSearchMode(EndatoSearchMode.Enrichment))"
+                                       Variant="@(_searchMode == EndatoSearchMode.Enrichment ? Variant.Filled : Variant.Outlined)"
+                                       Color="@(_searchMode == EndatoSearchMode.Enrichment ? Color.Primary : Color.Default)">
+                                Contact Enrich
+                            </MudButton>
+                        </MudButtonGroup>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@(_busy ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Search)"
+                                   OnClick="RunSearchAsync"
+                                   Disabled="@_busy">
+                            @(_busy ? "Searching…" : "Search")
+                        </MudButton>
+
+                        @if (_lastElapsedMs.HasValue) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@_lastElapsedMs.Value ms</MudText>
+                        }
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_error)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                    }
+
+                    @if (_searchMode == EndatoSearchMode.Person) {
+                        <EndatoPersonSearchForm @ref="_personForm" Query="@_personQuery"/>
+                    }
+                    else {
+                        <EndatoEnrichmentSearchForm @ref="_enrichmentForm" Query="@_enrichmentQuery"/>
+                    }
+
+                    <MudDivider Class="my-2"/>
+
+                    @if (_searchMode == EndatoSearchMode.Person) {
+                        <EndatoPersonSearchResults Response="@_personResponse"/>
+                    }
+                    else {
+                        <EndatoEnrichmentResult Response="@_enrichmentResponse"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Debug" Icon="@Icons.Material.Filled.Code">
+                <MudPaper Elevation="0" Class="pa-2">
+                    <EndatoSearchDebugPanel SearchMode="@_searchMode"
+                                            PersonQuery="@_personQuery"
+                                            PersonQueryChanged="@OnPersonQueryChanged"
+                                            EnrichmentQuery="@_enrichmentQuery"
+                                            EnrichmentQueryChanged="@OnEnrichmentQueryChanged"
+                                            PersonResponse="@_personResponse"
+                                            EnrichmentResponse="@_enrichmentResponse"
+                                            OnRunRequested="RunSearchAsync"
+                                            Busy="@_busy"
+                                            Error="@_error"
+                                            LastElapsedMs="@_lastElapsedMs"/>
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private EndatoSearchMode _searchMode = EndatoSearchMode.Person;
+    private int _activeTab;
+    private bool _busy;
+    private string? _error;
+    private long? _lastElapsedMs;
+
+    private EndatoPersonSearchForm? _personForm;
+    private EndatoEnrichmentSearchForm? _enrichmentForm;
+
+    private PersonQuery _personQuery = new() {
+        FirstName = "John",
+        LastName = "Smith",
+        DateOfBirth = "01/15/1980",
+    };
+
+    private EnrichmentQuery _enrichmentQuery = new() {
+        FirstName = "John",
+        LastName = "Smith",
+        Phone = "5125550100",
+        Address = new EnrichmentRequestAddress {
+            AddressLine1 = "123 Main St",
+            AddressLine2 = "Austin, TX 78701"
+        }
+    };
+
+    private PersonQueryResponse? _personResponse;
+    private EnrichmentResponse? _enrichmentResponse;
+
+    private void SetSearchMode(EndatoSearchMode mode)
+    {
+        if (_searchMode == mode)
+            return;
+
+        _searchMode = mode;
+        _error = null;
+    }
+
+    private Task OnPersonQueryChanged(PersonQuery query)
+    {
+        _personQuery = query;
+        return Task.CompletedTask;
+    }
+
+    private Task OnEnrichmentQueryChanged(EnrichmentQuery query)
+    {
+        _enrichmentQuery = query;
+        return Task.CompletedTask;
+    }
+
+    private async Task RunSearchAsync()
+    {
+        _error = null;
+        _busy = true;
+
+        try {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            switch (_searchMode) {
+                case EndatoSearchMode.Person: {
+                    var query = _personForm?.ApplyToQuery() ?? _personQuery;
+                    _personQuery = query;
+                    var response = await EndatoClient.Persons.QueryPersonsAsync(query).ConfigureAwait(false);
+                    _personResponse = response;
+                    Snackbar.Add(response.IsError ? "Endato returned IsError=true." : "Person search completed.", response.IsError ? Severity.Warning : Severity.Success);
+                    break;
+                }
+                case EndatoSearchMode.Enrichment: {
+                    var query = _enrichmentForm?.ApplyToQuery() ?? _enrichmentQuery;
+                    _enrichmentQuery = query;
+                    var builder = EnrichmentQueryBuilder.New()
+                        .WithName(query.FirstName, query.LastName, query.MiddleName)
+                        .WithDateOfBirth(query.DateOfBirth)
+                        .WithAge(query.Age)
+                        .WithPhone(query.Phone)
+                        .WithEmail(query.Email);
+                    if (query.Address != null)
+                        builder.WithAddress(a => {
+                            a.AddressLine1 = query.Address.AddressLine1;
+                            a.AddressLine2 = query.Address.AddressLine2;
+                        });
+
+                    var response = await EndatoClient.Enrichment.QueryEnrichmentAsync(builder).ConfigureAwait(false);
+                    _enrichmentResponse = response;
+                    Snackbar.Add(response.IsError ? "Endato returned IsError=true." : "Enrichment completed.", response.IsError ? Severity.Warning : Severity.Success);
+                    break;
+                }
+            }
+
+            stopwatch.Stop();
+            _lastElapsedMs = stopwatch.ElapsedMilliseconds;
+        }
+        catch (Exception ex) {
+            _error = ex.Message;
+            Snackbar.Add(_error, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+}
