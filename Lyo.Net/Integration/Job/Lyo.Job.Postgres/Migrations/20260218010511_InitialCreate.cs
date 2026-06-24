@@ -22,7 +22,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     type = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
                     worker_type = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: false),
                     enabled = table.Column<bool>(type: "boolean", nullable: false),
@@ -66,7 +66,7 @@ namespace Lyo.Job.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     base_job_definition_id = table.Column<Guid>(type: "uuid", nullable: false),
                     other_job_definition_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -95,7 +95,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     job_definition_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
                     value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
@@ -123,7 +123,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     job_definition_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     type = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     month_flags = table.Column<string>(type: "character varying(108)", maxLength: 108, nullable: false),
                     day_flags = table.Column<string>(type: "character varying(51)", maxLength: 51, nullable: false),
@@ -157,7 +157,7 @@ namespace Lyo.Job.Postgres.Migrations
                     trigger_job_result_key = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
                     trigger_comparator = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     trigger_job_result_value = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     enabled = table.Column<bool>(type: "boolean", nullable: false),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -186,7 +186,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     job_schedule_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
                     value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
@@ -267,7 +267,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     job_trigger_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
                     value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
@@ -317,7 +317,7 @@ namespace Lyo.Job.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     job_run_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
                     value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),

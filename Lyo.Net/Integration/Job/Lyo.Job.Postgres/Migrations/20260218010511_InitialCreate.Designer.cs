@@ -35,8 +35,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -165,8 +165,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("base_job_definition_id");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -212,8 +212,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("allow_multiple");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<byte[]>("EncryptedValue")
@@ -405,8 +405,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<byte[]>("EncryptedValue")
@@ -498,8 +498,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("day_flags");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -565,8 +565,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -623,8 +623,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -685,8 +685,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")

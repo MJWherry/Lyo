@@ -2,13 +2,34 @@
 
 Reusable k6 framework for `TestApi` person querying with multiple workload profiles and query shapes based on your `QueryRequest` model.
 
+Shared reusable API code lives outside k6 in:
+- `packages/lyo-api-client`
+- `packages/lyo-person-api-client`
+
+`k6/framework-person` contains test orchestration only.
+
+## Production Matrix
+
+The primary production path is now a **symmetric matrix**:
+
+- Endpoints: `/person/query`, `/person/QueryProject`
+- Profiles: `load`, `stress`, `spike`, `soak`
+- Dedicated suites: 8 scenario files (one per endpoint x profile)
+
+Core matrix orchestration is data-driven via:
+
+- `lib/config.js` (matrix/env schema)
+- `lib/cases.js` (case registry)
+- `lib/k6Transport.js` (k6 adapter over shared TS clients)
+- `lib/matrixRunner.js` (shared per-iteration execution)
+
 ## Benchmarks & “modern standards”
 
 Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). The **authoritative write-up** — per-scenario metrics, environment, grades, and **comparison to common stacks** (Hasura/PostgREST, typical EF/Django/Rails/Spring, GraphQL) — is:
 
 - [`Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
 
-**Latest full suite analyzed there (April 2026)**: `k6/framework-person/results/20260419-190727/` (see analysis for methodology; prior archive `20260414-002619/` retained for historical comparison).
+**Latest full suite analyzed there (June 2026, symmetric matrix)**: `k6/results/prod-matrix-20260623-163003/` (earlier April 2026 5-scenario archives are retained in the analysis doc for historical comparison).
 
 At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs split infra). **`Lyo.TestApi`** uses **`CacheOptions:QueryCacheTagGranularity`** = **`Broad`** (default) for these numbers:
 
@@ -22,7 +43,8 @@ At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs 
 
 Treat any table as **directional**: dataset size, indexes, cache keys, and hardware dominate absolute milliseconds.
 
-**Dataset (typical TestApi / benchmark DB)**: on the order of **~135k** persons and **hundreds of thousands** of rows in related contact/address/phone/email tables — not a tiny seed database. Scenarios still use **bounded `Start`/`Amount`**; they do not load the full graph.
+**Dataset (current benchmark DB, approximate)**: `person` **~176k**, `address` **~1.1m**, `contact_address` **~1.1m**, `phone_number` **~631k**, `contact_phone_number` **~668k**,
+`email_address` **~384k**, `contact_email_address` **~397k** — not a tiny seed database. Scenarios still use **bounded `Start`/`Amount`**; they do not load the full graph.
 
 **TestApi host**: k6 runs against **`Lyo.TestApi`**, which wires **`ILyoMapper`** to **Mapster** (`MapsterLyoMapper`). Object mapping adds CPU and allocations compared to hand-written maps or another mapper; production APIs that skip or minimize mapping might see different end-to-end latency than these results.
 
@@ -36,28 +58,49 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
 - Query shapes:
   - baseline pagination
   - filter groups + multi-sort
-  - select-field projection (`Select`)
+  - select-field projection (`Select` via `/person/QueryProject`)
   - complex `QueryNode` tree
   - `QueryNode` + `SubQuery` (two-phase style)
   - heavy includes (cache-bypass or cache-hit mode)
+  - QueryProject projection and computed fields (scenarios 06–07)
 
 ## Directory layout
 
 - `lib/`
   - `env.js` env parsing helpers
-  - `client.js` HTTP query request helper + checks
+  - `client.js` HTTP execution + validation checks/metrics
   - `metrics.js` custom k6 metrics
   - `profiles.js` workload profile option builders
-  - `queryFactory.js` `QueryRequest` body builders
+  - `config.js` matrix config schema and selectors
+  - `cases.js` endpoint-aware query case registry
+  - `k6Transport.js` transport adapter for shared TS API client
+  - `matrixRunner.js` shared execution flow for endpoint/profile suites
+  - `personModels.js` shared field names and source-type constants
+  - `queryFactory.js` `QueryReq` body builders (`/person/query`)
+  - `projectionQueries.js` `ProjectionQueryReq` body builders (`/person/QueryProject`)
 - `scenarios/`
-  - `01_load_mixed_queries.js`
-  - `02_stress_heavy_includes.js`
-  - `03_spike_select_fields.js`
-  - `04_soak_mixed_leak_watch.js`
-  - `05_load_query_subquery.js`
-- `run_all.sh` run all scenario files
+  - `query_load.js`
+  - `query_stress.js`
+  - `query_spike.js`
+  - `query_soak.js`
+  - `queryproject_load.js`
+  - `queryproject_stress.js`
+  - `queryproject_spike.js`
+  - `queryproject_soak.js`
+  - (legacy scenarios retained for migration compatibility)
+- `run_all.sh` strict matrix runner with package-build preflight
 
 ## Quick start
+
+Build shared TypeScript packages first:
+
+```bash
+cd packages/lyo-api-client && npm install && npm run build
+cd ../lyo-person-api-client && npm install && npm run build
+cd ../../
+```
+
+Then run a scenario:
 
 ```bash
 k6 run -e BASE_URL="http://localhost:5251" -e ENDPOINT_PATH="/person/query" \
@@ -70,18 +113,32 @@ Run everything:
 ./k6/framework-person/run_all.sh
 ```
 
+Smoke matrix mode:
+
+```bash
+MODE=smoke ./k6/framework-person/run_all.sh
+```
+
 ## Useful env vars
 
 - Core:
   - `BASE_URL` (default `http://localhost:5251`)
-  - `ENDPOINT_PATH` (default `/person/query`)
+  - `ENDPOINT_PATH` (default `/person/query`) — full entity queries only
+  - `QUERY_PROJECT_PATH` (default `/person/QueryProject`) — projection scenarios (01 case 3, 03, 04 case 2, 06, 07)
   - `TOKEN` (optional bearer token)
   - `SLEEP_SECONDS`
+- Matrix control:
+  - `MODE` (`full` or `smoke`) in `run_all.sh`
+  - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites)
+  - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
+  - Fairness default: both `/person/query` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
+  - `MATRIX_SLEEP_SECONDS` (global matrix iteration sleep override)
 - Query behavior:
   - `TOTAL_COUNT_MODE` (`None`, `HasMore`, `Exact`) — default `None`. `HasMore` is the in-between: fetches one extra row to detect more pages (no `COUNT`). `Exact` runs an extra `COUNT(*)` and can roughly double query time.
   - `INCLUDE_FILTER_MODE` (`Full`, `MatchedOnly`)
   - `INCLUDES` (comma separated include paths)
-  - `SELECT_FIELDS` (comma separated projection field paths)
+  - `SELECT_FIELDS` (comma separated projection field paths for `QueryProject`; use `SourceEntityType`, not `Source`)
+  - `SOURCE_FILTER_VALUES` (comma-separated `SourceEntityType` values for filter scenarios; default both Endato PS + CE entity type names)
   - `AMOUNT`, `START`
 - Profile tuning:
   - Load: `LOAD_RATE`, `LOAD_DURATION`, `LOAD_PREALLOCATED_VUS`, `LOAD_MAX_VUS`
@@ -111,8 +168,7 @@ Spike test with projection only:
 ```bash
 k6 run \
   -e BASE_URL="http://localhost:5251" \
-  -e ENDPOINT_PATH="/person/query" \
-  -e SELECT_FIELDS="Id,FirstName,LastName,Source" \
+  -e SELECT_FIELDS="Id,FirstName,LastName,SourceEntityType" \
   -e SPIKE_TARGET_RATE=100 \
   k6/framework-person/scenarios/03_spike_select_fields.js
 ```
@@ -130,5 +186,7 @@ k6 run \
 
 ## Notes
 
-- `04_soak_mixed_leak_watch.js` is designed for long-duration trend drift detection; pair it with API/container memory graphs (OTel/Prometheus) for leak confirmation.
-- `02_stress_heavy_includes.js` intentionally pushes heavy include pagination patterns (including multi-hop includes).
+- Query paths use entity property names (e.g. `SourceEntityType`). Values are full `EntityRef` type names such as `Lyo.Endato.Postgres.Database.EndatoPsPersonEntity` (Person Search) and `Lyo.Endato.Postgres.Database.EndatoCePersonEntity` (Contact Enrichment). JSON responses from `/person/query` expose the mapped field as `source` on `PersonRes`.
+- Matrix suites emit per-case tagged success metrics: `status_success_rate`, `latency_success_rate`, `shape_success_rate`, and per-case `query_duration`.
+- Scenarios that send `Select` post to `/person/QueryProject` via shared person client routing.
+- Legacy mixed scenarios still exist for migration/backward compatibility, but production execution should use dedicated matrix suites.

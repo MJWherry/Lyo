@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Query.Models.Attributes;
 
 namespace Lyo.Gateway.Models;
 
@@ -11,7 +12,7 @@ public sealed record PersonRes(
     string? MiddleName,
     string? LastName,
     string? Suffix,
-    string Source,
+    [property: QueryPropertyName("SourceEntityType")] string Source,
     IReadOnlyList<PersonAddressRes>? Addresses,
     IReadOnlyList<PersonEmailAddressRes>? EmailAddresses,
     IReadOnlyList<PersonPhoneNumberRes>? PhoneNumbers)

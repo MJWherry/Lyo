@@ -1,14 +1,14 @@
 import { group, sleep } from "k6";
 import { postQuery } from "../lib/client.js";
-import { toBool, toFloat, toInt, variedAmount, variedStart } from "../lib/env.js";
+import { queryProjectUrl, toBool, toFloat, toInt, variedAmount, variedStart } from "../lib/env.js";
 import { scenarioDuration } from "../lib/metrics.js";
 import { soakOptions } from "../lib/profiles.js";
+import { selectProjectionQuery } from "../lib/projectionQueries.js";
 import {
   baselineQuery,
   complexWhereClause,
   filterSortQuery,
   heavyIncludeQuery,
-  selectProjectionQuery,
 } from "../lib/queryFactory.js";
 
 export const options = soakOptions({
@@ -52,6 +52,7 @@ export default function () {
       });
     } else if (pick === 2) {
       postQuery({
+        url: queryProjectUrl(),
         name: "soak_select_projection",
         slowMs: toInt("SOAK_SELECT_SLOW_MS", 1800),
         body: selectProjectionQuery({ start, amount }),

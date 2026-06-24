@@ -1,4 +1,5 @@
 import { env, toInt } from "./env.js";
+import { resolveCaseSlowMs } from "./cases.js";
 
 export function commonThresholds(extra = {}) {
   return {
@@ -86,4 +87,42 @@ export function soakOptions(extra = {}) {
     summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
     ...extra,
   };
+}
+
+function perCaseThresholds(caseDefs) {
+  const thresholds = {};
+  for (const caseDef of caseDefs) {
+    const slowMs = resolveCaseSlowMs(caseDef);
+    thresholds[`query_duration{query_case:${caseDef.caseId}}`] = [`p(95)<${slowMs}`];
+    thresholds[`status_success_rate{query_case:${caseDef.caseId}}`] = ["rate>0.99"];
+    thresholds[`latency_success_rate{query_case:${caseDef.caseId}}`] = ["rate>0.99"];
+    thresholds[`shape_success_rate{query_case:${caseDef.caseId}}`] = ["rate>0.99"];
+  }
+  return thresholds;
+}
+
+export function matrixOptions(profile, caseDefs, extra = {}) {
+  const thresholds = commonThresholds(perCaseThresholds(caseDefs));
+  const mergedExtra = {
+    ...extra,
+    thresholds: {
+      ...thresholds,
+      ...(extra.thresholds ?? {}),
+    },
+  };
+
+  if (profile === "load") {
+    return loadOptions(mergedExtra);
+  }
+  if (profile === "stress") {
+    return stressOptions(mergedExtra);
+  }
+  if (profile === "spike") {
+    return spikeOptions(mergedExtra);
+  }
+  if (profile === "soak") {
+    return soakOptions(mergedExtra);
+  }
+
+  throw new Error(`Unknown matrix profile '${profile}'`);
 }

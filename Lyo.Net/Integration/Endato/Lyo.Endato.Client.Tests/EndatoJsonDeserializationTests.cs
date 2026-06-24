@@ -188,7 +188,7 @@ public class EndatoJsonDeserializationTests
                               "lastName": "Doe",
                               "suffix": "",
                               "dob": "01/01/1980",
-                              "relativeLevel": 1,
+                              "relativeLevel": "ab",
                               "relativeType": "Spouse",
                               "spouse": 0,
                               "sharedHouseholdIds": [],
@@ -202,7 +202,7 @@ public class EndatoJsonDeserializationTests
         Assert.NotNull(relative);
         Assert.False(relative!.Spouse);
         Assert.False(relative.OldSpouse);
-        Assert.Equal(1, relative.RelativeLevel);
+        Assert.Equal("ab", relative.RelativeLevel);
         Assert.Equal(100, relative.Score);
     }
 }

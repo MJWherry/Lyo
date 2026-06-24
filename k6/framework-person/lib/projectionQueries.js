@@ -1,33 +1,41 @@
 import { env, toInt } from "./env.js";
 import { buildOptions } from "./queryFactory.js";
+import { DEFAULT_PERSON_SELECT_FIELDS } from "./personModels.js";
+import {
+  selectProjectionQuery as buildSelectProjectionQuery,
+  projectionRootScalarsQuery as buildProjectionRootScalarsQuery,
+  projectionNestedSelectQuery as buildProjectionNestedSelectQuery,
+  projectionUnifiedCollectionQuery as buildProjectionUnifiedCollectionQuery,
+  computedCollectionParallelQuery as buildComputedCollectionParallelQuery,
+  computedScalarTemplateQuery as buildComputedScalarTemplateQuery,
+} from "../../../packages/lyo-person-api-client/dist/index.js";
+
+export const PERSON_SELECT_FIELDS = env("SELECT_FIELDS", DEFAULT_PERSON_SELECT_FIELDS)
+  .split(",")
+  .map((x) => x.trim())
+  .filter(Boolean);
+
+/** ProjectionQueryReq body for mixed select + sort (POST /person/QueryProject). */
+export function selectProjectionQuery({ start = 0, amount = 1200, include = [] } = {}) {
+  return buildSelectProjectionQuery({ start, amount, include, fields: PERSON_SELECT_FIELDS });
+}
 
 /** Root scalars only — exercises SQL projection without collection merge. */
 export function projectionRootScalarsQuery({ start = 0, amount = 200 } = {}) {
   const fields = env(
     "PROJECTION_ROOT_FIELDS",
-    "Id,FirstName,LastName,IsActive"
+    "Id,FirstName,LastName,SourceEntityType,IsActive"
   )
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
 
-  return {
-    Options: buildOptions({
-      totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
-      includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
-    }),
-    Start: start,
-    Amount: amount,
-    Keys: [],
-    whereClause: null,
-    Include: [],
-    Select: fields,
-    ComputedFields: [],
-    SortBy: [
-      { PropertyName: "LastName", Direction: "Asc", Priority: 0 },
-      { PropertyName: "FirstName", Direction: "Asc", Priority: 1 },
-    ],
-  };
+  const query = buildProjectionRootScalarsQuery({ start, amount, fields });
+  query.Options = buildOptions({
+    totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
+    includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
+  });
+  return query;
 }
 
 /** Nested navigation under Select (single collection + leaf paths). */
@@ -40,23 +48,12 @@ export function projectionNestedSelectQuery({ start = 0, amount = 200 } = {}) {
     .map((x) => x.trim())
     .filter(Boolean);
 
-  return {
-    Options: buildOptions({
-      totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
-      includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
-    }),
-    Start: start,
-    Amount: amount,
-    Keys: [],
-    whereClause: null,
-    Include: [],
-    Select: fields,
-    ComputedFields: [],
-    SortBy: [
-      { PropertyName: "LastName", Direction: "Asc", Priority: 0 },
-      { PropertyName: "FirstName", Direction: "Asc", Priority: 1 },
-    ],
-  };
+  const query = buildProjectionNestedSelectQuery({ start, amount, fields });
+  query.Options = buildOptions({
+    totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
+    includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
+  });
+  return query;
 }
 
 /**
@@ -76,26 +73,20 @@ export function projectionUnifiedCollectionQuery({ start = 0, amount = 200 } = {
   const zipSibling =
     zipRaw === "false" ? false : zipRaw === "null" ? null : true;
 
-  return {
-    Options: {
-      ...buildOptions({
-        totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
-        includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
-      }),
-      ZipSiblingCollectionSelections: zipSibling,
-    },
-    Start: start,
-    Amount: amount,
-    Keys: [],
-    whereClause: null,
-    Include: [],
-    Select: fields,
-    ComputedFields: [],
-    SortBy: [
-      { PropertyName: "LastName", Direction: "Asc", Priority: 0 },
-      { PropertyName: "FirstName", Direction: "Asc", Priority: 1 },
-    ],
+  const query = buildProjectionUnifiedCollectionQuery({
+    start,
+    amount,
+    fields,
+    zipSiblingCollectionSelections: zipSibling,
+  });
+  query.Options = {
+    ...buildOptions({
+      totalCountMode: env("PROJECTION_TOTAL_COUNT_MODE", "None"),
+      includeFilterMode: env("PROJECTION_INCLUDE_FILTER_MODE", "Full"),
+    }),
+    ZipSiblingCollectionSelections: zipSibling,
   };
+  return query;
 }
 
 /**
@@ -113,52 +104,36 @@ export function computedCollectionParallelQuery({ start = 0, amount = 200 } = {}
   const zipSibling =
     zipRaw === "false" ? false : zipRaw === "null" ? null : true;
 
-  return {
-    Options: {
-      ...buildOptions({
-        totalCountMode: env("COMPUTED_TOTAL_COUNT_MODE", "None"),
-        includeFilterMode: env("COMPUTED_INCLUDE_FILTER_MODE", "Full"),
-      }),
-      ZipSiblingCollectionSelections: zipSibling,
-    },
-    Start: start,
-    Amount: amount,
-    Keys: [],
-    whereClause: null,
-    Include: [],
-    Select: ["contactaddresses.id"],
-    ComputedFields: [{ Name: name, Template: template }],
-    SortBy: [
-      { PropertyName: "LastName", Direction: "Asc", Priority: 0 },
-      { PropertyName: "FirstName", Direction: "Asc", Priority: 1 },
-    ],
+  const query = buildComputedCollectionParallelQuery({
+    start,
+    amount,
+    name,
+    template,
+    zipSiblingCollectionSelections: zipSibling,
+  });
+  query.Options = {
+    ...buildOptions({
+      totalCountMode: env("COMPUTED_TOTAL_COUNT_MODE", "None"),
+      includeFilterMode: env("COMPUTED_INCLUDE_FILTER_MODE", "Full"),
+    }),
+    ZipSiblingCollectionSelections: zipSibling,
   };
+  return query;
 }
 
 /** Scalar-row computed (no collection parallel path). */
 export function computedScalarTemplateQuery({ start = 0, amount = 200 } = {}) {
-  return {
-    Options: buildOptions({
-      totalCountMode: env("COMPUTED_TOTAL_COUNT_MODE", "None"),
-      includeFilterMode: env("COMPUTED_INCLUDE_FILTER_MODE", "Full"),
-    }),
-    Start: start,
-    Amount: amount,
-    Keys: [],
-    whereClause: null,
-    Include: [],
-    Select: ["FirstName", "LastName"],
-    ComputedFields: [
-      {
-        Name: env("COMPUTED_SCALAR_NAME", "fullName"),
-        Template: env("COMPUTED_SCALAR_TEMPLATE", "{FirstName} {LastName}"),
-      },
-    ],
-    SortBy: [
-      { PropertyName: "LastName", Direction: "Asc", Priority: 0 },
-      { PropertyName: "FirstName", Direction: "Asc", Priority: 1 },
-    ],
-  };
+  const query = buildComputedScalarTemplateQuery({
+    start,
+    amount,
+    name: env("COMPUTED_SCALAR_NAME", "fullName"),
+    template: env("COMPUTED_SCALAR_TEMPLATE", "{FirstName} {LastName}"),
+  });
+  query.Options = buildOptions({
+    totalCountMode: env("COMPUTED_TOTAL_COUNT_MODE", "None"),
+    includeFilterMode: env("COMPUTED_INCLUDE_FILTER_MODE", "Full"),
+  });
+  return query;
 }
 
 export function projectionSlowMs(kind) {

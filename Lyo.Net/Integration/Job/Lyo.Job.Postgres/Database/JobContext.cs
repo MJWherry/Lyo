@@ -40,7 +40,7 @@ public partial class JobContext : DbContext
             entity.ToTable("job_definition");
             entity.HasIndex(e => e.Name, "ix_job_definition_name");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
             entity.Property(e => e.Type).HasMaxLength(25).HasColumnName("type");
@@ -83,7 +83,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.OtherJobDefinitionId, "ix_job_parallel_restriction_other_job_definition_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.BaseJobDefinitionId).HasColumnName("base_job_definition_id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
             entity.Property(e => e.OtherJobDefinitionId).HasColumnName("other_job_definition_id");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
@@ -108,7 +108,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.Key, "ix_job_parameter_key");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.AllowMultiple).HasDefaultValue(false).HasColumnName("allow_multiple");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
@@ -198,7 +198,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobRunId, "ix_job_run_parameter_job_run_id");
             entity.HasIndex(e => e.Key, "ix_job_run_parameter_key");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
@@ -234,7 +234,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobDefinitionId, "ix_job_schedule_job_definition_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.EndTime).HasMaxLength(8).HasColumnName("end_time");
             entity.Property(e => e.IntervalMinutes).HasColumnName("interval_minutes");
@@ -259,7 +259,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobScheduleId, "ix_job_schedule_parameter_job_schedule_id");
             entity.HasIndex(e => e.Key, "ix_job_schedule_parameter_key");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
             entity.Property(e => e.JobScheduleId).HasColumnName("job_schedule_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
@@ -281,7 +281,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.TriggerJobResultKey, "ix_job_trigger_trigger_job_result_key");
             entity.HasIndex(e => e.TriggersJobDefinitionId, "ix_job_trigger_triggers_job_definition_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
             entity.Property(e => e.TriggerComparator).HasMaxLength(20).HasColumnName("trigger_comparator");
@@ -309,7 +309,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobTriggerId, "ix_job_trigger_parameter_job_trigger_id");
             entity.HasIndex(e => e.Key, "ix_job_trigger_parameter_key");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
             entity.Property(e => e.JobTriggerId).HasColumnName("job_trigger_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");

@@ -1,9 +1,9 @@
 import { group, sleep } from "k6";
 import { postQuery } from "../lib/client.js";
-import { toFloat, toInt } from "../lib/env.js";
+import { queryProjectUrl, toFloat, toInt } from "../lib/env.js";
 import { scenarioDuration } from "../lib/metrics.js";
 import { spikeOptions } from "../lib/profiles.js";
-import { selectProjectionQuery } from "../lib/queryFactory.js";
+import { selectProjectionQuery } from "../lib/projectionQueries.js";
 
 export const options = spikeOptions({
   tags: { suite: "framework-person", profile: "spike", test: "select-fields" },
@@ -18,6 +18,7 @@ export default function () {
 
   group("person_spike_select_fields", () => {
     postQuery({
+      url: queryProjectUrl(),
       name: "select_fields_spike",
       slowMs: toInt("SELECT_SLOW_MS", 1800),
       body: selectProjectionQuery({ start, amount }),

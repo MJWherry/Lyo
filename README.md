@@ -172,7 +172,7 @@ top-level area.
 |-------|------|-------------|------------------|
 | **Compression** ([summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)) | 2026-06-14 | .NET 10.0.9, Linux Mint, Core Ultra 7 155U | LZ4 fastest compress @ 1 MB+ (**~117 µs**); Zstd fastest large decompress (**~13 ms @ 100 MB**); Zstd streaming compress **~29×** GZip @ 100 MB, **~20×** @ 1 GB |
 | **Encryption** ([summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)) | 2026-06-14 | .NET 10.0.9, Linux Mint, Core Ultra 7 155U (AES-NI) | AES-GCM **667 µs / 621 µs** @ 1 MB; ChaCha **920 / 899 µs**; XChaCha **2.5 / 2.3 ms**; CCM **12 ms**; SIV **17 ms**; stream **~873 MB/s** @ 100 MB; hybrid **692 µs** enc @ 1 MB; RSA dec 1 MB **2.5 s** |
-| **K6 Query API** ([analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)) | 2026-04-22 | TestApi + PostgreSQL + k6 on same laptop | Mixed queries **p95 ~23 ms**; spike select **p95 ~8.5 ms**; subquery **p95 ~17.5 ms**; 2 h soak **310k+ requests**, **99.999%** checks |
+| **K6 Query API** ([analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)) | 2026-06-23 | TestApi + PostgreSQL + k6 on same laptop | Symmetric matrix (8 suites): QueryProject stays fast (**~22–24 ms p95** load/spike/soak, **~216 ms p95** stress); Query endpoint shows heavier tails in stress/spike; status/shape checks remain **100%** |
 
 ---
 

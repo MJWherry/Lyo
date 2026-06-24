@@ -1,0 +1,58 @@
+import { env, toFloat, toInt, variedAmount, variedStart } from "./env.js";
+
+export function loadMatrixConfig({ endpointKind, profile }) {
+  const baseUrl = env("BASE_URL", "http://localhost:5251");
+  const token = env("TOKEN", "");
+
+  const requestedCases = env("MATRIX_CASES", "all")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  // Fair-by-default matrix pagination: both endpoints use identical ranges unless explicitly overridden.
+  const amountMin = toInt(
+    "MATRIX_AMOUNT_MIN",
+    toInt("QUERY_AMOUNT_MIN", toInt("QUERYPROJECT_AMOUNT_MIN", 200))
+  );
+  const amountMax = toInt(
+    "MATRIX_AMOUNT_MAX",
+    toInt("QUERY_AMOUNT_MAX", toInt("QUERYPROJECT_AMOUNT_MAX", 300))
+  );
+  const startMax = toInt(
+    "MATRIX_START_MAX",
+    toInt("QUERY_START_MAX", toInt("QUERYPROJECT_START_MAX", 1000))
+  );
+
+  const defaultSleep = profile === "soak" ? 0.15 : profile === "spike" ? 0.02 : 0.08;
+  const sleepSeconds = toFloat("MATRIX_SLEEP_SECONDS", defaultSleep);
+
+  return {
+    endpointKind,
+    profile,
+    baseUrl,
+    token,
+    queryPath: env("ENDPOINT_PATH", "/person/query"),
+    queryProjectPath: env("QUERY_PROJECT_PATH", env("QUERY_SELECT_PATH", "/person/QueryProject")),
+    requestedCases,
+    amountMin,
+    amountMax,
+    startMax,
+    sleepSeconds,
+  };
+}
+
+export function resolveCaseIdsForEndpoint(endpointKind, requestedCases, fallbackCaseIds) {
+  if (!requestedCases || requestedCases.length === 0 || requestedCases.includes("all")) {
+    return fallbackCaseIds;
+  }
+
+  const requested = new Set(requestedCases);
+  return fallbackCaseIds.filter((caseId) => requested.has(caseId));
+}
+
+export function nextStartAmount(config, iter, vu) {
+  return {
+    start: variedStart(config.startMax, iter, vu),
+    amount: variedAmount(config.amountMin, config.amountMax, iter, vu),
+  };
+}

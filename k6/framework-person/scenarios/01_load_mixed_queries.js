@@ -1,13 +1,13 @@
 import { group, sleep } from "k6";
 import { postQuery } from "../lib/client.js";
-import { toFloat, toInt, variedAmount, variedStart } from "../lib/env.js";
+import { queryProjectUrl, toFloat, toInt, variedAmount, variedStart } from "../lib/env.js";
 import { scenarioDuration } from "../lib/metrics.js";
 import { loadOptions } from "../lib/profiles.js";
+import { selectProjectionQuery } from "../lib/projectionQueries.js";
 import {
   baselineQuery,
   complexWhereClause,
   filterSortQuery,
-  selectProjectionQuery,
   twoPhaseSubQuery,
 } from "../lib/queryFactory.js";
 
@@ -47,6 +47,7 @@ export default function () {
       });
     } else if (selector === 3) {
       postQuery({
+        url: queryProjectUrl(),
         name: "select_projection",
         slowMs: toInt("SELECT_SLOW_MS", 1800),
         body: selectProjectionQuery({ start, amount }),
