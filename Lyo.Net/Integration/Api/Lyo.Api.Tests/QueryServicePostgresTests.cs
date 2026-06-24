@@ -84,6 +84,49 @@ public class QueryServicePostgresTests
     }
 
     [Fact]
+    public async Task Query_WithTooManyIncludes_ReturnsFailure()
+    {
+        var defId = await _fixture.SeedJobDefinitionAsync("TooManyIncludes");
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new QueryReq {
+            Start = 0,
+            Amount = 10,
+            Keys = [[defId]],
+            Include = Enumerable.Range(0, 17).Select(static i => $"JobRuns{i}").ToList()
+        };
+
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+        Assert.Contains(
+            result.Error!.Errors,
+            e => e.Description.Contains("Include path count", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task QueryProjected_WithComputedTemplateOverLimit_ReturnsFailure()
+    {
+        var defId = await _fixture.SeedJobDefinitionAsync("ComputedTemplateLimit");
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Name"],
+            ComputedFields = [new("TooLong", new string('x', 2049))],
+            WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+        Assert.Contains(
+            result.Error!.Errors,
+            e => e.Description.Contains("template length", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task QueryProjected_WithCollectionNavigationPath_ReturnsProjectedNestedValues()
     {
         var suffix = Guid.NewGuid().ToString("N")[..8];

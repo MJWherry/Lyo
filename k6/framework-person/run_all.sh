@@ -7,6 +7,7 @@ OUT_DIR="${OUT_DIR:-$ROOT_DIR/results/$(date +%Y%m%d-%H%M%S)}"
 K6_BIN="${K6_BIN:-k6}"
 MODE="${MODE:-full}"
 CONTINUE_ON_FAILURE="${CONTINUE_ON_FAILURE:-false}"
+TEST_FILTER="${TEST_FILTER:-}"
 
 BASE_URL="${BASE_URL:-http://localhost:5251}"
 ENDPOINT_PATH="${ENDPOINT_PATH:-/person/query}"
@@ -26,10 +27,115 @@ declare -a MATRIX_TESTS=(
   "queryproject_soak.js"
 )
 
+declare -a FILTER_KEYWORDS=()
+declare -a SELECTED_TESTS=()
+
+print_filter_help() {
+  cat <<'EOF'
+Usage: ./run_all.sh [keyword ...]
+
+Keywords can be scenario names (substring match) or group aliases:
+  - load | stress | spike | soak
+  - query | queryproject
+  - nonsoak (alias: no-soak, nosoak)
+  - all (or matrix)
+
+Examples:
+  ./run_all.sh spike
+  ./run_all.sh query spike
+  TEST_FILTER="query_spike,queryproject_load" ./run_all.sh
+EOF
+}
+
+normalize_keyword() {
+  local keyword="$1"
+  keyword="${keyword//[[:space:]]/}"
+  echo "${keyword,,}"
+}
+
+matches_keyword() {
+  local test_name="$1"
+  local test_file="$2"
+  local keyword="$3"
+
+  case "$keyword" in
+    all|matrix)
+      return 0
+      ;;
+    load|stress|spike|soak)
+      [[ "$test_name" == *"_$keyword" ]] && return 0
+      ;;
+    query)
+      [[ "$test_name" == query_* ]] && return 0
+      ;;
+    queryproject|projected|projection)
+      [[ "$test_name" == queryproject_* ]] && return 0
+      ;;
+    nonsoak|no-soak|nosoak)
+      [[ "$test_name" != *_soak ]] && return 0
+      ;;
+  esac
+
+  [[ "$test_name" == *"$keyword"* || "$test_file" == *"$keyword"* ]]
+}
+
+if [[ -n "$TEST_FILTER" ]]; then
+  IFS=',' read -r -a env_filters <<< "$TEST_FILTER"
+  for filter in "${env_filters[@]}"; do
+    normalized="$(normalize_keyword "$filter")"
+    [[ -n "$normalized" ]] && FILTER_KEYWORDS+=("$normalized")
+  done
+fi
+
+if [[ "$#" -gt 0 ]]; then
+  for arg in "$@"; do
+    if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+      print_filter_help
+      exit 0
+    fi
+    IFS=',' read -r -a cli_filters <<< "$arg"
+    for filter in "${cli_filters[@]}"; do
+      normalized="$(normalize_keyword "$filter")"
+      [[ -n "$normalized" ]] && FILTER_KEYWORDS+=("$normalized")
+    done
+  done
+fi
+
+for test_file in "${MATRIX_TESTS[@]}"; do
+  if [[ "${#FILTER_KEYWORDS[@]}" -eq 0 ]]; then
+    SELECTED_TESTS+=("$test_file")
+    continue
+  fi
+
+  test_name="${test_file%.js}"
+  include_test="false"
+  for keyword in "${FILTER_KEYWORDS[@]}"; do
+    if matches_keyword "$test_name" "$test_file" "$keyword"; then
+      include_test="true"
+      break
+    fi
+  done
+
+  if [[ "$include_test" == "true" ]]; then
+    SELECTED_TESTS+=("$test_file")
+  fi
+done
+
+if [[ "${#SELECTED_TESTS[@]}" -eq 0 ]]; then
+  echo "No tests matched filter(s): ${FILTER_KEYWORDS[*]}"
+  echo "Available tests: ${MATRIX_TESTS[*]}"
+  echo "Supported groups: load stress spike soak query queryproject nonsoak all"
+  exit 1
+fi
+
 echo "Running framework-person matrix suite in: $ROOT_DIR"
 echo "Results directory: $OUT_DIR"
 echo "Mode: $MODE"
 echo "Continue on failure: $CONTINUE_ON_FAILURE"
+if [[ "${#FILTER_KEYWORDS[@]}" -gt 0 ]]; then
+  echo "Filter keywords: ${FILTER_KEYWORDS[*]}"
+fi
+echo "Selected tests: ${SELECTED_TESTS[*]}"
 echo
 
 echo "Building shared packages..."
@@ -38,7 +144,7 @@ echo "Building shared packages..."
 echo "Shared packages built."
 echo
 
-for test_file in "${MATRIX_TESTS[@]}"; do
+for test_file in "${SELECTED_TESTS[@]}"; do
   test_name="${test_file%.js}"
   summary_file="$OUT_DIR/${test_name}.summary.json"
   log_file="$OUT_DIR/${test_name}.log"

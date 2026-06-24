@@ -311,6 +311,16 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
 
     public bool EnableComputedFields { get; private set; }
 
+    public int? MaxIncludePathCount { get; private set; }
+
+    public int? MaxKeySetCount { get; private set; }
+
+    public int? MaxSelectFieldCount { get; private set; }
+
+    public int? MaxComputedFieldCount { get; private set; }
+
+    public int? MaxComputedTemplateLength { get; private set; }
+
     public QueryEndpointConfigBuilder<TDbEntity> Auth(EndpointAuth auth)
     {
         AuthPolicy = auth;
@@ -321,6 +331,36 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
     public QueryEndpointConfigBuilder<TDbEntity> ComputedFields(bool enable = true)
     {
         EnableComputedFields = enable;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxIncludes(int maxIncludes)
+    {
+        MaxIncludePathCount = maxIncludes;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxKeySets(int maxKeySets)
+    {
+        MaxKeySetCount = maxKeySets;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxSelectFields(int maxSelectFields)
+    {
+        MaxSelectFieldCount = maxSelectFields;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxComputedFields(int maxComputedFields)
+    {
+        MaxComputedFieldCount = maxComputedFields;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxComputedTemplateChars(int maxComputedTemplateLength)
+    {
+        MaxComputedTemplateLength = maxComputedTemplateLength;
         return this;
     }
 }

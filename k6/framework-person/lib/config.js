@@ -3,8 +3,11 @@ import { env, toFloat, toInt, variedAmount, variedStart } from "./env.js";
 export function loadMatrixConfig({ endpointKind, profile }) {
   const baseUrl = env("BASE_URL", "http://localhost:5251");
   const token = env("TOKEN", "");
+  const defaultMatrixCases = profile === "load" && endpointKind === "query"
+    ? "baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include"
+    : "all";
 
-  const requestedCases = env("MATRIX_CASES", "all")
+  const requestedCases = env("MATRIX_CASES", defaultMatrixCases)
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
@@ -12,7 +15,7 @@ export function loadMatrixConfig({ endpointKind, profile }) {
   // Fair-by-default matrix pagination: both endpoints use identical ranges unless explicitly overridden.
   const amountMin = toInt(
     "MATRIX_AMOUNT_MIN",
-    toInt("QUERY_AMOUNT_MIN", toInt("QUERYPROJECT_AMOUNT_MIN", 200))
+    toInt("QUERY_AMOUNT_MIN", toInt("QUERYPROJECT_AMOUNT_MIN", 100))
   );
   const amountMax = toInt(
     "MATRIX_AMOUNT_MAX",

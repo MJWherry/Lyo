@@ -43,6 +43,21 @@ public sealed class QueryOptions
     /// </summary>
     public bool CacheQueryResultsAsUtf8Payload { get; init; }
 
+    /// <summary>Maximum include path count allowed in query request bodies.</summary>
+    public int MaxIncludePathCount { get; init; } = 16;
+
+    /// <summary>Maximum key-set count allowed in query request bodies.</summary>
+    public int MaxKeySetCount { get; init; } = 256;
+
+    /// <summary>Maximum select-field count allowed in QueryProject requests.</summary>
+    public int MaxSelectFieldCount { get; init; } = 256;
+
+    /// <summary>Maximum computed-field count allowed in QueryProject requests.</summary>
+    public int MaxComputedFieldCount { get; init; } = 32;
+
+    /// <summary>Maximum computed-template text length per computed field in QueryProject requests.</summary>
+    public int MaxComputedTemplateLength { get; init; } = 2048;
+
     public override string ToString()
-        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} AllowSelectWildcards={AllowSelectWildcards} CacheQueryUtf8Payload={CacheQueryResultsAsUtf8Payload}";
+        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} AllowSelectWildcards={AllowSelectWildcards} CacheQueryUtf8Payload={CacheQueryResultsAsUtf8Payload} MaxIncludes={MaxIncludePathCount} MaxKeySets={MaxKeySetCount} MaxSelectFields={MaxSelectFieldCount} MaxComputedFields={MaxComputedFieldCount} MaxComputedTemplateLength={MaxComputedTemplateLength}";
 }

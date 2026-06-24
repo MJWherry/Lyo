@@ -1,5 +1,6 @@
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Api.Tests;
 
@@ -78,5 +79,17 @@ public sealed class QueryCacheTagBuilderTests
     {
         var tags = QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<QueryCacheTagBuilderTests>();
         Assert.Equal(new[] { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)) }, tags);
+    }
+
+    [Fact]
+    public void BuildProjectionCacheKey_LongComputedTemplate_UsesHashedSegment()
+    {
+        var request = new ProjectionQueryReq {
+            Select = ["Name"],
+            ComputedFields = [new("Label", new string('x', 3000))]
+        };
+
+        var key = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(request);
+        Assert.Contains(":computed=sha256:", key, StringComparison.Ordinal);
     }
 }

@@ -11,6 +11,9 @@ namespace Lyo.Api.Services.Crud.Read;
 /// <summary>Builds EF and CLR key expressions for ID-first paging and batch hydration. Shared by QueryService.</summary>
 public static class QueryKeyExpressionBuilder
 {
+    private const int MaxEfKeySelectorCacheEntries = 2048;
+    private const int MaxEfKeyInPredicateCacheEntries = 2048;
+    private const int MaxClrKeyAccessorCacheEntries = 2048;
     private static readonly ConcurrentDictionary<string, object> EfKeySelectorCache = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, object> EfKeyInPredicateCache = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, object> ClrKeyAccessorCache = new(StringComparer.Ordinal);
@@ -21,6 +24,7 @@ public static class QueryKeyExpressionBuilder
         where TDbModel : class
     {
         var cacheKey = $"{typeof(TDbModel).FullName}\x1e{typeof(TKey).FullName}\x1e{keyName}";
+        TrimIfNeeded(EfKeySelectorCache, MaxEfKeySelectorCacheEntries);
         return (Expression<Func<TDbModel, TKey>>)EfKeySelectorCache.GetOrAdd(cacheKey, _ => CreateEfKeySelector<TDbModel, TKey>(keyName));
     }
 
@@ -37,6 +41,7 @@ public static class QueryKeyExpressionBuilder
         where TDbModel : class where TKey : notnull
     {
         var cacheKey = BuildEfKeyInPredicateCacheKey<TDbModel, TKey>(keyName, keys);
+        TrimIfNeeded(EfKeyInPredicateCache, MaxEfKeyInPredicateCacheEntries);
         return (Expression<Func<TDbModel, bool>>)EfKeyInPredicateCache.GetOrAdd(cacheKey, _ => CreateEfKeyInPredicate<TDbModel, TKey>(keyName, keys));
     }
 
@@ -75,6 +80,7 @@ public static class QueryKeyExpressionBuilder
         where TDbModel : class where TKey : notnull
     {
         var cacheKey = $"{typeof(TDbModel).FullName}\x1e{typeof(TKey).FullName}\x1e{keyName}";
+        TrimIfNeeded(ClrKeyAccessorCache, MaxClrKeyAccessorCacheEntries);
         return (Func<TDbModel, TKey>)ClrKeyAccessorCache.GetOrAdd(cacheKey, _ => CreateClrKeyAccessor<TDbModel, TKey>(keyName));
     }
 
@@ -84,5 +90,14 @@ public static class QueryKeyExpressionBuilder
         var property = typeof(TDbModel).GetProperty(keyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
         OperationHelpers.ThrowIfNull(property, $"Primary key property '{keyName}' was not found on '{typeof(TDbModel).Name}'.");
         return entity => (TKey)property.GetValue(entity)!;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TrimIfNeeded(ConcurrentDictionary<string, object> cache, int maxEntries)
+    {
+        if (cache.Count < maxEntries)
+            return;
+
+        cache.Clear();
     }
 }

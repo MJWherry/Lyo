@@ -4,9 +4,9 @@
 
 Production-matrix k6 review for the Lyo person query endpoints using the symmetric suite layout.
 
-**Merged runs analyzed:** query from `k6/results/prod-matrix-20260623-211829/` + QueryProject from `k6/results/prod-matrix-20260623-163003/`  
-**Date:** June 23, 2026  
-**Run type:** Combined single-instance snapshot (query current run + QueryProject prior full run)
+**Merged runs analyzed:** latest load/stress/spike from `k6/framework-person/results/prod-like-20260624-135401/` + soak baseline from `k6/results/prod-matrix-20260623-211829/` (Query) and `k6/results/prod-matrix-20260623-163003/` (QueryProject)  
+**Date:** June 24, 2026  
+**Run type:** Mixed single-instance snapshot (new 6-suite refresh + prior soak baselines)
 
 ---
 
@@ -49,7 +49,7 @@ Approximate row counts used for this benchmark cycle:
 | `/person/query` | ✅ | ✅ | ✅ | ✅ |
 | `/person/QueryProject` | ✅ | ✅ | ✅ | ✅ |
 
-Query source run: `prod-matrix-20260623-211829`; QueryProject source run: `prod-matrix-20260623-163003`.
+Load/stress/spike source run: `prod-like-20260624-135401`; soak source runs remain `prod-matrix-20260623-211829` (Query) and `prod-matrix-20260623-163003` (QueryProject).
 
 ---
 
@@ -57,13 +57,13 @@ Query source run: `prod-matrix-20260623-211829`; QueryProject source run: `prod-
 
 | Suite | Avg | p95 | p99 | Throughput | Requests | Checks pass | Dropped iterations | Source run |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `query_load` | 25.1 ms | 85.2 ms | 112.5 ms | 20.00 req/s | 3,601 | 100.00% | 0 | `20260623-211829` |
-| `query_stress` | 244.4 ms | 966.9 ms | 1,532.7 ms | 65.67 req/s | 31,521 | 100.00% | 0 | `20260623-211829` |
-| `query_spike` | 402.0 ms | 1,938.9 ms | 3,087.4 ms | 50.92 req/s | 6,115 | 99.86% | 635 | `20260623-211829` |
+| `query_load` | 56.4 ms | 209.7 ms | 392.0 ms | 7.00 req/s | 1,260 | 100.00% | 0 | `20260624-135401` |
+| `query_stress` | 1,765.0 ms | 7,023.7 ms | 10,473.6 ms | 14.44 req/s | 6,931 | 90.92% | 0 | `20260624-135401` |
+| `query_spike` | 4,799.1 ms | 17,596.5 ms | 25,866.1 ms | 14.97 req/s | 1,881 | 85.66% | 4,868 | `20260624-135401` |
 | `query_soak` | 44.4 ms | 166.5 ms | 251.9 ms | 46.69 req/s | 336,166 | 100.00% | 0 | `20260623-211829` |
-| `queryproject_load` | 10.5 ms | 22.4 ms | 28.0 ms | 19.99 req/s | 3,600 | 100.00% | 0 | `20260623-163003` |
-| `queryproject_stress` | 63.6 ms | 216.4 ms | 252.7 ms | 178.08 req/s | 85,494 | 100.00% | 0 | `20260623-163003` |
-| `queryproject_spike` | 10.0 ms | 22.4 ms | 28.9 ms | 56.23 req/s | 6,749 | 100.00% | 1 | `20260623-163003` |
+| `queryproject_load` | 55.5 ms | 153.4 ms | 231.8 ms | 7.00 req/s | 1,260 | 100.00% | 0 | `20260624-135401` |
+| `queryproject_stress` | 1,477.0 ms | 5,225.6 ms | 7,866.5 ms | 17.11 req/s | 8,215 | 91.65% | 0 | `20260624-135401` |
+| `queryproject_spike` | 4,066.4 ms | 12,482.5 ms | 18,791.5 ms | 17.60 req/s | 2,146 | 82.53% | 4,603 | `20260624-135401` |
 | `queryproject_soak` | 10.1 ms | 24.4 ms | 32.3 ms | 61.09 req/s | 439,848 | 100.00% | 0 | `20260623-163003` |
 
 ---
@@ -74,8 +74,8 @@ Weighted by request count within each endpoint family.
 
 | Endpoint family | Total requests | Checks pass | Status pass | Shape pass | Latency pass |
 |---|---:|---:|---:|---:|---:|
-| `/person/query` (current run) | 377,403 | 99.998% | 100.00% | 100.00% | 99.99% |
-| `/person/QueryProject` (prior full run) | 535,691 | 100.00% | 100.00% | 100.00% | 100.00% |
+| `/person/query` (mixed snapshot) | 346,238 | 99.74% | 100.00% | 100.00% | 99.22% |
+| `/person/QueryProject` (mixed snapshot) | 451,469 | 99.77% | 100.00% | 100.00% | 99.30% |
 
 ---
 
@@ -85,28 +85,28 @@ Weighted by request count within each endpoint family.
 
 | Endpoint | p95 | Throughput | Check pass |
 |---|---:|---:|---:|
-| `/person/query` | 85.2 ms | 20.00 req/s | 100.00% |
-| `/person/QueryProject` | 22.4 ms | 19.99 req/s | 100.00% |
+| `/person/query` | 209.7 ms | 7.00 req/s | 100.00% |
+| `/person/QueryProject` | 153.4 ms | 7.00 req/s | 100.00% |
 
-**Review:** Load performance is strong on both endpoint families, with QueryProject showing tighter p95.
+**Review:** Load remains strong on both endpoint families in the latest rerun, with QueryProject retaining the tighter p95.
 
 ### Stress
 
 | Endpoint | p95 | Throughput | Check pass |
 |---|---:|---:|---:|
-| `/person/query` | 966.9 ms | 65.67 req/s | 100.00% |
-| `/person/QueryProject` | 216.4 ms | 178.08 req/s | 100.00% |
+| `/person/query` | 7,023.7 ms | 14.44 req/s | 90.92% |
+| `/person/QueryProject` | 5,225.6 ms | 17.11 req/s | 91.65% |
 
-**Review:** Stress remains acceptable for Query and excellent for QueryProject with substantial throughput headroom.
+**Review:** Stress is still the main bottleneck in this snapshot, with high tail latency and check misses on both endpoints.
 
 ### Spike
 
 | Endpoint | p95 | Throughput | Check pass | Dropped iters |
 |---|---:|---:|---:|---:|
-| `/person/query` | 1,938.9 ms | 50.92 req/s | 99.86% | 635 |
-| `/person/QueryProject` | 22.4 ms | 56.23 req/s | 100.00% | 1 |
+| `/person/query` | 17,596.5 ms | 14.97 req/s | 85.66% | 4,868 |
+| `/person/QueryProject` | 12,482.5 ms | 17.60 req/s | 82.53% | 4,603 |
 
-**Review:** Spike is the only profile needing improvement on full-query, while QueryProject remains stable under burst.
+**Review:** Spike remains the weakest profile for both endpoints, with heavy tail latency and substantial dropped-iteration pressure.
 
 ### Soak
 
@@ -125,15 +125,15 @@ Typical internal API SLO bands are shown for orientation.
 
 | Area | Typical business target (p95) | Latest | Result |
 |---|---:|---:|---|
-| QueryProject load/spike/soak | 100–300 ms | 22–24 ms | Exceeds target |
-| QueryProject stress | 300–700 ms | 216 ms | Meets comfortably |
-| Query load | 300–700 ms | 85 ms | Exceeds target |
-| Query stress | 500–1,000 ms | 967 ms | Meets (near upper bound) |
-| Query spike | 700–1,500 ms | 1,939 ms | Miss |
+| QueryProject load/spike/soak | 100–300 ms | 24–12,482 ms | Miss |
+| QueryProject stress | 300–700 ms | 5,226 ms | Miss |
+| Query load | 300–700 ms | 210 ms | Exceeds target |
+| Query stress | 500–1,000 ms | 7,024 ms | Miss |
+| Query spike | 700–1,500 ms | 17,597 ms | Miss |
 | Query soak | 500–1,000 ms | 167 ms | Exceeds target |
 | Status + response-shape correctness | 99.9–100% | 100% | Meets |
 
-**Interpretation:** In this combined single-instance snapshot, QueryProject is business-grade across profiles and full-query is strong except for spike headroom.
+**Interpretation:** In this mixed snapshot, load and correctness are strong, but stress and spike remain well outside business latency targets on both endpoint families.
 
 ---
 
@@ -141,27 +141,27 @@ Typical internal API SLO bands are shown for orientation.
 
 | Category | Grade | Rationale |
 |---|---|---|
-| Query functional correctness (status/shape) | **A** | 100% status and shape checks across 377k+ query requests |
-| Query load | **A** | Very low p95 and clean checks |
-| Query stress | **B+** | Meets common p95 target band, but close to upper bound |
-| Query spike | **C** | Large improvement, but p95 still above spike target and dropped iterations remain |
+| Query functional correctness (status/shape) | **A** | 100% status and shape checks across mixed snapshot requests |
+| Query load | **A** | Strong p95 with perfect checks in latest rerun |
+| Query stress | **D+** | High p95 and check failures indicate ongoing bottleneck |
+| Query spike | **F** | Very high p95 and high dropped iterations in burst profile |
 | Query soak | **A** | Stable long-run behavior with strong p95 and zero check failures |
-| QueryProject path | **A** | Consistent low p95, high throughput, and perfect functional checks across merged source run |
+| QueryProject path | **C-** | Load remains healthy, but stress/spike tails and dropped iterations remain high |
 
 ---
 
 ## Key Caveats
 
 1. This is a **single-instance benchmark** (API + DB + Redis + k6 + dev tooling on one machine), so production-separated infra should improve absolute numbers.
-2. This document merges two run timestamps (query and QueryProject), so absolute cross-endpoint fairness is directional rather than strict apples-to-apples.
-3. Spike remains the limiting profile for `/person/query`, visible in both tail latency and dropped iterations.
+2. This document merges multiple timestamps and profile subsets (new load/stress/spike + prior soak), so strict cross-profile fairness is directional rather than apples-to-apples.
+3. Stress and spike are the limiting profiles for both endpoints in the latest rerun, visible in tail latency and dropped iterations.
 4. Throughput under `constant-arrival-rate` can still be capped by available VUs and burst tails.
 
 ---
 
 ## Recommended Next Steps
 
-1. Rerun the full 8-suite matrix to re-establish a complete fair Query vs QueryProject snapshot.
-2. Tune query spike profile (arrival stages, maxVUs, include-heavy case mix) to reduce dropped iterations.
+1. Rerun soak to complete a fully fresh 8-suite snapshot from one timestamp.
+2. Prioritize stress/spike tuning (arrival stages, maxVUs, case-mix) to reduce dropped iterations and p95 tails.
 3. Keep using standardized pagination ranges across Query and QueryProject for fairness.
 4. Re-validate in an isolated environment (split load generator from API/DB/cache) before final SLO sign-off.

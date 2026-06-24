@@ -4,6 +4,7 @@ using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
@@ -69,7 +70,7 @@ public class QueryHistoryService<TContext>(
             //    queryable = dbSet.TemporalBetween(query.FromDateTime!.Value, query.ToDateTime!.Value);
             queryable = filterService.ApplyWhereClause(queryable, query.WhereClause);
             queryable = filterService.ApplyOrdering(queryable, query.SortBy, defaultOrder, defaultSortDirection);
-            var total = await queryable.CountAsync(ct);
+            var total = await QueryRootCountHelper.CountDistinctRootEntitiesAsync(context, queryable, ct);
             var pageSize = query.Amount ??= queryOptions.DefaultPageSize;
             var resultsQuery = queryable.Skip(query.Start ?? 0).Take(pageSize);
             if (queryOptions.UseNoTrackingWithIdentityResolution)

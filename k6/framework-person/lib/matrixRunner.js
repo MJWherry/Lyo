@@ -1,9 +1,11 @@
 import { group, sleep } from "k6";
+import { toBool } from "./env.js";
 import { createMatrixCaseRunner } from "./client.js";
 import { getCaseDefinitions, getEndpointCaseIds, resolveCaseSlowMs } from "./cases.js";
 import { loadMatrixConfig, nextStartAmount, resolveCaseIdsForEndpoint } from "./config.js";
 import { scenarioDuration } from "./metrics.js";
 import { matrixOptions } from "./profiles.js";
+import { createSeededRng, requestSeed, resolveCaseWeight, weightedPick } from "./workloadShape.js";
 
 export function createEndpointProfileScenario({ endpointKind, profile, testTag }) {
   const config = loadMatrixConfig({ endpointKind, profile });
@@ -16,6 +18,12 @@ export function createEndpointProfileScenario({ endpointKind, profile, testTag }
   const caseDefs = getCaseDefinitions(endpointKind, caseIds).map((caseDef) => ({
     ...caseDef,
     slowMs: resolveCaseSlowMs(caseDef),
+    caseWeight: resolveCaseWeight({
+      endpointKind,
+      profile,
+      caseId: caseDef.caseId,
+      fallback: 1,
+    }),
   }));
 
   if (caseDefs.length === 0) {
@@ -38,8 +46,22 @@ export function createEndpointProfileScenario({ endpointKind, profile, testTag }
     options,
     run() {
       const startedAt = Date.now();
-      const selector = (__ITER + __VU) % caseDefs.length;
-      const selectedCase = caseDefs[selector];
+      const useWeightedSelection = toBool("RANDOMIZE_CASE_SELECTION", true);
+      const selectedCase = useWeightedSelection
+        ? weightedPick(
+            caseDefs,
+            (c) => c.caseWeight ?? 1,
+            createSeededRng(
+              requestSeed({
+                namespace: "matrix-case-select",
+                endpointKind,
+                profile,
+                iter: __ITER,
+                vu: __VU,
+              })
+            )
+          ) || caseDefs[0]
+        : caseDefs[(__ITER + __VU) % caseDefs.length];
       const startAmount = nextStartAmount(config, __ITER, __VU);
 
       group(`matrix_${endpointKind}_${profile}`, () => {

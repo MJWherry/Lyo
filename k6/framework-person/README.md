@@ -111,6 +111,21 @@ Run everything:
 
 ```bash
 ./k6/framework-person/run_all.sh
+
+# Run specific scenarios by keyword (substring match)
+./k6/framework-person/run_all.sh query_spike queryproject_load
+
+# Run profile groups across both endpoints (matrix-style)
+./k6/framework-person/run_all.sh spike
+./k6/framework-person/run_all.sh load
+./k6/framework-person/run_all.sh stress
+
+# Combine groups/keywords
+./k6/framework-person/run_all.sh query spike
+./k6/framework-person/run_all.sh nonsoak
+
+# Equivalent via env var (comma-separated)
+TEST_FILTER="query_spike,queryproject_load" ./k6/framework-person/run_all.sh
 ```
 
 Smoke matrix mode:
@@ -129,10 +144,14 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - `SLEEP_SECONDS`
 - Matrix control:
   - `MODE` (`full` or `smoke`) in `run_all.sh`
-  - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites)
+  - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.
   - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
   - Fairness default: both `/person/query` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
   - `MATRIX_SLEEP_SECONDS` (global matrix iteration sleep override)
+  - `RANDOMIZE_CASE_SELECTION` (`true|false`, default `true`) weighted random case selection instead of strict round-robin
+  - `RANDOM_SEED` (integer, default `20260623`) deterministic replay seed for case/shape/sort generation
+  - `CASE_WEIGHT_<CASE_ID>` (e.g. `CASE_WEIGHT_PROJECTION_NESTED=2.0`) set case weights
+  - `CASE_WEIGHT_<ENDPOINT>_<PROFILE>_<CASE_ID>` (most specific override; e.g. `CASE_WEIGHT_QUERYPROJECT_SPIKE_PROJECTION_UNIFIED=3.0`)
 - Query behavior:
   - `TOTAL_COUNT_MODE` (`None`, `HasMore`, `Exact`) — default `None`. `HasMore` is the in-between: fetches one extra row to detect more pages (no `COUNT`). `Exact` runs an extra `COUNT(*)` and can roughly double query time.
   - `INCLUDE_FILTER_MODE` (`Full`, `MatchedOnly`)
@@ -140,14 +159,25 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - `SELECT_FIELDS` (comma separated projection field paths for `QueryProject`; use `SourceEntityType`, not `Source`)
   - `SOURCE_FILTER_VALUES` (comma-separated `SourceEntityType` values for filter scenarios; default both Endato PS + CE entity type names)
   - `AMOUNT`, `START`
+  - `RANDOMIZE_INCLUDES` / `QUERY_RANDOMIZE_INCLUDES` (`true|false`, defaults `true`) for query include branch randomization
+  - `QUERY_INCLUDE_ADDRESS_RATE`, `QUERY_INCLUDE_PHONE_RATE`, `QUERY_INCLUDE_EMAIL_RATE` (branch probabilities; defaults `0.75/0.35/0.30`)
+  - `RANDOMIZE_PROJECTION_FIELDS` / `QUERYPROJECT_RANDOMIZE_PROJECTION_FIELDS` (`true|false`, defaults `true`) for per-request `Select` generation
+  - `PROJECTION_FIELD_MIN`, `PROJECTION_FIELD_MAX` (default `2..6` projected fields)
+  - `PROJECTION_ROOT_POOL`, `PROJECTION_ADDRESS_POOL`, `PROJECTION_PHONE_POOL`, `PROJECTION_EMAIL_POOL` (CSV field pools)
+  - `QUERYPROJECT_ADDRESS_RATE`, `QUERYPROJECT_PHONE_RATE`, `QUERYPROJECT_EMAIL_RATE` (projection nav-branch probabilities; defaults align with query include rates)
+  - `RANDOMIZE_SORTS`, `QUERY_RANDOMIZE_SORTS`, `QUERYPROJECT_RANDOMIZE_SORTS` (`true|false`, defaults `true`)
+  - `QUERY_SORT_FIELDS`, `QUERYPROJECT_SORT_FIELDS` (CSV sort candidate fields)
+  - `SORT_KEYCOUNT_WEIGHTS` or endpoint-specific variants (`QUERY_SORT_KEYCOUNT_WEIGHTS`, `QUERYPROJECT_SORT_KEYCOUNT_WEIGHTS`) using `count:weight` CSV, e.g. `0:0.1,1:0.4,2:0.4,3:0.1`
+  - `SORT_DESC_RATE` / endpoint-specific variants (default `0.45`)
+  - `SORT_MIXED_DIRECTION_RATE` / endpoint-specific variants (default `0.35`)
 - Profile tuning:
-  - Load: `LOAD_RATE`, `LOAD_DURATION`, `LOAD_PREALLOCATED_VUS`, `LOAD_MAX_VUS`
+  - Load: `LOAD_RATE`, `LOAD_DURATION`, `LOAD_PREALLOCATED_VUS`, `LOAD_MAX_VUS` (defaults: `7`, `3m`, `6`, `12`)
   - Stress: `STRESS_START_VUS`, `STRESS_TARGET1`, `STRESS_TARGET2`, stage durations
   - Spike: `SPIKE_START_RATE`, `SPIKE_TARGET_RATE`, `SPIKE_MAX_VUS`
   - Soak: `SOAK_VUS`, `SOAK_DURATION`, `SOAK_HEAVY_EVERY`
 - Heavy include:
   - `BYPASS_CACHE=true|false`
-  - `HEAVY_AMOUNT`, `HEAVY_MIN_AMOUNT`, `HEAVY_MAX_AMOUNT`
+  - `HEAVY_AMOUNT`, `HEAVY_MIN_AMOUNT`, `HEAVY_MAX_AMOUNT` (defaults: `200`, `150`, `300`)
 
 ## Example runs
 
@@ -187,6 +217,8 @@ k6 run \
 ## Notes
 
 - Query paths use entity property names (e.g. `SourceEntityType`). Values are full `EntityRef` type names such as `Lyo.Endato.Postgres.Database.EndatoPsPersonEntity` (Person Search) and `Lyo.Endato.Postgres.Database.EndatoCePersonEntity` (Contact Enrichment). JSON responses from `/person/query` expose the mapped field as `source` on `PersonRes`.
+- `QueryProject` keeps `Include` empty by design in these workloads; navigation loading is derived from `Select` (and where-clause collection paths) by the API.
+- Query and QueryProject generators now share seeded randomization and probability controls so cross-endpoint comparisons can use matched shape distributions (nav branches, sort count, sort direction mix).
 - Matrix suites emit per-case tagged success metrics: `status_success_rate`, `latency_success_rate`, `shape_success_rate`, and per-case `query_duration`.
 - Scenarios that send `Select` post to `/person/QueryProject` via shared person client routing.
 - Legacy mixed scenarios still exist for migration/backward compatibility, but production execution should use dedicated matrix suites.

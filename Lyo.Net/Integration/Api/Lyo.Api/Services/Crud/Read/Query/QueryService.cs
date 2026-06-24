@@ -300,6 +300,7 @@ public class QueryService<TContext>(
         ArgumentHelpers.ThrowIfNull(queryRequest);
         ArgumentHelpers.ThrowIfNull(defaultOrder);
         var pagingErrors = QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize);
+        var guardrailErrors = ValidateCommonQueryGuardrails(queryRequest);
         var pathCache = new QueryPathValidationCache();
 
         // Reuse one DbContext for include validation + query execution when Include is non-empty (same pattern as QueryProjectedCore).
@@ -334,9 +335,10 @@ public class QueryService<TContext>(
                     .Errors ?? [];
             }
 
-            if (pagingErrors.Count > 0 || queryModelValidationErrors.Count > 0) {
-                var apiErrors = new List<ApiError>(pagingErrors.Count + queryModelValidationErrors.Count);
+            if (pagingErrors.Count > 0 || guardrailErrors.Count > 0 || queryModelValidationErrors.Count > 0) {
+                var apiErrors = new List<ApiError>(pagingErrors.Count + guardrailErrors.Count + queryModelValidationErrors.Count);
                 apiErrors.AddRange(pagingErrors);
+                apiErrors.AddRange(guardrailErrors);
                 apiErrors.AddRange(queryModelValidationErrors.Select(e => new ApiError(e.Code, e.Message)));
                 Logger.LogWarning(
                     "Query validation failed for {Entity}: {IssueCount} issue(s). {Details}", typeof(TDbModel).Name, apiErrors.Count,
@@ -455,6 +457,8 @@ public class QueryService<TContext>(
 
         var aggregatedErrors = new List<ApiError>();
         aggregatedErrors.AddRange(QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize));
+        aggregatedErrors.AddRange(ValidateCommonQueryGuardrails(ToQueryReq(queryRequest)));
+        aggregatedErrors.AddRange(ValidateProjectedQueryGuardrails(queryRequest));
         if (queryRequest.Select.Count == 0)
             aggregatedErrors.Add(new(ApiErrorCodes.InvalidQuery, "Projected query requires at least one selected field."));
 
@@ -506,6 +510,19 @@ public class QueryService<TContext>(
             var sqlProjection = sqlBuild.Projection;
             var sqlConversionPlan = sqlBuild.ConversionPlan;
             var zipSiblingSelections = queryRequest.Options.ZipSiblingCollectionSelections;
+            var sqlBypassReason = keysProvided
+                ? "keys"
+                : hasSubQuery
+                    ? "subquery"
+                    : useMatchedOnly
+                        ? "matched_only"
+                        : sqlProjection is null
+                            ? "not_translatable"
+                            : null;
+            if (sqlBypassReason is not null) {
+                Metrics.IncrementCounter("api.queryproject.sql_path", 1, [("entity", typeof(TDbModel).Name), ("result", "bypass"), ("reason", sqlBypassReason)]);
+            }
+
             if (!keysProvided && !hasSubQuery && !useMatchedOnly && sqlProjection != null) {
                 var cacheKeyBase = queryRequest.WhereClause != null
                     ? QueryCacheKeyBuilder.BuildTree<TDbModel, object>(
@@ -566,10 +583,13 @@ public class QueryService<TContext>(
                     else
                         sqlResult = await cache.GetOrSetAsync(cacheKey, BuildSqlProjectedCacheEntryAsync, token: ct).ConfigureAwait(false);
 
-                    if (sqlResult != null)
+                    if (sqlResult != null) {
+                        Metrics.IncrementCounter("api.queryproject.sql_path", 1, [("entity", typeof(TDbModel).Name), ("result", "hit"), ("reason", "sql")]);
                         return sqlResult;
+                    }
                 }
                 catch (SqlProjectionFallbackException) {
+                    Metrics.IncrementCounter("api.queryproject.sql_path", 1, [("entity", typeof(TDbModel).Name), ("result", "fallback"), ("reason", "translation")]);
                     // SQL projection failed; fall through to load-then-project path
                 }
             }
@@ -726,8 +746,7 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         if (isInMemoryResults && !keysProvided && queryRequest.Include.Count > 0) {
-            foreach (var entity in queryResults)
-                await loaderService.LoadIncludes(context, entity, queryRequest.Include, ct).ConfigureAwait(false);
+            _ = await pagingHelper.BatchHydrateIncludesAsync(context, queryResults.ToList(), queryRequest.Include, ct).ConfigureAwait(false);
         }
     }
 
@@ -772,6 +791,50 @@ public class QueryService<TContext>(
             Keys = [..source.Keys.Select(i => i.ToArray())],
             SortBy = [..source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
         };
+
+    private List<ApiError> ValidateCommonQueryGuardrails(QueryReq queryRequest)
+    {
+        var errors = new List<ApiError>();
+        if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount) {
+            errors.Add(new(
+                ApiErrorCodes.InvalidQuery,
+                $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
+        }
+
+        if (queryRequest.Keys.Count > queryOptions.MaxKeySetCount) {
+            errors.Add(new(
+                ApiErrorCodes.InvalidQuery,
+                $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
+        }
+
+        return errors;
+    }
+
+    private List<ApiError> ValidateProjectedQueryGuardrails(ProjectionQueryReq queryRequest)
+    {
+        var errors = new List<ApiError>();
+        if (queryRequest.Select.Count > queryOptions.MaxSelectFieldCount) {
+            errors.Add(new(
+                ApiErrorCodes.InvalidQuery,
+                $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
+        }
+
+        if (queryRequest.ComputedFields.Count > queryOptions.MaxComputedFieldCount) {
+            errors.Add(new(
+                ApiErrorCodes.InvalidQuery,
+                $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
+        }
+
+        foreach (var computedField in queryRequest.ComputedFields) {
+            if (computedField.Template?.Length > queryOptions.MaxComputedTemplateLength) {
+                errors.Add(new(
+                    ApiErrorCodes.InvalidQuery,
+                    $"Computed field '{computedField.Name}' template length ({computedField.Template.Length}) exceeds maximum allowed ({queryOptions.MaxComputedTemplateLength})."));
+            }
+        }
+
+        return errors;
+    }
 
     private async Task<TResult[]> MapResultsAsync<TDbModel, TResult>(IReadOnlyList<TDbModel> dbResults, CancellationToken ct)
         where TDbModel : class

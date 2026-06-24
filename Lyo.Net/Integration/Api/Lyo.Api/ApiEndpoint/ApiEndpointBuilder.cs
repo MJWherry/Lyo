@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Models;
+using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
@@ -593,7 +594,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             GroupName = groupName,
             DefaultOrder = ResolveDefaultOrderFromPrimaryKey(),
             Auth = b.AuthPolicy,
-            EnableComputedFields = b.EnableComputedFields
+            EnableComputedFields = b.EnableComputedFields,
+            MaxIncludePathCount = b.MaxIncludePathCount,
+            MaxKeySetCount = b.MaxKeySetCount,
+            MaxSelectFieldCount = b.MaxSelectFieldCount,
+            MaxComputedFieldCount = b.MaxComputedFieldCount,
+            MaxComputedTemplateLength = b.MaxComputedTemplateLength
         };
 
         return this;
@@ -904,6 +910,14 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IQueryService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
+                    var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig);
+                    if (queryPolicyErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors).Build();
+                        var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
+                        return Results.Json(policyError, statusCode: policyError.Status);
+                    }
+
                     var result = await basicService.Query<TDbEntity, TResponse>(queryRequest, _queryConfig.DefaultOrder, SortDirection.Desc, ct).ConfigureAwait(false);
                     if (result.IsSuccess)
                         return Results.Ok(result);
@@ -923,6 +937,14 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IQueryService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
+                    var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig);
+                    if (queryPolicyErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors).Build();
+                        var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
+                        return Results.Json(policyError, statusCode: policyError.Status);
+                    }
+
                     if (!_queryConfig.EnableComputedFields && queryRequest.ComputedFields.Count > 0) {
                         var cfError = ApiErrorResponseFactory.CreateForError(
                             httpContext,
@@ -946,6 +968,43 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
 
         ApplyAuthorization(projectedRouteBuilder, _queryConfig.Auth);
+    }
+
+    private static List<ApiError> ValidateQueryPolicy(QueryReq queryRequest, QueryConfig<TDbEntity> queryConfig)
+    {
+        var errors = new List<ApiError>();
+        if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
+
+        if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds endpoint maximum ({maxKeySets})."));
+
+        return errors;
+    }
+
+    private static List<ApiError> ValidateProjectedQueryPolicy(ProjectionQueryReq queryRequest, QueryConfig<TDbEntity> queryConfig)
+    {
+        var errors = new List<ApiError>();
+        if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
+
+        if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds endpoint maximum ({maxKeySets})."));
+
+        if (queryConfig.MaxSelectFieldCount is int maxSelect && queryRequest.Select.Count > maxSelect)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Select field count ({queryRequest.Select.Count}) exceeds endpoint maximum ({maxSelect})."));
+
+        if (queryConfig.MaxComputedFieldCount is int maxComputed && queryRequest.ComputedFields.Count > maxComputed)
+            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds endpoint maximum ({maxComputed})."));
+
+        if (queryConfig.MaxComputedTemplateLength is int maxTemplateLength) {
+            foreach (var computed in queryRequest.ComputedFields) {
+                if (computed.Template?.Length > maxTemplateLength)
+                    errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Computed field '{computed.Name}' template length ({computed.Template.Length}) exceeds endpoint maximum ({maxTemplateLength})."));
+            }
+        }
+
+        return errors;
     }
 
     private void BuildQueryHistory()

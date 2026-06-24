@@ -15,6 +15,8 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 /// <summary>Builds cache tags for basic and projected query results. Keys remain in <see cref="QueryCacheKeyBuilder" />.</summary>
 public static class QueryCacheTagBuilder
 {
+    private const int MaxProjectionShapeMemoEntries = 4096;
+
     /// <summary>Broad tag for all list-query cache entries (same as SQL projection path and historical convention).</summary>
     public const string QueryScopeTag = "queries";
 
@@ -53,6 +55,9 @@ public static class QueryCacheTagBuilder
 
         parts.Add("zip:" + zipSiblingCollectionSelections);
         var payload = string.Join('\u001e', parts);
+        if (ProjShapeTagMemo.Count >= MaxProjectionShapeMemoEntries)
+            ProjShapeTagMemo.Clear();
+
         return ProjShapeTagMemo.GetOrAdd(
             payload, static p => {
                 var hash = SHA1.HashData(Encoding.UTF8.GetBytes(p));
@@ -82,6 +87,7 @@ public static class QueryCacheTagBuilder
             QueryProjectScopeTag,
             "entities",
             EntityTypeTag(rootClr),
+            QueryProjectReferencedEntityTag(rootClr),
             FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections)
         };
 

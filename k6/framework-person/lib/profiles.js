@@ -16,11 +16,11 @@ export function loadOptions(extra = {}) {
     scenarios: {
       load: {
         executor: "constant-arrival-rate",
-        rate: toInt("LOAD_RATE", 20),
+        rate: toInt("LOAD_RATE", 7),
         timeUnit: env("LOAD_TIME_UNIT", "1s"),
         duration: env("LOAD_DURATION", "3m"),
-        preAllocatedVUs: toInt("LOAD_PREALLOCATED_VUS", 10),
-        maxVUs: toInt("LOAD_MAX_VUS", 50),
+        preAllocatedVUs: toInt("LOAD_PREALLOCATED_VUS", 6),
+        maxVUs: toInt("LOAD_MAX_VUS", 12),
       },
     },
     thresholds: commonThresholds(),

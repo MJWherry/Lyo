@@ -1,5 +1,7 @@
 using System.Text;
 using Lyo.Cache;
+using Lyo.Common.Enums;
+using Lyo.Hashing;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -12,6 +14,8 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 /// <summary>Builds cache keys for query results. Shared by QueryService. Tags use <see cref="QueryCacheTagBuilder" />.</summary>
 public static class QueryCacheKeyBuilder
 {
+    private const int MaxCacheSegmentInlineChars = 512;
+
     /// <summary>
     /// Cache key for GET-by-primary-key responses. The base segment matches <see cref="QueryCacheTagBuilder.EntityInstanceTag" /> for the same PK values (EF key order), so
     /// <see cref="ICacheService.InvalidateCacheItem" /> and tag invalidation stay aligned.
@@ -40,7 +44,7 @@ public static class QueryCacheKeyBuilder
         var key = QueryCacheTagBuilder.EntityInstanceTag(entityClrType, primaryKeyValuesInEfOrder);
         if (includes is { Count: > 0 }) {
             var includeKey = string.Join("|", includes.Order(StringComparer.OrdinalIgnoreCase));
-            key += ":include=" + includeKey;
+            key += ":include=" + CompactCacheSegment(includeKey);
         }
 
         if (rawResponse)
@@ -77,7 +81,7 @@ public static class QueryCacheKeyBuilder
 
         if (queryRequest.Include.Count != 0) {
             var includeKey = string.Join("|", queryRequest.Include.OrderBy(i => i));
-            keyBuilder.Append($":include={includeKey}");
+            keyBuilder.Append($":include={CompactCacheSegment(includeKey)}");
         }
 
         return keyBuilder.ToString();
@@ -96,7 +100,7 @@ public static class QueryCacheKeyBuilder
         var keyBuilder = new StringBuilder(Build<TDb, TResponse>(queryRequest));
         if (selectForCacheKey.Count != 0) {
             var selectKey = string.Join("|", selectForCacheKey.OrderBy(i => i));
-            keyBuilder.Append($":select={selectKey}");
+            keyBuilder.Append($":select={CompactCacheSegment(selectKey)}");
         }
 
         AppendComputedFieldsKey(keyBuilder, computedForCacheKey);
@@ -130,14 +134,14 @@ public static class QueryCacheKeyBuilder
         var resultName = typeof(TResult).Name;
         var treeHash = queryTree != null ? WhereClauseUtils.GetWhereClauseTreeHash(queryTree) : "null";
         var includeArray = includes as string[] ?? includes.Order().ToArray();
-        var includeStr = includeArray.Length != 0 ? $":include={string.Join("|", includeArray)}" : "";
+        var includeStr = includeArray.Length != 0 ? $":include={CompactCacheSegment(string.Join("|", includeArray))}" : "";
         var sortStr = sortBy.Length > 0
             ? $":sortBy={string.Join("|", sortBy.Select((f, i) => (f, EffectivePriority: f.Priority ?? i)).OrderBy(x => x.f.PropertyName).Select(x => $"{x.f.PropertyName}:{x.f.Direction}:{x.EffectivePriority}"))}"
             : "";
 
         var keysStr = keys != null && keys.Count > 0 ? $":keys={string.Join(";", keys.Select(ks => string.Join("|", ks.Select(k => k.ToString() ?? "null"))))}" : "";
         var selectedFieldsArray = selectedFields as string[] ?? selectedFields?.Order().ToArray() ?? [];
-        var selectStr = selectedFields != null && selectedFieldsArray.Length != 0 ? $":select={string.Join("|", selectedFieldsArray)}" : "";
+        var selectStr = selectedFields != null && selectedFieldsArray.Length != 0 ? $":select={CompactCacheSegment(string.Join("|", selectedFieldsArray))}" : "";
         var sb = new StringBuilder(256);
         sb.Append(
             $"querytree:{typeName}:{resultName}:start={start}:amount={amount}:countMode={totalCountMode}:includeFilterMode={includeFilterMode}:tree={treeHash}{includeStr}{sortStr}{keysStr}{selectStr}");
@@ -152,7 +156,16 @@ public static class QueryCacheKeyBuilder
             return;
 
         var computedKey = string.Join("|", computedFields.OrderBy(c => c.Name).Select(c => $"{c.Name}={c.Template}"));
-        keyBuilder.Append($":computed={computedKey}");
+        keyBuilder.Append($":computed={CompactCacheSegment(computedKey)}");
+    }
+
+    private static string CompactCacheSegment(string segment)
+    {
+        if (segment.Length <= MaxCacheSegmentInlineChars)
+            return segment;
+
+        var hash = HashingService.Shared.Hash(ContentDigestAlgorithm.Sha256, Encoding.UTF8.GetBytes(segment));
+        return $"sha256:{HashingService.Shared.ToHex(hash, TextLetterCase.Lower)}";
     }
 
     private static QueryReq ToQueryReq(ProjectionQueryReq p)

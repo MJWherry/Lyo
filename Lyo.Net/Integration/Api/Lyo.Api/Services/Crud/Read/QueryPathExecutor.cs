@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Common.Request;
@@ -82,12 +83,21 @@ public sealed class QueryPathExecutor(
             return new(Array.Empty<TDbModel>().AsQueryable(), 0, true, false);
         }
 
-        var entities = new List<TDbModel>(validKeySets.Count);
-        foreach (var keySet in validKeySets) {
-            var convertedKeys = typeConversion.ConvertKeysForFind<TDbModel>(keySet, context);
-            var entity = await context.Set<TDbModel>().FindAsync(convertedKeys, ct).ConfigureAwait(false);
-            if (entity != null)
-                entities.Add(entity);
+        List<TDbModel> entities;
+        var singlePkOptimized = pkCount == 1
+            ? await TryLoadBySinglePrimaryKeyAsync<TDbModel>(context, validKeySets, primaryKey!.Properties[0].Name, primaryKey.Properties[0].ClrType, ct).ConfigureAwait(false)
+            : null;
+
+        if (singlePkOptimized is not null)
+            entities = singlePkOptimized;
+        else {
+            entities = new List<TDbModel>(validKeySets.Count);
+            foreach (var keySet in validKeySets) {
+                var convertedKeys = typeConversion.ConvertKeysForFind<TDbModel>(keySet, context);
+                var entity = await context.Set<TDbModel>().FindAsync(convertedKeys, ct).ConfigureAwait(false);
+                if (entity != null)
+                    entities.Add(entity);
+            }
         }
 
         if (entities.Count == 0) {
@@ -95,10 +105,8 @@ public sealed class QueryPathExecutor(
             return new(entities.AsQueryable(), 0, true, false);
         }
 
-        if (queryRequest.Include.Any()) {
-            foreach (var entity in entities)
-                await loaderService.LoadIncludes(context, entity, queryRequest.Include, ct).ConfigureAwait(false);
-        }
+        if (queryRequest.Include.Any())
+            entities = await pagingHelper.BatchHydrateIncludesAsync(context, entities, queryRequest.Include, ct).ConfigureAwait(false);
 
         if (queryRequest.WhereClause != null) {
             logger.LogDebug("Applying WhereClause to {EntityCount} entities loaded by keys", entities.Count);
@@ -134,15 +142,18 @@ public sealed class QueryPathExecutor(
         CancellationToken ct)
         where TContext : DbContext where TDbModel : class
     {
-        var sqlFirstQueryable = context.Set<TDbModel>().AsQueryable();
-        sqlFirstQueryable = filterService.ApplyWhereClause(sqlFirstQueryable, queryRequest.WhereClause);
-        if (await CanTranslateQueryAsync(sqlFirstQueryable, ct).ConfigureAwait(false)) {
+        try {
+            var sqlFirstQueryable = context.Set<TDbModel>().AsQueryable();
+            sqlFirstQueryable = filterService.ApplyWhereClause(sqlFirstQueryable, queryRequest.WhereClause);
             logger.LogDebug("Using SQL-first subquery execution for {EntityType}", typeof(TDbModel).Name);
             int? sqlTotal = null;
             if (computeExactTotal)
                 sqlTotal = await QueryRootCountHelper.CountDistinctRootEntitiesAsync(context, sqlFirstQueryable, ct).ConfigureAwait(false);
 
             return new(sqlFirstQueryable, sqlTotal, false, false);
+        }
+        catch (Exception ex) when (IsLikelyTranslationFailure(ex)) {
+            logger.LogDebug(ex, "Subquery expression could not be translated for {EntityType}; using fallback path", typeof(TDbModel).Name);
         }
 
         logger.LogDebug("Falling back to two-phase subquery execution for {EntityType}", typeof(TDbModel).Name);
@@ -184,16 +195,36 @@ public sealed class QueryPathExecutor(
     private static bool IsLikelyTranslationFailure(Exception ex)
         => ex is InvalidOperationException or NotSupportedException && ex.Message.Contains("could not be translated", StringComparison.OrdinalIgnoreCase);
 
-    private async Task<bool> CanTranslateQueryAsync<TDbModel>(IQueryable<TDbModel> queryable, CancellationToken ct)
+    private static async Task<List<TDbModel>?> TryLoadBySinglePrimaryKeyAsync<TDbModel>(
+        DbContext context,
+        IReadOnlyList<object[]> validKeySets,
+        string keyName,
+        Type keyClrType,
+        CancellationToken ct)
         where TDbModel : class
     {
-        try {
-            _ = await queryable.Select(_ => 1).Take(1).ToListAsync(ct).ConfigureAwait(false);
-            return true;
-        }
-        catch (Exception ex) when (IsLikelyTranslationFailure(ex)) {
-            logger.LogDebug(ex, "Subquery expression could not be translated for {EntityType}; using fallback path", typeof(TDbModel).Name);
-            return false;
-        }
+        var method = typeof(QueryPathExecutor).GetMethod(nameof(LoadBySinglePrimaryKeyAsync), BindingFlags.NonPublic | BindingFlags.Static)
+            ?.MakeGenericMethod(typeof(TDbModel), keyClrType);
+        if (method == null)
+            return null;
+
+        var task = (Task<List<TDbModel>>)method.Invoke(null, [context, validKeySets, keyName, ct])!;
+        return await task.ConfigureAwait(false);
+    }
+
+    private static async Task<List<TDbModel>> LoadBySinglePrimaryKeyAsync<TDbModel, TKey>(
+        DbContext context,
+        IReadOnlyList<object[]> validKeySets,
+        string keyName,
+        CancellationToken ct)
+        where TDbModel : class
+        where TKey : notnull
+    {
+        var keys = validKeySets.Where(static ks => ks.Length > 0 && ks[0] is not null).Select(static ks => (TKey)ks[0]).Distinct().ToArray();
+        if (keys.Length == 0)
+            return [];
+
+        var predicate = QueryKeyExpressionBuilder.BuildEfKeyInPredicate<TDbModel, TKey>(keyName, keys);
+        return await context.Set<TDbModel>().Where(predicate).ToListAsync(ct).ConfigureAwait(false);
     }
 }

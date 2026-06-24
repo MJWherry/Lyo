@@ -11,4 +11,14 @@ public sealed record QueryConfig<TDbEntity>
     public EndpointAuth? Auth { get; init; }
 
     public bool EnableComputedFields { get; init; }
+
+    public int? MaxIncludePathCount { get; init; }
+
+    public int? MaxKeySetCount { get; init; }
+
+    public int? MaxSelectFieldCount { get; init; }
+
+    public int? MaxComputedFieldCount { get; init; }
+
+    public int? MaxComputedTemplateLength { get; init; }
 }
