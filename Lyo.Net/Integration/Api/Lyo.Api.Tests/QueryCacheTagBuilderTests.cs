@@ -1,6 +1,9 @@
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Common.Enums;
+using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Models.Enums;
 
 namespace Lyo.Api.Tests;
 
@@ -91,5 +94,29 @@ public sealed class QueryCacheTagBuilderTests
 
         var key = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(request);
         Assert.Contains(":computed=sha256:", key, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildProjectionCacheKey_CanonicalizesCaseAndWhitespaceForSelectFields()
+    {
+        var a = new ProjectionQueryReq { Select = [" Name ", "id"] };
+        var b = new ProjectionQueryReq { Select = ["ID", "name"] };
+
+        var keyA = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(a);
+        var keyB = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(b);
+        Assert.Equal(keyA, keyB);
+    }
+
+    [Fact]
+    public void BuildTreeCacheKey_CanonicalizesEquivalentSortPriorities()
+    {
+        var sortA = new[] { new SortBy("Name", SortDirection.Asc), new SortBy("Id", SortDirection.Desc) };
+        var sortB = new[] { new SortBy("Name", SortDirection.Asc, 0), new SortBy("Id", SortDirection.Desc, 1) };
+        var keyA = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(
+            null, 0, 100, [], sortA, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
+        var keyB = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(
+            null, 0, 100, [], sortB, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
+
+        Assert.Equal(keyA, keyB);
     }
 }

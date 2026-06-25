@@ -596,6 +596,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             Auth = b.AuthPolicy,
             EnableComputedFields = b.EnableComputedFields,
             MaxIncludePathCount = b.MaxIncludePathCount,
+            MaxIncludePageSize = b.MaxIncludePageSize,
             MaxKeySetCount = b.MaxKeySetCount,
             MaxSelectFieldCount = b.MaxSelectFieldCount,
             MaxComputedFieldCount = b.MaxComputedFieldCount,
@@ -976,6 +977,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
             errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
 
+        if (queryConfig.MaxIncludePageSize is int maxIncludePageSize && queryRequest.Include.Count > 0) {
+            var effectiveAmount = queryRequest.Amount ?? 0;
+            if (effectiveAmount > maxIncludePageSize)
+                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
+        }
+
         if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
             errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds endpoint maximum ({maxKeySets})."));
 
@@ -987,6 +994,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var errors = new List<ApiError>();
         if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
             errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
+
+        if (queryConfig.MaxIncludePageSize is int maxIncludePageSize && queryRequest.Include.Count > 0) {
+            var effectiveAmount = queryRequest.Amount ?? 0;
+            if (effectiveAmount > maxIncludePageSize)
+                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
+        }
 
         if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
             errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds endpoint maximum ({maxKeySets})."));

@@ -27,6 +27,9 @@ public sealed class QueryOptions
     /// <summary>When <c>true</c>, EF may split include graphs into multiple SQL commands.</summary>
     public bool EnableSplitQueries { get; init; } = true;
 
+    /// <summary>When <c>true</c>, include-heavy query paging prefers an ID-first strategy to avoid paging on fan-out join shapes.</summary>
+    public bool EnableIdFirstIncludePaging { get; init; } = true;
+
     /// <summary>When <c>true</c>, read queries use no-tracking with identity resolution for consistent graphs.</summary>
     public bool UseNoTrackingWithIdentityResolution { get; init; } = true;
 
@@ -46,6 +49,12 @@ public sealed class QueryOptions
     /// <summary>Maximum include path count allowed in query request bodies.</summary>
     public int MaxIncludePathCount { get; init; } = 16;
 
+    /// <summary>Maximum page size allowed when includes are requested. Set to <c>0</c> to disable include-specific page capping.</summary>
+    public int MaxIncludePageSize { get; init; } = 300;
+
+    /// <summary>Applies <see cref="MaxIncludePageSize" /> when include count is at least this value.</summary>
+    public int IncludePageSizeCapMinIncludeCount { get; init; } = 1;
+
     /// <summary>Maximum key-set count allowed in query request bodies.</summary>
     public int MaxKeySetCount { get; init; } = 256;
 
@@ -59,5 +68,5 @@ public sealed class QueryOptions
     public int MaxComputedTemplateLength { get; init; } = 2048;
 
     public override string ToString()
-        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} AllowSelectWildcards={AllowSelectWildcards} CacheQueryUtf8Payload={CacheQueryResultsAsUtf8Payload} MaxIncludes={MaxIncludePathCount} MaxKeySets={MaxKeySetCount} MaxSelectFields={MaxSelectFieldCount} MaxComputedFields={MaxComputedFieldCount} MaxComputedTemplateLength={MaxComputedTemplateLength}";
+        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} IdFirstIncludePaging={EnableIdFirstIncludePaging} AllowSelectWildcards={AllowSelectWildcards} CacheQueryUtf8Payload={CacheQueryResultsAsUtf8Payload} MaxIncludes={MaxIncludePathCount} MaxIncludePageSize={MaxIncludePageSize} IncludePageSizeCapMinIncludeCount={IncludePageSizeCapMinIncludeCount} MaxKeySets={MaxKeySetCount} MaxSelectFields={MaxSelectFieldCount} MaxComputedFields={MaxComputedFieldCount} MaxComputedTemplateLength={MaxComputedTemplateLength}";
 }

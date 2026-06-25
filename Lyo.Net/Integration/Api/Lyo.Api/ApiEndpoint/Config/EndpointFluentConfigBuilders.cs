@@ -313,6 +313,8 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
 
     public int? MaxIncludePathCount { get; private set; }
 
+    public int? MaxIncludePageSize { get; private set; }
+
     public int? MaxKeySetCount { get; private set; }
 
     public int? MaxSelectFieldCount { get; private set; }
@@ -337,6 +339,12 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
     public QueryEndpointConfigBuilder<TDbEntity> MaxIncludes(int maxIncludes)
     {
         MaxIncludePathCount = maxIncludes;
+        return this;
+    }
+
+    public QueryEndpointConfigBuilder<TDbEntity> MaxIncludePageSizeForIncludes(int maxIncludePageSize)
+    {
+        MaxIncludePageSize = maxIncludePageSize;
         return this;
     }
 

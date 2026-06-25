@@ -130,7 +130,7 @@ public sealed class QueryPagingHelper(IEntityLoaderService loaderService, QueryO
         var pageSize = queryRequest.Amount ??= queryOptions.DefaultPageSize;
         var startIndex = queryRequest.Start ?? 0;
         var takeSize = totalCountMode == QueryTotalCountMode.HasMore ? pageSize + 1 : pageSize;
-        var useIdFirstIncludePaging = !state.IsInMemoryResults && !keysProvided && queryRequest.Include.Count > 0 && !queryOptions.EnableSplitQueries;
+        var useIdFirstIncludePaging = queryOptions.EnableIdFirstIncludePaging && !state.IsInMemoryResults && !keysProvided && queryRequest.Include.Count > 0;
         TDbModel[] rawResults;
         bool? hasMore = null;
         var usedIdFirstIncludePaging = false;

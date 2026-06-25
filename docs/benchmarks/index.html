@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lyo Benchmark Dashboards</title>
+  <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>Lyo Benchmark Dashboards</h1>
+      <p class="subtitle">Single-instance performance snapshots for the query API (k6), encryption library, and compression library. Data loads automatically from generated scripts — no manual table updates.</p>
+    </header>
+
+    <div id="cards" class="grid cards"></div>
+
+    <section>
+      <h2>Refresh data</h2>
+      <div class="callout">
+        <p>After running benchmarks, regenerate manifests:</p>
+        <p><code>python3 scripts/benchmarks/build-manifests.py</code></p>
+        <p>k6 runs also refresh automatically via <code>k6/framework-person/run_all.sh</code>.</p>
+        <p>Then reload the HTML page in your browser.</p>
+      </div>
+    </section>
+
+    <footer>Generated data lives in <code>docs/benchmarks/data/</code>.</footer>
+  </div>
+
+  <script src="data/k6-latest.js"></script>
+  <script src="data/encryption-latest.js"></script>
+  <script src="data/compression-latest.js"></script>
+  <script src="shared/render.js"></script>
+  <script src="shared/index-page.js"></script>
+</body>
+</html>

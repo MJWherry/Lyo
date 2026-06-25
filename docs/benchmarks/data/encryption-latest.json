@@ -1,0 +1,1317 @@
+{
+  "type": "encryption",
+  "runId": "20260614-190220",
+  "generatedAt": "2026-06-25T19:39:54+00:00",
+  "sourceDir": "Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BenchmarkDotNet.Artifacts",
+  "environment": {
+    "benchmarkDotNet": "0.15.8",
+    "runtime": ".NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v3",
+    "cpu": null,
+    "os": null
+  },
+  "classes": {
+    "AesCcmEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "12.49 \u03bcs",
+        "meanNs": 12490.0,
+        "ratio": null,
+        "allocated": "10.29 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "12,163.18 \u03bcs",
+        "meanNs": 12163180.0,
+        "ratio": null,
+        "allocated": "5125.98 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "121,575.36 \u03bcs",
+        "meanNs": 121575360.0,
+        "ratio": null,
+        "allocated": "51205.92 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "11.92 \u03bcs",
+        "meanNs": 11920.0,
+        "ratio": null,
+        "allocated": "7.59 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "11,132.53 \u03bcs",
+        "meanNs": 11132530.0,
+        "ratio": null,
+        "allocated": "3076.85 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "113,390.47 \u03bcs",
+        "meanNs": 113390470.0,
+        "ratio": null,
+        "allocated": "30726.38 KB"
+      }
+    ],
+    "AesGcmEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2.580 \u03bcs",
+        "meanNs": 2580.0,
+        "ratio": null,
+        "allocated": "5.16 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "667.230 \u03bcs",
+        "meanNs": 667230.0,
+        "ratio": null,
+        "allocated": "3074.82 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "8,618.785 \u03bcs",
+        "meanNs": 8618785.0,
+        "ratio": null,
+        "allocated": "30724.4 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2.300 \u03bcs",
+        "meanNs": 2300.0,
+        "ratio": null,
+        "allocated": "3.53 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "621.493 \u03bcs",
+        "meanNs": 621493.0,
+        "ratio": null,
+        "allocated": "2049.62 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "5,082.989 \u03bcs",
+        "meanNs": 5082989.0,
+        "ratio": null,
+        "allocated": "20482.95 KB"
+      }
+    ],
+    "AesGcmRsaEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "22.38 \u03bcs",
+        "meanNs": 22380.0,
+        "ratio": null,
+        "allocated": "5.24 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "692.06 \u03bcs",
+        "meanNs": 692060.0,
+        "ratio": null,
+        "allocated": "3075.03 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "8,597.38 \u03bcs",
+        "meanNs": 8597380.0,
+        "ratio": null,
+        "allocated": "30724.85 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "467.68 \u03bcs",
+        "meanNs": 467680.0,
+        "ratio": null,
+        "allocated": "2.84 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,103.68 \u03bcs",
+        "meanNs": 1103680.0,
+        "ratio": null,
+        "allocated": "2048.94 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "5,519.69 \u03bcs",
+        "meanNs": 5519690.0,
+        "ratio": null,
+        "allocated": "20482.33 KB"
+      }
+    ],
+    "AesSivEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "20.26 \u03bcs",
+        "meanNs": 20260.0,
+        "ratio": null,
+        "allocated": "6.85 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "16,975.12 \u03bcs",
+        "meanNs": 16975120.0,
+        "ratio": null,
+        "allocated": "4098.92 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "168,890.06 \u03bcs",
+        "meanNs": 168890060.0,
+        "ratio": null,
+        "allocated": "40963.43 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "19.96 \u03bcs",
+        "meanNs": 19960.0,
+        "ratio": null,
+        "allocated": "5.8 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "16,401.08 \u03bcs",
+        "meanNs": 16401080.000000002,
+        "ratio": null,
+        "allocated": "3075.09 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "165,779.06 \u03bcs",
+        "meanNs": 165779060.0,
+        "ratio": null,
+        "allocated": "30723.17 KB"
+      }
+    ],
+    "AlgorithmComparisonBenchmarks": [
+      {
+        "method": "AesGcm_Encrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2.604 \u03bcs",
+        "meanNs": 2604.0,
+        "ratio": 1.0,
+        "allocated": "5.16 KB"
+      },
+      {
+        "method": "AesCcm_Encrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "12.917 \u03bcs",
+        "meanNs": 12917.0,
+        "ratio": 4.96,
+        "allocated": "10.29 KB"
+      },
+      {
+        "method": "AesSiv_Encrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "19.882 \u03bcs",
+        "meanNs": 19882.0,
+        "ratio": 7.64,
+        "allocated": "6.85 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Encrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2.700 \u03bcs",
+        "meanNs": 2700.0,
+        "ratio": 1.04,
+        "allocated": "5.12 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Encrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "3.248 \u03bcs",
+        "meanNs": 3248.0,
+        "ratio": 1.25,
+        "allocated": "7.25 KB"
+      },
+      {
+        "method": "AesGcm_Decrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2.305 \u03bcs",
+        "meanNs": 2305.0,
+        "ratio": 0.89,
+        "allocated": "3.53 KB"
+      },
+      {
+        "method": "AesCcm_Decrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "12.376 \u03bcs",
+        "meanNs": 12376.0,
+        "ratio": 4.75,
+        "allocated": "7.59 KB"
+      },
+      {
+        "method": "AesSiv_Decrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "19.814 \u03bcs",
+        "meanNs": 19814.0,
+        "ratio": 7.61,
+        "allocated": "5.8 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Decrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2.357 \u03bcs",
+        "meanNs": 2357.0,
+        "ratio": 0.91,
+        "allocated": "3.44 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Decrypt",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2.731 \u03bcs",
+        "meanNs": 2731.0,
+        "ratio": 1.05,
+        "allocated": "5.92 KB"
+      },
+      {
+        "method": "AesGcm_Encrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "712.402 \u03bcs",
+        "meanNs": 712402.0,
+        "ratio": 1.01,
+        "allocated": "3074.67 KB"
+      },
+      {
+        "method": "AesCcm_Encrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "11,890.788 \u03bcs",
+        "meanNs": 11890788.0,
+        "ratio": 16.84,
+        "allocated": "5126.67 KB"
+      },
+      {
+        "method": "AesSiv_Encrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "17,164.262 \u03bcs",
+        "meanNs": 17164262.0,
+        "ratio": 24.31,
+        "allocated": "4099.75 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Encrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "966.821 \u03bcs",
+        "meanNs": 966821.0,
+        "ratio": 1.37,
+        "allocated": "3074.71 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Encrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "2,267.178 \u03bcs",
+        "meanNs": 2267178.0,
+        "ratio": 3.21,
+        "allocated": "5123.06 KB"
+      },
+      {
+        "method": "AesGcm_Decrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "498.198 \u03bcs",
+        "meanNs": 498198.0,
+        "ratio": 0.71,
+        "allocated": "2050.39 KB"
+      },
+      {
+        "method": "AesCcm_Decrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "11,428.640 \u03bcs",
+        "meanNs": 11428640.0,
+        "ratio": 16.18,
+        "allocated": "3077.06 KB"
+      },
+      {
+        "method": "AesSiv_Decrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "16,593.309 \u03bcs",
+        "meanNs": 16593309.000000002,
+        "ratio": 23.5,
+        "allocated": "3075.08 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Decrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "761.532 \u03bcs",
+        "meanNs": 761532.0,
+        "ratio": 1.08,
+        "allocated": "2050.04 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Decrypt",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "2,285.250 \u03bcs",
+        "meanNs": 2285250.0,
+        "ratio": 3.24,
+        "allocated": "4098.18 KB"
+      },
+      {
+        "method": "AesGcm_Encrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "5,170.803 \u03bcs",
+        "meanNs": 5170803.0,
+        "ratio": 1.0,
+        "allocated": "30722.41 KB"
+      },
+      {
+        "method": "AesCcm_Encrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "115,082.077 \u03bcs",
+        "meanNs": 115082077.0,
+        "ratio": 22.26,
+        "allocated": "51205.42 KB"
+      },
+      {
+        "method": "AesSiv_Encrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "167,583.814 \u03bcs",
+        "meanNs": 167583814.0,
+        "ratio": 32.42,
+        "allocated": "40962.93 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Encrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "7,422.815 \u03bcs",
+        "meanNs": 7422815.0,
+        "ratio": 1.44,
+        "allocated": "30722.3 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Encrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "20,415.506 \u03bcs",
+        "meanNs": 20415506.0,
+        "ratio": 3.95,
+        "allocated": "51202.88 KB"
+      },
+      {
+        "method": "AesGcm_Decrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "4,646.502 \u03bcs",
+        "meanNs": 4646502.0,
+        "ratio": 0.9,
+        "allocated": "20481.74 KB"
+      },
+      {
+        "method": "AesCcm_Decrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "112,736.683 \u03bcs",
+        "meanNs": 112736683.0,
+        "ratio": 21.81,
+        "allocated": "30724.6 KB"
+      },
+      {
+        "method": "AesSiv_Decrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "165,167.641 \u03bcs",
+        "meanNs": 165167641.0,
+        "ratio": 31.95,
+        "allocated": "30722.89 KB"
+      },
+      {
+        "method": "ChaCha20Poly1305_Decrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "7,147.149 \u03bcs",
+        "meanNs": 7147149.0,
+        "ratio": 1.38,
+        "allocated": "20481.65 KB"
+      },
+      {
+        "method": "XChaCha20Poly1305_Decrypt",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "19,624.851 \u03bcs",
+        "meanNs": 19624851.0,
+        "ratio": 3.8,
+        "allocated": "40962.21 KB"
+      }
+    ],
+    "ChaCha20Poly1305EncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2.720 \u03bcs",
+        "meanNs": 2720.0,
+        "ratio": null,
+        "allocated": "5.12 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "919.664 \u03bcs",
+        "meanNs": 919664.0,
+        "ratio": null,
+        "allocated": "3074.86 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "11,500.408 \u03bcs",
+        "meanNs": 11500408.0,
+        "ratio": null,
+        "allocated": "30724.16 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2.407 \u03bcs",
+        "meanNs": 2407.0,
+        "ratio": null,
+        "allocated": "3.44 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "899.018 \u03bcs",
+        "meanNs": 899018.0,
+        "ratio": null,
+        "allocated": "2049.51 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "8,149.150 \u03bcs",
+        "meanNs": 8149150.0,
+        "ratio": null,
+        "allocated": "20482.67 KB"
+      }
+    ],
+    "LargeFileStreamingBenchmarks": [
+      {
+        "method": "Encrypt_AesGcm_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "114.3 ms",
+        "meanNs": 114300000.0,
+        "ratio": null,
+        "allocated": "555.22 MB"
+      },
+      {
+        "method": "Encrypt_AesGcm_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3,087.6 ms",
+        "meanNs": 3087600000.0,
+        "ratio": null,
+        "allocated": "3075.2 MB"
+      },
+      {
+        "method": "Encrypt_AesGcm_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "7,822.3 ms",
+        "meanNs": 7822300000.0,
+        "ratio": null,
+        "allocated": "6149.43 MB"
+      },
+      {
+        "method": "Decrypt_AesGcm_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "105.5 ms",
+        "meanNs": 105500000.0,
+        "ratio": null,
+        "allocated": "455.15 MB"
+      },
+      {
+        "method": "Decrypt_AesGcm_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3,157.3 ms",
+        "meanNs": 3157300000.0,
+        "ratio": null,
+        "allocated": "2049.55 MB"
+      },
+      {
+        "method": "Decrypt_AesGcm_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6,167.3 ms",
+        "meanNs": 6167300000.0,
+        "ratio": null,
+        "allocated": "4099.11 MB"
+      },
+      {
+        "method": "Encrypt_ChaCha_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "132.5 ms",
+        "meanNs": 132500000.0,
+        "ratio": null,
+        "allocated": "555.22 MB"
+      },
+      {
+        "method": "Encrypt_ChaCha_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3,124.4 ms",
+        "meanNs": 3124400000.0,
+        "ratio": null,
+        "allocated": "3075.17 MB"
+      },
+      {
+        "method": "Encrypt_ChaCha_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6,398.5 ms",
+        "meanNs": 6398500000.0,
+        "ratio": null,
+        "allocated": "6149.32 MB"
+      },
+      {
+        "method": "Decrypt_ChaCha_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "127.6 ms",
+        "meanNs": 127600000.0,
+        "ratio": null,
+        "allocated": "455.14 MB"
+      },
+      {
+        "method": "Decrypt_ChaCha_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,970.4 ms",
+        "meanNs": 2970400000.0,
+        "ratio": null,
+        "allocated": "2049.46 MB"
+      },
+      {
+        "method": "Decrypt_ChaCha_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6,153.2 ms",
+        "meanNs": 6153200000.0,
+        "ratio": null,
+        "allocated": "4098.92 MB"
+      }
+    ],
+    "RsaEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "109.5 \u03bcs",
+        "meanNs": 109500.0,
+        "ratio": null,
+        "allocated": "8.45 KB"
+      },
+      {
+        "method": "Encrypt_64KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6,377.8 \u03bcs",
+        "meanNs": 6377800.0,
+        "ratio": null,
+        "allocated": "511.09 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "101,485.5 \u03bcs",
+        "meanNs": 101485500.0,
+        "ratio": null,
+        "allocated": "8172.9 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,770.2 \u03bcs",
+        "meanNs": 2770200.0,
+        "ratio": null,
+        "allocated": "5.99 KB"
+      },
+      {
+        "method": "Decrypt_64KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "155,575.8 \u03bcs",
+        "meanNs": 155575800.0,
+        "ratio": null,
+        "allocated": "359.43 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,509,195.3 \u03bcs",
+        "meanNs": 2509195300.0,
+        "ratio": null,
+        "allocated": "5745.67 KB"
+      }
+    ],
+    "TwoKeyEncryptionBenchmarks": [
+      {
+        "method": "Encrypt_AesGcm_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6.986 \u03bcs",
+        "meanNs": 6986.0,
+        "ratio": null,
+        "allocated": "7.5 KB"
+      },
+      {
+        "method": "Encrypt_AesGcm_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "879.829 \u03bcs",
+        "meanNs": 879829.0,
+        "ratio": null,
+        "allocated": "4099.58 KB"
+      },
+      {
+        "method": "Encrypt_AesGcm_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "12,736.195 \u03bcs",
+        "meanNs": 12736195.0,
+        "ratio": null,
+        "allocated": "62481.72 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "7.092 \u03bcs",
+        "meanNs": 7092.0,
+        "ratio": null,
+        "allocated": "7.52 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,003.753 \u03bcs",
+        "meanNs": 1003753.0,
+        "ratio": null,
+        "allocated": "4099.58 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "15,302.308 \u03bcs",
+        "meanNs": 15302308.0,
+        "ratio": null,
+        "allocated": "62481.21 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "4.913 \u03bcs",
+        "meanNs": 4913.0,
+        "ratio": null,
+        "allocated": "5.62 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "671.093 \u03bcs",
+        "meanNs": 671093.0,
+        "ratio": null,
+        "allocated": "3074.65 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "10,495.115 \u03bcs",
+        "meanNs": 10495115.0,
+        "ratio": null,
+        "allocated": "52232.99 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "4.811 \u03bcs",
+        "meanNs": 4811.0,
+        "ratio": null,
+        "allocated": "5.4 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "930.267 \u03bcs",
+        "meanNs": 930267.0,
+        "ratio": null,
+        "allocated": "3074.44 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "12,576.503 \u03bcs",
+        "meanNs": 12576503.0,
+        "ratio": null,
+        "allocated": "52231.26 KB"
+      },
+      {
+        "method": "Encrypt_AesGcm_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "140,430.245 \u03bcs",
+        "meanNs": 140430245.0,
+        "ratio": null,
+        "allocated": "568454.89 KB"
+      },
+      {
+        "method": "Encrypt_AesGcm_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3,032,332.886 \u03bcs",
+        "meanNs": 3032332886.0,
+        "ratio": null,
+        "allocated": "3147786.7 KB"
+      },
+      {
+        "method": "Encrypt_AesGcm_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "6,478,033.438 \u03bcs",
+        "meanNs": 6478033438.0,
+        "ratio": null,
+        "allocated": "6294618.98 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "149,485.836 \u03bcs",
+        "meanNs": 149485836.0,
+        "ratio": null,
+        "allocated": "568452.1 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3,324,469.193 \u03bcs",
+        "meanNs": 3324469193.0,
+        "ratio": null,
+        "allocated": "3147783.48 KB"
+      },
+      {
+        "method": "Encrypt_ChaCha_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "8,210,637.281 \u03bcs",
+        "meanNs": 8210637281.0,
+        "ratio": null,
+        "allocated": "6294538.69 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "106,262.906 \u03bcs",
+        "meanNs": 106262906.0,
+        "ratio": null,
+        "allocated": "465981.25 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,936,402.188 \u03bcs",
+        "meanNs": 2936402188.0,
+        "ratio": null,
+        "allocated": "2097850.76 KB"
+      },
+      {
+        "method": "Decrypt_AesGcm_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "7,687,024.851 \u03bcs",
+        "meanNs": 7687024851.0,
+        "ratio": null,
+        "allocated": "4195732.76 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "133,534.577 \u03bcs",
+        "meanNs": 133534576.99999999,
+        "ratio": null,
+        "allocated": "465972.28 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,961,340.354 \u03bcs",
+        "meanNs": 2961340354.0,
+        "ratio": null,
+        "allocated": "2097722.72 KB"
+      },
+      {
+        "method": "Decrypt_ChaCha_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "8,115,967.477 \u03bcs",
+        "meanNs": 8115967477.0,
+        "ratio": null,
+        "allocated": "4195486.02 KB"
+      }
+    ],
+    "XChaCha20Poly1305EncryptionBenchmarks": [
+      {
+        "method": "Encrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "3.301 \u03bcs",
+        "meanNs": 3301.0,
+        "ratio": null,
+        "allocated": "7.25 KB"
+      },
+      {
+        "method": "Encrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,541.648 \u03bcs",
+        "meanNs": 2541648.0,
+        "ratio": null,
+        "allocated": "5123.15 KB"
+      },
+      {
+        "method": "Encrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "26,594.043 \u03bcs",
+        "meanNs": 26594043.0,
+        "ratio": null,
+        "allocated": "51202.85 KB"
+      },
+      {
+        "method": "Decrypt_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2.801 \u03bcs",
+        "meanNs": 2801.0,
+        "ratio": null,
+        "allocated": "5.92 KB"
+      },
+      {
+        "method": "Decrypt_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "2,341.112 \u03bcs",
+        "meanNs": 2341112.0,
+        "ratio": null,
+        "allocated": "4098.06 KB"
+      },
+      {
+        "method": "Decrypt_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "25,299.350 \u03bcs",
+        "meanNs": 25299350.0,
+        "ratio": null,
+        "allocated": "40962.52 KB"
+      }
+    ]
+  },
+  "comparisonTables": {
+    "encryptOrCompress": [
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesCcm",
+        "mean": "12.917 \u03bcs",
+        "meanNs": 12917.0,
+        "ratio": 4.96,
+        "ratioVsBaseline": 4.960445468509985,
+        "allocated": "10.29 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesGcm",
+        "mean": "2.604 \u03bcs",
+        "meanNs": 2604.0,
+        "ratio": 1.0,
+        "ratioVsBaseline": 1.0,
+        "allocated": "5.16 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesSiv",
+        "mean": "19.882 \u03bcs",
+        "meanNs": 19882.0,
+        "ratio": 7.64,
+        "ratioVsBaseline": 7.635176651305684,
+        "allocated": "6.85 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "2.700 \u03bcs",
+        "meanNs": 2700.0,
+        "ratio": 1.04,
+        "ratioVsBaseline": 1.0368663594470047,
+        "allocated": "5.12 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "3.248 \u03bcs",
+        "meanNs": 3248.0,
+        "ratio": 1.25,
+        "ratioVsBaseline": 1.2473118279569892,
+        "allocated": "7.25 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesCcm",
+        "mean": "11,890.788 \u03bcs",
+        "meanNs": 11890788.0,
+        "ratio": 16.84,
+        "ratioVsBaseline": 16.691121024365458,
+        "allocated": "5126.67 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesGcm",
+        "mean": "712.402 \u03bcs",
+        "meanNs": 712402.0,
+        "ratio": 1.01,
+        "ratioVsBaseline": 1.0,
+        "allocated": "3074.67 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesSiv",
+        "mean": "17,164.262 \u03bcs",
+        "meanNs": 17164262.0,
+        "ratio": 24.31,
+        "ratioVsBaseline": 24.093506194536232,
+        "allocated": "4099.75 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "966.821 \u03bcs",
+        "meanNs": 966821.0,
+        "ratio": 1.37,
+        "ratioVsBaseline": 1.357128419066763,
+        "allocated": "3074.71 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "2,267.178 \u03bcs",
+        "meanNs": 2267178.0,
+        "ratio": 3.21,
+        "ratioVsBaseline": 3.182441935873285,
+        "allocated": "5123.06 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesCcm",
+        "mean": "115,082.077 \u03bcs",
+        "meanNs": 115082077.0,
+        "ratio": 22.26,
+        "ratioVsBaseline": 22.25613255813459,
+        "allocated": "51205.42 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesGcm",
+        "mean": "5,170.803 \u03bcs",
+        "meanNs": 5170803.0,
+        "ratio": 1.0,
+        "ratioVsBaseline": 1.0,
+        "allocated": "30722.41 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesSiv",
+        "mean": "167,583.814 \u03bcs",
+        "meanNs": 167583814.0,
+        "ratio": 32.42,
+        "ratioVsBaseline": 32.40963038042641,
+        "allocated": "40962.93 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "7,422.815 \u03bcs",
+        "meanNs": 7422815.0,
+        "ratio": 1.44,
+        "ratioVsBaseline": 1.4355246177431242,
+        "allocated": "30722.3 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "20,415.506 \u03bcs",
+        "meanNs": 20415506.0,
+        "ratio": 3.95,
+        "ratioVsBaseline": 3.9482273836384794,
+        "allocated": "51202.88 KB"
+      }
+    ],
+    "decryptOrDecompress": [
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesCcm",
+        "mean": "12.376 \u03bcs",
+        "meanNs": 12376.0,
+        "ratio": 4.75,
+        "ratioVsBaseline": 5.3691973969631235,
+        "allocated": "7.59 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesGcm",
+        "mean": "2.305 \u03bcs",
+        "meanNs": 2305.0,
+        "ratio": 0.89,
+        "ratioVsBaseline": 1.0,
+        "allocated": "3.53 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "AesSiv",
+        "mean": "19.814 \u03bcs",
+        "meanNs": 19814.0,
+        "ratio": 7.61,
+        "ratioVsBaseline": 8.596095444685467,
+        "allocated": "5.8 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "2.357 \u03bcs",
+        "meanNs": 2357.0,
+        "ratio": 0.91,
+        "ratioVsBaseline": 1.0225596529284164,
+        "allocated": "3.44 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "2.731 \u03bcs",
+        "meanNs": 2731.0,
+        "ratio": 1.05,
+        "ratioVsBaseline": 1.1848156182212581,
+        "allocated": "5.92 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesCcm",
+        "mean": "11,428.640 \u03bcs",
+        "meanNs": 11428640.0,
+        "ratio": 16.18,
+        "ratioVsBaseline": 22.939955599982337,
+        "allocated": "3077.06 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesGcm",
+        "mean": "498.198 \u03bcs",
+        "meanNs": 498198.0,
+        "ratio": 0.71,
+        "ratioVsBaseline": 1.0,
+        "allocated": "2050.39 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "AesSiv",
+        "mean": "16,593.309 \u03bcs",
+        "meanNs": 16593309.000000002,
+        "ratio": 23.5,
+        "ratioVsBaseline": 33.30665518528778,
+        "allocated": "3075.08 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "761.532 \u03bcs",
+        "meanNs": 761532.0,
+        "ratio": 1.08,
+        "ratioVsBaseline": 1.528572977009141,
+        "allocated": "2050.04 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "2,285.250 \u03bcs",
+        "meanNs": 2285250.0,
+        "ratio": 3.24,
+        "ratioVsBaseline": 4.587031662110245,
+        "allocated": "4098.18 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesCcm",
+        "mean": "112,736.683 \u03bcs",
+        "meanNs": 112736683.0,
+        "ratio": 21.81,
+        "ratioVsBaseline": 24.262699768557077,
+        "allocated": "30724.6 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesGcm",
+        "mean": "4,646.502 \u03bcs",
+        "meanNs": 4646502.0,
+        "ratio": 0.9,
+        "ratioVsBaseline": 1.0,
+        "allocated": "20481.74 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "AesSiv",
+        "mean": "165,167.641 \u03bcs",
+        "meanNs": 165167641.0,
+        "ratio": 31.95,
+        "ratioVsBaseline": 35.54666305965218,
+        "allocated": "30722.89 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "ChaCha20Poly1305",
+        "mean": "7,147.149 \u03bcs",
+        "meanNs": 7147149.0,
+        "ratio": 1.38,
+        "ratioVsBaseline": 1.5381783974267094,
+        "allocated": "20481.65 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "XChaCha20Poly1305",
+        "mean": "19,624.851 \u03bcs",
+        "meanNs": 19624851.0,
+        "ratio": 3.8,
+        "ratioVsBaseline": 4.22357528308392,
+        "allocated": "40962.21 KB"
+      }
+    ],
+    "baseline": "AesGcm"
+  },
+  "previous": {
+    "runId": "20260614-190220",
+    "generatedAt": "2026-06-25T19:34:54+00:00"
+  }
+}

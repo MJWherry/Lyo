@@ -25,9 +25,10 @@ Core matrix orchestration is data-driven via:
 
 ## Benchmarks & “modern standards”
 
-Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). The **authoritative write-up** — per-scenario metrics, environment, grades, and **comparison to common stacks** (Hasura/PostgREST, typical EF/Django/Rails/Spring, GraphQL) — is:
+Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). The **authoritative review** is the HTML dashboard (auto-loaded from latest JSON):
 
-- [`Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
+- **[K6 benchmark dashboard](../../docs/benchmarks/k6.html)** — open after `build-manifests.py`
+- Stub / refresh notes: [`K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
 
 **Latest full suite analyzed there (June 2026, symmetric matrix)**: `k6/results/prod-matrix-20260623-163003/` (earlier April 2026 5-scenario archives are retained in the analysis doc for historical comparison).
 

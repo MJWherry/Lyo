@@ -2,7 +2,7 @@
 
 BenchmarkDotNet performance suite for **`Lyo.Encryption`** and add-ons: **AES-GCM**, **ChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**, **XChaCha20-Poly1305**, **RSA**, **AES-GCM-RSA hybrid**, two-key envelope, and streaming.
 
-**Latest results:** [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md) (June 14, 2026, .NET 10.0.9, Intel Core Ultra 7 155U, AES-NI).
+**Latest results:** [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) · [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md) (refresh pointer)
 
 ## Running benchmarks
 
@@ -59,15 +59,17 @@ dotnet run -c Release --project Lyo.Encryption.Benchmarks -- --job short --filte
 | RSA decrypt 1 MB | **2.51 s** | Not for bulk data |
 | Two-key encrypt 1 MB | **880 µs** (AES) | ~1.3× single-key |
 
-See [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md) for full tables, ratios, and recommendations.
+See [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) for live tables, ratios, and recommendations (auto-generated from CSV artifacts).
 
 ## Output
 
-Results appear in the console and under `BenchmarkDotNet.Artifacts/results/` (Markdown, CSV, HTML).
+Results appear in the console and under `BenchmarkDotNet.Artifacts/results/` (Markdown, CSV, HTML). Refresh the HTML dashboard:
 
 ```bash
-dotnet run -c Release --project Lyo.Encryption.Benchmarks -- --exporters Markdown Html
+python3 scripts/benchmarks/build-manifests.py --encryption-only
 ```
+
+Optional future runs may add `--exporters json`; v1 reads CSV reports.
 
 ## Requirements
 

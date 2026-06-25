@@ -60,7 +60,15 @@ internal static class ProjectionCollectionZip
             var specPaths = new HashSet<string>(group.Specs.Select(s => s.RequestedPath), StringComparer.OrdinalIgnoreCase);
             var scopeWildcardSpec = group.Specs.FirstOrDefault(s => string.Equals(s.NormalizedParts[^1], "*", StringComparison.Ordinal));
             var collectionPrefix = GetCollectionRequestedPathPrefix(group.Specs[0].RequestedPath);
-            var extraZipColumns = new List<(string RowKey, string RelativePath)>();
+            var specColumns = new List<(ProjectedFieldSpec Spec, object? Value)>(group.Specs.Count);
+            var maxLen = 0;
+            foreach (var spec in group.Specs) {
+                row.TryGetValue(spec.RequestedPath, out var colVal);
+                specColumns.Add((spec, colVal));
+                maxLen = Math.Max(maxLen, GetEnumerableLength(colVal));
+            }
+
+            var extraZipColumns = new List<(string RowKey, string RelativePath, object? Value)>();
             foreach (var kvp in row) {
                 if (specPaths.Contains(kvp.Key))
                     continue;
@@ -76,7 +84,8 @@ internal static class ProjectionCollectionZip
                         continue;
 
                     var rel = kvp.Key[(mergeKey.Length + 1)..];
-                    extraZipColumns.Add((kvp.Key, rel));
+                    extraZipColumns.Add((kvp.Key, rel, kvp.Value));
+                    maxLen = Math.Max(maxLen, GetEnumerableLength(kvp.Value));
                     continue;
                 }
 
@@ -85,7 +94,8 @@ internal static class ProjectionCollectionZip
                         continue;
 
                     var relU = kvp.Key[(mergeKey.Length + 1)..];
-                    extraZipColumns.Add((kvp.Key, relU));
+                    extraZipColumns.Add((kvp.Key, relU, kvp.Value));
+                    maxLen = Math.Max(maxLen, GetEnumerableLength(kvp.Value));
                     continue;
                 }
 
@@ -97,26 +107,15 @@ internal static class ProjectionCollectionZip
                 if (leafStart >= kvp.Key.Length)
                     continue;
 
-                extraZipColumns.Add((kvp.Key, kvp.Key[leafStart..]));
-            }
-
-            var maxLen = 0;
-            foreach (var spec in group.Specs) {
-                if (row.TryGetValue(spec.RequestedPath, out var colVal) && colVal != null)
-                    maxLen = Math.Max(maxLen, GetEnumerableLength(colVal));
-            }
-
-            foreach (var (rowKey, _) in extraZipColumns) {
-                if (row.TryGetValue(rowKey, out var colVal) && colVal != null)
-                    maxLen = Math.Max(maxLen, GetEnumerableLength(colVal));
+                extraZipColumns.Add((kvp.Key, kvp.Key[leafStart..], kvp.Value));
+                maxLen = Math.Max(maxLen, GetEnumerableLength(kvp.Value));
             }
 
             var merged = new List<Dictionary<string, object?>>(maxLen);
             for (var i = 0; i < maxLen; i++) {
                 var capacity = group.Specs.Count + extraZipColumns.Count;
                 var obj = new Dictionary<string, object?>(capacity, StringComparer.OrdinalIgnoreCase);
-                foreach (var spec in group.Specs) {
-                    row.TryGetValue(spec.RequestedPath, out var colVal);
+                foreach (var (spec, colVal) in specColumns) {
                     var leafName = spec.NormalizedParts[^1];
                     if (string.Equals(leafName, "*", StringComparison.Ordinal)) {
                         var el = GetElementAtIndex(colVal, i);
@@ -143,8 +142,7 @@ internal static class ProjectionCollectionZip
                         obj[leafName] = GetElementAtIndex(colVal, i);
                 }
 
-                foreach (var (rowKey, relativePath) in extraZipColumns) {
-                    row.TryGetValue(rowKey, out var colVal);
+                foreach (var (_, relativePath, colVal) in extraZipColumns) {
                     var cell = GetElementAtIndex(colVal, i);
                     if (relativePath.Contains('.', StringComparison.Ordinal))
                         AssignNestedProperty(obj, relativePath, cell);
@@ -158,7 +156,7 @@ internal static class ProjectionCollectionZip
             foreach (var spec in group.Specs)
                 row.Remove(spec.RequestedPath);
 
-            foreach (var (rowKey, _) in extraZipColumns)
+            foreach (var (rowKey, _, _) in extraZipColumns)
                 row.Remove(rowKey);
 
             row[group.MergeKey] = merged;
@@ -518,32 +516,39 @@ internal static class ProjectionCollectionZip
 
     private static int GetEnumerableLength(object? value)
     {
-        if (value is null)
+        if (value is string or byte[])
             return 0;
 
         if (value is ICollection collection)
             return collection.Count;
 
-        return value is IEnumerable enumerable and not string and not byte[] ? enumerable.Cast<object?>().Count() : 0;
+        if (value is IEnumerable enumerable) {
+            var count = 0;
+            foreach (var _ in enumerable)
+                count++;
+
+            return count;
+        }
+
+        return 0;
     }
 
     private static object? GetElementAtIndex(object? value, int index)
     {
-        if (value is null)
+        if (value is string or byte[])
             return null;
 
         if (value is IList list)
             return index < list.Count ? list[index] : null;
 
-        if (value is not (IEnumerable enumerable and not string and not byte[]))
-            return null;
+        if (value is IEnumerable enumerable) {
+            var i = 0;
+            foreach (var element in enumerable) {
+                if (i == index)
+                    return element;
 
-        var i = 0;
-        foreach (var x in enumerable) {
-            if (i == index)
-                return x;
-
-            i++;
+                i++;
+            }
         }
 
         return null;

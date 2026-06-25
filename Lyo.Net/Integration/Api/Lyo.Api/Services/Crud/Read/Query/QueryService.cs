@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
@@ -388,16 +389,24 @@ public class QueryService<TContext>(
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
                     // Include paths are already validated by ProjectedQueryModelValidator above (same paths, same model).
                     var keysProvided = queryRequest.Keys.Count > 0;
+                    var pathStart = Stopwatch.GetTimestamp();
                     var state = keysProvided
                         ? await pathExecutor.ExecuteKeyConstrainedPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, ct2).ConfigureAwait(false)
                         : await pathExecutor.ExecuteNonKeyPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, ct2).ConfigureAwait(false);
+                    TrackQueryPhase<TDbModel>("query", "path", pathStart);
 
+                    var pagingStart = Stopwatch.GetTimestamp();
                     var (queryResults, total, hasMore) = await pagingHelper.ApplyPagingAndMaterializeAsync(
                             context, state, queryRequest, defaultOrder, defaultSortDirection, keysProvided, filterService, ct2)
                         .ConfigureAwait(false);
+                    TrackQueryPhase<TDbModel>("query", "paging", pagingStart);
 
+                    var includeStart = Stopwatch.GetTimestamp();
                     await ApplyPostLoadIncludesAsync(context, queryResults, queryRequest, keysProvided, state.IsInMemoryResults, ct2).ConfigureAwait(false);
+                    TrackQueryPhase<TDbModel>("query", "post_include_hydrate", includeStart);
+                    var matchedOnlyStart = Stopwatch.GetTimestamp();
                     ApplyMatchedOnlyFilterIfNeeded(queryRequest, queryResults);
+                    TrackQueryPhase<TDbModel>("query", "matched_only_filter", matchedOnlyStart);
                     var tags = cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
                         ? QueryCacheTagBuilder.BuildBasicQueryTagsBroad<TContext, TDbModel>(context, loaderService, queryRequest.Include)
                         : QueryCacheTagBuilder.BuildBasicQueryTags(queryResults, context, typeConversion, queryRequest.Include);
@@ -484,6 +493,9 @@ public class QueryService<TContext>(
 
         OperationHelpers.ThrowIfNull(projectedFieldSpecs, "Projected field specs must be resolved when Select is non-empty.");
         var effectiveIncludes = BuildQueryProjectEffectiveIncludes<TDbModel>(projectedFieldSpecs, queryRequest.WhereClause);
+        var includePageGuardrailErrors = ValidateIncludePageSizeGuardrail(queryRequest.Amount, effectiveIncludes.Count);
+        if (includePageGuardrailErrors.Count > 0)
+            aggregatedErrors.AddRange(includePageGuardrailErrors);
 
         // One DbContext for include validation + SQL path when derived includes are non-empty (avoids doubling context startup cost).
         TContext? sharedIncludeValidationAndSqlContext = null;
@@ -535,17 +547,24 @@ public class QueryService<TContext>(
                 try {
                     async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildSqlProjectedCacheEntryAsync(CancellationToken ct2)
                     {
+                        var sqlExecuteStart = Stopwatch.GetTimestamp();
                         var r = await ExecuteSqlProjectedQueryAsync(
                             queryRequest, defaultOrder, defaultSortDirection, projectedFieldSpecs, sqlProjection, sqlConversionPlan, sharedIncludeValidationAndSqlContext, ct2);
+                        TrackQueryPhase<TDbModel>("queryproject", "sql_execute", sqlExecuteStart);
 
                         if (r == null)
                             throw new SqlProjectionFallbackException();
 
                         var items = r.Items!;
-                        if (computedFields.Count > 0)
+                        if (computedFields.Count > 0) {
+                            var computedStart = Stopwatch.GetTimestamp();
                             items = projectionService.ApplyComputedFields(items, computedFields, projectedFieldSpecs);
+                            TrackQueryPhase<TDbModel>("queryproject", "computed_fields", computedStart);
+                        }
 
+                        var mergeStart = Stopwatch.GetTimestamp();
                         projectionService.MergeSiblingCollectionProjectionRows(items, typeof(TDbModel), projectedFieldSpecs, zipSiblingSelections);
+                        TrackQueryPhase<TDbModel>("queryproject", "merge_sibling_rows", mergeStart);
                         if (computedFields.Count > 0 && autoDerivedSelects is { Count: > 0 }) {
                             projectionService.StripAutoDerivedDependencyLeavesFromMergedCollections(items, projectedFieldSpecs, autoDerivedSelects);
                             StripAutoDerivedFields(items, autoDerivedSelects);
@@ -560,6 +579,7 @@ public class QueryService<TContext>(
 
                         var contextForTags = taggingContext ?? sharedIncludeValidationAndSqlContext!;
                         try {
+                            var tagsStart = Stopwatch.GetTimestamp();
                             IReadOnlyList<Type> referencedIncludeTypes = effectiveIncludes.Count > 0
                                 ? loaderService.GetReferencedTypes<TContext, TDbModel>(contextForTags, effectiveIncludes)
                                 : Array.Empty<Type>();
@@ -569,6 +589,7 @@ public class QueryService<TContext>(
                                 : QueryCacheTagBuilder.BuildProjectedSqlQueryTags<TDbModel>(
                                     items, contextForTags, typeConversion, projectedFieldSpecs, computedFields, zipSiblingSelections, effectiveIncludes, referencedIncludeTypes);
 
+                            TrackQueryPhase<TDbModel>("queryproject", "cache_tags", tagsStart);
                             return (projectedSuccess, cacheTags);
                         }
                         finally {
@@ -602,16 +623,25 @@ public class QueryService<TContext>(
             workingProjection.Include = effectiveIncludes;
             var entityLoadRequest = ToQueryReq(workingProjection);
             var cacheAug = new QueryCoreCacheAugmentation(workingProjection.Select, workingProjection.ComputedFields);
+            var fallbackLoadStart = Stopwatch.GetTimestamp();
             var raw = await QueryCore(entityLoadRequest, defaultOrder, defaultSortDirection, ct, cacheAug).ConfigureAwait(false);
+            TrackQueryPhase<TDbModel>("queryproject", "fallback_querycore_load", fallbackLoadStart);
             if (!raw.IsSuccess)
                 return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, raw.Error!);
 
             var projectionFilterConditions = projectionService.GetProjectedFilterConditions<TDbModel>(queryRequest.WhereClause);
+            var projectEntitiesStart = Stopwatch.GetTimestamp();
             var items = projectionService.ProjectEntities(raw.Items!, projectedFieldSpecs, includeFilterMode, projectionFilterConditions);
-            if (computedFields.Count > 0)
+            TrackQueryPhase<TDbModel>("queryproject", "fallback_project_entities", projectEntitiesStart);
+            if (computedFields.Count > 0) {
+                var computedStart = Stopwatch.GetTimestamp();
                 items = projectionService.ApplyComputedFields(items, computedFields, projectedFieldSpecs);
+                TrackQueryPhase<TDbModel>("queryproject", "fallback_computed_fields", computedStart);
+            }
 
+            var mergeStart = Stopwatch.GetTimestamp();
             projectionService.MergeSiblingCollectionProjectionRows(items, typeof(TDbModel), projectedFieldSpecs, zipSiblingSelections);
+            TrackQueryPhase<TDbModel>("queryproject", "fallback_merge_sibling_rows", mergeStart);
             if (computedFields.Count > 0 && autoDerivedSelects is { Count: > 0 }) {
                 projectionService.StripAutoDerivedDependencyLeavesFromMergedCollections(items, projectedFieldSpecs, autoDerivedSelects);
                 StripAutoDerivedFields(items, autoDerivedSelects);
@@ -701,8 +731,11 @@ public class QueryService<TContext>(
             var totalCountMode = queryRequest.Options.TotalCountMode;
             var computeExactTotal = totalCountMode == QueryTotalCountMode.Exact;
             int? total = null;
-            if (computeExactTotal)
+            if (computeExactTotal) {
+                var countStart = Stopwatch.GetTimestamp();
                 total = await QueryRootCountHelper.CountDistinctRootEntitiesAsync(context, filteredQueryable, ct).ConfigureAwait(false);
+                TrackQueryPhase<TDbModel>("queryproject", "sql_exact_count", countStart);
+            }
 
             var orderedQueryable = filterService.ApplyOrdering(filteredQueryable, queryRequest.SortBy, defaultOrder, defaultSortDirection);
             var pageSize = queryRequest.Amount ?? queryOptions.DefaultPageSize;
@@ -715,10 +748,14 @@ public class QueryService<TContext>(
 #pragma warning restore CS8634
             }
 
+            var sqlMaterializeStart = Stopwatch.GetTimestamp();
             var rawProjected = await projectedQueryable.ToListAsync(ct).ConfigureAwait(false);
+            TrackQueryPhase<TDbModel>("queryproject", "sql_materialize", sqlMaterializeStart);
             var hasMore = totalCountMode == QueryTotalCountMode.HasMore && rawProjected.Count > pageSize;
             var items = hasMore ? rawProjected.Take(pageSize).ToList() : rawProjected;
+            var convertStart = Stopwatch.GetTimestamp();
             var converted = projectionService.ConvertSqlProjectedResults(items, projectedFieldSpecs, sqlConversionPlan);
+            TrackQueryPhase<TDbModel>("queryproject", "sql_convert", convertStart);
             if (totalCountMode == QueryTotalCountMode.HasMore && !hasMore)
                 total = startIndex + converted.Count;
 
@@ -807,6 +844,24 @@ public class QueryService<TContext>(
                 $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
         }
 
+        errors.AddRange(ValidateIncludePageSizeGuardrail(queryRequest.Amount, queryRequest.Include.Count));
+        return errors;
+    }
+
+    private List<ApiError> ValidateIncludePageSizeGuardrail(int? requestedAmount, int includeCount)
+    {
+        var errors = new List<ApiError>();
+        if (queryOptions.MaxIncludePageSize <= 0 || includeCount < queryOptions.IncludePageSizeCapMinIncludeCount)
+            return errors;
+
+        var effectiveAmount = requestedAmount ?? queryOptions.DefaultPageSize;
+        if (effectiveAmount <= queryOptions.MaxIncludePageSize)
+            return errors;
+
+        errors.Add(
+            new(
+                ApiErrorCodes.InvalidQuery,
+                $"Page size ({effectiveAmount}) exceeds maximum allowed for include queries ({queryOptions.MaxIncludePageSize})."));
         return errors;
     }
 
@@ -834,6 +889,13 @@ public class QueryService<TContext>(
         }
 
         return errors;
+    }
+
+    private void TrackQueryPhase<TDbModel>(string endpoint, string phase, long startTimestamp)
+        where TDbModel : class
+    {
+        var elapsedMs = Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds;
+        Metrics.IncrementCounter("api.query.phase_ms", elapsedMs, [("entity", typeof(TDbModel).Name), ("endpoint", endpoint), ("phase", phase)]);
     }
 
     private async Task<TResult[]> MapResultsAsync<TDbModel, TResult>(IReadOnlyList<TDbModel> dbResults, CancellationToken ct)

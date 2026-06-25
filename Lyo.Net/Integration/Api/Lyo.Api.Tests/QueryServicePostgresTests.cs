@@ -105,6 +105,26 @@ public class QueryServicePostgresTests
     }
 
     [Fact]
+    public async Task Query_WithIncludePageSizeOverGuardrail_ReturnsFailure()
+    {
+        await _fixture.SeedJobDefinitionAsync("IncludePageSizeGuardrail");
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new QueryReq {
+            Start = 0,
+            Amount = 301,
+            Include = ["JobRuns"]
+        };
+
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+        Assert.Contains(
+            result.Error!.Errors,
+            e => e.Description.Contains("include queries", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task QueryProjected_WithComputedTemplateOverLimit_ReturnsFailure()
     {
         var defId = await _fixture.SeedJobDefinitionAsync("ComputedTemplateLimit");
@@ -701,7 +721,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobRunAsync(otherDefId);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var unkeyedRequest = new QueryReq { Start = 0, Amount = 500, Include = ["JobDefinition"] };
+        var unkeyedRequest = new QueryReq { Start = 0, Amount = 300, Include = ["JobDefinition"] };
         var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
         Assert.True(unkeyedResult.IsSuccess);
         Assert.True(unkeyedResult.Items!.Count >= 2);

@@ -196,3 +196,8 @@ done
 
 echo "All framework-person matrix tests completed."
 echo "Results: $OUT_DIR"
+
+if command -v python3 >/dev/null 2>&1; then
+  echo "Refreshing k6 benchmark dashboard manifest..."
+  python3 "$REPO_ROOT/scripts/benchmarks/build-manifests.py" --k6-only --k6-run-dir "$OUT_DIR" || echo "Warning: benchmark manifest refresh failed."
+fi

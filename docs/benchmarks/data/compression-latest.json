@@ -1,0 +1,1713 @@
+{
+  "type": "compression",
+  "runId": "20260614-103603",
+  "generatedAt": "2026-06-25T19:39:54+00:00",
+  "sourceDir": "Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BenchmarkDotNet.Artifacts",
+  "environment": {
+    "benchmarkDotNet": "0.15.8",
+    "runtime": ".NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v3",
+    "cpu": null,
+    "os": null
+  },
+  "classes": {
+    "AlgorithmComparisonBenchmarks": [
+      {
+        "method": "GZip_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "17,272.6 ns",
+        "meanNs": 17272.6,
+        "ratio": 1.0,
+        "allocated": "2.85 KB"
+      },
+      {
+        "method": "Deflate_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "16,306.9 ns",
+        "meanNs": 16306.9,
+        "ratio": 0.94,
+        "allocated": "2.52 KB"
+      },
+      {
+        "method": "Zstd_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "2,238.7 ns",
+        "meanNs": 2238.7,
+        "ratio": 0.13,
+        "allocated": "3.44 KB"
+      },
+      {
+        "method": "Snappier_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "878.3 ns",
+        "meanNs": 878.3,
+        "ratio": 0.05,
+        "allocated": "2.34 KB"
+      },
+      {
+        "method": "LZ4_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "1,562.0 ns",
+        "meanNs": 1562.0,
+        "ratio": 0.09,
+        "allocated": "2.26 KB"
+      },
+      {
+        "method": "LZMA_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "647,578.3 ns",
+        "meanNs": 647578.3,
+        "ratio": 37.5,
+        "allocated": "1500.75 KB"
+      },
+      {
+        "method": "BZip2_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "658,596.3 ns",
+        "meanNs": 658596.3,
+        "ratio": 38.14,
+        "allocated": "8058.31 KB"
+      },
+      {
+        "method": "XZ_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "1,244,395.4 ns",
+        "meanNs": 1244395.4,
+        "ratio": 72.07,
+        "allocated": "1030.2 KB"
+      },
+      {
+        "method": "GZip_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "1,056.3 ns",
+        "meanNs": 1056.3,
+        "ratio": 0.06,
+        "allocated": "2.13 KB"
+      },
+      {
+        "method": "Deflate_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "778.0 ns",
+        "meanNs": 778.0,
+        "ratio": 0.05,
+        "allocated": "2.1 KB"
+      },
+      {
+        "method": "Zstd_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "589.4 ns",
+        "meanNs": 589.4,
+        "ratio": 0.03,
+        "allocated": "1.77 KB"
+      },
+      {
+        "method": "Snappier_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "339.5 ns",
+        "meanNs": 339.5,
+        "ratio": 0.02,
+        "allocated": "1.79 KB"
+      },
+      {
+        "method": "LZ4_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "271.1 ns",
+        "meanNs": 271.1,
+        "ratio": 0.02,
+        "allocated": "1.71 KB"
+      },
+      {
+        "method": "LZMA_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "137,470.1 ns",
+        "meanNs": 137470.1,
+        "ratio": 7.96,
+        "allocated": "98.13 KB"
+      },
+      {
+        "method": "BZip2_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "204,128.5 ns",
+        "meanNs": 204128.5,
+        "ratio": 11.82,
+        "allocated": "2999.41 KB"
+      },
+      {
+        "method": "XZ_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "30,804.8 ns",
+        "meanNs": 30804.8,
+        "ratio": 1.78,
+        "allocated": "1027.45 KB"
+      },
+      {
+        "method": "Brotli_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "18,116.6 ns",
+        "meanNs": 18116.6,
+        "ratio": 1.05,
+        "allocated": "2.44 KB"
+      },
+      {
+        "method": "ZLib_Compress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "17,077.0 ns",
+        "meanNs": 17077.0,
+        "ratio": 0.99,
+        "allocated": "2.84 KB"
+      },
+      {
+        "method": "Brotli_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "841.1 ns",
+        "meanNs": 841.1,
+        "ratio": 0.05,
+        "allocated": "1.95 KB"
+      },
+      {
+        "method": "ZLib_Decompress",
+        "dataSize": 1024,
+        "dataSizeLabel": "1 KB",
+        "mean": "1,018.1 ns",
+        "meanNs": 1018.1,
+        "ratio": 0.06,
+        "allocated": "2.13 KB"
+      },
+      {
+        "method": "GZip_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "18,636,967.6 ns",
+        "meanNs": 18636967.6,
+        "ratio": 1.0,
+        "allocated": "5114.21 KB"
+      },
+      {
+        "method": "Deflate_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "18,556,044.1 ns",
+        "meanNs": 18556044.1,
+        "ratio": 0.996,
+        "allocated": "5114.16 KB"
+      },
+      {
+        "method": "Zstd_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "418,161.7 ns",
+        "meanNs": 418161.7,
+        "ratio": 0.022,
+        "allocated": "2054.12 KB"
+      },
+      {
+        "method": "Snappier_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "162,822.0 ns",
+        "meanNs": 162822.0,
+        "ratio": 0.009,
+        "allocated": "1025.48 KB"
+      },
+      {
+        "method": "LZ4_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "117,408.1 ns",
+        "meanNs": 117408.1,
+        "ratio": 0.006,
+        "allocated": "1025.35 KB"
+      },
+      {
+        "method": "LZMA_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "307,561,398.7 ns",
+        "meanNs": 307561398.7,
+        "ratio": 16.508,
+        "allocated": "6629.66 KB"
+      },
+      {
+        "method": "BZip2_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "133,356,797.1 ns",
+        "meanNs": 133356797.1,
+        "ratio": 7.158,
+        "allocated": "782260.35 KB"
+      },
+      {
+        "method": "XZ_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "203,790,206.4 ns",
+        "meanNs": 203790206.4,
+        "ratio": 10.938,
+        "allocated": "5121.8 KB"
+      },
+      {
+        "method": "GZip_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "381,105.2 ns",
+        "meanNs": 381105.2,
+        "ratio": 0.02,
+        "allocated": "1921.36 KB"
+      },
+      {
+        "method": "Deflate_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "213,004.0 ns",
+        "meanNs": 213004.0,
+        "ratio": 0.011,
+        "allocated": "1921.35 KB"
+      },
+      {
+        "method": "Zstd_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "70,339.0 ns",
+        "meanNs": 70339.0,
+        "ratio": 0.004,
+        "allocated": "1025.56 KB"
+      },
+      {
+        "method": "Snappier_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "180,781.5 ns",
+        "meanNs": 180781.5,
+        "ratio": 0.01,
+        "allocated": "1024.97 KB"
+      },
+      {
+        "method": "LZ4_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "132,547.7 ns",
+        "meanNs": 132547.7,
+        "ratio": 0.007,
+        "allocated": "1024.85 KB"
+      },
+      {
+        "method": "LZMA_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "144,808,274.3 ns",
+        "meanNs": 144808274.3,
+        "ratio": 7.772,
+        "allocated": "2081.24 KB"
+      },
+      {
+        "method": "BZip2_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "54,875,028.7 ns",
+        "meanNs": 54875028.7,
+        "ratio": 2.945,
+        "allocated": "6068.52 KB"
+      },
+      {
+        "method": "XZ_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "583,946.6 ns",
+        "meanNs": 583946.6,
+        "ratio": 0.031,
+        "allocated": "3969.78 KB"
+      },
+      {
+        "method": "Brotli_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "2,400,076.7 ns",
+        "meanNs": 2400076.7,
+        "ratio": 0.129,
+        "allocated": "5058.02 KB"
+      },
+      {
+        "method": "ZLib_Compress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "20,645,651.9 ns",
+        "meanNs": 20645651.9,
+        "ratio": 1.108,
+        "allocated": "5114.2 KB"
+      },
+      {
+        "method": "Brotli_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "698,594.9 ns",
+        "meanNs": 698594.9,
+        "ratio": 0.037,
+        "allocated": "5057.41 KB"
+      },
+      {
+        "method": "ZLib_Decompress",
+        "dataSize": 1048576,
+        "dataSizeLabel": "1 MB",
+        "mean": "475,560.0 ns",
+        "meanNs": 475560.0,
+        "ratio": 0.026,
+        "allocated": "1921.37 KB"
+      },
+      {
+        "method": "GZip_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "197,147,216.2 ns",
+        "meanNs": 197147216.2,
+        "ratio": 1.001,
+        "allocated": "43004.99 KB"
+      },
+      {
+        "method": "Deflate_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "196,375,385.8 ns",
+        "meanNs": 196375385.8,
+        "ratio": 0.997,
+        "allocated": "43004.94 KB"
+      },
+      {
+        "method": "Zstd_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "4,485,706.8 ns",
+        "meanNs": 4485706.8,
+        "ratio": 0.023,
+        "allocated": "20522.73 KB"
+      },
+      {
+        "method": "Snappier_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "3,289,505.6 ns",
+        "meanNs": 3289505.6,
+        "ratio": 0.017,
+        "allocated": "10241.9 KB"
+      },
+      {
+        "method": "LZ4_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "1,750,209.1 ns",
+        "meanNs": 1750209.1,
+        "ratio": 0.009,
+        "allocated": "10241.44 KB"
+      },
+      {
+        "method": "LZMA_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "3,058,141,382.4 ns",
+        "meanNs": 3058141382.4,
+        "ratio": 15.523,
+        "allocated": "44643.02 KB"
+      },
+      {
+        "method": "BZip2_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "1,326,515,511.2 ns",
+        "meanNs": 1326515511.2,
+        "ratio": 6.734,
+        "allocated": "6973107.95 KB"
+      },
+      {
+        "method": "XZ_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "3,626,721,055.9 ns",
+        "meanNs": 3626721055.9,
+        "ratio": 18.41,
+        "allocated": "43010.38 KB"
+      },
+      {
+        "method": "GZip_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "8,958,475.0 ns",
+        "meanNs": 8958475.0,
+        "ratio": 0.045,
+        "allocated": "42881.52 KB"
+      },
+      {
+        "method": "Deflate_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "7,530,880.7 ns",
+        "meanNs": 7530880.7,
+        "ratio": 0.038,
+        "allocated": "42881.5 KB"
+      },
+      {
+        "method": "Zstd_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "1,313,772.5 ns",
+        "meanNs": 1313772.5,
+        "ratio": 0.007,
+        "allocated": "10241.44 KB"
+      },
+      {
+        "method": "Snappier_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "3,234,961.2 ns",
+        "meanNs": 3234961.2,
+        "ratio": 0.016,
+        "allocated": "10240.9 KB"
+      },
+      {
+        "method": "LZ4_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "1,664,462.8 ns",
+        "meanNs": 1664462.8,
+        "ratio": 0.008,
+        "allocated": "10240.8 KB"
+      },
+      {
+        "method": "LZMA_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "1,459,432,527.4 ns",
+        "meanNs": 1459432527.4,
+        "ratio": 7.408,
+        "allocated": "43041.38 KB"
+      },
+      {
+        "method": "BZip2_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "553,557,231.7 ns",
+        "meanNs": 553557231.7,
+        "ratio": 2.81,
+        "allocated": "46072.03 KB"
+      },
+      {
+        "method": "XZ_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "9,476,407.7 ns",
+        "meanNs": 9476407.7,
+        "ratio": 0.048,
+        "allocated": "43905.73 KB"
+      },
+      {
+        "method": "Brotli_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "33,103,194.2 ns",
+        "meanNs": 33103194.2,
+        "ratio": 0.168,
+        "allocated": "42945.84 KB"
+      },
+      {
+        "method": "ZLib_Compress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "207,027,022.1 ns",
+        "meanNs": 207027022.1,
+        "ratio": 1.051,
+        "allocated": "43004.98 KB"
+      },
+      {
+        "method": "Brotli_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "8,610,053.5 ns",
+        "meanNs": 8610053.5,
+        "ratio": 0.044,
+        "allocated": "42944.41 KB"
+      },
+      {
+        "method": "ZLib_Decompress",
+        "dataSize": 10485760,
+        "dataSizeLabel": "10 MB",
+        "mean": "9,731,504.9 ns",
+        "meanNs": 9731504.9,
+        "ratio": 0.049,
+        "allocated": "42881.52 KB"
+      },
+      {
+        "method": "GZip_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "1,998,191,900.3 ns",
+        "meanNs": 1998191900.3,
+        "ratio": 1.0,
+        "allocated": "364569.28 KB"
+      },
+      {
+        "method": "Deflate_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "1,972,548,069.1 ns",
+        "meanNs": 1972548069.1,
+        "ratio": 0.987,
+        "allocated": "364569.15 KB"
+      },
+      {
+        "method": "Zstd_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "38,853,037.8 ns",
+        "meanNs": 38853037.8,
+        "ratio": 0.019,
+        "allocated": "205203.73 KB"
+      },
+      {
+        "method": "Snappier_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "42,168,791.3 ns",
+        "meanNs": 42168791.3,
+        "ratio": 0.021,
+        "allocated": "102406.06 KB"
+      },
+      {
+        "method": "LZ4_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "18,420,923.0 ns",
+        "meanNs": 18420923.0,
+        "ratio": 0.009,
+        "allocated": "102401.44 KB"
+      },
+      {
+        "method": "LZMA_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "29,242,869,847.5 ns",
+        "meanNs": 29242869847.5,
+        "ratio": 14.639,
+        "allocated": "367429.48 KB"
+      },
+      {
+        "method": "BZip2_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "13,459,118,013.5 ns",
+        "meanNs": 13459118013.5,
+        "ratio": 6.738,
+        "allocated": "67919807.66 KB"
+      },
+      {
+        "method": "XZ_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "44,641,172,378.3 ns",
+        "meanNs": 44641172378.3,
+        "ratio": 22.348,
+        "allocated": "364551.04 KB"
+      },
+      {
+        "method": "GZip_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "77,699,218.9 ns",
+        "meanNs": 77699218.9,
+        "ratio": 0.039,
+        "allocated": "364417.42 KB"
+      },
+      {
+        "method": "Deflate_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "70,212,073.0 ns",
+        "meanNs": 70212073.0,
+        "ratio": 0.035,
+        "allocated": "364417.39 KB"
+      },
+      {
+        "method": "Zstd_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "13,149,484.9 ns",
+        "meanNs": 13149484.9,
+        "ratio": 0.007,
+        "allocated": "102400.8 KB"
+      },
+      {
+        "method": "Snappier_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "39,482,757.0 ns",
+        "meanNs": 39482757.0,
+        "ratio": 0.02,
+        "allocated": "102400.82 KB"
+      },
+      {
+        "method": "LZ4_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "16,800,322.6 ns",
+        "meanNs": 16800322.6,
+        "ratio": 0.008,
+        "allocated": "102400.74 KB"
+      },
+      {
+        "method": "LZMA_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "13,521,378,359.7 ns",
+        "meanNs": 13521378359.7,
+        "ratio": 6.769,
+        "allocated": "364577.45 KB"
+      },
+      {
+        "method": "BZip2_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "5,433,014,702.9 ns",
+        "meanNs": 5433014702.9,
+        "ratio": 2.72,
+        "allocated": "368270.44 KB"
+      },
+      {
+        "method": "XZ_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "77,124,558.2 ns",
+        "meanNs": 77124558.2,
+        "ratio": 0.039,
+        "allocated": "365441.39 KB"
+      },
+      {
+        "method": "Brotli_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "406,728,380.9 ns",
+        "meanNs": 406728380.9,
+        "ratio": 0.204,
+        "allocated": "364482.02 KB"
+      },
+      {
+        "method": "ZLib_Compress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "1,908,453,217.8 ns",
+        "meanNs": 1908453217.8,
+        "ratio": 0.955,
+        "allocated": "364569.19 KB"
+      },
+      {
+        "method": "Brotli_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "78,120,480.6 ns",
+        "meanNs": 78120480.6,
+        "ratio": 0.039,
+        "allocated": "364473.31 KB"
+      },
+      {
+        "method": "ZLib_Decompress",
+        "dataSize": 104857600,
+        "dataSizeLabel": "100 MB",
+        "mean": "86,069,286.5 ns",
+        "meanNs": 86069286.5,
+        "ratio": 0.043,
+        "allocated": "364417.42 KB"
+      }
+    ],
+    "GZipCompressionBenchmarks": [
+      {
+        "method": "Compress_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "17.010 \u03bcs",
+        "meanNs": 17010.0,
+        "ratio": null,
+        "allocated": "2.85 KB"
+      },
+      {
+        "method": "Compress_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "19,544.091 \u03bcs",
+        "meanNs": 19544091.0,
+        "ratio": null,
+        "allocated": "5114.13 KB"
+      },
+      {
+        "method": "Compress_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "197,356.269 \u03bcs",
+        "meanNs": 197356269.0,
+        "ratio": null,
+        "allocated": "43005.41 KB"
+      },
+      {
+        "method": "Decompress_1KB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1.081 \u03bcs",
+        "meanNs": 1081.0,
+        "ratio": null,
+        "allocated": "2.13 KB"
+      },
+      {
+        "method": "Decompress_1MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "493.761 \u03bcs",
+        "meanNs": 493761.0,
+        "ratio": null,
+        "allocated": "1921.27 KB"
+      },
+      {
+        "method": "Decompress_10MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "9,525.967 \u03bcs",
+        "meanNs": 9525967.0,
+        "ratio": null,
+        "allocated": "42881.69 KB"
+      }
+    ],
+    "LargeFileStreamingBenchmarks": [
+      {
+        "method": "Compress_GZip_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,907.42 ms",
+        "meanNs": 1907420000.0,
+        "ratio": null,
+        "allocated": "255.99 MB"
+      },
+      {
+        "method": "Compress_GZip_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "19,909.48 ms",
+        "meanNs": 19909480000.0,
+        "ratio": null,
+        "allocated": "1.39 MB"
+      },
+      {
+        "method": "Compress_GZip_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "39,216.99 ms",
+        "meanNs": 39216990000.0,
+        "ratio": null,
+        "allocated": "1.64 MB"
+      },
+      {
+        "method": "Decompress_GZip_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "64.84 ms",
+        "meanNs": 64840000.0,
+        "ratio": null,
+        "allocated": "255.88 MB"
+      },
+      {
+        "method": "Decompress_GZip_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "962.81 ms",
+        "meanNs": 962810000.0,
+        "ratio": null,
+        "allocated": "1.14 MB"
+      },
+      {
+        "method": "Decompress_GZip_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,988.87 ms",
+        "meanNs": 1988870000.0,
+        "ratio": null,
+        "allocated": "1.27 MB"
+      },
+      {
+        "method": "Compress_Zstd_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "65.28 ms",
+        "meanNs": 65280000.0,
+        "ratio": null,
+        "allocated": "256.89 MB"
+      },
+      {
+        "method": "Compress_Zstd_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,013.42 ms",
+        "meanNs": 1013420000.0,
+        "ratio": null,
+        "allocated": "1.39 MB"
+      },
+      {
+        "method": "Compress_Zstd_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,989.87 ms",
+        "meanNs": 1989870000.0,
+        "ratio": null,
+        "allocated": "1.78 MB"
+      },
+      {
+        "method": "Decompress_Zstd_100MB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "58.26 ms",
+        "meanNs": 58260000.0,
+        "ratio": null,
+        "allocated": "255.87 MB"
+      },
+      {
+        "method": "Decompress_Zstd_1GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "836.39 ms",
+        "meanNs": 836390000.0,
+        "ratio": null,
+        "allocated": "1.25 MB"
+      },
+      {
+        "method": "Decompress_Zstd_2GB",
+        "dataSize": null,
+        "dataSizeLabel": "NA",
+        "mean": "1,690.08 ms",
+        "meanNs": 1690080000.0,
+        "ratio": null,
+        "allocated": "1.49 MB"
+      }
+    ]
+  },
+  "comparisonTables": {
+    "encryptOrCompress": [
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "BZip2",
+        "mean": "658,596.3 ns",
+        "meanNs": 658596.3,
+        "ratio": 38.14,
+        "ratioVsBaseline": 38.129540428192634,
+        "allocated": "8058.31 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Brotli",
+        "mean": "18,116.6 ns",
+        "meanNs": 18116.6,
+        "ratio": 1.05,
+        "ratioVsBaseline": 1.0488635179417112,
+        "allocated": "2.44 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Deflate",
+        "mean": "16,306.9 ns",
+        "meanNs": 16306.9,
+        "ratio": 0.94,
+        "ratioVsBaseline": 0.9440906406678786,
+        "allocated": "2.52 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "GZip",
+        "mean": "17,272.6 ns",
+        "meanNs": 17272.6,
+        "ratio": 1.0,
+        "ratioVsBaseline": 1.0,
+        "allocated": "2.85 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "LZ4",
+        "mean": "1,562.0 ns",
+        "meanNs": 1562.0,
+        "ratio": 0.09,
+        "ratioVsBaseline": 0.09043224529022846,
+        "allocated": "2.26 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "LZMA",
+        "mean": "647,578.3 ns",
+        "meanNs": 647578.3,
+        "ratio": 37.5,
+        "ratioVsBaseline": 37.49165151743224,
+        "allocated": "1500.75 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Snappier",
+        "mean": "878.3 ns",
+        "meanNs": 878.3,
+        "ratio": 0.05,
+        "ratioVsBaseline": 0.05084932204763614,
+        "allocated": "2.34 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "XZ",
+        "mean": "1,244,395.4 ns",
+        "meanNs": 1244395.4,
+        "ratio": 72.07,
+        "ratioVsBaseline": 72.04447506455311,
+        "allocated": "1030.2 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "ZLib",
+        "mean": "17,077.0 ns",
+        "meanNs": 17077.0,
+        "ratio": 0.99,
+        "ratioVsBaseline": 0.9886757060315182,
+        "allocated": "2.84 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Zstd",
+        "mean": "2,238.7 ns",
+        "meanNs": 2238.7,
+        "ratio": 0.13,
+        "ratioVsBaseline": 0.12960990238875444,
+        "allocated": "3.44 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "BZip2",
+        "mean": "133,356,797.1 ns",
+        "meanNs": 133356797.1,
+        "ratio": 7.158,
+        "ratioVsBaseline": 7.155498682092466,
+        "allocated": "782260.35 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Brotli",
+        "mean": "2,400,076.7 ns",
+        "meanNs": 2400076.7,
+        "ratio": 0.129,
+        "ratioVsBaseline": 0.12878042992358907,
+        "allocated": "5058.02 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Deflate",
+        "mean": "18,556,044.1 ns",
+        "meanNs": 18556044.1,
+        "ratio": 0.996,
+        "ratioVsBaseline": 0.9956579041324298,
+        "allocated": "5114.16 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "GZip",
+        "mean": "18,636,967.6 ns",
+        "meanNs": 18636967.6,
+        "ratio": 1.0,
+        "ratioVsBaseline": 1.0,
+        "allocated": "5114.21 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "LZ4",
+        "mean": "117,408.1 ns",
+        "meanNs": 117408.1,
+        "ratio": 0.006,
+        "ratioVsBaseline": 0.006299742668437112,
+        "allocated": "1025.35 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "LZMA",
+        "mean": "307,561,398.7 ns",
+        "meanNs": 307561398.7,
+        "ratio": 16.508,
+        "ratioVsBaseline": 16.502759746172437,
+        "allocated": "6629.66 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Snappier",
+        "mean": "162,822.0 ns",
+        "meanNs": 162822.0,
+        "ratio": 0.009,
+        "ratioVsBaseline": 0.008736507112884609,
+        "allocated": "1025.48 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "XZ",
+        "mean": "203,790,206.4 ns",
+        "meanNs": 203790206.4,
+        "ratio": 10.938,
+        "ratioVsBaseline": 10.934729875261466,
+        "allocated": "5121.8 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "ZLib",
+        "mean": "20,645,651.9 ns",
+        "meanNs": 20645651.9,
+        "ratio": 1.108,
+        "ratioVsBaseline": 1.1077795671008195,
+        "allocated": "5114.2 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Zstd",
+        "mean": "418,161.7 ns",
+        "meanNs": 418161.7,
+        "ratio": 0.022,
+        "ratioVsBaseline": 0.02243721773707435,
+        "allocated": "2054.12 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "BZip2",
+        "mean": "1,326,515,511.2 ns",
+        "meanNs": 1326515511.2,
+        "ratio": 6.734,
+        "ratioVsBaseline": 6.728553092295706,
+        "allocated": "6973107.95 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Brotli",
+        "mean": "33,103,194.2 ns",
+        "meanNs": 33103194.2,
+        "ratio": 0.168,
+        "ratioVsBaseline": 0.1679110404806213,
+        "allocated": "42945.84 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Deflate",
+        "mean": "196,375,385.8 ns",
+        "meanNs": 196375385.8,
+        "ratio": 0.997,
+        "ratioVsBaseline": 0.9960850048259521,
+        "allocated": "43004.94 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "GZip",
+        "mean": "197,147,216.2 ns",
+        "meanNs": 197147216.2,
+        "ratio": 1.001,
+        "ratioVsBaseline": 1.0,
+        "allocated": "43004.99 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "LZ4",
+        "mean": "1,750,209.1 ns",
+        "meanNs": 1750209.1,
+        "ratio": 0.009,
+        "ratioVsBaseline": 0.008877675950668585,
+        "allocated": "10241.44 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "LZMA",
+        "mean": "3,058,141,382.4 ns",
+        "meanNs": 3058141382.4,
+        "ratio": 15.523,
+        "ratioVsBaseline": 15.511968372394398,
+        "allocated": "44643.02 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Snappier",
+        "mean": "3,289,505.6 ns",
+        "meanNs": 3289505.6,
+        "ratio": 0.017,
+        "ratioVsBaseline": 0.016685529034621997,
+        "allocated": "10241.9 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "XZ",
+        "mean": "3,626,721,055.9 ns",
+        "meanNs": 3626721055.9,
+        "ratio": 18.41,
+        "ratioVsBaseline": 18.396004396130046,
+        "allocated": "43010.38 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "ZLib",
+        "mean": "207,027,022.1 ns",
+        "meanNs": 207027022.1,
+        "ratio": 1.051,
+        "ratioVsBaseline": 1.0501138493884552,
+        "allocated": "43004.98 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Zstd",
+        "mean": "4,485,706.8 ns",
+        "meanNs": 4485706.8,
+        "ratio": 0.023,
+        "ratioVsBaseline": 0.02275308212036524,
+        "allocated": "20522.73 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "BZip2",
+        "mean": "13,459,118,013.5 ns",
+        "meanNs": 13459118013.5,
+        "ratio": 6.738,
+        "ratioVsBaseline": 6.735648368647329,
+        "allocated": "67919807.66 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Brotli",
+        "mean": "406,728,380.9 ns",
+        "meanNs": 406728380.9,
+        "ratio": 0.204,
+        "ratioVsBaseline": 0.20354820817707026,
+        "allocated": "364482.02 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Deflate",
+        "mean": "1,972,548,069.1 ns",
+        "meanNs": 1972548069.1,
+        "ratio": 0.987,
+        "ratioVsBaseline": 0.9871664822602123,
+        "allocated": "364569.15 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "GZip",
+        "mean": "1,998,191,900.3 ns",
+        "meanNs": 1998191900.3,
+        "ratio": 1.0,
+        "ratioVsBaseline": 1.0,
+        "allocated": "364569.28 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "LZ4",
+        "mean": "18,420,923.0 ns",
+        "meanNs": 18420923.0,
+        "ratio": 0.009,
+        "ratioVsBaseline": 0.009218795750915797,
+        "allocated": "102401.44 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "LZMA",
+        "mean": "29,242,869,847.5 ns",
+        "meanNs": 29242869847.5,
+        "ratio": 14.639,
+        "ratioVsBaseline": 14.634665390801354,
+        "allocated": "367429.48 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Snappier",
+        "mean": "42,168,791.3 ns",
+        "meanNs": 42168791.3,
+        "ratio": 0.021,
+        "ratioVsBaseline": 0.021103474242723613,
+        "allocated": "102406.06 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "XZ",
+        "mean": "44,641,172,378.3 ns",
+        "meanNs": 44641172378.3,
+        "ratio": 22.348,
+        "ratioVsBaseline": 22.340783371005443,
+        "allocated": "364551.04 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "ZLib",
+        "mean": "1,908,453,217.8 ns",
+        "meanNs": 1908453217.8,
+        "ratio": 0.955,
+        "ratioVsBaseline": 0.9550900579236024,
+        "allocated": "364569.19 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Zstd",
+        "mean": "38,853,037.8 ns",
+        "meanNs": 38853037.8,
+        "ratio": 0.019,
+        "ratioVsBaseline": 0.019444097333277535,
+        "allocated": "205203.73 KB"
+      }
+    ],
+    "decryptOrDecompress": [
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "BZip2",
+        "mean": "204,128.5 ns",
+        "meanNs": 204128.5,
+        "ratio": 11.82,
+        "ratioVsBaseline": 193.24860361639688,
+        "allocated": "2999.41 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Brotli",
+        "mean": "841.1 ns",
+        "meanNs": 841.1,
+        "ratio": 0.05,
+        "ratioVsBaseline": 0.7962699990532993,
+        "allocated": "1.95 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Deflate",
+        "mean": "778.0 ns",
+        "meanNs": 778.0,
+        "ratio": 0.05,
+        "ratioVsBaseline": 0.7365331818612137,
+        "allocated": "2.1 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "GZip",
+        "mean": "1,056.3 ns",
+        "meanNs": 1056.3,
+        "ratio": 0.06,
+        "ratioVsBaseline": 1.0,
+        "allocated": "2.13 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "LZ4",
+        "mean": "271.1 ns",
+        "meanNs": 271.1,
+        "ratio": 0.02,
+        "ratioVsBaseline": 0.25665057275395253,
+        "allocated": "1.71 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "LZMA",
+        "mean": "137,470.1 ns",
+        "meanNs": 137470.1,
+        "ratio": 7.96,
+        "ratioVsBaseline": 130.14304648300674,
+        "allocated": "98.13 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Snappier",
+        "mean": "339.5 ns",
+        "meanNs": 339.5,
+        "ratio": 0.02,
+        "ratioVsBaseline": 0.3214049039098741,
+        "allocated": "1.79 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "XZ",
+        "mean": "30,804.8 ns",
+        "meanNs": 30804.8,
+        "ratio": 1.78,
+        "ratioVsBaseline": 29.162927198712488,
+        "allocated": "1027.45 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "ZLib",
+        "mean": "1,018.1 ns",
+        "meanNs": 1018.1,
+        "ratio": 0.06,
+        "ratioVsBaseline": 0.9638360314304649,
+        "allocated": "2.13 KB"
+      },
+      {
+        "size": 1024,
+        "sizeLabel": "1 KB",
+        "algorithm": "Zstd",
+        "mean": "589.4 ns",
+        "meanNs": 589.4,
+        "ratio": 0.03,
+        "ratioVsBaseline": 0.5579854208084825,
+        "allocated": "1.77 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "BZip2",
+        "mean": "54,875,028.7 ns",
+        "meanNs": 54875028.7,
+        "ratio": 2.945,
+        "ratioVsBaseline": 143.98918907430286,
+        "allocated": "6068.52 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Brotli",
+        "mean": "698,594.9 ns",
+        "meanNs": 698594.9,
+        "ratio": 0.037,
+        "ratioVsBaseline": 1.8330762739527038,
+        "allocated": "5057.41 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Deflate",
+        "mean": "213,004.0 ns",
+        "meanNs": 213004.0,
+        "ratio": 0.011,
+        "ratioVsBaseline": 0.5589112927349194,
+        "allocated": "1921.35 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "GZip",
+        "mean": "381,105.2 ns",
+        "meanNs": 381105.2,
+        "ratio": 0.02,
+        "ratioVsBaseline": 1.0,
+        "allocated": "1921.36 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "LZ4",
+        "mean": "132,547.7 ns",
+        "meanNs": 132547.7,
+        "ratio": 0.007,
+        "ratioVsBaseline": 0.34779819325477584,
+        "allocated": "1024.85 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "LZMA",
+        "mean": "144,808,274.3 ns",
+        "meanNs": 144808274.3,
+        "ratio": 7.772,
+        "ratioVsBaseline": 379.9692953546685,
+        "allocated": "2081.24 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Snappier",
+        "mean": "180,781.5 ns",
+        "meanNs": 180781.5,
+        "ratio": 0.01,
+        "ratioVsBaseline": 0.47436114752567005,
+        "allocated": "1024.97 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "XZ",
+        "mean": "583,946.6 ns",
+        "meanNs": 583946.6,
+        "ratio": 0.031,
+        "ratioVsBaseline": 1.5322451648521194,
+        "allocated": "3969.78 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "ZLib",
+        "mean": "475,560.0 ns",
+        "meanNs": 475560.0,
+        "ratio": 0.026,
+        "ratioVsBaseline": 1.2478444272080254,
+        "allocated": "1921.37 KB"
+      },
+      {
+        "size": 1048576,
+        "sizeLabel": "1 MB",
+        "algorithm": "Zstd",
+        "mean": "70,339.0 ns",
+        "meanNs": 70339.0,
+        "ratio": 0.004,
+        "ratioVsBaseline": 0.18456583641472224,
+        "allocated": "1025.56 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "BZip2",
+        "mean": "553,557,231.7 ns",
+        "meanNs": 553557231.7,
+        "ratio": 2.81,
+        "ratioVsBaseline": 61.79145799926886,
+        "allocated": "46072.03 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Brotli",
+        "mean": "8,610,053.5 ns",
+        "meanNs": 8610053.5,
+        "ratio": 0.044,
+        "ratioVsBaseline": 0.9611070522605689,
+        "allocated": "42944.41 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Deflate",
+        "mean": "7,530,880.7 ns",
+        "meanNs": 7530880.7,
+        "ratio": 0.038,
+        "ratioVsBaseline": 0.8406431563407835,
+        "allocated": "42881.5 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "GZip",
+        "mean": "8,958,475.0 ns",
+        "meanNs": 8958475.0,
+        "ratio": 0.045,
+        "ratioVsBaseline": 1.0,
+        "allocated": "42881.52 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "LZ4",
+        "mean": "1,664,462.8 ns",
+        "meanNs": 1664462.8,
+        "ratio": 0.008,
+        "ratioVsBaseline": 0.18579756041067258,
+        "allocated": "10240.8 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "LZMA",
+        "mean": "1,459,432,527.4 ns",
+        "meanNs": 1459432527.4,
+        "ratio": 7.408,
+        "ratioVsBaseline": 162.91082214327776,
+        "allocated": "43041.38 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Snappier",
+        "mean": "3,234,961.2 ns",
+        "meanNs": 3234961.2,
+        "ratio": 0.016,
+        "ratioVsBaseline": 0.3611062373897343,
+        "allocated": "10240.9 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "XZ",
+        "mean": "9,476,407.7 ns",
+        "meanNs": 9476407.7,
+        "ratio": 0.048,
+        "ratioVsBaseline": 1.0578148289747975,
+        "allocated": "43905.73 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "ZLib",
+        "mean": "9,731,504.9 ns",
+        "meanNs": 9731504.9,
+        "ratio": 0.049,
+        "ratioVsBaseline": 1.0862903451759367,
+        "allocated": "42881.52 KB"
+      },
+      {
+        "size": 10485760,
+        "sizeLabel": "10 MB",
+        "algorithm": "Zstd",
+        "mean": "1,313,772.5 ns",
+        "meanNs": 1313772.5,
+        "ratio": 0.007,
+        "ratioVsBaseline": 0.14665135528089324,
+        "allocated": "10241.44 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "BZip2",
+        "mean": "5,433,014,702.9 ns",
+        "meanNs": 5433014702.9,
+        "ratio": 2.72,
+        "ratioVsBaseline": 69.923672075679,
+        "allocated": "368270.44 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Brotli",
+        "mean": "78,120,480.6 ns",
+        "meanNs": 78120480.6,
+        "ratio": 0.039,
+        "ratioVsBaseline": 1.0054216980037105,
+        "allocated": "364473.31 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Deflate",
+        "mean": "70,212,073.0 ns",
+        "meanNs": 70212073.0,
+        "ratio": 0.035,
+        "ratioVsBaseline": 0.9036393672163414,
+        "allocated": "364417.39 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "GZip",
+        "mean": "77,699,218.9 ns",
+        "meanNs": 77699218.9,
+        "ratio": 0.039,
+        "ratioVsBaseline": 1.0,
+        "allocated": "364417.42 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "LZ4",
+        "mean": "16,800,322.6 ns",
+        "meanNs": 16800322.6,
+        "ratio": 0.008,
+        "ratioVsBaseline": 0.21622254171721153,
+        "allocated": "102400.74 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "LZMA",
+        "mean": "13,521,378,359.7 ns",
+        "meanNs": 13521378359.7,
+        "ratio": 6.769,
+        "ratioVsBaseline": 174.02206291291301,
+        "allocated": "364577.45 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Snappier",
+        "mean": "39,482,757.0 ns",
+        "meanNs": 39482757.0,
+        "ratio": 0.02,
+        "ratioVsBaseline": 0.5081486990340902,
+        "allocated": "102400.82 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "XZ",
+        "mean": "77,124,558.2 ns",
+        "meanNs": 77124558.2,
+        "ratio": 0.039,
+        "ratioVsBaseline": 0.9926040350451966,
+        "allocated": "365441.39 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "ZLib",
+        "mean": "86,069,286.5 ns",
+        "meanNs": 86069286.5,
+        "ratio": 0.043,
+        "ratioVsBaseline": 1.10772396065876,
+        "allocated": "364417.42 KB"
+      },
+      {
+        "size": 104857600,
+        "sizeLabel": "100 MB",
+        "algorithm": "Zstd",
+        "mean": "13,149,484.9 ns",
+        "meanNs": 13149484.9,
+        "ratio": 0.007,
+        "ratioVsBaseline": 0.16923574118452303,
+        "allocated": "102400.8 KB"
+      }
+    ],
+    "baseline": "GZip"
+  },
+  "previous": {
+    "runId": "20260614-103603",
+    "generatedAt": "2026-06-25T19:34:54+00:00"
+  }
+}

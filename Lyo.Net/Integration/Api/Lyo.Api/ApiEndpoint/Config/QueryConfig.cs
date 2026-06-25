@@ -14,6 +14,8 @@ public sealed record QueryConfig<TDbEntity>
 
     public int? MaxIncludePathCount { get; init; }
 
+    public int? MaxIncludePageSize { get; init; }
+
     public int? MaxKeySetCount { get; init; }
 
     public int? MaxSelectFieldCount { get; init; }

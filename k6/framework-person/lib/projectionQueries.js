@@ -45,7 +45,10 @@ function projectionRng(args = {}, namespace = "projection") {
 }
 
 function withRandomSort(query, args = {}) {
-  if (!shouldRandomize("RANDOMIZE_SORTS", true) || !shouldRandomize("QUERYPROJECT_RANDOMIZE_SORTS", true)) {
+  if (!shouldRandomize("RANDOMIZE_SORTS", false) || !shouldRandomize("QUERYPROJECT_RANDOMIZE_SORTS", false)) {
+    // Randomized multi-key sorting over unindexed columns is the dominant cost in this harness; keep it off by default.
+    // No queryproject case carries a fixed sort, so fall back to the server default (PK) order.
+    query.SortBy = [];
     return query;
   }
   const pool = parseFieldPool(

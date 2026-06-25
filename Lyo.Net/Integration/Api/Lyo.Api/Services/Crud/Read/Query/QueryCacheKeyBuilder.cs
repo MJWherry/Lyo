@@ -65,12 +65,7 @@ public static class QueryCacheKeyBuilder
         keyBuilder.Append($":countMode={options.TotalCountMode}");
         keyBuilder.Append($":includeFilterMode={options.IncludeFilterMode}");
         if (queryRequest.SortBy.Any()) {
-            var sortKey = string.Join(
-                "|",
-                queryRequest.SortBy.Select((f, i) => (f, EffectivePriority: f.Priority ?? i))
-                    .OrderBy(x => x.f.PropertyName)
-                    .Select(x => $"{x.f.PropertyName}:{x.f.Direction}:{x.EffectivePriority}"));
-
+            var sortKey = BuildSortKey(queryRequest.SortBy);
             keyBuilder.Append($":sortBy={sortKey}");
         }
 
@@ -80,7 +75,7 @@ public static class QueryCacheKeyBuilder
         }
 
         if (queryRequest.Include.Count != 0) {
-            var includeKey = string.Join("|", queryRequest.Include.OrderBy(i => i));
+            var includeKey = string.Join("|", NormalizePathValues(queryRequest.Include));
             keyBuilder.Append($":include={CompactCacheSegment(includeKey)}");
         }
 
@@ -99,7 +94,7 @@ public static class QueryCacheKeyBuilder
     {
         var keyBuilder = new StringBuilder(Build<TDb, TResponse>(queryRequest));
         if (selectForCacheKey.Count != 0) {
-            var selectKey = string.Join("|", selectForCacheKey.OrderBy(i => i));
+            var selectKey = string.Join("|", NormalizePathValues(selectForCacheKey));
             keyBuilder.Append($":select={CompactCacheSegment(selectKey)}");
         }
 
@@ -133,14 +128,14 @@ public static class QueryCacheKeyBuilder
         var typeName = typeof(TDbModel).Name;
         var resultName = typeof(TResult).Name;
         var treeHash = queryTree != null ? WhereClauseUtils.GetWhereClauseTreeHash(queryTree) : "null";
-        var includeArray = includes as string[] ?? includes.Order().ToArray();
+        var includeArray = includes as string[] ?? [..NormalizePathValues(includes)];
         var includeStr = includeArray.Length != 0 ? $":include={CompactCacheSegment(string.Join("|", includeArray))}" : "";
         var sortStr = sortBy.Length > 0
-            ? $":sortBy={string.Join("|", sortBy.Select((f, i) => (f, EffectivePriority: f.Priority ?? i)).OrderBy(x => x.f.PropertyName).Select(x => $"{x.f.PropertyName}:{x.f.Direction}:{x.EffectivePriority}"))}"
+            ? $":sortBy={BuildSortKey(sortBy)}"
             : "";
 
         var keysStr = keys != null && keys.Count > 0 ? $":keys={string.Join(";", keys.Select(ks => string.Join("|", ks.Select(k => k.ToString() ?? "null"))))}" : "";
-        var selectedFieldsArray = selectedFields as string[] ?? selectedFields?.Order().ToArray() ?? [];
+        var selectedFieldsArray = selectedFields as string[] ?? [..NormalizePathValues(selectedFields ?? [])];
         var selectStr = selectedFields != null && selectedFieldsArray.Length != 0 ? $":select={CompactCacheSegment(string.Join("|", selectedFieldsArray))}" : "";
         var sb = new StringBuilder(256);
         sb.Append(
@@ -155,9 +150,33 @@ public static class QueryCacheKeyBuilder
         if (computedFields is not { Count: > 0 })
             return;
 
-        var computedKey = string.Join("|", computedFields.OrderBy(c => c.Name).Select(c => $"{c.Name}={c.Template}"));
+        var computedKey = string.Join(
+            "|",
+            computedFields
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(c => $"{NormalizePathValue(c.Name)}={c.Template?.Trim()}"));
         keyBuilder.Append($":computed={CompactCacheSegment(computedKey)}");
     }
+
+    private static string BuildSortKey(IReadOnlyList<SortBy> sortBy)
+    {
+        var ordered = sortBy
+            .Select((f, i) => (Field: f, EffectivePriority: f.Priority ?? i))
+            .OrderBy(x => x.EffectivePriority)
+            .ThenBy(x => x.Field.PropertyName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Field.Direction)
+            .ToArray();
+        return string.Join("|", ordered.Select((x, index) => $"{NormalizePathValue(x.Field.PropertyName)}:{x.Field.Direction}:{index}"));
+    }
+
+    private static IEnumerable<string> NormalizePathValues(IEnumerable<string> values)
+        => values
+            .Select(NormalizePathValue)
+            .Where(static value => value.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase);
+
+    private static string NormalizePathValue(string value) => value.Trim().ToLowerInvariant();
 
     private static string CompactCacheSegment(string segment)
     {
