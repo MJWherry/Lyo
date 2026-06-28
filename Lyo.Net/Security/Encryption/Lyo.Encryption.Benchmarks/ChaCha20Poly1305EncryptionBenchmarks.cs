@@ -1,13 +1,13 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Keystore;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("ChaCha20-Poly1305 encrypt and decrypt of fixed 1 KB / 1 MB / 10 MB random buffers; decrypt cases reuse ciphertext from setup.")]
 public class ChaCha20Poly1305EncryptionBenchmarks
 {
     private const string KeyId = "benchmark-key";

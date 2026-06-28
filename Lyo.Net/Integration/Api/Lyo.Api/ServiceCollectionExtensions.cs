@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Registers CRUD services for a DbContext: IQueryService, ICreateService, IPatchService, IDeleteService, IUpdateService, IUpsertService, IQueryHistoryService. Export is
+        /// Registers CRUD services for a DbContext: IQueryService, ICreateService, IPatchService, IDeleteService, IUpdateService, IUpsertService. Export is
         /// opt-in via AddLyoApiExport (Lyo.Api.Export). Requires: AddLyoQueryServices, AddFusionCache or AddLocalCache, ILyoMapper, IDbContextFactory&lt;TContext&gt;.
         /// </summary>
         public IServiceCollection AddLyoCrudServices<TContext>()
@@ -62,7 +62,6 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IDeleteService<TContext>, DeleteService<TContext>>();
             services.AddScoped<IUpdateService<TContext>, UpdateService<TContext>>();
             services.AddScoped<IUpsertService<TContext>, UpsertService<TContext>>();
-            services.AddScoped<IQueryHistoryService, QueryHistoryService<TContext>>();
             services.AddScoped<ILyoRepository<TContext>, LyoRepository<TContext>>();
             services.AddBuiltInExportFormatHandlers();
             return services;

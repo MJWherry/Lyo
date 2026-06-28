@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.AesCcm;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("AES-CCM encrypt and decrypt of fixed 1 KB / 1 MB / 10 MB random buffers (size encoded in the method name); decrypt cases reuse ciphertext from setup.")]
 public class AesCcmEncryptionBenchmarks
 {
     private byte[] _encryptedLarge = null!;

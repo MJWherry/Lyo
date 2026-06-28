@@ -28,6 +28,10 @@
         <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj"/>
         <Project Path="Core/Lyo.Testing.Containers/Lyo.Testing.Containers.csproj"/>
     </Folder>
+    <Folder Name="/Core/Benchmark/">
+        <Project Path="Core/Benchmark/Lyo.Benchmark.Models/Lyo.Benchmark.Models.csproj"/>
+        <Project Path="Core/Benchmark/Lyo.Benchmarking/Lyo.Benchmarking.csproj"/>
+    </Folder>
     <Folder Name="/Core/Mathematics/">
         <Project Path="Core/Mathematics/Lyo.Mathematics/Lyo.Mathematics.csproj"/>
         <Project Path="Core/Mathematics/Lyo.Mathematics.Functions/Lyo.Mathematics.Functions.fsproj"/>
@@ -52,6 +56,7 @@
     </Folder>
     <Folder Name="/Core/Cache/">
         <Project Path="Core/Cache/Lyo.Cache/Lyo.Cache.csproj"/>
+        <Project Path="Core/Cache/Lyo.Cache.Benchmarks/Lyo.Cache.Benchmarks.csproj"/>
         <Project Path="Core/Cache/Lyo.Cache.Fusion/Lyo.Cache.Fusion.csproj"/>
         <Project Path="Core/Cache/Lyo.Cache.Tests/Lyo.Cache.Tests.csproj"/>
     </Folder>
@@ -60,6 +65,7 @@
     </Folder>
     <Folder Name="/Core/Lock/">
         <Project Path="Core/Lock/Lyo.Lock/Lyo.Lock.csproj"/>
+        <Project Path="Core/Lock/Lyo.Lock.Benchmarks/Lyo.Lock.Benchmarks.csproj"/>
         <Project Path="Core/Lock/Lyo.Lock.Redis/Lyo.Lock.Redis.csproj"/>
         <Project Path="Core/Lock/Lyo.Lock.Tests/Lyo.Lock.Tests.csproj"/>
     </Folder>
@@ -149,6 +155,7 @@
     </Folder>
     <Folder Name="/Data/Csv/">
         <Project Path="Data/Csv/Lyo.Csv/Lyo.Csv.csproj"/>
+        <Project Path="Data/Csv/Lyo.Csv.Benchmarks/Lyo.Csv.Benchmarks.csproj"/>
         <Project Path="Data/Csv/Lyo.Csv.Models/Lyo.Csv.Models.csproj"/>
         <Project Path="Data/Csv/Lyo.Csv.Tests/Lyo.Csv.Tests.csproj"/>
     </Folder>
@@ -191,6 +198,7 @@
     </Folder>
     <Folder Name="/Data/Query/">
         <Project Path="Data/Query/Lyo.Query/Lyo.Query.csproj"/>
+        <Project Path="Data/Query/Lyo.Query.Benchmarks/Lyo.Query.Benchmarks.csproj"/>
         <Project Path="Data/Query/Lyo.Query.Models/Lyo.Query.Models.csproj"/>
         <Project Path="Data/Query/Lyo.Query.Tests/Lyo.Query.Tests.csproj"/>
         <Project Path="Data/Query/Lyo.Query.Web.Components/Lyo.Query.Web.Components.csproj"/>
@@ -201,6 +209,7 @@
     </Folder>
     <Folder Name="/Data/Xlsx/">
         <Project Path="Data/Xlsx/Lyo.Xlsx/Lyo.Xlsx.csproj"/>
+        <Project Path="Data/Xlsx/Lyo.Xlsx.Benchmarks/Lyo.Xlsx.Benchmarks.csproj"/>
         <Project Path="Data/Xlsx/Lyo.Xlsx.Models/Lyo.Xlsx.Models.csproj"/>
         <Project Path="Data/Xlsx/Lyo.Xlsx.Tests/Lyo.Xlsx.Tests.csproj"/>
     </Folder>
@@ -346,6 +355,7 @@
     <Folder Name="/Security/"/>
     <Folder Name="/Security/Hashing/">
         <Project Path="Security/Hashing/Lyo.Hashing/Lyo.Hashing.csproj"/>
+        <Project Path="Security/Hashing/Lyo.Hashing.Benchmarks/Lyo.Hashing.Benchmarks.csproj"/>
         <Project Path="Security/Hashing/Lyo.Hashing.Tests/Lyo.Hashing.Tests.csproj"/>
     </Folder>
     <Folder Name="/Security/ContentThreat/">

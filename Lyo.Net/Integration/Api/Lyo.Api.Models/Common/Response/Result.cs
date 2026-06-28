@@ -42,18 +42,6 @@ public sealed record ProjectedQueryRes<T>(
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record QueryHistoryResults<T>(HistoryQuery Query, bool IsSuccess, IReadOnlyList<T>? Items, int? Start, int? Amount, int? Total, LyoProblemDetails? Error)
-{
-    public override string ToString() => IsSuccess ? $"Start={Start} Amount={Amount} Total: {Total}" : Error?.ToString() ?? "";
-}
-
-[DebuggerDisplay("{ToString(),nq}")]
-public record HistoryResult<T>(T? Value, DateTime? StartTimestamp, DateTime? EndTimestamp, LyoProblemDetails? Error)
-{
-    public override string ToString() => $"{StartTimestamp:g} - {EndTimestamp:g}, {Value!.ToString()}";
-}
-
-[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CreateResult<T>(bool IsSuccess, T? Data, LyoProblemDetails? Error)
 {
     public override string ToString() => $"{(IsSuccess ? $"Success, {Data}" : $"Failure, {Error}")}";

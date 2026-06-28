@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Consumer-facing benchmark report models and builders: a polymorphic, versioned schema (BenchmarkReport base with MicroBenchmarkReport/LoadTestReport subtypes) shared by the Lyo benchmark exporter, the dashboard, and external viewers (portfolio/test gateway).</Description>
+        <PackageTags>benchmark models report micro load schema</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json" Version="[9.0.0,)"/>
+    </ItemGroup>
+
+</Project>

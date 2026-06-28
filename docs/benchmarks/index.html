@@ -10,7 +10,7 @@
   <div class="page">
     <header class="hero">
       <h1>Lyo Benchmark Dashboards</h1>
-      <p class="subtitle">Single-instance performance snapshots for the query API (k6), encryption library, and compression library. Data loads automatically from generated scripts — no manual table updates.</p>
+      <p class="subtitle">Single-instance performance snapshots across the Lyo framework: the query API (k6) plus BenchmarkDotNet suites for encryption, compression, hashing, caching, query/CRUD, CSV, XLSX, and locking. Data loads automatically from generated scripts — no manual table updates.</p>
     </header>
 
     <div id="cards" class="grid cards"></div>
@@ -18,19 +18,18 @@
     <section>
       <h2>Refresh data</h2>
       <div class="callout">
-        <p>After running benchmarks, regenerate manifests:</p>
+        <p>Run the BenchmarkDotNet suites and regenerate every report:</p>
+        <p><code>scripts/benchmarks/run-dotnet-benchmarks.sh</code></p>
+        <p>Or just rebuild the dashboard data from existing artifacts / k6 results:</p>
         <p><code>python3 scripts/benchmarks/build-manifests.py</code></p>
-        <p>k6 runs also refresh automatically via <code>k6/framework-person/run_all.sh</code>.</p>
-        <p>Then reload the HTML page in your browser.</p>
+        <p>Each report follows the unified <code>lyo.bench/v1</code> schema (<code>type: "micro"</code> or <code>"load"</code>) and opens in <code>report.html</code>. Then reload this page.</p>
       </div>
     </section>
 
-    <footer>Generated data lives in <code>docs/benchmarks/data/</code>.</footer>
+    <footer>Generated data lives in <code>docs/benchmarks/data/</code> (<code>&lt;name&gt;.json</code> + <code>&lt;name&gt;.js</code> + <code>registry.js</code>).</footer>
   </div>
 
-  <script src="data/k6-latest.js"></script>
-  <script src="data/encryption-latest.js"></script>
-  <script src="data/compression-latest.js"></script>
+  <script src="data/registry.js"></script>
   <script src="shared/render.js"></script>
   <script src="shared/index-page.js"></script>
 </body>

@@ -25,9 +25,9 @@ Core matrix orchestration is data-driven via:
 
 ## Benchmarks & “modern standards”
 
-Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). The **authoritative review** is the HTML dashboard (auto-loaded from latest JSON):
+Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). `build-manifests.py` normalizes the raw `*.summary.json` into the unified `lyo.bench/v1` schema (`type: "load"` — cases / scenarios / rollups / SLO / grades; see [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md)). It also attaches a per-case `cases` block (query structure: where clauses, filters, sort, includes, selection field count) from the `K6_CASE_META` map in `build-manifests.py` — keep that map in sync with [`lib/cases.js`](lib/cases.js) / [`lib/queryFactory.js`](lib/queryFactory.js) when cases change, so the dashboard explains what each scenario actually tested. The **authoritative review** is the HTML dashboard:
 
-- **[K6 benchmark dashboard](../../docs/benchmarks/k6.html)** — open after `build-manifests.py`
+- **[Benchmark dashboard](../../docs/benchmarks/index.html)** — open after `build-manifests.py`, then click the **Query API (k6)** report
 - Stub / refresh notes: [`K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
 
 **Latest full suite analyzed there (June 2026, symmetric matrix)**: `k6/results/prod-matrix-20260623-163003/` (earlier April 2026 5-scenario archives are retained in the analysis doc for historical comparison).

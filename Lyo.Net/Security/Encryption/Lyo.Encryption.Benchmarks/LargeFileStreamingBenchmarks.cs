@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Keystore;
@@ -10,8 +11,7 @@ using Lyo.Keystore;
 namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>Benchmarks for large file encryption/decryption using streaming APIs</summary>
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("Streaming encrypt/decrypt of 100 MB / 1 GB / 2 GB random data in 1 MB chunks with AES-GCM and ChaCha20-Poly1305; large sizes stream through temp files to bound memory. Method names encode cipher and size.")]
 public class LargeFileStreamingBenchmarks
 {
     private const string KeyId = "benchmark-key";

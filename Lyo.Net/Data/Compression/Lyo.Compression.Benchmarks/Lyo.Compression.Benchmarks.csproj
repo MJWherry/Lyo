@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmarking\Lyo.Benchmarking.csproj"/>
         <ProjectReference Include="..\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\Lyo.Compression.BZip2\Lyo.Compression.BZip2.csproj"/>
         <ProjectReference Include="..\Lyo.Compression.LZ4\Lyo.Compression.LZ4.csproj"/>

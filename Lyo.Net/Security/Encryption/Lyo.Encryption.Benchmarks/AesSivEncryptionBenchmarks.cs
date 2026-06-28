@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.AesSiv;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("AES-SIV (nonce-misuse-resistant) encrypt and decrypt of fixed 1 KB / 1 MB / 10 MB random buffers; decrypt cases reuse ciphertext from setup.")]
 public class AesSivEncryptionBenchmarks
 {
     private byte[] _encryptedLarge = null!;

@@ -1,14 +1,14 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Encryption.Rsa;
 
 namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>RSA-only benchmarks (2048-bit OAEP-SHA256). Large payloads use automatic chunking.</summary>
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("RSA-only encrypt/decrypt (2048-bit, OAEP-SHA256) of fixed 1 KB / 64 KB / 1 MB random buffers; payloads beyond one RSA block use automatic chunking, so this measures asymmetric-only cost.")]
 public class RsaEncryptionBenchmarks
 {
     private string _privatePath = null!;
@@ -52,8 +52,7 @@ public class RsaEncryptionBenchmarks
     [Benchmark] public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedLarge);
 }
 
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("Hybrid AES-GCM + RSA envelope encrypt/decrypt of fixed 1 KB / 1 MB / 10 MB random buffers: RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload.")]
 public class AesGcmRsaEncryptionBenchmarks
 {
     private string _privatePath = null!;

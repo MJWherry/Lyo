@@ -58,8 +58,6 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
     private QueryConfig<TDbEntity>? _queryConfig;
 
-    private QueryHistoryConfig<TDbEntity>? _queryHistoryConfig;
-
     private bool _requireAuthorization;
 
     private UpdateConfig<TRequest, TDbEntity, TDbContext>? _updateBulkConfig;
@@ -347,22 +345,6 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         return this;
     }
 
-    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQueryHistory(
-        Expression<Func<TDbEntity, DateTime>> startTimeSelector,
-        Expression<Func<TDbEntity, DateTime>> endTimeSelector,
-        EndpointAuth? auth = null)
-    {
-        _queryHistoryConfig = new() {
-            GroupName = groupName,
-            DefaultOrder = ResolveDefaultOrderFromPrimaryKey(),
-            StartTimeSelector = startTimeSelector,
-            EndTimeSelector = endTimeSelector,
-            Auth = auth
-        };
-
-        return this;
-    }
-
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithGet(
         Action<GetContext<TDbEntity, TDbContext>>? before = null,
         Action<GetContext<TDbEntity, TDbContext>>? after = null,
@@ -621,21 +603,6 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         return this;
     }
 
-    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQueryHistory(QueryHistoryConfig<TDbEntity> config)
-    {
-        _queryHistoryConfig = config;
-        return this;
-    }
-
-    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQueryHistory(Action<QueryHistoryEndpointConfigBuilder<TDbEntity>> configure)
-    {
-        ArgumentNullException.ThrowIfNull(configure);
-        var b = new QueryHistoryEndpointConfigBuilder<TDbEntity>();
-        configure(b);
-        b.Validate();
-        return WithQueryHistory(b.StartTime!, b.EndTime!, b.AuthPolicy);
-    }
-
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithMetadata(Action<MetadataEndpointConfigBuilder<TDbContext, TDbEntity>> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
@@ -871,7 +838,6 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     {
         BuildMetadata();
         BuildQuery();
-        BuildQueryHistory();
         BuildExport();
         BuildGet();
         BuildCreate();
@@ -1018,37 +984,6 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         }
 
         return errors;
-    }
-
-    private void BuildQueryHistory()
-    {
-        if (_queryHistoryConfig == null)
-            return;
-
-        var routeBuilder = app.MapPost(
-                $"{baseRoute}/QueryHistory", async (
-                        [FromBody] HistoryQuery query,
-                        [FromServices] IQueryHistoryService service,
-                        HttpContext httpContext,
-                        CancellationToken ct = default)
-                    => {
-                    var result = await service.QueryHistory<TDbEntity, TResponse>(
-                            query, _queryHistoryConfig.DefaultOrder, _queryHistoryConfig.StartTimeSelector.Compile(), _queryHistoryConfig.EndTimeSelector.Compile(),
-                            SortDirection.Desc, ct)
-                        .ConfigureAwait(false);
-
-                    if (result.IsSuccess)
-                        return Results.Ok(result);
-
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
-                    return Results.Json(error, statusCode: error.Status);
-                })
-            .WithName($"Query{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
-            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
-            .Produces<QueryHistoryResults<HistoryResult<TResponse>>>()
-            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
-
-        ApplyAuthorization(routeBuilder, _queryHistoryConfig.Auth);
     }
 
     private void BuildExport()

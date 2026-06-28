@@ -1,44 +1,46 @@
+/* Builds the dashboard index cards from window.LyoBench.registry (emitted by build-manifests.py). */
 (function () {
   var R = window.BenchmarkDashboard;
-  var cardsEl = document.getElementById("cards");
-  try {
-    var k6 = window.__BENCHMARK_K6__;
-    var encryption = window.__BENCHMARK_ENCRYPTION__;
-    var compression = window.__BENCHMARK_COMPRESSION__;
-    if (!k6 || !encryption || !compression) {
-      throw new Error("Missing benchmark data scripts. Run build-manifests.py and reload.");
+
+  // Fallback descriptions per report name; the registry's own description (from the report) wins when present.
+  var DESCRIPTIONS = {
+    encryption: "AES-GCM/CCM/SIV and ChaCha/XChaCha encrypt/decrypt across payload sizes for Lyo.Encryption.",
+    compression: "GZip/Deflate/Zstd/LZ4/LZMA/BZip2/XZ/Brotli/ZLib compress and decompress for Lyo.Compression.",
+    hashing: "SHA-2/MD5 digests, HMAC, hashing streams, and hex encode/decode for Lyo.Hashing.",
+    cache: "Local IMemoryCache vs FusionCache, payload framing, and Redis backplane for Lyo.Cache.",
+    query: "Where-clause, sort, projection, mapping, and end-to-end CRUD for Lyo.Query.",
+    csv: "Typed write/read, streaming parse, and DataTable round-trips for Lyo.Csv.",
+    xlsx: "ClosedXML write and ExcelDataReader read paths for Lyo.Xlsx.",
+    lock: "Local vs Redis acquire/release and execute-with-lock for Lyo.Lock.",
+    "query-api": "k6 load/stress/spike/soak across the Query and QueryProject API endpoints.",
+  };
+
+  function init() {
+    var container = document.getElementById("cards");
+    if (!container) return;
+    var registry = (window.LyoBench && window.LyoBench.registry) || [];
+
+    if (!registry.length) {
+      container.appendChild(
+        R.el("div", { className: "error-box" }, [
+          R.el("strong", { text: "No benchmark reports found." }),
+          R.el("p", { text: "Run scripts/benchmarks/run-dotnet-benchmarks.sh (or build-manifests.py) to generate reports, then reload." }),
+        ])
+      );
+      return;
     }
-    var k6Spike = (k6.suites || []).find(function (s) { return s.name === "query_spike"; });
-    var encCmp = (encryption.comparisonTables && encryption.comparisonTables.encryptOrCompress || []).find(function (r) {
-      return r.algorithm === "AesGcm" && r.sizeLabel === "1 MB";
+
+    var cards = registry.map(function (entry) {
+      return {
+        href: "report.html#" + encodeURIComponent(entry.name),
+        title: entry.title,
+        // Cards stay concise (curated one-liners); the full methodology is the lead on the report page.
+        description: DESCRIPTIONS[entry.name] || entry.description || (entry.type === "load" ? "Load test report." : "Micro-benchmark report."),
+        badge: entry.type === "load" ? "Load test" : "Micro-benchmark",
+      };
     });
-    var compCmp = (compression.comparisonTables && compression.comparisonTables.encryptOrCompress || []).find(function (r) {
-      return r.algorithm === "LZ4" && r.sizeLabel === "1 MB";
-    });
-    R.renderIndexCards(cardsEl, [
-      {
-        href: "k6.html",
-        title: "Query API (k6)",
-        description: "Load, stress, spike, and soak profiles for /person/query and /person/QueryProject.",
-        headline: k6Spike ? k6Spike.p95.toFixed(0) + " ms p95 spike" : "k6 matrix",
-        subline: "Run " + k6.runId + " · updated " + new Date(k6.generatedAt).toLocaleString(),
-      },
-      {
-        href: "encryption.html",
-        title: "Encryption",
-        description: "BenchmarkDotNet suite for AES-GCM, ChaCha, RSA, hybrid, and streaming paths.",
-        headline: encCmp && encCmp.mean ? encCmp.mean : "Encryption benchmarks",
-        subline: "Run " + encryption.runId + " · " + ((encryption.environment && encryption.environment.runtime) || "BenchmarkDotNet"),
-      },
-      {
-        href: "compression.html",
-        title: "Compression",
-        description: "Algorithm comparison and streaming benchmarks for Lyo.Compression.",
-        headline: compCmp && compCmp.mean ? compCmp.mean : "Compression benchmarks",
-        subline: "Run " + compression.runId + " · " + ((compression.environment && compression.environment.runtime) || "BenchmarkDotNet"),
-      },
-    ]);
-  } catch (error) {
-    R.renderError(cardsEl, error);
+    R.renderIndexCards(container, cards);
   }
+
+  init();
 })();

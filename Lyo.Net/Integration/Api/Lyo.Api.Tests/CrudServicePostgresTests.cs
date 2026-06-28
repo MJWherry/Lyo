@@ -151,37 +151,4 @@ public class CrudServicePostgresTests
         Assert.Equal("UpsertUpdated", result.NewData.Name);
     }
 
-    [Fact]
-    public async Task QueryHistory_WithNavigationFilter_ReturnsDistinctRootTotal()
-    {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
-        var keepDefId = await _fixture.SeedJobDefinitionAsync($"HistKeep_{suffix}");
-        var otherDefId = await _fixture.SeedJobDefinitionAsync($"HistOther_{suffix}");
-        await _fixture.SeedJobRunAsync(keepDefId, $"hist-user-{suffix}");
-        await _fixture.SeedJobRunAsync(keepDefId, $"hist-user-{suffix}");
-        await _fixture.SeedJobRunAsync(otherDefId, $"other-user-{suffix}");
-
-        using var scope = _fixture.ServiceProvider.CreateScope();
-        var historyService = scope.ServiceProvider.GetRequiredService<IQueryHistoryService>();
-        var request = new HistoryQuery {
-            Start = 0,
-            Amount = 10,
-            SortBy = [new("Name", SortDirection.Asc)],
-            WhereClause = WhereClauseBuilder.Condition("JobRuns.CreatedBy", ComparisonOperatorEnum.Equals, $"hist-user-{suffix}")
-        };
-
-        var result = await historyService.QueryHistory<JobDefinition, JobDefinitionRes>(
-            request,
-            x => x.Name,
-            x => x.CreatedTimestamp,
-            x => x.UpdatedTimestamp ?? x.CreatedTimestamp,
-            SortDirection.Asc,
-            TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Items);
-        Assert.Single(result.Items!);
-        Assert.Equal(1, result.Total);
-        Assert.Equal(keepDefId, result.Items![0].Value!.Id);
-    }
 }

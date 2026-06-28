@@ -126,7 +126,6 @@ payloads** by design.
 | Delete (by body)       | DELETE | `/`             |
 | Delete Bulk            | DELETE | `/Bulk`         |
 | Export                 | POST   | `/Export`       |
-| Query History          | POST   | `/QueryHistory` |
 | Stored Procedures      | —      | Configurable    |
 
 ### Bulk Operations with Individual Fallback

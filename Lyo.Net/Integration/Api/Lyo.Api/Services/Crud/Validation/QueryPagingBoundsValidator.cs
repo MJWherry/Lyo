@@ -1,5 +1,4 @@
 using Lyo.Api.Models;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Query.Models.Common.Request;
@@ -13,9 +12,6 @@ public static class QueryPagingBoundsValidator
     /// <summary>Standard list/query/projected query: <paramref name="maxAmount" /> is typically <see cref="QueryOptions.MaxPageSize" />.</summary>
     public static IReadOnlyList<ApiError> Validate(QueryRequestBase request, QueryOptions options, int maxAmount)
         => ValidatePaging(request.Start, request.Amount, options, maxAmount);
-
-    /// <summary>Temporal/history query: same bounds as list/query paging.</summary>
-    public static IReadOnlyList<ApiError> Validate(HistoryQuery query, QueryOptions options) => ValidatePaging(query.Start, query.Amount, options, options.MaxPageSize);
 
     private static List<ApiError> ValidatePaging(int? start, int? amount, QueryOptions options, int maxAmount)
     {

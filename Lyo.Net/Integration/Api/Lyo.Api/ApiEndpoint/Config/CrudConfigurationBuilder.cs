@@ -38,7 +38,6 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     private EndpointAuth? _patchBulkAuth;
     private PatchPropertyAuthorization? _patchPropertyAuthorization;
     private EndpointAuth? _queryAuth;
-    private EndpointAuth? _queryHistoryAuth;
     private EndpointAuth? _updateAuth;
     private EndpointAuth? _updateBulkAuth;
     private EndpointAuth? _upsertAuth;
@@ -145,12 +144,6 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> QueryAuth(EndpointAuth auth)
     {
         _queryAuth = auth;
-        return this;
-    }
-
-    public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> QueryHistoryAuth(EndpointAuth auth)
-    {
-        _queryHistoryAuth = auth;
         return this;
     }
 
@@ -279,7 +272,6 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
             PatchBulkAuth = _patchBulkAuth,
             PatchPropertyAuthorization = _patchPropertyAuthorization,
             QueryAuth = _queryAuth,
-            QueryHistoryAuth = _queryHistoryAuth,
             UpdateAuth = _updateAuth,
             UpdateBulkAuth = _updateBulkAuth,
             UpsertAuth = _upsertAuth,

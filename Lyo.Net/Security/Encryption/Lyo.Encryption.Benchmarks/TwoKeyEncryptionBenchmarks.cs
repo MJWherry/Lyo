@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
@@ -10,8 +11,7 @@ using Lyo.Keystore;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[BenchmarkDescription("Envelope (two-key DEK/KEK) streaming encrypt and decrypt with AES-GCM and ChaCha20-Poly1305 across 1 KB to 2 GB inputs; large sizes stream through temp files. Method names encode cipher and size.")]
 public class TwoKeyEncryptionBenchmarks
 {
     private const string KeyId = "benchmark-key";

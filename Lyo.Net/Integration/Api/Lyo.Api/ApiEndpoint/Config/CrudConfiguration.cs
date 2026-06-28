@@ -42,8 +42,6 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
     // Per-endpoint authorization (null = use builder default)
     public EndpointAuth? QueryAuth { get; init; }
 
-    public EndpointAuth? QueryHistoryAuth { get; init; }
-
     public EndpointAuth? GetAuth { get; init; }
 
     public EndpointAuth? CreateAuth { get; init; }

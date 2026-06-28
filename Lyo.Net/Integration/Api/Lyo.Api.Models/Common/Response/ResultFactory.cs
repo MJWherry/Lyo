@@ -118,18 +118,4 @@ public static class ResultFactory
         return new(results, deletedCount, failedCount);
     }
 
-    // History / QueryHistory
-    public static QueryHistoryResults<HistoryResult<T>> QueryHistorySuccess<T>(
-        HistoryQuery query,
-        IReadOnlyList<HistoryResult<T>> items,
-        int total,
-        int? start = null,
-        int? amount = null)
-        => new(query, true, items, start, amount, total, null);
-
-    public static QueryHistoryResults<HistoryResult<T>> QueryHistoryFailure<T>(HistoryQuery query, LyoProblemDetails error) => new(query, false, null, null, null, null, error);
-
-    public static HistoryResult<T> HistorySuccess<T>(T value, DateTime startTimestamp, DateTime endTimestamp) => new(value, startTimestamp, endTimestamp, null);
-
-    public static HistoryResult<T> HistoryError<T>(LyoProblemDetails error) => new(default, null, null, error);
 }

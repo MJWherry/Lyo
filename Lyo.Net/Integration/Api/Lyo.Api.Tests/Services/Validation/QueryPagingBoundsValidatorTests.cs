@@ -66,12 +66,4 @@ public sealed class QueryPagingBoundsValidatorTests
         Assert.Empty(errors);
     }
 
-    [Fact]
-    public void Validate_HistoryQuery_InvalidAmount_ReturnsInvalidPaging()
-    {
-        var q = new HistoryQuery { Amount = 0 };
-        var errors = QueryPagingBoundsValidator.Validate(q, DefaultOptions);
-        Assert.Single(errors);
-        Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, errors[0].Code);
-    }
 }

@@ -271,6 +271,16 @@ tr:last-child td {
   color: var(--bad);
 }
 
+.badge.type-badge {
+  margin-left: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -280,6 +290,140 @@ tr:last-child td {
 .empty {
   color: var(--text-muted);
   font-style: italic;
+}
+
+.param-legend {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.param-legend li {
+  padding: 0.15rem 0;
+}
+
+.param-legend strong {
+  color: var(--text);
+}
+
+.muted-sub {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  white-space: normal;
+}
+
+.dataset {
+  margin: 0.5rem 0 1rem;
+}
+
+.dataset h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.dataset-stat {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+/* Report methodology shown as a muted lead/subtitle rather than a heavy callout. */
+.report-lead {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  max-width: 90ch;
+  margin: 0.25rem 0 1.75rem;
+}
+
+/* Concise, muted card blurbs on the index. */
+.card p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Small explanatory note under a table (e.g. the baseline legend). */
+.table-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+/* Method-name cell layout (name beside an optional baseline tag). */
+.method-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Small pill marking the baseline method in a measurement table. */
+.baseline-tag {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* Wrapping table variant for wide, text-heavy grids (query cases, breakdowns). */
+.table-wrap.wrap th,
+.table-wrap.wrap td {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.table-wrap.wrap td {
+  vertical-align: top;
+}
+
+/* Expandable scenario rows. */
+tr.expandable {
+  cursor: pointer;
+}
+
+tr.expandable:hover > td {
+  background: var(--accent-soft);
+}
+
+tr.expandable.open > td {
+  background: var(--accent-soft);
+  border-bottom-color: transparent;
+}
+
+.toggle-cell {
+  width: 1.5rem;
+  color: var(--text-muted);
+  text-align: center;
+  user-select: none;
+}
+
+.scenario-name {
+  font-weight: 600;
+}
+
+tr.detail-row.hidden {
+  display: none;
+}
+
+tr.detail-row > td {
+  padding: 0;
+  background: var(--bg);
+}
+
+.detail-inner {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.detail-inner h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 .error-box {

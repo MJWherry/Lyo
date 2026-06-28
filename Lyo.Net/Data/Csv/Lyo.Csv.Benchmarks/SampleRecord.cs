@@ -1,0 +1,31 @@
+namespace Lyo.Csv.Benchmarks;
+
+/// <summary>Flat POCO used as the row type for CSV read/write benchmarks.</summary>
+public sealed class SampleRecord
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public decimal Balance { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public static List<SampleRecord> Generate(int count)
+    {
+        var rows = new List<SampleRecord>(count);
+        var baseDate = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        for (var i = 0; i < count; i++)
+            rows.Add(new SampleRecord {
+                Id = i,
+                Name = $"Person {i}",
+                Email = $"person{i}@example.com",
+                Age = 18 + i % 60,
+                Balance = 100.50m + i,
+                IsActive = i % 2 == 0,
+                CreatedAt = baseDate.AddMinutes(i)
+            });
+
+        return rows;
+    }
+}

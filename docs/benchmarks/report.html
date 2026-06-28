@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lyo Benchmark Report</title>
+  <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p><a href="index.html">&larr; All benchmarks</a></p>
+      <h1 id="report-title">Benchmark Report</h1>
+      <p class="subtitle" id="report-subtitle"></p>
+    </header>
+
+    <main id="report"></main>
+
+    <footer>Unified <code>lyo.bench/v1</code> schema. Data lives in <code>docs/benchmarks/data/</code>.</footer>
+  </div>
+
+  <script src="data/registry.js"></script>
+  <script src="shared/render.js"></script>
+  <script src="shared/viewer.js"></script>
+  <script>
+    (function () {
+      var root = document.getElementById("report");
+      var name = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+      var registry = (window.LyoBench && window.LyoBench.registry) || [];
+      var entry = registry.filter(function (r) { return r.name === name; })[0];
+
+      if (!name) {
+        window.BenchmarkDashboard.renderError(root, "No report selected. Open this page from the index.");
+        return;
+      }
+
+      document.getElementById("report-title").textContent = entry ? entry.title : name;
+      document.getElementById("report-subtitle").textContent = entry ? (entry.type === "load" ? "Load test (k6)" : "Micro-benchmark (BenchmarkDotNet)") : "";
+
+      function render() {
+        var report = window.LyoBench && window.LyoBench.reports && window.LyoBench.reports[name];
+        if (!report) {
+          window.BenchmarkDashboard.renderError(root, "No data for report '" + name + "'. Run scripts/benchmarks/build-manifests.py, then reload.");
+          return;
+        }
+        window.LyoBenchViewer.renderReport(report, root);
+      }
+
+      // Data files register window.LyoBench.reports[name]; load on demand for file:// friendliness.
+      var script = document.createElement("script");
+      script.src = "data/" + name + ".js";
+      script.onload = render;
+      script.onerror = function () {
+        window.BenchmarkDashboard.renderError(root, "Could not load data/" + name + ".js. Run scripts/benchmarks/build-manifests.py, then reload.");
+      };
+      document.body.appendChild(script);
+
+      window.addEventListener("hashchange", function () { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

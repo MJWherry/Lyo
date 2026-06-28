@@ -8,7 +8,7 @@ projection DTOs).
 | Area                             | Types (selected)                                                                                                                | Notes                                                                    |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | Upsert / update / patch / delete | **`UpsertRequest<T>`**, **`UpdateRequest<T>`**, **`PatchRequest`**, **`DeleteRequest`**, matching fluent **`*Builder` classes** | Mirrors generic CRUD endpoints (server validates path + body alignment). |
-| History / exports                | **`HistoryQuery`**, **`ExportRequest`**, **`ExportColumnMapping`**                                                              | Drive bulk read + file generation endpoints.                             |
+| Exports                          | **`ExportRequest`**, **`ExportColumnMapping`**                                                                                 | Drive file generation endpoints.                                         |
 
 Builders follow **method-chaining** ergonomics so gateways/tests avoid object initializer noise.
 
@@ -21,8 +21,6 @@ Concrete result records emitted by `Lyo.Api` endpoints (see [`Common/Response/Re
 |---------------------------------------------------|-----------------------------|----------------------------------------------------------------------------------------------------------------|
 | **`QueryRes<T>`**                                 | `POST {route}/Query`        | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).    |
 | **`ProjectedQueryRes<T>`**                        | `POST {route}/QueryProject` | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`.   |
-| **`QueryHistoryResults<T>`**                      | `POST {route}/QueryHistory` | Wraps an ordered list of `HistoryResult<T>` items with `Start`, `Amount`, `Total`.                             |
-| **`HistoryResult<T>`**                            | per-row history slice       | `Value`, `StartTimestamp`, `EndTimestamp`, optional `Error`.                                                   |
 | **`CreateResult<T>`** / **`CreateBulkResult<T>`** | Create + Bulk create        | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`.                             |
 | **`UpdateResult<T>`** / **`UpdateBulkResult<T>`** | Update + Bulk update        | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`.         |
 | **`PatchResult<T>`** / **`PatchBulkResult<T>`**   | Patch + Bulk patch          | `Result` enum, `OldData`/`NewData`, `UpdatedProperties`; `IsSuccess` derived from `Updated`/`NoChange`.        |

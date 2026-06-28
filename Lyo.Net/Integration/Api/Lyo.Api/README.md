@@ -25,8 +25,7 @@ tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s
 and [`DynamicCrudEndpointBuilder`](ApiEndpoint/Dynamic/DynamicCrudEndpointBuilder.cs) (`MapDynamicCrudEndpoints`). `baseRoute` should not end with `/`; it is combined with route
 templates the same way as in the builders above.
 
-**Typed vs dynamic:** **QueryHistory** (`{baseRoute}/QueryHistory`) exists only on the **CreateBuilder** pipeline when you configure `WithQueryHistory`. **MapDynamicCrudEndpoints**
-does not map temporal history endpoints. Dynamic CRUD uses `JsonNode` / runtime types for create/update/patch/upsert bodies; typed CRUD uses `TRequest` / `TResponse` throughout.
+**Typed vs dynamic:** Dynamic CRUD uses `JsonNode` / runtime types for create/update/patch/upsert bodies; typed CRUD uses `TRequest` / `TResponse` throughout.
 
 Full route list for the typed builder: [Endpoints](#endpoints) below.
 
@@ -87,7 +86,6 @@ metadata—see **`entityTypes`** below.
 - **Request validation** – Paging bounds (`Start` / `Amount` vs `QueryOptions`), bulk batch size vs `BulkOperationOptions`, **`PatchRequest`** property names and convertible values
   vs `TDbModel`, and query/projection **path validation** for filters, includes, and `Select` (invalid paths return structured API errors; see [Validation](#validation))
 - **Export** – CSV, XLSX, JSON with optional SmartFormat column templates
-- **QueryHistory** – Temporal/history query support
 - **Errors** – Failures return **`LyoProblemDetails`** (RFC 7807–style problem details, including trace/span context when available)
 - **OpenTelemetry** – `api.crud.duration`, `api.crud.requests`, structured logging, trace/span IDs in errors
 
@@ -132,7 +130,7 @@ All registrations are extension methods on `IServiceCollection` (no `IServiceCol
 | Method                                           | Registers                                                                                                                                                                                                                                                                                                                   |
 |--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AddLyoQueryServices()`                          | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.                                              |
-| `AddLyoCrudServices<TContext>()`                 | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `IQueryHistoryService`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
+| `AddLyoCrudServices<TContext>()`                 | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
 | `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`) | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`.                                                                                                                                                                                                        |
 | `AddCsvExport()` / `AddXlsxExport()`             | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`).                                                                                                                                                                                                                                                                  |
 | `AddPostgresSprocService<TContext>()`            | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                                                          |
@@ -206,7 +204,6 @@ turned on).
 |--------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | POST   | `{baseRoute}/Query`                          | Query with filters, includes, sort, pagination                                                                                  |
 | POST   | `{baseRoute}/QueryProject`                   | Projected query (`Select`); SQL-level projection when possible; optional computed fields when `ProjectionComputedFields` is set |
-| POST   | `{baseRoute}/QueryHistory`                   | Temporal / history query (`WithQueryHistory` only)                                                                              |
 | POST   | `{baseRoute}/Export`                         | Export to CSV / XLSX / JSON (`IExportService` required)                                                                         |
 | GET    | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Get single entity (`?include=…`); route suffix is `/{id:guid}`, `/{id:int}`, `/{id}`, … depending on `TKey`                     |
 | POST   | `{baseRoute}`                                | Create                                                                                                                          |
@@ -256,8 +253,7 @@ Features are extensible records in a set (`features.Contains(ApiFeature.Query)`)
 ## Dynamic Endpoint Builder (MapDynamicCrudEndpoints)
 
 Register CRUD endpoints for all entities in a DbContext with **dynamic routes** `{baseRoute}/{entityType}/…` (e.g. `POST /api/Job/Person/Query`, `GET /api/Job/Person/{id}` when
-`BaseRoute = "api/Job"`). `entityType` is the entity type’s CLR **name**. Uses entity-as-request-response (no DTOs) and infers primary key and default order from the EF model. *
-*QueryHistory** is not mapped here—use the typed **CreateBuilder** if you need temporal queries.
+`BaseRoute = "api/Job"`). `entityType` is the entity type’s CLR **name**. Uses entity-as-request-response (no DTOs) and infers primary key and default order from the EF model.
 
 For **per-entity routes with custom DTOs**, use `CreateBuilder` (see Quick Start).
 
@@ -421,7 +417,6 @@ app.CreateBuilder<...>("/api/items", "Items")
     .WithGet()
     .WithCreate(c => c.Before(ctx => { }).After(ctx => { }).Auth(EndpointAuth.RequireRole("Editor")))
     .WithExport()
-    .WithQueryHistory(h => h.TimeRange(e => e.StartTime, e => e.EndTime))
     .Build();
 ```
 
@@ -762,16 +757,6 @@ Export requires `AddLyoApiExport<TContext>()`, optional `AddCsvExport()` / `AddX
 ```
 
 When `IFormatterService` is registered, values with `{` are SmartFormat templates.
-
-## Query History
-
-For temporal/history data:
-
-```csharp
-app.CreateBuilder<...>("/api/items", "Items")
-    .WithQueryHistory(e => e.StartTime, e => e.EndTime)
-    .Build();
-```
 
 ## Query result caching
 

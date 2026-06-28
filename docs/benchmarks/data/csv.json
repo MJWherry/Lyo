@@ -1,0 +1,1770 @@
+{
+  "type": "micro",
+  "groups": [
+    {
+      "name": "CsvEncodingBenchmarks",
+      "description": "Round-trips SampleRecords through CSV in UTF-8, UTF-16, and UTF-32 to show the encoding's effect on (de)serialization cost. Export = serialize the typed rows to bytes in the encoding; Parse = read those bytes back into typed rows. UTF-8 is the baseline.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record; only the byte encoding differs between algorithms."
+      },
+      "measurements": [
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 CSV bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7996028.864972015,
+          "stdDevNs": 377019.49395439023,
+          "allocatedBytes": 5608241,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 (little-endian) CSV bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 8633327.345471399,
+          "stdDevNs": 379628.6695128616,
+          "allocatedBytes": 8474217,
+          "ratioToBaseline": 1.0797018734250923,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 CSV bytes (widest encoding).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 12878713.898719879,
+          "stdDevNs": 685502.6363809161,
+          "allocatedBytes": 14213690,
+          "ratioToBaseline": 1.6106387453323623,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 14577231.832201088,
+          "stdDevNs": 559593.839701627,
+          "allocatedBytes": 5609751,
+          "ratioToBaseline": 1.8230589306723453,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 14840966.99971591,
+          "stdDevNs": 624056.5341496952,
+          "allocatedBytes": 5608647,
+          "ratioToBaseline": 1.8560421992383405,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 18060955.599431816,
+          "stdDevNs": 916333.7521513819,
+          "allocatedBytes": 5608790,
+          "ratioToBaseline": 2.2587406704534234,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 CSV bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 54656997.082000025,
+          "stdDevNs": 3396261.2730671945,
+          "allocatedBytes": 51425924,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 (little-endian) CSV bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 57064361.066919185,
+          "stdDevNs": 3143330.4026801507,
+          "allocatedBytes": 76290112,
+          "ratioToBaseline": 1.0440449368505824,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 CSV bytes (widest encoding).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 103842401.97727273,
+          "stdDevNs": 3893010.7993252515,
+          "allocatedBytes": 126091592,
+          "ratioToBaseline": 1.8998921916892275,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 140665664.44767442,
+          "stdDevNs": 7630864.01089725,
+          "allocatedBytes": 54971486,
+          "ratioToBaseline": 2.573607624960415,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 142001533.18292683,
+          "stdDevNs": 7530593.00092145,
+          "allocatedBytes": 54970612,
+          "ratioToBaseline": 2.5980485713455277,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 CSV bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 174999876.69767445,
+          "stdDevNs": 6354420.999337112,
+          "allocatedBytes": 54970736,
+          "ratioToBaseline": 3.201783596620358,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding."
+        }
+      ]
+    },
+    {
+      "name": "CsvNestedBenchmarks",
+      "description": "Serializes and parses a NestedRecord whose Address reference member itself nests a Geo coordinate. The CSV writer flattens these nested objects into leaf columns, so this captures the round-trip cost and the data structure that a flat row count alone hides.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of NestedRecord rows round-tripped (1,000 or 10,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "NestedRecord",
+        "columnCount": 3,
+        "maxNestingDepth": 2,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Address",
+            "type": "NestedAddress",
+            "kind": "object",
+            "children": [
+              {
+                "name": "City",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Country",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "PostalCode",
+                "type": "int",
+                "kind": "scalar"
+              },
+              {
+                "name": "Geo",
+                "type": "NestedGeo",
+                "kind": "object",
+                "children": [
+                  {
+                    "name": "Latitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  },
+                  {
+                    "name": "Longitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": "Record with a nested Address object that itself nests a Geo coordinate (nesting depth 2); the CSV writer flattens these into leaf columns."
+      },
+      "measurements": [
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to CSV bytes (writer flattens Address and Geo into columns).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 3247881.07045369,
+          "stdDevNs": 173289.24023062253,
+          "allocatedBytes": 513081,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the flattened CSV bytes back into typed NestedRecords (rebuilds the nested objects).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2032216.4389719204,
+          "stdDevNs": 98065.16307296365,
+          "allocatedBytes": 695419,
+          "ratioToBaseline": 0.6257053121369509,
+          "isBaseline": false,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to CSV bytes (writer flattens Address and Geo into columns).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 9205880.57202744,
+          "stdDevNs": 487190.64485342894,
+          "allocatedBytes": 5055509,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the flattened CSV bytes back into typed NestedRecords (rebuilds the nested objects).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 14815700.613802083,
+          "stdDevNs": 652605.0059927582,
+          "allocatedBytes": 6331712,
+          "ratioToBaseline": 1.6093735409538532,
+          "isBaseline": false,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds."
+        }
+      ]
+    },
+    {
+      "name": "CsvReadBenchmarks",
+      "description": "Parses CSV (produced from RowCount SampleRecords) back through every read surface: buffered typed objects from bytes / stream / file, the IAsyncEnumerable streaming path, the async list path, the options-driven parse, and the dynamic DataTable and row/column-dictionary targets. Contrasts the peak-memory of materializing all rows against bounded streaming, and typed mapping against dynamic parsing.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows encoded in the CSV being parsed (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record; the parser maps columns by header to typed properties."
+      },
+      "measurements": [
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1167155.7186132811,
+          "stdDevNs": 72432.64341571915,
+          "allocatedBytes": 125197,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1180556.4604779412,
+          "stdDevNs": 56474.27374555061,
+          "allocatedBytes": 125197,
+          "ratioToBaseline": 1.0114815372541563,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords (filesystem read + mapping).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1175945.54125,
+          "stdDevNs": 76959.92306422003,
+          "allocatedBytes": 129574,
+          "ratioToBaseline": 1.0075309767981622,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamStreaming",
+          "description": "Parse rows lazily via the async streaming API (bounded memory, no buffering of all rows).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1195963.11625,
+          "stdDevNs": 78412.68007109556,
+          "allocatedBytes": 122451,
+          "ratioToBaseline": 1.0246817088562488,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed List via the async byte path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1169375.37984375,
+          "stdDevNs": 78602.90719727751,
+          "allocatedBytes": 124818,
+          "ratioToBaseline": 1.001901769571164,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamWithOptions",
+          "description": "Parse a stream into a typed List with fine-grained parse options (per-row error handling path).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 1187753.974321546,
+          "stdDevNs": 67455.9048138432,
+          "allocatedBytes": 124567,
+          "ratioToBaseline": 1.0176482498262853,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDataTable",
+          "description": "Parse the CSV into a dynamic DataTable (no typed mapping) and count rows.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 96237.52100471048,
+          "stdDevNs": 5188.207003051934,
+          "allocatedBytes": 289536,
+          "ratioToBaseline": 0.08245473973177463,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDictionary",
+          "description": "Parse the CSV into a nested row/column dictionary (no typed model) and count rows.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 65975.37713867187,
+          "stdDevNs": 1750.8138510084825,
+          "allocatedBytes": 111904,
+          "ratioToBaseline": 0.05652662801246299,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 1898704.7711588542,
+          "stdDevNs": 11459.963879532907,
+          "allocatedBytes": 608191,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2075270.362890625,
+          "stdDevNs": 150531.75493288814,
+          "allocatedBytes": 608561,
+          "ratioToBaseline": 1.0929926518402362,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords (filesystem read + mapping).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 1953143.7513020833,
+          "stdDevNs": 15470.063940276641,
+          "allocatedBytes": 612518,
+          "ratioToBaseline": 1.028671640251898,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamStreaming",
+          "description": "Parse rows lazily via the async streaming API (bounded memory, no buffering of all rows).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2084316.03828125,
+          "stdDevNs": 141389.5711653618,
+          "allocatedBytes": 585116,
+          "ratioToBaseline": 1.0977567813289424,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed List via the async byte path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2112982.075703125,
+          "stdDevNs": 145364.67384405332,
+          "allocatedBytes": 601782,
+          "ratioToBaseline": 1.1128544615251,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamWithOptions",
+          "description": "Parse a stream into a typed List with fine-grained parse options (per-row error handling path).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2132458.0960165896,
+          "stdDevNs": 111440.90962984978,
+          "allocatedBytes": 601809,
+          "ratioToBaseline": 1.1231119910838305,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDataTable",
+          "description": "Parse the CSV into a dynamic DataTable (no typed mapping) and count rows.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 1198118.140161133,
+          "stdDevNs": 62406.02418490577,
+          "allocatedBytes": 2655192,
+          "ratioToBaseline": 0.6310186598572006,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDictionary",
+          "description": "Parse the CSV into a nested row/column dictionary (no typed model) and count rows.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 665554.0211710004,
+          "stdDevNs": 30099.725789702785,
+          "allocatedBytes": 902328,
+          "ratioToBaseline": 0.3505305465497865,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 13223622.944422469,
+          "stdDevNs": 686184.0504414265,
+          "allocatedBytes": 5609378,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 13031894.538976649,
+          "stdDevNs": 729257.6611818036,
+          "allocatedBytes": 5609378,
+          "ratioToBaseline": 0.9855010683341748,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords (filesystem read + mapping).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 13273149.256524725,
+          "stdDevNs": 742609.0196480307,
+          "allocatedBytes": 5614287,
+          "ratioToBaseline": 1.0037452907051578,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamStreaming",
+          "description": "Parse rows lazily via the async streaming API (bounded memory, no buffering of all rows).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 11202384.79873512,
+          "stdDevNs": 597694.2661397761,
+          "allocatedBytes": 5279377,
+          "ratioToBaseline": 0.847149442011285,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed List via the async byte path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 13704123.917269737,
+          "stdDevNs": 779507.4371177352,
+          "allocatedBytes": 5543354,
+          "ratioToBaseline": 1.0363365603259231,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamWithOptions",
+          "description": "Parse a stream into a typed List with fine-grained parse options (per-row error handling path).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 14067843.317708334,
+          "stdDevNs": 585655.6888286584,
+          "allocatedBytes": 5543106,
+          "ratioToBaseline": 1.0638418364493631,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDataTable",
+          "description": "Parse the CSV into a dynamic DataTable (no typed mapping) and count rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 38092489.53401361,
+          "stdDevNs": 1739637.5086371726,
+          "allocatedBytes": 26325234,
+          "ratioToBaseline": 2.8806394203852026,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDictionary",
+          "description": "Parse the CSV into a nested row/column dictionary (no typed model) and count rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 13848902.259375,
+          "stdDevNs": 233090.97231917965,
+          "allocatedBytes": 8798419,
+          "ratioToBaseline": 1.0472850229910908,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 134872574.125,
+          "stdDevNs": 5012409.237955114,
+          "allocatedBytes": 54976524,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 135921113.6818182,
+          "stdDevNs": 15808200.84864604,
+          "allocatedBytes": 54971872,
+          "ratioToBaseline": 1.0077742978038395,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords (filesystem read + mapping).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 137244566.49999997,
+          "stdDevNs": 6367786.729311142,
+          "allocatedBytes": 54978610,
+          "ratioToBaseline": 1.0175869140956826,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamStreaming",
+          "description": "Parse rows lazily via the async streaming API (bounded memory, no buffering of all rows).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 95636330.11428574,
+          "stdDevNs": 2687861.929019923,
+          "allocatedBytes": 52209958,
+          "ratioToBaseline": 0.7090865636304229,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed List via the async byte path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 134701162.5892857,
+          "stdDevNs": 1867603.0943975835,
+          "allocatedBytes": 54315494,
+          "ratioToBaseline": 0.9987290853101429,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseStreamWithOptions",
+          "description": "Parse a stream into a typed List with fine-grained parse options (per-row error handling path).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 139178139.2580645,
+          "stdDevNs": 4082157.7318489486,
+          "allocatedBytes": 54316732,
+          "ratioToBaseline": 1.0319232072272462,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDataTable",
+          "description": "Parse the CSV into a dynamic DataTable (no typed mapping) and count rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 388353694.4468085,
+          "stdDevNs": 14991023.494370459,
+          "allocatedBytes": 260621456,
+          "ratioToBaseline": 2.879411896497816,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Meets",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        },
+        {
+          "method": "ParseBytesAsDictionary",
+          "description": "Parse the CSV into a nested row/column dictionary (no typed model) and count rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 165327533.39393938,
+          "stdDevNs": 5181256.003871357,
+          "allocatedBytes": 86870843,
+          "ratioToBaseline": 1.2258054275787285,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path)."
+        }
+      ]
+    },
+    {
+      "name": "CsvWriteBenchmarks",
+      "description": "Serializes RowCount SampleRecords to CSV across every write surface: typed-list to bytes / string / stream / file, the async byte path, a selected-columns subset (3 of 7), and the dynamic DataTable and row/column-dictionary sources. Shows where extra materialization (UTF-16 string, file I/O, reflection vs dynamic columns) costs relative to the raw byte baseline.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows serialized (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record generated by SampleRecord.Generate; sequential Id, formatted Name/Email, cycling Age/Balance/IsActive, and an incrementing CreatedAt."
+      },
+      "measurements": [
+        {
+          "method": "ExportToCsvBytes",
+          "description": "Serialize the typed record list straight to UTF-8 CSV bytes (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2249714.697566106,
+          "stdDevNs": 23510.806028991257,
+          "allocatedBytes": 144070,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvString",
+          "description": "Serialize the typed record list to a CSV string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2301642.37109375,
+          "stdDevNs": 86332.98796980461,
+          "allocatedBytes": 145086,
+          "ratioToBaseline": 1.0230818928212644,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvStream",
+          "description": "Serialize the typed record list into a MemoryStream (streamed writer, no intermediate string).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2251508.6454427084,
+          "stdDevNs": 39233.80446472963,
+          "allocatedBytes": 136982,
+          "ratioToBaseline": 1.0007974112799918,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvFile",
+          "description": "Serialize the typed record list to a file on disk (writer + filesystem I/O).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2552313.9909237134,
+          "stdDevNs": 52269.120379973094,
+          "allocatedBytes": 125393,
+          "ratioToBaseline": 1.1345056302850223,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesAsync",
+          "description": "Serialize the typed record list to CSV bytes via the async path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2263497.506453804,
+          "stdDevNs": 86176.3892693751,
+          "allocatedBytes": 144222,
+          "ratioToBaseline": 1.0061264696819598,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesSelected",
+          "description": "Serialize only 3 of the 7 columns (Id, Name, Email) to CSV bytes (selected-property reflection path).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 28294.358298746745,
+          "stdDevNs": 414.16691579602553,
+          "allocatedBytes": 44152,
+          "ratioToBaseline": 0.01257686511509993,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDataTable",
+          "description": "Serialize a pre-parsed DataTable to CSV bytes (dynamic column path rather than typed reflection).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 42772.44178771973,
+          "stdDevNs": 825.1252514481819,
+          "allocatedBytes": 66016,
+          "ratioToBaseline": 0.019012384918849424,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDictionary",
+          "description": "Serialize a pre-built row/column dictionary map to CSV bytes (no typed model at all).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 33818.22165222168,
+          "stdDevNs": 765.5132049749886,
+          "allocatedBytes": 67024,
+          "ratioToBaseline": 0.01503222683694449,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytes",
+          "description": "Serialize the typed record list straight to UTF-8 CSV bytes (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2854526.1234375,
+          "stdDevNs": 46317.43602179616,
+          "allocatedBytes": 688734,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvString",
+          "description": "Serialize the typed record list to a CSV string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2867671.3978365385,
+          "stdDevNs": 27017.586517366108,
+          "allocatedBytes": 652479,
+          "ratioToBaseline": 1.0046050636184785,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvStream",
+          "description": "Serialize the typed record list into a MemoryStream (streamed writer, no intermediate string).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2842967.724392361,
+          "stdDevNs": 49248.91157907139,
+          "allocatedBytes": 615171,
+          "ratioToBaseline": 0.9959508518943873,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvFile",
+          "description": "Serialize the typed record list to a file on disk (writer + filesystem I/O).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 3193486.387257543,
+          "stdDevNs": 86780.70623400384,
+          "allocatedBytes": 356892,
+          "ratioToBaseline": 1.1187448456109617,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesAsync",
+          "description": "Serialize the typed record list to CSV bytes via the async path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2916765.9971354166,
+          "stdDevNs": 84130.52033715018,
+          "allocatedBytes": 688910,
+          "ratioToBaseline": 1.0218039250672422,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesSelected",
+          "description": "Serialize only 3 of the 7 columns (Id, Name, Email) to CSV bytes (selected-property reflection path).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 263122.02521829045,
+          "stdDevNs": 5081.062470281206,
+          "allocatedBytes": 339288,
+          "ratioToBaseline": 0.09217712987731623,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDataTable",
+          "description": "Serialize a pre-parsed DataTable to CSV bytes (dynamic column path rather than typed reflection).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 514154.49931242026,
+          "stdDevNs": 20134.903578084304,
+          "allocatedBytes": 712758,
+          "ratioToBaseline": 0.18011903800455015,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDictionary",
+          "description": "Serialize a pre-built row/column dictionary map to CSV bytes (no typed model at all).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 428630.64460834704,
+          "stdDevNs": 9180.344625254791,
+          "allocatedBytes": 728166,
+          "ratioToBaseline": 0.15015824906593533,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytes",
+          "description": "Serialize the typed record list straight to UTF-8 CSV bytes (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 8031720.425892857,
+          "stdDevNs": 262837.3272471464,
+          "allocatedBytes": 5605151,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvString",
+          "description": "Serialize the typed record list to a CSV string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7953735.020380435,
+          "stdDevNs": 193270.31383030972,
+          "allocatedBytes": 5826544,
+          "ratioToBaseline": 0.9902903236944091,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvStream",
+          "description": "Serialize the typed record list into a MemoryStream (streamed writer, no intermediate string).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7705011.456912879,
+          "stdDevNs": 228443.17310412438,
+          "allocatedBytes": 4833713,
+          "ratioToBaseline": 0.9593226666696807,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvFile",
+          "description": "Serialize the typed record list to a file on disk (writer + filesystem I/O).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 9299241.624289773,
+          "stdDevNs": 347202.36381225684,
+          "allocatedBytes": 2734750,
+          "ratioToBaseline": 1.1578144072732723,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesAsync",
+          "description": "Serialize the typed record list to CSV bytes via the async path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 8138294.4125,
+          "stdDevNs": 181483.51597126987,
+          "allocatedBytes": 5605336,
+          "ratioToBaseline": 1.0132691354972425,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesSelected",
+          "description": "Serialize only 3 of the 7 columns (Id, Name, Email) to CSV bytes (selected-property reflection path).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 3037563.6412417763,
+          "stdDevNs": 63948.4789875336,
+          "allocatedBytes": 3068567,
+          "ratioToBaseline": 0.37819588832415085,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDataTable",
+          "description": "Serialize a pre-parsed DataTable to CSV bytes (dynamic column path rather than typed reflection).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 4863037.728400735,
+          "stdDevNs": 157053.52285552752,
+          "allocatedBytes": 5789857,
+          "ratioToBaseline": 0.605478959741073,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDictionary",
+          "description": "Serialize a pre-built row/column dictionary map to CSV bytes (no typed model at all).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 4842157.026253634,
+          "stdDevNs": 177392.78382419483,
+          "allocatedBytes": 6749332,
+          "ratioToBaseline": 0.6028791802368232,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytes",
+          "description": "Serialize the typed record list straight to UTF-8 CSV bytes (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 53068609.620000005,
+          "stdDevNs": 937498.9309508962,
+          "allocatedBytes": 51425794,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvString",
+          "description": "Serialize the typed record list to a CSV string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 54450546.711111106,
+          "stdDevNs": 924538.7267673347,
+          "allocatedBytes": 59001240,
+          "ratioToBaseline": 1.0260405746637518,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvStream",
+          "description": "Serialize the typed record list into a MemoryStream (streamed writer, no intermediate string).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 47929701.33116883,
+          "stdDevNs": 477161.22635443805,
+          "allocatedBytes": 43318636,
+          "ratioToBaseline": 0.9031648214334511,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvFile",
+          "description": "Serialize the typed record list to a file on disk (writer + filesystem I/O).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 58763084.03174603,
+          "stdDevNs": 871831.3594097198,
+          "allocatedBytes": 26497479,
+          "ratioToBaseline": 1.1073040061256842,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesAsync",
+          "description": "Serialize the typed record list to CSV bytes via the async path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 54961262.3015873,
+          "stdDevNs": 886813.0848657665,
+          "allocatedBytes": 51425513,
+          "ratioToBaseline": 1.035664259816485,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesSelected",
+          "description": "Serialize only 3 of the 7 columns (Id, Name, Email) to CSV bytes (selected-property reflection path).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 32767983.959999997,
+          "stdDevNs": 522117.00648582116,
+          "allocatedBytes": 37203374,
+          "ratioToBaseline": 0.6174645274228309,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDataTable",
+          "description": "Serialize a pre-parsed DataTable to CSV bytes (dynamic column path rather than typed reflection).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 50817074.49090908,
+          "stdDevNs": 1220442.2089301413,
+          "allocatedBytes": 54038876,
+          "ratioToBaseline": 0.9575731275943888,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        },
+        {
+          "method": "ExportToCsvBytesFromDictionary",
+          "description": "Serialize a pre-built row/column dictionary map to CSV bytes (no typed model at all).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 48140767.126262635,
+          "stdDevNs": 999130.8890436792,
+          "allocatedBytes": 63638260,
+          "ratioToBaseline": 0.9071420463241191,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path)."
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "baseline": "Utf8",
+    "description": "Round-trips SampleRecords through CSV in UTF-8, UTF-16, and UTF-32 to show the encoding's effect on (de)serialization cost. Export = serialize the typed rows to bytes in the encoding; Parse = read those bytes back into typed rows. UTF-8 is the baseline.",
+    "parameters": [
+      {
+        "name": "RowCount",
+        "unit": "rows",
+        "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+      }
+    ],
+    "groups": [
+      {
+        "axis": "Export",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 7996028.864972015,
+            "allocatedBytes": 5608241,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 8633327.345471399,
+            "allocatedBytes": 8474217,
+            "ratioToBaseline": 1.0797018734250923,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 12878713.898719879,
+            "allocatedBytes": 14213690,
+            "ratioToBaseline": 1.6106387453323623,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 54656997.082000025,
+            "allocatedBytes": 51425924,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 57064361.066919185,
+            "allocatedBytes": 76290112,
+            "ratioToBaseline": 1.0440449368505824,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 103842401.97727273,
+            "allocatedBytes": 126091592,
+            "ratioToBaseline": 1.8998921916892275,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      },
+      {
+        "axis": "Parse",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 14577231.832201088,
+            "allocatedBytes": 5609751,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 14840966.99971591,
+            "allocatedBytes": 5608647,
+            "ratioToBaseline": 1.0180922668000814,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10000",
+            "meanNs": 18060955.599431816,
+            "allocatedBytes": 5608790,
+            "ratioToBaseline": 1.2389839036198345,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 140665664.44767442,
+            "allocatedBytes": 54971486,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 142001533.18292683,
+            "allocatedBytes": 54970612,
+            "ratioToBaseline": 1.009496764832397,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100000",
+            "meanNs": 174999876.69767445,
+            "allocatedBytes": 54970736,
+            "ratioToBaseline": 1.2440838166500245,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      }
+    ]
+  },
+  "slo": [
+    {
+      "area": "ExportNestedBytes",
+      "target": "<= 200 ms \u2014 Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
+      "latest": "3.25 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvBytes",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "2.25 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvBytesAsync",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "2.26 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvBytesFromDataTable",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "42.77 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvBytesFromDictionary",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "33.82 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvBytesSelected",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "28.29 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvFile",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "2.55 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvStream",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "2.25 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportToCsvString",
+      "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
+      "latest": "2.3 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytes",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.17 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytesAsDataTable",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "388.35 ms",
+      "result": "Meets"
+    },
+    {
+      "area": "ParseBytesAsDictionary",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "65.98 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytesAsync",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.17 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseFile",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.18 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseNestedBytes",
+      "target": "<= 200 ms \u2014 Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
+      "latest": "2.03 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseStream",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.18 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseStreamStreaming",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.2 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseStreamWithOptions",
+      "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+      "latest": "1.19 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Export",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "8.63 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Parse",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "14.84 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Export",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "12.88 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Parse",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "18.06 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Export",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "8 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Parse",
+      "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "14.58 ms",
+      "result": "Exceeds"
+    }
+  ],
+  "grades": [],
+  "schema": "lyo.bench/v1",
+  "name": "csv",
+  "title": "CSV",
+  "description": "CSV write and read paths for Lyo.Csv over a flat 7-column SampleRecord (int/string/decimal/bool/DateTime). Covers typed object lists (bytes and string), streaming parse, and DataTable round-trips. RowCount is the number of records; the data structure (columns and types) is captured in each class's data shape. The SampleRecord here is flat - nested objects/collections would add per-row flattening cost not represented by row count alone.",
+  "runId": "BenchmarkRun-joined-2026-06-28-10-11-19",
+  "generatedAt": "2026-06-28T14:11:21.2062723+00:00",
+  "environment": {
+    "tool": "BenchmarkDotNet",
+    "toolVersion": "0.15.8",
+    "runtime": ".NET 10.0.9",
+    "os": "Linux Mint 22.1"
+  },
+  "notes": []
+}

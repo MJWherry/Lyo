@@ -41,14 +41,27 @@
     return Number(value).toLocaleString();
   }
 
-  function fmtDelta(value, unit, invertGood) {
-    unit = unit || "";
-    if (value == null || isNaN(value) || value === 0) return "—";
-    var sign = value > 0 ? "+" : "";
-    var good = invertGood ? value < 0 : value > 0;
-    var cls = good ? "delta-good" : "delta-bad";
-    var text = sign + Number(value).toFixed(unit === " ms" ? 1 : 2) + unit;
-    return '<span class="' + cls + '">' + text + "</span>";
+  /* Format a nanosecond mean as ns / µs / ms with sensible precision. */
+  function fmtNs(value) {
+    if (value == null || isNaN(value)) return "—";
+    var ns = Number(value);
+    if (ns >= 1e6) return (ns / 1e6).toFixed(2) + " ms";
+    if (ns >= 1e3) return (ns / 1e3).toFixed(2) + " µs";
+    return ns.toFixed(1) + " ns";
+  }
+
+  /* Format a byte count as B / KB / MB. */
+  function fmtBytes(value) {
+    if (value == null || isNaN(value)) return "—";
+    var bytes = Number(value);
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + " MB";
+    if (bytes >= 1024) return (bytes / 1024).toFixed(2) + " KB";
+    return bytes.toFixed(0) + " B";
+  }
+
+  function fmtRatio(value) {
+    if (value == null || isNaN(value)) return "—";
+    return Number(value).toFixed(2) + "×";
   }
 
   function gradeClass(grade) {
@@ -117,89 +130,19 @@
     });
   }
 
-  function groupByProfile(suites, endpointPrefix) {
-    return ["load", "stress", "spike", "soak"].map(function (profile) {
-      return {
-        profile: profile,
-        query: suites.find(function (s) { return s.name === endpointPrefix + "_" + profile; }),
-        queryproject: suites.find(function (s) { return s.name === "queryproject_" + profile; }),
-      };
-    });
-  }
-
-  function comparisonRowsBySize(tableRows) {
-    var bySize = new Map();
-    (tableRows || []).forEach(function (row) {
-      if (!bySize.has(row.sizeLabel)) bySize.set(row.sizeLabel, []);
-      bySize.get(row.sizeLabel).push(row);
-    });
-    return Array.from(bySize.entries());
-  }
-
-  function dedicatedClassTable(classRows) {
-    if (!classRows || !classRows.length) {
-      return el("p", { className: "empty", text: "No data for this benchmark class." });
-    }
-    var methods = Array.from(new Set(classRows.map(function (r) { return r.method; })));
-    var sizes = Array.from(new Set(classRows.map(function (r) { return r.dataSizeLabel; })));
-    var lookup = new Map(classRows.map(function (r) { return [r.method + "|" + r.dataSizeLabel, r]; }));
-    var headers = [{ label: "Method" }].concat(sizes.map(function (s) { return { label: s, className: "num" }; }));
-    var rows = methods.map(function (method) {
-      return [method].concat(
-        sizes.map(function (size) {
-          var hit = lookup.get(method + "|" + size);
-          return { className: "num", text: hit && hit.mean ? hit.mean : "—" };
-        })
-      );
-    });
-    return table(headers, rows);
-  }
-
+  /* Index cards: each card = { href, title, description, badge }. */
   function renderIndexCards(container, cards) {
     container.innerHTML = "";
     cards.forEach(function (card) {
+      var heading = el("h2", { text: card.title });
+      if (card.badge) heading.appendChild(el("span", { className: "badge type-badge", text: card.badge }));
       container.appendChild(
         el("a", { className: "card card-link", href: card.href }, [
-          el("h2", { text: card.title }),
-          el("p", { text: card.description }),
-          el("div", { className: "metric-value", text: card.headline != null ? card.headline : "—" }),
-          el("div", { className: "metric-label", text: card.subline != null ? card.subline : "" }),
+          heading,
+          el("p", { text: card.description || "" }),
         ])
       );
     });
-  }
-
-  function comparisonTable(title, rows) {
-    var R = window.BenchmarkDashboard;
-    var sections = comparisonRowsBySize(rows).map(function (entry) {
-      var sizeLabel = entry[0];
-      var entries = entry[1];
-      return el("div", { className: "card" }, [
-        el("h3", { text: title + " @ " + sizeLabel }),
-        table(
-          [
-            { label: "Algorithm" },
-            { label: "Mean", className: "num" },
-            { label: "Ratio", className: "num" },
-            { label: "vs baseline", className: "num" },
-            { label: "Allocated", className: "num" },
-          ],
-          entries.map(function (r) {
-            return [
-              r.algorithm,
-              { className: "num", text: r.mean != null ? r.mean : "—" },
-              { className: "num", text: r.ratio != null ? r.ratio.toFixed(2) + "×" : "—" },
-              { className: "num", text: r.ratioVsBaseline != null ? r.ratioVsBaseline.toFixed(2) + "×" : "—" },
-              { className: "num", text: r.allocated != null ? r.allocated : "—" },
-            ];
-          })
-        ),
-      ]);
-    });
-    var wrap = el("div", {});
-    wrap.appendChild(el("h2", { text: title }));
-    sections.forEach(function (s) { wrap.appendChild(s); });
-    return wrap;
   }
 
   window.BenchmarkDashboard = {
@@ -208,16 +151,14 @@
     fmtRate: fmtRate,
     fmtPct: fmtPct,
     fmtInt: fmtInt,
-    fmtDelta: fmtDelta,
+    fmtNs: fmtNs,
+    fmtBytes: fmtBytes,
+    fmtRatio: fmtRatio,
     gradeClass: gradeClass,
     sloBadge: sloBadge,
     table: table,
     renderError: renderError,
     mountMeta: mountMeta,
-    groupByProfile: groupByProfile,
-    comparisonRowsBySize: comparisonRowsBySize,
-    dedicatedClassTable: dedicatedClassTable,
     renderIndexCards: renderIndexCards,
-    comparisonTable: comparisonTable,
   };
 })();

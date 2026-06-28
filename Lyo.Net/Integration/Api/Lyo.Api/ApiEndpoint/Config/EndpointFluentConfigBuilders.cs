@@ -385,31 +385,6 @@ public sealed class ExportEndpointConfigBuilder<TDbEntity>
     }
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithQueryHistory" />.</summary>
-public sealed class QueryHistoryEndpointConfigBuilder<TDbEntity>
-{
-    public Expression<Func<TDbEntity, DateTime>>? StartTime { get; private set; }
-
-    public Expression<Func<TDbEntity, DateTime>>? EndTime { get; private set; }
-
-    public EndpointAuth? AuthPolicy { get; private set; }
-
-    public QueryHistoryEndpointConfigBuilder<TDbEntity> TimeRange(Expression<Func<TDbEntity, DateTime>> startTimeSelector, Expression<Func<TDbEntity, DateTime>> endTimeSelector)
-    {
-        StartTime = startTimeSelector;
-        EndTime = endTimeSelector;
-        return this;
-    }
-
-    public QueryHistoryEndpointConfigBuilder<TDbEntity> Auth(EndpointAuth auth)
-    {
-        AuthPolicy = auth;
-        return this;
-    }
-
-    internal void Validate() => OperationHelpers.ThrowIf(StartTime == null || EndTime == null, "Call TimeRange(start, end) on the query history builder.");
-}
-
 /// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithMetadata" />.</summary>
 public sealed class MetadataEndpointConfigBuilder<TDbContext, TDbEntity>
     where TDbContext : DbContext where TDbEntity : class

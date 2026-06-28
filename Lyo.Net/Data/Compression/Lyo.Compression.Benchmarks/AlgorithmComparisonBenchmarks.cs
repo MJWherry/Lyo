@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
+using Lyo.Benchmarking;
 using Lyo.Compression.BZip2;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.LZ4;
@@ -13,8 +13,10 @@ using Lyo.Compression.Zstd;
 namespace Lyo.Compression.Benchmarks;
 
 /// <summary>Benchmarks comparing different compression algorithms</summary>
-[SimpleJob(RuntimeMoniker.HostProcess)]
-[MemoryDiagnoser]
+[ComparisonSuite(Baseline = "GZip")]
+[BenchmarkDescription("Compresses and decompresses the same random (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer (1 KB, 1 MB, 10 MB, 100 MB); random data is incompressible so ratio is not meaningful here.")]
+[BenchmarkSla(MinThroughputMbps = 30, SizeParam = "DataSize", Standard = "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy) should sustain >= 30 MB/s; high-ratio codecs (LZMA/XZ/BZip2) intentionally trade speed for ratio and may fall below this floor.")]
 public class AlgorithmComparisonBenchmarks
 {
     private static readonly ICompressorFactory[] AllFactories = [
@@ -82,6 +84,7 @@ public class AlgorithmComparisonBenchmarks
 
     // Compression Benchmarks
     [Benchmark(Baseline = true)]
+    [ComparisonAxis("Compress")]
     public byte[] GZip_Compress()
     {
         _ = _gzipService.Compress(_testData, out var compressed);
@@ -89,6 +92,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] Deflate_Compress()
     {
         _ = _deflateService.Compress(_testData, out var compressed);
@@ -96,6 +100,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] Zstd_Compress()
     {
         _ = _zstdService.Compress(_testData, out var compressed);
@@ -103,6 +108,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] Snappier_Compress()
     {
         _ = _snappierService.Compress(_testData, out var compressed);
@@ -110,6 +116,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] LZ4_Compress()
     {
         _ = _lz4Service.Compress(_testData, out var compressed);
@@ -117,6 +124,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] LZMA_Compress()
     {
         _ = _lzmaService.Compress(_testData, out var compressed);
@@ -124,6 +132,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] BZip2_Compress()
     {
         _ = _bzip2Service.Compress(_testData, out var compressed);
@@ -131,6 +140,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] XZ_Compress()
     {
         _ = _xzService.Compress(_testData, out var compressed);
@@ -139,6 +149,7 @@ public class AlgorithmComparisonBenchmarks
 
     // Decompression Benchmarks
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] GZip_Decompress()
     {
         _ = _gzipService.Decompress(_compressedGZip, out var decompressed);
@@ -146,6 +157,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] Deflate_Decompress()
     {
         _ = _deflateService.Decompress(_compressedDeflate, out var decompressed);
@@ -153,6 +165,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] Zstd_Decompress()
     {
         _ = _zstdService.Decompress(_compressedZstd, out var decompressed);
@@ -160,6 +173,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] Snappier_Decompress()
     {
         _ = _snappierService.Decompress(_compressedSnappier, out var decompressed);
@@ -167,6 +181,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] LZ4_Decompress()
     {
         _ = _lz4Service.Decompress(_compressedLZ4, out var decompressed);
@@ -174,6 +189,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] LZMA_Decompress()
     {
         _ = _lzmaService.Decompress(_compressedLZMA, out var decompressed);
@@ -181,6 +197,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] BZip2_Decompress()
     {
         _ = _bzip2Service.Decompress(_compressedBZip2, out var decompressed);
@@ -188,6 +205,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] XZ_Decompress()
     {
         _ = _xzService.Decompress(_compressedXZ, out var decompressed);
@@ -204,6 +222,7 @@ public class AlgorithmComparisonBenchmarks
 
 #if !NETSTANDARD2_0
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] Brotli_Compress()
     {
         _ = _brotliService.Compress(_testData, out var compressed);
@@ -211,6 +230,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Compress")]
     public byte[] ZLib_Compress()
     {
         _ = _zlibService.Compress(_testData, out var compressed);
@@ -220,6 +240,7 @@ public class AlgorithmComparisonBenchmarks
 
 #if !NETSTANDARD2_0
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] Brotli_Decompress()
     {
         _ = _brotliService.Decompress(_compressedBrotli, out var decompressed);
@@ -227,6 +248,7 @@ public class AlgorithmComparisonBenchmarks
     }
 
     [Benchmark]
+    [ComparisonAxis("Decompress")]
     public byte[] ZLib_Decompress()
     {
         _ = _zlibService.Decompress(_compressedZlib, out var decompressed);
