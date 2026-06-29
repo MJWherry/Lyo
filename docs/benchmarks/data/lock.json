@@ -152,7 +152,18 @@
       "result": "Exceeds"
     }
   ],
-  "grades": [],
+  "grades": [
+    {
+      "category": "LocalLockBenchmarks",
+      "grade": "A",
+      "rationale": "2 exceed of 2 SLA targets vs declared standards"
+    },
+    {
+      "category": "LockComparisonBenchmarks",
+      "grade": "A",
+      "rationale": "4 exceed of 4 SLA targets vs declared standards"
+    }
+  ],
   "schema": "lyo.bench/v1",
   "name": "lock",
   "title": "Locking",

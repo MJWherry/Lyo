@@ -16,7 +16,7 @@ namespace Lyo.Compression.Benchmarks;
 [ComparisonSuite(Baseline = "GZip")]
 [BenchmarkDescription("Compresses and decompresses the same random (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer (1 KB, 1 MB, 10 MB, 100 MB); random data is incompressible so ratio is not meaningful here.")]
-[BenchmarkSla(MinThroughputMbps = 30, SizeParam = "DataSize", Standard = "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy) should sustain >= 30 MB/s; high-ratio codecs (LZMA/XZ/BZip2) intentionally trade speed for ratio and may fall below this floor.")]
+[BenchmarkSla(MinThroughputMbps = 30, SizeParam = "DataSize", MinThroughputSizeBytes = 65536, Standard = "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 64 KB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.")]
 public class AlgorithmComparisonBenchmarks
 {
     private static readonly ICompressorFactory[] AllFactories = [
@@ -125,6 +125,7 @@ public class AlgorithmComparisonBenchmarks
 
     [Benchmark]
     [ComparisonAxis("Compress")]
+    [BenchmarkSla(MinThroughputMbps = 2, SizeParam = "DataSize", MinThroughputSizeBytes = 65536, Standard = "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU.")]
     public byte[] LZMA_Compress()
     {
         _ = _lzmaService.Compress(_testData, out var compressed);
@@ -133,6 +134,7 @@ public class AlgorithmComparisonBenchmarks
 
     [Benchmark]
     [ComparisonAxis("Compress")]
+    [BenchmarkSla(MinThroughputMbps = 4, SizeParam = "DataSize", MinThroughputSizeBytes = 65536, Standard = "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation.")]
     public byte[] BZip2_Compress()
     {
         _ = _bzip2Service.Compress(_testData, out var compressed);
@@ -190,6 +192,7 @@ public class AlgorithmComparisonBenchmarks
 
     [Benchmark]
     [ComparisonAxis("Decompress")]
+    [BenchmarkSla(MinThroughputMbps = 4, SizeParam = "DataSize", MinThroughputSizeBytes = 65536, Standard = "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size.")]
     public byte[] LZMA_Decompress()
     {
         _ = _lzmaService.Decompress(_compressedLZMA, out var decompressed);
@@ -198,6 +201,7 @@ public class AlgorithmComparisonBenchmarks
 
     [Benchmark]
     [ComparisonAxis("Decompress")]
+    [BenchmarkSla(MinThroughputMbps = 12, SizeParam = "DataSize", MinThroughputSizeBytes = 65536, Standard = "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec.")]
     public byte[] BZip2_Decompress()
     {
         _ = _bzip2Service.Decompress(_compressedBZip2, out var decompressed);

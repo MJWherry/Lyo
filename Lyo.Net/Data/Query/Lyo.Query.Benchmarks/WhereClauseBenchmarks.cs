@@ -51,8 +51,12 @@ public class WhereClauseBenchmarks
             .Build();
     }
 
-    [Benchmark(Baseline = true)]
-    [BenchmarkDescription("Compile a LINQ expression tree from the simple single-predicate clause (baseline; no data scan).")]
+    // No Baseline here on purpose: the methods measure unrelated operations (expression compile, full
+    // queryable build+scan, single-entity match), so a shared "vs baseline" ratio is meaningless — it
+    // produced ~700-10,000x noise comparing a sub-100us compile against a 100k-row scan. Each method is
+    // judged on its own SLA instead (mirrors ProjectionBenchmarks).
+    [Benchmark]
+    [BenchmarkDescription("Compile a LINQ expression tree from the simple single-predicate clause (no data scan).")]
     [BenchmarkSla(MaxMeanUs = 100, Standard = "Compiling a where-clause expression tree is a build-time step and should stay well under a millisecond.")]
     public Expression<Func<BenchPerson, bool>>? BuildExpression_Simple()
         => ((BaseWhereClauseService)_service).BuildExpressionFromWhereClause<BenchPerson>(_simpleClause);

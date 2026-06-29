@@ -1,0 +1,140 @@
+# Dockerized benchmarks and tests
+
+Run the Lyo BenchmarkDotNet suites or the xUnit test projects inside a container,
+in the background, with configurable CPU/memory limits.
+
+A single `run` service is driven by **`TARGET`**, which selects projects by
+group, exact name, or a list. The same `TARGET` decides both what the image
+**compiles** and what the container **runs**, so every image is lean — it only
+contains the projects you asked for. The source is baked in (multi-stage build
+copies the artifacts and warmed NuGet cache into the final .NET 10 SDK + python3
+image), so the host source tree is **never** mounted for building and a container
+run can never write to your host `obj/bin` (no more broken `.slnx`). Notes:
+
+- `Tools/` apps (`Lyo.TestApi`, `Lyo.TestConsole`, `Lyo.Gateway`, ...) and the
+  whole-solution build are never compiled — only the selected `*.Benchmarks` /
+  `*.Tests` projects (and their dependencies).
+- The **Tesseract OCR native libs are installed automatically** only when a
+  selected project needs them (the OCR test). No flag to set.
+- Source changes require a rebuild to take effect (`scripts/docker/run.sh
+  --build-only <target>`, or `docker compose build run`). Per-target images keep
+  the build small.
+- The SDK is in the final image on purpose: BenchmarkDotNet compiles a small
+  per-run executable, so the SDK is needed at runtime too.
+
+## TARGET grammar
+
+`TARGET` is a space- or comma-separated list of tokens (see
+[`scripts/docker/resolve-targets.sh`](../scripts/docker/resolve-targets.sh)):
+
+| Token | Resolves to |
+| --- | --- |
+| `benchmarks` (or `bench`) | every `Lyo.Net/**/*.Benchmarks.csproj` |
+| `tests` (or `test`) | every `Lyo.Net/**/*.Tests.csproj` |
+| `all` | both groups |
+| `Lyo.Lock.Benchmarks` | the project file `Lyo.Lock.Benchmarks.csproj` |
+| `path/to/Foo.csproj` | that exact csproj |
+
+## Setup
+
+```bash
+cp .env.example .env        # tune CPU_LIMIT / MEM_LIMIT, HOST_UID/HOST_GID, options
+```
+
+### One-time host cleanup
+
+If you previously ran the old bind-mounted setup, clear the root-owned/poisoned
+build output once so Rider builds clean again:
+
+```bash
+sudo git clean -xdff -- '**/obj' '**/bin'   # or: sudo rm -rf **/obj **/bin
+dotnet restore Lyo.Net/Lyo.slnx
+```
+
+## Run
+
+The wrapper [`scripts/docker/run.sh`](../scripts/docker/run.sh) builds the right
+per-target image (auto-tagged so targets don't clobber each other) and runs it
+detached by default:
+
+```bash
+scripts/docker/run.sh Lyo.Lock.Benchmarks            # one benchmark suite
+scripts/docker/run.sh Lyo.Query.Tests                # one test project
+scripts/docker/run.sh benchmarks                     # every benchmark suite
+scripts/docker/run.sh tests                          # every *.Tests (OCR libs auto-added)
+scripts/docker/run.sh all                            # benchmarks + tests
+scripts/docker/run.sh Lyo.Lock.Benchmarks Lyo.Cache.Benchmarks   # a list
+```
+
+Options (passthrough):
+
+```bash
+scripts/docker/run.sh --fg Lyo.Hashing.Benchmarks                 # foreground (default: detached)
+scripts/docker/run.sh --build-only benchmarks                     # build the image, don't run
+scripts/docker/run.sh --no-docker Lyo.Cache.Benchmarks            # skip Testcontainers classes
+scripts/docker/run.sh --filter '*Sha256*' Lyo.Hashing.Benchmarks  # BenchmarkDotNet --filter
+scripts/docker/run.sh --test-filter 'Category=Fast' Lyo.Csv.Tests # xUnit --filter
+```
+
+Prefer driving compose directly? Set `TARGET` and a `RUN_IMAGE` tag yourself so
+distinct targets cache separately:
+
+```bash
+TARGET=Lyo.Lock.Benchmarks RUN_IMAGE=lyo-runner-lock docker compose run -d --rm run
+TARGET=tests RUN_IMAGE=lyo-runner-tests docker compose build run   # just (re)build
+```
+
+Follow progress:
+
+```bash
+docker compose logs -f
+# or, for a specific detached container:
+docker logs -f <container-id>
+```
+
+## Where results go
+
+The **only** path mounted back to the host is `docs/benchmarks/data/`. After a
+benchmark run, `scripts/benchmarks/build-manifests.py` (invoked automatically)
+writes the aggregated dashboard manifests there, and the runner `chown`s them to
+`HOST_UID:HOST_GID` so they aren't root-owned. Open
+`docs/benchmarks/index.html` to view the dashboard.
+
+Everything else stays inside the container and is discarded with `--rm`:
+
+- Per-suite raw `BenchmarkDotNet.Artifacts/` (consumed by the manifest builder
+  before exit).
+- `dotnet test` results (`TestResults/`); pass/fail is reported via the exit
+  code and `docker compose logs`.
+
+## Configuration
+
+Set in `.env` (see `.env.example` for the full list):
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `TARGET` | Projects to build + run (group/name/list) | `all` |
+| `RUN_IMAGE` | Image tag for the `run` service (wrapper sets per-target) | `lyo-runner-all` |
+| `CPU_LIMIT` | CPUs the runner container may use | `4` |
+| `MEM_LIMIT` | Runner container memory cap | `8g` |
+| `HOST_UID` | UID the `docs/benchmarks/data` manifests are chowned to | `1000` |
+| `HOST_GID` | GID the `docs/benchmarks/data` manifests are chowned to | `1000` |
+| `BENCH_FILTER` | BenchmarkDotNet `--filter` glob | `*` |
+| `NO_DOCKER` | `1` skips Testcontainers-backed benchmark classes | `0` |
+| `TEST_FILTER` | xUnit `--filter` expression | (none) |
+| `TESTCONTAINERS_HOST_OVERRIDE` | Host advertised to sibling containers | `host.docker.internal` |
+
+## Testcontainers / Docker-backed suites
+
+The host Docker socket is mounted (`/var/run/docker.sock`) so suites that use
+Testcontainers (`cache`, `query`, `lock` benchmarks and all `*.Postgres`/Redis
+tests) can spin up sibling Redis/Postgres containers.
+
+Caveats:
+
+- Sibling containers spawned via the socket run on the host and are **not**
+  bound by `CPU_LIMIT` / `MEM_LIMIT` (those constrain only the runner).
+- Constraining CPU changes absolute BenchmarkDotNet numbers; keep limits fixed
+  for run-to-run comparability.
+- To run fully isolated without Docker-backed work, pass `--no-docker` (benchmark
+  suites only run their in-process classes).

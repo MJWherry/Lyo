@@ -1753,7 +1753,28 @@
       "result": "Exceeds"
     }
   ],
-  "grades": [],
+  "grades": [
+    {
+      "category": "CsvEncodingBenchmarks",
+      "grade": "A",
+      "rationale": "12 exceed of 12 SLA targets vs declared standards"
+    },
+    {
+      "category": "CsvNestedBenchmarks",
+      "grade": "A",
+      "rationale": "4 exceed of 4 SLA targets vs declared standards"
+    },
+    {
+      "category": "CsvReadBenchmarks",
+      "grade": "A-",
+      "rationale": "31 exceed, 1 meet of 32 SLA targets vs declared standards"
+    },
+    {
+      "category": "CsvWriteBenchmarks",
+      "grade": "A",
+      "rationale": "32 exceed of 32 SLA targets vs declared standards"
+    }
+  ],
   "schema": "lyo.bench/v1",
   "name": "csv",
   "title": "CSV",

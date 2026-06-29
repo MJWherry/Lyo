@@ -1,0 +1,14 @@
+# Build context for docker/Dockerfile (context is the repo root). Keep it lean and avoid copying
+# host build output into the image (it would carry host-specific paths and bloat the context).
+**/bin
+**/obj
+**/BenchmarkDotNet.Artifacts
+.git
+.idea
+.vscode
+node_modules
+**/__pycache__
+*.pyc
+k6/framework-person/results
+# Mounted at runtime; no need to bake it into the image.
+docs/benchmarks/data

@@ -10,15 +10,15 @@ namespace Lyo.Xlsx.Benchmarks;
 
 /// <summary>Benchmarks XLSX conversion paths: XLSX -> CSV (bytes/stream, default and UTF-16 encoding, sync + async) and XLSX -> HTML table.</summary>
 [BenchmarkDescription("Converts an XLSX workbook (built from RowCount SampleRecords) into other formats: XLSX -> CSV bytes (default and UTF-16 encoding), XLSX -> CSV via a stream, the async CSV conversion, and XLSX -> HTML table. Captures the read-then-rewrite cost and the effect of output encoding on conversion.")]
-[BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the source workbook being converted (100 to 10,000).")]
+[BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the source workbook being converted (100 to 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; the source workbook's first sheet is converted.")]
-[BenchmarkSla(MaxMeanMs = 2000, Standard = "Converting an up-to-10k-row workbook (read XLSX + rewrite CSV/HTML) should complete within a couple of seconds.")]
+[BenchmarkSla(MaxMeanMs = 10000, Standard = "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.")]
 public class XlsxConvertBenchmarks
 {
     private XlsxService _xlsx = null!;
     private byte[] _bytes = null!;
 
-    [Params(100, 1_000, 10_000)]
+    [Params(100, 1_000, 10_000, 100_000)]
     public int RowCount { get; set; }
 
     [GlobalSetup]

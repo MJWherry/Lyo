@@ -105,6 +105,12 @@ a:hover {
   box-shadow: var(--shadow);
 }
 
+/* Cards stacked within a section (comparison tables, benchmark classes) need breathing room between
+   them. The index grid lays cards out with `gap`, so this only applies to in-section stacks. */
+section > .card + .card {
+  margin-top: 1.25rem;
+}
+
 .card h2,
 .card h3,
 section h2 {
@@ -254,6 +260,7 @@ tr:last-child td {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .badge.meets {
@@ -371,15 +378,30 @@ tr:last-child td {
   color: var(--text-muted);
 }
 
-/* Wrapping table variant for wide, text-heavy grids (query cases, breakdowns). */
-.table-wrap.wrap th,
+/* Wrapping table variant for wide, text-heavy grids (query cases, breakdowns). Only the body text
+   wraps; short header labels ("Result", "Latest", ...) stay on one line so they don't break mid-word. */
 .table-wrap.wrap td {
   white-space: normal;
   word-break: break-word;
+  vertical-align: top;
 }
 
-.table-wrap.wrap td {
-  vertical-align: top;
+.table-wrap.wrap th {
+  white-space: nowrap;
+}
+
+/* Numeric columns (Latest, Mean, Allocated, Ratio) must stay on one line even inside a wrapping
+   table, so values like "142.83 ms (7 MB/s)" don't break across rows. */
+.table-wrap.wrap td.num {
+  white-space: nowrap;
+  word-break: normal;
+}
+
+/* Identifier cells (e.g. SLA assessment "Area" like BZip2_Compress) must not break mid-token. They
+   may still wrap at real spaces (multi-word k6 areas), but never split a single word across lines. */
+.table-wrap.wrap td.no-break {
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 /* Expandable scenario rows. */

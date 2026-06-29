@@ -151,32 +151,123 @@
     return el("div", {}, children);
   }
 
-  function measurementTable(measurements) {
-    if (!measurements.length) return el("p", { className: "empty", text: "No measurements." });
-    var hasSla = measurements.some(function (m) { return m.slaResult; });
+  /* Wrap an arbitrary cell value (DOM node or text) into a <td>. */
+  function td(content, className) {
+    if (content && content.nodeType === 1) return el("td", { className: className || "" }, [content]);
+    return el("td", { className: className || "", text: content == null ? "—" : String(content) });
+  }
+
+  var SLA_SEVERITY = { Exceeds: 0, Meets: 1, Miss: 2 };
+
+  /* The worst-verdict measurement in a matrix (Miss > Meets > Exceeds), or null when none carry an SLA. */
+  function worstSlaItem(items) {
+    var worst = null;
+    var worstSeverity = -1;
+    items.forEach(function (m) {
+      if (!m.slaResult) return;
+      var severity = SLA_SEVERITY[m.slaResult] != null ? SLA_SEVERITY[m.slaResult] : 1;
+      if (severity > worstSeverity) { worstSeverity = severity; worst = m; }
+    });
+    return worst;
+  }
+
+  function minMean(items) {
+    return Math.min.apply(null, items.map(function (m) { return m.meanNs || 0; }));
+  }
+
+  /* Detail table shown when a matrix (multi-parameter) method row is expanded. */
+  function matrixBreakdown(items, hasSla) {
     var headers = [
-      { label: "Method" },
       { label: "Parameters" },
       { label: "Mean", className: "num" },
       { label: "Allocated", className: "num" },
       { label: "Ratio", className: "num" },
     ];
     if (hasSla) headers.push({ label: "SLA" });
-    var rows = measurements
-      .slice()
-      .sort(function (a, b) { return (a.meanNs || 0) - (b.meanNs || 0); })
-      .map(function (m) {
-        var cells = [
-          methodNameCell(m.method, m.isBaseline, m.description),
-          paramLabel(m.parameters),
-          { className: "num", text: R.fmtNs(m.meanNs) },
-          { className: "num", text: R.fmtBytes(m.allocatedBytes) },
-          { className: "num", text: m.ratioToBaseline != null ? R.fmtRatio(m.ratioToBaseline) : "—" },
+    var rows = items.map(function (m) {
+      var cells = [
+        paramLabel(m.parameters),
+        { className: "num", text: R.fmtNs(m.meanNs) },
+        { className: "num", text: R.fmtBytes(m.allocatedBytes) },
+        { className: "num", text: m.ratioToBaseline != null ? R.fmtRatio(m.ratioToBaseline) : "—" },
+      ];
+      if (hasSla) cells.push(slaCell(m.slaResult, m.slaTarget));
+      return cells;
+    });
+    var table = R.table(headers, rows);
+    table.className += " wrap";
+    return el("div", { className: "detail-inner" }, [el("h4", { text: "Per-parameter breakdown" }), table]);
+  }
+
+  /* Measurement table. Methods run across multiple parameter values (a matrix) collapse into one
+     expandable summary row (mean/allocated range + worst SLA); click to reveal the per-parameter sweep. */
+  function measurementTable(measurements) {
+    if (!measurements.length) return el("p", { className: "empty", text: "No measurements." });
+    var hasSla = measurements.some(function (m) { return m.slaResult; });
+
+    var byMethod = {};
+    var order = [];
+    measurements.forEach(function (m) {
+      if (!byMethod[m.method]) { byMethod[m.method] = []; order.push(m.method); }
+      byMethod[m.method].push(m);
+    });
+    order.sort(function (a, b) { return minMean(byMethod[a]) - minMean(byMethod[b]); });
+
+    var headers = [{ label: "" }, { label: "Method" }, { label: "Parameters" }, { label: "Mean", className: "num" }, { label: "Allocated", className: "num" }, { label: "Ratio", className: "num" }];
+    if (hasSla) headers.push({ label: "SLA" });
+    var colspan = headers.length;
+    var thead = el("thead", {}, [el("tr", {}, headers.map(function (h) { return el("th", { text: h.label, className: h.className || "" }); }))]);
+    var tbody = el("tbody");
+    var anyMatrix = false;
+
+    order.forEach(function (method) {
+      var items = byMethod[method].slice().sort(function (a, b) { return (a.meanNs || 0) - (b.meanNs || 0); });
+      var first = items[0];
+
+      if (items.length === 1) {
+        var single = [
+          td("", "toggle-cell"),
+          td(methodNameCell(first.method, first.isBaseline, first.description)),
+          td(paramLabel(first.parameters)),
+          td(R.fmtNs(first.meanNs), "num"),
+          td(R.fmtBytes(first.allocatedBytes), "num"),
+          td(first.ratioToBaseline != null ? R.fmtRatio(first.ratioToBaseline) : "—", "num"),
         ];
-        if (hasSla) cells.push(slaCell(m.slaResult, m.slaTarget));
-        return cells;
+        if (hasSla) single.push(td(slaCell(first.slaResult, first.slaTarget)));
+        tbody.appendChild(el("tr", {}, single));
+        return;
+      }
+
+      anyMatrix = true;
+      var means = items.map(function (m) { return m.meanNs || 0; });
+      var allocs = items.map(function (m) { return m.allocatedBytes; }).filter(function (x) { return x != null; });
+      var meanRange = R.fmtNs(Math.min.apply(null, means)) + " – " + R.fmtNs(Math.max.apply(null, means));
+      var allocRange = allocs.length ? R.fmtBytes(Math.min.apply(null, allocs)) + " – " + R.fmtBytes(Math.max.apply(null, allocs)) : "—";
+      var worst = worstSlaItem(items);
+
+      var summary = [
+        td("\u25B8", "toggle-cell"),
+        td(methodNameCell(first.method, first.isBaseline, first.description)),
+        td(items.length + " cases"),
+        td(meanRange, "num"),
+        td(allocRange, "num"),
+        td("—", "num"),
+      ];
+      if (hasSla) summary.push(td(worst ? slaCell(worst.slaResult, worst.slaTarget) : "—"));
+      var mainRow = el("tr", { className: "expandable" }, summary);
+      tbody.appendChild(mainRow);
+
+      var detailRow = el("tr", { className: "detail-row hidden" }, [el("td", { colspan: String(colspan) }, [matrixBreakdown(items, hasSla)])]);
+      tbody.appendChild(detailRow);
+      mainRow.addEventListener("click", function () {
+        var hidden = detailRow.classList.toggle("hidden");
+        mainRow.classList.toggle("open", !hidden);
+        mainRow.querySelector(".toggle-cell").textContent = hidden ? "\u25B8" : "\u25BE";
       });
-    var children = [R.table(headers, rows)];
+    });
+
+    var children = [el("div", { className: "table-wrap" }, [el("table", {}, [thead, tbody])])];
+    if (anyMatrix) children.push(el("p", { className: "table-note", text: "Click a row (\u25B8) to expand its per-parameter matrix breakdown (mean/allocated shown as a range across parameters; SLA shows the worst verdict)." }));
     if (measurements.some(function (m) { return m.isBaseline; })) {
       children.push(el("p", { className: "table-note", text: "The baseline tag marks the reference method; Ratio is each row's mean relative to it (1.00× = same speed)." }));
     }
@@ -355,7 +446,7 @@
   function sloSection(slo, title) {
     var rows = slo.map(function (row) {
       return [
-        row.area,
+        { className: "no-break", text: row.area },
         row.target,
         { className: "num", text: row.latest },
         { html: '<span class="' + R.sloBadge(row.result) + '">' + row.result + "</span>" },

@@ -10,16 +10,16 @@ namespace Lyo.Xlsx.Benchmarks;
 
 /// <summary>Benchmarks XLSX parsing across sources (bytes/stream/file) and targets (dictionary vs DataTable), sync vs async.</summary>
 [BenchmarkDescription("Parses an XLSX workbook (built from RowCount SampleRecords) via ExcelDataReader across every read surface: into a row/column dictionary and into a DataTable, from bytes, a stream, and a file, plus the async byte paths. Contrasts the dynamic dictionary target against the typed DataTable and the cost of stream/file sources vs an in-memory buffer.")]
-[BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the workbook being parsed (100 to 10,000).")]
+[BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the workbook being parsed (100 to 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; columns mapped by header.")]
-[BenchmarkSla(MaxMeanMs = 2000, Standard = "XLSX parsing is heavier than CSV; reading up to 10k rows should still complete within a couple of seconds.")]
+[BenchmarkSla(MaxMeanMs = 10000, Standard = "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.")]
 public class XlsxReadBenchmarks
 {
     private XlsxService _xlsx = null!;
     private byte[] _bytes = null!;
     private string _filePath = null!;
 
-    [Params(100, 1_000, 10_000)]
+    [Params(100, 1_000, 10_000, 100_000)]
     public int RowCount { get; set; }
 
     [GlobalSetup]

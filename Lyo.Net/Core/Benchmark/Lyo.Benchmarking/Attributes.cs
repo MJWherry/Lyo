@@ -115,6 +115,13 @@ public sealed class BenchmarkSlaAttribute : Attribute
     /// <summary>Minimum sustained throughput in MB/s; evaluated only for size-based suites (see <see cref="SizeParam" />). 0 = unset.</summary>
     public double MinThroughputMbps { get; set; }
 
+    /// <summary>
+    /// Smallest payload (in bytes) at which the <see cref="MinThroughputMbps" /> floor is judged. Below this size the
+    /// throughput target is skipped (not graded a Miss), because small payloads are dominated by fixed per-call
+    /// overhead and cannot represent sustained bulk throughput. 0 = always evaluate. Typical value: 65536 (64 KB).
+    /// </summary>
+    public double MinThroughputSizeBytes { get; set; }
+
     /// <summary>Name of the parameter carrying the processed byte size, used to derive throughput (default <c>DataSize</c>).</summary>
     public string SizeParam { get; set; } = "DataSize";
 

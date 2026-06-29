@@ -95,7 +95,10 @@
           {},
           cells.map(function (cell) {
             if (cell && typeof cell === "object" && cell.nodeType === 1) {
-              return el("td", { className: cell.className || "" }, [cell]);
+              // Wrap the node WITHOUT copying its own class onto the <td> — otherwise a badge span
+              // (class "badge exceeds") would style the whole cell as a pill. Matches the viewer's
+              // manual td() helper so nested/comparison tables render like the parent tables.
+              return el("td", {}, [cell]);
             }
             var className = cell && typeof cell === "object" ? cell.className || "" : "";
             var content = cell && typeof cell === "object" ? (cell.html != null ? cell.html : cell.text != null ? cell.text : "") : cell != null ? cell : "";

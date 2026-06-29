@@ -1,0 +1,66 @@
+# Run Lyo BenchmarkDotNet suites or xUnit test projects in a container, with configurable CPU/memory
+# limits, in the background.
+#
+# A single `run` service is driven by TARGET, which selects projects by group (benchmarks|tests|all),
+# exact project name (e.g. Lyo.Lock.Benchmarks), or a space/comma list. The same TARGET decides what
+# the image compiles AND what the container runs. The source is baked into the image, so the host tree
+# is NEVER mounted for building (the container can't touch your obj/bin). The only thing mounted out
+# at runtime is docs/benchmarks/data, so just the dashboard manifests update on the host.
+#
+# Easiest entrypoint is the wrapper, which auto-tags a per-target image:
+#   scripts/docker/run.sh Lyo.Lock.Benchmarks    # one suite
+#   scripts/docker/run.sh benchmarks             # a whole group
+#   scripts/docker/run.sh tests                  # every *.Tests (auto-installs OCR libs)
+#
+# Or drive compose directly (set the image tag yourself so targets don't clobber each other):
+#   TARGET=Lyo.Lock.Benchmarks RUN_IMAGE=lyo-runner-lock docker compose run -d --rm run
+#
+# Source changes require a rebuild (source is baked in): scripts/docker/run.sh --build-only <target>
+# or `docker compose build run`. After a bench run, open docs/benchmarks/index.html.
+
+# Shared build settings; the per-target image tag + TARGET arg are supplied per invocation.
+x-build: &build
+  context: .
+  dockerfile: docker/Dockerfile
+
+# Shared runtime settings.
+x-runner: &runner
+  working_dir: /src
+  env_file:
+    # Optional so the stack still runs before `cp .env.example .env`; the
+    # ${VAR:-default} fallbacks below supply sensible values either way.
+    - path: .env
+      required: false
+  # Resource caps for the runner container. Configurable in .env.
+  # NOTE: sibling containers that Testcontainers spawns via the mounted Docker
+  # socket run on the host and are NOT constrained by these limits.
+  cpus: ${CPU_LIMIT:-4}
+  mem_limit: ${MEM_LIMIT:-8g}
+  volumes:
+    # Mount the host Docker socket so Testcontainers can spin up sibling
+    # Redis/Postgres containers for the Docker-backed suites.
+    - /var/run/docker.sock:/var/run/docker.sock
+    # The ONLY host-tree mount: dashboard manifests written by build-manifests.py land here.
+    # Everything else (source, build output, raw artifacts) stays inside the container.
+    - ./docs/benchmarks/data:/src/docs/benchmarks/data
+  # Let Testcontainers reach host-published ports when running over the socket.
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  # The single target-driven runner. TARGET selects what to build + run; RUN_IMAGE tags the image so
+  # distinct targets cache separately (the wrapper sets both for you).
+  run:
+    <<: *runner
+    image: ${RUN_IMAGE:-lyo-runner-all}
+    build:
+      <<: *build
+      args:
+        TARGET: ${TARGET:-all}
+    profiles: ["run"]
+    environment:
+      TESTCONTAINERS_HOST_OVERRIDE: ${TESTCONTAINERS_HOST_OVERRIDE:-host.docker.internal}
+      TARGET: ${TARGET:-all}
+      BENCH_FILTER: ${BENCH_FILTER:-*}
+      NO_DOCKER: ${NO_DOCKER:-0}
+      TEST_FILTER: ${TEST_FILTER:-}

@@ -72,7 +72,12 @@ for category in "${CATEGORIES[@]}"; do
   # emits one Summary per class and the exporter (which writes a fixed <name>.lyobench.json) keeps only
   # the last class — the cause of past "only one group showed up" reports.
   artifacts="$NET_DIR/$(dirname "$project")/BenchmarkDotNet.Artifacts"
-  args=(run -c Release --project "$NET_DIR/$project" -- --join --artifacts "$artifacts" --filter)
+  # BENCH_NO_BUILD=1 (set by the Docker runner) reuses prebuilt output instead of recompiling/restoring.
+  run_opts=(run -c Release --project "$NET_DIR/$project")
+  if [[ "${BENCH_NO_BUILD:-0}" == "1" ]]; then
+    run_opts+=(--no-build --no-restore)
+  fi
+  args=("${run_opts[@]}" -- --join --artifacts "$artifacts" --filter)
   if [[ "$NO_DOCKER" -eq 1 && -n "${NODOCKER_FILTERS[$category]:-}" ]]; then
     # Positive include of just the in-process classes (BDN has no exclusion flag).
     # shellcheck disable=SC2206

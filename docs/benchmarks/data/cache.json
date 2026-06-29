@@ -678,7 +678,18 @@
       "result": "Exceeds"
     }
   ],
-  "grades": [],
+  "grades": [
+    {
+      "category": "CacheComparisonBenchmarks",
+      "grade": "A",
+      "rationale": "8 exceed of 8 SLA targets vs declared standards"
+    },
+    {
+      "category": "PayloadCacheBenchmarks",
+      "grade": "A",
+      "rationale": "16 exceed of 16 SLA targets vs declared standards"
+    }
+  ],
   "schema": "lyo.bench/v1",
   "name": "cache",
   "title": "Caching",

@@ -459,13 +459,14 @@ public sealed class LyoBenchmarkExporter : IExporter
         if (sla is null)
             return null;
 
+        long? sizeBytes = null;
+        if (row.Parameters.TryGetValue(sla.SizeParam, out var sizeStr) && long.TryParse(sizeStr, out var parsedSize))
+            sizeBytes = parsedSize;
+
         double? throughputMbps = null;
-        if (sla.MinThroughputMbps > 0
-            && row.MeanNs > 0
-            && row.Parameters.TryGetValue(sla.SizeParam, out var sizeStr)
-            && long.TryParse(sizeStr, out var sizeBytes)) {
+        if (sla.MinThroughputMbps > 0 && row.MeanNs > 0 && sizeBytes is long bytes) {
             var seconds = row.MeanNs / 1e9;
-            throughputMbps = sizeBytes / seconds / 1_000_000.0;
+            throughputMbps = bytes / seconds / 1_000_000.0;
         }
 
         var targets = new List<string>();
@@ -481,7 +482,12 @@ public sealed class LyoBenchmarkExporter : IExporter
             else if (row.MeanNs <= 0.5 * budgetNs) comfortable++;
         }
 
-        if (sla.MinThroughputMbps > 0 && throughputMbps is double tp) {
+        // Throughput is only a fair target for bulk payloads; below MinThroughputSizeBytes the result is
+        // dominated by fixed per-call overhead, so it is skipped (not counted as a Miss) at small sizes.
+        var throughputApplies = sla.MinThroughputMbps > 0
+            && throughputMbps is not null
+            && (sla.MinThroughputSizeBytes <= 0 || (sizeBytes is long sz && sz >= sla.MinThroughputSizeBytes));
+        if (throughputApplies && throughputMbps is double tp) {
             evaluated++;
             targets.Add(">= " + TrimNum(sla.MinThroughputMbps) + " MB/s");
             if (tp < sla.MinThroughputMbps) misses++;

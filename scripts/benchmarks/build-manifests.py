@@ -209,8 +209,57 @@ def write_registry() -> None:
 
 
 # --------------------------------------------------------------------------------------
-# Micro (BenchmarkDotNet) — copy the exporter's report verbatim.
+# Micro (BenchmarkDotNet) — copy the exporter's report and derive feature grades from its SLAs.
 # --------------------------------------------------------------------------------------
+def _micro_letter(exceeds: int, meets: int, miss: int, total: int) -> str:
+    """Letter rating for a feature from its SLA verdict mix (vs the declared business/computing standards)."""
+    if total == 0:
+        return "N/A"
+    if miss == 0:
+        # Everything is within budget: reward how much headroom there is.
+        if meets == 0:
+            return "A"  # all comfortably under budget
+        if exceeds >= meets:
+            return "A-"
+        return "B"
+    # One or more targets missed: grade by how much of the feature still holds.
+    ok_fraction = (exceeds + meets) / total
+    if ok_fraction >= 0.8:
+        return "C"
+    if ok_fraction >= 0.5:
+        return "D"
+    return "F"
+
+
+def grade_micro(report: dict[str, Any]) -> list[dict[str, str]]:
+    """Roll a micro report's per-measurement SLA verdicts up into one letter grade per benchmark class.
+
+    Each benchmark class is treated as a "feature" and rated against the SLA budgets declared on its
+    methods (the same Meets/Exceeds/Miss verdicts the C# exporter computed against business/computing
+    standards). Classes without any SLA'd measurements are skipped.
+    """
+    grades: list[dict[str, str]] = []
+    for group in report.get("groups") or []:
+        verdicts = [m.get("slaResult") for m in (group.get("measurements") or []) if m.get("slaResult")]
+        total = len(verdicts)
+        if total == 0:
+            continue
+        exceeds = verdicts.count("Exceeds")
+        meets = verdicts.count("Meets")
+        miss = verdicts.count("Miss")
+        grade = _micro_letter(exceeds, meets, miss, total)
+        parts = []
+        if exceeds:
+            parts.append(f"{exceeds} exceed")
+        if meets:
+            parts.append(f"{meets} meet")
+        if miss:
+            parts.append(f"{miss} miss")
+        rationale = f"{', '.join(parts)} of {total} SLA target{'s' if total != 1 else ''} vs declared standards"
+        grades.append({"category": group.get("name", "?"), "grade": grade, "rationale": rationale})
+    return grades
+
+
 def find_lyobench_json(artifacts_dir: Path) -> Path | None:
     candidates = list(artifacts_dir.glob("*.lyobench.json"))
     candidates += list(artifacts_dir.glob("results/*.lyobench.json"))
@@ -235,6 +284,9 @@ def build_micro_category(category: dict[str, Any]) -> bool:
         return False
     report.setdefault("schema", SCHEMA)
     report.setdefault("type", "micro")
+    grades = grade_micro(report)
+    if grades:
+        report["grades"] = grades
     write_report(report)
     return True
 
