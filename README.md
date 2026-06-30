@@ -176,6 +176,27 @@ top-level area.
 
 ---
 
+## Documentation
+
+Project-wide guides live in [`docs/`](docs/README.md); per-package API docs are
+the `README.md` beside each library.
+
+| Document | What it covers |
+|----------|----------------|
+| [Documentation index](docs/README.md) | Entry point for all cross-cutting guides and interactive artifacts. |
+| [Getting started](docs/getting-started.md) | Prerequisites, consuming a package, a minimal example. |
+| [Architecture](docs/architecture.md) | Area model and dependency law (detail in [`package-layout.md`](Lyo.Net/docs/package-layout.md)). |
+| [Configuration](docs/configuration.md) | Environment variables for the tooling/runner. |
+| [Testing](docs/testing.md) | Unit tests, benchmarks, and k6 — local and containerized. |
+| [Deployment](docs/deployment.md) | The container stack and operational notes. |
+| [Publishing](docs/publishing.md) | Versioning and packing with `build-nuget.sh`. |
+| [Security](docs/security/README.md) | Security model and crypto design notes ([`SECURITY.md`](SECURITY.md) for reporting). |
+| [Glossary](docs/glossary.md) · [Roadmap](docs/roadmap.md) · [ADRs](docs/adr/README.md) | Terms, direction, and recorded decisions. |
+
+Interactive (HTML, open locally or via Pages): the
+[project graph](docs/Lyo.ProjectGraph.html) and the
+[benchmark dashboards](docs/benchmarks/index.html).
+
 ## Finding your way
 
 - Start from the **Major capabilities** table for API/query, storage, PDF ([Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md)), encryption, caching, diagnostics, content-threat
@@ -186,7 +207,8 @@ top-level area.
 ## Contributing
 
 The license does **not** require users of the library to send changes back—that keeps adoption easy for companies and side projects. We still **welcome** fixes and improvements;
-see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+see [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Notable changes are tracked in [`CHANGELOG.md`](CHANGELOG.md), and security issues
+should follow [`SECURITY.md`](SECURITY.md).
 
 ## License
 
