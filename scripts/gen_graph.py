@@ -1,7 +1,7 @@
 """Generate an interactive HTML view of project references in Lyo.slnx.
 
 Output:
-  Lyo.ProjectGraph.html  - self-contained interactive viewer (Cytoscape + dagre)
+  docs/Lyo.ProjectGraph.html  - self-contained interactive viewer (Cytoscape + dagre)
 
 Tests/benchmarks are excluded by default. Pass --include-tests to keep them.
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SLNX = REPO_ROOT / "Lyo.Net" / "Lyo.slnx"
-OUT_HTML = REPO_ROOT / "Lyo.ProjectGraph.html"
+OUT_HTML = REPO_ROOT / "docs" / "Lyo.ProjectGraph.html"
 NS_RE = re.compile(r"\sxmlns=\"[^\"]+\"")
 
 # Match `'$(TargetFramework)' == 'netstandard2.0'` and friends.
