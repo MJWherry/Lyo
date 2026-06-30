@@ -309,7 +309,7 @@
         <File Path="..\.gitignore"/>
         <File Path="..\CONTRIBUTING.md"/>
         <File Path="..\LICENSE"/>
-        <File Path="..\Lyo.ProjectGraph.html"/>
+        <File Path="..\docs\Lyo.ProjectGraph.html"/>
         <File Path="..\README.md"/>
         <File Path=".editorconfig"/>
         <File Path="build-nuget.sh"/>
