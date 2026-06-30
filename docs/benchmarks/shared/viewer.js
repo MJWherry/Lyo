@@ -4,14 +4,64 @@
   var R = window.BenchmarkDashboard;
   var el = R.el;
 
+  function formatBytes(n) {
+    if (typeof n !== "number" || !isFinite(n) || n <= 0) return null;
+    var gb = 1024 * 1024 * 1024;
+    var mb = 1024 * 1024;
+    if (n >= gb) return (n / gb).toFixed(n % gb === 0 ? 0 : 1) + " GB";
+    if (n >= mb) return Math.round(n / mb) + " MB";
+    return Math.round(n / 1024) + " KB";
+  }
+
+  function formatDuration(seconds) {
+    if (typeof seconds !== "number" || !isFinite(seconds) || seconds < 0) return null;
+    var s = Math.round(seconds);
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var sec = s % 60;
+    if (h > 0) return h + "h " + m + "m";
+    if (m > 0) return m + "m " + sec + "s";
+    return sec + "s";
+  }
+
+  function formatTimestamp(value) {
+    if (!value) return null;
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function coresChip(env) {
+    if (!env.logicalCores) return null;
+    var chip = env.logicalCores + " vCPU";
+    if (env.physicalCores && env.physicalCores !== env.logicalCores)
+      chip += " (" + env.physicalCores + " phys)";
+    return chip;
+  }
+
   function metaChips(report) {
     var env = report.environment || {};
+    var started = formatTimestamp(report.runStarted);
+    var ended = formatTimestamp(report.runEnded);
+    var duration = formatDuration(report.durationSeconds);
     return [
       report.runId ? "Run " + report.runId : null,
       env.tool ? env.tool + (env.toolVersion ? " " + env.toolVersion : "") : null,
       env.runtime || null,
+      env.dotnetSdkVersion ? "SDK " + env.dotnetSdkVersion : null,
+      env.configuration || null,
       env.cpu || null,
+      coresChip(env),
+      env.architecture || null,
+      formatBytes(env.memoryBytes) ? formatBytes(env.memoryBytes) + " RAM" : null,
+      env.gcMode ? env.gcMode + " GC" : null,
       env.os || null,
+      started ? "Started " + started : null,
+      ended ? "Ended " + ended : null,
+      duration ? "Duration " + duration : null,
     ].filter(Boolean);
   }
 

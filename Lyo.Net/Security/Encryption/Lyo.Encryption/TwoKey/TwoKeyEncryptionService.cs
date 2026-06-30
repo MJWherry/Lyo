@@ -4,6 +4,7 @@ using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Encryption.Utilities;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -446,23 +447,32 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             await output.WriteAsync(encryptedDekLenBytes, 0, 4, ct).ConfigureAwait(false);
             await output.WriteAsync(encryptedDek, 0, encryptedDek.Length, ct).ConfigureAwait(false);
 
-            // Encrypt and write data chunks using DEK encryption service
-            // Use buffer pool to reduce allocations
+            // Encrypt and write data chunks using the DEK encryption service.
             var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
-            var buffer = BufferPool.Rent(effectiveChunkSize);
-            try {
-                int bytesRead;
-                while ((bytesRead = await input.ReadAsync(buffer, 0, Math.Min(effectiveChunkSize, buffer.Length), ct).ConfigureAwait(false)) > 0) {
-                    ct.ThrowIfCancellationRequested();
-                    var encryptedChunk = _dekEncryptionService.Encrypt(buffer.AsSpan(0, bytesRead), null, dek);
-                    var chunkLenBytes = new byte[4];
-                    BinaryPrimitives.WriteInt32LittleEndian(chunkLenBytes, encryptedChunk.Length);
-                    await output.WriteAsync(chunkLenBytes, 0, 4, ct).ConfigureAwait(false);
-                    await output.WriteAsync(encryptedChunk, 0, encryptedChunk.Length, ct).ConfigureAwait(false);
-                }
+            if (_dekEncryptionService is IAeadStreamCryptorFactory cryptorFactory) {
+                // Fast path: encrypt each chunk directly into pooled buffers using the compact frame
+                // [ciphertextLen:4][nonce][ciphertext][tag]. The stream processor produces each chunk's nonce
+                // (per-stream random prefix + per-chunk counter); the DEK is also fresh per stream.
+                using var cryptor = cryptorFactory.CreateCryptor(dek);
+                await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
             }
-            finally {
-                BufferPool.Return(buffer);
+            else {
+                // Fallback for DEK services that do not expose a stream cryptor: legacy self-describing per-chunk blob.
+                var buffer = BufferPool.Rent(effectiveChunkSize);
+                try {
+                    int bytesRead;
+                    while ((bytesRead = await input.ReadAsync(buffer, 0, Math.Min(effectiveChunkSize, buffer.Length), ct).ConfigureAwait(false)) > 0) {
+                        ct.ThrowIfCancellationRequested();
+                        var encryptedChunk = _dekEncryptionService.Encrypt(buffer.AsSpan(0, bytesRead), null, dek);
+                        var chunkLenBytes = new byte[4];
+                        BinaryPrimitives.WriteInt32LittleEndian(chunkLenBytes, encryptedChunk.Length);
+                        await output.WriteAsync(chunkLenBytes, 0, 4, ct).ConfigureAwait(false);
+                        await output.WriteAsync(encryptedChunk, 0, encryptedChunk.Length, ct).ConfigureAwait(false);
+                    }
+                }
+                finally {
+                    BufferPool.Return(buffer);
+                }
             }
         }
         finally {
@@ -652,69 +662,12 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                         }
 
                         try {
-                            // Maximum allowed encrypted chunk size (200 MB) to prevent denial-of-service attacks
-                            const int maxEncryptedChunkSize = 200 * 1024 * 1024; // 200 MB
-
-                            // Read and decrypt data chunks using DEK encryption service
-                            // Use buffer pool for length buffer and encrypted chunks
-                            var lengthBuffer = BufferPool.RentExact(4, true);
-                            try {
-                                while (await input.ReadAsync(lengthBuffer, 0, 4, ct).ConfigureAwait(false) == 4) {
-                                    ct.ThrowIfCancellationRequested();
-                                    var chunkLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-
-                                    // Validate chunk length to prevent DoS attacks
-                                    if (chunkLength <= 0)
-                                        throw new InvalidDataException($"Invalid chunk length: {chunkLength}. Chunk length must be positive.");
-
-                                    if (chunkLength > maxEncryptedChunkSize) {
-                                        throw new InvalidDataException(
-                                            $"Invalid chunk length: {chunkLength} bytes. Maximum allowed: {maxEncryptedChunkSize} bytes ({maxEncryptedChunkSize / (1024 * 1024)} MB).");
-                                    }
-
-                                    // Check if stream has enough remaining data for this chunk
-                                    if (input.CanSeek) {
-                                        var remainingBytes = input.Length - input.Position;
-                                        if (remainingBytes < chunkLength) {
-                                            throw new InvalidDataException(
-                                                $"Invalid encrypted data format: chunk length ({chunkLength} bytes) exceeds remaining stream size ({remainingBytes} bytes).");
-                                        }
-                                    }
-
-                                    // Use buffer pool for encrypted chunk
-                                    var encryptedChunk = BufferPool.Rent(chunkLength);
-                                    try {
-                                        var chunkBytesRead = 0;
-                                        while (chunkBytesRead < chunkLength) {
-                                            ct.ThrowIfCancellationRequested();
-                                            var bytesRead = await input.ReadAsync(encryptedChunk, chunkBytesRead, chunkLength - chunkBytesRead, ct).ConfigureAwait(false);
-                                            if (bytesRead == 0)
-                                                throw new EndOfStreamException("Unexpected end of stream while reading encrypted chunk.");
-
-                                            chunkBytesRead += bytesRead;
-                                        }
-
-                                        byte[] decryptedChunk;
-                                        try {
-                                            decryptedChunk = _dekEncryptionService.Decrypt(encryptedChunk, 0, chunkLength, null, dek);
-                                        }
-                                        catch (DecryptionFailedException) {
-                                            throw;
-                                        }
-                                        catch (Exception ex) {
-                                            throw new DecryptionFailedException(
-                                                "Failed to decrypt data chunk. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
-                                        }
-
-                                        await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, ct).ConfigureAwait(false);
-                                    }
-                                    finally {
-                                        BufferPool.Return(encryptedChunk);
-                                    }
-                                }
+                            if (_dekEncryptionService is IAeadStreamCryptorFactory cryptorFactory) {
+                                using var cryptor = cryptorFactory.CreateCryptor(dek);
+                                await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
                             }
-                            finally {
-                                BufferPool.Return(lengthBuffer);
+                            else {
+                                await DecryptChunksLegacyAsync(input, output, dek, AeadStreamProcessor.MaxEncryptedChunkSize, ct).ConfigureAwait(false);
                             }
                         }
                         finally {
@@ -736,6 +689,65 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
         finally {
             BufferPool.Return(versionBuffer);
+        }
+    }
+
+    /// <summary>Fallback: decrypts the legacy self-describing per-chunk blob for DEK services that do not expose a stream cryptor.</summary>
+    private async Task DecryptChunksLegacyAsync(Stream input, Stream output, byte[] dek, int maxEncryptedChunkSize, CancellationToken ct)
+    {
+        var lengthBuffer = BufferPool.RentExact(4, true);
+        try {
+            while (await input.ReadAsync(lengthBuffer, 0, 4, ct).ConfigureAwait(false) == 4) {
+                ct.ThrowIfCancellationRequested();
+                var chunkLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+                if (chunkLength <= 0)
+                    throw new InvalidDataException($"Invalid chunk length: {chunkLength}. Chunk length must be positive.");
+
+                if (chunkLength > maxEncryptedChunkSize) {
+                    throw new InvalidDataException(
+                        $"Invalid chunk length: {chunkLength} bytes. Maximum allowed: {maxEncryptedChunkSize} bytes ({maxEncryptedChunkSize / (1024 * 1024)} MB).");
+                }
+
+                if (input.CanSeek) {
+                    var remainingBytes = input.Length - input.Position;
+                    if (remainingBytes < chunkLength) {
+                        throw new InvalidDataException(
+                            $"Invalid encrypted data format: chunk length ({chunkLength} bytes) exceeds remaining stream size ({remainingBytes} bytes).");
+                    }
+                }
+
+                var encryptedChunk = BufferPool.Rent(chunkLength);
+                try {
+                    var chunkBytesRead = 0;
+                    while (chunkBytesRead < chunkLength) {
+                        ct.ThrowIfCancellationRequested();
+                        var bytesRead = await input.ReadAsync(encryptedChunk, chunkBytesRead, chunkLength - chunkBytesRead, ct).ConfigureAwait(false);
+                        if (bytesRead == 0)
+                            throw new EndOfStreamException("Unexpected end of stream while reading encrypted chunk.");
+
+                        chunkBytesRead += bytesRead;
+                    }
+
+                    byte[] decryptedChunk;
+                    try {
+                        decryptedChunk = _dekEncryptionService.Decrypt(encryptedChunk, 0, chunkLength, null, dek);
+                    }
+                    catch (DecryptionFailedException) {
+                        throw;
+                    }
+                    catch (Exception ex) {
+                        throw new DecryptionFailedException("Failed to decrypt data chunk. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
+                    }
+
+                    await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, ct).ConfigureAwait(false);
+                }
+                finally {
+                    BufferPool.Return(encryptedChunk);
+                }
+            }
+        }
+        finally {
+            BufferPool.Return(lengthBuffer);
         }
     }
 

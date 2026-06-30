@@ -51,11 +51,8 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
 
         try {
             var (ciphertext, tag) = AesCcmHelper.Encrypt(plaintext, actualKey!, nonce);
@@ -105,11 +102,8 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
 
         try {
             var (ciphertext, tag) = AesCcmHelper.Encrypt(bytes, actualKey!, nonce);

@@ -1,5 +1,8 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Text;
+using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Encryption.Utilities;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -75,6 +78,16 @@ public abstract class EncryptionServiceBase : IEncryptionService
         int chunkSize = 1024 * 1024,
         CancellationToken ct = default)
     {
+        // Services that expose a per-stream AEAD cipher (AES-GCM, ChaCha20-Poly1305) use the allocation-free compact
+        // path; everything else keeps the legacy per-chunk self-describing format.
+        if (this is IAeadStreamCryptorFactory factory)
+            await EncryptToStreamWithCryptorAsync(factory, input, output, keyId, key, chunkSize, ct).ConfigureAwait(false);
+        else
+            await EncryptToStreamLegacyAsync(input, output, keyId, key, chunkSize, ct).ConfigureAwait(false);
+    }
+
+    private async Task EncryptToStreamLegacyAsync(Stream input, Stream output, string? keyId, byte[]? key, int chunkSize, CancellationToken ct)
+    {
         var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
         var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
         await output.WriteAsync(new[] { formatVersion }, 0, 1, ct).ConfigureAwait(false);
@@ -97,6 +110,57 @@ public abstract class EncryptionServiceBase : IEncryptionService
         }
     }
 
+    private async Task EncryptToStreamWithCryptorAsync(
+        IAeadStreamCryptorFactory factory, Stream input, Stream output, string? keyId, byte[]? key, int chunkSize, CancellationToken ct)
+    {
+        var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
+
+        // Resolve the key once for the whole stream (mirrors the single-shot Encrypt key resolution).
+        byte[]? actualKey;
+        string? keyVersion = null;
+        if (key != null)
+            actualKey = key;
+        else if (keyId != null && KeyStore != null) {
+            actualKey = KeyStore.GetCurrentKey(keyId);
+            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key available for key ID '{keyId}'. Ensure a key is configured.");
+            keyVersion = KeyStore.GetCurrentVersion(keyId);
+        }
+        else {
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
+            return;
+        }
+
+        // keyId/version are persisted exactly when the single-shot format would embed them (KeyStore-resolved key).
+        var embedKeyInfo = key == null && keyId != null && keyVersion != null;
+        var headerKeyId = embedKeyInfo ? keyId! : "";
+        var headerKeyVersion = embedKeyInfo ? keyVersion! : "";
+
+        // One-time stream header: [version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion].
+        var keyIdBytes = Encoding.UTF8.GetBytes(headerKeyId);
+        var keyVersionBytes = Encoding.UTF8.GetBytes(headerKeyVersion);
+        var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
+        var headerLength = 1 + 1 + 4 + keyIdBytes.Length + 4 + keyVersionBytes.Length;
+        var header = ArrayPool<byte>.Shared.Rent(headerLength);
+        try {
+            header[0] = formatVersion;
+            header[1] = GetAlgorithmId();
+            BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(2, 4), keyIdBytes.Length);
+            keyIdBytes.CopyTo(header.AsSpan(6));
+            var versionLengthOffset = 6 + keyIdBytes.Length;
+            BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(versionLengthOffset, 4), keyVersionBytes.Length);
+            keyVersionBytes.CopyTo(header.AsSpan(versionLengthOffset + 4));
+            await output.WriteAsync(header, 0, headerLength, ct).ConfigureAwait(false);
+        }
+        finally {
+            ArrayPool<byte>.Shared.Return(header);
+        }
+
+        // Nonces are produced by the stream processor itself (per-stream random prefix + per-chunk counter),
+        // so this path no longer needs a nonce callback or any KeyStore round-trips.
+        using var cryptor = factory.CreateCryptor(actualKey!);
+        await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
+    }
+
     /// <inheritdoc />
     public virtual async Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
@@ -104,6 +168,108 @@ public abstract class EncryptionServiceBase : IEncryptionService
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+
+        if (this is IAeadStreamCryptorFactory factory)
+            await DecryptToStreamWithCryptorAsync(factory, input, output, keyId, key, ct).ConfigureAwait(false);
+        else
+            await DecryptToStreamLegacyAsync(input, output, keyId, key, ct).ConfigureAwait(false);
+    }
+
+    private async Task DecryptToStreamWithCryptorAsync(IAeadStreamCryptorFactory factory, Stream input, Stream output, string? keyId, byte[]? key, CancellationToken ct)
+    {
+        // Read the one-time header: [version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion].
+        var fixedHeader = ArrayPool<byte>.Shared.Rent(2);
+        string? headerKeyId;
+        string? headerKeyVersion;
+        try {
+            if (await AeadChunkCodec.ReadAtLeastAsync(input, fixedHeader, 2, ct).ConfigureAwait(false) != 2)
+                throw new InvalidDataException("Invalid encrypted stream format: insufficient data for header.");
+
+            var firstByte = fixedHeader[0];
+            var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
+            if (firstByte != expectedFormatVersion)
+                throw new InvalidDataException($"Invalid encrypted stream format: expected format version {expectedFormatVersion}, got {firstByte}.");
+
+            var algorithmId = fixedHeader[1];
+            var expectedAlgorithmId = GetAlgorithmId();
+            if (algorithmId != expectedAlgorithmId) {
+                throw new InvalidDataException(
+                    $"Stream algorithm ID mismatch. Expected {expectedAlgorithmId} ({(EncryptionAlgorithm)expectedAlgorithmId}), got {algorithmId} ({(EncryptionAlgorithm)algorithmId}).");
+            }
+
+            headerKeyId = await ReadHeaderStringAsync(input, ct).ConfigureAwait(false);
+            headerKeyVersion = await ReadHeaderStringAsync(input, ct).ConfigureAwait(false);
+        }
+        finally {
+            ArrayPool<byte>.Shared.Return(fixedHeader);
+        }
+
+        if (string.IsNullOrEmpty(headerKeyId))
+            headerKeyId = null;
+
+        if (string.IsNullOrWhiteSpace(headerKeyVersion))
+            headerKeyVersion = null;
+
+        // Resolve the key once (mirrors the single-shot DecryptFromStream resolution).
+        byte[]? actualKey;
+        if (key != null)
+            actualKey = key;
+        else {
+            var actualKeyId = headerKeyId ?? keyId;
+            if (actualKeyId != null && KeyStore != null) {
+                if (!string.IsNullOrWhiteSpace(headerKeyVersion)) {
+                    actualKey = KeyStore.GetKey(actualKeyId, headerKeyVersion!);
+                    OperationHelpers.ThrowIfNull(
+                        actualKey, $"No decryption key available for key ID '{actualKeyId}' version {headerKeyVersion}. Ensure the key version exists in KeyStore.");
+                }
+                else {
+                    actualKey = KeyStore.GetCurrentKey(actualKeyId);
+                    OperationHelpers.ThrowIfNull(actualKey, $"No decryption key available for key ID '{actualKeyId}'. Ensure a key is configured.");
+                }
+            }
+            else {
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
+                return;
+            }
+        }
+
+        using var cryptor = factory.CreateCryptor(actualKey!);
+        await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads an <c>[length:int32][utf8 bytes]</c> header string (length capped at 1024 bytes). Returns the decoded string (possibly empty).</summary>
+    private static async Task<string> ReadHeaderStringAsync(Stream input, CancellationToken ct)
+    {
+        var lengthBuffer = ArrayPool<byte>.Shared.Rent(4);
+        try {
+            if (await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, 4, ct).ConfigureAwait(false) != 4)
+                throw new InvalidDataException("Invalid encrypted stream format: insufficient data for header string length.");
+
+            var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+            if (length < 0 || length > 1024)
+                throw new InvalidDataException($"Invalid header string length: {length}. Maximum allowed: 1024 bytes.");
+
+            if (length == 0)
+                return "";
+
+            var valueBuffer = ArrayPool<byte>.Shared.Rent(length);
+            try {
+                if (await AeadChunkCodec.ReadAtLeastAsync(input, valueBuffer, length, ct).ConfigureAwait(false) != length)
+                    throw new InvalidDataException("Invalid encrypted stream format: header string truncated.");
+
+                return Encoding.UTF8.GetString(valueBuffer, 0, length);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(valueBuffer);
+            }
+        }
+        finally {
+            ArrayPool<byte>.Shared.Return(lengthBuffer);
+        }
+    }
+
+    private async Task DecryptToStreamLegacyAsync(Stream input, Stream output, string? keyId, byte[]? key, CancellationToken ct)
+    {
         // Maximum allowed encrypted chunk size (200 MB) to prevent denial-of-service attacks
         // This accounts for encryption overhead (nonce, tag, etc.) while preventing memory exhaustion
         const int maxEncryptedChunkSize = 200 * 1024 * 1024; // 200 MB

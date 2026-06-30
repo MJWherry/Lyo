@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
@@ -14,8 +15,15 @@ namespace Lyo.Encryption.AesGcm;
 /// high-performance encryption is needed. Thread-safe: Multiple threads can safely call methods concurrently on the same instance. Each method call uses its own cryptographic context
 /// (nonce, key material), so there are no shared mutable state concerns. However, if using a KeyStore that isn't thread-safe, ensure proper synchronization at the KeyStore level.
 /// </summary>
-public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
+public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize, IAeadStreamCryptorFactory
 {
+    /// <summary>Creates a per-stream AES-GCM cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
+    IAeadStreamCryptor IAeadStreamCryptorFactory.CreateCryptor(ReadOnlySpan<byte> key)
+    {
+        AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
+        return new AesGcmStreamCryptor(key);
+    }
+
     /// <summary>Initializes a new instance with the specified AES-GCM key size.</summary>
     /// <param name="keyStore">The key store to use for retrieving encryption keys</param>
     /// <param name="aesGcmKeySize">AES key size (128, 192, or 256 bits).</param>
@@ -62,11 +70,8 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
 
         try {
             var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, actualKey!, nonce);
@@ -122,13 +127,8 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        // Use hybrid nonce generator (random IV + counter) to prevent nonce reuse
-        // If key was provided directly (not from KeyStore), fall back to random nonce
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize); // Fallback for direct key usage
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
 
         try {
             var (ciphertext, tag) = AesGcmHelper.Encrypt(bytes, actualKey!, nonce);

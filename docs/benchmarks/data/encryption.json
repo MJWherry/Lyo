@@ -9,49 +9,49 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 13631.06130065918,
-          "stdDevNs": 219.9347553065098,
-          "allocatedBytes": 10536,
+          "meanNs": 15786.61956351144,
+          "stdDevNs": 450.9687772133783,
+          "allocatedBytes": 9968,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 12866020.139648438,
-          "stdDevNs": 238775.16835448798,
-          "allocatedBytes": 5248652,
+          "meanNs": 14094453.324776785,
+          "stdDevNs": 186022.1090603113,
+          "allocatedBytes": 5248606,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 128992225.0625,
-          "stdDevNs": 1243219.5336150918,
-          "allocatedBytes": 52434702,
+          "meanNs": 140652004.60576922,
+          "stdDevNs": 3801616.6461855425,
+          "allocatedBytes": 52434142,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 13019.44320678711,
-          "stdDevNs": 172.37529152330637,
+          "meanNs": 14559.150713833895,
+          "stdDevNs": 342.77433975112905,
           "allocatedBytes": 7776,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 12049712.335416667,
-          "stdDevNs": 136896.93024039234,
-          "allocatedBytes": 3150589,
+          "meanNs": 13585865.733333332,
+          "stdDevNs": 224995.04200411236,
+          "allocatedBytes": 3150695,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 118875551.86666666,
-          "stdDevNs": 1835583.5755168907,
-          "allocatedBytes": 31463811,
+          "meanNs": 132152065.25,
+          "stdDevNs": 1946358.9520243856,
+          "allocatedBytes": 31463278,
           "isBaseline": false
         }
       ]
@@ -64,49 +64,49 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 2841.7164566626916,
-          "stdDevNs": 128.50732579600498,
-          "allocatedBytes": 5288,
+          "meanNs": 3639.3651458740233,
+          "stdDevNs": 44.76552220371379,
+          "allocatedBytes": 4720,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 691324.6673828125,
-          "stdDevNs": 15435.93817026269,
-          "allocatedBytes": 3148649,
+          "meanNs": 813038.7788696289,
+          "stdDevNs": 20113.526839541602,
+          "allocatedBytes": 3148039,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 8635289.955357144,
-          "stdDevNs": 132726.98710722872,
-          "allocatedBytes": 31461788,
+          "meanNs": 10060351.680729168,
+          "stdDevNs": 172657.84711758094,
+          "allocatedBytes": 31461307,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 2503.2265421893144,
-          "stdDevNs": 84.71114226229281,
+          "meanNs": 2664.3245590209963,
+          "stdDevNs": 53.40678847298373,
           "allocatedBytes": 3616,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 1076299.5009303042,
-          "stdDevNs": 432392.86420473,
-          "allocatedBytes": 2099152,
+          "meanNs": 750724.948046875,
+          "stdDevNs": 13134.34026097104,
+          "allocatedBytes": 2098813,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 17600431.206054688,
-          "stdDevNs": 6505254.855863419,
-          "allocatedBytes": 20974601,
+          "meanNs": 5920261.138392857,
+          "stdDevNs": 54652.07690492482,
+          "allocatedBytes": 20974513,
           "isBaseline": false
         }
       ]
@@ -119,49 +119,49 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 39131.94436711851,
-          "stdDevNs": 16612.914889115727,
+          "meanNs": 26351.39455566406,
+          "stdDevNs": 479.6169042428794,
           "allocatedBytes": 5368,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 936105.5016143176,
-          "stdDevNs": 73469.61915292646,
-          "allocatedBytes": 3148967,
+          "meanNs": 837015.7398856027,
+          "stdDevNs": 10746.68030384068,
+          "allocatedBytes": 3148925,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 10048147.8578125,
-          "stdDevNs": 520286.91571308236,
+          "meanNs": 10134303.590104166,
+          "stdDevNs": 123643.20560579696,
           "allocatedBytes": 31462242,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 507615.7958233173,
-          "stdDevNs": 13319.151843925403,
+          "meanNs": 536629.3071713655,
+          "stdDevNs": 12966.373545689778,
           "allocatedBytes": 2912,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 1299539.5328414352,
-          "stdDevNs": 54550.240054049325,
-          "allocatedBytes": 2098165,
+          "meanNs": 1311959.1787760416,
+          "stdDevNs": 24270.65354207257,
+          "allocatedBytes": 2098149,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 5903712.21796875,
-          "stdDevNs": 249332.62626934238,
-          "allocatedBytes": 20973915,
+          "meanNs": 6480370.380208333,
+          "stdDevNs": 110581.78486006151,
+          "allocatedBytes": 20973806,
           "isBaseline": false
         }
       ]
@@ -174,48 +174,48 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 23491.886116429378,
-          "stdDevNs": 511.32330310754185,
+          "meanNs": 23729.368471272788,
+          "stdDevNs": 330.29636998792074,
           "allocatedBytes": 7016,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 19786617.852430556,
-          "stdDevNs": 423097.0443105354,
-          "allocatedBytes": 4197504,
+          "meanNs": 19635617.802083332,
+          "stdDevNs": 332653.6739279369,
+          "allocatedBytes": 4197521,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 178823735.2833333,
-          "stdDevNs": 4015789.1789792175,
+          "meanNs": 190060786.97435898,
+          "stdDevNs": 2948053.9545832826,
           "allocatedBytes": 41946549,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 21497.558996449345,
-          "stdDevNs": 532.2544327229061,
+          "meanNs": 23046.88047027588,
+          "stdDevNs": 427.9791582441506,
           "allocatedBytes": 5944,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 17907376.893028848,
-          "stdDevNs": 50746.076019171174,
+          "meanNs": 19179034.225694444,
+          "stdDevNs": 531270.4391114593,
           "allocatedBytes": 3148892,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 187848532.99999997,
-          "stdDevNs": 5000134.782419077,
+          "meanNs": 192075479.20833334,
+          "stdDevNs": 3578336.798871062,
           "allocatedBytes": 31460525,
           "isBaseline": false
         }
@@ -237,9 +237,9 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2843.7249516487122,
-          "stdDevNs": 91.58915078927663,
-          "allocatedBytes": 5288,
+          "meanNs": 3581.0083171299525,
+          "stdDevNs": 52.32380408991237,
+          "allocatedBytes": 4720,
           "ratioToBaseline": 1,
           "isBaseline": true
         },
@@ -248,10 +248,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 14586.798486171625,
-          "stdDevNs": 508.06385115059686,
-          "allocatedBytes": 10536,
-          "ratioToBaseline": 5.129468824934918,
+          "meanNs": 15262.753841145834,
+          "stdDevNs": 276.23238998374484,
+          "allocatedBytes": 9968,
+          "ratioToBaseline": 4.262138618370586,
           "isBaseline": false
         },
         {
@@ -259,10 +259,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 23076.25525241428,
-          "stdDevNs": 764.3457479361398,
+          "meanNs": 23154.56721496582,
+          "stdDevNs": 291.3810912644881,
           "allocatedBytes": 7016,
-          "ratioToBaseline": 8.114798598589964,
+          "ratioToBaseline": 6.4659350563931,
           "isBaseline": false
         },
         {
@@ -270,10 +270,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 3353.841819381714,
-          "stdDevNs": 77.14252985527537,
-          "allocatedBytes": 5240,
-          "ratioToBaseline": 1.1793833357326804,
+          "meanNs": 3776.548105576459,
+          "stdDevNs": 74.39792216204103,
+          "allocatedBytes": 4672,
+          "ratioToBaseline": 1.0546046730780074,
           "isBaseline": false
         },
         {
@@ -281,10 +281,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 4317.539797101702,
-          "stdDevNs": 70.78204709117838,
+          "meanNs": 3908.526667022705,
+          "stdDevNs": 88.16434737556386,
           "allocatedBytes": 7424,
-          "ratioToBaseline": 1.5182691260624601,
+          "ratioToBaseline": 1.0914598126807051,
           "isBaseline": false
         },
         {
@@ -292,10 +292,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2743.7147225600024,
-          "stdDevNs": 31.178135446138416,
+          "meanNs": 2671.1478727976482,
+          "stdDevNs": 34.60996129356184,
           "allocatedBytes": 3616,
-          "ratioToBaseline": 0.9648312580192656,
+          "ratioToBaseline": 0.7459206000779344,
           "isBaseline": false
         },
         {
@@ -303,10 +303,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 13880.175351969401,
-          "stdDevNs": 127.45255506641757,
+          "meanNs": 15996.566176373026,
+          "stdDevNs": 1648.8731246892917,
           "allocatedBytes": 7776,
-          "ratioToBaseline": 4.880983775847261,
+          "ratioToBaseline": 4.467056415326533,
           "isBaseline": false
         },
         {
@@ -314,10 +314,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 22687.056638445174,
-          "stdDevNs": 76.74582735974126,
+          "meanNs": 23112.785385131836,
+          "stdDevNs": 193.88492448510723,
           "allocatedBytes": 5944,
-          "ratioToBaseline": 7.977936342012209,
+          "ratioToBaseline": 6.454267440421889,
           "isBaseline": false
         },
         {
@@ -325,10 +325,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2727.123293797175,
-          "stdDevNs": 99.4718783406552,
+          "meanNs": 2828.8147315979004,
+          "stdDevNs": 49.60389387710941,
           "allocatedBytes": 3520,
-          "ratioToBaseline": 0.9589968580526977,
+          "ratioToBaseline": 0.7899492213034267,
           "isBaseline": false
         },
         {
@@ -336,10 +336,10 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2956.275548869166,
-          "stdDevNs": 127.85009249049325,
+          "meanNs": 3196.2804389953612,
+          "stdDevNs": 68.51616355687662,
           "allocatedBytes": 6064,
-          "ratioToBaseline": 1.0395785806061166,
+          "ratioToBaseline": 0.892564371801589,
           "isBaseline": false
         },
         {
@@ -347,12 +347,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 869428.9483192846,
-          "stdDevNs": 43850.1879640637,
-          "allocatedBytes": 3148682,
+          "meanNs": 906070.5719031894,
+          "stdDevNs": 52173.02171517631,
+          "allocatedBytes": 3148069,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 1206.0513996307911,
+          "throughputMbps": 1157.278508447173,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -362,14 +362,14 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 12244360.998697916,
-          "stdDevNs": 138697.13195048063,
-          "allocatedBytes": 5249654,
-          "ratioToBaseline": 14.083222122253698,
+          "meanNs": 14160962.220982144,
+          "stdDevNs": 527186.1460363457,
+          "allocatedBytes": 5249962,
+          "ratioToBaseline": 15.628983723902683,
           "isBaseline": false,
-          "throughputMbps": 85.63746202121182,
+          "throughputMbps": 74.04694565503016,
           "slaTarget": ">= 50 MB/s",
-          "slaResult": "Exceeds",
+          "slaResult": "Meets",
           "slaStandard": "AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required."
         },
         {
@@ -377,12 +377,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 17568658.332291666,
-          "stdDevNs": 224930.80818045582,
-          "allocatedBytes": 4198384,
-          "ratioToBaseline": 20.20712372903397,
+          "meanNs": 19842988.96381579,
+          "stdDevNs": 431188.04570574465,
+          "allocatedBytes": 4198152,
+          "ratioToBaseline": 21.900047942331742,
           "isBaseline": false,
-          "throughputMbps": 59.6844665180089,
+          "throughputMbps": 52.843651826451435,
           "slaTarget": ">= 35 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority."
@@ -392,12 +392,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 956073.5189052484,
-          "stdDevNs": 48947.61048487554,
-          "allocatedBytes": 3148442,
-          "ratioToBaseline": 1.0996568733459573,
+          "meanNs": 1229228.4229706554,
+          "stdDevNs": 64625.83615560137,
+          "allocatedBytes": 3147945,
+          "ratioToBaseline": 1.3566585882915025,
           "isBaseline": false,
-          "throughputMbps": 1096.7524769441072,
+          "throughputMbps": 853.0359210747213,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -407,14 +407,14 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 2221718.365944602,
-          "stdDevNs": 53007.12623986167,
-          "allocatedBytes": 5246156,
-          "ratioToBaseline": 2.5553765724496094,
+          "meanNs": 2724684.397966056,
+          "stdDevNs": 79741.3457931949,
+          "allocatedBytes": 5246303,
+          "ratioToBaseline": 3.0071436844515236,
           "isBaseline": false,
-          "throughputMbps": 471.9662114123001,
+          "throughputMbps": 384.8431035839414,
           "slaTarget": ">= 300 MB/s",
-          "slaResult": "Exceeds",
+          "slaResult": "Meets",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
         },
         {
@@ -422,12 +422,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 502763.6238902699,
-          "stdDevNs": 12004.517164128845,
-          "allocatedBytes": 2099581,
-          "ratioToBaseline": 0.5782687876475417,
+          "meanNs": 613733.2972005209,
+          "stdDevNs": 16543.58971702405,
+          "allocatedBytes": 2099625,
+          "ratioToBaseline": 0.6773570583043902,
           "isBaseline": false,
-          "throughputMbps": 2085.6242380591475,
+          "throughputMbps": 1708.5206306761713,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -437,12 +437,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 11344122.4625,
-          "stdDevNs": 78614.9242892257,
-          "allocatedBytes": 3151192,
-          "ratioToBaseline": 13.047785542947029,
+          "meanNs": 13258375.914583333,
+          "stdDevNs": 216122.99440116406,
+          "allocatedBytes": 3151416,
+          "ratioToBaseline": 14.632829192028925,
           "isBaseline": false,
-          "throughputMbps": 92.43341681705687,
+          "throughputMbps": 79.08781639285368,
           "slaTarget": ">= 50 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required."
@@ -452,12 +452,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 16799543.348557692,
-          "stdDevNs": 123514.36073643099,
-          "allocatedBytes": 3150456,
-          "ratioToBaseline": 19.32250286930671,
+          "meanNs": 19228807.36830357,
+          "stdDevNs": 307911.3929742783,
+          "allocatedBytes": 3148852,
+          "ratioToBaseline": 21.222196112068524,
           "isBaseline": false,
-          "throughputMbps": 62.416934689479184,
+          "throughputMbps": 54.53151513330225,
           "slaTarget": ">= 35 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority."
@@ -467,12 +467,12 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 757784.1054199219,
-          "stdDevNs": 16965.699805106207,
-          "allocatedBytes": 2099208,
-          "ratioToBaseline": 0.8715883073422087,
+          "meanNs": 946760.3338583669,
+          "stdDevNs": 28530.099585085827,
+          "allocatedBytes": 2099472,
+          "ratioToBaseline": 1.044907938980635,
           "isBaseline": false,
-          "throughputMbps": 1383.7397650600462,
+          "throughputMbps": 1107.541119436954,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -482,14 +482,14 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 2238463.6250813804,
-          "stdDevNs": 87828.72760695773,
-          "allocatedBytes": 4196487,
-          "ratioToBaseline": 2.5746366386909614,
+          "meanNs": 2655712.4459635415,
+          "stdDevNs": 76574.01388226653,
+          "allocatedBytes": 4196565,
+          "ratioToBaseline": 2.9310216315548714,
           "isBaseline": false,
-          "throughputMbps": 468.43557708554613,
+          "throughputMbps": 394.83792817770876,
           "slaTarget": ">= 300 MB/s",
-          "slaResult": "Exceeds",
+          "slaResult": "Meets",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
         },
         {
@@ -497,12 +497,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 4928811.673549107,
-          "stdDevNs": 33275.34657430061,
-          "allocatedBytes": 31459688,
+          "meanNs": 5339801.180175781,
+          "stdDevNs": 86222.36150607251,
+          "allocatedBytes": 31459192,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2127.441804334447,
+          "throughputMbps": 1963.6985809375806,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -512,12 +512,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 113469634.6285714,
-          "stdDevNs": 1436516.341620547,
-          "allocatedBytes": 52434346,
-          "ratioToBaseline": 23.021702216279834,
+          "meanNs": 129962260.7,
+          "stdDevNs": 1780863.1753534258,
+          "allocatedBytes": 52433656,
+          "ratioToBaseline": 24.338408175662032,
           "isBaseline": false,
-          "throughputMbps": 92.41027376464037,
+          "throughputMbps": 80.68311480211116,
           "slaTarget": ">= 50 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required."
@@ -527,12 +527,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 166098704.37777779,
-          "stdDevNs": 2854261.5074470527,
+          "meanNs": 186554687.29166666,
+          "stdDevNs": 3502043.8129250756,
           "allocatedBytes": 41946043,
-          "ratioToBaseline": 33.699543699176175,
+          "ratioToBaseline": 34.936635465803136,
           "isBaseline": false,
-          "throughputMbps": 63.12969170518636,
+          "throughputMbps": 56.20743253481574,
           "slaTarget": ">= 35 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority."
@@ -542,12 +542,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 7344962.3515625,
-          "stdDevNs": 101371.00779591154,
-          "allocatedBytes": 31459640,
-          "ratioToBaseline": 1.4902095754601203,
+          "meanNs": 8895643.555625,
+          "stdDevNs": 233436.1449861066,
+          "allocatedBytes": 31459082,
+          "ratioToBaseline": 1.6659128786761612,
           "isBaseline": false,
-          "throughputMbps": 1427.6124911340569,
+          "throughputMbps": 1178.7522661437486,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -557,14 +557,14 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 20147277.58035714,
-          "stdDevNs": 196811.88571121445,
+          "meanNs": 24168218.994791668,
+          "stdDevNs": 514988.7031246958,
           "allocatedBytes": 52431752,
-          "ratioToBaseline": 4.0876541679365115,
+          "ratioToBaseline": 4.526052221666439,
           "isBaseline": false,
-          "throughputMbps": 520.4554291852926,
+          "throughputMbps": 433.865648199386,
           "slaTarget": ">= 300 MB/s",
-          "slaResult": "Exceeds",
+          "slaResult": "Meets",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
         },
         {
@@ -572,12 +572,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 4515861.534040178,
-          "stdDevNs": 60360.03339363679,
+          "meanNs": 5062270.67109375,
+          "stdDevNs": 81963.17903238899,
           "allocatedBytes": 20973302,
-          "ratioToBaseline": 0.9162170991995775,
+          "ratioToBaseline": 0.9480260594509822,
           "isBaseline": false,
-          "throughputMbps": 2321.9843923378157,
+          "throughputMbps": 2071.3550659934303,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -587,12 +587,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 112170810.97333333,
-          "stdDevNs": 1421621.8235083323,
+          "meanNs": 126249792.83333333,
+          "stdDevNs": 2037434.9478607718,
           "allocatedBytes": 31461992,
-          "ratioToBaseline": 22.75818562419572,
+          "ratioToBaseline": 23.64316358856966,
           "isBaseline": false,
-          "throughputMbps": 93.48029054093946,
+          "throughputMbps": 83.05566104051047,
           "slaTarget": ">= 50 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required."
@@ -602,12 +602,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 166803802.53333333,
-          "stdDevNs": 1406497.86879839,
+          "meanNs": 183832061.64444444,
+          "stdDevNs": 3057636.079197239,
           "allocatedBytes": 31460235,
-          "ratioToBaseline": 33.84260011972061,
+          "ratioToBaseline": 34.42676149196867,
           "isBaseline": false,
-          "throughputMbps": 62.86283550343268,
+          "throughputMbps": 57.03988687392762,
           "slaTarget": ">= 35 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority."
@@ -617,12 +617,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 7091355.546875,
-          "stdDevNs": 68998.18623123293,
-          "allocatedBytes": 20973206,
-          "ratioToBaseline": 1.4387556304760782,
+          "meanNs": 8439222.370404411,
+          "stdDevNs": 168590.1473889044,
+          "allocatedBytes": 20973195,
+          "ratioToBaseline": 1.5804375641803576,
           "isBaseline": false,
-          "throughputMbps": 1478.667926137315,
+          "throughputMbps": 1242.5031051169608,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -632,12 +632,12 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 19552677.317307692,
-          "stdDevNs": 97997.96312928853,
+          "meanNs": 22777494.508333333,
+          "stdDevNs": 353674.1424249959,
           "allocatedBytes": 41945300,
-          "ratioToBaseline": 3.9670165168287563,
+          "ratioToBaseline": 4.265607227642794,
           "isBaseline": false,
-          "throughputMbps": 536.282567846511,
+          "throughputMbps": 460.35616411470096,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput."
@@ -652,49 +652,49 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 2629.7526717552773,
-          "stdDevNs": 27.571109514901618,
-          "allocatedBytes": 5240,
+          "meanNs": 3750.677525997162,
+          "stdDevNs": 113.55484395672778,
+          "allocatedBytes": 4672,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 909633.6497721354,
-          "stdDevNs": 11234.855710820062,
-          "allocatedBytes": 3148603,
+          "meanNs": 1122654.9591955238,
+          "stdDevNs": 38089.84447408918,
+          "allocatedBytes": 3148209,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 11775341.35,
-          "stdDevNs": 260344.18807270084,
-          "allocatedBytes": 31461642,
+          "meanNs": 13702301.671052631,
+          "stdDevNs": 241783.98022269073,
+          "allocatedBytes": 31461292,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 2435.4997542245046,
-          "stdDevNs": 30.249920740900148,
+          "meanNs": 2801.9112570626394,
+          "stdDevNs": 78.31794871348706,
           "allocatedBytes": 3520,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 915003.6365885417,
-          "stdDevNs": 11411.761403587449,
-          "allocatedBytes": 2098709,
+          "meanNs": 1067269.9654947917,
+          "stdDevNs": 39758.48770525781,
+          "allocatedBytes": 2098745,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 8079652.015104166,
-          "stdDevNs": 100597.7107600487,
-          "allocatedBytes": 20974303,
+          "meanNs": 9624306.06138393,
+          "stdDevNs": 165163.7375571176,
+          "allocatedBytes": 20974252,
           "isBaseline": false
         }
       ]
@@ -707,97 +707,97 @@
         {
           "method": "Encrypt_AesGcm_100MB",
           "parameters": {},
-          "meanNs": 114540338.63157895,
-          "stdDevNs": 2461775.215802158,
-          "allocatedBytes": 582192349,
+          "meanNs": 80437731.67447916,
+          "stdDevNs": 3702856.728199818,
+          "allocatedBytes": 267412093,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_1GB",
           "parameters": {},
-          "meanNs": 3376198185.875,
-          "stdDevNs": 2838676703.218349,
-          "allocatedBytes": 3224583392,
+          "meanNs": 4471606760.1,
+          "stdDevNs": 3976034807.7935414,
+          "allocatedBytes": 1216024,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_2GB",
           "parameters": {},
-          "meanNs": 8521354258.742268,
-          "stdDevNs": 4751995076.688665,
-          "allocatedBytes": 6448156744,
+          "meanNs": 6266830295.142858,
+          "stdDevNs": 3399800575.427119,
+          "allocatedBytes": 1380024,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_100MB",
           "parameters": {},
-          "meanNs": 97935640,
-          "stdDevNs": 1460340.2847700666,
-          "allocatedBytes": 477253806,
+          "meanNs": 67824519.1875,
+          "stdDevNs": 384184.15341268183,
+          "allocatedBytes": 267403418,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_1GB",
           "parameters": {},
-          "meanNs": 4366148294.75,
-          "stdDevNs": 3781690430.8002205,
-          "allocatedBytes": 2149109320,
+          "meanNs": 2300299324.802198,
+          "stdDevNs": 2162258990.9331603,
+          "allocatedBytes": 306928,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_2GB",
           "parameters": {},
-          "meanNs": 8094388863.73,
-          "stdDevNs": 3986602802.9385953,
-          "allocatedBytes": 4298227344,
+          "meanNs": 6309589851.762887,
+          "stdDevNs": 3434093535.6169095,
+          "allocatedBytes": 610768,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_100MB",
           "parameters": {},
-          "meanNs": 144976072.6818182,
-          "stdDevNs": 5428685.958075536,
-          "allocatedBytes": 582187670,
+          "meanNs": 90928870.96666665,
+          "stdDevNs": 1023436.9817305491,
+          "allocatedBytes": 267411693,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_1GB",
           "parameters": {},
-          "meanNs": 4428086474.22,
-          "stdDevNs": 3218760902.756012,
-          "allocatedBytes": 3224546824,
+          "meanNs": 1521816252.627451,
+          "stdDevNs": 62146821.14884787,
+          "allocatedBytes": 1215880,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_2GB",
           "parameters": {},
-          "meanNs": 10429886898,
-          "stdDevNs": 4617644264.013282,
-          "allocatedBytes": 6448024976,
+          "meanNs": 5636572778.340206,
+          "stdDevNs": 4209469641.1386085,
+          "allocatedBytes": 1380520,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_100MB",
           "parameters": {},
-          "meanNs": 124251139.1574074,
-          "stdDevNs": 3436805.6734777386,
-          "allocatedBytes": 477242236,
+          "meanNs": 92199164.47058822,
+          "stdDevNs": 1876124.191379745,
+          "allocatedBytes": 267403077,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_1GB",
           "parameters": {},
-          "meanNs": 3330668835.7916665,
-          "stdDevNs": 2578967604.690565,
-          "allocatedBytes": 2149010744,
+          "meanNs": 1533022519.4155843,
+          "stdDevNs": 84635835.49665982,
+          "allocatedBytes": 307128,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_2GB",
           "parameters": {},
-          "meanNs": 8612519734.38,
-          "stdDevNs": 4788357050.691688,
-          "allocatedBytes": 4298030360,
+          "meanNs": 5294235242.421053,
+          "stdDevNs": 4390790392.655726,
+          "allocatedBytes": 612008,
           "isBaseline": false
         }
       ]
@@ -810,48 +810,48 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 107975.26077706473,
-          "stdDevNs": 1142.8291328914709,
+          "meanNs": 116421.7585067749,
+          "stdDevNs": 2127.0232184455854,
           "allocatedBytes": 8656,
           "isBaseline": false
         },
         {
           "method": "Encrypt_64KB",
           "parameters": {},
-          "meanNs": 6255835.702083333,
-          "stdDevNs": 109189.9465227503,
-          "allocatedBytes": 523388,
+          "meanNs": 6633940.482954546,
+          "stdDevNs": 160707.91827410826,
+          "allocatedBytes": 523380,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 99930097.20000002,
-          "stdDevNs": 790153.1778373423,
-          "allocatedBytes": 8369054,
+          "meanNs": 105318462.49333332,
+          "stdDevNs": 1946944.6434285431,
+          "allocatedBytes": 8368955,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 2701218.9249441964,
-          "stdDevNs": 15992.457757900986,
+          "meanNs": 2797974.936941964,
+          "stdDevNs": 44648.56734058636,
           "allocatedBytes": 6136,
           "isBaseline": false
         },
         {
           "method": "Decrypt_64KB",
           "parameters": {},
-          "meanNs": 155006444.7857143,
-          "stdDevNs": 960314.1833746635,
+          "meanNs": 163464930.63157895,
+          "stdDevNs": 3597107.6227524285,
           "allocatedBytes": 368056,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 2471944653,
-          "stdDevNs": 12115997.280296417,
+          "meanNs": 2599699894.2,
+          "stdDevNs": 33505294.4319712,
           "allocatedBytes": 5883568,
           "isBaseline": false
         }
@@ -865,185 +865,193 @@
         {
           "method": "Encrypt_AesGcm_1KB",
           "parameters": {},
-          "meanNs": 6754.778969537644,
-          "stdDevNs": 159.47023028922126,
-          "allocatedBytes": 7680,
+          "meanNs": 6762.0239883422855,
+          "stdDevNs": 124.80536044492996,
+          "allocatedBytes": 3984,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_1MB",
           "parameters": {},
-          "meanNs": 920657.6563867187,
-          "stdDevNs": 24482.419617768828,
-          "allocatedBytes": 4197975,
+          "meanNs": 378298.50823102676,
+          "stdDevNs": 5299.007759608275,
+          "allocatedBytes": 1051546,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_10MB",
           "parameters": {},
-          "meanNs": 11740669.56138393,
-          "stdDevNs": 420380.8138298336,
-          "allocatedBytes": 63981022,
+          "meanNs": 8010125.960449219,
+          "stdDevNs": 151388.67053159006,
+          "allocatedBytes": 32514222,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_1KB",
           "parameters": {},
-          "meanNs": 6756.357573917934,
-          "stdDevNs": 84.37544756047996,
-          "allocatedBytes": 7696,
+          "meanNs": 6998.975849292897,
+          "stdDevNs": 185.18796464514872,
+          "allocatedBytes": 4024,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_1MB",
           "parameters": {},
-          "meanNs": 977790.0621512277,
-          "stdDevNs": 27411.792050786946,
-          "allocatedBytes": 4197999,
+          "meanNs": 629965.9544677734,
+          "stdDevNs": 16185.18181333416,
+          "allocatedBytes": 1051579,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_10MB",
           "parameters": {},
-          "meanNs": 14226515.3046875,
-          "stdDevNs": 381544.7842270091,
-          "allocatedBytes": 63981211,
+          "meanNs": 10100792.5390625,
+          "stdDevNs": 148802.37846095065,
+          "allocatedBytes": 32514202,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_1KB",
           "parameters": {},
-          "meanNs": 4836.133932876587,
-          "stdDevNs": 110.64962843988036,
-          "allocatedBytes": 5752,
+          "meanNs": 4576.287337493896,
+          "stdDevNs": 98.98685598107035,
+          "allocatedBytes": 3368,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_1MB",
           "parameters": {},
-          "meanNs": 572327.5884765625,
-          "stdDevNs": 14081.55689891021,
-          "allocatedBytes": 3148477,
+          "meanNs": 363223.65768229164,
+          "stdDevNs": 6740.836610081026,
+          "allocatedBytes": 1050931,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_10MB",
           "parameters": {},
-          "meanNs": 13840104.566780822,
-          "stdDevNs": 647236.315877917,
-          "allocatedBytes": 53486385,
+          "meanNs": 7739039.716452206,
+          "stdDevNs": 153768.76992839514,
+          "allocatedBytes": 32509826,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_1KB",
           "parameters": {},
-          "meanNs": 5322.67665308172,
-          "stdDevNs": 222.86865539004862,
-          "allocatedBytes": 5528,
+          "meanNs": 4692.529952656139,
+          "stdDevNs": 112.9762320677569,
+          "allocatedBytes": 3272,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_1MB",
           "parameters": {},
-          "meanNs": 918540.5880859375,
-          "stdDevNs": 29470.600225949438,
-          "allocatedBytes": 3148223,
+          "meanNs": 628161.8433131168,
+          "stdDevNs": 13147.863696998404,
+          "allocatedBytes": 1050833,
+          "isBaseline": false
+        },
+        {
+          "method": "Decrypt_ChaCha_10MB",
+          "parameters": {},
+          "meanNs": 10302154.5078125,
+          "stdDevNs": 142842.533031556,
+          "allocatedBytes": 32510233,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_100MB",
           "parameters": {},
-          "meanNs": 128676354.57333334,
-          "stdDevNs": 3835512.870597672,
-          "allocatedBytes": 582100157,
+          "meanNs": 71302050.03061225,
+          "stdDevNs": 988169.6526545424,
+          "allocatedBytes": 267433009,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_1GB",
           "parameters": {},
-          "meanNs": 3443094671.5151515,
-          "stdDevNs": 2660385498.0556126,
-          "allocatedBytes": 3223346544,
+          "meanNs": 2619736640.096774,
+          "stdDevNs": 2279008599.0064983,
+          "allocatedBytes": 1217360,
           "isBaseline": false
         },
         {
           "method": "Encrypt_AesGcm_2GB",
           "parameters": {},
-          "meanNs": 9864331773.821053,
-          "stdDevNs": 5145250233.133364,
-          "allocatedBytes": 6445660032,
+          "meanNs": 5830995654.886598,
+          "stdDevNs": 3794621463.370444,
+          "allocatedBytes": 1381200,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_100MB",
           "parameters": {},
-          "meanNs": 154720415.7666667,
-          "stdDevNs": 4156631.090620991,
-          "allocatedBytes": 582096187,
+          "meanNs": 97214023.84920634,
+          "stdDevNs": 2269161.278071546,
+          "allocatedBytes": 267433156,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_1GB",
           "parameters": {},
-          "meanNs": 5126838231.48,
-          "stdDevNs": 3555519352.1969256,
-          "allocatedBytes": 3223330552,
+          "meanNs": 2063615275.909091,
+          "stdDevNs": 1251353333.7510865,
+          "allocatedBytes": 1217240,
           "isBaseline": false
         },
         {
           "method": "Encrypt_ChaCha_2GB",
           "parameters": {},
-          "meanNs": 10485120071.23,
-          "stdDevNs": 4838857370.102358,
-          "allocatedBytes": 6445607720,
+          "meanNs": 5732293184.8,
+          "stdDevNs": 4009484766.435681,
+          "allocatedBytes": 1381000,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_100MB",
           "parameters": {},
-          "meanNs": 149716986.8104575,
-          "stdDevNs": 6095436.450348629,
-          "allocatedBytes": 477164621,
+          "meanNs": 75853454.14285713,
+          "stdDevNs": 1596518.517553613,
+          "allocatedBytes": 267412679,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_1GB",
           "parameters": {},
-          "meanNs": 5466903940.9,
-          "stdDevNs": 4439284940.002028,
-          "allocatedBytes": 2148207232,
+          "meanNs": 1598834373.0119047,
+          "stdDevNs": 1118407484.988728,
+          "allocatedBytes": 308208,
           "isBaseline": false
         },
         {
           "method": "Decrypt_AesGcm_2GB",
           "parameters": {},
-          "meanNs": 9813287554.32653,
-          "stdDevNs": 4949376527.397699,
-          "allocatedBytes": 4296433048,
+          "meanNs": 5642356984.082474,
+          "stdDevNs": 3593710454.7431054,
+          "allocatedBytes": 612784,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_100MB",
           "parameters": {},
-          "meanNs": 163158058.73333335,
-          "stdDevNs": 3685729.586361057,
-          "allocatedBytes": 477153139,
+          "meanNs": 101948706.85000002,
+          "stdDevNs": 2809692.9080705,
+          "allocatedBytes": 267412816,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_1GB",
           "parameters": {},
-          "meanNs": 4326237641.96,
-          "stdDevNs": 3358089124.2841163,
-          "allocatedBytes": 2148076488,
+          "meanNs": 1454740838.7659574,
+          "stdDevNs": 55774578.38778365,
+          "allocatedBytes": 307928,
           "isBaseline": false
         },
         {
           "method": "Decrypt_ChaCha_2GB",
           "parameters": {},
-          "meanNs": 7628534630.505051,
-          "stdDevNs": 4609772672.133309,
-          "allocatedBytes": 4296200776,
+          "meanNs": 5434742597.618557,
+          "stdDevNs": 4175028379.324032,
+          "allocatedBytes": 611424,
           "isBaseline": false
         }
       ]
@@ -1056,49 +1064,49 @@
         {
           "method": "Encrypt_1KB",
           "parameters": {},
-          "meanNs": 3546.673058191935,
-          "stdDevNs": 105.58822837471159,
+          "meanNs": 3414.4712777455647,
+          "stdDevNs": 37.05666521827553,
           "allocatedBytes": 7424,
           "isBaseline": false
         },
         {
           "method": "Encrypt_1MB",
           "parameters": {},
-          "meanNs": 2835423.41015625,
-          "stdDevNs": 47918.887081134555,
-          "allocatedBytes": 5246132,
+          "meanNs": 2621303.877511161,
+          "stdDevNs": 39026.92385131463,
+          "allocatedBytes": 5246072,
           "isBaseline": false
         },
         {
           "method": "Encrypt_10MB",
           "parameters": {},
-          "meanNs": 30025339.61099138,
-          "stdDevNs": 799992.6205866339,
+          "meanNs": 27209033.322916668,
+          "stdDevNs": 256830.6215348014,
           "allocatedBytes": 52431719,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1KB",
           "parameters": {},
-          "meanNs": 3677.830953174167,
-          "stdDevNs": 78.36874748106294,
+          "meanNs": 2874.1506734575546,
+          "stdDevNs": 29.366356908027278,
           "allocatedBytes": 6064,
           "isBaseline": false
         },
         {
           "method": "Decrypt_1MB",
           "parameters": {},
-          "meanNs": 3137504.4444444445,
-          "stdDevNs": 153892.65736008828,
-          "allocatedBytes": 4196443,
+          "meanNs": 2369652.624112216,
+          "stdDevNs": 55534.949730615066,
+          "allocatedBytes": 4196431,
           "isBaseline": false
         },
         {
           "method": "Decrypt_10MB",
           "parameters": {},
-          "meanNs": 28772885.351222824,
-          "stdDevNs": 1847850.594223042,
-          "allocatedBytes": 41945583,
+          "meanNs": 25538914.483173076,
+          "stdDevNs": 220575.8640217971,
+          "allocatedBytes": 41945624,
           "isBaseline": false
         }
       ]
@@ -1124,8 +1132,8 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 2843.7249516487122,
-            "allocatedBytes": 5288,
+            "meanNs": 3581.0083171299525,
+            "allocatedBytes": 4720,
             "ratioToBaseline": 1
           },
           {
@@ -1134,9 +1142,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 14586.798486171625,
-            "allocatedBytes": 10536,
-            "ratioToBaseline": 5.129468824934918
+            "meanNs": 15262.753841145834,
+            "allocatedBytes": 9968,
+            "ratioToBaseline": 4.262138618370586
           },
           {
             "algorithm": "AesSiv",
@@ -1144,9 +1152,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 23076.25525241428,
+            "meanNs": 23154.56721496582,
             "allocatedBytes": 7016,
-            "ratioToBaseline": 8.114798598589964
+            "ratioToBaseline": 6.4659350563931
           },
           {
             "algorithm": "ChaCha20Poly1305",
@@ -1154,9 +1162,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 3353.841819381714,
-            "allocatedBytes": 5240,
-            "ratioToBaseline": 1.1793833357326804
+            "meanNs": 3776.548105576459,
+            "allocatedBytes": 4672,
+            "ratioToBaseline": 1.0546046730780074
           },
           {
             "algorithm": "XChaCha20Poly1305",
@@ -1164,9 +1172,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 4317.539797101702,
+            "meanNs": 3908.526667022705,
             "allocatedBytes": 7424,
-            "ratioToBaseline": 1.5182691260624601
+            "ratioToBaseline": 1.0914598126807051
           },
           {
             "algorithm": "AesGcm",
@@ -1174,10 +1182,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 869428.9483192846,
-            "allocatedBytes": 3148682,
+            "meanNs": 906070.5719031894,
+            "allocatedBytes": 3148069,
             "ratioToBaseline": 1,
-            "throughputMbps": 1206.0513996307911,
+            "throughputMbps": 1157.278508447173,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1187,12 +1195,12 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 12244360.998697916,
-            "allocatedBytes": 5249654,
-            "ratioToBaseline": 14.083222122253698,
-            "throughputMbps": 85.63746202121182,
+            "meanNs": 14160962.220982144,
+            "allocatedBytes": 5249962,
+            "ratioToBaseline": 15.628983723902683,
+            "throughputMbps": 74.04694565503016,
             "slaTarget": ">= 50 MB/s",
-            "slaResult": "Exceeds"
+            "slaResult": "Meets"
           },
           {
             "algorithm": "AesSiv",
@@ -1200,10 +1208,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 17568658.332291666,
-            "allocatedBytes": 4198384,
-            "ratioToBaseline": 20.20712372903397,
-            "throughputMbps": 59.6844665180089,
+            "meanNs": 19842988.96381579,
+            "allocatedBytes": 4198152,
+            "ratioToBaseline": 21.900047942331742,
+            "throughputMbps": 52.843651826451435,
             "slaTarget": ">= 35 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1213,10 +1221,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 956073.5189052484,
-            "allocatedBytes": 3148442,
-            "ratioToBaseline": 1.0996568733459573,
-            "throughputMbps": 1096.7524769441072,
+            "meanNs": 1229228.4229706554,
+            "allocatedBytes": 3147945,
+            "ratioToBaseline": 1.3566585882915025,
+            "throughputMbps": 853.0359210747213,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1226,12 +1234,12 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 2221718.365944602,
-            "allocatedBytes": 5246156,
-            "ratioToBaseline": 2.5553765724496094,
-            "throughputMbps": 471.9662114123001,
+            "meanNs": 2724684.397966056,
+            "allocatedBytes": 5246303,
+            "ratioToBaseline": 3.0071436844515236,
+            "throughputMbps": 384.8431035839414,
             "slaTarget": ">= 300 MB/s",
-            "slaResult": "Exceeds"
+            "slaResult": "Meets"
           },
           {
             "algorithm": "AesGcm",
@@ -1239,10 +1247,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 4928811.673549107,
-            "allocatedBytes": 31459688,
+            "meanNs": 5339801.180175781,
+            "allocatedBytes": 31459192,
             "ratioToBaseline": 1,
-            "throughputMbps": 2127.441804334447,
+            "throughputMbps": 1963.6985809375806,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1252,10 +1260,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 113469634.6285714,
-            "allocatedBytes": 52434346,
-            "ratioToBaseline": 23.021702216279834,
-            "throughputMbps": 92.41027376464037,
+            "meanNs": 129962260.7,
+            "allocatedBytes": 52433656,
+            "ratioToBaseline": 24.338408175662032,
+            "throughputMbps": 80.68311480211116,
             "slaTarget": ">= 50 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1265,10 +1273,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 166098704.37777779,
+            "meanNs": 186554687.29166666,
             "allocatedBytes": 41946043,
-            "ratioToBaseline": 33.699543699176175,
-            "throughputMbps": 63.12969170518636,
+            "ratioToBaseline": 34.936635465803136,
+            "throughputMbps": 56.20743253481574,
             "slaTarget": ">= 35 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1278,10 +1286,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 7344962.3515625,
-            "allocatedBytes": 31459640,
-            "ratioToBaseline": 1.4902095754601203,
-            "throughputMbps": 1427.6124911340569,
+            "meanNs": 8895643.555625,
+            "allocatedBytes": 31459082,
+            "ratioToBaseline": 1.6659128786761612,
+            "throughputMbps": 1178.7522661437486,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1291,12 +1299,12 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 20147277.58035714,
+            "meanNs": 24168218.994791668,
             "allocatedBytes": 52431752,
-            "ratioToBaseline": 4.0876541679365115,
-            "throughputMbps": 520.4554291852926,
+            "ratioToBaseline": 4.526052221666439,
+            "throughputMbps": 433.865648199386,
             "slaTarget": ">= 300 MB/s",
-            "slaResult": "Exceeds"
+            "slaResult": "Meets"
           }
         ]
       },
@@ -1309,7 +1317,7 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 2743.7147225600024,
+            "meanNs": 2671.1478727976482,
             "allocatedBytes": 3616,
             "ratioToBaseline": 1
           },
@@ -1319,9 +1327,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 13880.175351969401,
+            "meanNs": 15996.566176373026,
             "allocatedBytes": 7776,
-            "ratioToBaseline": 5.058898885456506
+            "ratioToBaseline": 5.988648677700832
           },
           {
             "algorithm": "AesSiv",
@@ -1329,9 +1337,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 22687.056638445174,
+            "meanNs": 23112.785385131836,
             "allocatedBytes": 5944,
-            "ratioToBaseline": 8.268737435383656
+            "ratioToBaseline": 8.652753979106546
           },
           {
             "algorithm": "ChaCha20Poly1305",
@@ -1339,9 +1347,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 2727.123293797175,
+            "meanNs": 2828.8147315979004,
             "allocatedBytes": 3520,
-            "ratioToBaseline": 0.9939529322686482
+            "ratioToBaseline": 1.0590258818711966
           },
           {
             "algorithm": "XChaCha20Poly1305",
@@ -1349,9 +1357,9 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 2956.275548869166,
+            "meanNs": 3196.2804389953612,
             "allocatedBytes": 6064,
-            "ratioToBaseline": 1.0774719122806016
+            "ratioToBaseline": 1.1965943449052527
           },
           {
             "algorithm": "AesGcm",
@@ -1359,10 +1367,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 502763.6238902699,
-            "allocatedBytes": 2099581,
+            "meanNs": 613733.2972005209,
+            "allocatedBytes": 2099625,
             "ratioToBaseline": 1,
-            "throughputMbps": 2085.6242380591475,
+            "throughputMbps": 1708.5206306761713,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1372,10 +1380,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 11344122.4625,
-            "allocatedBytes": 3151192,
-            "ratioToBaseline": 22.56353070001719,
-            "throughputMbps": 92.43341681705687,
+            "meanNs": 13258375.914583333,
+            "allocatedBytes": 3151416,
+            "ratioToBaseline": 21.602829722715068,
+            "throughputMbps": 79.08781639285368,
             "slaTarget": ">= 50 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1385,10 +1393,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 16799543.348557692,
-            "allocatedBytes": 3150456,
-            "ratioToBaseline": 33.41439704520918,
-            "throughputMbps": 62.416934689479184,
+            "meanNs": 19228807.36830357,
+            "allocatedBytes": 3148852,
+            "ratioToBaseline": 31.330885021252275,
+            "throughputMbps": 54.53151513330225,
             "slaTarget": ">= 35 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1398,10 +1406,10 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 757784.1054199219,
-            "allocatedBytes": 2099208,
-            "ratioToBaseline": 1.5072373366162848,
-            "throughputMbps": 1383.7397650600462,
+            "meanNs": 946760.3338583669,
+            "allocatedBytes": 2099472,
+            "ratioToBaseline": 1.5426250102070613,
+            "throughputMbps": 1107.541119436954,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1411,12 +1419,12 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 2238463.6250813804,
-            "allocatedBytes": 4196487,
-            "ratioToBaseline": 4.45231818436,
-            "throughputMbps": 468.43557708554613,
+            "meanNs": 2655712.4459635415,
+            "allocatedBytes": 4196565,
+            "ratioToBaseline": 4.327144148895442,
+            "throughputMbps": 394.83792817770876,
             "slaTarget": ">= 300 MB/s",
-            "slaResult": "Exceeds"
+            "slaResult": "Meets"
           },
           {
             "algorithm": "AesGcm",
@@ -1424,10 +1432,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 4515861.534040178,
+            "meanNs": 5062270.67109375,
             "allocatedBytes": 20973302,
             "ratioToBaseline": 1,
-            "throughputMbps": 2321.9843923378157,
+            "throughputMbps": 2071.3550659934303,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1437,10 +1445,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 112170810.97333333,
+            "meanNs": 126249792.83333333,
             "allocatedBytes": 31461992,
-            "ratioToBaseline": 24.83929370460085,
-            "throughputMbps": 93.48029054093946,
+            "ratioToBaseline": 24.939360424608807,
+            "throughputMbps": 83.05566104051047,
             "slaTarget": ">= 50 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1450,10 +1458,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 166803802.53333333,
+            "meanNs": 183832061.64444444,
             "allocatedBytes": 31460235,
-            "ratioToBaseline": 36.937315565586,
-            "throughputMbps": 62.86283550343268,
+            "ratioToBaseline": 36.314151018069886,
+            "throughputMbps": 57.03988687392762,
             "slaTarget": ">= 35 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1463,10 +1471,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 7091355.546875,
-            "allocatedBytes": 20973206,
-            "ratioToBaseline": 1.5703217411386439,
-            "throughputMbps": 1478.667926137315,
+            "meanNs": 8439222.370404411,
+            "allocatedBytes": 20973195,
+            "ratioToBaseline": 1.6670824060423146,
+            "throughputMbps": 1242.5031051169608,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           },
@@ -1476,10 +1484,10 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 19552677.317307692,
+            "meanNs": 22777494.508333333,
             "allocatedBytes": 41945300,
-            "ratioToBaseline": 4.329777866287813,
-            "throughputMbps": 536.282567846511,
+            "ratioToBaseline": 4.499461998031023,
+            "throughputMbps": 460.35616411470096,
             "slaTarget": ">= 300 MB/s",
             "slaResult": "Exceeds"
           }
@@ -1491,82 +1499,93 @@
     {
       "area": "AesCcm_Decrypt",
       "target": ">= 50 MB/s \u2014 AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required.",
-      "latest": "11.34 ms (92 MB/s)",
+      "latest": "13.26 ms (79 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "AesCcm_Encrypt",
       "target": ">= 50 MB/s \u2014 AES-CCM is two-pass (CBC-MAC then CTR) with no single-pass AEAD hardware path, so it runs well below AES-GCM; >= 50 MB/s is the acceptable floor when CCM interop is required.",
-      "latest": "12.24 ms (86 MB/s)",
-      "result": "Exceeds"
+      "latest": "14.16 ms (74 MB/s)",
+      "result": "Meets"
     },
     {
       "area": "AesGcm_Decrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "502.76 \u00b5s (2086 MB/s)",
+      "latest": "613.73 \u00b5s (1709 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "AesGcm_Encrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "869.43 \u00b5s (1206 MB/s)",
+      "latest": "906.07 \u00b5s (1157 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "AesSiv_Decrypt",
       "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
-      "latest": "16.8 ms (62 MB/s)",
+      "latest": "19.23 ms (55 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "AesSiv_Encrypt",
       "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
-      "latest": "17.57 ms (60 MB/s)",
+      "latest": "19.84 ms (53 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "ChaCha20Poly1305_Decrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "757.78 \u00b5s (1384 MB/s)",
+      "latest": "946.76 \u00b5s (1108 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "ChaCha20Poly1305_Encrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "956.07 \u00b5s (1097 MB/s)",
+      "latest": "1.23 ms (853 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "XChaCha20Poly1305_Decrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "2.24 ms (468 MB/s)",
-      "result": "Exceeds"
+      "latest": "2.66 ms (395 MB/s)",
+      "result": "Meets"
     },
     {
       "area": "XChaCha20Poly1305_Encrypt",
       "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 64 KB) payloads; 1 KB payloads are overhead-bound and not graded on throughput.",
-      "latest": "2.22 ms (472 MB/s)",
-      "result": "Exceeds"
+      "latest": "2.72 ms (385 MB/s)",
+      "result": "Meets"
     }
   ],
   "grades": [
     {
       "category": "AlgorithmComparisonBenchmarks",
-      "grade": "A",
-      "rationale": "20 exceed of 20 SLA targets vs declared standards"
+      "grade": "A-",
+      "rationale": "16 exceed, 4 meet of 20 SLA targets vs declared standards"
     }
   ],
   "schema": "lyo.bench/v1",
   "name": "encryption",
   "title": "Encryption",
   "description": "Symmetric authenticated-encryption throughput for Lyo.Encryption: AES-GCM/CCM/SIV and ChaCha20-Poly1305/XChaCha20-Poly1305, encrypt and decrypt. Each run encrypts/decrypts a buffer of cryptographically random bytes of the given DataSize (1 KB to 100 MB) using a fixed local key store, so timings reflect raw per-byte cipher throughput.",
-  "runId": "BenchmarkRun-joined-2026-06-28-22-07-05",
-  "generatedAt": "2026-06-29T02:07:06.0651917+00:00",
+  "runId": "BenchmarkRun-joined-2026-06-30-03-28-51",
+  "generatedAt": "2026-06-30T03:28:51.9187044+00:00",
+  "runStarted": "2026-06-30T00:25:36.9167669+00:00",
+  "runEnded": "2026-06-30T03:28:51.9187044+00:00",
+  "durationSeconds": 10995.0019375,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
-    "runtime": ".NET 10.0.9",
-    "os": "Linux Mint 22.1"
+    "runtime": ".NET 10.0.0",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+    "os": "Ubuntu 24.04.3 LTS",
+    "architecture": "X64",
+    "logicalCores": 14,
+    "physicalCores": 12,
+    "memoryBytes": 6442450944,
+    "gcMode": "Workstation",
+    "configuration": "Release",
+    "dotnetSdkVersion": "10.0.100"
   },
   "notes": []
 }

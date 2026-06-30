@@ -43,6 +43,15 @@ public sealed class MicroBenchmarkReportBuilder
         return this;
     }
 
+    /// <summary>Records the wall-clock window the run occupied (start, end, and total duration).</summary>
+    public MicroBenchmarkReportBuilder WithTiming(DateTimeOffset? started, DateTimeOffset? ended, double? durationSeconds)
+    {
+        _report.RunStarted = started;
+        _report.RunEnded = ended;
+        _report.DurationSeconds = durationSeconds;
+        return this;
+    }
+
     /// <summary>Appends a methodology note / caveat.</summary>
     public MicroBenchmarkReportBuilder AddNote(string note)
     {

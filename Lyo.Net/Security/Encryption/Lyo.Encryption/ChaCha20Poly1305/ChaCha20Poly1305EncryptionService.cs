@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
@@ -15,8 +16,15 @@ namespace Lyo.Encryption.ChaCha20Poly1305;
 /// context (nonce, key material), so there are no shared mutable state concerns. However, if using a KeyStore that isn't thread-safe, ensure proper synchronization at the KeyStore
 /// level.
 /// </summary>
-public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
+public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize, IAeadStreamCryptorFactory
 {
+    /// <summary>Creates a per-stream ChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
+    IAeadStreamCryptor IAeadStreamCryptorFactory.CreateCryptor(ReadOnlySpan<byte> key)
+    {
+        ArgumentHelpers.ThrowIfNotInRange(key.Length, 32, 32, nameof(key), $"ChaCha20-Poly1305 key must be exactly 32 bytes; got {key.Length}.");
+        return new ChaCha20Poly1305StreamCryptor(key);
+    }
+
     // Format header: [FormatVersion: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][nonceLength: 4 bytes][nonce][tag][ciphertext]
 
     /// <summary> Initializes a new instance of the ChaCha20Poly1305EncryptionService. </summary>
@@ -57,11 +65,8 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
 
         try {
             var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
@@ -112,13 +117,8 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        // Use hybrid nonce generator (random IV + counter) to prevent nonce reuse
-        // If key was provided directly (not from KeyStore), fall back to random nonce
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize); // Fallback for direct key usage
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
 
         try {
             var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);

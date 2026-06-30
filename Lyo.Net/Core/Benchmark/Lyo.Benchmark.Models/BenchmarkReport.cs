@@ -36,6 +36,15 @@ public abstract class BenchmarkReport
     /// <summary>UTC timestamp the report was generated.</summary>
     public DateTimeOffset GeneratedAt { get; set; }
 
+    /// <summary>UTC timestamp the benchmark run started, when known.</summary>
+    public DateTimeOffset? RunStarted { get; set; }
+
+    /// <summary>UTC timestamp the benchmark run finished, when known.</summary>
+    public DateTimeOffset? RunEnded { get; set; }
+
+    /// <summary>Total wall-clock duration of the run, in seconds, when known.</summary>
+    public double? DurationSeconds { get; set; }
+
     /// <summary>Tool / host / hardware environment that produced the measurements.</summary>
     public BenchmarkEnvironment? Environment { get; set; }
 

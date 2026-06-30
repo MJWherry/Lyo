@@ -30,7 +30,7 @@ chown_data() {
 trap chown_data EXIT
 
 # Resolve the target to the same csproj set the image compiled.
-mapfile -t projects < <(bash "$REPO_ROOT/scripts/docker/resolve-targets.sh" $TARGET)
+mapfile -t projects < <(bash "$REPO_ROOT/scripts/docker/resolve-targets.sh" "$TARGET")
 if [[ ${#projects[@]} -eq 0 ]]; then
   echo "TARGET '$TARGET' resolved to no projects" >&2
   exit 2

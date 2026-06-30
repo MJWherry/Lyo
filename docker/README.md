@@ -33,7 +33,13 @@ run can never write to your host `obj/bin` (no more broken `.slnx`). Notes:
 | `tests` (or `test`) | every `Lyo.Net/**/*.Tests.csproj` |
 | `all` | both groups |
 | `Lyo.Lock.Benchmarks` | the project file `Lyo.Lock.Benchmarks.csproj` |
+| `'*.Benchmarks'`, `'Lyo.Lock.*'` | a glob over project file names (matches runnable `*.Tests`/`*.Benchmarks` only) |
 | `path/to/Foo.csproj` | that exact csproj |
+
+Globs are shell wildcards matched against the project file name (`*`, `?`, `[...]`);
+`.csproj` is appended if you omit it. Quote them (`'*.Benchmarks'`) so your shell
+doesn't expand them before the runner sees them. To build a non-runnable library,
+pass its exact name or `path/to/Foo.csproj`.
 
 ## Setup
 

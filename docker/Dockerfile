@@ -27,7 +27,7 @@ COPY . .
 # it (its post-build target symlinks libleptonica/libtesseract into the output at build time), then
 # build each selected project. Tools apps and the whole solution are never built.
 RUN set -e; \
-    projects="$(bash scripts/docker/resolve-targets.sh $TARGET)"; \
+    projects="$(bash scripts/docker/resolve-targets.sh "$TARGET")"; \
     echo "==> target '$TARGET' resolves to:"; echo "$projects" | sed 's/^/    /'; \
     if echo "$projects" | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
       echo "==> installing Tesseract native libs (OCR project selected)"; \
@@ -61,7 +61,7 @@ WORKDIR /src
 # libs), so install them here too when this image's target selects the OCR project.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 \
-    && if bash scripts/docker/resolve-targets.sh $TARGET | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
+    && if bash scripts/docker/resolve-targets.sh "$TARGET" | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
          apt-get install -y --no-install-recommends libleptonica-dev libtesseract5 tesseract-ocr-eng; \
        fi \
     && rm -rf /var/lib/apt/lists/*

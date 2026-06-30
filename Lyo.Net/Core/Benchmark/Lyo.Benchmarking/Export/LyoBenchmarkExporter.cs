@@ -58,10 +58,17 @@ public sealed class LyoBenchmarkExporter : IExporter
         var meta = assembly?.GetCustomAttribute<BenchmarkReportAttribute>();
         var (name, title) = ResolveNameAndTitle(meta, assembly);
 
+        // Export runs in the host process at the end of the run; treat "now" as the end and subtract the
+        // total wall-clock time BenchmarkDotNet reports to recover the start.
+        var runEnded = DateTimeOffset.UtcNow;
+        var totalTime = summary.TotalTime;
+        var runStarted = runEnded - totalTime;
+
         var builder = MicroBenchmarkReportBuilder.Create(name, title)
             .WithDescription(meta?.Description)
-            .WithRun(summary.Title)
-            .WithEnvironment(ReadEnvironment(summary));
+            .WithRun(summary.Title, runEnded)
+            .WithTiming(runStarted, runEnded, totalTime.TotalSeconds)
+            .WithEnvironment(ReadEnvironment(summary, assembly));
 
         var measurementByCase = new Dictionary<BenchmarkReportRow, BenchmarkMeasurement>();
         var rows = new List<BenchmarkReportRow>();
@@ -143,16 +150,73 @@ public sealed class LyoBenchmarkExporter : IExporter
         return (segment.ToLowerInvariant(), segment);
     }
 
-    private static BenchmarkEnvironment ReadEnvironment(Summary summary)
+    private static BenchmarkEnvironment ReadEnvironment(Summary summary, Assembly? assembly)
     {
         var host = summary.HostEnvironmentInfo;
-        return new BenchmarkEnvironment {
+        var env = new BenchmarkEnvironment {
             Tool = "BenchmarkDotNet",
             ToolVersion = host.BenchmarkDotNetVersion,
             Os = RuntimeInformation.OSDescription,
             Runtime = RuntimeInformation.FrameworkDescription,
+            Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
+            LogicalCores = Environment.ProcessorCount,
+            GcMode = System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation",
+            Configuration = assembly?.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration,
         };
+
+        try {
+            var available = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+            if (available > 0)
+                env.MemoryBytes = available;
+        }
+        catch {
+            // GC memory info is best-effort; leave null on platforms that do not report it.
+        }
+
+        ReadHostCpuAndSdk(host, env);
+        return env;
     }
+
+    /// <summary>
+    /// Reads processor name / core counts and the .NET SDK version from BenchmarkDotNet's host info reflectively.
+    /// The backing types live in Perfolizer and have changed shape across BenchmarkDotNet releases, so reflection
+    /// keeps this resilient (and any failure simply leaves the optional fields null).
+    /// </summary>
+    private static void ReadHostCpuAndSdk(object host, BenchmarkEnvironment env)
+    {
+        try {
+            var hostType = host.GetType();
+            var cpu = UnwrapLazy(hostType.GetProperty("Cpu")?.GetValue(host));
+            if (cpu is not null) {
+                if (GetProperty(cpu, "ProcessorName") is string name && !string.IsNullOrWhiteSpace(name))
+                    env.Cpu = name.Trim();
+                if (GetProperty(cpu, "PhysicalCoreCount") is int physical && physical > 0)
+                    env.PhysicalCores = physical;
+                if (GetProperty(cpu, "LogicalCoreCount") is int logical && logical > 0)
+                    env.LogicalCores = logical;
+            }
+
+            if (UnwrapLazy(hostType.GetProperty("DotNetSdkVersion")?.GetValue(host)) is string sdk
+                && !string.IsNullOrWhiteSpace(sdk))
+                env.DotnetSdkVersion = sdk.Trim();
+        }
+        catch {
+            // Host CPU/SDK probing is best-effort; the BCL-sourced fields above remain populated.
+        }
+    }
+
+    private static object? UnwrapLazy(object? value)
+    {
+        if (value is null)
+            return null;
+        var type = value.GetType();
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Lazy<>))
+            return type.GetProperty("Value")?.GetValue(value);
+        return value;
+    }
+
+    private static object? GetProperty(object instance, string name)
+        => instance.GetType().GetProperty(name)?.GetValue(instance);
 
     private static void DescribeGroups(Summary summary, MicroBenchmarkReportBuilder builder)
     {

@@ -9,6 +9,9 @@
 #   tests      | test    -> every Lyo.Net/**/*.Tests.csproj
 #   all                  -> both of the above
 #   <Name>               -> the project whose file is <Name>.csproj (e.g. Lyo.Lock.Benchmarks)
+#   <glob>               -> shell glob matched against project FILE names, e.g. '*.Benchmarks'
+#                          matches every *.Benchmarks.csproj, 'Lyo.Lock.*' matches the Lock suite
+#                          and tests. Quote globs so your shell doesn't expand them first.
 #   path/to/Foo.csproj   -> used as-is (must exist)
 #
 # Exits non-zero if any token resolves to nothing.
@@ -45,6 +48,14 @@ for token in "${tokens[@]}"; do
       mapfile -t matches < <(find_by_glob '*.Tests.csproj') ;;
     all)
       mapfile -t matches < <(find_by_glob '*.Benchmarks.csproj'; find_by_glob '*.Tests.csproj') ;;
+    *'*'*|*'?'*|*'['*)
+      # Glob token: match against project file names. Append .csproj unless already present so
+      # '*.Benchmarks' and '*.Benchmarks.csproj' both work. Globs only ever select runnable
+      # *.Tests/*.Benchmarks projects, so a broad glob like 'Lyo.Lock.*' won't drag in plain libs
+      # (use an exact name or a path/to/Foo.csproj to build something else).
+      pat="$token"
+      [[ "$pat" == *.csproj ]] || pat="$pat.csproj"
+      mapfile -t matches < <(find_by_glob "$pat" | { grep -E '\.(Tests|Benchmarks)\.csproj$' || true; }) ;;
     *.csproj)
       # Literal path (repo-relative or absolute). Verify it exists.
       if [[ "$token" = /* ]]; then

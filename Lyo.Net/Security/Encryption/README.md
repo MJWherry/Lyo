@@ -978,7 +978,6 @@ updatedHeader.Write(buffer);
 - `AesGcmRsaEncryptionService` - Hybrid implementation
 - `TwoKeyEncryptionService` - Envelope encryption with single-pass streaming
 - `LocalKeyStore` - Development KeyStore
-- `NonceGenerator` - Hybrid nonce generation utility
 
 ### Configuration Classes
 

@@ -46,11 +46,8 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion, XChaCha20Poly1305Helper.NonceSize);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
 
         try {
             var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
@@ -94,11 +91,8 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         else
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
-        byte[] nonce;
-        if (key != null || keyId == null || keyVersion == null)
-            nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-        else
-            nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion, XChaCha20Poly1305Helper.NonceSize);
+        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
+        var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
 
         try {
             var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);
