@@ -4,13 +4,17 @@
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
-        <Description>Digests, hex encoding, hashing streams, lightweight file fingerprints (non-security), and optional hashing service.</Description>
-        <PackageTags>hashing sha md5 hex fingerprint</PackageTags>
+        <Description>Digests, hex encoding, hashing streams, non-cryptographic checksums (CRC/Adler), lightweight file fingerprints (non-security), and optional hashing service.</Description>
+        <PackageTags>hashing sha md5 hex fingerprint crc checksum crc32 crc64 adler32</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="System.Memory" Version="4.6.3"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="System.IO.Hashing" Version="[10,)"/>
     </ItemGroup>
 
     <ItemGroup>

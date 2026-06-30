@@ -1,8 +1,8 @@
 # Lyo.Hashing
 
-Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), hexadecimal encoding (**`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file
-fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** / **`HashingService`**). A process-wide default is exposed as *
-*`HashingService.Shared`**
+Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (*
+*`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** /
+**`HashingService`**). A process-wide default is exposed as **`HashingService.Shared`**
 (analogous to **`Random.Shared`**).
 
 The public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default *
@@ -16,7 +16,8 @@ Hex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / *
 
 - **SHA-2** – One-shot buffer hashing on modern .NET; stream hashing via **`HashAlgorithm`**
 - **MD5** – Legacy compatibility and fingerprints only (not for security)
-- **`IHashingService`** – Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, **`CreateHashingStream`**
+- **Checksums** – **`Checksummer`** / **`ChecksumStream`**: CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32 for corruption detection (not for security)
+- **`IHashingService`** – Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, **`CreateHashingStream`**, checksums (**`Checksum`** / **`ChecksumValue`** / **`ChecksumFileAsync`** / **`CreateChecksumStream`**)
 - **`Hasher`** – Static digest helpers without allocating a service
 - **`HexEncoding`** – Encode/decode hex with explicit casing
 - **`byte[].ToHexString()`** – Extension in namespace **`Lyo.Hashing`** (**`ByteArrayHexExtensions`**) — lowercase hex for historical consistency
@@ -32,6 +33,7 @@ Hex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / *
 | Tests, scripts, or **`Random.Shared`-style** access | **`HashingService.Shared`**                                       |
 | ASP.NET / hosted apps                               | Inject **`IHashingService`** via **`AddLyoHashing`**              |
 | Hash while copying or processing a stream           | **`HashingStream`** or **`IHashingService.CreateHashingStream`**  |
+| Detect accidental corruption (transport, storage)   | **`Checksummer`** / **`ChecksumStream`** (CRC / Adler-32)         |
 | “Did this huge file change?” without full read      | **`FingerprintSampledFileAsync`** / **`SparseFileFingerprinter`** |
 
 ## Usage
@@ -129,6 +131,31 @@ var digest = hashingStream.GetHash();
 
 When created via **`IHashingService.CreateHashingStream`**, the correct **`HashAlgorithm`** instance is chosen for **`ContentDigestAlgorithm`**.
 
+### Checksums (non-cryptographic)
+
+For accidental-corruption detection (transport, storage, archive formats) — **not** for security, signatures, or tamper detection. On modern .NET the CRC-32 and CRC-64 buffer
+paths delegate to **`System.IO.Hashing`**; CRC-32C and Adler-32 use internal implementations that produce identical results across targets.
+
+```csharp
+// Numeric value (32-bit checksums in the low bits)
+uint crc = Checksummer.ComputeCrc32(payload);            // e.g. 0xCBF43926 for "123456789"
+ulong crc64 = Checksummer.ComputeValue(ChecksumAlgorithm.Crc64, payload);
+
+// Big-endian bytes (4 for 32-bit, 8 for CRC-64) — flows through HexEncoding/ToHex
+byte[] bytes = Checksummer.Compute(ChecksumAlgorithm.Crc32C, payload);
+
+// Service surface (honors HashingOptions.DefaultHexLetterCase via ToHex)
+var svc = HashingService.Shared;
+byte[] viaSvc = svc.Checksum(ChecksumAlgorithm.Crc32, payload);
+byte[] fileCrc = await svc.ChecksumFileAsync(ChecksumAlgorithm.Crc64, "/path/to/file.bin", ct);
+
+// Incremental over a stream
+using var cs = svc.CreateChecksumStream(File.OpenRead(path), ChecksumAlgorithm.Crc32);
+var buffer = new byte[8192];
+while (cs.Read(buffer, 0, buffer.Length) > 0) { /* ... */ }
+ulong value = cs.GetChecksumValue();
+```
+
 ### Sparse file fingerprint
 
 For directory snapshots or “probably unchanged” checks without hashing entire files:
@@ -179,10 +206,22 @@ Key lifecycle and storage are caller responsibilities.
 | **`Sha512`** | SHA-512                    |
 | **`Md5`**    | MD5 — **not for security** |
 
+### **`ChecksumAlgorithm`**
+
+| Value         | Definition                                        | Check value of `"123456789"` |
+|---------------|---------------------------------------------------|------------------------------|
+| **`Crc32`**   | CRC-32 IEEE/ISO-HDLC (zip, gzip, PNG)             | `0xCBF43926`                 |
+| **`Crc32C`**  | CRC-32C Castagnoli (iSCSI, ext4, SSE4.2)          | `0xE3069283`                 |
+| **`Crc64`**   | CRC-64/ECMA-182 (matches `System.IO.Hashing`)     | `0x6C40DF5F0B497347`         |
+| **`Adler32`** | Adler-32 (zlib / RFC 1950)                        | `0x091E01DE`                 |
+
+`Checksummer.Compute` and `IHashingService.Checksum` return **big-endian** bytes (4 for 32-bit checksums, 8 for CRC-64); `ComputeValue` / `ChecksumValue` return the raw numeric value.
+
 ## Notes
 
 - **MD5** and sparse fingerprints are for compatibility, change detection, or tooling — do not use them for passwords, signatures, or integrity where an attacker can influence
   inputs.
+- **Checksums** (CRC / Adler-32) detect accidental corruption only; they are trivially forgeable and must not be used as a security or tamper-detection boundary.
 - **`HashFileAsync`** throws if the file is missing; **`FingerprintSampledFileAsync`** returns **`null`** when the path does not exist.
 - On **netstandard2.0**, file hashing uses synchronous **`HashAlgorithm`** paths under the hood where async OS APIs are unavailable.
 
@@ -198,6 +237,7 @@ Key lifecycle and storage are caller responsibilities.
 |---------------------------------------------------------|---------|-----------------------|
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |                       |
 | `System.Memory`                                         | `4.6.3` | *netstandard2.0 only* |
+| `System.IO.Hashing`                                     | `[10,)` | *net10.0 only*        |
 
 ### Project references
 

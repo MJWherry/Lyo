@@ -149,6 +149,54 @@ public sealed class HashingService(HashingOptions? options = null) : IHashingSer
 #pragma warning restore CA5351
     }
 
+    /// <inheritdoc />
+    public byte[] Checksum(ChecksumAlgorithm algorithm, ReadOnlySpan<byte> data) => Checksummer.Compute(algorithm, data);
+
+    /// <inheritdoc />
+    public byte[] Checksum(ChecksumAlgorithm algorithm, byte[] data)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        return Checksummer.Compute(algorithm, data.AsSpan());
+    }
+
+    /// <inheritdoc />
+    public byte[] Checksum(ChecksumAlgorithm algorithm, Stream stream)
+    {
+        ArgumentHelpers.ThrowIfNull(stream);
+        return Checksummer.Compute(algorithm, stream);
+    }
+
+    /// <inheritdoc />
+    public ulong ChecksumValue(ChecksumAlgorithm algorithm, ReadOnlySpan<byte> data) => Checksummer.ComputeValue(algorithm, data);
+
+    /// <inheritdoc />
+    public async Task<byte[]> ChecksumFileAsync(ChecksumAlgorithm algorithm, string path, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        ArgumentHelpers.ThrowIfFileNotFound(path);
+        using var fs = File.OpenRead(path);
+        var size = Checksummer.OutputSize(algorithm);
+        var calculator = Internal.ChecksumCalculator.Create(algorithm);
+        var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(81920);
+        try {
+            int read;
+            while ((read = await fs.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false)) > 0)
+                calculator.Append(buffer.AsSpan(0, read));
+        }
+        finally {
+            System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return Checksummer.ToBigEndianBytes(calculator.GetCurrentValue(), size);
+    }
+
+    /// <inheritdoc />
+    public ChecksumStream CreateChecksumStream(Stream inner, ChecksumAlgorithm algorithm)
+    {
+        ArgumentHelpers.ThrowIfNull(inner);
+        return new(inner, algorithm);
+    }
+
 #if NET5_0_OR_GREATER
     private static async Task<byte[]> ComputeMd5Async(Stream stream, CancellationToken ct)
     {

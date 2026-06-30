@@ -3,6 +3,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Keystore;
 
@@ -11,22 +12,27 @@ using Lyo.Keystore;
 namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>Benchmarks for large file encryption/decryption using streaming APIs</summary>
-[BenchmarkDescription("Streaming encrypt/decrypt of 100 MB / 1 GB / 2 GB random data in 1 MB chunks with AES-GCM and ChaCha20-Poly1305; large sizes stream through temp files to bound memory. Method names encode cipher and size.")]
+[BenchmarkDescription("Streaming encrypt/decrypt of 100 MB / 1 GB / 2 GB random data in 1 MB chunks with AES-GCM (256-bit), ChaCha20-Poly1305 (256-bit) and AES-SIV-512 (512-bit key, RFC 5297); large sizes stream through temp files to bound memory. Method names encode cipher and size.")]
 public class LargeFileStreamingBenchmarks
 {
     private const string KeyId = "benchmark-key";
     private const int ChunkSize = 1024 * 1024; // 1 MB chunks
     private AesGcmEncryptionService _aesGcmService = null!;
     private ChaCha20Poly1305EncryptionService _chachaService = null!;
+    private AesSivEncryptionService _sivService = null!;
+    private byte[] _sivKey = null!; // AES-SIV-512 requires exactly 64 bytes
     private Stream _data100MB = null!;
     private Stream _data1GB = null!;
     private Stream _data2GB = null!;
     private Stream _encrypted100MBAesGcm = null!;
     private Stream _encrypted100MBChacha = null!;
+    private Stream _encrypted100MBSiv = null!;
     private Stream _encrypted1GBAesGcm = null!;
     private Stream _encrypted1GBChacha = null!;
+    private Stream _encrypted1GBSiv = null!;
     private Stream _encrypted2GBAesGcm = null!;
     private Stream _encrypted2GBChacha = null!;
+    private Stream _encrypted2GBSiv = null!;
     private LocalKeyStore _keyStore = null!;
 
     [GlobalSetup]
@@ -36,6 +42,8 @@ public class LargeFileStreamingBenchmarks
         _keyStore.UpdateKeyFromString(KeyId, "benchmark-test-key-32-bytes-long!");
         _aesGcmService = new(_keyStore);
         _chachaService = new(_keyStore);
+        _sivService = new(_keyStore, AesSivKeySizeBits.Bits512);
+        _sivKey = RandomNumberGenerator.GetBytes(64);
 
         // Create test data streams (using FileStream for very large files to avoid memory issues)
         _data100MB = CreateTestDataStream(100 * 1024 * 1024); // 100 MB
@@ -50,6 +58,9 @@ public class LargeFileStreamingBenchmarks
         _encrypted100MBChacha = new MemoryStream();
         _encrypted1GBChacha = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
         _encrypted2GBChacha = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        _encrypted100MBSiv = new MemoryStream();
+        _encrypted1GBSiv = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        _encrypted2GBSiv = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
         _data100MB.Position = 0;
         _aesGcmService.EncryptToStreamAsync(_data100MB, _encrypted100MBAesGcm, KeyId, chunkSize: ChunkSize).Wait();
         _data1GB.Position = 0;
@@ -62,6 +73,12 @@ public class LargeFileStreamingBenchmarks
         _chachaService.EncryptToStreamAsync(_data1GB, _encrypted1GBChacha, KeyId, chunkSize: ChunkSize).Wait();
         _data2GB.Position = 0;
         _chachaService.EncryptToStreamAsync(_data2GB, _encrypted2GBChacha, KeyId, chunkSize: ChunkSize).Wait();
+        _data100MB.Position = 0;
+        _sivService.EncryptToStreamAsync(_data100MB, _encrypted100MBSiv, key: _sivKey, chunkSize: ChunkSize).Wait();
+        _data1GB.Position = 0;
+        _sivService.EncryptToStreamAsync(_data1GB, _encrypted1GBSiv, key: _sivKey, chunkSize: ChunkSize).Wait();
+        _data2GB.Position = 0;
+        _sivService.EncryptToStreamAsync(_data2GB, _encrypted2GBSiv, key: _sivKey, chunkSize: ChunkSize).Wait();
     }
 
     [GlobalCleanup]
@@ -76,6 +93,9 @@ public class LargeFileStreamingBenchmarks
         _encrypted100MBChacha.Dispose();
         _encrypted1GBChacha.Dispose();
         _encrypted2GBChacha.Dispose();
+        _encrypted100MBSiv.Dispose();
+        _encrypted1GBSiv.Dispose();
+        _encrypted2GBSiv.Dispose();
     }
 
     private Stream CreateTestDataStream(long size)
@@ -239,6 +259,76 @@ public class LargeFileStreamingBenchmarks
         var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
         try {
             await _chachaService.DecryptToStreamAsync(_encrypted2GBChacha, output, KeyId);
+        }
+        finally {
+            await output.DisposeAsync();
+        }
+    }
+
+    // AES-SIV-512 Encryption Benchmarks
+    [Benchmark]
+    public async Task Encrypt_AesSiv512_100MB()
+    {
+        _data100MB.Position = 0;
+        var output = new MemoryStream();
+        await _sivService.EncryptToStreamAsync(_data100MB, output, key: _sivKey, chunkSize: ChunkSize);
+    }
+
+    [Benchmark]
+    public async Task Encrypt_AesSiv512_1GB()
+    {
+        _data1GB.Position = 0;
+        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        try {
+            await _sivService.EncryptToStreamAsync(_data1GB, output, key: _sivKey, chunkSize: ChunkSize);
+        }
+        finally {
+            await output.DisposeAsync();
+        }
+    }
+
+    [Benchmark]
+    public async Task Encrypt_AesSiv512_2GB()
+    {
+        _data2GB.Position = 0;
+        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        try {
+            await _sivService.EncryptToStreamAsync(_data2GB, output, key: _sivKey, chunkSize: ChunkSize);
+        }
+        finally {
+            await output.DisposeAsync();
+        }
+    }
+
+    // AES-SIV-512 Decryption Benchmarks
+    [Benchmark]
+    public async Task Decrypt_AesSiv512_100MB()
+    {
+        _encrypted100MBSiv.Position = 0;
+        var output = new MemoryStream();
+        await _sivService.DecryptToStreamAsync(_encrypted100MBSiv, output, key: _sivKey);
+    }
+
+    [Benchmark]
+    public async Task Decrypt_AesSiv512_1GB()
+    {
+        _encrypted1GBSiv.Position = 0;
+        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        try {
+            await _sivService.DecryptToStreamAsync(_encrypted1GBSiv, output, key: _sivKey);
+        }
+        finally {
+            await output.DisposeAsync();
+        }
+    }
+
+    [Benchmark]
+    public async Task Decrypt_AesSiv512_2GB()
+    {
+        _encrypted2GBSiv.Position = 0;
+        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
+        try {
+            await _sivService.DecryptToStreamAsync(_encrypted2GBSiv, output, key: _sivKey);
         }
         finally {
             await output.DisposeAsync();
