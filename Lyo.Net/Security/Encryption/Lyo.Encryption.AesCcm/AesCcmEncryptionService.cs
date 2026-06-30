@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
@@ -30,6 +31,13 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public int RequiredKeyBytes => Options.AesGcmKeySize.GetKeyLengthBytes();
 
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesCcm;
+
+    /// <summary>Creates a per-stream AES-CCM cipher bound to <paramref name="key" /> for the streaming chunk loop.</summary>
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
+    {
+        AesCcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
+        return new AesCcmStreamCryptor(key);
+    }
 
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
@@ -62,8 +70,6 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             SecurityUtilities.Clear(nonce);
         }
     }
-
-    protected override byte[] EncryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key) => Encrypt(buffer.AsSpan(offset, count), keyId, key);
 
     private static byte[] BuildEncryptedFormat(byte[] ciphertext, byte[] tag, byte[] nonce, string? keyId, string? keyVersion, byte formatVersion)
     {

@@ -19,7 +19,19 @@ public interface ITwoKeyEncryptionService
 {
     string FileExtension { get; }
 
-    Encoding DefaultEncoding { get; set; }
+    /// <summary>Gets the encoding used when encrypting strings (defaults to UTF-8).</summary>
+    Encoding GetEncryptionEncoding();
+
+    /// <summary>Sets the encoding used when encrypting strings.</summary>
+    /// <param name="encoding">The encoding to use for subsequent string encryption operations.</param>
+    void SetEncryptionEncoding(Encoding encoding);
+
+    /// <summary>Gets the encoding used when decrypting to strings (defaults to UTF-8).</summary>
+    Encoding GetDecryptionEncoding();
+
+    /// <summary>Sets the encoding used when decrypting to strings.</summary>
+    /// <param name="encoding">The encoding to use for subsequent string decryption operations.</param>
+    void SetDecryptionEncoding(Encoding encoding);
 
     /// <summary>Gets the encryption algorithm used for Data Encryption Key (DEK) operations.</summary>
     EncryptionAlgorithm? DekAlgorithm { get; }
@@ -64,7 +76,7 @@ public interface ITwoKeyEncryptionService
     /// <param name="text">String to encrypt. Must not be empty.</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided kek directly.</param>
     /// <param name="kek">Optional Key Encryption Key. If null and keyId is provided, uses the key from KeyStore.</param>
-    /// <param name="encoding">Optional encoding. If null, uses DefaultEncoding.</param>
+    /// <param name="encoding">Optional encoding. If null, uses the encryption encoding (see <see cref="GetEncryptionEncoding" />).</param>
     /// <returns>Encryption result containing encrypted data and encrypted DEK</returns>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when text is empty, the encoded bytes are empty (length is less than 1), or encoded bytes exceed maximum allowed size</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided, or when keyId is not found in KeyStore</exception>
@@ -74,7 +86,7 @@ public interface ITwoKeyEncryptionService
     /// <param name="encryptedData">The encrypted data</param>
     /// <param name="encryptedDataEncryptionKey">The encrypted Data Encryption Key (DEK)</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided kek directly.</param>
-    /// <param name="encoding">Optional encoding. If null, uses DefaultEncoding.</param>
+    /// <param name="encoding">Optional encoding. If null, uses the decryption encoding (see <see cref="GetDecryptionEncoding" />).</param>
     /// <param name="kek">Optional Key Encryption Key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <param name="keyVersion">Optional key version. If provided and a key store is configured, uses the key for that version.</param>
     /// <param name="salt">Optional salt used to derive the KEK. If provided, the KEK will be derived using this salt instead of the salt stored in keystore metadata.</param>

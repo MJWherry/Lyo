@@ -1,8 +1,11 @@
 using System.Security.Cryptography;
+using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.TwoKey;
+using Lyo.Encryption.XChaCha20Poly1305;
 using Lyo.Keystore;
 using Lyo.Keystore.KeyDerivation;
 
@@ -23,6 +26,9 @@ public class StreamingChunkFormatTests
     private static IEncryptionService CreateService(string algorithm, IKeyStore keyStore) => algorithm switch {
         "aesgcm" => new AesGcmEncryptionService(keyStore),
         "chacha" => new ChaCha20Poly1305EncryptionService(keyStore),
+        "aesccm" => new AesCcmEncryptionService(keyStore),
+        "aessiv" => new AesSivEncryptionService(keyStore),
+        "xchacha" => new XChaCha20Poly1305EncryptionService(keyStore),
         _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
     };
 
@@ -46,7 +52,7 @@ public class StreamingChunkFormatTests
     public static TheoryData<string, int> ServiceAndSize()
     {
         var data = new TheoryData<string, int>();
-        foreach (var algorithm in new[] { "aesgcm", "chacha" })
+        foreach (var algorithm in new[] { "aesgcm", "chacha", "aesccm", "aessiv", "xchacha" })
             foreach (var size in new[] { 0, 1, 7, 16, 32, 48, 50, 1000 })
                 data.Add(algorithm, size);
 
@@ -154,6 +160,25 @@ public class StreamingChunkFormatTests
         Assert.Equal(64, nonces.Count);
         var distinct = new HashSet<string>(nonces.Select(Convert.ToHexString));
         Assert.Equal(nonces.Count, distinct.Count);
+    }
+
+    // AES-SIV is deterministic: with a counter-only nonce (no random prefix) the same key + plaintext + chunk size yields byte-identical streaming output.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(7)]
+    [InlineData(64)]
+    [InlineData(500)]
+    public async Task AesSiv_Stream_IsDeterministic_ForSameKeyAndChunkSize(int size)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var key = DeriveKey("siv-determinism-key");
+        var plaintext = RandomNumberGenerator.GetBytes(size);
+
+        var first = await EncryptAsync(new AesSivEncryptionService(new LocalKeyStore()), plaintext, key, null, 16, ct);
+        var second = await EncryptAsync(new AesSivEncryptionService(new LocalKeyStore()), plaintext, key, null, 16, ct);
+
+        Assert.Equal(first, second);
+        Assert.Equal(plaintext, await DecryptAsync(new AesSivEncryptionService(new LocalKeyStore()), first, key, null, ct));
     }
 
     [Theory]

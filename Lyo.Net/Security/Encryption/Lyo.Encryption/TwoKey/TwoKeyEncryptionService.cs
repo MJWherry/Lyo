@@ -93,7 +93,20 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public string FileExtension => _dekEncryptionService.FileExtension + FileTypeInfo.TwoKeyEnvelopeSuffix;
 
-    public Encoding DefaultEncoding { get; set; } = Encoding.UTF8;
+    private Encoding _encryptionEncoding = Encoding.UTF8;
+    private Encoding _decryptionEncoding = Encoding.UTF8;
+
+    /// <inheritdoc />
+    public Encoding GetEncryptionEncoding() => _encryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetEncryptionEncoding(Encoding encoding) => _encryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
+
+    /// <inheritdoc />
+    public Encoding GetDecryptionEncoding() => _decryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
     /// <summary>Gets the encryption algorithm used for Data Encryption Key (DEK) operations.</summary>
     public EncryptionAlgorithm? DekAlgorithm => DetermineAlgorithm(_dekEncryptionService);
@@ -175,10 +188,10 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     /// <param name="text">String to encrypt</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided kek directly.</param>
     /// <param name="kek">Optional Key Encryption Key. If null and keyId is provided, uses the key from KeyStore.</param>
-    /// <param name="encoding">Optional encoding. If null, uses DefaultEncoding.</param>
+    /// <param name="encoding">Optional encoding. If null, uses the encryption encoding (see <see cref="GetEncryptionEncoding" />).</param>
     /// <returns>Encryption result containing encrypted data and encrypted DEK</returns>
     public TwoKeyEncryptionResult EncryptString(string text, string? keyId = null, byte[]? kek = null, Encoding? encoding = null)
-        => Encrypt((encoding ?? DefaultEncoding).GetBytes(text), keyId, kek);
+        => Encrypt((encoding ?? GetEncryptionEncoding()).GetBytes(text), keyId, kek);
 
     public byte[] Decrypt(byte[] encryptedData, byte[] encryptedDataEncryptionKey, string? keyId = null, byte[]? kek = null, string? keyVersion = null, byte[]? salt = null)
     {
@@ -222,7 +235,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     /// <param name="encryptedData">The encrypted data</param>
     /// <param name="encryptedDataEncryptionKey">The encrypted Data Encryption Key (DEK)</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided kek directly.</param>
-    /// <param name="encoding">Encoding to use for decoding the decrypted bytes. If null, uses DefaultEncoding.</param>
+    /// <param name="encoding">Encoding to use for decoding the decrypted bytes. If null, uses the decryption encoding (see <see cref="GetDecryptionEncoding" />).</param>
     /// <param name="kek">Optional Key Encryption Key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <param name="keyVersion">Optional key version. If provided and a key store is configured, uses the key for that version.</param>
     /// <param name="salt">Optional salt used to derive the KEK. If provided, the KEK will be derived using this salt instead of the salt stored in keystore metadata.</param>
@@ -235,7 +248,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         byte[]? kek = null,
         string? keyVersion = null,
         byte[]? salt = null)
-        => (encoding ?? DefaultEncoding).GetString(Decrypt(encryptedData, encryptedDataEncryptionKey, keyId, kek, keyVersion, salt));
+        => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedData, encryptedDataEncryptionKey, keyId, kek, keyVersion, salt));
 
     public async Task<TwoKeyEncryptionResult> EncryptStreamAsync(Stream input, string? keyId = null, byte[]? kek = null, int chunkSize = 1024 * 1024)
     {
@@ -449,31 +462,16 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
             // Encrypt and write data chunks using the DEK encryption service.
             var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
-            if (_dekEncryptionService is IAeadStreamCryptorFactory cryptorFactory) {
-                // Fast path: encrypt each chunk directly into pooled buffers using the compact frame
-                // [ciphertextLen:4][nonce][ciphertext][tag]. The stream processor produces each chunk's nonce
-                // (per-stream random prefix + per-chunk counter); the DEK is also fresh per stream.
-                using var cryptor = cryptorFactory.CreateCryptor(dek);
-                await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
+            // The DEK service must be a single-key AEAD service exposing a per-stream cryptor. Each chunk is encrypted
+            // directly into pooled buffers using the compact frame [ciphertextLen:4][nonce][ciphertext][tag]; the stream
+            // processor produces each chunk's nonce (per-stream random prefix + per-chunk counter) and the DEK is fresh per stream.
+            if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
+                throw new NotSupportedException(
+                    $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
             }
-            else {
-                // Fallback for DEK services that do not expose a stream cryptor: legacy self-describing per-chunk blob.
-                var buffer = BufferPool.Rent(effectiveChunkSize);
-                try {
-                    int bytesRead;
-                    while ((bytesRead = await input.ReadAsync(buffer, 0, Math.Min(effectiveChunkSize, buffer.Length), ct).ConfigureAwait(false)) > 0) {
-                        ct.ThrowIfCancellationRequested();
-                        var encryptedChunk = _dekEncryptionService.Encrypt(buffer.AsSpan(0, bytesRead), null, dek);
-                        var chunkLenBytes = new byte[4];
-                        BinaryPrimitives.WriteInt32LittleEndian(chunkLenBytes, encryptedChunk.Length);
-                        await output.WriteAsync(chunkLenBytes, 0, 4, ct).ConfigureAwait(false);
-                        await output.WriteAsync(encryptedChunk, 0, encryptedChunk.Length, ct).ConfigureAwait(false);
-                    }
-                }
-                finally {
-                    BufferPool.Return(buffer);
-                }
-            }
+
+            using var cryptor = dekBase.CreateStreamCryptor(dek);
+            await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
         }
         finally {
             // Securely clear the DEK from memory
@@ -662,13 +660,13 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                         }
 
                         try {
-                            if (_dekEncryptionService is IAeadStreamCryptorFactory cryptorFactory) {
-                                using var cryptor = cryptorFactory.CreateCryptor(dek);
-                                await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
+                            if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
+                                throw new NotSupportedException(
+                                    $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
                             }
-                            else {
-                                await DecryptChunksLegacyAsync(input, output, dek, AeadStreamProcessor.MaxEncryptedChunkSize, ct).ConfigureAwait(false);
-                            }
+
+                            using var cryptor = dekBase.CreateStreamCryptor(dek);
+                            await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
                         }
                         finally {
                             // Securely clear the DEK from memory after decryption
@@ -689,65 +687,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
         finally {
             BufferPool.Return(versionBuffer);
-        }
-    }
-
-    /// <summary>Fallback: decrypts the legacy self-describing per-chunk blob for DEK services that do not expose a stream cryptor.</summary>
-    private async Task DecryptChunksLegacyAsync(Stream input, Stream output, byte[] dek, int maxEncryptedChunkSize, CancellationToken ct)
-    {
-        var lengthBuffer = BufferPool.RentExact(4, true);
-        try {
-            while (await input.ReadAsync(lengthBuffer, 0, 4, ct).ConfigureAwait(false) == 4) {
-                ct.ThrowIfCancellationRequested();
-                var chunkLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-                if (chunkLength <= 0)
-                    throw new InvalidDataException($"Invalid chunk length: {chunkLength}. Chunk length must be positive.");
-
-                if (chunkLength > maxEncryptedChunkSize) {
-                    throw new InvalidDataException(
-                        $"Invalid chunk length: {chunkLength} bytes. Maximum allowed: {maxEncryptedChunkSize} bytes ({maxEncryptedChunkSize / (1024 * 1024)} MB).");
-                }
-
-                if (input.CanSeek) {
-                    var remainingBytes = input.Length - input.Position;
-                    if (remainingBytes < chunkLength) {
-                        throw new InvalidDataException(
-                            $"Invalid encrypted data format: chunk length ({chunkLength} bytes) exceeds remaining stream size ({remainingBytes} bytes).");
-                    }
-                }
-
-                var encryptedChunk = BufferPool.Rent(chunkLength);
-                try {
-                    var chunkBytesRead = 0;
-                    while (chunkBytesRead < chunkLength) {
-                        ct.ThrowIfCancellationRequested();
-                        var bytesRead = await input.ReadAsync(encryptedChunk, chunkBytesRead, chunkLength - chunkBytesRead, ct).ConfigureAwait(false);
-                        if (bytesRead == 0)
-                            throw new EndOfStreamException("Unexpected end of stream while reading encrypted chunk.");
-
-                        chunkBytesRead += bytesRead;
-                    }
-
-                    byte[] decryptedChunk;
-                    try {
-                        decryptedChunk = _dekEncryptionService.Decrypt(encryptedChunk, 0, chunkLength, null, dek);
-                    }
-                    catch (DecryptionFailedException) {
-                        throw;
-                    }
-                    catch (Exception ex) {
-                        throw new DecryptionFailedException("Failed to decrypt data chunk. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
-                    }
-
-                    await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, ct).ConfigureAwait(false);
-                }
-                finally {
-                    BufferPool.Return(encryptedChunk);
-                }
-            }
-        }
-        finally {
-            BufferPool.Return(lengthBuffer);
         }
     }
 
@@ -949,9 +888,9 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     /// <summary>Gets the algorithm ID from an encryption service.</summary>
     private static byte GetAlgorithmIdFromService(IEncryptionService service)
     {
-        if (service is EncryptionServiceBase baseService)
-            return (byte)baseService.AlgorithmKind;
+        if (service is IEncryptionAlgorithmProvider provider)
+            return (byte)provider.AlgorithmKind;
 
-        throw new InvalidOperationException("Cannot determine algorithm ID from encryption service. Service must inherit from EncryptionServiceBase.");
+        throw new InvalidOperationException("Cannot determine algorithm ID from encryption service. Service must implement IEncryptionAlgorithmProvider.");
     }
 }

@@ -16,10 +16,10 @@ namespace Lyo.Encryption.ChaCha20Poly1305;
 /// context (nonce, key material), so there are no shared mutable state concerns. However, if using a KeyStore that isn't thread-safe, ensure proper synchronization at the KeyStore
 /// level.
 /// </summary>
-public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize, IAeadStreamCryptorFactory
+public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     /// <summary>Creates a per-stream ChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
-    IAeadStreamCryptor IAeadStreamCryptorFactory.CreateCryptor(ReadOnlySpan<byte> key)
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
     {
         ArgumentHelpers.ThrowIfNotInRange(key.Length, 32, 32, nameof(key), $"ChaCha20-Poly1305 key must be exactly 32 bytes; got {key.Length}.");
         return new ChaCha20Poly1305StreamCryptor(key);
@@ -89,9 +89,6 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
             SecurityUtilities.Clear(nonce);
         }
     }
-
-    /// <inheritdoc />
-    protected override byte[] EncryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key) => Encrypt(buffer.AsSpan(offset, count), keyId, key);
 
     /// <inheritdoc />
     /// <remarks>

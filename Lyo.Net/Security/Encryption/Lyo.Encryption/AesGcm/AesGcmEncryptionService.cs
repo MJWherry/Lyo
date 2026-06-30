@@ -15,10 +15,10 @@ namespace Lyo.Encryption.AesGcm;
 /// high-performance encryption is needed. Thread-safe: Multiple threads can safely call methods concurrently on the same instance. Each method call uses its own cryptographic context
 /// (nonce, key material), so there are no shared mutable state concerns. However, if using a KeyStore that isn't thread-safe, ensure proper synchronization at the KeyStore level.
 /// </summary>
-public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize, IAeadStreamCryptorFactory
+public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     /// <summary>Creates a per-stream AES-GCM cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
-    IAeadStreamCryptor IAeadStreamCryptorFactory.CreateCryptor(ReadOnlySpan<byte> key)
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
     {
         AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
         return new AesGcmStreamCryptor(key);
@@ -81,9 +81,6 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             SecurityUtilities.Clear(nonce);
         }
     }
-
-    /// <inheritdoc />
-    protected override byte[] EncryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key) => Encrypt(buffer.AsSpan(offset, count), keyId, key);
 
     private static byte[] BuildEncryptedFormat(byte[] ciphertext, byte[] tag, byte[] nonce, string? keyId, string? keyVersion, byte formatVersion)
     {

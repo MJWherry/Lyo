@@ -94,7 +94,7 @@ target decrypt on the other when keys and formats match.
 | **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                    | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
 | **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                  | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
 | **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                               | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
-| **RSA** (`RsaEncryptionService`, RSA leg of `AesGcmRsaEncryptionService`)                                                   | **≥ 2048-bit** RSA modulus (enforced in `RsaEncryptionService`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
+| **RSA** (`RsaEncryptor` / `RsaDecryptor`, RSA leg of `AesGcmRsaEncryptionService`)                                          | **≥ 2048-bit** RSA modulus (enforced by `RsaEncryptor` / `RsaDecryptor`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
 
 **Interop:** File extensions, stream headers, and chunk framing are **not** TFM-specific.
 
@@ -219,21 +219,22 @@ RSA is suitable for encrypting small amounts of data or for key exchange scenari
 using Lyo.Encryption.Rsa;
 using System.Security.Cryptography;
 
-// Using PEM files
-using var service = new RsaEncryptionService(
+// Encryptor uses the public key; decryptor uses the private key.
+using var encryptor = new RsaEncryptor(
     publicPemPath: "public.pem",
+    padding: RSAEncryptionPadding.OaepSHA256
+);
+using var decryptor = new RsaDecryptor(
     privatePemPath: "private.pem",
     padding: RSAEncryptionPadding.OaepSHA256
 );
 
-var encrypted = service.Encrypt("Small data"u8.ToArray());
-var decrypted = service.Decrypt(encrypted);
+var encrypted = encryptor.Encrypt("Small data"u8.ToArray());
+var decrypted = decryptor.Decrypt(encrypted);
 
-// Using PFX certificate
-using var service2 = new RsaEncryptionService(
-    pfxPath: "certificate.pfx",
-    password: "pfx-password"
-);
+// Using a PFX certificate (contains the private key, usable for both)
+using var encryptor2 = new RsaEncryptor(pfxPath: "certificate.pfx", password: "pfx-password");
+using var decryptor2 = new RsaDecryptor(pfxPath: "certificate.pfx", password: "pfx-password");
 ```
 
 ### 4. Hybrid AES-GCM-RSA Encryption
@@ -853,9 +854,13 @@ All encryption services implement `IEncryptionService`:
 - `AesCcmEncryptionService` - AES-CCM authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesCcm`)
 - `AesSivEncryptionService` - AES-SIV deterministic authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesSiv`)
 - `XChaCha20Poly1305EncryptionService` - XChaCha20-Poly1305 with 24-byte nonces (`Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305`)
-- `RsaEncryptionService` - RSA asymmetric encryption
 - `AesGcmRsaEncryptionService` - Hybrid AES-GCM + RSA
 - `TwoKeyEncryptionService` - Envelope encryption pattern (composes any of the above as DEK and KEK)
+
+RSA is asymmetric and is split into single-responsibility types instead of implementing `IEncryptionService`:
+
+- `RsaEncryptor` - RSA encryption with a public key (`IEncryptor`)
+- `RsaDecryptor` - RSA decryption with a private key (`IDecryptor`)
 
 ### Key Management
 
@@ -974,7 +979,7 @@ updatedHeader.Write(buffer);
 - `EncryptionServiceBase` - Base class with common functionality (requires `EncryptionServiceOptions`)
 - `AesGcmEncryptionService` - AES-GCM implementation
 - `ChaCha20Poly1305EncryptionService` - ChaCha20Poly1305 implementation
-- `RsaEncryptionService` - RSA implementation
+- `RsaEncryptor` / `RsaDecryptor` - RSA implementation (encrypt with public key / decrypt with private key)
 - `AesGcmRsaEncryptionService` - Hybrid implementation
 - `TwoKeyEncryptionService` - Envelope encryption with single-pass streaming
 - `LocalKeyStore` - Development KeyStore
@@ -1081,7 +1086,8 @@ Each operation uses its own cryptographic context (nonce, key material).
 
 ```csharp
 var service = new AesGcmEncryptionService(keyStore);
-service.DefaultEncoding = Encoding.UTF32; // Change default encoding
+service.SetEncryptionEncoding(Encoding.UTF32); // Change the encoding used by EncryptString
+service.SetDecryptionEncoding(Encoding.UTF32); // Change the encoding used by DecryptString
 
 // Or specify per operation
 var encrypted = service.EncryptString("Hello 世界", encoding: Encoding.UTF32);

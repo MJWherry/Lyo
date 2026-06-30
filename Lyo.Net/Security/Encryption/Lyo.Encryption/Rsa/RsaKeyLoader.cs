@@ -48,6 +48,38 @@ public static class RsaKeyLoader
 #endif
     }
 
+    /// <summary>Loads an RSA instance containing only the public key from a SubjectPublicKeyInfo PEM file. Suitable for encrypt-only use.</summary>
+    public static RSA LoadPublicFromPem(string publicKeyPath)
+    {
+#if NET10_0_OR_GREATER
+        var rsa = RSA.Create();
+        var publicPem = File.ReadAllText(publicKeyPath);
+        rsa.ImportSubjectPublicKeyInfo(ReadPem(publicPem, "PUBLIC KEY"), out var _);
+        return rsa;
+#else
+        var rsa = RSA.Create();
+        var publicPem = File.ReadAllText(publicKeyPath);
+        ImportPublicPem(rsa, publicPem);
+        return rsa;
+#endif
+    }
+
+    /// <summary>Loads an RSA instance containing the private key from a PKCS#8 PEM file. Suitable for decrypt use.</summary>
+    public static RSA LoadPrivateFromPem(string privateKeyPath)
+    {
+#if NET10_0_OR_GREATER
+        var rsa = RSA.Create();
+        var privatePem = File.ReadAllText(privateKeyPath);
+        rsa.ImportPkcs8PrivateKey(ReadPem(privatePem, "PRIVATE KEY"), out var _);
+        return rsa;
+#else
+        var rsa = RSA.Create();
+        var privatePem = File.ReadAllText(privateKeyPath);
+        ImportPrivatePem(rsa, privatePem);
+        return rsa;
+#endif
+    }
+
 #if !NET10_0_OR_GREATER
     private static void ImportPublicPem(RSA rsa, string pem)
     {

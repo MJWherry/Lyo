@@ -44,11 +44,13 @@ public class EncryptionServiceInterfaceTests : IDisposable, IAsyncDisposable
     public void EncryptString_DecryptString_RsaService()
     {
         var (pub, priv) = GeneratePemFiles();
-        using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        IEncryptionService service = svc;
-        var enc = service.EncryptString("hello");
-        var dec = service.DecryptString(enc);
-        Assert.Equal("hello", dec);
+        using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
+        IEncryptor enc = encryptor;
+        IDecryptor dec = decryptor;
+        var encrypted = enc.EncryptString("hello");
+        var decrypted = dec.DecryptString(encrypted);
+        Assert.Equal("hello", decrypted);
     }
 
     [Fact]
@@ -89,14 +91,14 @@ public class EncryptionServiceInterfaceTests : IDisposable, IAsyncDisposable
     public async Task EncryptStreamAsync_DecryptStreamAsync_Rsa()
     {
         var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        IEncryptionService service = svc;
+        await using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        await using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         var input = new MemoryStream(Encoding.UTF8.GetBytes("This is a long stream content to encrypt"));
         var encStream = new MemoryStream();
-        await service.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
+        await encryptor.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
         encStream.Position = 0;
         var outStream = new MemoryStream();
-        await service.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
+        await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
         var result = Encoding.UTF8.GetString(outStream.ToArray());
         Assert.Equal("This is a long stream content to encrypt", result);
     }

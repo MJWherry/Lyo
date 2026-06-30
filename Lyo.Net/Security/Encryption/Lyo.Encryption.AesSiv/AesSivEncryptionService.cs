@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
@@ -41,6 +42,13 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public int RequiredKeyBytes => AesSivKeySize.GetKeyLengthBytes();
 
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesSiv;
+
+    /// <summary>Creates a per-stream AES-SIV cipher bound to <paramref name="key" /> for the deterministic streaming chunk loop.</summary>
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
+    {
+        ArgumentHelpers.ThrowIf(key.Length != RequiredKeyBytes, $"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(key));
+        return new AesSivStreamCryptor(key);
+    }
 
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
@@ -92,8 +100,6 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             SecurityUtilities.Clear(total);
         }
     }
-
-    protected override byte[] EncryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key) => Encrypt(buffer.AsSpan(offset, count), keyId, key);
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
     {

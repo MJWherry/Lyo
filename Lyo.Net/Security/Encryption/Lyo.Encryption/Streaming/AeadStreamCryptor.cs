@@ -5,9 +5,10 @@ namespace Lyo.Encryption.Streaming;
 
 /// <summary>
 /// A per-stream AEAD cipher bound to a single key. Reused across every chunk of one streaming encrypt/decrypt operation so the key schedule is built once and no intermediate
-/// arrays are allocated per chunk. Instances are NOT thread-safe: a single instance is driven sequentially by one streaming loop and disposed when the stream completes.
+/// arrays are allocated per chunk. Instances are NOT thread-safe: a single instance is driven sequentially by one streaming loop and disposed when the stream completes. Created
+/// by <see cref="EncryptionServiceBase.CreateStreamCryptor" /> on each single-key AEAD service.
 /// </summary>
-internal interface IAeadStreamCryptor : IDisposable
+public interface IAeadStreamCryptor : IDisposable
 {
     /// <summary>Nonce size in bytes (12 for AES-GCM / ChaCha20-Poly1305).</summary>
     int NonceSize { get; }
@@ -27,16 +28,6 @@ internal interface IAeadStreamCryptor : IDisposable
     /// <c>AuthenticationTagMismatchException</c>) on tag mismatch.
     /// </summary>
     void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext);
-}
-
-/// <summary>
-/// Implemented by symmetric AEAD encryption services (AES-GCM, ChaCha20-Poly1305) to expose an allocation-free per-stream cipher for the streaming chunk loops. Services that do
-/// not implement this fall back to the legacy per-chunk <see cref="IEncryptionService.Encrypt(byte[], string?, byte[])" /> framing.
-/// </summary>
-internal interface IAeadStreamCryptorFactory
-{
-    /// <summary>Creates a cipher bound to <paramref name="key" /> for the lifetime of one streaming operation. Validates the key length and throws if invalid.</summary>
-    IAeadStreamCryptor CreateCryptor(ReadOnlySpan<byte> key);
 }
 
 /// <summary>

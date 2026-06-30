@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
+using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
@@ -26,6 +27,13 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     public int RequiredKeyBytes => 32;
 
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.XChaCha20Poly1305;
+
+    /// <summary>Creates a per-stream XChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the streaming chunk loop.</summary>
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
+    {
+        ArgumentHelpers.ThrowIfNotInRange(key.Length, 32, 32, nameof(key), $"XChaCha20-Poly1305 key must be exactly 32 bytes; got {key.Length}.");
+        return new XChaCha20Poly1305StreamCryptor(key);
+    }
 
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
@@ -70,8 +78,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
             SecurityUtilities.Clear(nonce);
         }
     }
-
-    protected override byte[] EncryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key) => Encrypt(buffer.AsSpan(offset, count), keyId, key);
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
     {

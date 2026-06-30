@@ -177,28 +177,31 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     public async Task Rsa_EncryptFileAsync_DecryptFileAsync_Roundtrip()
     {
         var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        await using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        await using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         var testContent = "RSA file encryption test";
         var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
-        var decryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptFileAsync(inputFile, encryptedFile, ct: TestContext.Current.CancellationToken);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, ct: TestContext.Current.CancellationToken);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
-        Assert.Equal(testContent, decryptedContent);
+        var data = await File.ReadAllBytesAsync(inputFile, TestContext.Current.CancellationToken);
+        await encryptor.EncryptToFileAsync(data, encryptedFile, ct: TestContext.Current.CancellationToken);
+        var decrypted = await decryptor.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(testContent, Encoding.UTF8.GetString(decrypted));
     }
 
     [Fact]
     public void Rsa_EncryptToFile_DecryptToFile_Roundtrip()
     {
         var (pub, priv) = GeneratePemFiles();
-        using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         var testContent = "RSA EncryptToFile test";
         var inputFile = _tempSession.CreateFile(testContent);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
-        svc.EncryptToFile(inputFile, encryptedFile);
-        svc.DecryptToFile(encryptedFile, decryptedFile);
+        var encrypted = encryptor.Encrypt(File.ReadAllBytes(inputFile));
+        File.WriteAllBytes(encryptedFile, encrypted);
+        var decrypted = decryptor.Decrypt(File.ReadAllBytes(encryptedFile));
+        File.WriteAllBytes(decryptedFile, decrypted);
         var decryptedContent = File.ReadAllText(decryptedFile);
         Assert.Equal(testContent, decryptedContent);
     }
@@ -206,11 +209,12 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task Rsa_EncryptFileAsync_AutoAddsExtension()
     {
-        var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        var (pub, _) = GeneratePemFiles();
+        await using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
         var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken);
-        var encryptedFile = inputFile + FileTypeInfo.LyoRsa.DefaultExtension;
-        await svc.EncryptFileAsync(inputFile, ct: TestContext.Current.CancellationToken);
+        var encryptedFile = inputFile + encryptor.FileExtension;
+        var data = await File.ReadAllBytesAsync(inputFile, TestContext.Current.CancellationToken);
+        await encryptor.EncryptToFileAsync(data, encryptedFile, ct: TestContext.Current.CancellationToken);
         Assert.True(File.Exists(encryptedFile), "Encrypted file should be created with .rsa extension");
     }
 
@@ -351,11 +355,12 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     public async Task Rsa_EncryptToFileAsync_ByteArray_DecryptFromFileAsync_Roundtrip()
     {
         var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv);
+        await using var encryptor = new RsaEncryptor(pub);
+        await using var decryptor = new RsaDecryptor(priv);
         var testData = "RSA test data"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptToFileAsync(testData, encryptedFile, ct: TestContext.Current.CancellationToken);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
+        await encryptor.EncryptToFileAsync(testData, encryptedFile, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await decryptor.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -363,13 +368,14 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     public async Task Rsa_EncryptToFileAsync_Stream_DecryptFromFileAsync_Roundtrip()
     {
         var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv);
+        await using var encryptor = new RsaEncryptor(pub);
+        await using var decryptor = new RsaDecryptor(priv);
         var testContent = "RSA stream test content";
         var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, ct: TestContext.Current.CancellationToken);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
+        await encryptor.EncryptToFileAsync(inputStream, encryptedFile, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await decryptor.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
         var decryptedContent = Encoding.UTF8.GetString(decryptedData);
         Assert.Equal(testContent, decryptedContent);
     }

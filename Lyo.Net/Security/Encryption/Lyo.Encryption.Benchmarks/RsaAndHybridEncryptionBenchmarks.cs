@@ -13,7 +13,8 @@ public class RsaEncryptionBenchmarks
 {
     private string _privatePath = null!;
     private string _publicPath = null!;
-    private RsaEncryptionService _encryptionService = null!;
+    private RsaEncryptor _encryptor = null!;
+    private RsaDecryptor _decryptor = null!;
     private byte[] _encryptedLarge = null!;
     private byte[] _encryptedMedium = null!;
     private byte[] _encryptedSmall = null!;
@@ -25,31 +26,33 @@ public class RsaEncryptionBenchmarks
     public void Setup()
     {
         (_publicPath, _privatePath) = EncryptionBenchmarkSupport.CreateRsaPemFiles();
-        _encryptionService = new(_publicPath, _privatePath, padding: RSAEncryptionPadding.OaepSHA256);
+        _encryptor = new(_publicPath, padding: RSAEncryptionPadding.OaepSHA256);
+        _decryptor = new(_privatePath, padding: RSAEncryptionPadding.OaepSHA256);
         _smallData = new byte[1024];
         _mediumData = new byte[64 * 1024];
         _largeData = new byte[1024 * 1024];
         RandomNumberGenerator.Fill(_smallData);
         RandomNumberGenerator.Fill(_mediumData);
         RandomNumberGenerator.Fill(_largeData);
-        _encryptedSmall = _encryptionService.Encrypt(_smallData);
-        _encryptedMedium = _encryptionService.Encrypt(_mediumData);
-        _encryptedLarge = _encryptionService.Encrypt(_largeData);
+        _encryptedSmall = _encryptor.Encrypt(_smallData);
+        _encryptedMedium = _encryptor.Encrypt(_mediumData);
+        _encryptedLarge = _encryptor.Encrypt(_largeData);
     }
 
     [GlobalCleanup]
     public void Cleanup()
     {
-        _encryptionService.Dispose();
+        _encryptor.Dispose();
+        _decryptor.Dispose();
         EncryptionBenchmarkSupport.TryDelete(_publicPath, _privatePath);
     }
 
-    [Benchmark] public byte[] Encrypt_1KB() => _encryptionService.Encrypt(_smallData);
-    [Benchmark] public byte[] Encrypt_64KB() => _encryptionService.Encrypt(_mediumData);
-    [Benchmark] public byte[] Encrypt_1MB() => _encryptionService.Encrypt(_largeData);
-    [Benchmark] public byte[] Decrypt_1KB() => _encryptionService.Decrypt(_encryptedSmall);
-    [Benchmark] public byte[] Decrypt_64KB() => _encryptionService.Decrypt(_encryptedMedium);
-    [Benchmark] public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedLarge);
+    [Benchmark] public byte[] Encrypt_1KB() => _encryptor.Encrypt(_smallData);
+    [Benchmark] public byte[] Encrypt_64KB() => _encryptor.Encrypt(_mediumData);
+    [Benchmark] public byte[] Encrypt_1MB() => _encryptor.Encrypt(_largeData);
+    [Benchmark] public byte[] Decrypt_1KB() => _decryptor.Decrypt(_encryptedSmall);
+    [Benchmark] public byte[] Decrypt_64KB() => _decryptor.Decrypt(_encryptedMedium);
+    [Benchmark] public byte[] Decrypt_1MB() => _decryptor.Decrypt(_encryptedLarge);
 }
 
 [BenchmarkDescription("Hybrid AES-GCM + RSA envelope encrypt/decrypt of fixed 1 KB / 1 MB / 10 MB random buffers: RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload.")]

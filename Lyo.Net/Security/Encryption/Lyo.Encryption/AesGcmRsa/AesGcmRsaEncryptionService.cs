@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Encryption.AesGcm;
@@ -17,8 +18,11 @@ namespace Lyo.Encryption.AesGcmRsa;
 /// method call uses its own cryptographic context (nonce, key material), so there are no shared mutable state concerns. However, if using RSA keys that aren't thread-safe, ensure
 /// proper synchronization at the RSA key level.
 /// </summary>
-public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposable
+public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryptionAlgorithmProvider, IDisposable, IAsyncDisposable
 {
+    private const long MinInputSize = 1;
+    private const long MaxInputSize = long.MaxValue;
+
     private readonly int _aesKeyLengthBytes;
     private readonly RSAEncryptionPadding _padding;
 
@@ -42,14 +46,6 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
         string? password = null,
         RSAEncryptionPadding? padding = null,
         AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
-        : base(
-            new() {
-                CurrentFormatVersion = null, // AES-GCM-RSA doesn't use format versioning
-                MaxInputSize = long.MaxValue,
-                MinInputSize = 1,
-                FileExtension = FileTypeInfo.LyoAesGcmRsa.DefaultExtension,
-                AesGcmKeySize = aesGcmKeySize
-            })
     {
         _aesKeyLengthBytes = aesGcmKeySize.GetKeyLengthBytes();
         _padding = padding ?? RSAEncryptionPadding.OaepSHA256;
@@ -72,11 +68,29 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
             $"RSA key size must be at least 2048 bits for security. Current key size: {_rsa.KeySize} bits. Consider using 3072 or 4096 bits for new deployments.");
     }
 
+    /// <inheritdoc />
+    public string FileExtension => FileTypeInfo.LyoAesGcmRsa.DefaultExtension;
+
+    private Encoding _encryptionEncoding = Encoding.UTF8;
+    private Encoding _decryptionEncoding = Encoding.UTF8;
+
+    /// <inheritdoc />
+    public Encoding GetEncryptionEncoding() => _encryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetEncryptionEncoding(Encoding encoding) => _encryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
+
+    /// <inheritdoc />
+    public Encoding GetDecryptionEncoding() => _decryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
+
+    /// <inheritdoc />
+    public EncryptionAlgorithm AlgorithmKind => EncryptionAlgorithm.AesGcmRsa;
+
     /// <summary> Disposes of the RSA instance and releases all resources. </summary>
     public void Dispose() => Dispose(true);
-
-    /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
-    protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesGcmRsa;
 
     /// <summary>
     /// Encrypts data using AES-GCM with a randomly generated key (or provided key) that is encrypted with RSA. Performance: Encrypts approximately 100-500 MB/s on typical
@@ -91,9 +105,9 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
     /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is
     /// not 32 bytes
     /// </exception>
-    public override byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null)
+    public byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(plaintext, Options.MinInputSize, Options.MaxInputSize);
+        ArgumentHelpers.ThrowIfNotInRange(plaintext, MinInputSize, MaxInputSize);
         // AES-GCM-RSA uses RSA keys from constructor, not keyId
         ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA encryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
 
@@ -152,7 +166,7 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
     /// Thrown when decryption fails due to wrong RSA key (for embedded key), wrong AES key (for external key), corrupted data, authentication
     /// failure, or tampered data
     /// </exception>
-    public override byte[] Decrypt(byte[] encryptedData, string? keyId = null, byte[]? key = null)
+    public byte[] Decrypt(byte[] encryptedData, string? keyId = null, byte[]? key = null)
     {
         // AES-GCM-RSA uses RSA keys from constructor, not keyId
         ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA decryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
@@ -160,7 +174,7 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
         using var br = new BinaryReader(ms);
         // Minimum size: hasEmbeddedKey flag (1) + at least some data
         const int minEncryptedSize = 1 + 4 + AesGcmHelper.NonceSize + AesGcmHelper.TagSize;
-        ArgumentHelpers.ThrowIfNotInRange(encryptedData, minEncryptedSize, Options.MaxInputSize);
+        ArgumentHelpers.ThrowIfNotInRange(encryptedData, minEncryptedSize, MaxInputSize);
         var hasEmbeddedKey = br.ReadByte() == 1;
         byte[]? aesKey = null;
         byte[]? nonce = null;
@@ -264,6 +278,85 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
                 SecurityUtilities.Clear(nonce);
         }
     }
+
+    /// <inheritdoc />
+    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
+
+    /// <inheritdoc />
+    public byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
+        => Encrypt((encoding ?? GetEncryptionEncoding()).GetBytes(text), keyId, key);
+
+    /// <inheritdoc />
+    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
+    {
+        var chunk = new byte[count];
+        Array.Copy(buffer, offset, chunk, 0, count);
+        return Decrypt(chunk, keyId, key);
+    }
+
+    /// <inheritdoc />
+    public string DecryptString(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
+        => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedBytes, keyId, key));
+
+    /// <inheritdoc />
+    public Task EncryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(output);
+        OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
+        OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        return RsaStreamCodec.EncryptAsync(input, output, (byte)EncryptionAlgorithm.AesGcmRsa, (byte)StreamFormatVersion.V1, chunkSize, EncryptChunkTransform(keyId, key), ct);
+    }
+
+    /// <inheritdoc />
+    public async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
+        using var inputStream = new MemoryStream(data);
+        using var outputStream = File.Create(outputPath);
+        await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task EncryptToFileAsync(Stream input, string outputPath, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
+        ArgumentHelpers.ThrowIfNegative(chunkSize);
+        using var outputStream = File.Create(outputPath);
+        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(output);
+        OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
+        OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        return RsaStreamCodec.DecryptAsync(input, output, (byte)EncryptionAlgorithm.AesGcmRsa, (byte)StreamFormatVersion.V1, DecryptChunkTransform(keyId, key), ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
+        using var inputStream = File.OpenRead(inputPath);
+        using var outputStream = new MemoryStream();
+        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
+        return outputStream.ToArray();
+    }
+
+    private Func<byte[], int, int, byte[]> EncryptChunkTransform(string? keyId, byte[]? key)
+        => (buffer, offset, count) => {
+            var chunk = new byte[count];
+            Array.Copy(buffer, offset, chunk, 0, count);
+            return Encrypt(chunk, keyId, key);
+        };
+
+    private Func<byte[], int, int, byte[]> DecryptChunkTransform(string? keyId, byte[]? key)
+        => (buffer, offset, count) => Decrypt(buffer, offset, count, keyId, key);
 
     /// <summary> Asynchronously disposes of the RSA instance and releases all resources. </summary>
     public ValueTask DisposeAsync()

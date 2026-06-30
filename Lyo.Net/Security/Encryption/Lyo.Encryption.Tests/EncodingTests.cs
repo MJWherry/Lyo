@@ -95,13 +95,14 @@ public class EncodingTests : IDisposable, IAsyncDisposable
     {
         var encoding = Encoding.GetEncoding(encodingName);
         var (pub, priv) = GeneratePemFiles();
-        using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
                 continue;
 
-            var enc = svc.EncryptString(testString, encoding: encoding);
-            var dec = svc.DecryptString(enc, encoding: encoding);
+            var enc = encryptor.EncryptString(testString, encoding: encoding);
+            var dec = decryptor.DecryptString(enc, encoding: encoding);
             Assert.Equal(testString, dec);
         }
     }
@@ -171,7 +172,8 @@ public class EncodingTests : IDisposable, IAsyncDisposable
     {
         var encoding = Encoding.GetEncoding(encodingName);
         var (pub, priv) = GeneratePemFiles();
-        await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        await using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        await using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
                 continue;
@@ -179,10 +181,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
+            await encryptor.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
+            await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }
@@ -195,7 +197,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "test-key");
         var svc = new AesGcmEncryptionService(keyStore);
-        Assert.Equal(Encoding.UTF8, svc.DefaultEncoding);
+        Assert.Equal(Encoding.UTF8, svc.GetEncryptionEncoding());
     }
 
     [Fact]
@@ -205,15 +207,15 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "test-key");
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
-        Assert.Equal(Encoding.UTF8, svc.DefaultEncoding);
+        Assert.Equal(Encoding.UTF8, svc.GetEncryptionEncoding());
     }
 
     [Fact]
     public void Rsa_DefaultEncoding_IsUtf8()
     {
-        var (pub, priv) = GeneratePemFiles();
-        using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        Assert.Equal(Encoding.UTF8, svc.DefaultEncoding);
+        var (pub, _) = GeneratePemFiles();
+        using var svc = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        Assert.Equal(Encoding.UTF8, svc.GetEncryptionEncoding());
     }
 
     [Fact]
@@ -246,10 +248,11 @@ public class EncodingTests : IDisposable, IAsyncDisposable
     public void Rsa_EncryptString_UsesDefaultEncoding_WhenNotSpecified()
     {
         var (pub, priv) = GeneratePemFiles();
-        using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
+        using var encryptor = new RsaEncryptor(pub, padding: RSAEncryptionPadding.OaepSHA256);
+        using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         var testString = "Hello 世界";
-        var enc = svc.EncryptString(testString);
-        var dec = svc.DecryptString(enc);
+        var enc = encryptor.EncryptString(testString);
+        var dec = decryptor.DecryptString(enc);
         Assert.Equal(testString, dec);
     }
 

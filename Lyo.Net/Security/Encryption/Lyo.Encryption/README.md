@@ -19,7 +19,7 @@ the umbrella guide; this file focuses on **this assembly’s API surface**.
 - **Key sources** – Optional **`byte[] key`** / **`byte[] kek`** or **`IKeyStore`** lookup by **`keyId`** (and version for two-key decrypt / rotation)
 - **Streaming** – **`EncryptToStreamAsync`** / **`DecryptToStreamAsync`** chunk large payloads without materializing the whole ciphertext in memory (framed format on the wire)
 - **Files** – **`EncryptToFileAsync`**, **`DecryptFromFileAsync`**, and stream-to-file variants
-- **Strings** – **`EncryptString`** / **`DecryptString`** using **`DefaultEncoding`** (UTF-8 by default on **`EncryptionServiceBase`**)
+- **Strings** – **`EncryptString`** / **`DecryptString`** using the per-direction encoding (**`GetEncryptionEncoding`** / **`GetDecryptionEncoding`**, UTF-8 by default; set via **`SetEncryptionEncoding`** / **`SetDecryptionEncoding`**)
 - **DI helpers** – **`EncryptionServiceExtensions`**: RSA / AES-GCM+RSA registration, keyed **`ITwoKeyEncryptionService`** + keyed **`IKeyStore`**
 - **Discovery** – **`EncryptionAlgorithm`**, **`EncryptionAlgorithmDiscovery`**, algorithm metadata on **`EncryptionServiceBase.AlgorithmKind`**
 - **Non-throwing workflows** – **`EncryptionResult`** / **`DecryptionResult`** in **`Lyo.Encryption.Models`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
@@ -34,7 +34,7 @@ the umbrella guide; this file focuses on **this assembly’s API surface**.
 | **`XChaCha20Poly1305EncryptionService`**  | XChaCha20-Poly1305 (extended nonce)                  |
 | **`AesCcmEncryptionService`**             | AES-CCM                                              |
 | **`AesSivEncryptionService`**             | AES-SIV (misuse-resistant synthetic IV)              |
-| **`RsaEncryptionService`**                | RSA encrypt/decrypt (chunked for large plaintext)    |
+| **`RsaEncryptor`** / **`RsaDecryptor`**   | RSA encrypt (public key) / decrypt (private key), chunked for large plaintext |
 | **`AesGcmRsaEncryptionService`**          | Hybrid: RSA wraps AES key, AES-GCM protects payload  |
 | **`TwoKeyEncryptionService<TKek, TDek>`** | Envelope: random DEK per operation, KEK encrypts DEK |
 
@@ -178,7 +178,7 @@ services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath
 - **`Lyo.Encryption.TwoKey.TwoKeyDekValidation`** – validates `DekAlgorithm` + DEK key-material byte length for all supported symmetric algorithms; used on decrypt to reject
   mismatched envelopes before any cryptographic call.
 - **`Lyo.Encryption.RsaKeyLoader`** – PEM/PFX RSA key loading helper. Uses BouncyCastle on `netstandard2.0` and `RSA.ImportFromPem` / `X509Certificate2` on `net10.0`. Invoked
-  transitively by `RsaEncryptionService` / `AesGcmRsaEncryptionService` constructors but exposed for callers that want to share a loaded key across services.
+  transitively by `RsaEncryptor` / `RsaDecryptor` / `AesGcmRsaEncryptionService` constructors but exposed for callers that want to share a loaded key across services.
 - **`Lyo.Encryption.ISymmetricKeyMaterialSize`** – implemented by every symmetric `IEncryptionService` to advertise its accepted key-material sizes in bytes (e.g. AES-GCM =
   `{16, 24, 32}`, XChaCha20-Poly1305 = `{32}`). `TwoKeyDekValidation` and key-store validators rely on this.
 - **`Encrypt` / `Decrypt` `ReadOnlySpan<byte>` overloads** on `IEncryptionService` — zero-copy entry points for callers that already hold a contiguous buffer; the legacy `byte[]`

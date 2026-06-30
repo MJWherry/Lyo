@@ -224,10 +224,44 @@ public static class EncryptionServiceExtensions
                 });
         }
 
-        /// <summary>Adds RSA encryption service to the service collection.</summary>
+        /// <summary>Adds an RSA encryptor (public key) to the service collection.</summary>
         /// <param name="publicPemPath">Path to the RSA public key PEM file</param>
+        /// <param name="pfxPath">Path to the PFX certificate file (alternative to PEM)</param>
+        /// <param name="password">Password for the PFX certificate</param>
+        /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
+        /// <param name="maxChunkSize">Maximum chunk size for encryption. If null, automatically calculated.</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddRsaEncryptor(
+            string? publicPemPath = null,
+            string? pfxPath = null,
+            string? password = null,
+            RSAEncryptionPadding? padding = null,
+            int? maxChunkSize = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            return services.AddScoped(_ => new RsaEncryptor(publicPemPath, pfxPath, password, padding, maxChunkSize));
+        }
+
+        /// <summary>Adds an RSA decryptor (private key) to the service collection.</summary>
         /// <param name="privatePemPath">Path to the RSA private key PEM file</param>
         /// <param name="pfxPath">Path to the PFX certificate file (alternative to PEM)</param>
+        /// <param name="password">Password for the PFX certificate</param>
+        /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddRsaDecryptor(
+            string? privatePemPath = null,
+            string? pfxPath = null,
+            string? password = null,
+            RSAEncryptionPadding? padding = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            return services.AddScoped(_ => new RsaDecryptor(privatePemPath, pfxPath, password, padding));
+        }
+
+        /// <summary>Adds both an RSA encryptor (public key) and decryptor (private key) to the service collection.</summary>
+        /// <param name="publicPemPath">Path to the RSA public key PEM file</param>
+        /// <param name="privatePemPath">Path to the RSA private key PEM file</param>
+        /// <param name="pfxPath">Path to the PFX certificate file (alternative to PEM, used for both encryptor and decryptor)</param>
         /// <param name="password">Password for the PFX certificate</param>
         /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
         /// <param name="maxChunkSize">Maximum chunk size for encryption. If null, automatically calculated.</param>
@@ -241,7 +275,9 @@ public static class EncryptionServiceExtensions
             int? maxChunkSize = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
-            return services.AddScoped(_ => new RsaEncryptionService(publicPemPath, privatePemPath, pfxPath, password, padding, maxChunkSize));
+            services.AddRsaEncryptor(publicPemPath, pfxPath, password, padding, maxChunkSize);
+            services.AddRsaDecryptor(privatePemPath, pfxPath, password, padding);
+            return services;
         }
 
         /// <summary>Adds AES-GCM + RSA hybrid encryption service to the service collection.</summary>
