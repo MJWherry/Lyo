@@ -6,8 +6,8 @@ namespace Lyo.Encryption.Rsa;
 
 /// <summary>
 /// Reproduces the legacy per-chunk stream framing (<c>[formatVersion:1][algorithmId:1][reserved:2]</c> followed by length-prefixed ciphertext chunks) used by the RSA
-/// encrypt/decrypt services so the on-disk <c>.rsa</c> stream/file format stays byte-compatible after the split out of <see cref="EncryptionServiceBase" />. The per-chunk
-/// transform is supplied by the caller (RSA encrypt/decrypt of a buffer slice).
+/// encrypt/decrypt services so the on-disk <c>.rsa</c> stream/file format stays byte-compatible after the split out of <see cref="EncryptionServiceBase" />. The per-chunk transform
+/// is supplied by the caller (RSA encrypt/decrypt of a buffer slice).
 /// </summary>
 internal static class RsaStreamCodec
 {
@@ -44,13 +44,7 @@ internal static class RsaStreamCodec
         }
     }
 
-    public static async Task DecryptAsync(
-        Stream input,
-        Stream output,
-        byte algorithmId,
-        byte formatVersion,
-        Func<byte[], int, int, byte[]> decryptChunk,
-        CancellationToken ct)
+    public static async Task DecryptAsync(Stream input, Stream output, byte algorithmId, byte formatVersion, Func<byte[], int, int, byte[]> decryptChunk, CancellationToken ct)
     {
         var headerBuffer = BufferPool.RentExact(4, true);
         try {
@@ -76,7 +70,6 @@ internal static class RsaStreamCodec
                 while (true) {
                     ct.ThrowIfCancellationRequested();
                     var chunkLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-
                     if (chunkLength <= 0)
                         throw new InvalidDataException($"Invalid chunk length: {chunkLength}. Chunk length must be positive.");
 

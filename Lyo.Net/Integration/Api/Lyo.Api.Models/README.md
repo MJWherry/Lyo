@@ -8,7 +8,7 @@ projection DTOs).
 | Area                             | Types (selected)                                                                                                                | Notes                                                                    |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | Upsert / update / patch / delete | **`UpsertRequest<T>`**, **`UpdateRequest<T>`**, **`PatchRequest`**, **`DeleteRequest`**, matching fluent **`*Builder` classes** | Mirrors generic CRUD endpoints (server validates path + body alignment). |
-| Exports                          | **`ExportRequest`**, **`ExportColumnMapping`**                                                                                 | Drive file generation endpoints.                                         |
+| Exports                          | **`ExportRequest`**, **`ExportColumnMapping`**                                                                                  | Drive file generation endpoints.                                         |
 
 Builders follow **method-chaining** ergonomics so gateways/tests avoid object initializer noise.
 

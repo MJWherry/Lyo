@@ -87,11 +87,7 @@ public sealed class QueryCacheTagBuilderTests
     [Fact]
     public void BuildProjectionCacheKey_LongComputedTemplate_UsesHashedSegment()
     {
-        var request = new ProjectionQueryReq {
-            Select = ["Name"],
-            ComputedFields = [new("Label", new string('x', 3000))]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new("Label", new('x', 3000))] };
         var key = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(request);
         Assert.Contains(":computed=sha256:", key, StringComparison.Ordinal);
     }
@@ -101,7 +97,6 @@ public sealed class QueryCacheTagBuilderTests
     {
         var a = new ProjectionQueryReq { Select = [" Name ", "id"] };
         var b = new ProjectionQueryReq { Select = ["ID", "name"] };
-
         var keyA = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(a);
         var keyB = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(b);
         Assert.Equal(keyA, keyB);
@@ -112,11 +107,8 @@ public sealed class QueryCacheTagBuilderTests
     {
         var sortA = new[] { new SortBy("Name", SortDirection.Asc), new SortBy("Id", SortDirection.Desc) };
         var sortB = new[] { new SortBy("Name", SortDirection.Asc, 0), new SortBy("Id", SortDirection.Desc, 1) };
-        var keyA = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(
-            null, 0, 100, [], sortA, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
-        var keyB = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(
-            null, 0, 100, [], sortB, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
-
+        var keyA = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(null, 0, 100, [], sortA, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
+        var keyB = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(null, 0, 100, [], sortB, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
         Assert.Equal(keyA, keyB);
     }
 }

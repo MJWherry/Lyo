@@ -7,7 +7,8 @@ using Lyo.Benchmarking;
 namespace Lyo.Hashing.Benchmarks;
 
 /// <summary>Benchmarks for large file hashing/checksumming using the streaming APIs.</summary>
-[BenchmarkDescription("Streaming SHA-256 / SHA-512 digests and CRC-32 / CRC-64 checksums of 100 MB / 1 GB / 2 GB random data; large sizes stream through temp files to bound memory. Method names encode algorithm and size.")]
+[BenchmarkDescription(
+    "Streaming SHA-256 / SHA-512 digests and CRC-32 / CRC-64 checksums of 100 MB / 1 GB / 2 GB random data; large sizes stream through temp files to bound memory. Method names encode algorithm and size.")]
 public class LargeFileStreamingBenchmarks
 {
     private readonly IHashingService _hashing = HashingService.Shared;

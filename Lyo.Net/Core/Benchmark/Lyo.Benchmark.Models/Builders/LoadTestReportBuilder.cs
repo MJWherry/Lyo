@@ -1,19 +1,14 @@
-using System;
-
 namespace Lyo.Benchmark.Models.Builders;
 
 /// <summary>
-/// Fluent builder for <see cref="LoadTestReport" />. Used by the k6 normalizer (and tests) to construct load-test
-/// reports against the same schema as the micro-benchmark path.
+/// Fluent builder for <see cref="LoadTestReport" />. Used by the k6 normalizer (and tests) to construct load-test reports against the same schema as the micro-benchmark
+/// path.
 /// </summary>
 public sealed class LoadTestReportBuilder
 {
     private readonly LoadTestReport _report;
 
-    private LoadTestReportBuilder(string name, string title)
-    {
-        _report = new LoadTestReport { Name = name, Title = title, GeneratedAt = DateTimeOffset.UtcNow };
-    }
+    private LoadTestReportBuilder(string name, string title) => _report = new() { Name = name, Title = title, GeneratedAt = DateTimeOffset.UtcNow };
 
     /// <summary>Starts a builder for a load-test report with the given machine name and display title.</summary>
     public static LoadTestReportBuilder Create(string name, string title) => new(name, title);
@@ -38,6 +33,7 @@ public sealed class LoadTestReportBuilder
         _report.RunId = runId;
         if (generatedAt.HasValue)
             _report.GeneratedAt = generatedAt.Value;
+
         return this;
     }
 
@@ -53,6 +49,7 @@ public sealed class LoadTestReportBuilder
     {
         if (!string.IsNullOrWhiteSpace(note))
             _report.Notes.Add(note);
+
         return this;
     }
 

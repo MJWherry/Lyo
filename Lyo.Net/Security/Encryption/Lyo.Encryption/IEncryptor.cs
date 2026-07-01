@@ -1,5 +1,4 @@
 using System.Text;
-using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Encryption;

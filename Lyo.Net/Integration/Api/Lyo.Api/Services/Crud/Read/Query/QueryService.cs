@@ -393,14 +393,14 @@ public class QueryService<TContext>(
                     var state = keysProvided
                         ? await pathExecutor.ExecuteKeyConstrainedPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, ct2).ConfigureAwait(false)
                         : await pathExecutor.ExecuteNonKeyPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, ct2).ConfigureAwait(false);
-                    TrackQueryPhase<TDbModel>("query", "path", pathStart);
 
+                    TrackQueryPhase<TDbModel>("query", "path", pathStart);
                     var pagingStart = Stopwatch.GetTimestamp();
                     var (queryResults, total, hasMore) = await pagingHelper.ApplyPagingAndMaterializeAsync(
                             context, state, queryRequest, defaultOrder, defaultSortDirection, keysProvided, filterService, ct2)
                         .ConfigureAwait(false);
-                    TrackQueryPhase<TDbModel>("query", "paging", pagingStart);
 
+                    TrackQueryPhase<TDbModel>("query", "paging", pagingStart);
                     var includeStart = Stopwatch.GetTimestamp();
                     await ApplyPostLoadIncludesAsync(context, queryResults, queryRequest, keysProvided, state.IsInMemoryResults, ct2).ConfigureAwait(false);
                     TrackQueryPhase<TDbModel>("query", "post_include_hydrate", includeStart);
@@ -522,18 +522,9 @@ public class QueryService<TContext>(
             var sqlProjection = sqlBuild.Projection;
             var sqlConversionPlan = sqlBuild.ConversionPlan;
             var zipSiblingSelections = queryRequest.Options.ZipSiblingCollectionSelections;
-            var sqlBypassReason = keysProvided
-                ? "keys"
-                : hasSubQuery
-                    ? "subquery"
-                    : useMatchedOnly
-                        ? "matched_only"
-                        : sqlProjection is null
-                            ? "not_translatable"
-                            : null;
-            if (sqlBypassReason is not null) {
+            var sqlBypassReason = keysProvided ? "keys" : hasSubQuery ? "subquery" : useMatchedOnly ? "matched_only" : sqlProjection is null ? "not_translatable" : null;
+            if (sqlBypassReason is not null)
                 Metrics.IncrementCounter("api.queryproject.sql_path", 1, [("entity", typeof(TDbModel).Name), ("result", "bypass"), ("reason", sqlBypassReason)]);
-            }
 
             if (!keysProvided && !hasSubQuery && !useMatchedOnly && sqlProjection != null) {
                 var cacheKeyBase = queryRequest.WhereClause != null
@@ -550,8 +541,8 @@ public class QueryService<TContext>(
                         var sqlExecuteStart = Stopwatch.GetTimestamp();
                         var r = await ExecuteSqlProjectedQueryAsync(
                             queryRequest, defaultOrder, defaultSortDirection, projectedFieldSpecs, sqlProjection, sqlConversionPlan, sharedIncludeValidationAndSqlContext, ct2);
-                        TrackQueryPhase<TDbModel>("queryproject", "sql_execute", sqlExecuteStart);
 
+                        TrackQueryPhase<TDbModel>("queryproject", "sql_execute", sqlExecuteStart);
                         if (r == null)
                             throw new SqlProjectionFallbackException();
 
@@ -782,9 +773,8 @@ public class QueryService<TContext>(
         CancellationToken ct)
         where TDbModel : class
     {
-        if (isInMemoryResults && !keysProvided && queryRequest.Include.Count > 0) {
+        if (isInMemoryResults && !keysProvided && queryRequest.Include.Count > 0)
             _ = await pagingHelper.BatchHydrateIncludesAsync(context, queryResults.ToList(), queryRequest.Include, ct).ConfigureAwait(false);
-        }
     }
 
     private void ApplyMatchedOnlyFilterIfNeeded<TDbModel>(QueryReq queryRequest, TDbModel[] queryResults)
@@ -833,15 +823,11 @@ public class QueryService<TContext>(
     {
         var errors = new List<ApiError>();
         if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount) {
-            errors.Add(new(
-                ApiErrorCodes.InvalidQuery,
-                $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
         }
 
         if (queryRequest.Keys.Count > queryOptions.MaxKeySetCount) {
-            errors.Add(new(
-                ApiErrorCodes.InvalidQuery,
-                $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
         }
 
         errors.AddRange(ValidateIncludePageSizeGuardrail(queryRequest.Amount, queryRequest.Include.Count));
@@ -858,10 +844,7 @@ public class QueryService<TContext>(
         if (effectiveAmount <= queryOptions.MaxIncludePageSize)
             return errors;
 
-        errors.Add(
-            new(
-                ApiErrorCodes.InvalidQuery,
-                $"Page size ({effectiveAmount}) exceeds maximum allowed for include queries ({queryOptions.MaxIncludePageSize})."));
+        errors.Add(new(ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds maximum allowed for include queries ({queryOptions.MaxIncludePageSize})."));
         return errors;
     }
 
@@ -869,22 +852,20 @@ public class QueryService<TContext>(
     {
         var errors = new List<ApiError>();
         if (queryRequest.Select.Count > queryOptions.MaxSelectFieldCount) {
-            errors.Add(new(
-                ApiErrorCodes.InvalidQuery,
-                $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
         }
 
         if (queryRequest.ComputedFields.Count > queryOptions.MaxComputedFieldCount) {
-            errors.Add(new(
-                ApiErrorCodes.InvalidQuery,
-                $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
+            errors.Add(
+                new(ApiErrorCodes.InvalidQuery, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
         }
 
         foreach (var computedField in queryRequest.ComputedFields) {
             if (computedField.Template?.Length > queryOptions.MaxComputedTemplateLength) {
-                errors.Add(new(
-                    ApiErrorCodes.InvalidQuery,
-                    $"Computed field '{computedField.Name}' template length ({computedField.Template.Length}) exceeds maximum allowed ({queryOptions.MaxComputedTemplateLength})."));
+                errors.Add(
+                    new(
+                        ApiErrorCodes.InvalidQuery,
+                        $"Computed field '{computedField.Name}' template length ({computedField.Template.Length}) exceeds maximum allowed ({queryOptions.MaxComputedTemplateLength})."));
             }
         }
 

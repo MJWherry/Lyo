@@ -32,6 +32,7 @@ public sealed class DeflateCompressorFactory : ICompressorFactory
 public sealed class BrotliCompressorFactory : ICompressorFactory
 {
     public CompressionAlgorithm Algorithm => CompressionAlgorithm.Brotli;
+
     public ICompressor Create(CompressionLevel level) => new BrotliCompressor(CompressorFactoryConstants.CompressorName, level);
 }
 
@@ -39,6 +40,7 @@ public sealed class BrotliCompressorFactory : ICompressorFactory
 public sealed class ZLibCompressorFactory : ICompressorFactory
 {
     public CompressionAlgorithm Algorithm => CompressionAlgorithm.ZLib;
+
     public ICompressor Create(CompressionLevel level) => new ZLibCompressor(CompressorFactoryConstants.CompressorName, level);
 }
 #endif

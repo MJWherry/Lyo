@@ -1,7 +1,9 @@
+using System.Buffers;
 using System.Security.Cryptography;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Hashing.Files;
+using Lyo.Hashing.Internal;
 
 namespace Lyo.Hashing;
 
@@ -176,15 +178,15 @@ public sealed class HashingService(HashingOptions? options = null) : IHashingSer
         ArgumentHelpers.ThrowIfFileNotFound(path);
         using var fs = File.OpenRead(path);
         var size = Checksummer.OutputSize(algorithm);
-        var calculator = Internal.ChecksumCalculator.Create(algorithm);
-        var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(81920);
+        var calculator = ChecksumCalculator.Create(algorithm);
+        var buffer = ArrayPool<byte>.Shared.Rent(81920);
         try {
             int read;
             while ((read = await fs.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false)) > 0)
                 calculator.Append(buffer.AsSpan(0, read));
         }
         finally {
-            System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         return Checksummer.ToBigEndianBytes(calculator.GetCurrentValue(), size);

@@ -99,9 +99,7 @@ public class QueryServicePostgresTests
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
-        Assert.Contains(
-            result.Error!.Errors,
-            e => e.Description.Contains("Include path count", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Include path count", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -110,18 +108,11 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("IncludePageSizeGuardrail");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
-            Start = 0,
-            Amount = 301,
-            Include = ["JobRuns"]
-        };
-
+        var request = new QueryReq { Start = 0, Amount = 301, Include = ["JobRuns"] };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
-        Assert.Contains(
-            result.Error!.Errors,
-            e => e.Description.Contains("include queries", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("include queries", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -134,16 +125,14 @@ public class QueryServicePostgresTests
             Start = 0,
             Amount = 10,
             Select = ["Name"],
-            ComputedFields = [new("TooLong", new string('x', 2049))],
+            ComputedFields = [new("TooLong", new('x', 2049))],
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
         var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
-        Assert.Contains(
-            result.Error!.Errors,
-            e => e.Description.Contains("template length", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("template length", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

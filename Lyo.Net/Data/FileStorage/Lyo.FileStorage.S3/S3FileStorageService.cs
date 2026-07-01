@@ -45,8 +45,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         IFileMalwareScanner? malwareScanner = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService),
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<S3FileStorageService>(), compressionService,
-            twoKeyEncryptionService, metrics, operationContextAccessor, auditHandlers, contentPolicy, malwareScanner)
+            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<S3FileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
+            auditHandlers, contentPolicy, malwareScanner)
     {
         _options = options;
         if (s3Client != null) {

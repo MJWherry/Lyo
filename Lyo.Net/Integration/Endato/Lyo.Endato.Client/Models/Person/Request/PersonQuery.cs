@@ -59,7 +59,7 @@ public class PersonQuery
     /// <summary>Last-name character offset for fuzzy matching.</summary>
     public int? LastNameCharOffset { get; set; }
 
-    /// <summary>Expected date-of-birth format for <see cref="DateOfBirth"/>.</summary>
+    /// <summary>Expected date-of-birth format for <see cref="DateOfBirth" />.</summary>
     public string? DobFormat { get; set; }
 
     /// <summary>Maximum age in years for returned addresses.</summary>

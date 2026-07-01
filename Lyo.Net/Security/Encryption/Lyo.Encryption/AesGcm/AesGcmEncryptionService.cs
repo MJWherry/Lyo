@@ -17,13 +17,6 @@ namespace Lyo.Encryption.AesGcm;
 /// </summary>
 public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
-    /// <summary>Creates a per-stream AES-GCM cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
-    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
-    {
-        AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
-        return new AesGcmStreamCryptor(key);
-    }
-
     /// <summary>Initializes a new instance with the specified AES-GCM key size.</summary>
     /// <param name="keyStore">The key store to use for retrieving encryption keys</param>
     /// <param name="aesGcmKeySize">AES key size (128, 192, or 256 bits).</param>
@@ -46,6 +39,13 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
     /// <inheritdoc cref="ISymmetricKeyMaterialSize.RequiredKeyBytes" />
     public int RequiredKeyBytes => Options.AesGcmKeySize.GetKeyLengthBytes();
+
+    /// <summary>Creates a per-stream AES-GCM cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
+    {
+        AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
+        return new AesGcmStreamCryptor(key);
+    }
 
     /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesGcm;
@@ -72,7 +72,6 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
-
         try {
             var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
@@ -126,7 +125,6 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
-
         try {
             var (ciphertext, tag) = AesGcmHelper.Encrypt(bytes, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);

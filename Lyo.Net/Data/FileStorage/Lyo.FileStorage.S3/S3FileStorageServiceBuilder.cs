@@ -6,7 +6,6 @@ using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
-using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.S3.Multipart;
@@ -239,8 +238,8 @@ public sealed class S3FileStorageServiceBuilder
                 var contentPolicy = provider.GetService<IFileContentPolicy>();
                 var malwareScanner = provider.GetService<IFileMalwareScanner>();
                 return new(
-                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics,
-                    operationContextAccessor, auditHandlers, contentPolicy, malwareScanner);
+                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics, operationContextAccessor, auditHandlers, contentPolicy,
+                    malwareScanner);
             });
 
         _services.AddKeyedScoped<IFileStorageService>(

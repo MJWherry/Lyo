@@ -9,8 +9,8 @@ namespace Lyo.Encryption.Rsa;
 
 /// <summary>
 /// Encrypts data using RSA with a public key. RSA can only encrypt small amounts of data (typically up to key size minus padding overhead), so data is automatically chunked.
-/// Suitable for encrypting small data directly or for key exchange scenarios. Pairs with <see cref="RsaDecryptor" /> for the decrypt side. Thread-safe: each method call uses its
-/// own cryptographic context, so there are no shared mutable state concerns.
+/// Suitable for encrypting small data directly or for key exchange scenarios. Pairs with <see cref="RsaDecryptor" /> for the decrypt side. Thread-safe: each method call uses its own
+/// cryptographic context, so there are no shared mutable state concerns.
 /// </summary>
 public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
 {
@@ -25,6 +25,8 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
 
     private bool _disposed;
 
+    private Encoding _encryptionEncoding = Encoding.UTF8;
+
     /// <summary> Initializes a new instance of the RsaEncryptor. </summary>
     /// <param name="publicPemPath">Path to the RSA public key PEM file (SubjectPublicKeyInfo)</param>
     /// <param name="pfxPath">Path to the PFX certificate file (alternative to PEM)</param>
@@ -32,12 +34,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
     /// <param name="maxChunkSize">Maximum chunk size for encryption. If null, automatically calculated based on key size and padding.</param>
     /// <exception cref="InvalidOperationException">Thrown when no key configuration is provided.</exception>
-    public RsaEncryptor(
-        string? publicPemPath = null,
-        string? pfxPath = null,
-        string? password = null,
-        RSAEncryptionPadding? padding = null,
-        int? maxChunkSize = null)
+    public RsaEncryptor(string? publicPemPath = null, string? pfxPath = null, string? password = null, RSAEncryptionPadding? padding = null, int? maxChunkSize = null)
     {
         _padding = padding ?? RSAEncryptionPadding.OaepSHA256;
 
@@ -61,17 +58,6 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
         _maxChunkSize = maxChunkSize ?? CalculateMaxChunkSize(_rsa.KeySize, _padding);
     }
 
-    /// <inheritdoc />
-    public string FileExtension => FileTypeInfo.LyoRsa.DefaultExtension;
-
-    private Encoding _encryptionEncoding = Encoding.UTF8;
-
-    /// <inheritdoc />
-    public Encoding GetEncryptionEncoding() => _encryptionEncoding;
-
-    /// <inheritdoc />
-    public void SetEncryptionEncoding(Encoding encoding) => _encryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
-
     /// <summary> Asynchronously disposes of the RSA instance and releases all resources. </summary>
     public ValueTask DisposeAsync()
     {
@@ -81,6 +67,15 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
 
     /// <summary> Disposes of the RSA instance and releases all resources. </summary>
     public void Dispose() => Dispose(true);
+
+    /// <inheritdoc />
+    public string FileExtension => FileTypeInfo.LyoRsa.DefaultExtension;
+
+    /// <inheritdoc />
+    public Encoding GetEncryptionEncoding() => _encryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetEncryptionEncoding(Encoding encoding) => _encryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
     /// <summary>
     /// Encrypts data using RSA encryption. Thread-safe: Multiple threads can safely call this method concurrently on the same instance. Each method call uses its own
@@ -148,13 +143,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task EncryptToFileAsync(
-        Stream input,
-        string outputPath,
-        string? keyId = null,
-        byte[]? key = null,
-        int chunkSize = 1024 * 1024,
-        CancellationToken ct = default)
+    public async Task EncryptToFileAsync(Stream input, string outputPath, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);

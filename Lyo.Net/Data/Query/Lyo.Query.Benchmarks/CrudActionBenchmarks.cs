@@ -1,6 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
-using Lyo.Api;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Services.Crud.Create;
@@ -27,18 +25,21 @@ namespace Lyo.Query.Benchmarks;
 /// End-to-end CRUD benchmarks for the Lyo.Api query pipeline against a real PostgreSQL database (Testcontainers). Requires Docker; the container is started in
 /// <see cref="GlobalSetup" />. Isolated in its own class so it can be excluded with a BenchmarkDotNet filter when Docker is unavailable.
 /// </summary>
-[BenchmarkDescription("End-to-end CRUD against a real PostgreSQL database (Testcontainers): paged Query, single Get, Patch, Create, and create-then-Delete of JobDefinition rows. The table is pre-seeded with at least 2x Amount (min 100) rows so paging is exercised.")]
+[BenchmarkDescription(
+    "End-to-end CRUD against a real PostgreSQL database (Testcontainers): paged Query, single Get, Patch, Create, and create-then-Delete of JobDefinition rows. The table is pre-seeded with at least 2x Amount (min 100) rows so paging is exercised.")]
 [BenchmarkParameter("Amount", Unit = "rows", Description = "Page size requested by the Query case (10 or 50); also scales the seeded row count.")]
-[BenchmarkSla(MaxMeanMs = 25, Standard = "Single CRUD operations against a local PostgreSQL (paged read, get, patch, create, delete) should complete within tens of milliseconds end-to-end.")]
+[BenchmarkSla(
+    MaxMeanMs = 25,
+    Standard = "Single CRUD operations against a local PostgreSQL (paged read, get, patch, create, delete) should complete within tens of milliseconds end-to-end.")]
 public class CrudActionBenchmarks
 {
-    private PostgresTestContainer _postgres = null!;
-    private ServiceProvider _provider = null!;
-    private IServiceScope _scope = null!;
-    private IQueryService<JobContext> _query = null!;
-    private IPatchService<JobContext> _patch = null!;
     private ICreateService<JobContext> _create = null!;
     private IDeleteService<JobContext> _delete = null!;
+    private IPatchService<JobContext> _patch = null!;
+    private PostgresTestContainer _postgres = null!;
+    private ServiceProvider _provider = null!;
+    private IQueryService<JobContext> _query = null!;
+    private IServiceScope _scope = null!;
     private Guid _seedId;
 
     [Params(10, 50)]
@@ -47,13 +48,11 @@ public class CrudActionBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        _postgres = new PostgresTestContainer();
+        _postgres = new();
         _postgres.StartAsync().GetAwaiter().GetResult();
-
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
         config.ConfigureJobMappings();
-
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddLocalCache();
@@ -63,7 +62,6 @@ public class CrudActionBenchmarks
         services.AddScoped<IMapper, ServiceMapper>();
         services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         _provider = services.BuildServiceProvider();
-
         using (var migrateScope = _provider.CreateScope()) {
             var factory = migrateScope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
             using var ctx = factory.CreateDbContext();
@@ -94,9 +92,15 @@ public class CrudActionBenchmarks
 
     private async Task<Guid> SeedDefinition(string name)
     {
-        var req = new JobDefinitionReq { Name = name, Description = "benchmark", Type = "Test", WorkerType = "csharp", Enabled = true };
-        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-            req, ctx => ctx.Entity.Id = Guid.NewGuid());
+        var req = new JobDefinitionReq {
+            Name = name,
+            Description = "benchmark",
+            Type = "Test",
+            WorkerType = "csharp",
+            Enabled = true
+        };
+
+        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = Guid.NewGuid());
         return result.Data!.Id;
     }
 
@@ -111,16 +115,13 @@ public class CrudActionBenchmarks
 
     [Benchmark]
     [BenchmarkDescription("Get a single seeded JobDefinition by primary key.")]
-    public async Task<JobDefinitionRes?> Get()
-        => await _query.Get<JobDefinition, JobDefinitionRes>([_seedId]);
+    public async Task<JobDefinitionRes?> Get() => await _query.Get<JobDefinition, JobDefinitionRes>([_seedId]);
 
     [Benchmark]
     [BenchmarkDescription("Patch one property of a single seeded JobDefinition by key.")]
     public async Task<bool> Patch()
     {
-        var request = new PatchRequest(new[] { new object[] { _seedId } }) {
-            Properties = { ["Description"] = $"patched-{Guid.NewGuid():N}" }
-        };
+        var request = new PatchRequest(new[] { new object[] { _seedId } }) { Properties = { ["Description"] = $"patched-{Guid.NewGuid():N}" } };
         var result = await _patch.PatchAsync<JobDefinition, JobDefinitionRes>(request);
         return result.IsSuccess;
     }
@@ -129,7 +130,13 @@ public class CrudActionBenchmarks
     [BenchmarkDescription("Create a new JobDefinition row (insert + mapping).")]
     public async Task<bool> Create()
     {
-        var req = new JobDefinitionReq { Name = $"Created-{Guid.NewGuid():N}", Type = "Test", WorkerType = "csharp", Enabled = true };
+        var req = new JobDefinitionReq {
+            Name = $"Created-{Guid.NewGuid():N}",
+            Type = "Test",
+            WorkerType = "csharp",
+            Enabled = true
+        };
+
         var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = Guid.NewGuid());
         return result.IsSuccess;
     }
@@ -139,7 +146,13 @@ public class CrudActionBenchmarks
     public async Task<bool> CreateThenDelete()
     {
         var id = Guid.NewGuid();
-        var req = new JobDefinitionReq { Name = $"Temp-{id:N}", Type = "Test", WorkerType = "csharp", Enabled = true };
+        var req = new JobDefinitionReq {
+            Name = $"Temp-{id:N}",
+            Type = "Test",
+            WorkerType = "csharp",
+            Enabled = true
+        };
+
         await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = id);
         var result = await _delete.DeleteAsync<JobDefinition, JobDefinitionRes>([id]);
         return result.IsSuccess;

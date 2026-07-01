@@ -12,7 +12,8 @@ public sealed record PersonRes(
     string? MiddleName,
     string? LastName,
     string? Suffix,
-    [property: QueryPropertyName("SourceEntityType")] string Source,
+    [property: QueryPropertyName("SourceEntityType")]
+    string Source,
     IReadOnlyList<PersonAddressRes>? Addresses,
     IReadOnlyList<PersonEmailAddressRes>? EmailAddresses,
     IReadOnlyList<PersonPhoneNumberRes>? PhoneNumbers)

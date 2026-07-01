@@ -4,9 +4,7 @@ namespace Lyo.Endato.Client.Models;
 
 /// <summary>API error payload shared by Person Search and Contact Enrichment responses.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record EndatoErrorDetails(
-    IReadOnlyList<string>? InputErrors,
-    IReadOnlyList<string>? Warnings)
+public sealed record EndatoErrorDetails(IReadOnlyList<string>? InputErrors, IReadOnlyList<string>? Warnings)
 {
     public override string ToString()
     {

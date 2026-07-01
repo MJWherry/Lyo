@@ -1,4 +1,3 @@
-using Lyo.FileMetadataStore.Sqlite;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Lock;
 using Microsoft.EntityFrameworkCore;

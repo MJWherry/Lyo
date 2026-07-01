@@ -43,10 +43,8 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
 
     private readonly Func<ICompressionResolver>? _resolveResolver;
 
-    private readonly ICompressionAlgorithmSelector? _algorithmSelector;
-
     /// <inheritdoc />
-    public CompressionAlgorithm Algorithm { get; private set; }
+    public CompressionAlgorithm Algorithm { get; }
 
     /// <inheritdoc />
     public string FileExtension => Algorithm.Extension;
@@ -55,7 +53,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     public ICompressionResolver Resolver => _resolveResolver?.Invoke() ?? this;
 
     /// <inheritdoc />
-    public ICompressionAlgorithmSelector? AlgorithmSelector => _algorithmSelector;
+    public ICompressionAlgorithmSelector? AlgorithmSelector { get; }
 
     public CompressionService(
         IEnumerable<ICompressorFactory>? factories = null,
@@ -82,17 +80,17 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         _compressor = GetCompressor(Algorithm);
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _resolveResolver = resolveResolver;
-        _algorithmSelector = algorithmSelector;
+        AlgorithmSelector = algorithmSelector;
     }
 
     /// <inheritdoc />
     public CompressionSelectionResult ResolveForCompress(CompressionSelectionContext context)
     {
         ArgumentHelpers.ThrowIfNull(context);
-        if (_algorithmSelector != null)
-            return _algorithmSelector.ResolveForCompress(context);
+        if (AlgorithmSelector != null)
+            return AlgorithmSelector.ResolveForCompress(context);
 
-        return new CompressionSelectionResult(true, Algorithm);
+        return new(true, Algorithm);
     }
 
     /// <inheritdoc />
@@ -114,16 +112,14 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     }
 
     /// <inheritdoc />
-    public CompressionInfo Compress(byte[] bytes, CompressionAlgorithm algorithm, out byte[] compressed)
-        => CompressWithCompressor(bytes, GetCompressor(algorithm), out compressed);
+    public CompressionInfo Compress(byte[] bytes, CompressionAlgorithm algorithm, out byte[] compressed) => CompressWithCompressor(bytes, GetCompressor(algorithm), out compressed);
 
     /// <inheritdoc />
     public DecompressionInfo Decompress(byte[] compressedBytes, CompressionAlgorithm algorithm, out byte[] decompressed)
         => DecompressWithCompressor(compressedBytes, GetCompressor(algorithm), out decompressed);
 
     /// <inheritdoc />
-    public void Compress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm)
-        => CompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
+    public void Compress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm) => CompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
 
     /// <inheritdoc />
     public void Decompress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm)
@@ -315,8 +311,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     }
 
     /// <inheritdoc />
-    public DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed)
-        => DecompressWithCompressor(compressedBytes, _compressor, out decompressed);
+    public DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed) => DecompressWithCompressor(compressedBytes, _compressor, out decompressed);
 
     private DecompressionInfo DecompressWithCompressor(byte[] compressedBytes, ICompressor compressor, out byte[] decompressed)
     {
@@ -415,12 +410,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     public Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
         => CompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
 
-    private async Task CompressAsyncWithCompressor(
-        Stream inputStream,
-        Stream outputStream,
-        ICompressor compressor,
-        int? chunkSize,
-        CancellationToken ct)
+    private async Task CompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, int? chunkSize, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
@@ -457,12 +447,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     public Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
         => DecompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
 
-    private async Task DecompressAsyncWithCompressor(
-        Stream inputStream,
-        Stream outputStream,
-        ICompressor compressor,
-        int? chunkSize,
-        CancellationToken ct)
+    private async Task DecompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, int? chunkSize, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);

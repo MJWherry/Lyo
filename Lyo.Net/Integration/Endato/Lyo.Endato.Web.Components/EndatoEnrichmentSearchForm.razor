@@ -43,7 +43,8 @@
 </MudStack>
 
 @code {
-    [Parameter, EditorRequired]
+
+    [Parameter][EditorRequired]
     public EnrichmentQuery Query { get; set; } = new();
 
     [Parameter]
@@ -52,19 +53,21 @@
     private string? _addressLine1;
     private string? _addressLine2;
 
-    private int IdentifierCount
-    {
-        get
-        {
+    private int IdentifierCount {
+        get {
             var count = 0;
             if (HasName())
                 count++;
+
             if (!string.IsNullOrWhiteSpace(Query.Phone))
                 count++;
+
             if (!string.IsNullOrWhiteSpace(Query.Email))
                 count++;
+
             if (HasAddress())
                 count++;
+
             return count;
         }
     }
@@ -78,18 +81,15 @@
     public EnrichmentQuery ApplyToQuery()
     {
         if (HasAddress())
-            Query.Address = new EnrichmentRequestAddress { AddressLine1 = _addressLine1, AddressLine2 = _addressLine2 };
+            Query.Address = new() { AddressLine1 = _addressLine1, AddressLine2 = _addressLine2 };
         else
             Query.Address = null;
 
         return Query;
     }
 
-    private bool HasName()
-        => !string.IsNullOrWhiteSpace(Query.FirstName)
-            || !string.IsNullOrWhiteSpace(Query.LastName)
-            || !string.IsNullOrWhiteSpace(Query.MiddleName);
+    private bool HasName() => !string.IsNullOrWhiteSpace(Query.FirstName) || !string.IsNullOrWhiteSpace(Query.LastName) || !string.IsNullOrWhiteSpace(Query.MiddleName);
 
-    private bool HasAddress()
-        => !string.IsNullOrWhiteSpace(_addressLine1) || !string.IsNullOrWhiteSpace(_addressLine2);
+    private bool HasAddress() => !string.IsNullOrWhiteSpace(_addressLine1) || !string.IsNullOrWhiteSpace(_addressLine2);
+
 }

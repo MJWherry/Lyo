@@ -6,12 +6,6 @@ namespace Lyo.Hashing.Internal;
 /// </summary>
 internal sealed class ReflectedCrc32Calculator : ChecksumCalculator
 {
-    internal enum Variant
-    {
-        Crc32,
-        Crc32C
-    }
-
     private const uint InitialState = 0xFFFFFFFFu;
 
     private static readonly uint[] Crc32Table = BuildTable(0xEDB88320u);
@@ -22,9 +16,9 @@ internal sealed class ReflectedCrc32Calculator : ChecksumCalculator
 
     private uint _crc = InitialState;
 
-    public ReflectedCrc32Calculator(Variant variant) => _table = variant == Variant.Crc32C ? Crc32CTable : Crc32Table;
-
     public override int HashSizeInBytes => 4;
+
+    public ReflectedCrc32Calculator(Variant variant) => _table = variant == Variant.Crc32C ? Crc32CTable : Crc32Table;
 
     public override void Append(ReadOnlySpan<byte> data)
     {
@@ -49,5 +43,11 @@ internal sealed class ReflectedCrc32Calculator : ChecksumCalculator
         }
 
         return table;
+    }
+
+    internal enum Variant
+    {
+        Crc32,
+        Crc32C
     }
 }

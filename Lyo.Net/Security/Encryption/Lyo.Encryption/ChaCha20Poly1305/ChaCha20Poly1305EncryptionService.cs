@@ -18,13 +18,6 @@ namespace Lyo.Encryption.ChaCha20Poly1305;
 /// </summary>
 public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
-    /// <summary>Creates a per-stream ChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
-    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
-    {
-        ArgumentHelpers.ThrowIfNotInRange(key.Length, 32, 32, nameof(key), $"ChaCha20-Poly1305 key must be exactly 32 bytes; got {key.Length}.");
-        return new ChaCha20Poly1305StreamCryptor(key);
-    }
-
     // Format header: [FormatVersion: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][nonceLength: 4 bytes][nonce][tag][ciphertext]
 
     /// <summary> Initializes a new instance of the ChaCha20Poly1305EncryptionService. </summary>
@@ -42,6 +35,13 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
 
     /// <inheritdoc cref="ISymmetricKeyMaterialSize.RequiredKeyBytes" />
     public int RequiredKeyBytes => 32;
+
+    /// <summary>Creates a per-stream ChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the allocation-free streaming chunk loop.</summary>
+    public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key)
+    {
+        ArgumentHelpers.ThrowIfNotInRange(key.Length, 32, 32, nameof(key), $"ChaCha20-Poly1305 key must be exactly 32 bytes; got {key.Length}.");
+        return new ChaCha20Poly1305StreamCryptor(key);
+    }
 
     /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.ChaCha20Poly1305;
@@ -67,7 +67,6 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
-
         try {
             var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
             using var ms = new MemoryStream();
@@ -116,7 +115,6 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
-
         try {
             var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);
             using var ms = new MemoryStream();

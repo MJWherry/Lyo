@@ -1,6 +1,3 @@
-using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Models;
-
 namespace Lyo.FileStorage.Staged;
 
 /// <summary>Optional DI hook for host apps to publish staged-upload lifecycle signals (e.g. RabbitMQ commit workers).</summary>

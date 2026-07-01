@@ -13,8 +13,10 @@ public sealed record Phone(
     string PhoneType,
     bool IsConnected,
     bool IsPublic,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Latitude,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Longitude,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Latitude,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Longitude,
     int PhoneOrder,
     string FirstReportedDate,
     string LastReportedDate,

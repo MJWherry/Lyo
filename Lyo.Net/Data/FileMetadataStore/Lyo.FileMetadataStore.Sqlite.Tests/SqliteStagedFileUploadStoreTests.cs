@@ -1,5 +1,4 @@
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileMetadataStore.Sqlite;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.Staged;
@@ -18,7 +17,7 @@ public sealed class SqliteStagedFileUploadStoreTests
     {
         Assert.NotNull(_fixture.ServiceProvider);
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<SqliteFileMetadataStoreDbContext>>();
-        return new SqliteStagedFileUploadStore(factory);
+        return new(factory);
     }
 
     private static StagedFileUploadRecord SampleRecord(Guid? stageId = null)
@@ -26,24 +25,8 @@ public sealed class SqliteStagedFileUploadStoreTests
         var id = stageId ?? Guid.NewGuid();
         var now = DateTime.UtcNow;
         return new(
-            id,
-            "tenant-a",
-            Guid.NewGuid(),
-            now,
-            now.AddHours(24),
-            StagedUploadStatus.PendingUpload,
-            $"files/.stage/{id:N}/object",
-            "uploads",
-            "file.bin",
-            "application/octet-stream",
-            1024,
-            null,
-            null,
-            HashAlgorithm.Sha256,
-            MultipartUploadProviderKind.AzureBlob,
-            "{}",
-            null,
-            null);
+            id, "tenant-a", Guid.NewGuid(), now, now.AddHours(24), StagedUploadStatus.PendingUpload, $"files/.stage/{id:N}/object", "uploads", "file.bin",
+            "application/octet-stream", 1024, null, null, HashAlgorithm.Sha256, MultipartUploadProviderKind.AzureBlob, "{}", null, null);
     }
 
     [Fact]
@@ -82,15 +65,9 @@ public sealed class SqliteStagedFileUploadStoreTests
         var store = CreateStore();
         var record = SampleRecord();
         await store.CreateAsync(record, TestContext.Current.CancellationToken);
-
         var hash = new byte[] { 9, 8, 7, 6 };
-        var updated = record with {
-            Status = StagedUploadStatus.Uploaded,
-            ObservedSizeBytes = 512,
-            ContentHash = hash
-        };
+        var updated = record with { Status = StagedUploadStatus.Uploaded, ObservedSizeBytes = 512, ContentHash = hash };
         await store.UpdateAsync(updated, TestContext.Current.CancellationToken);
-
         var retrieved = await store.GetAsync(record.StageId, TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal(StagedUploadStatus.Uploaded, retrieved.Status);
@@ -113,7 +90,6 @@ public sealed class SqliteStagedFileUploadStoreTests
         var store = CreateStore();
         var record = SampleRecord();
         await store.CreateAsync(record, TestContext.Current.CancellationToken);
-
         Assert.True(await store.TryTransitionStatusAsync(record.StageId, StagedUploadStatus.PendingUpload, StagedUploadStatus.Uploaded, TestContext.Current.CancellationToken));
         var retrieved = await store.GetAsync(record.StageId, TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
@@ -126,7 +102,6 @@ public sealed class SqliteStagedFileUploadStoreTests
         var store = CreateStore();
         var record = SampleRecord();
         await store.CreateAsync(record, TestContext.Current.CancellationToken);
-
         Assert.False(await store.TryTransitionStatusAsync(record.StageId, StagedUploadStatus.Uploaded, StagedUploadStatus.Committed, TestContext.Current.CancellationToken));
         var retrieved = await store.GetAsync(record.StageId, TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);

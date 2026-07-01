@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Hashing.Benchmarks;
@@ -12,8 +11,8 @@ namespace Lyo.Hashing.Benchmarks;
 public class HmacBenchmarks
 {
     private readonly IHashingService _hashing = HashingService.Shared;
-    private byte[] _key = null!;
     private byte[] _data = null!;
+    private byte[] _key = null!;
 
     [Params(1024, 1024 * 1024)] // 1 KB, 1 MB
     public int DataSize { get; set; }

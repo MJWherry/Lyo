@@ -1,18 +1,19 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Cache.Benchmarks;
 
 /// <summary>Compares object-cache operations between the local IMemoryCache implementation and FusionCache (no Redis backplane).</summary>
-[BenchmarkDescription("Object-cache get/set/try-get on a warm key, comparing local IMemoryCache against in-process FusionCache (no Redis backplane). Values are a nested NestedCachePayload (object graph + collection + dictionary) so the comparison reflects realistic cached entities rather than a trivial scalar.")]
-[BenchmarkDataShape(typeof(NestedCachePayload), Notes = "Nested graph (Address -> Geo object, Contacts collection, Attributes dictionary) cached as the object value across the comparison.")]
+[BenchmarkDescription(
+    "Object-cache get/set/try-get on a warm key, comparing local IMemoryCache against in-process FusionCache (no Redis backplane). Values are a nested NestedCachePayload (object graph + collection + dictionary) so the comparison reflects realistic cached entities rather than a trivial scalar.")]
+[BenchmarkDataShape(
+    typeof(NestedCachePayload), Notes = "Nested graph (Address -> Geo object, Contacts collection, Attributes dictionary) cached as the object value across the comparison.")]
 [BenchmarkSla(MaxMeanUs = 5, Standard = "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.")]
 public class CacheComparisonBenchmarks
 {
     private const string HitKey = "comparison-hit";
-    private ICacheService _local = null!;
     private ICacheService _fusion = null!;
+    private ICacheService _local = null!;
     private NestedCachePayload _value = null!;
 
     [GlobalSetup]
@@ -46,8 +47,8 @@ public class CacheComparisonBenchmarks
     public void Fusion_Set() => _fusion.Set("comparison-set-fusion", _value);
 
     [Benchmark]
-    public bool Local_TryGetValue() => _local.TryGetValue<NestedCachePayload>(HitKey, out _);
+    public bool Local_TryGetValue() => _local.TryGetValue<NestedCachePayload>(HitKey, out var _);
 
     [Benchmark]
-    public bool Fusion_TryGetValue() => _fusion.TryGetValue<NestedCachePayload>(HitKey, out _);
+    public bool Fusion_TryGetValue() => _fusion.TryGetValue<NestedCachePayload>(HitKey, out var _);
 }

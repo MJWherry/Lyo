@@ -56,7 +56,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-
         try {
             var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
             using var ms = new MemoryStream();
@@ -99,7 +98,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-
         try {
             var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);
             using var ms = new MemoryStream();

@@ -1,4 +1,3 @@
-using Lyo.Endato.Client.Models.Enrichment.Request;
 using Lyo.Endato.Client.Models.Person.Request;
 
 namespace Lyo.Endato.Client.Tests;
@@ -8,7 +7,7 @@ public class PersonQueryBuilderTests
     [Fact]
     public void Build_IncludesFluentFields()
     {
-        var query = PersonQueryBuilder.Create("Jane", "Doe", age: 42)
+        var query = PersonQueryBuilder.Create("Jane", "Doe", 42)
             .WithMiddleName("Q")
             .WithPhone("5125550100")
             .WithEmail("jane@example.com")

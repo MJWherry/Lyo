@@ -87,13 +87,13 @@ within this stack, not a single industry-wide “AES-GCM file” or “RSA file�
 **Lyo.Encryption** multi-targets **`net10.0`** and **`netstandard2.0`**. The **supported algorithms and acceptable key material sizes are the same** on both: blobs encrypted on one
 target decrypt on the other when keys and formats match.
 
-| Algorithm (typical service)                                                                                                 | Key / IV sizes                                                                                                                                                                                    | `net10.0`                                                                                                         | `netstandard2.0`                                                                |
-|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit)                                                                                      | `System.Security.Cryptography.AesGcm`                                                                             | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout)                    |
-| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`)                                                                 | **32-byte** key; **12-byte** nonce; **16-byte** tag                                                                                                                                               | `System.Security.Cryptography.ChaCha20Poly1305`                                                                   | BouncyCastle (**same** sizes and layout)                                        |
-| **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                    | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
-| **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                  | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
-| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                               | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| Algorithm (typical service)                                                                                                 | Key / IV sizes                                                                                                                                                                                             | `net10.0`                                                                                                         | `netstandard2.0`                                                                |
+|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit)                                                                                               | `System.Security.Cryptography.AesGcm`                                                                             | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout)                    |
+| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`)                                                                 | **32-byte** key; **12-byte** nonce; **16-byte** tag                                                                                                                                                        | `System.Security.Cryptography.ChaCha20Poly1305`                                                                   | BouncyCastle (**same** sizes and layout)                                        |
+| **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                             | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                           | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
+| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                                        | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
 | **RSA** (`RsaEncryptor` / `RsaDecryptor`, RSA leg of `AesGcmRsaEncryptionService`)                                          | **≥ 2048-bit** RSA modulus (enforced by `RsaEncryptor` / `RsaDecryptor`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
 
 **Interop:** File extensions, stream headers, and chunk framing are **not** TFM-specific.
@@ -1012,50 +1012,53 @@ updatedHeader.Write(buffer);
 
 ## 🔍 Performance
 
-BenchmarkDotNet suite: [`Lyo.Encryption.Benchmarks`](Lyo.Encryption.Benchmarks/) — full write-up in [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (last run **June 14, 2026 @ 19:02**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U, **AES-NI**). Payloads use **random bytes**.
+BenchmarkDotNet suite: [`Lyo.Encryption.Benchmarks`](Lyo.Encryption.Benchmarks/) — full write-up in [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (last
+run **June 14, 2026 @ 19:02**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U, **AES-NI**). Payloads use **random bytes**.
 
 ### Benchmark coverage
 
-| Algorithm / pattern | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
-|---------------------|:---------------:|:-------------------------------------:|
-| **AES-GCM** | ✅ | ✅ |
-| **ChaCha20-Poly1305** | ✅ | ✅ |
-| **AES-CCM** | ✅ | ✅ |
-| **AES-SIV** | ✅ | ✅ |
-| **XChaCha20-Poly1305** | ✅ | ✅ |
-| **RSA** (2048 OAEP-SHA256) | ✅ | ✅ |
-| **AES-GCM-RSA hybrid** | ✅ | ✅ |
-| **Two-key envelope** (AES or ChaCha DEK/KEK) | ✅ | ✅ (incl. mixed DEK/KEK combos) |
-| **Large-file streaming** | ✅ | — |
+| Algorithm / pattern                          | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
+|----------------------------------------------|:---------------:|:-----------------------------------:|
+| **AES-GCM**                                  |        ✅        |                  ✅                  |
+| **ChaCha20-Poly1305**                        |        ✅        |                  ✅                  |
+| **AES-CCM**                                  |        ✅        |                  ✅                  |
+| **AES-SIV**                                  |        ✅        |                  ✅                  |
+| **XChaCha20-Poly1305**                       |        ✅        |                  ✅                  |
+| **RSA** (2048 OAEP-SHA256)                   |        ✅        |                  ✅                  |
+| **AES-GCM-RSA hybrid**                       |        ✅        |                  ✅                  |
+| **Two-key envelope** (AES or ChaCha DEK/KEK) |        ✅        |   ✅ (incl. mixed DEK/KEK combos)    |
+| **Large-file streaming**                     |        ✅        |                  —                  |
 
 ### Benchmark highlights (June 2026, this hardware)
 
 **Symmetric @ 1 MB (in-memory, encrypt / decrypt):**
 
-| Algorithm | Encrypt | Decrypt | vs AES-GCM (encrypt) |
-|-----------|--------:|--------:|---------------------:|
-| **AES-GCM** | **667 µs** (~1.5 GB/s) | **621 µs** | 1.00× |
-| **ChaCha20-Poly1305** | 920 µs | 899 µs | 1.38× |
-| **XChaCha20-Poly1305** | 2.54 ms | 2.34 ms | 3.8× |
-| **AES-CCM** | 12.2 ms | 11.1 ms | 18× |
-| **AES-SIV** | 17.0 ms | 16.4 ms | 25× |
+| Algorithm              |                Encrypt |    Decrypt | vs AES-GCM (encrypt) |
+|------------------------|-----------------------:|-----------:|---------------------:|
+| **AES-GCM**            | **667 µs** (~1.5 GB/s) | **621 µs** |                1.00× |
+| **ChaCha20-Poly1305**  |                 920 µs |     899 µs |                1.38× |
+| **XChaCha20-Poly1305** |                2.54 ms |    2.34 ms |                 3.8× |
+| **AES-CCM**            |                12.2 ms |    11.1 ms |                  18× |
+| **AES-SIV**            |                17.0 ms |    16.4 ms |                  25× |
 
 **Other patterns:**
 
-| Workload | Result | Notes |
-|----------|--------|-------|
-| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms |
-| Two-key encrypt 1 MB (AES-GCM) | **880 µs** | ~1.3× single-key |
-| Two-key encrypt 1 KB | **7.0 µs** | ~2.7× single-key |
-| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs** | Near pure GCM |
-| Hybrid decrypt 1 KB | **468 µs** | RSA unwrap dominates |
-| RSA decrypt 1 MB | **2.51 s** | Chunked; not for bulk |
+| Workload                        | Result                 | Notes                 |
+|---------------------------------|------------------------|-----------------------|
+| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms         |
+| Two-key encrypt 1 MB (AES-GCM)  | **880 µs**             | ~1.3× single-key      |
+| Two-key encrypt 1 KB            | **7.0 µs**             | ~2.7× single-key      |
+| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs**             | Near pure GCM         |
+| Hybrid decrypt 1 KB             | **468 µs**             | RSA unwrap dominates  |
+| RSA decrypt 1 MB                | **2.51 s**             | Chunked; not for bulk |
 
-On systems **with AES-NI**, **AES-GCM is the default production choice** for bulk data. ChaCha20-Poly1305 is ~30–40% slower here. XChaCha, CCM, and SIV trade throughput for nonce/protocol properties. RSA and hybrid are for key wrapping and small secrets — use hybrid (AES-GCM-RSA) when encrypting large blobs to a public key.
+On systems **with AES-NI**, **AES-GCM is the default production choice** for bulk data. ChaCha20-Poly1305 is ~30–40% slower here. XChaCha, CCM, and SIV trade throughput for
+nonce/protocol properties. RSA and hybrid are for key wrapping and small secrets — use hybrid (AES-GCM-RSA) when encrypting large blobs to a public key.
 
 Two-key adds modest overhead at 1 MB+; avoid envelope mode for high-frequency sub-4 KB payloads if latency-sensitive.
 
-For large files, use `EncryptToStreamAsync` / `DecryptToStreamAsync` to avoid memory issues. These methods use **single-pass streaming** with **no temporary files**, processing data efficiently through compression → encryption → output in one pass.
+For large files, use `EncryptToStreamAsync` / `DecryptToStreamAsync` to avoid memory issues. These methods use **single-pass streaming** with **no temporary files**, processing
+data efficiently through compression → encryption → output in one pass.
 
 ## 🧪 Testing
 

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesSiv;
@@ -12,15 +11,14 @@ using Lyo.Keystore;
 namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>Benchmarks for large file encryption/decryption using streaming APIs</summary>
-[BenchmarkDescription("Streaming encrypt/decrypt of 100 MB / 1 GB / 2 GB random data in 1 MB chunks with AES-GCM (256-bit), ChaCha20-Poly1305 (256-bit) and AES-SIV-512 (512-bit key, RFC 5297); large sizes stream through temp files to bound memory. Method names encode cipher and size.")]
+[BenchmarkDescription(
+    "Streaming encrypt/decrypt of 100 MB / 1 GB / 2 GB random data in 1 MB chunks with AES-GCM (256-bit), ChaCha20-Poly1305 (256-bit) and AES-SIV-512 (512-bit key, RFC 5297); large sizes stream through temp files to bound memory. Method names encode cipher and size.")]
 public class LargeFileStreamingBenchmarks
 {
     private const string KeyId = "benchmark-key";
     private const int ChunkSize = 1024 * 1024; // 1 MB chunks
     private AesGcmEncryptionService _aesGcmService = null!;
     private ChaCha20Poly1305EncryptionService _chachaService = null!;
-    private AesSivEncryptionService _sivService = null!;
-    private byte[] _sivKey = null!; // AES-SIV-512 requires exactly 64 bytes
     private Stream _data100MB = null!;
     private Stream _data1GB = null!;
     private Stream _data2GB = null!;
@@ -34,6 +32,8 @@ public class LargeFileStreamingBenchmarks
     private Stream _encrypted2GBChacha = null!;
     private Stream _encrypted2GBSiv = null!;
     private LocalKeyStore _keyStore = null!;
+    private byte[] _sivKey = null!; // AES-SIV-512 requires exactly 64 bytes
+    private AesSivEncryptionService _sivService = null!;
 
     [GlobalSetup]
     public void Setup()

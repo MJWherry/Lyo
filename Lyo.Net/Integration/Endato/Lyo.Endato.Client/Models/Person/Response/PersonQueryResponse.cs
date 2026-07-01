@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
-using Lyo.Endato.Client.Models;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 
@@ -15,7 +14,8 @@ public sealed record PersonQueryResponse(
     bool IsError,
     Pagination? Pagination = null,
     Counts? Counts = null,
-    [property: JsonPropertyName("searchCriteria")] IReadOnlyList<CriteriaType>? SearchCriteria = null,
+    [property: JsonPropertyName("searchCriteria")]
+    IReadOnlyList<CriteriaType>? SearchCriteria = null,
     EndatoErrorDetails? Error = null)
 {
     public override string ToString()

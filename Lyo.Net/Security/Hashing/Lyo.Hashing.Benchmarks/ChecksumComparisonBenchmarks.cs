@@ -8,7 +8,10 @@ namespace Lyo.Hashing.Benchmarks;
 [ComparisonSuite(Baseline = "Crc32")]
 [BenchmarkDescription("Checksums the same random byte buffer with CRC-32, CRC-32C, CRC-64/ECMA-182 and Adler-32 to compare non-cryptographic throughput at each payload size.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer being checksummed (1 KB, 1 MB, 10 MB).")]
-[BenchmarkSla(MinThroughputMbps = 300, SizeParam = "DataSize", Standard = "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.")]
+[BenchmarkSla(
+    MinThroughputMbps = 300, SizeParam = "DataSize",
+    Standard =
+        "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.")]
 public class ChecksumComparisonBenchmarks
 {
     private byte[] _data = null!;

@@ -1,5 +1,4 @@
 using System.Text;
-using Lyo.Common.Enums;
 
 namespace Lyo.Hashing.Tests;
 
@@ -12,8 +11,7 @@ public sealed class ChecksummerTests
     [InlineData(ChecksumAlgorithm.Crc32C, 0xE3069283UL)]
     [InlineData(ChecksumAlgorithm.Crc64, 0x6C40DF5F0B497347UL)]
     [InlineData(ChecksumAlgorithm.Adler32, 0x091E01DEUL)]
-    public void ComputeValue_matches_known_check_vector(ChecksumAlgorithm algorithm, ulong expected)
-        => Assert.Equal(expected, Checksummer.ComputeValue(algorithm, CheckVector));
+    public void ComputeValue_matches_known_check_vector(ChecksumAlgorithm algorithm, ulong expected) => Assert.Equal(expected, Checksummer.ComputeValue(algorithm, CheckVector));
 
     [Theory]
     [InlineData(ChecksumAlgorithm.Crc32, 0x00000000UL)]
@@ -32,7 +30,7 @@ public sealed class ChecksummerTests
     {
         var bytes = Checksummer.Compute(algorithm, CheckVector);
         Assert.Equal(expectedHex.Length / 2, bytes.Length);
-        Assert.Equal(expectedHex, HexEncoding.ToHexString(bytes, TextLetterCase.Upper));
+        Assert.Equal(expectedHex, HexEncoding.ToHexString(bytes));
     }
 
     [Theory]
@@ -70,7 +68,6 @@ public sealed class ChecksummerTests
             data[i] = (byte)(i * 31 + 7);
 
         var oneShot = Checksummer.ComputeValue(ChecksumAlgorithm.Adler32, data);
-
         using var ms = new MemoryStream();
         using var incremental = new ChecksumStream(ms, ChecksumAlgorithm.Adler32);
         foreach (var b in data)
@@ -80,10 +77,8 @@ public sealed class ChecksummerTests
     }
 
     [Fact]
-    public void Compute_null_array_throws()
-        => Assert.Throws<ArgumentNullException>(() => Checksummer.Compute(ChecksumAlgorithm.Crc32, (byte[])null!));
+    public void Compute_null_array_throws() => Assert.Throws<ArgumentNullException>(() => Checksummer.Compute(ChecksumAlgorithm.Crc32, (byte[])null!));
 
     [Fact]
-    public void ComputeValue_unknown_algorithm_throws()
-        => Assert.Throws<ArgumentOutOfRangeException>(() => Checksummer.ComputeValue((ChecksumAlgorithm)999, CheckVector));
+    public void ComputeValue_unknown_algorithm_throws() => Assert.Throws<ArgumentOutOfRangeException>(() => Checksummer.ComputeValue((ChecksumAlgorithm)999, CheckVector));
 }

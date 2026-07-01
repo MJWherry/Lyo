@@ -1,20 +1,25 @@
+using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Cache.Benchmarks;
 
 /// <summary>Benchmarks the serialized byte-payload cache path (JSON + optional compression framing) across payload sizes, using a nested payload graph.</summary>
-[BenchmarkDescription("Serialized byte-payload cache path (JSON +/- compression framing) on a warm key, comparing no-compress vs auto-compress at increasing payload sizes up to 10 MB. The cached value is a nested NestedCachePayload whose Data body carries DataSize compressible bytes, so this exercises caching of large, structured outputs.")]
-[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Length of the compressible string body inside the payload (1 KB, 64 KB, 1 MB, 10 MB) - caching is frequently used for large outputs, so the matrix scales accordingly.")]
+[BenchmarkDescription(
+    "Serialized byte-payload cache path (JSON +/- compression framing) on a warm key, comparing no-compress vs auto-compress at increasing payload sizes up to 10 MB. The cached value is a nested NestedCachePayload whose Data body carries DataSize compressible bytes, so this exercises caching of large, structured outputs.")]
+[BenchmarkParameter(
+    "DataSize", Unit = "bytes",
+    Description =
+        "Length of the compressible string body inside the payload (1 KB, 64 KB, 1 MB, 10 MB) - caching is frequently used for large outputs, so the matrix scales accordingly.")]
 [BenchmarkDataShape(typeof(NestedCachePayload), Notes = "Nested graph (Address -> Geo object, Contacts collection, Attributes dictionary) plus a DataSize-byte compressible body.")]
-[BenchmarkSla(MaxMeanMs = 50, Standard = "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.")]
+[BenchmarkSla(
+    MaxMeanMs = 50, Standard = "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.")]
 public class PayloadCacheBenchmarks
 {
     private const string PlainKey = "payload-plain";
     private const string CompressedKey = "payload-compressed";
-    private ICacheService _plain = null!;
     private ICacheService _compressed = null!;
+    private ICacheService _plain = null!;
     private NestedCachePayload _value = null!;
 
     [Params(1024, 64 * 1024, 1024 * 1024, 10 * 1024 * 1024)]
@@ -28,6 +33,7 @@ public class PayloadCacheBenchmarks
             o.Payload.AutoCompress = true;
             o.Payload.AutoCompressMinSizeBytes = 256;
         });
+
         _value = CacheBenchmarkSupport.GenerateNested(DataSize);
         // Pre-populate so the benchmarked calls exercise the read/decode/deserialize path.
         _ = _plain.GetOrSetPayloadAsync<NestedCachePayload>(PlainKey, _ => Task.FromResult<NestedCachePayload?>(_value)).AsTask().GetAwaiter().GetResult();
@@ -46,11 +52,9 @@ public class PayloadCacheBenchmarks
 
     [Benchmark]
     [BenchmarkDescription("Write the DataSize body bytes to the uncompressed payload cache.")]
-    public void Payload_NoCompress_Set()
-        => _plain.SetPayload("payload-set-plain", System.Text.Encoding.UTF8.GetBytes(_value.Data));
+    public void Payload_NoCompress_Set() => _plain.SetPayload("payload-set-plain", Encoding.UTF8.GetBytes(_value.Data));
 
     [Benchmark]
     [BenchmarkDescription("Write the DataSize body bytes to the auto-compressing payload cache (compression overhead on write).")]
-    public void Payload_Compress_Set()
-        => _compressed.SetPayload("payload-set-compressed", System.Text.Encoding.UTF8.GetBytes(_value.Data));
+    public void Payload_Compress_Set() => _compressed.SetPayload("payload-set-compressed", Encoding.UTF8.GetBytes(_value.Data));
 }

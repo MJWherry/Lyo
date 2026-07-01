@@ -10,14 +10,11 @@ namespace Lyo.Compression.Policy;
 /// <summary>Default <see cref="ICompressionAlgorithmSelector" /> driven by <see cref="CompressionPolicyOptions" /> and built-in heuristics.</summary>
 public sealed class CompressionPolicyAlgorithmSelector : ICompressionAlgorithmSelector
 {
+    private readonly ILogger<CompressionPolicyAlgorithmSelector> _logger;
     private readonly CompressionPolicyOptions _policy;
     private readonly CompressionServiceOptions _serviceOptions;
-    private readonly ILogger<CompressionPolicyAlgorithmSelector> _logger;
 
-    public CompressionPolicyAlgorithmSelector(
-        CompressionPolicyOptions policy,
-        CompressionServiceOptions serviceOptions,
-        ILogger<CompressionPolicyAlgorithmSelector>? logger = null)
+    public CompressionPolicyAlgorithmSelector(CompressionPolicyOptions policy, CompressionServiceOptions serviceOptions, ILogger<CompressionPolicyAlgorithmSelector>? logger = null)
     {
         _policy = policy;
         _serviceOptions = serviceOptions;
@@ -28,7 +25,6 @@ public sealed class CompressionPolicyAlgorithmSelector : ICompressionAlgorithmSe
     public CompressionSelectionResult ResolveForCompress(CompressionSelectionContext context)
     {
         ArgumentHelpers.ThrowIfNull(context);
-
         foreach (var rule in _policy.Rules) {
             if (!RuleMatches(rule, context))
                 continue;
@@ -71,11 +67,9 @@ public sealed class CompressionPolicyAlgorithmSelector : ICompressionAlgorithmSe
         return null;
     }
 
-    private CompressionAlgorithm ResolveDefaultAlgorithm()
-        => ResolveAlgorithmName(_policy.DefaultAlgorithm) ?? _serviceOptions.DefaultAlgorithm;
+    private CompressionAlgorithm ResolveDefaultAlgorithm() => ResolveAlgorithmName(_policy.DefaultAlgorithm) ?? _serviceOptions.DefaultAlgorithm;
 
-    private static CompressionAlgorithm? ResolveAlgorithmName(string? name)
-        => CompressionAlgorithm.TryFromName(name?.Trim());
+    private static CompressionAlgorithm? ResolveAlgorithmName(string? name) => CompressionAlgorithm.TryFromName(name?.Trim());
 
     private static bool RuleMatches(CompressionPolicyRuleOptions rule, CompressionSelectionContext context)
     {

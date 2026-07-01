@@ -59,4 +59,5 @@ See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Encryption area `README
 
 ## Performance
 
-BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).
+BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Full
+tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).

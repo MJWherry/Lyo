@@ -67,6 +67,5 @@ public sealed class ChecksumStreamTests
     }
 
     [Fact]
-    public void Throws_on_null_base_stream()
-        => Assert.Throws<ArgumentNullException>(() => new ChecksumStream(null!, ChecksumAlgorithm.Crc32));
+    public void Throws_on_null_base_stream() => Assert.Throws<ArgumentNullException>(() => new ChecksumStream(null!, ChecksumAlgorithm.Crc32));
 }

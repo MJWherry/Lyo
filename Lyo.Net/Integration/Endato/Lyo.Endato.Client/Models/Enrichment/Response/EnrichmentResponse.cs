@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Endato.Client.Models;
 
 namespace Lyo.Endato.Client.Models.Enrichment.Response;
 

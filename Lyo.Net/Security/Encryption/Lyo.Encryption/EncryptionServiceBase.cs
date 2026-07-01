@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Text;
+using Lyo.Common.Extensions;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -22,8 +23,9 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     /// <summary>The options used to configure this encryption service.</summary>
     protected readonly EncryptionServiceOptions Options;
 
-    /// <summary>Algorithm for stream headers and discovery; matches the stream format algorithm byte.</summary>
-    public EncryptionAlgorithm AlgorithmKind => (EncryptionAlgorithm)GetAlgorithmId();
+    private Encoding _decryptionEncoding = Encoding.UTF8;
+
+    private Encoding _encryptionEncoding = Encoding.UTF8;
 
     /// <summary>Initializes a new instance of EncryptionServiceBase.</summary>
     /// <param name="options">The options to configure this encryption service. Must not be null.</param>
@@ -36,11 +38,11 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         KeyStore = keyStore;
     }
 
+    /// <summary>Algorithm for stream headers and discovery; matches the stream format algorithm byte.</summary>
+    public EncryptionAlgorithm AlgorithmKind => (EncryptionAlgorithm)GetAlgorithmId();
+
     /// <inheritdoc />
     public string FileExtension => Options.FileExtension;
-
-    private Encoding _encryptionEncoding = Encoding.UTF8;
-    private Encoding _decryptionEncoding = Encoding.UTF8;
 
     /// <inheritdoc />
     public virtual Encoding GetEncryptionEncoding() => _encryptionEncoding;
@@ -79,12 +81,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     public virtual string DecryptString(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedBytes, keyId, key));
 
-    /// <summary>
-    /// Creates a per-stream AEAD cipher bound to <paramref name="key" /> for the lifetime of one streaming operation. Implementations validate the key length and throw if it is
-    /// invalid. Drives the allocation-reduced compact streaming frame used by <see cref="EncryptToStreamAsync" />/<see cref="DecryptToStreamAsync" />.
-    /// </summary>
-    public abstract IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key);
-
     /// <inheritdoc />
     public virtual async Task EncryptToStreamAsync(
         Stream input,
@@ -98,7 +94,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
-
         var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
 
         // Resolve the key once for the whole stream (mirrors the single-shot Encrypt key resolution).
@@ -143,7 +138,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
 
         // Nonces are produced by the stream processor itself (per-stream random prefix + per-chunk counter),
         // so this path no longer needs a nonce callback or any KeyStore round-trips.
-        using var cryptor = CreateStreamCryptor(actualKey!);
+        using var cryptor = CreateStreamCryptor(actualKey);
         await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
     }
 
@@ -195,13 +190,13 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         else {
             var actualKeyId = headerKeyId ?? keyId;
             if (actualKeyId != null && KeyStore != null) {
-                if (!string.IsNullOrWhiteSpace(headerKeyVersion)) {
-                    actualKey = KeyStore.GetKey(actualKeyId, headerKeyVersion!);
+                if (!headerKeyVersion.IsNullOrWhitespace()) {
+                    actualKey = await KeyStore.GetKeyAsync(actualKeyId, headerKeyVersion, ct);
                     OperationHelpers.ThrowIfNull(
                         actualKey, $"No decryption key available for key ID '{actualKeyId}' version {headerKeyVersion}. Ensure the key version exists in KeyStore.");
                 }
                 else {
-                    actualKey = KeyStore.GetCurrentKey(actualKeyId);
+                    actualKey = await KeyStore.GetCurrentKeyAsync(actualKeyId, ct);
                     OperationHelpers.ThrowIfNull(actualKey, $"No decryption key available for key ID '{actualKeyId}'. Ensure a key is configured.");
                 }
             }
@@ -213,37 +208,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
 
         using var cryptor = CreateStreamCryptor(actualKey!);
         await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
-    }
-
-    /// <summary>Reads an <c>[length:int32][utf8 bytes]</c> header string (length capped at 1024 bytes). Returns the decoded string (possibly empty).</summary>
-    private static async Task<string> ReadHeaderStringAsync(Stream input, CancellationToken ct)
-    {
-        var lengthBuffer = ArrayPool<byte>.Shared.Rent(4);
-        try {
-            if (await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, 4, ct).ConfigureAwait(false) != 4)
-                throw new InvalidDataException("Invalid encrypted stream format: insufficient data for header string length.");
-
-            var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-            if (length < 0 || length > 1024)
-                throw new InvalidDataException($"Invalid header string length: {length}. Maximum allowed: 1024 bytes.");
-
-            if (length == 0)
-                return "";
-
-            var valueBuffer = ArrayPool<byte>.Shared.Rent(length);
-            try {
-                if (await AeadChunkCodec.ReadAtLeastAsync(input, valueBuffer, length, ct).ConfigureAwait(false) != length)
-                    throw new InvalidDataException("Invalid encrypted stream format: header string truncated.");
-
-                return Encoding.UTF8.GetString(valueBuffer, 0, length);
-            }
-            finally {
-                ArrayPool<byte>.Shared.Return(valueBuffer);
-            }
-        }
-        finally {
-            ArrayPool<byte>.Shared.Return(lengthBuffer);
-        }
     }
 
     // File operation methods from IEncryptionService
@@ -281,6 +245,43 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
         return outputStream.ToArray();
+    }
+
+    /// <summary>
+    /// Creates a per-stream AEAD cipher bound to <paramref name="key" /> for the lifetime of one streaming operation. Implementations validate the key length and throw if it is
+    /// invalid. Drives the allocation-reduced compact streaming frame used by <see cref="EncryptToStreamAsync" />/<see cref="DecryptToStreamAsync" />.
+    /// </summary>
+    public abstract IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key);
+
+    /// <summary>Reads an <c>[length:int32][utf8 bytes]</c> header string (length capped at 1024 bytes). Returns the decoded string (possibly empty).</summary>
+    private static async Task<string> ReadHeaderStringAsync(Stream input, CancellationToken ct)
+    {
+        var lengthBuffer = ArrayPool<byte>.Shared.Rent(4);
+        try {
+            if (await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, 4, ct).ConfigureAwait(false) != 4)
+                throw new InvalidDataException("Invalid encrypted stream format: insufficient data for header string length.");
+
+            var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+            if (length < 0 || length > 1024)
+                throw new InvalidDataException($"Invalid header string length: {length}. Maximum allowed: 1024 bytes.");
+
+            if (length == 0)
+                return "";
+
+            var valueBuffer = ArrayPool<byte>.Shared.Rent(length);
+            try {
+                if (await AeadChunkCodec.ReadAtLeastAsync(input, valueBuffer, length, ct).ConfigureAwait(false) != length)
+                    throw new InvalidDataException("Invalid encrypted stream format: header string truncated.");
+
+                return Encoding.UTF8.GetString(valueBuffer, 0, length);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(valueBuffer);
+            }
+        }
+        finally {
+            ArrayPool<byte>.Shared.Return(lengthBuffer);
+        }
     }
 
     /// <summary>Gets the algorithm identifier for this encryption service. Used in stream format header for versioning and compatibility.</summary>

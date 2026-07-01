@@ -1,27 +1,28 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Csv.Benchmarks;
 
 /// <summary>Comparison suite contrasting UTF-8 / UTF-16 / UTF-32 CSV round-trips (export + parse).</summary>
 [ComparisonSuite]
-[BenchmarkDescription("Round-trips SampleRecords through CSV in UTF-8, UTF-16, and UTF-32 to show the encoding's effect on (de)serialization cost. Export = serialize the typed rows to bytes in the encoding; Parse = read those bytes back into typed rows. UTF-8 is the baseline.")]
+[BenchmarkDescription(
+    "Round-trips SampleRecords through CSV in UTF-8, UTF-16, and UTF-32 to show the encoding's effect on (de)serialization cost. Export = serialize the typed rows to bytes in the encoding; Parse = read those bytes back into typed rows. UTF-8 is the baseline.")]
 [BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows round-tripped (10,000 or 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; only the byte encoding differs between algorithms.")]
-[BenchmarkSla(MaxMeanMs = 500, Standard = "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.")]
+[BenchmarkSla(
+    MaxMeanMs = 500,
+    Standard =
+        "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.")]
 public class CsvEncodingBenchmarks
 {
-    private readonly CsvService _utf8 = new();
     private readonly CsvService _utf16 = new();
     private readonly CsvService _utf32 = new();
+    private readonly CsvService _utf8 = new();
     private List<SampleRecord> _rows = null!;
-    private byte[] _utf8Bytes = null!;
     private byte[] _utf16Bytes = null!;
     private byte[] _utf32Bytes = null!;
+    private byte[] _utf8Bytes = null!;
 
     [Params(10_000, 100_000)]
     public int RowCount { get; set; }

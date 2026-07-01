@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Benchmark.Models;
 
 /// <summary>
-/// Polymorphic root of a benchmark report. The <c>type</c> discriminator selects the concrete shape:
-/// <see cref="MicroBenchmarkReport" /> (<c>micro</c>) for BenchmarkDotNet micro-benchmarks or
-/// <see cref="LoadTestReport" /> (<c>load</c>) for k6-style load tests. Only the envelope below is shared;
-/// each subtype carries its own divergent payload (mirrors the <c>WhereClause</c> AST in Lyo.Query.Models).
+/// Polymorphic root of a benchmark report. The <c>type</c> discriminator selects the concrete shape: <see cref="MicroBenchmarkReport" /> (<c>micro</c>) for BenchmarkDotNet
+/// micro-benchmarks or <see cref="LoadTestReport" /> (<c>load</c>) for k6-style load tests. Only the envelope below is shared; each subtype carries its own divergent payload (mirrors
+/// the <c>WhereClause</c> AST in Lyo.Query.Models).
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(MicroBenchmarkReport), "micro")]
@@ -25,8 +22,8 @@ public abstract class BenchmarkReport
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
-    /// Suite-level methodology: what is measured and how (e.g. the data set, payload kinds, and what each
-    /// benchmark exercises). Rendered as an introduction so individual rows are self-explanatory.
+    /// Suite-level methodology: what is measured and how (e.g. the data set, payload kinds, and what each benchmark exercises). Rendered as an introduction so individual rows
+    /// are self-explanatory.
     /// </summary>
     public string? Description { get; set; }
 

@@ -19,17 +19,16 @@ public static class Extensions
 {
     private static CompressionService CreateCompressionService(IServiceProvider sp, CompressionServiceOptions options, Func<ICompressionResolver>? resolveResolver = null)
         => new(
-            sp.GetServices<ICompressorFactory>(),
-            sp.GetService<ILogger<CompressionService>>(),
-            options,
-            sp.GetService<IMetrics>(),
-            resolveResolver ?? (() => sp.GetRequiredService<ICompressionResolver>()),
-            sp.GetService<ICompressionAlgorithmSelector>());
+            sp.GetServices<ICompressorFactory>(), sp.GetService<ILogger<CompressionService>>(), options, sp.GetService<IMetrics>(),
+            resolveResolver ?? (() => sp.GetRequiredService<ICompressionResolver>()), sp.GetService<ICompressionAlgorithmSelector>());
 
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="CompressionServiceOptions" /> (defaults), built-in compressor factories, <see cref="CompressionService" />, and <see cref="ICompressionResolver" /> as singletons.</summary>
+        /// <summary>
+        /// Adds <see cref="CompressionServiceOptions" /> (defaults), built-in compressor factories, <see cref="CompressionService" />, and <see cref="ICompressionResolver" /> as
+        /// singletons.
+        /// </summary>
         /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionService()
         {
@@ -156,9 +155,7 @@ public static class Extensions
             services.AddKeyedSingleton<CompressionService>(
                 keyedServiceName,
                 (provider, key) => CreateCompressionService(
-                    provider,
-                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
-                    () => provider.GetRequiredKeyedService<CompressionService>(key)));
+                    provider, provider.GetRequiredKeyedService<CompressionServiceOptions>(key), () => provider.GetRequiredKeyedService<CompressionService>(key)));
 
             services.AddKeyedSingleton<ICompressionService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
             return services;
@@ -175,8 +172,8 @@ public static class Extensions
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, GZipCompressorFactory>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, DeflateCompressorFactory>());
 #if !NETSTANDARD2_0
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, BrotliCompressorFactory>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, ZLibCompressorFactory>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, BrotliCompressorFactory>());
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompressorFactory, ZLibCompressorFactory>());
 #endif
             return services;
         }

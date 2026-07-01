@@ -7,13 +7,13 @@ namespace Lyo.Endato.Client.Models.Person.Request;
 [DebuggerDisplay("{ToString(),nq}")]
 public class PersonQueryBuilder
 {
-    private readonly PersonQuery _query = new();
-    private readonly List<PersonQueryName> _akas = [];
-    private readonly List<PersonQueryName> _relatives = [];
     private readonly List<PersonQueryAddress> _addresses = [];
-    private readonly List<string> _tahoeIds = [];
-    private readonly List<string> _includes = [];
+    private readonly List<PersonQueryName> _akas = [];
     private readonly List<string> _filterOptions = [];
+    private readonly List<string> _includes = [];
+    private readonly PersonQuery _query = new();
+    private readonly List<PersonQueryName> _relatives = [];
+    private readonly List<string> _tahoeIds = [];
 
     public PersonQueryBuilder WithFirstName(string? firstName)
     {

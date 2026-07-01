@@ -68,9 +68,8 @@ public sealed class LocalFileStorageTestScope : IDisposable
             options = builder(options);
 
         var storage = new LocalFileStorageService(
-            options, loggerFactory ?? NullLoggerFactory.Instance, compressionService, twoKeyEncryptionService: twoKeyEncryptionService, metrics: metrics,
-            operationContextAccessor: operationContextAccessor, auditHandlers: auditHandlers, contentPolicy: contentPolicy, malwareScanner: malwareScanner,
-            metadataService: metadataService);
+            options, loggerFactory ?? NullLoggerFactory.Instance, compressionService, twoKeyEncryptionService, metrics: metrics, operationContextAccessor: operationContextAccessor,
+            auditHandlers: auditHandlers, contentPolicy: contentPolicy, malwareScanner: malwareScanner, metadataService: metadataService);
 
         return new(root, options, storage);
     }

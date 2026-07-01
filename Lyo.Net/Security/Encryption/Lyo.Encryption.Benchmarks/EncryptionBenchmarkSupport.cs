@@ -16,8 +16,8 @@ internal static class EncryptionBenchmarkSupport
     }
 
     /// <summary>32-byte key material for benchmarks that pass an explicit key (e.g. XChaCha20-Poly1305).</summary>
-    internal static byte[] GetSymmetricKey(LocalKeyStore keyStore) =>
-        keyStore.GetCurrentKey(KeyId) ?? throw new InvalidOperationException($"Benchmark key store missing key ID {KeyId}.");
+    internal static byte[] GetSymmetricKey(LocalKeyStore keyStore)
+        => keyStore.GetCurrentKey(KeyId) ?? throw new InvalidOperationException($"Benchmark key store missing key ID {KeyId}.");
 
     internal static (string PublicPath, string PrivatePath) CreateRsaPemFiles()
     {

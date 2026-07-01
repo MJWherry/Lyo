@@ -1,7 +1,6 @@
 using System.Buffers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
@@ -39,20 +38,12 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
         ArgumentHelpers.ThrowIfNull(options);
         _store = store;
         _options = options;
-        _physicalIo = new LocalStagedFilePhysicalIo(options);
+        _physicalIo = new(options);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalStagedFileUploadService>();
-        _coordinator = new StagedUploadCoordinator(
-            store,
-            _physicalIo,
-            storage,
-            contentPolicy ?? new AllowAllFileContentPolicy(),
-            malwareScanner ?? NullFileMalwareScanner.Instance,
-            operationContextAccessor ?? NullFileOperationContextAccessor.Instance,
-            options,
-            logger,
-            metrics ?? NullMetrics.Instance,
-            auditHandlers,
-            eventHandlers);
+        _coordinator = new(
+            store, _physicalIo, storage, contentPolicy ?? new AllowAllFileContentPolicy(), malwareScanner ?? NullFileMalwareScanner.Instance,
+            operationContextAccessor ?? NullFileOperationContextAccessor.Instance, options, logger, metrics ?? NullMetrics.Instance, auditHandlers, eventHandlers);
+
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);
@@ -79,11 +70,9 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
     public Task<StagedFileResult> CompleteAsync(Guid stageId, StagedUploadCompleteRequest? request = null, CancellationToken ct = default)
         => _coordinator.CompleteCoreAsync(stageId, request, ct);
 
-    public Task<FileStoreResult> CommitAsync(Guid stageId, StagedUploadCommitRequest request, CancellationToken ct = default)
-        => _coordinator.CommitCoreAsync(stageId, request, ct);
+    public Task<FileStoreResult> CommitAsync(Guid stageId, StagedUploadCommitRequest request, CancellationToken ct = default) => _coordinator.CommitCoreAsync(stageId, request, ct);
 
-    public Task AbortAsync(Guid stageId, CancellationToken ct = default)
-        => _coordinator.AbortCoreAsync(stageId, ct);
+    public Task AbortAsync(Guid stageId, CancellationToken ct = default) => _coordinator.AbortCoreAsync(stageId, ct);
 
     public async Task<StagedFileResult> GetAsync(Guid stageId, CancellationToken ct = default)
     {
@@ -189,8 +178,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
             return Task.FromResult(new StagedPresignedPutResult(url, null));
         }
 
-        public Task<bool> ObjectExistsAsync(StagedFileUploadRecord record, CancellationToken ct)
-            => Task.FromResult(File.Exists(GetAbsolutePath(record)));
+        public Task<bool> ObjectExistsAsync(StagedFileUploadRecord record, CancellationToken ct) => Task.FromResult(File.Exists(GetAbsolutePath(record)));
 
         public Task<long> GetObjectSizeAsync(StagedFileUploadRecord record, CancellationToken ct)
         {

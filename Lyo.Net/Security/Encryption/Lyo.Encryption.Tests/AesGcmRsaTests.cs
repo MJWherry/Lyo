@@ -98,19 +98,20 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
         var (pub, priv) = GeneratePemFiles();
         using var svc = new AesGcmRsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
         var plaintext = RandomNumberGenerator.GetBytes(size);
-
         byte[] encrypted;
-        using (var input = new MemoryStream(plaintext))
-        using (var output = new MemoryStream()) {
-            await svc.EncryptToStreamAsync(input, output, chunkSize: 64, ct: ct);
-            encrypted = output.ToArray();
+        using (var input = new MemoryStream(plaintext)) {
+            using (var output = new MemoryStream()) {
+                await svc.EncryptToStreamAsync(input, output, chunkSize: 64, ct: ct);
+                encrypted = output.ToArray();
+            }
         }
 
         byte[] decrypted;
-        using (var input = new MemoryStream(encrypted))
-        using (var output = new MemoryStream()) {
-            await svc.DecryptToStreamAsync(input, output, ct: ct);
-            decrypted = output.ToArray();
+        using (var input = new MemoryStream(encrypted)) {
+            using (var output = new MemoryStream()) {
+                await svc.DecryptToStreamAsync(input, output, ct: ct);
+                decrypted = output.ToArray();
+            }
         }
 
         Assert.Equal(plaintext, decrypted);

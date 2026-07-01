@@ -1,14 +1,13 @@
 using System.Buffers;
 using System.Buffers.Binary;
-using Lyo.Common.Security;
 using Lyo.Encryption.Exceptions;
 
 namespace Lyo.Encryption.Streaming;
 
 /// <summary>
 /// Shared streaming chunk loops for the compact AEAD frame <c>[ciphertextLen:int32 LE][nonce][ciphertext][tag]</c>. Buffers are rented once per stream from
-/// <see cref="ArrayPool{T}" /> and reused for every chunk, so total allocation is O(chunkSize) regardless of stream length. Used by both <see cref="EncryptionServiceBase" /> and
-/// the two-key envelope service.
+/// <see cref="ArrayPool{T}" /> and reused for every chunk, so total allocation is O(chunkSize) regardless of stream length. Used by both <see cref="EncryptionServiceBase" /> and the
+/// two-key envelope service.
 /// </summary>
 internal static class AeadStreamProcessor
 {
@@ -19,12 +18,11 @@ internal static class AeadStreamProcessor
     private const int CounterSize = 4;
 
     /// <summary>
-    /// Reads <paramref name="input" /> in <paramref name="effectiveChunkSize" /> chunks and writes compact encrypted frames to <paramref name="output" />. Each chunk's nonce is a
-    /// per-stream random prefix (the leading <c>NonceSize - 4</c> bytes, drawn once) followed by a 4-byte little-endian chunk counter. This is stateless and lock-free: every
-    /// streaming operation owns its own prefix and counter, so concurrent encryptions (even with the same key) never collide and there are no shared-state or KeyStore round-trips.
+    /// Reads <paramref name="input" /> in <paramref name="effectiveChunkSize" /> chunks and writes compact encrypted frames to <paramref name="output" />. Each chunk's nonce is
+    /// a per-stream random prefix (the leading <c>NonceSize - 4</c> bytes, drawn once) followed by a 4-byte little-endian chunk counter. This is stateless and lock-free: every streaming
+    /// operation owns its own prefix and counter, so concurrent encryptions (even with the same key) never collide and there are no shared-state or KeyStore round-trips.
     /// </summary>
-    public static async Task EncryptChunksAsync(
-        Stream input, Stream output, IAeadStreamCryptor cryptor, int effectiveChunkSize, CancellationToken ct)
+    public static async Task EncryptChunksAsync(Stream input, Stream output, IAeadStreamCryptor cryptor, int effectiveChunkSize, CancellationToken ct)
     {
         var nonceSize = cryptor.NonceSize;
         var readBuffer = ArrayPool<byte>.Shared.Rent(effectiveChunkSize);
@@ -64,7 +62,7 @@ internal static class AeadStreamProcessor
         try {
             int lengthRead;
             while ((lengthRead = await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, AeadChunkCodec.LengthPrefixSize, ct).ConfigureAwait(false)) ==
-                   AeadChunkCodec.LengthPrefixSize) {
+                AeadChunkCodec.LengthPrefixSize) {
                 ct.ThrowIfCancellationRequested();
                 var ciphertextLength = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
                 if (ciphertextLength <= 0)
@@ -81,14 +79,13 @@ internal static class AeadStreamProcessor
                 if (input.CanSeek) {
                     var remainingBytes = input.Length - input.Position;
                     if (remainingBytes < bodyLength) {
-                        throw new InvalidDataException(
-                            $"Invalid encrypted data format: chunk body ({bodyLength} bytes) exceeds remaining stream size ({remainingBytes} bytes).");
+                        throw new InvalidDataException($"Invalid encrypted data format: chunk body ({bodyLength} bytes) exceeds remaining stream size ({remainingBytes} bytes).");
                     }
                 }
 
                 AeadChunkCodec.EnsureCapacity(ref bodyBuffer, bodyLength);
                 AeadChunkCodec.EnsureCapacity(ref plainBuffer, ciphertextLength);
-                if (await AeadChunkCodec.ReadAtLeastAsync(input, bodyBuffer!, bodyLength, ct).ConfigureAwait(false) != bodyLength)
+                if (await AeadChunkCodec.ReadAtLeastAsync(input, bodyBuffer, bodyLength, ct).ConfigureAwait(false) != bodyLength)
                     throw new EndOfStreamException("Unexpected end of stream while reading encrypted chunk.");
 
                 int plaintextLength;

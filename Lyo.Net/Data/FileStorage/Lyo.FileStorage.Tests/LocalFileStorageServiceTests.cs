@@ -73,7 +73,7 @@ public class LocalFileStorageServiceTests : IDisposable
         if (hashAlgorithm.HasValue)
             options.HashAlgorithm = hashAlgorithm.Value;
 
-        return new(options, _loggerFactory, compressionService, twoKeyEncryptionService: encryptionService);
+        return new(options, _loggerFactory, compressionService, encryptionService);
     }
 
     private LocalKeyStore CreateKeyStoreWithKey(string keyId = "test-key", string version = "1", string keyString = "test-kek-key")
@@ -182,9 +182,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var gzipService = CreateCompressionService(CompressionAlgorithm.GZip);
         using var saveService = CreateService(compressionService: gzipService);
         var testData = Encoding.UTF8.GetBytes(new string('P', 2000) + "metadata-algo-read" + new string('Q', 2000));
-        var saveResult = await saveService.SaveFileAsync(testData, "roundtrip.bin", compress: true, ct: TestContext.Current.CancellationToken);
+        var saveResult = await saveService.SaveFileAsync(testData, "roundtrip.bin", true, ct: TestContext.Current.CancellationToken);
         Assert.Equal(CompressionAlgorithm.GZip, saveResult.CompressionAlgorithm);
-
         var lz4DefaultService = CreateCompressionService(Lz4CompressionAlgorithm.Instance);
         using var readService = CreateService(compressionService: lz4DefaultService);
         var retrieved = await readService.GetFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);

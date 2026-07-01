@@ -9,9 +9,7 @@ namespace Lyo.Compression;
 /// Implementations are typically registered as singletons. File outputs use atomic write-to-temp-then-rename where applicable. Respect
 /// <see cref="Models.CompressionServiceOptions.MaxInputSize" /> for both compressed input size and maximum decompressed output size.
 /// </para>
-/// <para>
-/// <see cref="Resolver" /> provides per-algorithm dispatch; <see cref="ResolveForCompress" /> delegates to <see cref="AlgorithmSelector" /> when registered.
-/// </para>
+/// <para><see cref="Resolver" /> provides per-algorithm dispatch; <see cref="ResolveForCompress" /> delegates to <see cref="AlgorithmSelector" /> when registered.</para>
 /// </remarks>
 public interface ICompressionService
 {

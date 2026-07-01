@@ -6,12 +6,7 @@ namespace Lyo.FileStorage;
 /// <summary>Compares requested save-time compression/encryption options against stored metadata for duplicate detection.</summary>
 internal static class FileStorageDuplicateProfile
 {
-    internal static bool Matches(
-        FileStoreResult existing,
-        bool compress,
-        bool encrypt,
-        string? keyId,
-        CompressionAlgorithm? compressionAlgorithm)
+    internal static bool Matches(FileStoreResult existing, bool compress, bool encrypt, string? keyId, CompressionAlgorithm? compressionAlgorithm)
     {
         if (existing.IsCompressed != compress)
             return false;
@@ -39,8 +34,8 @@ internal static class FileStorageDuplicateProfile
         var storedProfile = FormatProfile(existing.IsCompressed, existing.IsEncrypted, existing.DataEncryptionKeyId, existing.CompressionAlgorithm);
         var requestedProfile = FormatProfile(compress, encrypt, keyId, compressionAlgorithm);
         return $"A file with the same content hash already exists (file ID '{existingFileId}') but with a different storage profile. " +
-               $"Stored: {storedProfile}. Requested: {requestedProfile}. " +
-               "Use DuplicateHandlingStrategy.Overwrite to replace the stored object with the requested profile, or AllowDuplicate to create a separate file.";
+            $"Stored: {storedProfile}. Requested: {requestedProfile}. " +
+            "Use DuplicateHandlingStrategy.Overwrite to replace the stored object with the requested profile, or AllowDuplicate to create a separate file.";
     }
 
     private static string FormatProfile(bool compress, bool encrypt, string? keyId, CompressionAlgorithm? algorithm)

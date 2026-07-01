@@ -12,8 +12,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage.Staged;
 
 /// <summary>
-/// Shared orchestration for staged uploads; backend packages supply <see cref="IStagedFilePhysicalIo" /> and delegate public
-/// <see cref="IStagedFileUploadService" /> methods here. Not intended for direct use by application code.
+/// Shared orchestration for staged uploads; backend packages supply <see cref="IStagedFilePhysicalIo" /> and delegate public <see cref="IStagedFileUploadService" /> methods
+/// here. Not intended for direct use by application code.
 /// </summary>
 public sealed class StagedUploadCoordinator
 {
@@ -27,8 +27,8 @@ public sealed class StagedUploadCoordinator
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
     private readonly IStagedFilePhysicalIo _physicalIo;
-    private readonly IStagedFileUploadStore _store;
     private readonly IFileStorageService _storage;
+    private readonly IStagedFileUploadStore _store;
 
     public StagedUploadCoordinator(
         IStagedFileUploadStore store,
@@ -95,34 +95,17 @@ public sealed class StagedUploadCoordinator
         var urlExpiresUtc = DateTimeOffset.UtcNow.Add(urlExpiry);
         var storageLocation = _physicalIo.BuildStageStorageLocation(stageId, normalizedPrefix);
         var record = new StagedFileUploadRecord(
-            stageId,
-            tenant,
-            _operationContextAccessor.Current?.ActorId is { } actor && Guid.TryParse(actor, out var ownerId) ? ownerId : null,
-            now,
-            now.Add(sessionTtl),
-            StagedUploadStatus.PendingUpload,
-            storageLocation,
-            normalizedPrefix,
-            request.OriginalFileName ?? stageId.ToString(),
-            contentType,
-            request.DeclaredMaxSizeBytes,
-            null,
-            null,
-            _options.HashAlgorithm,
-            _physicalIo.ProviderKind,
-            "{}",
-            null,
-            null);
+            stageId, tenant, _operationContextAccessor.Current?.ActorId is { } actor && Guid.TryParse(actor, out var ownerId) ? ownerId : null, now, now.Add(sessionTtl),
+            StagedUploadStatus.PendingUpload, storageLocation, normalizedPrefix, request.OriginalFileName ?? stageId.ToString(), contentType, request.DeclaredMaxSizeBytes, null,
+            null, _options.HashAlgorithm, _physicalIo.ProviderKind, "{}", null, null);
 
         await _store.CreateAsync(record, ct).ConfigureAwait(false);
         var presigned = await _physicalIo.GeneratePresignedPutUrlAsync(stageId, normalizedPrefix, request, urlExpiresUtc, ct).ConfigureAwait(false);
         await PublishAuditAsync(FileAuditEventType.StagedUploadBegin, stageId, tenant, FileAuditOutcome.Success, ct: ct).ConfigureAwait(false);
-
         var snapshot = StagedFileUploadMappings.ToResult(record);
         var eventArgs = new StagedUploadPresignedCreatedEventArgs { StageId = stageId, TenantId = tenant, Snapshot = snapshot };
         PresignedCreated?.Invoke(this, eventArgs);
         await PublishEventHandlersAsync(h => h.OnPresignedCreatedAsync(eventArgs, ct), ct).ConfigureAwait(false);
-
         return (new() {
             StageId = stageId,
             PresignedPutUrl = presigned.Url,
@@ -145,7 +128,6 @@ public sealed class StagedUploadCoordinator
 
         OperationHelpers.ThrowIf(record.Status != StagedUploadStatus.PendingUpload, $"Stage {stageId} is not pending upload (status={record.Status}).");
         EnsureScanRequirementSatisfied();
-
         try {
             if (!await _physicalIo.ObjectExistsAsync(record, ct).ConfigureAwait(false))
                 throw new FileNotFoundException($"No backing object exists for staged upload {stageId}");
@@ -155,6 +137,7 @@ public sealed class StagedUploadCoordinator
             OperationHelpers.ThrowIf(
                 _options.MaxUploadSizeBytes.HasValue && observedLength > _options.MaxUploadSizeBytes.Value,
                 $"Uploaded payload length {observedLength} exceeds MaxUploadSizeBytes.");
+
             OperationHelpers.ThrowIf(
                 request?.ExpectedByteLength.HasValue == true && request.ExpectedByteLength!.Value != observedLength,
                 $"Expected byte length {request?.ExpectedByteLength} but observed {observedLength}.");
@@ -198,7 +181,6 @@ public sealed class StagedUploadCoordinator
                     using var ha = _options.HashAlgorithm.Create();
                     await using var hashStream = File.OpenRead(spoolPath);
                     contentHash = await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false);
-
                     if (_options.RequireScanBeforeAvailable) {
                         await using var scanStream = File.OpenRead(spoolPath);
                         var scan = await _malwareScanner.ScanAsync(scanStream, record.ContentType, record.OriginalFileName, ct).ConfigureAwait(false);
@@ -217,7 +199,6 @@ public sealed class StagedUploadCoordinator
                 }
             }
 #endif
-
             var updated = record with {
                 Status = StagedUploadStatus.Uploaded,
                 ObservedSizeBytes = observedLength,
@@ -225,9 +206,9 @@ public sealed class StagedUploadCoordinator
                 OriginalFileName = request?.OriginalFileName ?? record.OriginalFileName,
                 FailureReason = null
             };
+
             await _store.UpdateAsync(updated, ct).ConfigureAwait(false);
             await PublishAuditAsync(FileAuditEventType.StagedUploadComplete, stageId, updated.TenantId, FileAuditOutcome.Success, ct: ct).ConfigureAwait(false);
-
             var result = StagedFileUploadMappings.ToResult(updated);
             var eventArgs = new StagedUploadCompletedEventArgs { StageId = stageId, TenantId = updated.TenantId, Snapshot = result };
             UploadCompleted?.Invoke(this, eventArgs);
@@ -245,7 +226,6 @@ public sealed class StagedUploadCoordinator
     {
         ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Commit Encrypt=true requires KeyId.");
-
         var record = await _store.GetAsync(stageId, ct).ConfigureAwait(false);
         if (record == null)
             throw new FileNotFoundException($"Staged upload {stageId} was not found.");
@@ -263,25 +243,13 @@ public sealed class StagedUploadCoordinator
 #endif
             var destPrefix = FileHelpers.NormalizePathPrefix(request.PathPrefix ?? record.PathPrefix);
             var fileResult = await _storage.SaveFromStreamAsync(
-                    input,
-                    record.ObservedSizeBytes ?? 0,
-                    record.OriginalFileName,
-                    request.Compress,
-                    request.Encrypt,
-                    request.KeyId,
-                    destPrefix,
-                    request.ChunkSize,
+                    input, record.ObservedSizeBytes ?? 0, record.OriginalFileName, request.Compress, request.Encrypt, request.KeyId, destPrefix, request.ChunkSize,
                     record.ContentType,
-                    record.TenantId,
-                    ct: ct)
+                    record.TenantId, ct: ct)
                 .ConfigureAwait(false);
 
             await _physicalIo.DeleteStageObjectAsync(record, ct).ConfigureAwait(false);
-            var committed = record with {
-                Status = StagedUploadStatus.Committed,
-                CommittedFileId = fileResult.Id,
-                FailureReason = null
-            };
+            var committed = record with { Status = StagedUploadStatus.Committed, CommittedFileId = fileResult.Id, FailureReason = null };
             await _store.UpdateAsync(committed, ct).ConfigureAwait(false);
             await PublishAuditAsync(FileAuditEventType.StagedUploadCommit, stageId, committed.TenantId, FileAuditOutcome.Success, correlationId: fileResult.Id, ct: ct)
                 .ConfigureAwait(false);
@@ -292,6 +260,7 @@ public sealed class StagedUploadCoordinator
                 CommittedFileId = fileResult.Id,
                 FileResult = fileResult
             };
+
             Committed?.Invoke(this, eventArgs);
             await PublishEventHandlersAsync(h => h.OnCommittedAsync(eventArgs, ct), ct).ConfigureAwait(false);
             return fileResult;
@@ -305,12 +274,14 @@ public sealed class StagedUploadCoordinator
 
             await PublishAuditAsync(FileAuditEventType.StagedUploadFailed, stageId, record.TenantId, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), ct: ct)
                 .ConfigureAwait(false);
+
             var failArgs = new StagedUploadFailedEventArgs {
                 StageId = stageId,
                 TenantId = record.TenantId,
                 Snapshot = latest == null ? null : StagedFileUploadMappings.ToResult(latest),
                 ErrorMessage = ex.Message
             };
+
             UploadFailed?.Invoke(this, failArgs);
             await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct), ct).ConfigureAwait(false);
             throw;
@@ -324,10 +295,7 @@ public sealed class StagedUploadCoordinator
         if (record == null)
             throw new FileNotFoundException($"Staged upload {stageId} was not found.");
 
-        OperationHelpers.ThrowIf(
-            record.Status is StagedUploadStatus.Committing or StagedUploadStatus.Committed,
-            $"Stage {stageId} cannot be aborted (status={record.Status}).");
-
+        OperationHelpers.ThrowIf(record.Status is StagedUploadStatus.Committing or StagedUploadStatus.Committed, $"Stage {stageId} cannot be aborted (status={record.Status}).");
         if (record.Status is StagedUploadStatus.Aborted or StagedUploadStatus.Expired)
             return;
 
@@ -356,12 +324,14 @@ public sealed class StagedUploadCoordinator
 
         await PublishAuditAsync(FileAuditEventType.StagedUploadFailed, stageId, record.TenantId, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), ct: ct)
             .ConfigureAwait(false);
+
         var failArgs = new StagedUploadFailedEventArgs {
             StageId = stageId,
             TenantId = record.TenantId,
             Snapshot = StagedFileUploadMappings.ToResult(failed),
             ErrorMessage = ex.Message
         };
+
         UploadFailed?.Invoke(this, failArgs);
         await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct), ct).ConfigureAwait(false);
     }
@@ -397,7 +367,7 @@ public sealed class StagedUploadCoordinator
         CancellationToken ct = default)
         => await FileAuditPublication.PublishAsync(
                 _auditHandlers, null, null,
-                new(eventType, DateTime.UtcNow, stageId, tenantId, _operationContextAccessor.Current?.ActorId, null, null, outcome, detail, CorrelationId: correlationId),
+                new(eventType, DateTime.UtcNow, stageId, tenantId, _operationContextAccessor.Current?.ActorId, null, null, outcome, detail, correlationId),
                 ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
             .ConfigureAwait(false);
 

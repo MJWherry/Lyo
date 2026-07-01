@@ -1,5 +1,4 @@
 using Lyo.Api.Models;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Query.Models.Common.Request;
@@ -65,5 +64,4 @@ public sealed class QueryPagingBoundsValidatorTests
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         Assert.Empty(errors);
     }
-
 }

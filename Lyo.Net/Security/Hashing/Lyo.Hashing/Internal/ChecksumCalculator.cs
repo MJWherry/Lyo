@@ -2,8 +2,8 @@ namespace Lyo.Hashing.Internal;
 
 /// <summary>
 /// Incremental, allocation-free state for a single <see cref="ChecksumAlgorithm" />. One instance accumulates bytes via <see cref="Append" />; <see cref="GetCurrentValue" />
-/// is non-mutating so it can be read repeatedly while more data is appended. Implementations are the cross-target source of truth (used directly on netstandard2.0, for
-/// streaming on all targets, and for the algorithms not provided by <c>System.IO.Hashing</c>).
+/// is non-mutating so it can be read repeatedly while more data is appended. Implementations are the cross-target source of truth (used directly on netstandard2.0, for streaming on
+/// all targets, and for the algorithms not provided by <c>System.IO.Hashing</c>).
 /// </summary>
 internal abstract class ChecksumCalculator
 {

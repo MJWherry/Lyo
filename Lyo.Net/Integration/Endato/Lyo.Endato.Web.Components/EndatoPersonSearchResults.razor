@@ -1,3 +1,4 @@
+@using Lyo.Web.Components
 @using PersonResult = Lyo.Endato.Client.Models.Person.Response.Person
 @inject IDialogService DialogService
 
@@ -83,14 +84,16 @@ else {
 }
 
 @code {
+
     [Parameter]
     public PersonQueryResponse? Response { get; set; }
 
     private async Task ShowPersonJson(PersonResult person)
     {
         await Task.Yield();
-        var parameters = new DialogParameters<Lyo.Web.Components.JsonViewDialog<PersonResult>> { { i => i.Data, person } };
+        var parameters = new DialogParameters<JsonViewDialog<PersonResult>> { { i => i.Data, person } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync(typeof(Lyo.Web.Components.JsonViewDialog<PersonResult>), person.FullName, parameters, options);
+        await DialogService.ShowAsync(typeof(JsonViewDialog<PersonResult>), person.FullName, parameters, options);
     }
+
 }

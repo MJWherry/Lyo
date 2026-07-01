@@ -91,7 +91,7 @@ public class Ed25519LyoJwtTests
         var builder = new JwkSetBuilder(keys, MsOptions.Create(new LyoJwtOptions()));
         var jwks = await builder.BuildAsync(TestContext.Current.CancellationToken);
         var keyList = (IEnumerable<Dictionary<string, object>>)jwks["keys"];
-        var enumerator = keyList.GetEnumerator();
+        using var enumerator = keyList.GetEnumerator();
         Assert.True(enumerator.MoveNext());
         var first = enumerator.Current;
         Assert.Equal("OKP", first["kty"]);

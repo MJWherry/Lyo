@@ -4,8 +4,8 @@ using Lyo.Encryption.Streaming;
 namespace Lyo.Encryption.XChaCha20Poly1305;
 
 /// <summary>
-/// Per-stream XChaCha20-Poly1305 cipher reused across every chunk of a streaming operation (see <see cref="IAeadStreamCryptor" />). Each chunk is encrypted independently with the
-/// stream-supplied 24-byte nonce via <see cref="XChaCha20Poly1305Helper" /> (HChaCha20 subkey derivation + IETF ChaCha20-Poly1305).
+/// Per-stream XChaCha20-Poly1305 cipher reused across every chunk of a streaming operation (see <see cref="IAeadStreamCryptor" />). Each chunk is encrypted independently
+/// with the stream-supplied 24-byte nonce via <see cref="XChaCha20Poly1305Helper" /> (HChaCha20 subkey derivation + IETF ChaCha20-Poly1305).
 /// </summary>
 internal sealed class XChaCha20Poly1305StreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamCryptor
 {

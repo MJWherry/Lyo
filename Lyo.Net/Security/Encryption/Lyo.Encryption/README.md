@@ -19,7 +19,8 @@ the umbrella guide; this file focuses on **this assembly’s API surface**.
 - **Key sources** – Optional **`byte[] key`** / **`byte[] kek`** or **`IKeyStore`** lookup by **`keyId`** (and version for two-key decrypt / rotation)
 - **Streaming** – **`EncryptToStreamAsync`** / **`DecryptToStreamAsync`** chunk large payloads without materializing the whole ciphertext in memory (framed format on the wire)
 - **Files** – **`EncryptToFileAsync`**, **`DecryptFromFileAsync`**, and stream-to-file variants
-- **Strings** – **`EncryptString`** / **`DecryptString`** using the per-direction encoding (**`GetEncryptionEncoding`** / **`GetDecryptionEncoding`**, UTF-8 by default; set via **`SetEncryptionEncoding`** / **`SetDecryptionEncoding`**)
+- **Strings** – **`EncryptString`** / **`DecryptString`** using the per-direction encoding (**`GetEncryptionEncoding`** / **`GetDecryptionEncoding`**, UTF-8 by default; set via *
+  *`SetEncryptionEncoding`** / **`SetDecryptionEncoding`**)
 - **DI helpers** – **`EncryptionServiceExtensions`**: RSA / AES-GCM+RSA registration, keyed **`ITwoKeyEncryptionService`** + keyed **`IKeyStore`**
 - **Discovery** – **`EncryptionAlgorithm`**, **`EncryptionAlgorithmDiscovery`**, algorithm metadata on **`EncryptionServiceBase.AlgorithmKind`**
 - **Non-throwing workflows** – **`EncryptionResult`** / **`DecryptionResult`** in **`Lyo.Encryption.Models`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
@@ -27,16 +28,16 @@ the umbrella guide; this file focuses on **this assembly’s API surface**.
 
 ## Service matrix
 
-| Type                                      | Role                                                 |
-|-------------------------------------------|------------------------------------------------------|
-| **`AesGcmEncryptionService`**             | AES-GCM; key size via **`AesGcmKeySizeBits`**        |
-| **`ChaCha20Poly1305EncryptionService`**   | ChaCha20-Poly1305 (IETF nonce)                       |
-| **`XChaCha20Poly1305EncryptionService`**  | XChaCha20-Poly1305 (extended nonce)                  |
-| **`AesCcmEncryptionService`**             | AES-CCM                                              |
-| **`AesSivEncryptionService`**             | AES-SIV (misuse-resistant synthetic IV)              |
+| Type                                      | Role                                                                          |
+|-------------------------------------------|-------------------------------------------------------------------------------|
+| **`AesGcmEncryptionService`**             | AES-GCM; key size via **`AesGcmKeySizeBits`**                                 |
+| **`ChaCha20Poly1305EncryptionService`**   | ChaCha20-Poly1305 (IETF nonce)                                                |
+| **`XChaCha20Poly1305EncryptionService`**  | XChaCha20-Poly1305 (extended nonce)                                           |
+| **`AesCcmEncryptionService`**             | AES-CCM                                                                       |
+| **`AesSivEncryptionService`**             | AES-SIV (misuse-resistant synthetic IV)                                       |
 | **`RsaEncryptor`** / **`RsaDecryptor`**   | RSA encrypt (public key) / decrypt (private key), chunked for large plaintext |
-| **`AesGcmRsaEncryptionService`**          | Hybrid: RSA wraps AES key, AES-GCM protects payload  |
-| **`TwoKeyEncryptionService<TKek, TDek>`** | Envelope: random DEK per operation, KEK encrypts DEK |
+| **`AesGcmRsaEncryptionService`**          | Hybrid: RSA wraps AES key, AES-GCM protects payload                           |
+| **`TwoKeyEncryptionService<TKek, TDek>`** | Envelope: random DEK per operation, KEK encrypts DEK                          |
 
 Concrete types live under **`AesGcm/`**, **`ChaCha20Poly1305/`**, **`Symmetric/Aes/*`**, **`Symmetric/ChaCha/*`**, **`Rsa/`**, **`AesGcmRsa/`**, and **`TwoKey/`**.
 

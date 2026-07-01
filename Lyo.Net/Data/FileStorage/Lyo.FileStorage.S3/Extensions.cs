@@ -60,17 +60,10 @@ public static class Extensions
                     var opts = provider.GetRequiredService<S3FileStorageOptions>();
                     var metrics = opts.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
                     return new(
-                        provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey),
-                        opts,
-                        provider.GetRequiredService<IAmazonS3>(),
-                        provider.GetRequiredService<IStagedFileUploadStore>(),
-                        provider.GetService<IFileMalwareScanner>(),
-                        provider.GetService<IFileContentPolicy>(),
-                        provider.GetServices<IFileAuditEventHandler>(),
-                        provider.GetServices<IStagedFileUploadEventHandler>(),
-                        provider.GetService<IFileOperationContextAccessor>(),
-                        provider.GetService<ILoggerFactory>(),
-                        metrics);
+                        provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey), opts, provider.GetRequiredService<IAmazonS3>(),
+                        provider.GetRequiredService<IStagedFileUploadStore>(), provider.GetService<IFileMalwareScanner>(), provider.GetService<IFileContentPolicy>(),
+                        provider.GetServices<IFileAuditEventHandler>(), provider.GetServices<IStagedFileUploadEventHandler>(), provider.GetService<IFileOperationContextAccessor>(),
+                        provider.GetService<ILoggerFactory>(), metrics);
                 });
 
             services.AddKeyedScoped<IStagedFileUploadService>(serviceKey, (provider, _) => provider.GetRequiredKeyedService<S3StagedFileUploadService>(serviceKey));

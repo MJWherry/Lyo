@@ -27,11 +27,20 @@ public abstract record CompressionAlgorithm
     private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByExt = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByName = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>GZIP container around DEFLATE; ubiquitous <c>.gz</c> format.</summary>
+    public static readonly CompressionAlgorithm GZip = new BuiltInCompressionAlgorithm("GZip", ".gz");
+
+    /// <summary>Raw DEFLATE bitstream (no zlib/gzip wrapper).</summary>
+    public static readonly CompressionAlgorithm Deflate = new BuiltInCompressionAlgorithm("Deflate", ".deflate");
+
     /// <summary>Stable display name (e.g. <c>"GZip"</c>, <c>"LZ4"</c>). Used as the discriminator key for addon registrars and error messages.</summary>
     public string Name { get; }
 
     /// <summary>Default file extension including the leading dot (e.g. <c>".gz"</c>, <c>".lz4"</c>).</summary>
     public string Extension { get; }
+
+    /// <summary>All algorithms whose assemblies have been loaded into the current AppDomain.</summary>
+    public static IReadOnlyCollection<CompressionAlgorithm> All => ByName.Values.ToArray();
 
     /// <param name="name">Stable algorithm name; case-insensitive lookup key.</param>
     /// <param name="extension">Default file extension including the leading dot.</param>
@@ -49,16 +58,7 @@ public abstract record CompressionAlgorithm
     /// <summary>Looks up a registered algorithm by <see cref="Name" />. Case-insensitive. Only returns algorithms whose assemblies are loaded.</summary>
     public static CompressionAlgorithm? TryFromName(string? name) => !name.IsNullOrEmpty() && ByName.TryGetValue(name, out var algo) ? algo : null;
 
-    /// <summary>All algorithms whose assemblies have been loaded into the current AppDomain.</summary>
-    public static IReadOnlyCollection<CompressionAlgorithm> All => ByName.Values.ToArray();
-
     public sealed override string ToString() => Name;
-
-    /// <summary>GZIP container around DEFLATE; ubiquitous <c>.gz</c> format.</summary>
-    public static readonly CompressionAlgorithm GZip = new BuiltInCompressionAlgorithm("GZip", ".gz");
-
-    /// <summary>Raw DEFLATE bitstream (no zlib/gzip wrapper).</summary>
-    public static readonly CompressionAlgorithm Deflate = new BuiltInCompressionAlgorithm("Deflate", ".deflate");
 
 #if !NETSTANDARD2_0
     /// <summary>Brotli (RFC 7932); strong ratio, common for HTTP and static assets. Not available on <c>netstandard2.0</c>.</summary>

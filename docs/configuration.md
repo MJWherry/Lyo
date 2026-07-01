@@ -21,18 +21,18 @@ cp .env.example .env
 
 ## Variables
 
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `CPU_LIMIT` | CPUs the runner container may use (fractional allowed, e.g. `1.5`). | `4` |
-| `MEM_LIMIT` | Memory cap for the runner container (e.g. `2g`, `512m`). | `8g` |
-| `HOST_UID` | UID that `docs/benchmarks/data` manifests are `chown`ed to on exit (the runner is root for the Docker socket). | `1000` |
-| `HOST_GID` | GID for the same manifest ownership fix. | `1000` |
-| `TARGET` | What the `run` service builds **and** runs: a group (`benchmarks` / `tests` / `all`), an exact project name, a glob, or a space/comma list. | `all` |
-| `RUN_IMAGE` | Image tag for the `run` service; set a distinct value per target so builds don't clobber each other. | `lyo-runner-all` |
-| `BENCH_FILTER` | BenchmarkDotNet `--filter` glob applied to every selected suite. | `*` |
-| `NO_DOCKER` | `1` skips Testcontainers-backed benchmark classes (Redis/Postgres). | `0` |
-| `TEST_FILTER` | Optional xUnit `--filter` expression applied to every selected test project. | (empty) |
-| `TESTCONTAINERS_HOST_OVERRIDE` | Host that Testcontainers advertises to sibling containers reached over the mounted Docker socket. | `host.docker.internal` |
+| Variable                       | Purpose                                                                                                                                     | Default                |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| `CPU_LIMIT`                    | CPUs the runner container may use (fractional allowed, e.g. `1.5`).                                                                         | `4`                    |
+| `MEM_LIMIT`                    | Memory cap for the runner container (e.g. `2g`, `512m`).                                                                                    | `8g`                   |
+| `HOST_UID`                     | UID that `docs/benchmarks/data` manifests are `chown`ed to on exit (the runner is root for the Docker socket).                              | `1000`                 |
+| `HOST_GID`                     | GID for the same manifest ownership fix.                                                                                                    | `1000`                 |
+| `TARGET`                       | What the `run` service builds **and** runs: a group (`benchmarks` / `tests` / `all`), an exact project name, a glob, or a space/comma list. | `all`                  |
+| `RUN_IMAGE`                    | Image tag for the `run` service; set a distinct value per target so builds don't clobber each other.                                        | `lyo-runner-all`       |
+| `BENCH_FILTER`                 | BenchmarkDotNet `--filter` glob applied to every selected suite.                                                                            | `*`                    |
+| `NO_DOCKER`                    | `1` skips Testcontainers-backed benchmark classes (Redis/Postgres).                                                                         | `0`                    |
+| `TEST_FILTER`                  | Optional xUnit `--filter` expression applied to every selected test project.                                                                | (empty)                |
+| `TESTCONTAINERS_HOST_OVERRIDE` | Host that Testcontainers advertises to sibling containers reached over the mounted Docker socket.                                           | `host.docker.internal` |
 
 The wrapper script [`scripts/docker/run.sh`](../scripts/docker/run.sh) sets
 `TARGET` and a per-target `RUN_IMAGE` for you, so prefer it over editing those

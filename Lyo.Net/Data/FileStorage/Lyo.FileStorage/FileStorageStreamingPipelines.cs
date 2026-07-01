@@ -247,12 +247,7 @@ internal sealed class FileStorageStreamingPipelines
         }
     }
 
-    private async Task DecompressCompressedPipeToPlainAsync(
-        Pipe pipeCompressed,
-        PipeWriter plainWriter,
-        CompressionAlgorithm algorithm,
-        int? chunkSize,
-        CancellationToken ct)
+    private async Task DecompressCompressedPipeToPlainAsync(Pipe pipeCompressed, PipeWriter plainWriter, CompressionAlgorithm algorithm, int? chunkSize, CancellationToken ct)
     {
         try {
             using var compressedRead = pipeCompressed.Reader.AsStream(true);

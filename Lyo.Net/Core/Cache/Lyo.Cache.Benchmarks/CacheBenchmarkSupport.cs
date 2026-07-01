@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Text;
 using Lyo.Cache.Fusion;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +14,7 @@ internal static class CacheBenchmarkSupport
             o.Enabled = true;
             configure?.Invoke(o);
         });
+
         return services.BuildServiceProvider().GetRequiredService<ICacheService>();
     }
 
@@ -24,6 +25,7 @@ internal static class CacheBenchmarkSupport
             o.Enabled = true;
             configure?.Invoke(o);
         });
+
         return services.BuildServiceProvider().GetRequiredService<ICacheService>();
     }
 
@@ -31,9 +33,10 @@ internal static class CacheBenchmarkSupport
     internal static string CompressibleString(int sizeBytes)
     {
         const string seed = "the quick brown fox jumps over the lazy dog 0123456789 ";
-        var builder = new System.Text.StringBuilder(sizeBytes + seed.Length);
+        var builder = new StringBuilder(sizeBytes + seed.Length);
         while (builder.Length < sizeBytes)
             builder.Append(seed);
+
         return builder.ToString(0, sizeBytes);
     }
 
@@ -42,21 +45,15 @@ internal static class CacheBenchmarkSupport
         => new() {
             Id = 1,
             Name = "nested-payload",
-            Address = new CacheAddress {
+            Address = new() {
                 Street = "123 Benchmark Way",
                 City = "Perfville",
                 Country = "Lyoland",
-                Geo = new CacheGeo { Latitude = 51.5074, Longitude = -0.1278 },
+                Geo = new() { Latitude = 51.5074, Longitude = -0.1278 }
             },
-            Contacts = Enumerable.Range(0, 5)
-                .Select(i => new CacheContact { Kind = i % 2 == 0 ? "email" : "phone", Value = $"contact-{i}@example.com" })
-                .ToList(),
-            Attributes = new Dictionary<string, string> {
-                ["tier"] = "gold",
-                ["region"] = "us-east",
-                ["source"] = "benchmark",
-            },
-            Data = CompressibleString(approxBytes),
+            Contacts = Enumerable.Range(0, 5).Select(i => new CacheContact { Kind = i % 2 == 0 ? "email" : "phone", Value = $"contact-{i}@example.com" }).ToList(),
+            Attributes = new() { ["tier"] = "gold", ["region"] = "us-east", ["source"] = "benchmark" },
+            Data = CompressibleString(approxBytes)
         };
 }
 
@@ -64,22 +61,28 @@ internal static class CacheBenchmarkSupport
 public sealed class CachePayload
 {
     public int Id { get; set; }
+
     public string Name { get; set; } = string.Empty;
+
     public string Data { get; set; } = string.Empty;
 }
 
 /// <summary>
-/// Cached value with realistic nested structure: a nested <see cref="Address" /> object (itself nesting a
-/// <see cref="CacheGeo" />), a <see cref="Contacts" /> collection of objects, an <see cref="Attributes" /> dictionary,
-/// and a size-scalable <see cref="Data" /> body. Exercises serialization/compression of non-trivial graphs.
+/// Cached value with realistic nested structure: a nested <see cref="Address" /> object (itself nesting a <see cref="CacheGeo" />), a <see cref="Contacts" /> collection of
+/// objects, an <see cref="Attributes" /> dictionary, and a size-scalable <see cref="Data" /> body. Exercises serialization/compression of non-trivial graphs.
 /// </summary>
 public sealed class NestedCachePayload
 {
     public int Id { get; set; }
+
     public string Name { get; set; } = string.Empty;
+
     public CacheAddress Address { get; set; } = new();
+
     public List<CacheContact> Contacts { get; set; } = [];
+
     public Dictionary<string, string> Attributes { get; set; } = [];
+
     public string Data { get; set; } = string.Empty;
 }
 
@@ -87,8 +90,11 @@ public sealed class NestedCachePayload
 public sealed class CacheAddress
 {
     public string Street { get; set; } = string.Empty;
+
     public string City { get; set; } = string.Empty;
+
     public string Country { get; set; } = string.Empty;
+
     public CacheGeo Geo { get; set; } = new();
 }
 
@@ -96,6 +102,7 @@ public sealed class CacheAddress
 public sealed class CacheGeo
 {
     public double Latitude { get; set; }
+
     public double Longitude { get; set; }
 }
 
@@ -103,5 +110,6 @@ public sealed class CacheGeo
 public sealed class CacheContact
 {
     public string Kind { get; set; } = string.Empty;
+
     public string Value { get; set; } = string.Empty;
 }

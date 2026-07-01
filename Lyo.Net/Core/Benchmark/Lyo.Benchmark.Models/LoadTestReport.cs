@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-
 namespace Lyo.Benchmark.Models;
 
-/// <summary>
-/// Load-test report (k6). Captures per-scenario latency/throughput plus endpoint rollups, SLO assessment, and grades.
-/// </summary>
+/// <summary>Load-test report (k6). Captures per-scenario latency/throughput plus endpoint rollups, SLO assessment, and grades.</summary>
 public sealed class LoadTestReport : BenchmarkReport
 {
     /// <summary>Per-case query structure (where clauses, sort, includes, selection field count) behind the scenarios.</summary>
@@ -24,8 +20,8 @@ public sealed class LoadTestReport : BenchmarkReport
 }
 
 /// <summary>
-/// Describes the structure of a single load-test query case so latencies are interpretable (e.g. how many
-/// where clauses, which filters/sorts/includes, and how many fields the projection selects).
+/// Describes the structure of a single load-test query case so latencies are interpretable (e.g. how many where clauses, which filters/sorts/includes, and how many fields
+/// the projection selects).
 /// </summary>
 public sealed class LoadCase
 {

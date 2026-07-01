@@ -1,21 +1,15 @@
-using System;
-using System.Collections.Generic;
-
 namespace Lyo.Benchmark.Models.Builders;
 
 /// <summary>
-/// Fluent builder for <see cref="MicroBenchmarkReport" />. Used by the BenchmarkDotNet exporter and by tests to
-/// construct reports consistently (mirrors the builder style of <c>WhereClauseBuilder</c> in Lyo.Query.Models).
+/// Fluent builder for <see cref="MicroBenchmarkReport" />. Used by the BenchmarkDotNet exporter and by tests to construct reports consistently (mirrors the builder style of
+/// <c>WhereClauseBuilder</c> in Lyo.Query.Models).
 /// </summary>
 public sealed class MicroBenchmarkReportBuilder
 {
-    private readonly MicroBenchmarkReport _report;
     private readonly Dictionary<string, BenchmarkGroup> _groups = new(StringComparer.Ordinal);
+    private readonly MicroBenchmarkReport _report;
 
-    private MicroBenchmarkReportBuilder(string name, string title)
-    {
-        _report = new MicroBenchmarkReport { Name = name, Title = title, GeneratedAt = DateTimeOffset.UtcNow };
-    }
+    private MicroBenchmarkReportBuilder(string name, string title) => _report = new() { Name = name, Title = title, GeneratedAt = DateTimeOffset.UtcNow };
 
     /// <summary>Starts a builder for a micro-benchmark report with the given machine name and display title.</summary>
     public static MicroBenchmarkReportBuilder Create(string name, string title) => new(name, title);
@@ -33,6 +27,7 @@ public sealed class MicroBenchmarkReportBuilder
         _report.RunId = runId;
         if (generatedAt.HasValue)
             _report.GeneratedAt = generatedAt.Value;
+
         return this;
     }
 
@@ -57,6 +52,7 @@ public sealed class MicroBenchmarkReportBuilder
     {
         if (!string.IsNullOrWhiteSpace(note))
             _report.Notes.Add(note);
+
         return this;
     }
 
@@ -77,17 +73,20 @@ public sealed class MicroBenchmarkReportBuilder
         var bucket = GetOrAddGroup(group);
         if (description is not null)
             bucket.Description = description;
+
         if (parameters is not null)
-            bucket.Parameters = new List<ParameterDescriptor>(parameters);
+            bucket.Parameters = new(parameters);
+
         if (dataset is not null)
             bucket.Dataset = dataset;
+
         return this;
     }
 
     private BenchmarkGroup GetOrAddGroup(string group)
     {
         if (!_groups.TryGetValue(group, out var bucket)) {
-            bucket = new BenchmarkGroup { Name = group };
+            bucket = new() { Name = group };
             _groups[group] = bucket;
             _report.Groups.Add(bucket);
         }
@@ -107,6 +106,7 @@ public sealed class MicroBenchmarkReportBuilder
     {
         if (row is not null)
             _report.Slo.Add(row);
+
         return this;
     }
 
@@ -115,6 +115,7 @@ public sealed class MicroBenchmarkReportBuilder
     {
         if (row is not null)
             _report.Grades.Add(row);
+
         return this;
     }
 

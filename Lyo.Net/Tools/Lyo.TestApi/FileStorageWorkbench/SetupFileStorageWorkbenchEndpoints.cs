@@ -221,11 +221,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                 .DisableAntiforgery();
 
             group.MapPost(
-                "stage/{stageId:guid}/complete", async (
-                    Guid stageId,
-                    [FromBody] StagedUploadCompleteRequest? request,
-                    IServiceProvider services,
-                    CancellationToken ct) => {
+                "stage/{stageId:guid}/complete", async (Guid stageId, [FromBody] StagedUploadCompleteRequest? request, IServiceProvider services, CancellationToken ct) => {
                     var staged = GetStagedFileUploadService(services);
                     var result = await staged.CompleteAsync(stageId, request, ct);
                     return Results.Ok(result);

@@ -7,9 +7,9 @@ using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Blob.Multipart;
 using Lyo.FileStorage.Blob.Staged;
 using Lyo.FileStorage.Multipart;
-using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
+using Lyo.FileStorage.Staged;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,17 +108,9 @@ public static class Extensions
                 var opts = sp.GetRequiredService<BlobFileStorageOptions>();
                 var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
                 return new(
-                    sp.GetRequiredService<BlobFileStorageService>(),
-                    opts,
-                    sp.GetRequiredService<IStagedFileUploadStore>(),
-                    null,
-                    sp.GetService<IFileMalwareScanner>(),
-                    sp.GetService<IFileContentPolicy>(),
-                    sp.GetServices<IFileAuditEventHandler>(),
-                    sp.GetServices<IStagedFileUploadEventHandler>(),
-                    sp.GetService<IFileOperationContextAccessor>(),
-                    sp.GetService<ILoggerFactory>(),
-                    metrics);
+                    sp.GetRequiredService<BlobFileStorageService>(), opts, sp.GetRequiredService<IStagedFileUploadStore>(), null, sp.GetService<IFileMalwareScanner>(),
+                    sp.GetService<IFileContentPolicy>(), sp.GetServices<IFileAuditEventHandler>(), sp.GetServices<IStagedFileUploadEventHandler>(),
+                    sp.GetService<IFileOperationContextAccessor>(), sp.GetService<ILoggerFactory>(), metrics);
             });
 
             services.AddScoped<IStagedFileUploadService>(sp => sp.GetRequiredService<BlobStagedFileUploadService>());

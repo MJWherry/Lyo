@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Hashing.Benchmarks;
@@ -8,7 +7,9 @@ namespace Lyo.Hashing.Benchmarks;
 /// <summary>Compares the static <see cref="Hasher" /> hot path against the injectable <see cref="HashingService" /> facade for SHA-256.</summary>
 [BenchmarkDescription("Measures the overhead of the injectable HashingService facade against the static Hasher hot path for the same SHA-256 digest.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer being hashed (1 KB, 1 MB).")]
-[BenchmarkSla(MinThroughputMbps = 200, SizeParam = "DataSize", Standard = "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.")]
+[BenchmarkSla(
+    MinThroughputMbps = 200, SizeParam = "DataSize",
+    Standard = "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.")]
 public class HasherSurfaceBenchmarks
 {
     private readonly IHashingService _service = HashingService.Shared;

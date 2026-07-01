@@ -1,13 +1,13 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Benchmarks;
 
-[BenchmarkDescription("Buffered GZip compress/decompress of fixed 1 KB / 1 MB / 10 MB random (incompressible) buffers; decompress cases reuse output from setup. Method names encode size.")]
+[BenchmarkDescription(
+    "Buffered GZip compress/decompress of fixed 1 KB / 1 MB / 10 MB random (incompressible) buffers; decompress cases reuse output from setup. Method names encode size.")]
 public class GZipCompressionBenchmarks
 {
     private byte[] _compressedLarge = null!;

@@ -1,4 +1,3 @@
-using System;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -18,6 +17,7 @@ public static class BenchmarkData
         var builder = new StringBuilder(sizeBytes + Seed.Length);
         while (builder.Length < sizeBytes)
             builder.Append(Seed);
+
         return builder.ToString(0, sizeBytes);
     }
 
@@ -27,6 +27,7 @@ public static class BenchmarkData
         var buffer = new byte[Math.Max(0, sizeBytes)];
         if (buffer.Length > 0)
             RandomNumberGenerator.Fill(buffer);
+
         return buffer;
     }
 }

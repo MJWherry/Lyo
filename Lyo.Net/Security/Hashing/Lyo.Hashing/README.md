@@ -17,7 +17,8 @@ Hex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / *
 - **SHA-2** – One-shot buffer hashing on modern .NET; stream hashing via **`HashAlgorithm`**
 - **MD5** – Legacy compatibility and fingerprints only (not for security)
 - **Checksums** – **`Checksummer`** / **`ChecksumStream`**: CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32 for corruption detection (not for security)
-- **`IHashingService`** – Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, **`CreateHashingStream`**, checksums (**`Checksum`** / **`ChecksumValue`** / **`ChecksumFileAsync`** / **`CreateChecksumStream`**)
+- **`IHashingService`** – Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, **`CreateHashingStream`**, checksums (**`Checksum`** /
+  **`ChecksumValue`** / **`ChecksumFileAsync`** / **`CreateChecksumStream`**)
 - **`Hasher`** – Static digest helpers without allocating a service
 - **`HexEncoding`** – Encode/decode hex with explicit casing
 - **`byte[].ToHexString()`** – Extension in namespace **`Lyo.Hashing`** (**`ByteArrayHexExtensions`**) — lowercase hex for historical consistency
@@ -208,14 +209,15 @@ Key lifecycle and storage are caller responsibilities.
 
 ### **`ChecksumAlgorithm`**
 
-| Value         | Definition                                        | Check value of `"123456789"` |
-|---------------|---------------------------------------------------|------------------------------|
-| **`Crc32`**   | CRC-32 IEEE/ISO-HDLC (zip, gzip, PNG)             | `0xCBF43926`                 |
-| **`Crc32C`**  | CRC-32C Castagnoli (iSCSI, ext4, SSE4.2)          | `0xE3069283`                 |
-| **`Crc64`**   | CRC-64/ECMA-182 (matches `System.IO.Hashing`)     | `0x6C40DF5F0B497347`         |
-| **`Adler32`** | Adler-32 (zlib / RFC 1950)                        | `0x091E01DE`                 |
+| Value         | Definition                                    | Check value of `"123456789"` |
+|---------------|-----------------------------------------------|------------------------------|
+| **`Crc32`**   | CRC-32 IEEE/ISO-HDLC (zip, gzip, PNG)         | `0xCBF43926`                 |
+| **`Crc32C`**  | CRC-32C Castagnoli (iSCSI, ext4, SSE4.2)      | `0xE3069283`                 |
+| **`Crc64`**   | CRC-64/ECMA-182 (matches `System.IO.Hashing`) | `0x6C40DF5F0B497347`         |
+| **`Adler32`** | Adler-32 (zlib / RFC 1950)                    | `0x091E01DE`                 |
 
-`Checksummer.Compute` and `IHashingService.Checksum` return **big-endian** bytes (4 for 32-bit checksums, 8 for CRC-64); `ComputeValue` / `ChecksumValue` return the raw numeric value.
+`Checksummer.Compute` and `IHashingService.Checksum` return **big-endian** bytes (4 for 32-bit checksums, 8 for CRC-64); `ComputeValue` / `ChecksumValue` return the raw numeric
+value.
 
 ## Notes
 

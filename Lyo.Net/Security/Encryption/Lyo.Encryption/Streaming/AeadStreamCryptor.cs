@@ -1,12 +1,13 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Lyo.Encryption.Streaming;
 
 /// <summary>
 /// A per-stream AEAD cipher bound to a single key. Reused across every chunk of one streaming encrypt/decrypt operation so the key schedule is built once and no intermediate
-/// arrays are allocated per chunk. Instances are NOT thread-safe: a single instance is driven sequentially by one streaming loop and disposed when the stream completes. Created
-/// by <see cref="EncryptionServiceBase.CreateStreamCryptor" /> on each single-key AEAD service.
+/// arrays are allocated per chunk. Instances are NOT thread-safe: a single instance is driven sequentially by one streaming loop and disposed when the stream completes. Created by
+/// <see cref="EncryptionServiceBase.CreateStreamCryptor" /> on each single-key AEAD service.
 /// </summary>
 public interface IAeadStreamCryptor : IDisposable
 {
@@ -24,15 +25,15 @@ public interface IAeadStreamCryptor : IDisposable
 
     /// <summary>
     /// Decrypts the contiguous <c>ciphertext||tag</c> in <paramref name="ciphertextAndTag" /> with <paramref name="nonce" /> into <paramref name="plaintext" />, which must be
-    /// exactly <c>ciphertextAndTag.Length - TagSize</c> bytes. Throws <see cref="System.Security.Cryptography.CryptographicException" /> (or
-    /// <c>AuthenticationTagMismatchException</c>) on tag mismatch.
+    /// exactly <c>ciphertextAndTag.Length - TagSize</c> bytes. Throws <see cref="System.Security.Cryptography.CryptographicException" /> (or <c>AuthenticationTagMismatchException</c>) on
+    /// tag mismatch.
     /// </summary>
     void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext);
 }
 
 /// <summary>
-/// Encodes/decodes the compact streaming chunk frame <c>[ciphertextLen:int32 LE][nonce:NonceSize][ciphertext][tag:TagSize]</c> into caller-owned buffers, with no per-chunk heap
-/// allocation. The nonce is supplied by the caller (a per-stream random prefix plus a per-chunk counter) so the codec is agnostic to how the nonce was produced.
+/// Encodes/decodes the compact streaming chunk frame <c>[ciphertextLen:int32 LE][nonce:NonceSize][ciphertext][tag:TagSize]</c> into caller-owned buffers, with no per-chunk
+/// heap allocation. The nonce is supplied by the caller (a per-stream random prefix plus a per-chunk counter) so the codec is agnostic to how the nonce was produced.
 /// </summary>
 internal static class AeadChunkCodec
 {
@@ -69,7 +70,7 @@ internal static class AeadChunkCodec
     }
 
     /// <summary>Ensures <paramref name="buffer" /> is rented from <see cref="ArrayPool{T}" /> and at least <paramref name="size" /> bytes; grows (return + re-rent) if too small.</summary>
-    public static void EnsureCapacity(ref byte[]? buffer, int size)
+    public static void EnsureCapacity([NotNull]ref byte[]? buffer, int size)
     {
         if (buffer != null && buffer.Length >= size)
             return;
@@ -81,8 +82,8 @@ internal static class AeadChunkCodec
     }
 
     /// <summary>
-    /// Reads up to <paramref name="count" /> bytes into <paramref name="buffer" /> at offset 0, looping until <paramref name="count" /> bytes are read or the stream ends. Returns
-    /// the number of bytes actually read (equal to <paramref name="count" /> on success, 0 on a clean end of stream, or a partial count if the stream ends mid-read). Robust
+    /// Reads up to <paramref name="count" /> bytes into <paramref name="buffer" /> at offset 0, looping until <paramref name="count" /> bytes are read or the stream ends.
+    /// Returns the number of bytes actually read (equal to <paramref name="count" /> on success, 0 on a clean end of stream, or a partial count if the stream ends mid-read). Robust
     /// against streams (e.g. pipes) that satisfy a read with fewer bytes than requested.
     /// </summary>
     public static async Task<int> ReadAtLeastAsync(Stream input, byte[] buffer, int count, CancellationToken ct)

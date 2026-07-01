@@ -17,16 +17,6 @@ public sealed class TestApiStagedFileUploadService : IStagedFileUploadService
         _routePrefix = routePrefix.Trim('/');
     }
 
-#pragma warning disable CS0067
-    public event EventHandler<StagedUploadPresignedCreatedEventArgs>? PresignedCreated;
-
-    public event EventHandler<StagedUploadCompletedEventArgs>? UploadCompleted;
-
-    public event EventHandler<StagedUploadFailedEventArgs>? UploadFailed;
-
-    public event EventHandler<StagedUploadCommittedEventArgs>? Committed;
-#pragma warning restore CS0067
-
     public Task<StagedUploadBeginResult> BeginAsync(StagedUploadBeginRequest request, CancellationToken ct = default)
         => _apiClient.PostAsAsync<StagedUploadBeginRequest, StagedUploadBeginResult>(BuildUri("stage/begin"), request, ct: ct);
 
@@ -36,8 +26,7 @@ public sealed class TestApiStagedFileUploadService : IStagedFileUploadService
     public Task<FileStoreResult> CommitAsync(Guid stageId, StagedUploadCommitRequest request, CancellationToken ct = default)
         => _apiClient.PostAsAsync<StagedUploadCommitRequest, FileStoreResult>(BuildUri($"stage/{stageId:D}/commit"), request, ct: ct);
 
-    public Task AbortAsync(Guid stageId, CancellationToken ct = default)
-        => _apiClient.PostAsAsync<object>(BuildUri($"stage/{stageId:D}/abort"), ct: ct);
+    public Task AbortAsync(Guid stageId, CancellationToken ct = default) => _apiClient.PostAsAsync<object>(BuildUri($"stage/{stageId:D}/abort"), ct: ct);
 
     public async Task<StagedFileResult> GetAsync(Guid stageId, CancellationToken ct = default)
     {
@@ -46,4 +35,14 @@ public sealed class TestApiStagedFileUploadService : IStagedFileUploadService
     }
 
     private string BuildUri(string relativePath) => $"{_routePrefix}/{relativePath}";
+
+#pragma warning disable CS0067
+    public event EventHandler<StagedUploadPresignedCreatedEventArgs>? PresignedCreated;
+
+    public event EventHandler<StagedUploadCompletedEventArgs>? UploadCompleted;
+
+    public event EventHandler<StagedUploadFailedEventArgs>? UploadFailed;
+
+    public event EventHandler<StagedUploadCommittedEventArgs>? Committed;
+#pragma warning restore CS0067
 }

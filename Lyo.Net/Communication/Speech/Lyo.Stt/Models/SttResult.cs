@@ -1,5 +1,4 @@
 using System.Diagnostics;
-
 #if NETSTANDARD2_0
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #endif

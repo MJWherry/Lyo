@@ -1,8 +1,6 @@
 namespace Lyo.Hashing.Internal;
 
-/// <summary>
-/// Adler-32 (zlib / RFC 1950). Two 16-bit running sums modulo 65521 combined as <c>(b &lt;&lt; 16) | a</c>. Check value of <c>"123456789"</c> is <c>0x091E01DE</c>.
-/// </summary>
+/// <summary>Adler-32 (zlib / RFC 1950). Two 16-bit running sums modulo 65521 combined as <c>(b &lt;&lt; 16) | a</c>. Check value of <c>"123456789"</c> is <c>0x091E01DE</c>.</summary>
 internal sealed class Adler32Calculator : ChecksumCalculator
 {
     private const uint ModAdler = 65521u;

@@ -1,15 +1,11 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 
 namespace Lyo.Csv.Benchmarks;
 
 /// <summary>Benchmarks CSV parsing across sources (bytes/stream/file), buffered vs streaming vs async, and dynamic targets (DataTable, dictionary).</summary>
-[BenchmarkDescription("Parses CSV (produced from RowCount SampleRecords) back through every read surface: buffered typed objects from bytes / stream / file, the IAsyncEnumerable streaming path, the async list path, the options-driven parse, and the dynamic DataTable and row/column-dictionary targets. Contrasts the peak-memory of materializing all rows against bounded streaming, and typed mapping against dynamic parsing.")]
+[BenchmarkDescription(
+    "Parses CSV (produced from RowCount SampleRecords) back through every read surface: buffered typed objects from bytes / stream / file, the IAsyncEnumerable streaming path, the async list path, the options-driven parse, and the dynamic DataTable and row/column-dictionary targets. Contrasts the peak-memory of materializing all rows against bounded streaming, and typed mapping against dynamic parsing.")]
 [BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows encoded in the CSV being parsed (100 to 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; the parser maps columns by header to typed properties.")]
 [BenchmarkSla(MaxMeanMs = 500, Standard = "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).")]
@@ -45,7 +41,7 @@ public class CsvReadBenchmarks
     [BenchmarkDescription("Parse all rows into typed SampleRecords from a MemoryStream.")]
     public int ParseStream()
     {
-        using var stream = new MemoryStream(_bytes, writable: false);
+        using var stream = new MemoryStream(_bytes, false);
         return _csv.ParseStream<SampleRecord>(stream).ToList().Count;
     }
 
@@ -57,10 +53,11 @@ public class CsvReadBenchmarks
     [BenchmarkDescription("Parse rows lazily via the async streaming API (bounded memory, no buffering of all rows).")]
     public async Task<int> ParseStreamStreaming()
     {
-        using var stream = new MemoryStream(_bytes, writable: false);
+        using var stream = new MemoryStream(_bytes, false);
         var count = 0;
         await foreach (var _ in _csv.ParseStreamStreamingAsync<SampleRecord>(stream))
             count++;
+
         return count;
     }
 
@@ -72,7 +69,7 @@ public class CsvReadBenchmarks
     [BenchmarkDescription("Parse a stream into a typed List with fine-grained parse options (per-row error handling path).")]
     public async Task<int> ParseStreamWithOptions()
     {
-        using var stream = new MemoryStream(_bytes, writable: false);
+        using var stream = new MemoryStream(_bytes, false);
         return (await _csv.ParseStreamWithOptionsAsync<SampleRecord>(stream, null)).Count;
     }
 

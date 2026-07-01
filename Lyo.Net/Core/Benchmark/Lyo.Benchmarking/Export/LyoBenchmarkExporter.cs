@@ -1,24 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using BenchmarkDotNet.Loggers;
+using System.Text.Json.Serialization;
 using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Reports;
+using BenchmarkDotNet.Running;
 using Lyo.Benchmark.Models;
 using Lyo.Benchmark.Models.Builders;
+using BenchmarkReport = BenchmarkDotNet.Reports.BenchmarkReport;
 using ModelReport = Lyo.Benchmark.Models.BenchmarkReport;
-using BdnReport = BenchmarkDotNet.Reports.BenchmarkReport;
 
 namespace Lyo.Benchmarking.Export;
 
 /// <summary>
-/// BenchmarkDotNet exporter that normalizes a run into the unified <see cref="MicroBenchmarkReport" /> schema and
-/// writes <c>&lt;name&gt;.lyobench.json</c> into the artifacts directory. Reads structured statistics directly
-/// (nanosecond means, GC bytes, parameters) so no downstream string reparsing is needed.
+/// BenchmarkDotNet exporter that normalizes a run into the unified <see cref="MicroBenchmarkReport" /> schema and writes <c>&lt;name&gt;.lyobench.json</c> into the artifacts
+/// directory. Reads structured statistics directly (nanosecond means, GC bytes, parameters) so no downstream string reparsing is needed.
 /// </summary>
 public sealed class LyoBenchmarkExporter : IExporter
 {
@@ -26,10 +24,10 @@ public sealed class LyoBenchmarkExporter : IExporter
     public static readonly LyoBenchmarkExporter Default = new();
 
     private static readonly JsonSerializerOptions JsonOptions = new() {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    private static readonly Dictionary<string, int> SlaSeverity = new(StringComparer.Ordinal) { ["Exceeds"] = 0, ["Meets"] = 1, ["Miss"] = 2 };
 
     /// <inheritdoc />
     public string Name => "lyobench";
@@ -63,7 +61,6 @@ public sealed class LyoBenchmarkExporter : IExporter
         var runEnded = DateTimeOffset.UtcNow;
         var totalTime = summary.TotalTime;
         var runStarted = runEnded - totalTime;
-
         var builder = MicroBenchmarkReportBuilder.Create(name, title)
             .WithDescription(meta?.Description)
             .WithRun(summary.Title, runEnded)
@@ -72,7 +69,6 @@ public sealed class LyoBenchmarkExporter : IExporter
 
         var measurementByCase = new Dictionary<BenchmarkReportRow, BenchmarkMeasurement>();
         var rows = new List<BenchmarkReportRow>();
-
         foreach (var bdnReport in summary.Reports) {
             var benchmarkCase = bdnReport.BenchmarkCase;
             var mean = bdnReport.ResultStatistics?.Mean ?? double.NaN;
@@ -88,8 +84,9 @@ public sealed class LyoBenchmarkExporter : IExporter
                 AllocatedBytes = ReadAllocated(bdnReport),
                 IsBaseline = benchmarkCase.Descriptor.Baseline,
                 WorkloadMethod = benchmarkCase.Descriptor.WorkloadMethod,
-                BenchmarkType = benchmarkCase.Descriptor.Type,
+                BenchmarkType = benchmarkCase.Descriptor.Type
             };
+
             rows.Add(row);
         }
 
@@ -97,7 +94,6 @@ public sealed class LyoBenchmarkExporter : IExporter
 
         // Aggregates the worst-case SLA verdict per (class, method) for the suite-level SLO summary.
         var sloAggregates = new Dictionary<(string, string), SloAggregate>();
-
         foreach (var row in rows) {
             var measurement = new BenchmarkMeasurement {
                 Method = row.Method,
@@ -107,7 +103,7 @@ public sealed class LyoBenchmarkExporter : IExporter
                 StdDevNs = row.StdDevNs,
                 AllocatedBytes = row.AllocatedBytes,
                 IsBaseline = row.IsBaseline,
-                RatioToBaseline = row.RatioToBaseline,
+                RatioToBaseline = row.RatioToBaseline
             };
 
             var sla = ResolveSla(row);
@@ -125,7 +121,6 @@ public sealed class LyoBenchmarkExporter : IExporter
         }
 
         DescribeGroups(summary, builder);
-
         var comparison = BuildComparison(summary, rows, measurementByCase);
         if (comparison is not null)
             builder.WithComparison(comparison);
@@ -146,6 +141,7 @@ public sealed class LyoBenchmarkExporter : IExporter
         const string suffix = ".Benchmarks";
         if (trimmed.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
             trimmed = trimmed.Substring(0, trimmed.Length - suffix.Length);
+
         var segment = trimmed.Split('.').LastOrDefault() ?? trimmed;
         return (segment.ToLowerInvariant(), segment);
     }
@@ -160,8 +156,8 @@ public sealed class LyoBenchmarkExporter : IExporter
             Runtime = RuntimeInformation.FrameworkDescription,
             Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
             LogicalCores = Environment.ProcessorCount,
-            GcMode = System.Runtime.GCSettings.IsServerGC ? "Server" : "Workstation",
-            Configuration = assembly?.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration,
+            GcMode = GCSettings.IsServerGC ? "Server" : "Workstation",
+            Configuration = assembly?.GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration
         };
 
         try {
@@ -178,9 +174,8 @@ public sealed class LyoBenchmarkExporter : IExporter
     }
 
     /// <summary>
-    /// Reads processor name / core counts and the .NET SDK version from BenchmarkDotNet's host info reflectively.
-    /// The backing types live in Perfolizer and have changed shape across BenchmarkDotNet releases, so reflection
-    /// keeps this resilient (and any failure simply leaves the optional fields null).
+    /// Reads processor name / core counts and the .NET SDK version from BenchmarkDotNet's host info reflectively. The backing types live in Perfolizer and have changed shape
+    /// across BenchmarkDotNet releases, so reflection keeps this resilient (and any failure simply leaves the optional fields null).
     /// </summary>
     private static void ReadHostCpuAndSdk(object host, BenchmarkEnvironment env)
     {
@@ -190,14 +185,15 @@ public sealed class LyoBenchmarkExporter : IExporter
             if (cpu is not null) {
                 if (GetProperty(cpu, "ProcessorName") is string name && !string.IsNullOrWhiteSpace(name))
                     env.Cpu = name.Trim();
+
                 if (GetProperty(cpu, "PhysicalCoreCount") is int physical && physical > 0)
                     env.PhysicalCores = physical;
+
                 if (GetProperty(cpu, "LogicalCoreCount") is int logical && logical > 0)
                     env.LogicalCores = logical;
             }
 
-            if (UnwrapLazy(hostType.GetProperty("DotNetSdkVersion")?.GetValue(host)) is string sdk
-                && !string.IsNullOrWhiteSpace(sdk))
+            if (UnwrapLazy(hostType.GetProperty("DotNetSdkVersion")?.GetValue(host)) is string sdk && !string.IsNullOrWhiteSpace(sdk))
                 env.DotnetSdkVersion = sdk.Trim();
         }
         catch {
@@ -209,35 +205,26 @@ public sealed class LyoBenchmarkExporter : IExporter
     {
         if (value is null)
             return null;
+
         var type = value.GetType();
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Lazy<>))
             return type.GetProperty("Value")?.GetValue(value);
+
         return value;
     }
 
-    private static object? GetProperty(object instance, string name)
-        => instance.GetType().GetProperty(name)?.GetValue(instance);
+    private static object? GetProperty(object instance, string name) => instance.GetType().GetProperty(name)?.GetValue(instance);
 
     private static void DescribeGroups(Summary summary, MicroBenchmarkReportBuilder builder)
     {
-        var types = summary.BenchmarksCases
-            .Select(c => c.Descriptor.Type)
-            .GroupBy(t => t.Name)
-            .Select(g => g.First());
-
+        var types = summary.BenchmarksCases.Select(c => c.Descriptor.Type).GroupBy(t => t.Name).Select(g => g.First());
         foreach (var type in types) {
-            builder.DescribeGroup(
-                type.Name,
-                type.GetCustomAttribute<BenchmarkDescriptionAttribute>()?.Text,
-                ReadParameterDescriptors(type),
-                ReadDataset(type));
+            builder.DescribeGroup(type.Name, type.GetCustomAttribute<BenchmarkDescriptionAttribute>()?.Text, ReadParameterDescriptors(type), ReadDataset(type));
         }
     }
 
     private static List<ParameterDescriptor> ReadParameterDescriptors(Type type)
-        => type.GetCustomAttributes<BenchmarkParameterAttribute>()
-            .Select(a => new ParameterDescriptor { Name = a.Name, Unit = a.Unit, Description = a.Description })
-            .ToList();
+        => type.GetCustomAttributes<BenchmarkParameterAttribute>().Select(a => new ParameterDescriptor { Name = a.Name, Unit = a.Unit, Description = a.Description }).ToList();
 
     private static DatasetDescriptor? ReadDataset(Type type)
     {
@@ -245,13 +232,13 @@ public sealed class LyoBenchmarkExporter : IExporter
         if (shape is null)
             return null;
 
-        var columns = BuildColumns(shape.RowType, new HashSet<Type>());
-        return new DatasetDescriptor {
+        var columns = BuildColumns(shape.RowType, new());
+        return new() {
             TypeName = FriendlyTypeName(shape.RowType),
             ColumnCount = columns.Count,
             MaxNestingDepth = MaxDepth(columns),
             Columns = columns,
-            Notes = shape.Notes,
+            Notes = shape.Notes
         };
     }
 
@@ -264,6 +251,7 @@ public sealed class LyoBenchmarkExporter : IExporter
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             if (!property.CanRead || property.GetIndexParameters().Length > 0)
                 continue;
+
             columns.Add(DescribeProperty(property, visited));
         }
 
@@ -276,7 +264,6 @@ public sealed class LyoBenchmarkExporter : IExporter
         var type = property.PropertyType;
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
         var column = new ColumnDescriptor { Name = property.Name };
-
         if (IsScalar(underlying)) {
             column.Type = FriendlyTypeName(type);
             column.Kind = "scalar";
@@ -302,6 +289,7 @@ public sealed class LyoBenchmarkExporter : IExporter
         var objectChildren = BuildColumns(underlying, visited);
         if (objectChildren.Count > 0)
             column.Children = objectChildren;
+
         return column;
     }
 
@@ -317,21 +305,17 @@ public sealed class LyoBenchmarkExporter : IExporter
     }
 
     private static bool IsScalar(Type type)
-        => type.IsPrimitive
-           || type.IsEnum
-           || type == typeof(string)
-           || type == typeof(decimal)
-           || type == typeof(DateTime)
-           || type == typeof(DateTimeOffset)
-           || type == typeof(TimeSpan)
-           || type == typeof(Guid);
+        => type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime) || type == typeof(DateTimeOffset) ||
+            type == typeof(TimeSpan) || type == typeof(Guid);
 
     private static Type? GetEnumerableElementType(Type type)
     {
         if (type == typeof(string))
             return null;
+
         if (type.IsArray)
             return type.GetElementType();
+
         foreach (var iface in new[] { type }.Concat(type.GetInterfaces())) {
             if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 return iface.GetGenericArguments()[0];
@@ -347,28 +331,29 @@ public sealed class LyoBenchmarkExporter : IExporter
             return FriendlyTypeName(underlying) + "?";
 
         return type switch {
-            _ when type == typeof(int) => "int",
-            _ when type == typeof(long) => "long",
-            _ when type == typeof(short) => "short",
-            _ when type == typeof(byte) => "byte",
-            _ when type == typeof(bool) => "bool",
-            _ when type == typeof(double) => "double",
-            _ when type == typeof(float) => "float",
-            _ when type == typeof(decimal) => "decimal",
-            _ when type == typeof(string) => "string",
-            _ => type.Name,
+            var _ when type == typeof(int) => "int",
+            var _ when type == typeof(long) => "long",
+            var _ when type == typeof(short) => "short",
+            var _ when type == typeof(byte) => "byte",
+            var _ when type == typeof(bool) => "bool",
+            var _ when type == typeof(double) => "double",
+            var _ when type == typeof(float) => "float",
+            var _ when type == typeof(decimal) => "decimal",
+            var _ when type == typeof(string) => "string",
+            var _ => type.Name
         };
     }
 
-    private static Dictionary<string, string?> ReadParameters(BenchmarkDotNet.Running.BenchmarkCase benchmarkCase)
+    private static Dictionary<string, string?> ReadParameters(BenchmarkCase benchmarkCase)
     {
         var result = new Dictionary<string, string?>(StringComparer.Ordinal);
         foreach (var item in benchmarkCase.Parameters.Items)
             result[item.Name] = item.Value?.ToString();
+
         return result;
     }
 
-    private static double? ReadAllocated(BenchmarkDotNet.Reports.BenchmarkReport bdnReport)
+    private static double? ReadAllocated(BenchmarkReport bdnReport)
     {
         try {
             var bytes = bdnReport.GcStats.GetBytesAllocatedPerOperation(bdnReport.BenchmarkCase);
@@ -386,30 +371,22 @@ public sealed class LyoBenchmarkExporter : IExporter
             var baseline = group.FirstOrDefault(r => r.IsBaseline);
             if (baseline is null || baseline.MeanNs <= 0)
                 continue;
+
             foreach (var row in group)
                 row.RatioToBaseline = row.MeanNs / baseline.MeanNs;
         }
     }
 
-    private static ComparisonTable? BuildComparison(
-        Summary summary,
-        List<BenchmarkReportRow> rows,
-        Dictionary<BenchmarkReportRow, BenchmarkMeasurement> measurementByCase)
+    private static ComparisonTable? BuildComparison(Summary summary, List<BenchmarkReportRow> rows, Dictionary<BenchmarkReportRow, BenchmarkMeasurement> measurementByCase)
     {
-        var suiteType = summary.BenchmarksCases
-            .Select(c => c.Descriptor.Type)
-            .Distinct()
-            .FirstOrDefault(t => t.GetCustomAttribute<ComparisonSuiteAttribute>() is not null);
-
+        var suiteType = summary.BenchmarksCases.Select(c => c.Descriptor.Type).Distinct().FirstOrDefault(t => t.GetCustomAttribute<ComparisonSuiteAttribute>() is not null);
         if (suiteType is null)
             return null;
 
         var suiteAttr = suiteType.GetCustomAttribute<ComparisonSuiteAttribute>();
         var suiteRows = rows.Where(r => r.ClassName == suiteType.Name && r.WorkloadMethod is not null).ToList();
-
         var groups = new List<ComparisonGroup>();
-        string? baselineName = suiteAttr?.Baseline;
-
+        var baselineName = suiteAttr?.Baseline;
         foreach (var axisGroup in GroupByAxis(suiteRows)) {
             var axis = axisGroup.Key;
             var comparisonRows = new List<ComparisonRow>();
@@ -422,8 +399,7 @@ public sealed class LyoBenchmarkExporter : IExporter
             }
 
             // Reference mean per parameter set (for the baseline algorithm).
-            var baselineMeanByParam = axisGroup.Value
-                .Where(x => baselineName != null && x.Algorithm == baselineName)
+            var baselineMeanByParam = axisGroup.Value.Where(x => baselineName != null && x.Algorithm == baselineName)
                 .GroupBy(x => ParamKey(x.Row.Parameters))
                 .ToDictionary(g => g.Key, g => g.First().Row.MeanNs);
 
@@ -434,30 +410,31 @@ public sealed class LyoBenchmarkExporter : IExporter
                     ratio = entry.Row.MeanNs / baseMean;
 
                 var evaluation = EvaluateSla(entry.Row, ResolveSla(entry.Row));
-                comparisonRows.Add(new ComparisonRow {
-                    Algorithm = entry.Algorithm,
-                    Parameters = entry.Row.Parameters,
-                    ParamLabel = ParamLabel(entry.Row.Parameters),
-                    MeanNs = entry.Row.MeanNs,
-                    AllocatedBytes = entry.Row.AllocatedBytes,
-                    RatioToBaseline = ratio,
-                    ThroughputMbps = evaluation?.ThroughputMbps,
-                    SlaTarget = evaluation?.Target,
-                    SlaResult = evaluation?.Result,
-                });
+                comparisonRows.Add(
+                    new() {
+                        Algorithm = entry.Algorithm,
+                        Parameters = entry.Row.Parameters,
+                        ParamLabel = ParamLabel(entry.Row.Parameters),
+                        MeanNs = entry.Row.MeanNs,
+                        AllocatedBytes = entry.Row.AllocatedBytes,
+                        RatioToBaseline = ratio,
+                        ThroughputMbps = evaluation?.ThroughputMbps,
+                        SlaTarget = evaluation?.Target,
+                        SlaResult = evaluation?.Result
+                    });
             }
 
-            groups.Add(new ComparisonGroup { Axis = axis, Rows = comparisonRows });
+            groups.Add(new() { Axis = axis, Rows = comparisonRows });
         }
 
         if (groups.Count == 0)
             return null;
 
-        return new ComparisonTable {
+        return new() {
             Baseline = baselineName,
             Description = suiteType.GetCustomAttribute<BenchmarkDescriptionAttribute>()?.Text,
             Parameters = ReadParameterDescriptors(suiteType),
-            Groups = groups,
+            Groups = groups
         };
     }
 
@@ -468,6 +445,7 @@ public sealed class LyoBenchmarkExporter : IExporter
             var axisAttr = row.WorkloadMethod!.GetCustomAttribute<ComparisonAxisAttribute>();
             if (axisAttr is null)
                 continue;
+
             var algorithm = axisAttr.Algorithm ?? StripAxis(row.Method, axisAttr.Axis);
             if (!byAxis.TryGetValue(axisAttr.Axis, out var list)) {
                 list = [];
@@ -484,6 +462,7 @@ public sealed class LyoBenchmarkExporter : IExporter
     {
         if (method.EndsWith(axis, StringComparison.Ordinal))
             method = method.Substring(0, method.Length - axis.Length);
+
         return method.TrimEnd('_');
     }
 
@@ -494,8 +473,10 @@ public sealed class LyoBenchmarkExporter : IExporter
     {
         if (parameters.Count == 0)
             return null;
+
         if (parameters.TryGetValue("DataSize", out var dataSize) && long.TryParse(dataSize, out var bytes))
             return FormatDataSize(bytes);
+
         var first = parameters.OrderBy(p => p.Key, StringComparer.Ordinal).First();
         return first.Value;
     }
@@ -505,18 +486,19 @@ public sealed class LyoBenchmarkExporter : IExporter
         const long mb = 1024 * 1024;
         if (n >= mb)
             return n % mb == 0 ? $"{n / mb} MB" : $"{n / (double)mb:0.0} MB";
+
         if (n >= 1024)
             return n % 1024 == 0 ? $"{n / 1024} KB" : $"{n / 1024.0:0.0} KB";
+
         return $"{n} B";
     }
 
     private static BenchmarkSlaAttribute? ResolveSla(BenchmarkReportRow row)
-        => row.WorkloadMethod?.GetCustomAttribute<BenchmarkSlaAttribute>()
-           ?? row.BenchmarkType?.GetCustomAttribute<BenchmarkSlaAttribute>();
+        => row.WorkloadMethod?.GetCustomAttribute<BenchmarkSlaAttribute>() ?? row.BenchmarkType?.GetCustomAttribute<BenchmarkSlaAttribute>();
 
     /// <summary>
-    /// Compares a measured row against its declared SLA: builds the target display string, derives throughput when a
-    /// size parameter is present, and grades the outcome Miss / Exceeds / Meets. Returns null when no budget applies.
+    /// Compares a measured row against its declared SLA: builds the target display string, derives throughput when a size parameter is present, and grades the outcome Miss /
+    /// Exceeds / Meets. Returns null when no budget applies.
     /// </summary>
     private static SlaEvaluation? EvaluateSla(BenchmarkReportRow row, BenchmarkSlaAttribute? sla)
     {
@@ -537,33 +519,38 @@ public sealed class LyoBenchmarkExporter : IExporter
         var evaluated = 0;
         var misses = 0;
         var comfortable = 0;
-
         var maxNs = LatencyBudgetNs(sla);
         if (maxNs is double budgetNs && budgetNs > 0) {
             evaluated++;
             targets.Add("<= " + FormatLatencyBudget(sla));
-            if (row.MeanNs > budgetNs) misses++;
-            else if (row.MeanNs <= 0.5 * budgetNs) comfortable++;
+            if (row.MeanNs > budgetNs)
+                misses++;
+            else if (row.MeanNs <= 0.5 * budgetNs)
+                comfortable++;
         }
 
         // Throughput is only a fair target for bulk payloads; below MinThroughputSizeBytes the result is
         // dominated by fixed per-call overhead, so it is skipped (not counted as a Miss) at small sizes.
-        var throughputApplies = sla.MinThroughputMbps > 0
-            && throughputMbps is not null
-            && (sla.MinThroughputSizeBytes <= 0 || (sizeBytes is long sz && sz >= sla.MinThroughputSizeBytes));
+        var throughputApplies = sla.MinThroughputMbps > 0 && throughputMbps is not null &&
+            (sla.MinThroughputSizeBytes <= 0 || (sizeBytes is long sz && sz >= sla.MinThroughputSizeBytes));
+
         if (throughputApplies && throughputMbps is double tp) {
             evaluated++;
             targets.Add(">= " + TrimNum(sla.MinThroughputMbps) + " MB/s");
-            if (tp < sla.MinThroughputMbps) misses++;
-            else if (tp >= 1.5 * sla.MinThroughputMbps) comfortable++;
+            if (tp < sla.MinThroughputMbps)
+                misses++;
+            else if (tp >= 1.5 * sla.MinThroughputMbps)
+                comfortable++;
         }
 
         if (sla.MaxAllocatedKb > 0 && row.AllocatedBytes is double allocBytes) {
             evaluated++;
             targets.Add("<= " + TrimNum(sla.MaxAllocatedKb) + " KB alloc");
             var allocKb = allocBytes / 1024.0;
-            if (allocKb > sla.MaxAllocatedKb) misses++;
-            else if (allocKb <= 0.5 * sla.MaxAllocatedKb) comfortable++;
+            if (allocKb > sla.MaxAllocatedKb)
+                misses++;
+            else if (allocKb <= 0.5 * sla.MaxAllocatedKb)
+                comfortable++;
         }
 
         if (evaluated == 0)
@@ -574,60 +561,65 @@ public sealed class LyoBenchmarkExporter : IExporter
         if (throughputMbps is double tpLatest)
             latest += $" ({tpLatest:0} MB/s)";
 
-        return new SlaEvaluation {
+        return new() {
             Target = string.Join(", ", targets),
             Result = result,
             Standard = sla.Standard,
             Latest = latest,
-            ThroughputMbps = throughputMbps,
+            ThroughputMbps = throughputMbps
         };
     }
 
     private static double? LatencyBudgetNs(BenchmarkSlaAttribute sla)
     {
-        if (sla.MaxMeanNs > 0) return sla.MaxMeanNs;
-        if (sla.MaxMeanUs > 0) return sla.MaxMeanUs * 1_000;
-        if (sla.MaxMeanMs > 0) return sla.MaxMeanMs * 1_000_000;
+        if (sla.MaxMeanNs > 0)
+            return sla.MaxMeanNs;
+
+        if (sla.MaxMeanUs > 0)
+            return sla.MaxMeanUs * 1_000;
+
+        if (sla.MaxMeanMs > 0)
+            return sla.MaxMeanMs * 1_000_000;
+
         return null;
     }
 
     private static string FormatLatencyBudget(BenchmarkSlaAttribute sla)
     {
-        if (sla.MaxMeanMs > 0) return TrimNum(sla.MaxMeanMs) + " ms";
-        if (sla.MaxMeanUs > 0) return TrimNum(sla.MaxMeanUs) + " \u00b5s";
+        if (sla.MaxMeanMs > 0)
+            return TrimNum(sla.MaxMeanMs) + " ms";
+
+        if (sla.MaxMeanUs > 0)
+            return TrimNum(sla.MaxMeanUs) + " \u00b5s";
+
         return TrimNum(sla.MaxMeanNs) + " ns";
     }
 
     private static string FormatMean(double ns)
     {
-        if (ns >= 1_000_000) return $"{ns / 1_000_000:0.##} ms";
-        if (ns >= 1_000) return $"{ns / 1_000:0.##} \u00b5s";
+        if (ns >= 1_000_000)
+            return $"{ns / 1_000_000:0.##} ms";
+
+        if (ns >= 1_000)
+            return $"{ns / 1_000:0.##} \u00b5s";
+
         return $"{ns:0.##} ns";
     }
 
-    private static string TrimNum(double v)
-        => v == Math.Floor(v) ? ((long)v).ToString() : v.ToString("0.##");
+    private static string TrimNum(double v) => v == Math.Floor(v) ? ((long)v).ToString() : v.ToString("0.##");
 
-    private static readonly Dictionary<string, int> SlaSeverity = new(StringComparer.Ordinal) {
-        ["Exceeds"] = 0,
-        ["Meets"] = 1,
-        ["Miss"] = 2,
-    };
-
-    private static void Accumulate(
-        Dictionary<(string, string), SloAggregate> aggregates,
-        BenchmarkReportRow row,
-        SlaEvaluation evaluation)
+    private static void Accumulate(Dictionary<(string, string), SloAggregate> aggregates, BenchmarkReportRow row, SlaEvaluation evaluation)
     {
         var key = (row.ClassName, row.Method);
         if (!aggregates.TryGetValue(key, out var aggregate)) {
-            aggregate = new SloAggregate {
+            aggregate = new() {
                 Method = row.Method,
                 Target = evaluation.Target,
                 Standard = evaluation.Standard,
                 WorstResult = evaluation.Result,
-                WorstLatest = evaluation.Latest,
+                WorstLatest = evaluation.Latest
             };
+
             aggregates[key] = aggregate;
             return;
         }
@@ -641,22 +633,25 @@ public sealed class LyoBenchmarkExporter : IExporter
     private static int Severity(string result) => SlaSeverity.TryGetValue(result, out var s) ? s : 1;
 
     private static IEnumerable<SloRow> BuildSloRows(Dictionary<(string, string), SloAggregate> aggregates)
-        => aggregates.Values
-            .OrderBy(a => a.Method, StringComparer.Ordinal)
+        => aggregates.Values.OrderBy(a => a.Method, StringComparer.Ordinal)
             .Select(a => new SloRow {
                 Area = a.Method,
                 Target = a.Standard is { Length: > 0 } ? $"{a.Target} \u2014 {a.Standard}" : a.Target,
                 Latest = a.WorstLatest,
-                Result = a.WorstResult,
+                Result = a.WorstResult
             });
 
     /// <summary>Per-(class, method) running aggregate used to roll measurements up into one SLO row.</summary>
     private sealed class SloAggregate
     {
         public string Method { get; set; } = string.Empty;
+
         public string Target { get; set; } = string.Empty;
+
         public string? Standard { get; set; }
+
         public string WorstResult { get; set; } = string.Empty;
+
         public string WorstLatest { get; set; } = string.Empty;
     }
 
@@ -698,9 +693,13 @@ public sealed class LyoBenchmarkExporter : IExporter
     private sealed class SlaEvaluation
     {
         public string Target { get; set; } = string.Empty;
+
         public string Result { get; set; } = string.Empty;
+
         public string? Standard { get; set; }
+
         public string Latest { get; set; } = string.Empty;
+
         public double? ThroughputMbps { get; set; }
     }
 }

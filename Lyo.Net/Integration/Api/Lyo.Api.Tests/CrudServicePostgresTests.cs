@@ -5,13 +5,10 @@ using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Tests.Fixtures;
-using Lyo.Common.Enums;
 using Lyo.Common.Records;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
-using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Enums;
 
 namespace Lyo.Api.Tests;
 
@@ -150,5 +147,4 @@ public class CrudServicePostgresTests
         Assert.Equal(defId, result.NewData!.Id);
         Assert.Equal("UpsertUpdated", result.NewData.Name);
     }
-
 }

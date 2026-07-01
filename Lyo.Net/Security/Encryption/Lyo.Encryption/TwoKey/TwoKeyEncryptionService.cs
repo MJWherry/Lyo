@@ -30,8 +30,11 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     private readonly TKeyEncryptionService _kekEncryptionService; // For encrypting DEK with KEK
 
     private readonly IKeyStore _keyStore;
+    private Encoding _decryptionEncoding = Encoding.UTF8;
 
     private bool _disposed;
+
+    private Encoding _encryptionEncoding = Encoding.UTF8;
 
     /// <summary>Initializes a new instance using the same encryption service for both DEK and KEK operations. This is the most common use case.</summary>
     /// <param name="encryptionService">The encryption service to use for both DEK and KEK operations</param>
@@ -92,9 +95,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     }
 
     public string FileExtension => _dekEncryptionService.FileExtension + FileTypeInfo.TwoKeyEnvelopeSuffix;
-
-    private Encoding _encryptionEncoding = Encoding.UTF8;
-    private Encoding _decryptionEncoding = Encoding.UTF8;
 
     /// <inheritdoc />
     public Encoding GetEncryptionEncoding() => _encryptionEncoding;

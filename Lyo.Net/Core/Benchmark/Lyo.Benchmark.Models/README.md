@@ -11,11 +11,11 @@ BenchmarkDotNet / Testcontainers baggage — the benchmark-only helpers live in
 
 ## Polymorphic report tree
 
-| Type                          | Discriminator | Role                                                                                 |
-|-------------------------------|---------------|--------------------------------------------------------------------------------------|
-| `BenchmarkReport` (abstract)  | —             | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
-| `MicroBenchmarkReport`        | `micro`       | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`. |
-| `LoadTestReport`              | `load`        | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`.                                |
+| Type                         | Discriminator | Role                                                                                                       |
+|------------------------------|---------------|------------------------------------------------------------------------------------------------------------|
+| `BenchmarkReport` (abstract) | —             | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
+| `MicroBenchmarkReport`       | `micro`       | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`.      |
+| `LoadTestReport`             | `load`        | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`.                                                      |
 
 ### Descriptive context
 
@@ -23,17 +23,23 @@ So a row like `Hash @ 1 MB` or "csv: 10,000 rows" is meaningful on its own, repo
 
 - `BenchmarkReport.Description` — suite-level methodology ("what / how", the data set, payload kinds).
 - `BenchmarkGroup.Description` — what a class measures; `BenchmarkMeasurement.Description` — what a single method does.
-- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters` — a list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value (e.g. `DataSize` is bytes, `RowCount` is rows).
-- `BenchmarkGroup.Dataset` — a `DatasetDescriptor` capturing the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. This is what surfaces nested-property complexity (e.g. a CSV/XLSX row type or a mapping entity with a nested child collection) that a row count alone hides.
-- `LoadTestReport.Cases` — a list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's structure (so `query_with_subquery` vs `baseline` is interpretable). `Hotspot.Case` joins to it.
+- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters` — a list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value (e.g. `DataSize` is
+  bytes, `RowCount` is rows).
+- `BenchmarkGroup.Dataset` — a `DatasetDescriptor` capturing the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of
+  `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. This is what surfaces nested-property complexity (e.g. a CSV/XLSX row type or a mapping entity with
+  a nested child collection) that a row count alone hides.
+- `LoadTestReport.Cases` — a list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's
+  structure (so `query_with_subquery` vs `baseline` is interpretable). `Hotspot.Case` joins to it.
 
 ### SLAs / business standards (micro)
 
 Micro reports carry the same SLA assessment k6 reports do. From a `[BenchmarkSla]` budget the exporter sets, per measurement and comparison row:
 
-- `BenchmarkMeasurement` — `ThroughputMbps` (size-based suites), `SlaTarget` (e.g. `<= 2 ms`, `>= 300 MB/s`), `SlaResult` (`Meets` / `Exceeds` / `Miss`), `SlaStandard` (the business-standard text).
+- `BenchmarkMeasurement` — `ThroughputMbps` (size-based suites), `SlaTarget` (e.g. `<= 2 ms`, `>= 300 MB/s`), `SlaResult` (`Meets` / `Exceeds` / `Miss`), `SlaStandard` (the
+  business-standard text).
 - `ComparisonRow` — `ThroughputMbps`, `SlaTarget`, `SlaResult`.
-- `MicroBenchmarkReport.Slo` — one worst-case `SloRow` per benchmark (reusing the load report's `SloRow` type); `MicroBenchmarkReport.Grades` reuses `GradeRow`. The viewer renders an "SLA assessment" section from these, plus a verdict badge column on the measurement and comparison tables.
+- `MicroBenchmarkReport.Slo` — one worst-case `SloRow` per benchmark (reusing the load report's `SloRow` type); `MicroBenchmarkReport.Grades` reuses `GradeRow`. The viewer renders
+  an "SLA assessment" section from these, plus a verdict badge column on the measurement and comparison tables.
 
 The discriminator property is named `type` (via
 `[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]`), mirroring the
@@ -138,10 +144,10 @@ switch (report) {
 
 ## Builders
 
-| Builder                         | Produces                | Notes                                                                                  |
-|---------------------------------|-------------------------|----------------------------------------------------------------------------------------|
-| `MicroBenchmarkReportBuilder`   | `MicroBenchmarkReport`  | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddMeasurement(group, m)`, `DescribeGroup(group, description, parameters, dataset)`, `WithComparison`, `AddSlo`, `AddGrade`. |
-| `LoadTestReportBuilder`         | `LoadTestReport`        | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`. |
+| Builder                       | Produces               | Notes                                                                                                                                                                                                            |
+|-------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MicroBenchmarkReportBuilder` | `MicroBenchmarkReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddMeasurement(group, m)`, `DescribeGroup(group, description, parameters, dataset)`, `WithComparison`, `AddSlo`, `AddGrade`. |
+| `LoadTestReportBuilder`       | `LoadTestReport`       | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`.                                                                  |
 
 ## Related projects
 

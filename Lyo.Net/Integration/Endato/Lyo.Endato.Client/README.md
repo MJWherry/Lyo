@@ -17,7 +17,8 @@ Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, an
 | `Persons`    | [`PersonManager.QueryPersonsAsync(query, ct)`](PersonManager.cs)            | `POST /PersonSearch` with header `galaxy-search-type: Person`. Returns `PersonQueryResponse`.               |
 | `Enrichment` | [`EnrichmentManager.QueryEnrichmentAsync(query, ct)`](EnrichmentManager.cs) | `POST /Contact/Enrich` with header `galaxy-search-type: DevAPIContactEnrich`. Returns `EnrichmentResponse`. |
 
-Both managers accept a built query or a [`PersonQueryBuilder`](Models/Person/Request/PersonQueryBuilder.cs) / [`EnrichmentQueryBuilder`](Models/Enrichment/Request/EnrichmentQueryBuilder.cs).
+Both managers accept a built query or a [`PersonQueryBuilder`](Models/Person/Request/PersonQueryBuilder.cs) / [
+`EnrichmentQueryBuilder`](Models/Enrichment/Request/EnrichmentQueryBuilder.cs).
 
 Authentication is wired automatically: the client sets `galaxy-ap-name` / `galaxy-ap-password` headers from options on every request.
 
@@ -40,7 +41,8 @@ var response = await client.Persons.QueryPersonsAsync(
     PersonQueryBuilder.Create("Jane", "Doe", age: 42).WithPhone("5125550100"), ct);
 ```
 
-Contact Enrichment — see [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone, email, or address; `EnrichmentQueryBuilder.Build()` enforces that:
+Contact Enrichment — see [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone,
+email, or address; `EnrichmentQueryBuilder.Build()` enforces that:
 
 ```csharp
 var query = EnrichmentQueryBuilder.Create("John", "Smith")
@@ -53,7 +55,8 @@ var response = await client.Enrichment.QueryEnrichmentAsync(query, ct);
 
 ### Numeric fields
 
-`EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude deserialize into `decimal?` whether the API sends JSON numbers or quoted strings.
+`EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude deserialize into
+`decimal?` whether the API sends JSON numbers or quoted strings.
 
 ## Options ([`EndatoClientOptions`](EndatoClientOptions.cs))
 

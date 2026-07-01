@@ -1,6 +1,7 @@
 # Encryption Benchmarks
 
-BenchmarkDotNet performance suite for **`Lyo.Encryption`** and add-ons: **AES-GCM**, **ChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**, **XChaCha20-Poly1305**, **RSA**, **AES-GCM-RSA hybrid**, two-key envelope, and streaming.
+BenchmarkDotNet performance suite for **`Lyo.Encryption`** and add-ons: **AES-GCM**, **ChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**, **XChaCha20-Poly1305**, **RSA**, **AES-GCM-RSA
+hybrid**, two-key envelope, and streaming.
 
 **Latest results:** [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) · [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md) (refresh pointer)
 
@@ -35,29 +36,29 @@ dotnet run -c Release --project Lyo.Encryption.Benchmarks -- --job short --filte
 
 ## Benchmark classes
 
-| Class | What it measures |
-|-------|------------------|
-| `AesGcmEncryptionBenchmarks` | AES-GCM encrypt/decrypt @ 1 KB, 1 MB, 10 MB |
-| `ChaCha20Poly1305EncryptionBenchmarks` | ChaCha20-Poly1305 @ 1 KB, 1 MB, 10 MB |
-| `AesCcmEncryptionBenchmarks` | AES-CCM @ 1 KB, 1 MB, 10 MB |
-| `AesSivEncryptionBenchmarks` | AES-SIV @ 1 KB, 1 MB, 10 MB |
-| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 1 KB, 1 MB, 10 MB (explicit key) |
-| `RsaEncryptionBenchmarks` | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB |
-| `AesGcmRsaEncryptionBenchmarks` | Hybrid RSA + AES-GCM @ 1 KB, 1 MB, 10 MB |
-| `TwoKeyEncryptionBenchmarks` | Envelope (DEK/KEK) AES + ChaCha @ 1 KB–2 GB |
-| `LargeFileStreamingBenchmarks` | Stream API AES + ChaCha @ 100 MB, 1 GB, 2 GB |
-| `AlgorithmComparisonBenchmarks` | Side-by-side all five symmetric AEAD @ 1 KB–100 MB |
+| Class                                   | What it measures                                   |
+|-----------------------------------------|----------------------------------------------------|
+| `AesGcmEncryptionBenchmarks`            | AES-GCM encrypt/decrypt @ 1 KB, 1 MB, 10 MB        |
+| `ChaCha20Poly1305EncryptionBenchmarks`  | ChaCha20-Poly1305 @ 1 KB, 1 MB, 10 MB              |
+| `AesCcmEncryptionBenchmarks`            | AES-CCM @ 1 KB, 1 MB, 10 MB                        |
+| `AesSivEncryptionBenchmarks`            | AES-SIV @ 1 KB, 1 MB, 10 MB                        |
+| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 1 KB, 1 MB, 10 MB (explicit key)         |
+| `RsaEncryptionBenchmarks`               | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB           |
+| `AesGcmRsaEncryptionBenchmarks`         | Hybrid RSA + AES-GCM @ 1 KB, 1 MB, 10 MB           |
+| `TwoKeyEncryptionBenchmarks`            | Envelope (DEK/KEK) AES + ChaCha @ 1 KB–2 GB        |
+| `LargeFileStreamingBenchmarks`          | Stream API AES + ChaCha @ 100 MB, 1 GB, 2 GB       |
+| `AlgorithmComparisonBenchmarks`         | Side-by-side all five symmetric AEAD @ 1 KB–100 MB |
 
 ## Headline results (June 2026, this hardware)
 
-| Workload | Fastest | Notes |
-|----------|---------|-------|
-| Encrypt 1 MB | **AES-GCM 667 µs** (~1.5 GB/s) | ChaCha 920 µs; XChaCha 2.5 ms; CCM 12 ms; SIV 17 ms |
-| Decrypt 1 MB | **AES-GCM 621 µs** (~1.6 GB/s) | ChaCha 899 µs |
-| Stream encrypt 100 MB | **AES-GCM 114 ms** (~873 MB/s) | ChaCha 133 ms |
-| Hybrid encrypt 1 MB | **692 µs** | Near pure GCM; RSA wrap amortized |
-| RSA decrypt 1 MB | **2.51 s** | Not for bulk data |
-| Two-key encrypt 1 MB | **880 µs** (AES) | ~1.3× single-key |
+| Workload              | Fastest                        | Notes                                               |
+|-----------------------|--------------------------------|-----------------------------------------------------|
+| Encrypt 1 MB          | **AES-GCM 667 µs** (~1.5 GB/s) | ChaCha 920 µs; XChaCha 2.5 ms; CCM 12 ms; SIV 17 ms |
+| Decrypt 1 MB          | **AES-GCM 621 µs** (~1.6 GB/s) | ChaCha 899 µs                                       |
+| Stream encrypt 100 MB | **AES-GCM 114 ms** (~873 MB/s) | ChaCha 133 ms                                       |
+| Hybrid encrypt 1 MB   | **692 µs**                     | Near pure GCM; RSA wrap amortized                   |
+| RSA decrypt 1 MB      | **2.51 s**                     | Not for bulk data                                   |
+| Two-key encrypt 1 MB  | **880 µs** (AES)               | ~1.3× single-key                                    |
 
 See [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) for live tables, ratios, and recommendations (auto-generated from CSV artifacts).
 
@@ -89,8 +90,9 @@ Optional future runs may add `--exporters json`; v1 reads CSV reports.
 
 **Target framework:** `net10.0`
 
-| Package | Version |
-|---------|---------|
+| Package           | Version  |
+|-------------------|----------|
 | `BenchmarkDotNet` | `0.15.8` |
 
-**Project references:** `Lyo.Encryption`, `Lyo.Encryption.AesCcm`, `Lyo.Encryption.AesSiv`, `Lyo.Encryption.XChaCha20Poly1305`, `Lyo.Encryption.Rsa`, `Lyo.Encryption.AesGcmRsa`, `Lyo.Keystore`
+**Project references:** `Lyo.Encryption`, `Lyo.Encryption.AesCcm`, `Lyo.Encryption.AesSiv`, `Lyo.Encryption.XChaCha20Poly1305`, `Lyo.Encryption.Rsa`, `Lyo.Encryption.AesGcmRsa`,
+`Lyo.Keystore`

@@ -14,7 +14,7 @@ PostgreSQL **schema and migrations** for storing pre-built reports. Schema name 
 - **`ReportEntity`** ([`Database/ReportEntity.cs`](Database/ReportEntity.cs)) — the row shape:
 
   | Column                | Type / Constraints                                          |
-        |-----------------------|-------------------------------------------------------------|
+          |-----------------------|-------------------------------------------------------------|
   | `Id`                  | `Guid`, primary key (default `Guid.NewGuid()`).             |
   | `Name`                | `string`, required, max length 500.                         |
   | `Description`         | `string?`, max length 2000.                                 |

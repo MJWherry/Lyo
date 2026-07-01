@@ -1,3 +1,4 @@
+@using Lyo.Web.Components
 @inject IDialogService DialogService
 
 @if (Response == null) {
@@ -32,16 +33,19 @@ else {
 
                     @if (person.Phones.Count > 0) {
                         <MudText Typo="Typo.subtitle2">Phones</MudText>
+
                         <MudText Typo="Typo.body2">@EndatoContactFormatter.FormatEnrichmentPhones(person.Phones)</MudText>
                     }
 
                     @if (person.Emails.Count > 0) {
                         <MudText Typo="Typo.subtitle2">Emails</MudText>
+
                         <MudText Typo="Typo.body2">@EndatoContactFormatter.FormatEnrichmentEmails(person.Emails)</MudText>
                     }
 
                     @if (person.Addresses.Count > 0) {
                         <MudText Typo="Typo.subtitle2">Addresses</MudText>
+
                         <MudList T="string" Dense="true">
                             @foreach (var address in person.Addresses) {
                                 <MudListItem T="string">@address.Street @address.Unit — @address.City, @address.State @address.Zip</MudListItem>
@@ -55,6 +59,7 @@ else {
 }
 
 @code {
+
     [Parameter]
     public EnrichmentResponse? Response { get; set; }
 
@@ -64,8 +69,9 @@ else {
             return;
 
         await Task.Yield();
-        var parameters = new DialogParameters<Lyo.Web.Components.JsonViewDialog<EnrichmentResponse>> { { i => i.Data, Response } };
+        var parameters = new DialogParameters<JsonViewDialog<EnrichmentResponse>> { { i => i.Data, Response } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync(typeof(Lyo.Web.Components.JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, options);
+        await DialogService.ShowAsync(typeof(JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, options);
     }
+
 }

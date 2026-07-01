@@ -56,7 +56,8 @@ Two minimal-API endpoints sit in front of the Blazor app:
 `AddFileStorageWorkbenchSupport(IConfiguration)` (in `Services/FileStorageWorkbenchExtensions.cs`) is the switch between the two hosting modes for `/filestorage-workbench`. It
 binds `FileStorageWorkbenchOptions` from `FileStorageWorkbench` and:
 
-- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed **`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` →
+- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed *
+  *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` →
   `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by
   `ApiRoutePrefix` (default `Workbench/FileStorage`).
 - **In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`),
@@ -69,7 +70,8 @@ Service keys default to `gateway-filestorage` (and `gateway-filestorage-metadata
 
 A single `WebApplication` builder registers the entire surface used across workbenches:
 
-- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetrics`, `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`,
+- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetrics`,
+  `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`,
   `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.
 - Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`,
   `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.

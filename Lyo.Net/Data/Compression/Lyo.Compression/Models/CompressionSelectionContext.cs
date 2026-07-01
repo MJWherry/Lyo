@@ -15,8 +15,7 @@ public sealed record CompressionSelectionContext
     public string? TenantId { get; init; }
 
     /// <summary>Resolved from <see cref="ContentType" /> then <see cref="OriginalFileName" />.</summary>
-    public FileTypeInfo FileType
-    {
+    public FileTypeInfo FileType {
         get {
             var fromMime = FileTypeInfo.FromMimeType(ContentType);
             return fromMime != FileTypeInfo.Unknown ? fromMime : FileTypeInfo.FromFilePath(OriginalFileName);

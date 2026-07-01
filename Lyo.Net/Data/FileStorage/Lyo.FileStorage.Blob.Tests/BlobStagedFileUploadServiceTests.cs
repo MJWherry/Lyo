@@ -13,9 +13,10 @@ public sealed class BlobStagedFileUploadServiceTests : IDisposable
     private const string TestConnectionString =
         "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;EndpointSuffix=core.windows.net";
 
+    private readonly BlobContainerClient _container;
+
     private readonly string _metadataRoot;
     private readonly BlobFileStorageOptions _options;
-    private readonly BlobContainerClient _container;
     private readonly BlobFileStorageService _storage;
     private readonly InMemoryStagedFileUploadStore _store = new();
 
@@ -23,14 +24,15 @@ public sealed class BlobStagedFileUploadServiceTests : IDisposable
     {
         _metadataRoot = Path.Combine(Path.GetTempPath(), "lyo-blob-staged-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_metadataRoot);
-        _options = new BlobFileStorageOptions {
+        _options = new() {
             ConnectionString = TestConnectionString,
             ContainerName = "uploads",
             BlobPrefix = "tenant/files",
             EncryptionScope = "test-scope"
         };
-        _container = new BlobContainerClient(_options.ConnectionString, _options.ContainerName);
-        _storage = new BlobFileStorageService(_options, new LocalFileMetadataStore(_metadataRoot), containerClient: _container);
+
+        _container = new(_options.ConnectionString, _options.ContainerName);
+        _storage = new(_options, new LocalFileMetadataStore(_metadataRoot), containerClient: _container);
     }
 
     public void Dispose()
@@ -48,8 +50,13 @@ public sealed class BlobStagedFileUploadServiceTests : IDisposable
     public async Task BeginAsync_GeneratesSasPut_WithStageKeyAndRequiredHeaders()
     {
         var staged = CreateStaged();
-        var begin = await staged.BeginAsync(new() { DeclaredMaxSizeBytes = 256, OriginalFileName = "photo.jpg", ContentType = "image/jpeg", PathPrefix = "gallery" },
-            TestContext.Current.CancellationToken);
+        var begin = await staged.BeginAsync(
+            new() {
+                DeclaredMaxSizeBytes = 256,
+                OriginalFileName = "photo.jpg",
+                ContentType = "image/jpeg",
+                PathPrefix = "gallery"
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(MultipartUploadProviderKind.AzureBlob, begin.ProviderKind);
         Assert.Contains("sig=", begin.PresignedPutUrl, StringComparison.OrdinalIgnoreCase);
@@ -59,7 +66,6 @@ public sealed class BlobStagedFileUploadServiceTests : IDisposable
         Assert.Equal("BlockBlob", begin.RequiredPutHeaders!["x-ms-blob-type"]);
         Assert.Equal("image/jpeg", begin.RequiredPutHeaders!["Content-Type"]);
         Assert.Equal("test-scope", begin.RequiredPutHeaders!["x-ms-encryption-scope"]);
-
         var persisted = await _store.GetAsync(begin.StageId, TestContext.Current.CancellationToken);
         Assert.NotNull(persisted);
         Assert.Equal(begin.StorageLocation, persisted.StorageLocation);
@@ -70,15 +76,15 @@ public sealed class BlobStagedFileUploadServiceTests : IDisposable
     public async Task BeginAsync_WithCustomerProvidedKey_ThrowsNotSupported()
     {
         var cpkOptions = new BlobFileStorageOptions {
-            ConnectionString = TestConnectionString,
-            ContainerName = "uploads",
-            CustomerProvidedKeyBase64 = Convert.ToBase64String(new byte[32])
+            ConnectionString = TestConnectionString, ContainerName = "uploads", CustomerProvidedKeyBase64 = Convert.ToBase64String(new byte[32])
         };
+
         var cpkContainer = new BlobContainerClient(cpkOptions.ConnectionString, cpkOptions.ContainerName);
         using var cpkStorage = new BlobFileStorageService(cpkOptions, new LocalFileMetadataStore(_metadataRoot), containerClient: cpkContainer);
         var staged = new BlobStagedFileUploadService(cpkStorage, cpkOptions, _store, cpkContainer);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => staged.BeginAsync(
+            new() { DeclaredMaxSizeBytes = 16, OriginalFileName = "x.bin" }, TestContext.Current.CancellationToken));
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => staged.BeginAsync(new() { DeclaredMaxSizeBytes = 16, OriginalFileName = "x.bin" }, TestContext.Current.CancellationToken));
         Assert.Contains("SSE-C", ex.Message);
     }
 }

@@ -23,8 +23,10 @@ public sealed record Address(
     string Zip,
     string Zip4,
     string FullAddress,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Latitude,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Longitude,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Latitude,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Longitude,
     int AddressOrder,
     string PropertyIndicator,
     string BldgCode,

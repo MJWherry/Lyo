@@ -1,5 +1,4 @@
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.Staged;
 
 namespace Lyo.FileMetadataStore.Postgres.Database;
@@ -35,23 +34,7 @@ internal static class StagedFileUploadEntityMapping
             hashAlgorithm = hashAlg;
 
         return new(
-            e.StageId,
-            e.TenantId,
-            e.OwnerId,
-            e.CreatedUtc,
-            e.ExpiresUtc,
-            e.Status,
-            e.StorageLocation,
-            e.PathPrefix,
-            e.OriginalFileName,
-            e.ContentType,
-            e.DeclaredMaxSizeBytes,
-            e.ObservedSizeBytes,
-            e.ContentHash,
-            hashAlgorithm,
-            e.ProviderKind,
-            e.ProviderState,
-            e.CommittedFileId,
-            e.FailureReason);
+            e.StageId, e.TenantId, e.OwnerId, e.CreatedUtc, e.ExpiresUtc, e.Status, e.StorageLocation, e.PathPrefix, e.OriginalFileName, e.ContentType, e.DeclaredMaxSizeBytes,
+            e.ObservedSizeBytes, e.ContentHash, hashAlgorithm, e.ProviderKind, e.ProviderState, e.CommittedFileId, e.FailureReason);
     }
 }

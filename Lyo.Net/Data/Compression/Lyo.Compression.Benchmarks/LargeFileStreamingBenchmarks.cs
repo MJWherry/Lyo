@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
@@ -11,7 +10,8 @@ using Lyo.Compression.Zstd;
 namespace Lyo.Compression.Benchmarks;
 
 /// <summary>Benchmarks for large file compression/decompression using streaming APIs</summary>
-[BenchmarkDescription("Streaming compress/decompress of 100 MB / 1 GB / 2 GB random (incompressible) data with GZip and Zstd; large sizes stream through temp files. Measures streaming throughput, not compression ratio. Method names encode algorithm and size.")]
+[BenchmarkDescription(
+    "Streaming compress/decompress of 100 MB / 1 GB / 2 GB random (incompressible) data with GZip and Zstd; large sizes stream through temp files. Measures streaming throughput, not compression ratio. Method names encode algorithm and size.")]
 public class LargeFileStreamingBenchmarks
 {
     private Stream _compressed100MBGZip = null!;

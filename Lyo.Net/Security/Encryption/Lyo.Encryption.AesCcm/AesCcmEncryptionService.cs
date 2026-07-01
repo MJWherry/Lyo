@@ -61,7 +61,6 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
-
         try {
             var (ciphertext, tag) = AesCcmHelper.Encrypt(plaintext, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
@@ -110,7 +109,6 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(AesCcmHelper.NonceSize);
-
         try {
             var (ciphertext, tag) = AesCcmHelper.Encrypt(bytes, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);

@@ -31,7 +31,7 @@
         <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf\Lyo.Pdf.csproj"/>
         <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
-        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Client\Lyo.Endato.Client.csproj" />
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Client\Lyo.Endato.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Espn\Lyo.Espn.Fantasy.Football\Lyo.Espn.Fantasy.Football.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>

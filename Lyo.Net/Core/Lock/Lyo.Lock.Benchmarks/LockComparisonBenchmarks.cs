@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
@@ -10,15 +9,16 @@ using Testcontainers.Redis;
 namespace Lyo.Lock.Benchmarks;
 
 /// <summary>
-/// Compares uncontended lock operations between the in-process <see cref="LocalLockService" /> and the distributed <see cref="RedisLockService" />. Requires Docker; a throwaway
-/// Redis container is started in <see cref="GlobalSetup" />.
+/// Compares uncontended lock operations between the in-process <see cref="LocalLockService" /> and the distributed <see cref="RedisLockService" />. Requires Docker; a
+/// throwaway Redis container is started in <see cref="GlobalSetup" />.
 /// </summary>
-[BenchmarkDescription("Uncontended acquire/release and execute-with-lock on a unique key, comparing in-process LocalLockService against distributed RedisLockService (throwaway Docker Redis). Isolates per-operation lock cost.")]
+[BenchmarkDescription(
+    "Uncontended acquire/release and execute-with-lock on a unique key, comparing in-process LocalLockService against distributed RedisLockService (throwaway Docker Redis). Isolates per-operation lock cost.")]
 public class LockComparisonBenchmarks
 {
-    private RedisContainer _redisContainer = null!;
-    private IConnectionMultiplexer _redis = null!;
     private ILockService _local = null!;
+    private IConnectionMultiplexer _redis = null!;
+    private RedisContainer _redisContainer = null!;
     private ILockService _redisLock = null!;
 
     [GlobalSetup]
@@ -47,7 +47,8 @@ public class LockComparisonBenchmarks
     }
 
     [Benchmark]
-    [BenchmarkSla(MaxMeanMs = 5, Standard = "A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.")]
+    [BenchmarkSla(
+        MaxMeanMs = 5, Standard = "A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.")]
     public async Task Redis_AcquireRelease()
     {
         var handle = await _redisLock.AcquireAsync($"redis-{Guid.NewGuid():N}", TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
@@ -56,8 +57,7 @@ public class LockComparisonBenchmarks
 
     [Benchmark]
     [BenchmarkSla(MaxMeanUs = 15, Standard = "In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.")]
-    public async Task Local_ExecuteWithLock()
-        => await _local.ExecuteWithLockAsync($"local-exec-{Guid.NewGuid():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5));
+    public async Task Local_ExecuteWithLock() => await _local.ExecuteWithLockAsync($"local-exec-{Guid.NewGuid():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5));
 
     [Benchmark]
     [BenchmarkSla(MaxMeanMs = 5, Standard = "Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.")]

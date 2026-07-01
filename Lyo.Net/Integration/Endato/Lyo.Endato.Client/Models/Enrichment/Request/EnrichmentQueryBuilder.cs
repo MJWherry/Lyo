@@ -86,15 +86,9 @@ public class EnrichmentQueryBuilder
         return New().WithName(firstName, lastName);
     }
 
-    private bool HasName()
-        => !string.IsNullOrWhiteSpace(_query.FirstName)
-            || !string.IsNullOrWhiteSpace(_query.LastName)
-            || !string.IsNullOrWhiteSpace(_query.MiddleName);
+    private bool HasName() => !string.IsNullOrWhiteSpace(_query.FirstName) || !string.IsNullOrWhiteSpace(_query.LastName) || !string.IsNullOrWhiteSpace(_query.MiddleName);
 
-    private bool HasAddress()
-        => _query.Address != null
-            && (!string.IsNullOrWhiteSpace(_query.Address.AddressLine1)
-                || !string.IsNullOrWhiteSpace(_query.Address.AddressLine2));
+    private bool HasAddress() => _query.Address != null && (!string.IsNullOrWhiteSpace(_query.Address.AddressLine1) || !string.IsNullOrWhiteSpace(_query.Address.AddressLine2));
 
-    public override string ToString() => _query.ToString() ?? nameof(EnrichmentQueryBuilder);
+    public override string ToString() => _query.ToString();
 }

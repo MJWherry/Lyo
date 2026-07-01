@@ -16,8 +16,7 @@ public sealed class StagedFileUploadEntityConfiguration : IEntityTypeConfigurati
         builder.Property(e => e.OwnerId).HasColumnType("uuid").HasColumnName("owner_id");
         builder.Property(e => e.CreatedUtc).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_utc");
         builder.Property(e => e.ExpiresUtc).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("expires_utc");
-        builder.Property(e => e.Status).IsRequired().HasMaxLength(32).HasColumnName("status")
-            .HasConversion(v => v.ToString(), v => Enum.Parse<StagedUploadStatus>(v));
+        builder.Property(e => e.Status).IsRequired().HasMaxLength(32).HasColumnName("status").HasConversion(v => v.ToString(), v => Enum.Parse<StagedUploadStatus>(v));
         builder.Property(e => e.StorageLocation).IsRequired().HasMaxLength(1024).HasColumnName("storage_location");
         builder.Property(e => e.PathPrefix).HasMaxLength(500).HasColumnName("path_prefix");
         builder.Property(e => e.OriginalFileName).HasMaxLength(500).HasColumnName("original_file_name");
@@ -26,8 +25,12 @@ public sealed class StagedFileUploadEntityConfiguration : IEntityTypeConfigurati
         builder.Property(e => e.ObservedSizeBytes).HasColumnName("observed_size_bytes");
         builder.Property(e => e.ContentHash).HasColumnType("bytea").HasColumnName("content_hash");
         builder.Property(e => e.HashAlgorithm).HasMaxLength(32).HasColumnName("hash_algorithm");
-        builder.Property(e => e.ProviderKind).IsRequired().HasMaxLength(32).HasColumnName("provider_kind")
+        builder.Property(e => e.ProviderKind)
+            .IsRequired()
+            .HasMaxLength(32)
+            .HasColumnName("provider_kind")
             .HasConversion(v => v.ToString(), v => Enum.Parse<MultipartUploadProviderKind>(v));
+
         builder.Property(e => e.ProviderState).IsRequired().HasMaxLength(8192).HasColumnName("provider_state");
         builder.Property(e => e.CommittedFileId).HasColumnType("uuid").HasColumnName("committed_file_id");
         builder.Property(e => e.FailureReason).HasMaxLength(512).HasColumnName("failure_reason");

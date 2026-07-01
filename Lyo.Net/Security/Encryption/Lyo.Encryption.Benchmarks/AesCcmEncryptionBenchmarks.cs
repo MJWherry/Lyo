@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Lyo.Benchmarking;
 using Lyo.Encryption.AesCcm;
 
@@ -33,10 +32,21 @@ public class AesCcmEncryptionBenchmarks
         _encryptedLarge = _encryptionService.Encrypt(_largeData, EncryptionBenchmarkSupport.KeyId);
     }
 
-    [Benchmark] public byte[] Encrypt_1KB() => _encryptionService.Encrypt(_smallData, EncryptionBenchmarkSupport.KeyId);
-    [Benchmark] public byte[] Encrypt_1MB() => _encryptionService.Encrypt(_mediumData, EncryptionBenchmarkSupport.KeyId);
-    [Benchmark] public byte[] Encrypt_10MB() => _encryptionService.Encrypt(_largeData, EncryptionBenchmarkSupport.KeyId);
-    [Benchmark] public byte[] Decrypt_1KB() => _encryptionService.Decrypt(_encryptedSmall, EncryptionBenchmarkSupport.KeyId);
-    [Benchmark] public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedMedium, EncryptionBenchmarkSupport.KeyId);
-    [Benchmark] public byte[] Decrypt_10MB() => _encryptionService.Decrypt(_encryptedLarge, EncryptionBenchmarkSupport.KeyId);
+    [Benchmark]
+    public byte[] Encrypt_1KB() => _encryptionService.Encrypt(_smallData, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Encrypt_1MB() => _encryptionService.Encrypt(_mediumData, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Encrypt_10MB() => _encryptionService.Encrypt(_largeData, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Decrypt_1KB() => _encryptionService.Decrypt(_encryptedSmall, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedMedium, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Decrypt_10MB() => _encryptionService.Decrypt(_encryptedLarge, EncryptionBenchmarkSupport.KeyId);
 }

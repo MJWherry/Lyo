@@ -130,10 +130,7 @@ public static class QueryCacheKeyBuilder
         var treeHash = queryTree != null ? WhereClauseUtils.GetWhereClauseTreeHash(queryTree) : "null";
         var includeArray = includes as string[] ?? [..NormalizePathValues(includes)];
         var includeStr = includeArray.Length != 0 ? $":include={CompactCacheSegment(string.Join("|", includeArray))}" : "";
-        var sortStr = sortBy.Length > 0
-            ? $":sortBy={BuildSortKey(sortBy)}"
-            : "";
-
+        var sortStr = sortBy.Length > 0 ? $":sortBy={BuildSortKey(sortBy)}" : "";
         var keysStr = keys != null && keys.Count > 0 ? $":keys={string.Join(";", keys.Select(ks => string.Join("|", ks.Select(k => k.ToString() ?? "null"))))}" : "";
         var selectedFieldsArray = selectedFields as string[] ?? [..NormalizePathValues(selectedFields ?? [])];
         var selectStr = selectedFields != null && selectedFieldsArray.Length != 0 ? $":select={CompactCacheSegment(string.Join("|", selectedFieldsArray))}" : "";
@@ -150,28 +147,23 @@ public static class QueryCacheKeyBuilder
         if (computedFields is not { Count: > 0 })
             return;
 
-        var computedKey = string.Join(
-            "|",
-            computedFields
-                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(c => $"{NormalizePathValue(c.Name)}={c.Template?.Trim()}"));
+        var computedKey = string.Join("|", computedFields.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).Select(c => $"{NormalizePathValue(c.Name)}={c.Template?.Trim()}"));
         keyBuilder.Append($":computed={CompactCacheSegment(computedKey)}");
     }
 
     private static string BuildSortKey(IReadOnlyList<SortBy> sortBy)
     {
-        var ordered = sortBy
-            .Select((f, i) => (Field: f, EffectivePriority: f.Priority ?? i))
+        var ordered = sortBy.Select((f, i) => (Field: f, EffectivePriority: f.Priority ?? i))
             .OrderBy(x => x.EffectivePriority)
             .ThenBy(x => x.Field.PropertyName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.Field.Direction)
             .ToArray();
+
         return string.Join("|", ordered.Select((x, index) => $"{NormalizePathValue(x.Field.PropertyName)}:{x.Field.Direction}:{index}"));
     }
 
     private static IEnumerable<string> NormalizePathValues(IEnumerable<string> values)
-        => values
-            .Select(NormalizePathValue)
+        => values.Select(NormalizePathValue)
             .Where(static value => value.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase);

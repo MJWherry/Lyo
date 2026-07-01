@@ -248,11 +248,7 @@ public static class EncryptionServiceExtensions
         /// <param name="password">Password for the PFX certificate</param>
         /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddRsaDecryptor(
-            string? privatePemPath = null,
-            string? pfxPath = null,
-            string? password = null,
-            RSAEncryptionPadding? padding = null)
+        public IServiceCollection AddRsaDecryptor(string? privatePemPath = null, string? pfxPath = null, string? password = null, RSAEncryptionPadding? padding = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
             return services.AddScoped(_ => new RsaDecryptor(privatePemPath, pfxPath, password, padding));

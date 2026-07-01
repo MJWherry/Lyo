@@ -29,8 +29,8 @@ public sealed class ChecksumServiceTests
         var svc = HashingService.Shared;
         var path = Path.GetTempFileName();
         try {
-            await File.WriteAllBytesAsync(path, CheckVector);
-            var fromFile = await svc.ChecksumFileAsync(ChecksumAlgorithm.Crc32C, path);
+            await File.WriteAllBytesAsync(path, CheckVector, TestContext.Current.CancellationToken);
+            var fromFile = await svc.ChecksumFileAsync(ChecksumAlgorithm.Crc32C, path, TestContext.Current.CancellationToken);
             Assert.Equal(svc.Checksum(ChecksumAlgorithm.Crc32C, CheckVector), fromFile);
         }
         finally {
@@ -40,8 +40,7 @@ public sealed class ChecksumServiceTests
 
     [Fact]
     public async Task ChecksumFileAsync_missing_file_throws()
-        => await Assert.ThrowsAsync<FileNotFoundException>(
-            () => HashingService.Shared.ChecksumFileAsync(ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))));
+        => await Assert.ThrowsAsync<FileNotFoundException>(() => HashingService.Shared.ChecksumFileAsync(ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), TestContext.Current.CancellationToken));
 
     [Fact]
     public void CreateChecksumStream_wraps_underlying_stream()
@@ -55,7 +54,7 @@ public sealed class ChecksumServiceTests
     [Fact]
     public void Hex_casing_honors_options()
     {
-        var lower = new HashingService(new HashingOptions { DefaultHexLetterCase = TextLetterCase.Lower });
+        var lower = new HashingService(new() { DefaultHexLetterCase = TextLetterCase.Lower });
         var bytes = lower.Checksum(ChecksumAlgorithm.Crc32, CheckVector);
         Assert.Equal("cbf43926", lower.ToHex(bytes));
     }

@@ -1,3 +1,4 @@
+@using System.Diagnostics
 @using System.Text.Json
 @inject EndatoClient EndatoClient
 @inject JsonSerializerOptions JsonOptions
@@ -95,19 +96,14 @@
     private EndatoEnrichmentSearchForm? _enrichmentForm;
 
     private PersonQuery _personQuery = new() {
-        FirstName = "John",
-        LastName = "Smith",
-        DateOfBirth = "01/15/1980",
+        FirstName = "John", LastName = "Smith", DateOfBirth = "01/15/1980"
     };
 
     private EnrichmentQuery _enrichmentQuery = new() {
         FirstName = "John",
         LastName = "Smith",
         Phone = "5125550100",
-        Address = new EnrichmentRequestAddress {
-            AddressLine1 = "123 Main St",
-            AddressLine2 = "Austin, TX 78701"
-        }
+        Address = new() { AddressLine1 = "123 Main St", AddressLine2 = "Austin, TX 78701" }
     };
 
     private PersonQueryResponse? _personResponse;
@@ -138,9 +134,8 @@
     {
         _error = null;
         _busy = true;
-
         try {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             switch (_searchMode) {
                 case EndatoSearchMode.Person: {
                     var query = _personForm?.ApplyToQuery() ?? _personQuery;
@@ -153,12 +148,7 @@
                 case EndatoSearchMode.Enrichment: {
                     var query = _enrichmentForm?.ApplyToQuery() ?? _enrichmentQuery;
                     _enrichmentQuery = query;
-                    var builder = EnrichmentQueryBuilder.New()
-                        .WithName(query.FirstName, query.LastName, query.MiddleName)
-                        .WithDateOfBirth(query.DateOfBirth)
-                        .WithAge(query.Age)
-                        .WithPhone(query.Phone)
-                        .WithEmail(query.Email);
+                    var builder = EnrichmentQueryBuilder.New().WithName(query.FirstName, query.LastName, query.MiddleName).WithDateOfBirth(query.DateOfBirth).WithAge(query.Age).WithPhone(query.Phone).WithEmail(query.Email);
                     if (query.Address != null)
                         builder.WithAddress(a => {
                             a.AddressLine1 = query.Address.AddressLine1;
@@ -183,4 +173,5 @@
             _busy = false;
         }
     }
+
 }

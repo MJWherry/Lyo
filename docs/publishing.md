@@ -63,20 +63,20 @@ fingerprint and the last packed version are stored in
 
 Per project, three outcomes are possible:
 
-| Situation | Action |
-|-----------|--------|
-| Source changed (or `--force`) | Full rebuild (`--no-incremental`) + pack. |
+| Situation                         | Action                                                                     |
+|-----------------------------------|----------------------------------------------------------------------------|
+| Source changed (or `--force`)     | Full rebuild (`--no-incremental`) + pack.                                  |
 | Source unchanged, version changed | Incremental rebuild (so assembly metadata matches the new version) + pack. |
-| Source and version unchanged | Skipped entirely; no new `.nupkg`. |
+| Source and version unchanged      | Skipped entirely; no new `.nupkg`.                                         |
 
 Use `-f`/`--force` to bypass change detection and always rebuild.
 
 ## Environment variables
 
-| Variable | Purpose | Default |
-|----------|---------|---------|
+| Variable           | Purpose                                                 | Default         |
+|--------------------|---------------------------------------------------------|-----------------|
 | `NUGET_OUTPUT_DIR` | Output directory for packages and the build-state file. | `~/nuget-local` |
-| `BUILD_CONFIG` | Build configuration. | `Release` |
+| `BUILD_CONFIG`     | Build configuration.                                    | `Release`       |
 
 ## Consuming the output
 

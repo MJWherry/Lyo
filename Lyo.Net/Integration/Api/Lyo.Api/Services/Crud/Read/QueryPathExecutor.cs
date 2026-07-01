@@ -91,7 +91,7 @@ public sealed class QueryPathExecutor(
         if (singlePkOptimized is not null)
             entities = singlePkOptimized;
         else {
-            entities = new List<TDbModel>(validKeySets.Count);
+            entities = new(validKeySets.Count);
             foreach (var keySet in validKeySets) {
                 var convertedKeys = typeConversion.ConvertKeysForFind<TDbModel>(keySet, context);
                 var entity = await context.Set<TDbModel>().FindAsync(convertedKeys, ct).ConfigureAwait(false);
@@ -205,6 +205,7 @@ public sealed class QueryPathExecutor(
     {
         var method = typeof(QueryPathExecutor).GetMethod(nameof(LoadBySinglePrimaryKeyAsync), BindingFlags.NonPublic | BindingFlags.Static)
             ?.MakeGenericMethod(typeof(TDbModel), keyClrType);
+
         if (method == null)
             return null;
 
@@ -217,8 +218,7 @@ public sealed class QueryPathExecutor(
         IReadOnlyList<object[]> validKeySets,
         string keyName,
         CancellationToken ct)
-        where TDbModel : class
-        where TKey : notnull
+        where TDbModel : class where TKey : notnull
     {
         var keys = validKeySets.Where(static ks => ks.Length > 0 && ks[0] is not null).Select(static ks => (TKey)ks[0]).Distinct().ToArray();
         if (keys.Length == 0)

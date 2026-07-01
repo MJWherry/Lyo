@@ -5,12 +5,11 @@ namespace Lyo.FileStorage.Staged;
 
 /// <summary>
 /// Two-phase upload: clients PUT bytes to a staging key, then the host verifies (<see cref="CompleteAsync" />) and optionally commits into canonical
-/// <see cref="IFileStorageService" /> storage (<see cref="CommitAsync" />). Session state lives in <see cref="IStagedFileUploadStore" /> — not
-/// <c>file_metadata</c> until commit.
+/// <see cref="IFileStorageService" /> storage (<see cref="CommitAsync" />). Session state lives in <see cref="IStagedFileUploadStore" /> — not <c>file_metadata</c> until commit.
 /// </summary>
 /// <remarks>
-/// Typical flow: <see cref="BeginAsync" /> → client PUT to <see cref="StagedUploadBeginResult.PresignedPutUrl" /> → <see cref="CompleteAsync" /> →
-/// <see cref="CommitAsync" /> (compress/encrypt pipeline) or worker handoff via <see cref="UploadCompleted" /> / <see cref="IStagedFileUploadEventHandler" />.
+/// Typical flow: <see cref="BeginAsync" /> → client PUT to <see cref="StagedUploadBeginResult.PresignedPutUrl" /> → <see cref="CompleteAsync" /> → <see cref="CommitAsync" />
+/// (compress/encrypt pipeline) or worker handoff via <see cref="UploadCompleted" /> / <see cref="IStagedFileUploadEventHandler" />.
 /// </remarks>
 public interface IStagedFileUploadService
 {

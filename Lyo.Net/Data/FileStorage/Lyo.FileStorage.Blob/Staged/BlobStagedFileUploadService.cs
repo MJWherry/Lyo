@@ -1,10 +1,8 @@
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
@@ -20,8 +18,8 @@ namespace Lyo.FileStorage.Blob.Staged;
 /// <summary>Staged uploads using Azure Blob SAS PUT URLs under <c>.stage/{stageId}/object</c>.</summary>
 public sealed class BlobStagedFileUploadService : IStagedFileUploadService
 {
-    private readonly BlobStagedFilePhysicalIo _physicalIo;
     private readonly StagedUploadCoordinator _coordinator;
+    private readonly BlobStagedFilePhysicalIo _physicalIo;
     private readonly IStagedFileUploadStore _store;
 
     public BlobStagedFileUploadService(
@@ -42,20 +40,12 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
         ArgumentHelpers.ThrowIfNull(store);
         _store = store;
         var container = containerClient ?? new BlobContainerClient(blobOptions.ConnectionString, blobOptions.ContainerName);
-        _physicalIo = new BlobStagedFilePhysicalIo(blobOptions, container);
+        _physicalIo = new(blobOptions, container);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<BlobStagedFileUploadService>();
-        _coordinator = new StagedUploadCoordinator(
-            store,
-            _physicalIo,
-            storage,
-            contentPolicy ?? new AllowAllFileContentPolicy(),
-            malwareScanner ?? NullFileMalwareScanner.Instance,
-            operationContextAccessor ?? NullFileOperationContextAccessor.Instance,
-            blobOptions,
-            logger,
-            metrics ?? NullMetrics.Instance,
-            auditHandlers,
-            eventHandlers);
+        _coordinator = new(
+            store, _physicalIo, storage, contentPolicy ?? new AllowAllFileContentPolicy(), malwareScanner ?? NullFileMalwareScanner.Instance,
+            operationContextAccessor ?? NullFileOperationContextAccessor.Instance, blobOptions, logger, metrics ?? NullMetrics.Instance, auditHandlers, eventHandlers);
+
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);
@@ -73,8 +63,7 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
     public async Task<StagedUploadBeginResult> BeginAsync(StagedUploadBeginRequest request, CancellationToken ct = default)
     {
         OperationHelpers.ThrowIf(
-            _physicalIo.UsesCustomerProvidedKey,
-            "Staged upload presigned PUT is not compatible with SSE-C CustomerProvidedKey; remove it or disable staged uploads.");
+            _physicalIo.UsesCustomerProvidedKey, "Staged upload presigned PUT is not compatible with SSE-C CustomerProvidedKey; remove it or disable staged uploads.");
 
         var (result, _) = await _coordinator.BeginCoreAsync(request, ct).ConfigureAwait(false);
         return result;
@@ -83,11 +72,9 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
     public Task<StagedFileResult> CompleteAsync(Guid stageId, StagedUploadCompleteRequest? request = null, CancellationToken ct = default)
         => _coordinator.CompleteCoreAsync(stageId, request, ct);
 
-    public Task<FileStoreResult> CommitAsync(Guid stageId, StagedUploadCommitRequest request, CancellationToken ct = default)
-        => _coordinator.CommitCoreAsync(stageId, request, ct);
+    public Task<FileStoreResult> CommitAsync(Guid stageId, StagedUploadCommitRequest request, CancellationToken ct = default) => _coordinator.CommitCoreAsync(stageId, request, ct);
 
-    public Task AbortAsync(Guid stageId, CancellationToken ct = default)
-        => _coordinator.AbortCoreAsync(stageId, ct);
+    public Task AbortAsync(Guid stageId, CancellationToken ct = default) => _coordinator.AbortCoreAsync(stageId, ct);
 
     public async Task<StagedFileResult> GetAsync(Guid stageId, CancellationToken ct = default)
     {
@@ -100,8 +87,10 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
 
     private sealed class BlobStagedFilePhysicalIo : IStagedFilePhysicalIo
     {
-        private readonly BlobFileStorageOptions _options;
         private readonly BlobContainerClient _container;
+        private readonly BlobFileStorageOptions _options;
+
+        internal bool UsesCustomerProvidedKey => _options.UsesCustomerProvidedKey;
 
         internal BlobStagedFilePhysicalIo(BlobFileStorageOptions options, BlobContainerClient container)
         {
@@ -109,12 +98,9 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
             _container = container;
         }
 
-        internal bool UsesCustomerProvidedKey => _options.UsesCustomerProvidedKey;
-
         public MultipartUploadProviderKind ProviderKind => MultipartUploadProviderKind.AzureBlob;
 
-        public string BuildStageStorageLocation(Guid stageId, string? pathPrefix)
-            => StagedObjectKeyBuilder.Build(stageId, pathPrefix, _options.BlobPrefix);
+        public string BuildStageStorageLocation(Guid stageId, string? pathPrefix) => StagedObjectKeyBuilder.Build(stageId, pathPrefix, _options.BlobPrefix);
 
         public Task<StagedPresignedPutResult> GeneratePresignedPutUrlAsync(
             Guid stageId,

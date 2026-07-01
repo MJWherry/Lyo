@@ -1,8 +1,8 @@
 namespace Lyo.Benchmark.Models;
 
 /// <summary>
-/// A distribution of a single measured metric (latency, duration, etc.) shared by both report kinds.
-/// Micro-benchmarks populate it in nanoseconds (<see cref="Unit" /> = <c>ns</c>); load tests in milliseconds (<c>ms</c>).
+/// A distribution of a single measured metric (latency, duration, etc.) shared by both report kinds. Micro-benchmarks populate it in nanoseconds (<see cref="Unit" /> =
+/// <c>ns</c>); load tests in milliseconds (<c>ms</c>).
 /// </summary>
 public sealed class MetricStat
 {

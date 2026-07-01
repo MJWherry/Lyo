@@ -8,16 +8,16 @@ is [`Lyo.Net/docs/package-layout.md`](../Lyo.Net/docs/package-layout.md).
 
 ## Areas
 
-| Area | Role |
-|------|------|
-| `Core` | Domain-agnostic primitives and canonical Lyo domains: caching, diagnostics, validation, metrics, resilience, exceptions, math/science, people, geolocation, entity references, locks, scheduling, streams, audit, change tracking, health. |
-| `Data` | Persistence and data handling: file storage (local/S3/Blob), compression, CSV/XLSX/PDF, images, QR codes, Postgres migration helpers, query shapes. |
-| `Security` | Cryptography (`Lyo.Encryption`), hashing, authentication providers, content-threat scanning, keystores. |
-| `Communication` | Messaging and media delivery capabilities: email, SMS, text-to-speech, translation, message queues. |
-| `Integration` | App-facing surfaces and vendor integrations: the `Lyo.Api` query engine, Blazor web components, jobs, and vendor clients (Google, Endato, Discord, Typecast, ...). |
-| `Features` | Composable, often EF-backed product features: comments, notes, favorites, ratings, tags, typed config, contact forms, profanity, short URLs. |
-| `Apps` | Sample/reference HTTP hosts (e.g. the centralized config API). |
-| `Tools` | Utilities and host apps for trying components end to end. |
+| Area            | Role                                                                                                                                                                                                                                       |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Core`          | Domain-agnostic primitives and canonical Lyo domains: caching, diagnostics, validation, metrics, resilience, exceptions, math/science, people, geolocation, entity references, locks, scheduling, streams, audit, change tracking, health. |
+| `Data`          | Persistence and data handling: file storage (local/S3/Blob), compression, CSV/XLSX/PDF, images, QR codes, Postgres migration helpers, query shapes.                                                                                        |
+| `Security`      | Cryptography (`Lyo.Encryption`), hashing, authentication providers, content-threat scanning, keystores.                                                                                                                                    |
+| `Communication` | Messaging and media delivery capabilities: email, SMS, text-to-speech, translation, message queues.                                                                                                                                        |
+| `Integration`   | App-facing surfaces and vendor integrations: the `Lyo.Api` query engine, Blazor web components, jobs, and vendor clients (Google, Endato, Discord, Typecast, ...).                                                                         |
+| `Features`      | Composable, often EF-backed product features: comments, notes, favorites, ratings, tags, typed config, contact forms, profanity, short URLs.                                                                                               |
+| `Apps`          | Sample/reference HTTP hosts (e.g. the centralized config API).                                                                                                                                                                             |
+| `Tools`         | Utilities and host apps for trying components end to end.                                                                                                                                                                                  |
 
 A live, interactive view of the actual project-reference graph is generated into
 [`Lyo.ProjectGraph.html`](Lyo.ProjectGraph.html) by

@@ -27,8 +27,11 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     private readonly RSAEncryptionPadding _padding;
 
     private readonly RSA _rsa;
+    private Encoding _decryptionEncoding = Encoding.UTF8;
 
     private bool _disposed;
+
+    private Encoding _encryptionEncoding = Encoding.UTF8;
 
     /// <summary>Initializes a new instance of the AesGcmRsaEncryptionService.</summary>
     /// <param name="publicPemPath">Path to the RSA public key PEM file</param>
@@ -68,11 +71,21 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
             $"RSA key size must be at least 2048 bits for security. Current key size: {_rsa.KeySize} bits. Consider using 3072 or 4096 bits for new deployments.");
     }
 
+    /// <summary> Asynchronously disposes of the RSA instance and releases all resources. </summary>
+    public ValueTask DisposeAsync()
+    {
+        Dispose(true);
+        return default;
+    }
+
+    /// <summary> Disposes of the RSA instance and releases all resources. </summary>
+    public void Dispose() => Dispose(true);
+
+    /// <inheritdoc />
+    public EncryptionAlgorithm AlgorithmKind => EncryptionAlgorithm.AesGcmRsa;
+
     /// <inheritdoc />
     public string FileExtension => FileTypeInfo.LyoAesGcmRsa.DefaultExtension;
-
-    private Encoding _encryptionEncoding = Encoding.UTF8;
-    private Encoding _decryptionEncoding = Encoding.UTF8;
 
     /// <inheritdoc />
     public Encoding GetEncryptionEncoding() => _encryptionEncoding;
@@ -85,12 +98,6 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
 
     /// <inheritdoc />
     public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
-
-    /// <inheritdoc />
-    public EncryptionAlgorithm AlgorithmKind => EncryptionAlgorithm.AesGcmRsa;
-
-    /// <summary> Disposes of the RSA instance and releases all resources. </summary>
-    public void Dispose() => Dispose(true);
 
     /// <summary>
     /// Encrypts data using AES-GCM with a randomly generated key (or provided key) that is encrypted with RSA. Performance: Encrypts approximately 100-500 MB/s on typical
@@ -355,15 +362,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
             return Encrypt(chunk, keyId, key);
         };
 
-    private Func<byte[], int, int, byte[]> DecryptChunkTransform(string? keyId, byte[]? key)
-        => (buffer, offset, count) => Decrypt(buffer, offset, count, keyId, key);
-
-    /// <summary> Asynchronously disposes of the RSA instance and releases all resources. </summary>
-    public ValueTask DisposeAsync()
-    {
-        Dispose(true);
-        return default;
-    }
+    private Func<byte[], int, int, byte[]> DecryptChunkTransform(string? keyId, byte[]? key) => (buffer, offset, count) => Decrypt(buffer, offset, count, keyId, key);
 
     private void Dispose(bool disposing)
     {

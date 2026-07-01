@@ -74,16 +74,17 @@
 </MudStack>
 
 @code {
+
     [Parameter]
     public EndatoSearchMode SearchMode { get; set; }
 
-    [Parameter, EditorRequired]
+    [Parameter][EditorRequired]
     public PersonQuery PersonQuery { get; set; } = new();
 
     [Parameter]
     public EventCallback<PersonQuery> PersonQueryChanged { get; set; }
 
-    [Parameter, EditorRequired]
+    [Parameter][EditorRequired]
     public EnrichmentQuery EnrichmentQuery { get; set; } = new();
 
     [Parameter]
@@ -121,11 +122,9 @@
             _responseJson = JsonSerializer.SerializeToElement(EnrichmentResponse, JsonOptions);
     }
 
-    private Task OnPersonQueryChanged(PersonQuery query)
-        => PersonQueryChanged.HasDelegate ? PersonQueryChanged.InvokeAsync(query) : Task.CompletedTask;
+    private Task OnPersonQueryChanged(PersonQuery query) => PersonQueryChanged.HasDelegate ? PersonQueryChanged.InvokeAsync(query) : Task.CompletedTask;
 
-    private Task OnEnrichmentQueryChanged(EnrichmentQuery query)
-        => EnrichmentQueryChanged.HasDelegate ? EnrichmentQueryChanged.InvokeAsync(query) : Task.CompletedTask;
+    private Task OnEnrichmentQueryChanged(EnrichmentQuery query) => EnrichmentQueryChanged.HasDelegate ? EnrichmentQueryChanged.InvokeAsync(query) : Task.CompletedTask;
 
     private Task OnRequestParseErrorChanged(string? error)
     {
@@ -141,4 +140,5 @@
         await OnRunRequested.InvokeAsync();
         _responseEditorKey++;
     }
+
 }

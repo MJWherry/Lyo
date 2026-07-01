@@ -12,8 +12,10 @@ public sealed record Phone(
     string Type,
     bool IsConnected,
     string Number,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Latitude = null,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Longitude = null,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Latitude = null,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Longitude = null,
     string? SourceSummary = null)
 {
     public override string ToString()

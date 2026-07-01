@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-
 namespace Lyo.Benchmark.Models;
 
 /// <summary>
-/// Micro-benchmark report (BenchmarkDotNet). <see cref="Groups" /> mirror benchmark classes; <see cref="Comparison" />
-/// is populated only when a suite opts into a comparison axis (e.g. an algorithm shoot-out).
+/// Micro-benchmark report (BenchmarkDotNet). <see cref="Groups" /> mirror benchmark classes; <see cref="Comparison" /> is populated only when a suite opts into a comparison
+/// axis (e.g. an algorithm shoot-out).
 /// </summary>
 public sealed class MicroBenchmarkReport : BenchmarkReport
 {

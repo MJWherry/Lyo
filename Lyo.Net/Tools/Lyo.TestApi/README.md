@@ -11,7 +11,8 @@ A standard `WebApplication` with the following pipeline:
 - **OpenAPI / Scalar** — `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so `/scalar/v1` (or whatever Scalar picks) shows every endpoint.
 - **Compression** — Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can ship Brotli payloads.
 - **JSON** — `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.
-- **Infra** — `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster
+- **Infra** — `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers
+  `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster
   via `ConfigureMapster()`.
 - **Locks** — `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.
 - **Messaging** — `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).
@@ -113,7 +114,9 @@ anti-forgery disabled, useful when callers don't want to nest under the workbenc
 
 ## Staged file upload
 
-Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table above). State is stored in **`staged_file_upload`**, not **`file_metadata`**, until **`stage/{id}/commit`**. Local backends accept **`PUT stage/{stageId}/put`** on this host; S3/Blob return presigned URLs from **`stage/begin`**. Register **`IStagedFileUploadStore`** via Postgres/Sqlite metadata builders (or in-memory for dev). Hook **`IStagedFileUploadEventHandler`** to enqueue async commit workers after **`UploadCompleted`**.
+Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table above). State is stored in **`staged_file_upload`**, not **`file_metadata`**, until *
+*`stage/{id}/commit`**. Local backends accept **`PUT stage/{stageId}/put`** on this host; S3/Blob return presigned URLs from **`stage/begin`**. Register **`IStagedFileUploadStore`
+** via Postgres/Sqlite metadata builders (or in-memory for dev). Hook **`IStagedFileUploadEventHandler`** to enqueue async commit workers after **`UploadCompleted`**.
 
 ## FileMetadata Query/QueryProject
 

@@ -19,6 +19,12 @@ public interface ITwoKeyEncryptionService
 {
     string FileExtension { get; }
 
+    /// <summary>Gets the encryption algorithm used for Data Encryption Key (DEK) operations.</summary>
+    EncryptionAlgorithm? DekAlgorithm { get; }
+
+    /// <summary>Gets the encryption algorithm used for Key Encryption Key (KEK) operations.</summary>
+    EncryptionAlgorithm? KekAlgorithm { get; }
+
     /// <summary>Gets the encoding used when encrypting strings (defaults to UTF-8).</summary>
     Encoding GetEncryptionEncoding();
 
@@ -32,12 +38,6 @@ public interface ITwoKeyEncryptionService
     /// <summary>Sets the encoding used when decrypting to strings.</summary>
     /// <param name="encoding">The encoding to use for subsequent string decryption operations.</param>
     void SetDecryptionEncoding(Encoding encoding);
-
-    /// <summary>Gets the encryption algorithm used for Data Encryption Key (DEK) operations.</summary>
-    EncryptionAlgorithm? DekAlgorithm { get; }
-
-    /// <summary>Gets the encryption algorithm used for Key Encryption Key (KEK) operations.</summary>
-    EncryptionAlgorithm? KekAlgorithm { get; }
 
     /// <summary>Gets the current key version for a specific key ID.</summary>
     /// <param name="keyId">The key identifier</param>

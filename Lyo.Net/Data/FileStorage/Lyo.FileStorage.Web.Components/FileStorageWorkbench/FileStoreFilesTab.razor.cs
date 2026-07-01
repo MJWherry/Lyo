@@ -255,8 +255,8 @@ public partial class FileStoreFilesTab : ComponentBase
             FileStoreResult result;
             if (FileStorageGridRowHelper.IsRowDeleted(row)) {
                 var uri = $"{Workbench.FileStorageApiRoutePrefix.TrimEnd('/')}/files/{fileId:D}/metadata?includeDeleted=true";
-                result = await Workbench.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false)
-                    ?? throw new InvalidOperationException($"Metadata for deleted file {fileId} was not returned.");
+                result = await Workbench.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false) ??
+                    throw new InvalidOperationException($"Metadata for deleted file {fileId} was not returned.");
             }
             else
                 result = await storage.GetMetadataAsync(fileId).ConfigureAwait(false);

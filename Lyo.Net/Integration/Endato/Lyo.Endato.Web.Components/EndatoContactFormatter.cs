@@ -8,38 +8,27 @@ namespace Lyo.Endato.Web.Components;
 internal static class EndatoContactFormatter
 {
     public static string FormatPossibleNumbers(IReadOnlyList<PersonPhone> phones)
-        => string.Join(", ", phones
-            .Where(IsMobilePhone)
-            .OrderByDescending(p => ParseReportDate(p.LastReportedDate))
-            .ThenBy(p => p.PhoneOrder)
-            .Select(FormatPhoneEntry));
+        => string.Join(", ", phones.Where(IsMobilePhone).OrderByDescending(p => ParseReportDate(p.LastReportedDate)).ThenBy(p => p.PhoneOrder).Select(FormatPhoneEntry));
 
     public static string FormatPossibleEmails(IReadOnlyList<PersonEmail> emails)
-        => string.Join(", ", emails
-            .OrderByDescending(e => e.EmailEngagementData?.LastTouchedDate ?? DateTime.MinValue)
-            .ThenBy(e => e.EmailOrdinal)
-            .Select(FormatEmailEntry));
+        => string.Join(", ", emails.OrderByDescending(e => e.EmailEngagementData?.LastTouchedDate ?? DateTime.MinValue).ThenBy(e => e.EmailOrdinal).Select(FormatEmailEntry));
 
     public static string FormatEnrichmentPhones(IReadOnlyList<EnrichmentPhone> phones)
-        => string.Join(", ", phones
-            .OrderByDescending(p => ParseReportDate(p.LastReportedDate))
-            .Select(p => $"({FormatDisplayDate(p.LastReportedDate)}) {FormatPhoneNumber(p.Number)} ({p.Type})"));
+        => string.Join(
+            ", ",
+            phones.OrderByDescending(p => ParseReportDate(p.LastReportedDate)).Select(p => $"({FormatDisplayDate(p.LastReportedDate)}) {FormatPhoneNumber(p.Number)} ({p.Type})"));
 
     public static string FormatEnrichmentEmails(IReadOnlyList<EnrichmentEmail> emails)
-        => string.Join(", ", emails
-            .OrderByDescending(e => ParseReportDate(e.LastReportedDate))
-            .Select(e => $"({FormatDisplayDate(e.LastReportedDate)}) {e.EmailAddress}"));
+        => string.Join(", ", emails.OrderByDescending(e => ParseReportDate(e.LastReportedDate)).Select(e => $"({FormatDisplayDate(e.LastReportedDate)}) {e.EmailAddress}"));
 
     private static bool IsMobilePhone(PersonPhone phone)
     {
         var type = phone.PhoneType?.Trim() ?? string.Empty;
-        return type.Contains("mobile", StringComparison.OrdinalIgnoreCase)
-            || type.Contains("wireless", StringComparison.OrdinalIgnoreCase)
-            || type.Contains("cell", StringComparison.OrdinalIgnoreCase);
+        return type.Contains("mobile", StringComparison.OrdinalIgnoreCase) || type.Contains("wireless", StringComparison.OrdinalIgnoreCase) ||
+            type.Contains("cell", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string FormatPhoneEntry(PersonPhone phone)
-        => $"({FormatDisplayDate(phone.LastReportedDate)}) {FormatPhoneNumber(phone.PhoneNumber)}";
+    private static string FormatPhoneEntry(PersonPhone phone) => $"({FormatDisplayDate(phone.LastReportedDate)}) {FormatPhoneNumber(phone.PhoneNumber)}";
 
     private static string FormatEmailEntry(PersonEmail email)
     {
@@ -85,8 +74,6 @@ internal static class EndatoContactFormatter
         if (digits.Length == 11 && digits[0] == '1')
             digits = digits[1..];
 
-        return digits.Length == 10
-            ? $"{digits[..3]}-{digits[3..6]}-{digits[6..]}"
-            : number.Trim();
+        return digits.Length == 10 ? $"{digits[..3]}-{digits[3..6]}-{digits[6..]}" : number.Trim();
     }
 }

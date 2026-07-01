@@ -29,10 +29,10 @@ public static class FileStorageWorkbenchExtensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyStoreKey) && s.ServiceType == typeof(IKeyStore)))
                 services.AddKeyedScoped<IKeyStore>(keyStoreKey, (provider, _) => new TestApiKeyStore(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));
 
-            if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(fileStorageKey) && s.ServiceType == typeof(IStagedFileUploadService)))
+            if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(fileStorageKey) && s.ServiceType == typeof(IStagedFileUploadService))) {
                 services.AddKeyedScoped<IStagedFileUploadService>(
-                    fileStorageKey,
-                    (provider, _) => new TestApiStagedFileUploadService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));
+                    fileStorageKey, (provider, _) => new TestApiStagedFileUploadService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));
+            }
 
             services.AddScoped<IFileStorageWorkbenchQueryService>(provider
                 => new TestApiFileStorageWorkbenchQueryService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix));

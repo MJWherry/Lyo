@@ -34,7 +34,7 @@ internal sealed class AesGcmStreamCryptor : IAeadStreamCryptor
     private byte[] _inBuffer = [];
     private byte[] _outBuffer = [];
 
-    public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _key = new KeyParameter(key.ToArray());
+    public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _key = new(key.ToArray());
 
     public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag)
     {

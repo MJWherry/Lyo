@@ -8,7 +8,9 @@ namespace Lyo.Hashing.Benchmarks;
 [ComparisonSuite(Baseline = "Sha256")]
 [BenchmarkDescription("Hashes the same random byte buffer with SHA-256/384/512 and MD5 to compare digest throughput at each payload size.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer being hashed (1 KB, 1 MB, 10 MB).")]
-[BenchmarkSla(MinThroughputMbps = 150, SizeParam = "DataSize", Standard = "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.")]
+[BenchmarkSla(
+    MinThroughputMbps = 150, SizeParam = "DataSize",
+    Standard = "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.")]
 public class AlgorithmComparisonBenchmarks
 {
     private readonly IHashingService _hashing = HashingService.Shared;

@@ -12,8 +12,8 @@ using Lyo.Keystore.KeyDerivation;
 namespace Lyo.Encryption.Tests;
 
 /// <summary>
-/// Exercises the compact streaming chunk format (<c>[ciphertextLen:4][nonce:12][ciphertext][tag:16]</c>) used by the allocation-reduced streaming AEAD paths: round-trips across
-/// chunk boundaries, tamper detection, per-chunk nonce uniqueness, and cross-instance/cross-algorithm decryption.
+/// Exercises the compact streaming chunk format (<c>[ciphertextLen:4][nonce:12][ciphertext][tag:16]</c>) used by the allocation-reduced streaming AEAD paths: round-trips
+/// across chunk boundaries, tamper detection, per-chunk nonce uniqueness, and cross-instance/cross-algorithm decryption.
 /// </summary>
 public class StreamingChunkFormatTests
 {
@@ -23,14 +23,15 @@ public class StreamingChunkFormatTests
 
     private static byte[] DeriveKey(string password) => KeyDerivationService.DeriveKey(password);
 
-    private static IEncryptionService CreateService(string algorithm, IKeyStore keyStore) => algorithm switch {
-        "aesgcm" => new AesGcmEncryptionService(keyStore),
-        "chacha" => new ChaCha20Poly1305EncryptionService(keyStore),
-        "aesccm" => new AesCcmEncryptionService(keyStore),
-        "aessiv" => new AesSivEncryptionService(keyStore),
-        "xchacha" => new XChaCha20Poly1305EncryptionService(keyStore),
-        _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
-    };
+    private static IEncryptionService CreateService(string algorithm, IKeyStore keyStore)
+        => algorithm switch {
+            "aesgcm" => new AesGcmEncryptionService(keyStore),
+            "chacha" => new ChaCha20Poly1305EncryptionService(keyStore),
+            "aesccm" => new AesCcmEncryptionService(keyStore),
+            "aessiv" => new AesSivEncryptionService(keyStore),
+            "xchacha" => new XChaCha20Poly1305EncryptionService(keyStore),
+            var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
+        };
 
     private static async Task<byte[]> EncryptAsync(IEncryptionService svc, byte[] plaintext, byte[]? key, string? keyId, int chunkSize, CancellationToken ct)
     {
@@ -53,8 +54,8 @@ public class StreamingChunkFormatTests
     {
         var data = new TheoryData<string, int>();
         foreach (var algorithm in new[] { "aesgcm", "chacha", "aesccm", "aessiv", "xchacha" })
-            foreach (var size in new[] { 0, 1, 7, 16, 32, 48, 50, 1000 })
-                data.Add(algorithm, size);
+        foreach (var size in new[] { 0, 1, 7, 16, 32, 48, 50, 1000 })
+            data.Add(algorithm, size);
 
         return data;
     }
@@ -67,10 +68,8 @@ public class StreamingChunkFormatTests
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("raw-key");
         var plaintext = RandomNumberGenerator.GetBytes(size);
-
         var encrypted = await EncryptAsync(svc, plaintext, key, null, 16, ct);
         var decrypted = await DecryptAsync(svc, encrypted, key, null, ct);
-
         Assert.Equal(plaintext, decrypted);
     }
 
@@ -84,10 +83,8 @@ public class StreamingChunkFormatTests
         keyStore.UpdateKeyFromString(keyId, "stream-password");
         var svc = CreateService(algorithm, keyStore);
         var plaintext = RandomNumberGenerator.GetBytes(size);
-
         var encrypted = await EncryptAsync(svc, plaintext, null, keyId, 16, ct);
         var decrypted = await DecryptAsync(svc, encrypted, null, keyId, ct);
-
         Assert.Equal(plaintext, decrypted);
     }
 
@@ -103,10 +100,8 @@ public class StreamingChunkFormatTests
         var encryptService = CreateService(algorithm, keyStore);
         var decryptService = CreateService(algorithm, keyStore);
         var plaintext = RandomNumberGenerator.GetBytes(5000);
-
         var encrypted = await EncryptAsync(encryptService, plaintext, null, keyId, 256, ct);
         var decrypted = await DecryptAsync(decryptService, encrypted, null, keyId, ct);
-
         Assert.Equal(plaintext, decrypted);
     }
 
@@ -120,9 +115,7 @@ public class StreamingChunkFormatTests
         var aesGcm = new AesGcmEncryptionService(keyStore);
         var chacha = new ChaCha20Poly1305EncryptionService(keyStore);
         var plaintext = RandomNumberGenerator.GetBytes(200);
-
         var encrypted = await EncryptAsync(aesGcm, plaintext, null, keyId, 64, ct);
-
         await Assert.ThrowsAnyAsync<InvalidDataException>(() => DecryptAsync(chacha, encrypted, null, keyId, ct));
     }
 
@@ -135,12 +128,10 @@ public class StreamingChunkFormatTests
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("tamper-key");
         var plaintext = RandomNumberGenerator.GetBytes(200);
-
         var encrypted = await EncryptAsync(svc, plaintext, key, null, 64, ct);
 
         // Flip a bit in the final tag byte (well past the header / length prefix) so it surfaces as an auth failure.
         encrypted[^1] ^= 0xFF;
-
         await Assert.ThrowsAnyAsync<DecryptionFailedException>(() => DecryptAsync(svc, encrypted, key, null, ct));
     }
 
@@ -153,9 +144,7 @@ public class StreamingChunkFormatTests
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("nonce-key");
         var plaintext = RandomNumberGenerator.GetBytes(16 * 64); // 64 chunks at chunkSize 16
-
         var encrypted = await EncryptAsync(svc, plaintext, key, null, 16, ct);
-
         var nonces = ExtractChunkNonces(encrypted);
         Assert.Equal(64, nonces.Count);
         var distinct = new HashSet<string>(nonces.Select(Convert.ToHexString));
@@ -173,10 +162,8 @@ public class StreamingChunkFormatTests
         var ct = TestContext.Current.CancellationToken;
         var key = DeriveKey("siv-determinism-key");
         var plaintext = RandomNumberGenerator.GetBytes(size);
-
         var first = await EncryptAsync(new AesSivEncryptionService(new LocalKeyStore()), plaintext, key, null, 16, ct);
         var second = await EncryptAsync(new AesSivEncryptionService(new LocalKeyStore()), plaintext, key, null, 16, ct);
-
         Assert.Equal(first, second);
         Assert.Equal(plaintext, await DecryptAsync(new AesSivEncryptionService(new LocalKeyStore()), first, key, null, ct));
     }
@@ -195,19 +182,20 @@ public class StreamingChunkFormatTests
         var aesGcm = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcm, keyStore);
         var plaintext = RandomNumberGenerator.GetBytes(size);
-
         byte[] encrypted;
-        using (var input = new MemoryStream(plaintext))
-        using (var output = new MemoryStream()) {
-            await svc.EncryptToStreamAsync(input, output, keyId, chunkSize: 16, ct: ct);
-            encrypted = output.ToArray();
+        using (var input = new MemoryStream(plaintext)) {
+            using (var output = new MemoryStream()) {
+                await svc.EncryptToStreamAsync(input, output, keyId, chunkSize: 16, ct: ct);
+                encrypted = output.ToArray();
+            }
         }
 
         byte[] decrypted;
-        using (var input = new MemoryStream(encrypted))
-        using (var output = new MemoryStream()) {
-            await svc.DecryptToStreamAsync(input, output, keyId, ct: ct);
-            decrypted = output.ToArray();
+        using (var input = new MemoryStream(encrypted)) {
+            using (var output = new MemoryStream()) {
+                await svc.DecryptToStreamAsync(input, output, keyId, ct: ct);
+                decrypted = output.ToArray();
+            }
         }
 
         Assert.Equal(plaintext, decrypted);
@@ -223,16 +211,15 @@ public class StreamingChunkFormatTests
         var aesGcm = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcm, keyStore);
         var plaintext = RandomNumberGenerator.GetBytes(300);
-
         byte[] encrypted;
-        using (var input = new MemoryStream(plaintext))
-        using (var output = new MemoryStream()) {
-            await svc.EncryptToStreamAsync(input, output, keyId, chunkSize: 64, ct: ct);
-            encrypted = output.ToArray();
+        using (var input = new MemoryStream(plaintext)) {
+            using (var output = new MemoryStream()) {
+                await svc.EncryptToStreamAsync(input, output, keyId, chunkSize: 64, ct: ct);
+                encrypted = output.ToArray();
+            }
         }
 
         encrypted[^1] ^= 0xFF;
-
         using var tamperedInput = new MemoryStream(encrypted);
         using var tamperedOutput = new MemoryStream();
         await Assert.ThrowsAnyAsync<DecryptionFailedException>(() => svc.DecryptToStreamAsync(tamperedInput, tamperedOutput, keyId, ct: ct));
@@ -249,7 +236,6 @@ public class StreamingChunkFormatTests
         br.ReadBytes(keyIdLength);
         var keyVersionLength = br.ReadInt32();
         br.ReadBytes(keyVersionLength);
-
         var nonces = new List<byte[]>();
         while (ms.Position < ms.Length) {
             var ciphertextLength = br.ReadInt32();

@@ -53,7 +53,8 @@ public sealed class LyoJwtAuthenticationTests
     {
         var userStore = harness.Services.GetRequiredService<IUserStore>();
         var user = await userStore.CreateAsync(
-            new(Guid.NewGuid(), "Jwt User", $"jwt-{Guid.NewGuid():N}@example.com", true, null, null, scopes, null, null, DateTime.UtcNow, null, null, null, null), null, TestContext.Current.CancellationToken);
+            new(Guid.NewGuid(), "Jwt User", $"jwt-{Guid.NewGuid():N}@example.com", true, null, null, scopes, null, null, DateTime.UtcNow, null, null, null, null), null,
+            TestContext.Current.CancellationToken);
 
         var issuer = harness.Services.GetRequiredService<ILyoJwtIssuer>();
         var issued = await issuer.IssueAsync(user, scopes, "local", null, false, TestContext.Current.CancellationToken);

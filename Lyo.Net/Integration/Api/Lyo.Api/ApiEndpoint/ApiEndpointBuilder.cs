@@ -879,8 +879,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     CancellationToken ct = default) => {
                     var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig);
                     if (queryPolicyErrors.Count > 0) {
-                        var problem = LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.")
-                            .AddErrors(queryPolicyErrors).Build();
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors)
+                            .Build();
+
                         var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
                         return Results.Json(policyError, statusCode: policyError.Status);
                     }
@@ -906,8 +910,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     CancellationToken ct = default) => {
                     var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig);
                     if (queryPolicyErrors.Count > 0) {
-                        var problem = LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.")
-                            .AddErrors(queryPolicyErrors).Build();
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors)
+                            .Build();
+
                         var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
                         return Results.Json(policyError, statusCode: policyError.Status);
                     }
@@ -979,7 +987,10 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         if (queryConfig.MaxComputedTemplateLength is int maxTemplateLength) {
             foreach (var computed in queryRequest.ComputedFields) {
                 if (computed.Template?.Length > maxTemplateLength)
-                    errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Computed field '{computed.Name}' template length ({computed.Template.Length}) exceeds endpoint maximum ({maxTemplateLength})."));
+                    errors.Add(
+                        new(
+                            Constants.ApiErrorCodes.InvalidQuery,
+                            $"Computed field '{computed.Name}' template length ({computed.Template.Length}) exceeds endpoint maximum ({maxTemplateLength})."));
             }
         }
 

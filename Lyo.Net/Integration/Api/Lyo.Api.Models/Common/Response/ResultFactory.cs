@@ -117,5 +117,4 @@ public static class ResultFactory
         var failedCount = results.Count - deletedCount;
         return new(results, deletedCount, failedCount);
     }
-
 }

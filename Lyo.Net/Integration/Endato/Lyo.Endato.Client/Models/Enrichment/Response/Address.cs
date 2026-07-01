@@ -14,8 +14,10 @@ public sealed record Address(
     string City,
     string State,
     string Zip,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Latitude = null,
-    [property: JsonConverter(typeof(StringDecimalNullableConverter))] decimal? Longitude = null,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Latitude = null,
+    [property: JsonConverter(typeof(StringDecimalNullableConverter))]
+    decimal? Longitude = null,
     string? SourceSummary = null)
 {
     public override string ToString()

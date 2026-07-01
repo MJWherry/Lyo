@@ -12,7 +12,7 @@ public class StringDecimalNullableConverter : JsonConverter<decimal?>
             JsonTokenType.Null => null,
             JsonTokenType.String => ParseStringValue(ref reader),
             JsonTokenType.Number => reader.GetDecimal(),
-            _ => null
+            var _ => null
         };
 
     private static decimal? ParseStringValue(ref Utf8JsonReader reader)

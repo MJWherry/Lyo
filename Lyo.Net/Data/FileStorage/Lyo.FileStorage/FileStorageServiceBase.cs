@@ -675,9 +675,7 @@ public abstract class FileStorageServiceBase
     {
         contentType = ResolveStoredContentType(contentType, originalFileName);
         var selectionContext = FileStorageCompression.BuildSelectionContext(originalSize, contentType, originalFileName, tenantId);
-        var (shouldCompress, selectedCompressAlgorithm) = FileStorageCompression.ResolveForSave(
-            compress, selectionContext, CompressionService, Logger);
-
+        var (shouldCompress, selectedCompressAlgorithm) = FileStorageCompression.ResolveForSave(compress, selectionContext, CompressionService, Logger);
         compress = shouldCompress;
         // Single-pass streaming pipeline: input -> compression -> encryption -> storage
         long? compressedSize = null;
@@ -762,8 +760,7 @@ public abstract class FileStorageServiceBase
             if (compress) {
                 OperationHelpers.ThrowIfNull(selectedCompressAlgorithm, "Compression was requested but no compression algorithm was resolved.");
                 OperationHelpers.ThrowIfNull(
-                    CompressionService,
-                    "Compression was requested but no compression service is configured. Provide an ICompressionService when creating FileStorageService.");
+                    CompressionService, "Compression was requested but no compression service is configured. Provide an ICompressionService when creating FileStorageService.");
 
                 using var inputHashStream = new HashingStream(processingStream, originalHashAlgo);
                 using var compressedHashAlgo = hashAlg.Create();
@@ -798,6 +795,7 @@ public abstract class FileStorageServiceBase
                     var duplicateResult = await HandleDuplicateAsync(
                             existingMetadata, fileId, originalSize, normalizedPathPrefix, compress, encrypt, keyId, selectedCompressAlgorithm, ct)
                         .ConfigureAwait(false);
+
                     if (duplicateResult != null)
                         return duplicateResult;
 
@@ -1149,8 +1147,7 @@ public abstract class FileStorageServiceBase
         int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
         var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var pipePlain = new Pipe();
-        var pipelineTask = _streamingPipelines.RunStreamingDecodePipelineAsync(
-            storageStream, metadata, pipePlain.Writer, chunkSize, compressionAlgorithmOverride, linkedCts.Token);
+        var pipelineTask = _streamingPipelines.RunStreamingDecodePipelineAsync(storageStream, metadata, pipePlain.Writer, chunkSize, compressionAlgorithmOverride, linkedCts.Token);
         Stream decoded = new PipelineFileReadStream(pipePlain.Reader.AsStream(), pipelineTask, linkedCts);
         if (Options.MaxDecompressedFileSize is { } maxDecompressed)
             decoded = new MaxDecompressedBytesReadStream(decoded, maxDecompressed, fileId);
@@ -1283,10 +1280,8 @@ public abstract class FileStorageServiceBase
             case DuplicateHandlingStrategy.ReturnExisting:
                 if (!FileStorageDuplicateProfile.Matches(existingMetadata, compress, encrypt, keyId, compressionAlgorithm)) {
                     await CleanupPartialFileAsync(newFileId, normalizedPathPrefix, ct).ConfigureAwait(false);
-                    var message = FileStorageDuplicateProfile.BuildMismatchMessage(
-                        existingMetadata.Id, existingMetadata, compress, encrypt, keyId, compressionAlgorithm);
-                    Logger.LogWarning(
-                        "Duplicate file detected for hash but storage profile does not match. Existing file ID: {FileId}", existingMetadata.Id);
+                    var message = FileStorageDuplicateProfile.BuildMismatchMessage(existingMetadata.Id, existingMetadata, compress, encrypt, keyId, compressionAlgorithm);
+                    Logger.LogWarning("Duplicate file detected for hash but storage profile does not match. Existing file ID: {FileId}", existingMetadata.Id);
                     throw new ConflictException(message);
                 }
 

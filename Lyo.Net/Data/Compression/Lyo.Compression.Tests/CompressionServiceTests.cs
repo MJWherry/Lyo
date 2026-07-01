@@ -1,10 +1,12 @@
 using System.IO.Compression;
 using System.Text;
+using Lyo.Common.Enums;
 using Lyo.Compression.BZip2;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.LZ4;
 using Lyo.Compression.LZMA;
 using Lyo.Compression.Models;
+using Lyo.Compression.Policy;
 using Lyo.Compression.Snappier;
 using Lyo.Compression.XZ;
 using Lyo.Compression.Zstd;
@@ -13,7 +15,6 @@ using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Compression.Policy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -86,20 +87,11 @@ public class CompressionServiceTests : IDisposable
     public void ResolveForCompress_WithSelector_DelegatesToPolicy()
     {
         var selector = new CompressionPolicyAlgorithmSelector(
-            new CompressionPolicyOptions {
-                BuiltInDefaultsEnabled = false,
-                Rules = [new() { Categories = [Common.Enums.FileTypeCategory.Images], Compress = false }]
-            },
-            new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip },
-            NullLogger<CompressionPolicyAlgorithmSelector>.Instance);
+            new() { BuiltInDefaultsEnabled = false, Rules = [new() { Categories = [FileTypeCategory.Images], Compress = false }] },
+            new() { DefaultAlgorithm = CompressionAlgorithm.GZip }, NullLogger<CompressionPolicyAlgorithmSelector>.Instance);
 
         var service = new CompressionService(AllFactories, _logger, new() { DefaultAlgorithm = CompressionAlgorithm.GZip }, algorithmSelector: selector);
-        var result = service.ResolveForCompress(new() {
-            ByteLength = 100_000,
-            ContentType = "image/png",
-            OriginalFileName = "photo.png"
-        });
-
+        var result = service.ResolveForCompress(new() { ByteLength = 100_000, ContentType = "image/png", OriginalFileName = "photo.png" });
         Assert.False(result.ShouldCompress);
         Assert.Same(selector, service.AlgorithmSelector);
     }

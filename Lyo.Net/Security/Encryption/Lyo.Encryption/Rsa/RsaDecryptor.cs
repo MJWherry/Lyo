@@ -8,8 +8,8 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption.Rsa;
 
 /// <summary>
-/// Decrypts data using an RSA private key. Handles both single-block and chunked ciphertext produced by <see cref="RsaEncryptor" />. Thread-safe: each method call uses its own
-/// cryptographic context, so there are no shared mutable state concerns.
+/// Decrypts data using an RSA private key. Handles both single-block and chunked ciphertext produced by <see cref="RsaEncryptor" />. Thread-safe: each method call uses its
+/// own cryptographic context, so there are no shared mutable state concerns.
 /// </summary>
 public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
 {
@@ -19,6 +19,8 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
 
     private readonly RSA _rsa;
 
+    private Encoding _decryptionEncoding = Encoding.UTF8;
+
     private bool _disposed;
 
     /// <summary> Initializes a new instance of the RsaDecryptor. </summary>
@@ -27,11 +29,7 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
     /// <param name="password">Password for the PFX certificate</param>
     /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
     /// <exception cref="InvalidOperationException">Thrown when no key configuration is provided.</exception>
-    public RsaDecryptor(
-        string? privatePemPath = null,
-        string? pfxPath = null,
-        string? password = null,
-        RSAEncryptionPadding? padding = null)
+    public RsaDecryptor(string? privatePemPath = null, string? pfxPath = null, string? password = null, RSAEncryptionPadding? padding = null)
     {
         _padding = padding ?? RSAEncryptionPadding.OaepSHA256;
 
@@ -53,14 +51,6 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
             $"RSA key size must be at least 2048 bits for security. Current key size: {_rsa.KeySize} bits. Consider using 3072 or 4096 bits for new deployments.");
     }
 
-    private Encoding _decryptionEncoding = Encoding.UTF8;
-
-    /// <inheritdoc />
-    public Encoding GetDecryptionEncoding() => _decryptionEncoding;
-
-    /// <inheritdoc />
-    public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
-
     /// <summary> Asynchronously disposes of the RSA instance and releases all resources. </summary>
     public ValueTask DisposeAsync()
     {
@@ -68,8 +58,11 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         return default;
     }
 
-    /// <summary> Disposes of the RSA instance and releases all resources. </summary>
-    public void Dispose() => Dispose(true);
+    /// <inheritdoc />
+    public Encoding GetDecryptionEncoding() => _decryptionEncoding;
+
+    /// <inheritdoc />
+    public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
     /// <summary>
     /// Decrypts data using RSA decryption. Thread-safe: Multiple threads can safely call this method concurrently on the same instance. Each method call uses its own
@@ -184,8 +177,10 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         return outputStream.ToArray();
     }
 
-    private Func<byte[], int, int, byte[]> DecryptChunk(string? keyId, byte[]? key)
-        => (buffer, offset, count) => Decrypt(buffer, offset, count, keyId, key);
+    /// <summary> Disposes of the RSA instance and releases all resources. </summary>
+    public void Dispose() => Dispose(true);
+
+    private Func<byte[], int, int, byte[]> DecryptChunk(string? keyId, byte[]? key) => (buffer, offset, count) => Decrypt(buffer, offset, count, keyId, key);
 
     private void Dispose(bool disposing)
     {
