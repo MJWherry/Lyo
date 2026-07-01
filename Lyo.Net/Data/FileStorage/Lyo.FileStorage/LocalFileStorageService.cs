@@ -56,7 +56,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     }
 
     /// <inheritdoc />
-    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct = default)
+    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
@@ -542,18 +542,16 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             catch (DirectoryNotFoundException) {
                 continue;
             }
+            
+            foreach (var file in filesEnumerable) {
+                ct.ThrowIfCancellationRequested();
+                var full = TrimEnds(Path.GetFullPath(file));
+                EnsurePathUnder(storageRootFull, full);
+                counted++;
+                yield return full;
 
-            if (filesEnumerable != null) {
-                foreach (var file in filesEnumerable) {
-                    ct.ThrowIfCancellationRequested();
-                    var full = TrimEnds(Path.GetFullPath(file));
-                    EnsurePathUnder(storageRootFull, full);
-                    counted++;
-                    yield return full;
-
-                    if (counted >= maxEntries)
-                        yield break;
-                }
+                if (counted >= maxEntries)
+                    yield break;
             }
 
             IEnumerable<string>? subdirs;
@@ -566,11 +564,9 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             catch (DirectoryNotFoundException) {
                 continue;
             }
-
-            if (subdirs != null) {
-                foreach (var sub in subdirs)
-                    dirs.Enqueue(sub);
-            }
+            
+            foreach (var sub in subdirs)
+                dirs.Enqueue(sub);
         }
     }
 

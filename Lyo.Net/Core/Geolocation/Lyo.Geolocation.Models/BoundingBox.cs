@@ -33,7 +33,7 @@ public class BoundingBox : IEquatable<BoundingBox>
     }
 
     /// <summary>Checks if a coordinate is within this bounding box</summary>
-    public bool Contains(GeoCoordinate point)
+    public bool Contains(GeoCoordinate? point)
     {
         if (point == null)
             return false;
@@ -42,7 +42,7 @@ public class BoundingBox : IEquatable<BoundingBox>
     }
 
     /// <summary>Checks if this bounding box intersects with another</summary>
-    public bool Intersects(BoundingBox other)
+    public bool Intersects(BoundingBox? other)
     {
         if (other == null)
             return false;

@@ -23,7 +23,7 @@ internal static class EndatoContactFormatter
 
     private static bool IsMobilePhone(PersonPhone phone)
     {
-        var type = phone.PhoneType?.Trim() ?? string.Empty;
+        var type = phone.PhoneType.Trim();
         return type.Contains("mobile", StringComparison.OrdinalIgnoreCase) || type.Contains("wireless", StringComparison.OrdinalIgnoreCase) ||
             type.Contains("cell", StringComparison.OrdinalIgnoreCase);
     }

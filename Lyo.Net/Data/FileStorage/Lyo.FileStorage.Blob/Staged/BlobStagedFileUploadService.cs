@@ -43,8 +43,7 @@ public sealed class BlobStagedFileUploadService : IStagedFileUploadService
         _physicalIo = new(blobOptions, container);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<BlobStagedFileUploadService>();
         _coordinator = new(
-            store, _physicalIo, storage, contentPolicy ?? new AllowAllFileContentPolicy(), malwareScanner ?? NullFileMalwareScanner.Instance,
-            operationContextAccessor ?? NullFileOperationContextAccessor.Instance, blobOptions, logger, metrics ?? NullMetrics.Instance, auditHandlers, eventHandlers);
+            store, _physicalIo, storage, blobOptions, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
 
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);

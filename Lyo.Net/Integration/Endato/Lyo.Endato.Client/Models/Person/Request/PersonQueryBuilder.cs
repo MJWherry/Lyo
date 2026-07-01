@@ -225,5 +225,5 @@ public class PersonQueryBuilder
         return builder;
     }
 
-    public override string ToString() => _query.ToString() ?? nameof(PersonQueryBuilder);
+    public override string ToString() => _query.ToString();
 }

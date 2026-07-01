@@ -29,7 +29,7 @@ public class EndatoJsonDeserializationTests
 
         var phone = JsonSerializer.Deserialize<Phone>(json, Options);
         Assert.NotNull(phone);
-        Assert.Equal(30.267153m, phone!.Latitude);
+        Assert.Equal(30.267153m, phone.Latitude);
         Assert.Equal(-97.743061m, phone.Longitude);
     }
 
@@ -55,7 +55,7 @@ public class EndatoJsonDeserializationTests
 
         var phone = JsonSerializer.Deserialize<Phone>(json, Options);
         Assert.NotNull(phone);
-        Assert.Equal(30.267153m, phone!.Latitude);
+        Assert.Equal(30.267153m, phone.Latitude);
         Assert.Equal(-97.743061m, phone.Longitude);
     }
 
@@ -82,7 +82,7 @@ public class EndatoJsonDeserializationTests
 
         var response = JsonSerializer.Deserialize<PersonQueryResponse>(json, Options);
         Assert.NotNull(response);
-        Assert.NotNull(response!.Pagination);
+        Assert.NotNull(response.Pagination);
         Assert.Equal(1, response.Pagination!.CurrentPageNumber);
         Assert.NotNull(response.SearchCriteria);
         Assert.True(response.SearchCriteria![0].Phone);
@@ -125,7 +125,7 @@ public class EndatoJsonDeserializationTests
 
         var address = JsonSerializer.Deserialize<Address>(json, Options);
         Assert.NotNull(address);
-        Assert.NotNull(address!.PhoneNumbers);
+        Assert.NotNull(address.PhoneNumbers);
         Assert.Single(address.PhoneNumbers!);
         Assert.Equal("(502) 370-4422", address.PhoneNumbers![0]);
     }
@@ -166,7 +166,7 @@ public class EndatoJsonDeserializationTests
 
         var address = JsonSerializer.Deserialize<Address>(json, Options);
         Assert.NotNull(address);
-        Assert.Null(address!.Latitude);
+        Assert.Null(address.Latitude);
         Assert.Null(address.Longitude);
     }
 
@@ -193,7 +193,7 @@ public class EndatoJsonDeserializationTests
 
         var relative = JsonSerializer.Deserialize<RelativeSummary>(json, Options);
         Assert.NotNull(relative);
-        Assert.False(relative!.Spouse);
+        Assert.False(relative.Spouse);
         Assert.False(relative.OldSpouse);
         Assert.Equal("ab", relative.RelativeLevel);
         Assert.Equal(100, relative.Score);

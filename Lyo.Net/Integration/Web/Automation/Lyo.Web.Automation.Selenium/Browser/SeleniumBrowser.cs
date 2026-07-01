@@ -205,6 +205,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
 
     /// <summary>Begins a structured logging scope (<c>session_id</c>, <c>operation</c>, <c>tab</c>, <c>url</c>) for multi-step flows.</summary>
+    /// <param name="operation">Operation label recorded on the logging scope.</param>
     /// <param name="urlOverride">When set, used for <c>url</c> instead of the current document URL.</param>
     public IDisposable? BeginOperationScope(string operation, string? urlOverride = null)
     {

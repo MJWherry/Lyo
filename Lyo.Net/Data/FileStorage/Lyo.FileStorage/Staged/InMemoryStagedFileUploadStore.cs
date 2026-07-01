@@ -22,7 +22,7 @@ public sealed class InMemoryStagedFileUploadStore : IStagedFileUploadStore
     public Task<StagedFileUploadRecord?> GetAsync(Guid stageId, CancellationToken ct = default)
     {
         _records.TryGetValue(stageId, out var record);
-        return Task.FromResult<StagedFileUploadRecord?>(record);
+        return Task.FromResult(record);
     }
 
     /// <inheritdoc />

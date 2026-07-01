@@ -11,11 +11,20 @@ namespace Lyo.PackageMetadata;
 /// <param name="Version">Published version string when known (ecosystem-specific format).</param>
 /// <param name="ArtifactDigestAlgorithm">Hash algorithm for <see cref="ArtifactDigestHex" />; <see cref="ArtifactDigestAlgorithm.None" /> when no digest is stored.</param>
 /// <param name="ArtifactDigestHex">Lowercase hex digest of canonical primary artifact bytes (length: 40 for SHA-1, 64 for SHA-256, 128 for SHA-512), or <see langword="null" />.</param>
+/// <param name="Title">Human-friendly display title for the package, when available.</param>
+/// <param name="Description">Package description or summary, when available.</param>
+/// <param name="Authors">Declared authors or maintainers, when available.</param>
+/// <param name="PackageTypes">Ecosystem-specific package type classifiers (e.g. NuGet package types), when available.</param>
+/// <param name="ProjectUrl">Canonical project or homepage URL, when available.</param>
+/// <param name="RepositoryUrl">Source repository URL, when available.</param>
+/// <param name="LicenseUrl">License document URL, when available. Prefer <paramref name="LicenseExpression" /> as the canonical license field.</param>
 /// <param name="LicenseExpression">When known, an SPDX 2.x license expression: <c>AND</c>, <c>OR</c>, parentheses, <c>WITH</c>. Canonical license field.</param>
 /// <param name="LicenseExpressionSyntax">
 /// Parsed tree of <see cref="LicenseExpression" /> (surjective with the string when parsing succeeds). Derived when persisting or loading; not
 /// an independent legal source—use <see cref="LicenseExpression" /> as written.
 /// </param>
+/// <param name="PackageDetailsUrl">URL to the package's details page on its registry, when available.</param>
+/// <param name="Tags">Free-form tags or keywords associated with the package, when available.</param>
 /// <param name="CreatedAt">When this metadata row was first stored (UTC). Populated by Postgres store; optional elsewhere.</param>
 /// <param name="UpdatedAt">When this metadata row was last updated (UTC). Populated by Postgres store; optional elsewhere.</param>
 public sealed record PackageMetadata(

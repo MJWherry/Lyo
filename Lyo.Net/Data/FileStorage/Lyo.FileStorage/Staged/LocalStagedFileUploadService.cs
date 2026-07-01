@@ -1,4 +1,5 @@
 using System.Buffers;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -41,8 +42,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
         _physicalIo = new(options);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalStagedFileUploadService>();
         _coordinator = new(
-            store, _physicalIo, storage, contentPolicy ?? new AllowAllFileContentPolicy(), malwareScanner ?? NullFileMalwareScanner.Instance,
-            operationContextAccessor ?? NullFileOperationContextAccessor.Instance, options, logger, metrics ?? NullMetrics.Instance, auditHandlers, eventHandlers);
+            store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
 
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
@@ -225,7 +225,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
 
         private static string BuildRelativePath(Guid stageId, string? pathPrefix)
         {
-            var prefix = string.IsNullOrWhiteSpace(pathPrefix) ? "" : pathPrefix.Trim().Trim('/') + "/";
+            var prefix = pathPrefix.IsNullOrWhitespace() ? "" : pathPrefix.Trim().Trim('/') + "/";
             return $"{prefix}.stage/{stageId:N}/object";
         }
     }

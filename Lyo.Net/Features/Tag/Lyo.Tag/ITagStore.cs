@@ -20,7 +20,12 @@ public interface ITagStore
         CancellationToken ct = default);
 
     /// <summary>Removes a tag from an entity.</summary>
+    /// <param name="forEntity">The entity to remove the tag from.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <param name="tagType">The tag type/category (defaults to "tag").</param>
     /// <param name="slug">Must match the stored slug for that assignment (empty when none was stored).</param>
+    /// <param name="tenantId">Tenant scope; pass null in single-tenant deployments.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", string? slug = null, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Gets all tags for an entity, optionally filtered by tag type.</summary>

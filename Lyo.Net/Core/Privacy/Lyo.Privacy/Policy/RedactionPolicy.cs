@@ -4,6 +4,9 @@ using Lyo.Privacy.Abstractions;
 namespace Lyo.Privacy.Policy;
 
 /// <summary>Immutable ordered rule list and output shape. Not a compliance certification.</summary>
+/// <param name="Rules">Ordered redaction rules applied to the input.</param>
+/// <param name="Placeholder">Replacement text substituted for each redacted run.</param>
+/// <param name="MergeAdjacentRuns">When <see langword="true" />, adjacent redacted runs collapse into a single placeholder.</param>
 /// <param name="Name">Optional stable label for metrics / logs (for example preset name). Never echo secret text.</param>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record RedactionPolicy(IReadOnlyList<IRedactionRule> Rules, string Placeholder = "[redacted]", bool MergeAdjacentRuns = true, string? Name = null)

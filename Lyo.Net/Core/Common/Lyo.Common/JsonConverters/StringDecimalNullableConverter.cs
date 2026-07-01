@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Lyo.Common.JsonConverters;
 
-/// <summary>Deserializes JSON numbers or strings into <see cref="decimal?" />; empty or unparseable strings become null.</summary>
+/// <summary>Deserializes JSON numbers or strings into a nullable <see cref="decimal" />; empty or unparseable strings become null.</summary>
 public class StringDecimalNullableConverter : JsonConverter<decimal?>
 {
     public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

@@ -31,6 +31,7 @@ public interface IProjectionService
     /// Builds an Expression for SQL-level projection. Sibling paths under the same collection share one navigation when possible (single join). Returns a null projection when
     /// any path has wildcard or cannot be resolved.
     /// </summary>
+    /// <param name="specs">Resolved projected field specs to build the SQL projection from.</param>
     /// <param name="projectionPathsAlreadyValidated">
     /// When <c>true</c>, skips an internal <see cref="CollectProjectionFieldIssues{TDbModel}" /> pass (callers such as
     /// <c>QueryProjectedCore</c> already validated specs).

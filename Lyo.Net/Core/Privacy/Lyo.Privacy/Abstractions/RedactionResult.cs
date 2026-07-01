@@ -6,6 +6,8 @@ using Lyo.Privacy.Enums;
 namespace Lyo.Privacy.Abstractions;
 
 /// <summary>Sanitised text plus per-kind counts. Does not echo discovered secrets in <see cref="ToString" />.</summary>
+/// <param name="Text">The sanitised output text (<c>null</c> when the input was <c>null</c>).</param>
+/// <param name="CountsByKind">Number of redacted runs per <see cref="RedactionKind" />.</param>
 /// <param name="InputUtf16Length">UTF-16 code units in the input to the redactor (<c>null</c> when input was <c>null</c>).</param>
 /// <param name="OutputUtf16Length">UTF-16 code units in <see cref="Text" /> (<c>null</c> when <see cref="Text" /> is <c>null</c>).</param>
 /// <param name="PolicyName">Same policy name supplied to the redactor policy / JSON options, when any.</param>

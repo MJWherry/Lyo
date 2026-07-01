@@ -1,4 +1,5 @@
 using Lyo.Common.Extensions;
+using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -8,6 +9,7 @@ using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage.Staged;
 
@@ -34,24 +36,24 @@ public sealed class StagedUploadCoordinator
         IStagedFileUploadStore store,
         IStagedFilePhysicalIo physicalIo,
         IFileStorageService storage,
-        IFileContentPolicy contentPolicy,
-        IFileMalwareScanner malwareScanner,
-        IFileOperationContextAccessor operationContextAccessor,
         FileStorageServiceBaseOptions options,
-        ILogger logger,
-        IMetrics metrics,
-        IEnumerable<IFileAuditEventHandler>? auditHandlers,
-        IEnumerable<IStagedFileUploadEventHandler>? eventHandlers,
+        IFileContentPolicy? contentPolicy = null,
+        IFileMalwareScanner? malwareScanner = null,
+        IFileOperationContextAccessor? operationContextAccessor = null,
+        ILogger? logger = null,
+        IMetrics? metrics = null,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
+        IEnumerable<IStagedFileUploadEventHandler>? eventHandlers = null,
         int copyToBufferSizeBytes = 81920)
     {
         _store = ArgumentHelpers.ThrowIfNullReturn(store);
         _physicalIo = ArgumentHelpers.ThrowIfNullReturn(physicalIo);
         _storage = ArgumentHelpers.ThrowIfNullReturn(storage);
+        _options = ArgumentHelpers.ThrowIfNullReturn(options);
+        _logger = logger ?? NullLogger.Instance;
         _contentPolicy = contentPolicy ?? new AllowAllFileContentPolicy();
         _malwareScanner = malwareScanner ?? NullFileMalwareScanner.Instance;
         _operationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
-        _options = ArgumentHelpers.ThrowIfNullReturn(options);
-        _logger = ArgumentHelpers.ThrowIfNullReturn(logger);
         _metrics = metrics ?? NullMetrics.Instance;
         _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
         _eventHandlers = eventHandlers == null ? [] : eventHandlers.ToList();
@@ -72,7 +74,7 @@ public sealed class StagedUploadCoordinator
         ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIfLessThanOrEqual(request.DeclaredMaxSizeBytes, 0, message: "DeclaredMaxSizeBytes must be positive.");
         FileHelpers.ThrowIfPathPrefixTraversal(request.PathPrefix);
-        var normalizedPrefix = FileHelpers.NormalizePathPrefix(request.PathPrefix) ?? "";
+        var normalizedPrefix = FileHelpers.NormalizePathPrefix(request.PathPrefix);
         var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
         var contentType = ResolveContentType(request.ContentType, request.OriginalFileName);
         if (_options.MaxUploadSizeBytes.HasValue && request.DeclaredMaxSizeBytes > _options.MaxUploadSizeBytes.Value)
@@ -105,7 +107,7 @@ public sealed class StagedUploadCoordinator
         var snapshot = StagedFileUploadMappings.ToResult(record);
         var eventArgs = new StagedUploadPresignedCreatedEventArgs { StageId = stageId, TenantId = tenant, Snapshot = snapshot };
         PresignedCreated?.Invoke(this, eventArgs);
-        await PublishEventHandlersAsync(h => h.OnPresignedCreatedAsync(eventArgs, ct), ct).ConfigureAwait(false);
+        await PublishEventHandlersAsync(h => h.OnPresignedCreatedAsync(eventArgs, ct)).ConfigureAwait(false);
         return (new() {
             StageId = stageId,
             PresignedPutUrl = presigned.Url,
@@ -212,7 +214,7 @@ public sealed class StagedUploadCoordinator
             var result = StagedFileUploadMappings.ToResult(updated);
             var eventArgs = new StagedUploadCompletedEventArgs { StageId = stageId, TenantId = updated.TenantId, Snapshot = result };
             UploadCompleted?.Invoke(this, eventArgs);
-            await PublishEventHandlersAsync(h => h.OnUploadCompletedAsync(eventArgs, ct), ct).ConfigureAwait(false);
+            await PublishEventHandlersAsync(h => h.OnUploadCompletedAsync(eventArgs, ct)).ConfigureAwait(false);
             return result;
         }
         catch (Exception ex) {
@@ -262,7 +264,7 @@ public sealed class StagedUploadCoordinator
             };
 
             Committed?.Invoke(this, eventArgs);
-            await PublishEventHandlersAsync(h => h.OnCommittedAsync(eventArgs, ct), ct).ConfigureAwait(false);
+            await PublishEventHandlersAsync(h => h.OnCommittedAsync(eventArgs, ct)).ConfigureAwait(false);
             return fileResult;
         }
         catch (Exception ex) {
@@ -283,7 +285,7 @@ public sealed class StagedUploadCoordinator
             };
 
             UploadFailed?.Invoke(this, failArgs);
-            await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct), ct).ConfigureAwait(false);
+            await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct)).ConfigureAwait(false);
             throw;
         }
     }
@@ -333,7 +335,7 @@ public sealed class StagedUploadCoordinator
         };
 
         UploadFailed?.Invoke(this, failArgs);
-        await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct), ct).ConfigureAwait(false);
+        await PublishEventHandlersAsync(h => h.OnUploadFailedAsync(failArgs, ct)).ConfigureAwait(false);
     }
 
     private void EnsureScanRequirementSatisfied()
@@ -347,14 +349,11 @@ public sealed class StagedUploadCoordinator
 
     private static string? ResolveContentType(string? contentType, string? originalFileName)
     {
-        if (!string.IsNullOrWhiteSpace(contentType))
+        if (!contentType.IsNullOrWhitespace())
             return contentType.Trim();
 
-        if (string.IsNullOrWhiteSpace(originalFileName))
-            return null;
-
-        var ext = Path.GetExtension(originalFileName);
-        return string.IsNullOrEmpty(ext) ? null : ext;
+        var fileType = originalFileName.GetFileTypeFromExtension();
+        return fileType == FileTypeInfo.Unknown ? null : fileType.MimeType;
     }
 
     private async Task PublishAuditAsync(
@@ -371,7 +370,7 @@ public sealed class StagedUploadCoordinator
                 ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
             .ConfigureAwait(false);
 
-    private async Task PublishEventHandlersAsync(Func<IStagedFileUploadEventHandler, Task> invoke, CancellationToken ct)
+    private async Task PublishEventHandlersAsync(Func<IStagedFileUploadEventHandler, Task> invoke)
     {
         foreach (var handler in _eventHandlers) {
             try {

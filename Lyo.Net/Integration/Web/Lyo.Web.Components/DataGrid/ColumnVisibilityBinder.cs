@@ -9,6 +9,7 @@ public sealed class ColumnVisibilityBinder
     private bool _defaultHiddenFromColumnsApplied;
 
     /// <param name="persistedHiddenIfAny">Saved hidden fields when <paramref name="loadedGridStateFromStore" /> is true; ignored when false.</param>
+    /// <param name="onChanged">Callback invoked when the set of hidden columns changes (e.g. to persist grid state).</param>
     /// <param name="loadedGridStateFromStore">True if any grid state was loaded from the client store for this grid.</param>
     public ColumnVisibilityBinder(HashSet<string>? persistedHiddenIfAny, Func<ColumnVisibilityBinder, Task> onChanged, bool loadedGridStateFromStore)
     {
