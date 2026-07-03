@@ -116,7 +116,7 @@ top-level area.
 - [Lyo.Postgres](Lyo.Net/Data/Postgres/Lyo.Postgres/README.md): shared EF Core auto-migration hosted service helpers.
 - [Lyo.Query.Models](Lyo.Net/Data/Query/Lyo.Query.Models/README.md): query request/projection DTOs and **`WhereClause`** builders shared with **`Lyo.Api`** and Blazor tooling.
 - [Lyo.QRCode](Lyo.Net/Data/QRCode/Lyo.QRCode/README.md): QR generation (QRCoder), formats, error correction, icons.
-- [Lyo.Xlsx](Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md): Excel import/export with ClosedXML / ExcelDataReader.
+- [Lyo.Xlsx](Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md): Excel read/write with sheet control and merged-cell spans (streaming OpenXML writer, ClosedXML / ExcelDataReader readers).
 
 ### Features
 

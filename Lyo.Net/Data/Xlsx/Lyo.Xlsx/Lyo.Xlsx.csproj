@@ -2,13 +2,14 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>Excel (XLSX) processing library using ClosedXML and ExcelDataReader for reading and writing Excel files.</Description>
+        <Description>Excel (XLSX) processing library: streaming OpenXML writer for exports, ExcelDataReader and ClosedXML for reading Excel files.</Description>
         <PackageTags>xlsx excel closedxml exceldatareader</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="ClosedXML" Version="[0.100,)"/>
+        <PackageReference Include="DocumentFormat.OpenXml" Version="[2.16,)"/>
         <PackageReference Include="ExcelDataReader" Version="[3.8,)"/>
         <PackageReference Include="ExcelDataReader.DataSet" Version="[3.8,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>

@@ -2,8 +2,8 @@ using System.Reflection;
 
 namespace Lyo.Csv.Models;
 
-/// <summary>Exports data to CSV format. Supports enumerables, row/column dictionaries, <see cref="DataTable.Models.DataTable" />, property selection, and async export with progress.</summary>
-public interface ICsvExporter
+/// <summary>Writes data to CSV format. Supports enumerables, row/column dictionaries, <see cref="DataTable.Models.DataTable" />, property selection, and async export with progress.</summary>
+public interface ICsvWriter
 {
     /// <summary>Writes <paramref name="data" /> to <paramref name="csvFilePath" /> using CsvHelper and registered class maps.</summary>
     /// <typeparam name="T">Row type.</typeparam>

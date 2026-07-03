@@ -1,7 +1,7 @@
 # Lyo.Csv
 
 CsvHelper-backed implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md).
-`CsvService` composes a `CsvExporter` and `CsvImporter` to read and write CSV from
+`CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from
 files, streams, byte arrays, URLs, and `TextWriter`/`TextReader`. Multi-targets
 `net10.0;netstandard2.0`; async, streaming, and option-based overloads are only
 available on `net10.0`.
@@ -58,7 +58,7 @@ services.AddCsvService((provider, config) => {
 ```
 
 All four overloads register the same singleton: `CsvService`, plus `ICsvService`,
-`ICsvExporter`, and `ICsvImporter` resolving to the same instance.
+`ICsvWriter`, and `ICsvReader` resolving to the same instance.
 
 ## Quick start
 

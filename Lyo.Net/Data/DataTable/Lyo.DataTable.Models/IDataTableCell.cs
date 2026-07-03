@@ -41,4 +41,10 @@ public interface IDataTableCell
     string? BorderRight { get; }
 
     string? BorderColor { get; }
+
+    /// <summary>Number of columns this cell spans (1 = no spanning).</summary>
+    int ColSpan { get; }
+
+    /// <summary>Number of rows this cell spans (1 = no spanning).</summary>
+    int RowSpan { get; }
 }

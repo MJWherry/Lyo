@@ -20,8 +20,8 @@ public static class Extensions
         });
 
         services.AddSingleton<IXlsxService>(sp => sp.GetRequiredService<XlsxService>());
-        services.AddSingleton<IXlsxExporter>(sp => sp.GetRequiredService<XlsxService>().Exporter);
-        services.AddSingleton<IXlsxImporter>(sp => sp.GetRequiredService<XlsxService>().Importer);
+        services.AddSingleton<IXlsxWriter>(sp => sp.GetRequiredService<XlsxService>().Writer);
+        services.AddSingleton<IXlsxReader>(sp => sp.GetRequiredService<XlsxService>().Reader);
         return services;
     }
 }

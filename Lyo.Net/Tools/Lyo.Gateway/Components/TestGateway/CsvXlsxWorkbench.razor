@@ -357,7 +357,7 @@
         if (_xlsxTable == null)
             return;
 
-        var bytes = XlsxService.Exporter.ExportToXlsxBytesFromDataTable(_xlsxTable);
+        var bytes = XlsxService.Writer.ExportToXlsxBytesFromDataTable(_xlsxTable);
         await Js.DownloadFile(bytes, "export.xlsx", FileTypeInfo.Xlsx.MimeType).ConfigureAwait(false);
     }
 
@@ -457,7 +457,7 @@
         if (_mergedTable == null)
             return;
 
-        var bytes = XlsxService.Exporter.ExportToXlsxBytesFromDataTable(_mergedTable);
+        var bytes = XlsxService.Writer.ExportToXlsxBytesFromDataTable(_mergedTable);
         await Js.DownloadFile(bytes, "merged.xlsx", FileTypeInfo.Xlsx.MimeType).ConfigureAwait(false);
     }
 

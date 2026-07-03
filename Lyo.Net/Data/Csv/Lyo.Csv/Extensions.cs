@@ -24,8 +24,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvExporter>(sp => sp.GetRequiredService<CsvService>().Exporter);
-            services.AddSingleton<ICsvImporter>(sp => sp.GetRequiredService<CsvService>().Importer);
+            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
+            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
             return services;
         }
 
@@ -44,8 +44,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvExporter>(sp => sp.GetRequiredService<CsvService>().Exporter);
-            services.AddSingleton<ICsvImporter>(sp => sp.GetRequiredService<CsvService>().Importer);
+            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
+            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
             return services;
         }
 
@@ -62,8 +62,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvExporter>(sp => sp.GetRequiredService<CsvService>().Exporter);
-            services.AddSingleton<ICsvImporter>(sp => sp.GetRequiredService<CsvService>().Importer);
+            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
+            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
             return services;
         }
 
@@ -82,8 +82,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvExporter>(sp => sp.GetRequiredService<CsvService>().Exporter);
-            services.AddSingleton<ICsvImporter>(sp => sp.GetRequiredService<CsvService>().Importer);
+            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
+            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
             return services;
         }
     }

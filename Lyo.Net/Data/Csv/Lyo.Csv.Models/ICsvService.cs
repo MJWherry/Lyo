@@ -7,11 +7,11 @@ namespace Lyo.Csv.Models;
 /// <summary>Service for reading, writing, and processing CSV files with support for export, import, validation, and batch operations.</summary>
 public interface ICsvService
 {
-    /// <summary>Gets the CSV exporter for writing data to CSV format.</summary>
-    ICsvExporter Exporter { get; }
+    /// <summary>Gets the CSV writer for writing data to CSV format.</summary>
+    ICsvWriter Writer { get; }
 
-    /// <summary>Gets the CSV importer for reading/parsing data from CSV format.</summary>
-    ICsvImporter Importer { get; }
+    /// <summary>Gets the CSV reader for reading/parsing data from CSV format.</summary>
+    ICsvReader Reader { get; }
 
     /// <summary>Sets the encoding used for reading and writing CSV files.</summary>
     /// <param name="encoding">The encoding to use. Must not be null.</param>

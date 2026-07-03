@@ -8,21 +8,20 @@ else {
         <MudText Typo="Typo.body2" Color="Color.Secondary">Empty table.</MudText>
     }
     else {
-        var cols = Enumerable.Range(0, maxCol + 1).ToList();
         <div style="overflow:auto; max-height: 480px;">
             <MudSimpleTable Dense="true" Bordered="true" Striped="true">
                 <thead>
                 <tr>
-                    @foreach (var col in cols) {
-                        <th>@(Table.Headers.TryGetValue(col, out var h) ? h.DisplayValue : "")</th>
+                    @foreach (var seg in GetHeaderSegments(Table, maxCol)) {
+                        <th colspan="@seg.ColSpan">@seg.Cell.DisplayValue</th>
                     }
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var row in Table.Rows) {
+                @foreach (var rowSegments in GetBodySegments(Table, maxCol)) {
                     <tr>
-                        @foreach (var col in cols) {
-                            <td>@row[col].DisplayValue</td>
+                        @foreach (var seg in rowSegments) {
+                            <td colspan="@seg.ColSpan" rowspan="@seg.RowSpan">@seg.Cell.DisplayValue</td>
                         }
                     </tr>
                 }
@@ -36,5 +35,53 @@ else {
 
     [Parameter]
     public DataTable? Table { get; set; }
+
+    private sealed record CellSegment(IDataTableCell Cell, int ColSpan, int RowSpan);
+
+    private static int ClampSpan(int span, int max) => span < 1 ? 1 : Math.Min(span, max);
+
+    private static IEnumerable<CellSegment> GetHeaderSegments(DataTable table, int maxCol)
+    {
+        var col = 0;
+        while (col <= maxCol) {
+            var cell = table.Headers.TryGetValue(col, out var h) ? h : DataTableCell.Empty;
+            var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
+            yield return new(cell, colSpan, 1);
+            col += colSpan;
+        }
+    }
+
+    private static IEnumerable<IReadOnlyList<CellSegment>> GetBodySegments(DataTable table, int maxCol)
+    {
+        // pendingRows[col] > 0 means the column is covered by a rowspan from a previous row.
+        var pendingRows = new int[maxCol + 1];
+        foreach (var row in table.Rows) {
+            var segments = new List<CellSegment>();
+            var coveredInRow = new HashSet<int>();
+            for (var col = 0; col <= maxCol; col++) {
+                if (pendingRows[col] > 0) {
+                    pendingRows[col]--;
+                    continue;
+                }
+
+                if (coveredInRow.Contains(col))
+                    continue;
+
+                var cell = row[col];
+                var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
+                var rowSpan = cell.RowSpan < 1 ? 1 : cell.RowSpan;
+                segments.Add(new(cell, colSpan, rowSpan));
+                for (var k = col; k < col + colSpan; k++) {
+                    if (k > col)
+                        coveredInRow.Add(k);
+
+                    if (rowSpan > 1)
+                        pendingRows[k] += rowSpan - 1;
+                }
+            }
+
+            yield return segments;
+        }
+    }
 
 }

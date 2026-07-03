@@ -2,8 +2,8 @@ using Lyo.Result;
 
 namespace Lyo.Csv.Models;
 
-/// <summary>Imports and parses CSV. Supports strongly-typed rows, row/column dictionaries, Lyo data tables, streaming, validation, and comparison.</summary>
-public interface ICsvImporter
+/// <summary>Reads and parses CSV. Supports strongly-typed rows, row/column dictionaries, Lyo data tables, streaming, validation, and comparison.</summary>
+public interface ICsvReader
 {
     /// <summary>Parses <paramref name="csvFilePath" /> lazily as <typeparamref name="T" /> rows.</summary>
     /// <typeparam name="T">Mapped row type.</typeparam>

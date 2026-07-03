@@ -20,6 +20,8 @@ namespace Lyo.Xlsx.Models;
 /// <param name="BorderLeft">Left border style, if set.</param>
 /// <param name="BorderRight">Right border style, if set.</param>
 /// <param name="BorderColor">Border color as hex (when borders are set), if set.</param>
+/// <param name="ColSpan">Number of columns this cell spans (1 = no spanning; anchor cell of a merged range).</param>
+/// <param name="RowSpan">Number of rows this cell spans (1 = no spanning; anchor cell of a merged range).</param>
 public sealed record XlsxCellValue(
     string Value,
     double? FontSize = null,
@@ -39,7 +41,9 @@ public sealed record XlsxCellValue(
     string? BorderBottom = null,
     string? BorderLeft = null,
     string? BorderRight = null,
-    string? BorderColor = null)
+    string? BorderColor = null,
+    int ColSpan = 1,
+    int RowSpan = 1)
 {
     /// <summary>Creates a cell with only a value (no formatting).</summary>
     public static XlsxCellValue FromValue(string value) => new(value);

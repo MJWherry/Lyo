@@ -61,9 +61,9 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 980973.1361019737,
-          "stdDevNs": 20491.401195462906,
-          "allocatedBytes": 650596,
+          "meanNs": 761253.7291666666,
+          "stdDevNs": 25159.115914806287,
+          "allocatedBytes": 619742,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -76,10 +76,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 947789.3352481618,
-          "stdDevNs": 29750.62267308484,
-          "allocatedBytes": 671780,
-          "ratioToBaseline": 0.9661725692248087,
+          "meanNs": 776134.6473011364,
+          "stdDevNs": 31638.544098846516,
+          "allocatedBytes": 640929,
+          "ratioToBaseline": 1.019547908357388,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -91,10 +91,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 901028.0750868055,
-          "stdDevNs": 24955.682642329368,
-          "allocatedBytes": 643700,
-          "ratioToBaseline": 0.9185043320015465,
+          "meanNs": 773020.5227272727,
+          "stdDevNs": 24176.55960248005,
+          "allocatedBytes": 612846,
+          "ratioToBaseline": 1.0154571243591635,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -106,10 +106,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 917701.6875,
-          "stdDevNs": 29540.76572536397,
-          "allocatedBytes": 650476,
-          "ratioToBaseline": 0.9355013442535326,
+          "meanNs": 802862.883828125,
+          "stdDevNs": 97879.59731019886,
+          "allocatedBytes": 619622,
+          "ratioToBaseline": 1.0546587203021092,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -121,10 +121,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 3895085.4328125,
-          "stdDevNs": 87447.62022232985,
-          "allocatedBytes": 3455092,
-          "ratioToBaseline": 3.9706341483418557,
+          "meanNs": 2994004.0942382812,
+          "stdDevNs": 91665.73462939501,
+          "allocatedBytes": 3053042,
+          "ratioToBaseline": 3.932991037713239,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -136,9 +136,9 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8017146.7666015625,
-          "stdDevNs": 147810.675558916,
-          "allocatedBytes": 4632297,
+          "meanNs": 7122268.096875,
+          "stdDevNs": 115777.30303523556,
+          "allocatedBytes": 4717771,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -151,10 +151,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8801160.486742428,
-          "stdDevNs": 329877.34771748434,
-          "allocatedBytes": 4963472,
-          "ratioToBaseline": 1.0977921127011132,
+          "meanNs": 7561479.834134615,
+          "stdDevNs": 56347.857520090976,
+          "allocatedBytes": 5049091,
+          "ratioToBaseline": 1.0616673974196964,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -166,10 +166,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8053944.417410715,
-          "stdDevNs": 113158.82870487383,
-          "allocatedBytes": 4560891,
-          "ratioToBaseline": 1.0045898686752806,
+          "meanNs": 7057802.998798077,
+          "stdDevNs": 66482.48663330218,
+          "allocatedBytes": 4646420,
+          "ratioToBaseline": 0.9909487964788621,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -181,10 +181,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8298626.901960785,
-          "stdDevNs": 263033.34870072926,
-          "allocatedBytes": 4631418,
-          "ratioToBaseline": 1.0351097645526253,
+          "meanNs": 7057657.405133928,
+          "stdDevNs": 116527.23191617112,
+          "allocatedBytes": 4716931,
+          "ratioToBaseline": 0.9909283544423972,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -196,10 +196,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 40255380.60752688,
-          "stdDevNs": 2402775.775632269,
-          "allocatedBytes": 30379220,
-          "ratioToBaseline": 5.021160492561493,
+          "meanNs": 35530159.17058823,
+          "stdDevNs": 1916778.8756375785,
+          "allocatedBytes": 27894262,
+          "ratioToBaseline": 4.988601761028571,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -211,9 +211,9 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 94739407.89473684,
-          "stdDevNs": 1995317.6732268138,
-          "allocatedBytes": 45856236,
+          "meanNs": 83032917.8205128,
+          "stdDevNs": 1912625.4163395723,
+          "allocatedBytes": 46909760,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -226,10 +226,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 100156848.65,
-          "stdDevNs": 2114944.8902777126,
-          "allocatedBytes": 48702149,
-          "ratioToBaseline": 1.0571825481670982,
+          "meanNs": 88773576.24444444,
+          "stdDevNs": 1343641.393915514,
+          "allocatedBytes": 49754173,
+          "ratioToBaseline": 1.0691371395178582,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -241,10 +241,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 96140788.12121211,
-          "stdDevNs": 2338800.7658059634,
-          "allocatedBytes": 45105768,
-          "ratioToBaseline": 1.0147919462198065,
+          "meanNs": 83023093.40350878,
+          "stdDevNs": 1838869.8621218635,
+          "allocatedBytes": 46160760,
+          "ratioToBaseline": 0.9998816804556326,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -256,10 +256,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 97004443.86206897,
-          "stdDevNs": 2830113.2710299306,
-          "allocatedBytes": 45849992,
-          "ratioToBaseline": 1.023908065478399,
+          "meanNs": 82422908.59166667,
+          "stdDevNs": 2893216.617581287,
+          "allocatedBytes": 46903557,
+          "ratioToBaseline": 0.9926534048801615,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -271,10 +271,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 456054330.3,
-          "stdDevNs": 10357927.74782811,
-          "allocatedBytes": 300070640,
-          "ratioToBaseline": 4.813776446721235,
+          "meanNs": 389623118.078125,
+          "stdDevNs": 17879022.77283711,
+          "allocatedBytes": 276371728,
+          "ratioToBaseline": 4.692393430282067,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -286,9 +286,9 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1018666309.6428572,
-          "stdDevNs": 8056877.999737764,
-          "allocatedBytes": 455420552,
+          "meanNs": 935974986,
+          "stdDevNs": 9860164.272719674,
+          "allocatedBytes": 466592360,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -301,10 +301,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1042514512.0714285,
-          "stdDevNs": 12615157.260355512,
-          "allocatedBytes": 480087392,
-          "ratioToBaseline": 1.023411201688738,
+          "meanNs": 949626225.4666667,
+          "stdDevNs": 17732402.160524383,
+          "allocatedBytes": 491258536,
+          "ratioToBaseline": 1.014585047325898,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -316,10 +316,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1019974959.2307693,
-          "stdDevNs": 14313060.858092146,
-          "allocatedBytes": 447514512,
-          "ratioToBaseline": 1.0012846695483342,
+          "meanNs": 929814745.8571428,
+          "stdDevNs": 12221432.620979952,
+          "allocatedBytes": 458691608,
+          "ratioToBaseline": 0.9934183709661049,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -331,10 +331,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1009065654.6,
-          "stdDevNs": 8189338.365877558,
-          "allocatedBytes": 455371424,
-          "ratioToBaseline": 0.990575269887719,
+          "meanNs": 942350189.4761904,
+          "stdDevNs": 21671300.651089285,
+          "allocatedBytes": 466543168,
+          "ratioToBaseline": 1.006811296852532,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -346,10 +346,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 4447159249.846154,
-          "stdDevNs": 45992967.505823895,
-          "allocatedBytes": 3101626576,
-          "ratioToBaseline": 4.365668332945379,
+          "meanNs": 3701089682.357143,
+          "stdDevNs": 40742517.84008808,
+          "allocatedBytes": 2865550240,
+          "ratioToBaseline": 3.954261318642914,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -417,9 +417,9 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 910576.5942778717,
-          "stdDevNs": 30682.6576786124,
-          "allocatedBytes": 650076,
+          "meanNs": 741204.0486111111,
+          "stdDevNs": 24171.725669782863,
+          "allocatedBytes": 619222,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -432,10 +432,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 3454632.7434895835,
-          "stdDevNs": 108464.20811313888,
-          "allocatedBytes": 2648368,
-          "ratioToBaseline": 3.793895829520265,
+          "meanNs": 2659874.4669331396,
+          "stdDevNs": 152411.43169393568,
+          "allocatedBytes": 2351796,
+          "ratioToBaseline": 3.588585993178649,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -447,10 +447,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 907779.6694972826,
-          "stdDevNs": 22437.08829226654,
-          "allocatedBytes": 650076,
-          "ratioToBaseline": 0.9969284025109308,
+          "meanNs": 746696.7408854166,
+          "stdDevNs": 19161.390491215694,
+          "allocatedBytes": 619222,
+          "ratioToBaseline": 1.007410499557575,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -462,10 +462,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 3518491.5864583333,
-          "stdDevNs": 200966.08153130303,
-          "allocatedBytes": 2648726,
-          "ratioToBaseline": 3.864025946382529,
+          "meanNs": 2635154.32109375,
+          "stdDevNs": 87980.44637220434,
+          "allocatedBytes": 2351704,
+          "ratioToBaseline": 3.5552346564101693,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -477,10 +477,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 3460904.396875,
-          "stdDevNs": 51343.8907763403,
-          "allocatedBytes": 2652830,
-          "ratioToBaseline": 3.8007833922193592,
+          "meanNs": 2743937.0639349488,
+          "stdDevNs": 165090.55158895339,
+          "allocatedBytes": 2355716,
+          "ratioToBaseline": 3.7019995628418583,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -492,10 +492,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 3612041.1751644737,
-          "stdDevNs": 179501.53969441637,
-          "allocatedBytes": 2649436,
-          "ratioToBaseline": 3.966762596208598,
+          "meanNs": 2747590.394230769,
+          "stdDevNs": 95700.5062869612,
+          "allocatedBytes": 2351880,
+          "ratioToBaseline": 3.7069284758755443,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -507,10 +507,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 927697.4049107142,
-          "stdDevNs": 29206.98792038904,
-          "allocatedBytes": 650692,
-          "ratioToBaseline": 1.0188021641896257,
+          "meanNs": 814014.0574048914,
+          "stdDevNs": 31003.398245885386,
+          "allocatedBytes": 619838,
+          "ratioToBaseline": 1.0982320710878652,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -522,9 +522,9 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8020123.635817308,
-          "stdDevNs": 126308.23772369874,
-          "allocatedBytes": 4563891,
+          "meanNs": 7077300.865056818,
+          "stdDevNs": 173799.50162643558,
+          "allocatedBytes": 4649416,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -537,10 +537,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 37265154.25403226,
-          "stdDevNs": 1695318.1724431294,
-          "allocatedBytes": 22497388,
-          "ratioToBaseline": 4.646456332369828,
+          "meanNs": 30976650.73453608,
+          "stdDevNs": 1816504.1179331776,
+          "allocatedBytes": 21065922,
+          "ratioToBaseline": 4.3769017772692065,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -552,10 +552,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7903311.336458334,
-          "stdDevNs": 111864.72894203049,
-          "allocatedBytes": 4563891,
-          "ratioToBaseline": 0.9854350999232357,
+          "meanNs": 6953903.09375,
+          "stdDevNs": 103034.81657186296,
+          "allocatedBytes": 4649416,
+          "ratioToBaseline": 0.9825642891746941,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -567,10 +567,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 37513254.563432835,
-          "stdDevNs": 1774494.967810063,
-          "allocatedBytes": 22498646,
-          "ratioToBaseline": 4.677391056155454,
+          "meanNs": 31363859.482323233,
+          "stdDevNs": 2172693.2167891846,
+          "allocatedBytes": 21066384,
+          "ratioToBaseline": 4.431613136185561,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -582,10 +582,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 37399611.58241757,
-          "stdDevNs": 2082023.109229594,
-          "allocatedBytes": 22501941,
-          "ratioToBaseline": 4.663221326837598,
+          "meanNs": 30435683.685185187,
+          "stdDevNs": 1592977.4463910558,
+          "allocatedBytes": 21070692,
+          "ratioToBaseline": 4.300464861605236,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -597,10 +597,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 36979156.4760274,
-          "stdDevNs": 1827780.2051027433,
-          "allocatedBytes": 22498334,
-          "ratioToBaseline": 4.610796311278929,
+          "meanNs": 31498678.71551724,
+          "stdDevNs": 1710160.8549622819,
+          "allocatedBytes": 21067066,
+          "ratioToBaseline": 4.450662663083543,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -612,10 +612,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 8553173.788461536,
-          "stdDevNs": 570107.3908510531,
-          "allocatedBytes": 4564554,
-          "ratioToBaseline": 1.066464081708624,
+          "meanNs": 7148073.091145833,
+          "stdDevNs": 151279.16873929236,
+          "allocatedBytes": 4650032,
+          "ratioToBaseline": 1.0099998894265527,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -627,9 +627,9 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 105014168.58333333,
-          "stdDevNs": 2703152.6633586637,
-          "allocatedBytes": 45548724,
+          "meanNs": 94457836.1,
+          "stdDevNs": 2175014.1790434727,
+          "allocatedBytes": 46603328,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -642,10 +642,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 392043719.14285713,
-          "stdDevNs": 4403330.205047012,
-          "allocatedBytes": 221297040,
-          "ratioToBaseline": 3.7332459460625382,
+          "meanNs": 335660540.25,
+          "stdDevNs": 7647895.209599109,
+          "allocatedBytes": 208578264,
+          "ratioToBaseline": 3.5535489072038993,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -657,10 +657,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 107033813.34375,
-          "stdDevNs": 3279168.348374275,
-          "allocatedBytes": 45548684,
-          "ratioToBaseline": 1.0192321168434904,
+          "meanNs": 94461407.25,
+          "stdDevNs": 1693997.8853735346,
+          "allocatedBytes": 46601484,
+          "ratioToBaseline": 1.000037806815691,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -672,10 +672,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 407337706.05263156,
-          "stdDevNs": 8696562.796155319,
-          "allocatedBytes": 221299368,
-          "ratioToBaseline": 3.878883312106512,
+          "meanNs": 332918558.5964912,
+          "stdDevNs": 14465864.5810157,
+          "allocatedBytes": 208575168,
+          "ratioToBaseline": 3.5245202763700747,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -687,10 +687,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 403066450.85714287,
-          "stdDevNs": 5949329.315993693,
-          "allocatedBytes": 221301392,
-          "ratioToBaseline": 3.8382101795844057,
+          "meanNs": 334472609.0677966,
+          "stdDevNs": 14792923.027569162,
+          "allocatedBytes": 208585120,
+          "ratioToBaseline": 3.5409725955790408,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -702,10 +702,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 404098926.6666667,
-          "stdDevNs": 12093153.506637793,
-          "allocatedBytes": 221298296,
-          "ratioToBaseline": 3.8480419558432875,
+          "meanNs": 336314706.74358976,
+          "stdDevNs": 11520518.71446953,
+          "allocatedBytes": 208579080,
+          "ratioToBaseline": 3.5604743939670853,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -717,10 +717,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 106434467.71052632,
-          "stdDevNs": 2297585.180467916,
-          "allocatedBytes": 45549580,
-          "ratioToBaseline": 1.0135248333282372,
+          "meanNs": 94426442.93055555,
+          "stdDevNs": 3083443.5719621796,
+          "allocatedBytes": 46602920,
+          "ratioToBaseline": 0.9996676488606916,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -732,9 +732,9 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1121189895.2,
-          "stdDevNs": 9875671.197576469,
-          "allocatedBytes": 454429008,
+          "meanNs": 1030618080.2142857,
+          "stdDevNs": 16888910.682588242,
+          "allocatedBytes": 465598800,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -747,10 +747,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3986388150,
-          "stdDevNs": 22553724.636685148,
-          "allocatedBytes": 2312537408,
-          "ratioToBaseline": 3.555497750261922,
+          "meanNs": 3334776730.5333333,
+          "stdDevNs": 60564868.40081775,
+          "allocatedBytes": 2189350296,
+          "ratioToBaseline": 3.2357056358258025,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -762,10 +762,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1113992639.0666666,
-          "stdDevNs": 12818142.659249337,
-          "allocatedBytes": 454426048,
-          "ratioToBaseline": 0.9935806983597104,
+          "meanNs": 1041801724.3846154,
+          "stdDevNs": 15789800.730357014,
+          "allocatedBytes": 465600656,
+          "ratioToBaseline": 1.0108513952792333,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -777,10 +777,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 4022780084.5333333,
-          "stdDevNs": 25473866.06187648,
-          "allocatedBytes": 2312537376,
-          "ratioToBaseline": 3.5879560650301277,
+          "meanNs": 3356882961.4,
+          "stdDevNs": 49725125.33163372,
+          "allocatedBytes": 2189356112,
+          "ratioToBaseline": 3.257155124526865,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -792,10 +792,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3945224200.785714,
-          "stdDevNs": 33189970.479426127,
-          "allocatedBytes": 2312513496,
-          "ratioToBaseline": 3.518783229920171,
+          "meanNs": 3451727816.071429,
+          "stdDevNs": 48619704.74135391,
+          "allocatedBytes": 2189362664,
+          "ratioToBaseline": 3.3491822842402947,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -807,10 +807,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 4021383523.3333335,
-          "stdDevNs": 35068429.2954693,
-          "allocatedBytes": 2312540560,
-          "ratioToBaseline": 3.586710458727414,
+          "meanNs": 3336507930.1764708,
+          "stdDevNs": 58357721.07470611,
+          "allocatedBytes": 2189355720,
+          "ratioToBaseline": 3.2373854041865298,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -822,10 +822,10 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1119434644.5333333,
-          "stdDevNs": 17744449.20885713,
-          "allocatedBytes": 454427792,
-          "ratioToBaseline": 0.9984344751284494,
+          "meanNs": 1031672506.4,
+          "stdDevNs": 13786801.36835305,
+          "allocatedBytes": 465599624,
+          "ratioToBaseline": 1.0010231008032529,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -893,9 +893,9 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 11727713.544791667,
-          "stdDevNs": 159754.3998824759,
-          "allocatedBytes": 19664576,
+          "meanNs": 941232.4372829861,
+          "stdDevNs": 19044.109587550345,
+          "allocatedBytes": 875476,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -908,10 +908,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 11489583.826923076,
-          "stdDevNs": 86675.70651463568,
-          "allocatedBytes": 19653481,
-          "ratioToBaseline": 0.9796951283846504,
+          "meanNs": 933282.2713694853,
+          "stdDevNs": 29917.56397350911,
+          "allocatedBytes": 868754,
+          "ratioToBaseline": 0.991553450987675,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -923,10 +923,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 15201629.34397163,
-          "stdDevNs": 527802.323285728,
-          "allocatedBytes": 19626167,
-          "ratioToBaseline": 1.2962142438005528,
+          "meanNs": 1108021.9639423077,
+          "stdDevNs": 32351.226153010615,
+          "allocatedBytes": 855280,
+          "ratioToBaseline": 1.1772033347477755,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -938,10 +938,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 11912669.734375,
-          "stdDevNs": 135182.01299694553,
-          "allocatedBytes": 19665228,
-          "ratioToBaseline": 1.0157708652140018,
+          "meanNs": 951263.9288411458,
+          "stdDevNs": 16787.66769255208,
+          "allocatedBytes": 876156,
+          "ratioToBaseline": 1.0106578260170433,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -953,10 +953,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 6714103.325721154,
-          "stdDevNs": 90364.3550070304,
-          "allocatedBytes": 11108174,
-          "ratioToBaseline": 0.5724989189135609,
+          "meanNs": 509630.9221047794,
+          "stdDevNs": 10383.500219371563,
+          "allocatedBytes": 505182,
+          "ratioToBaseline": 0.5414506575824228,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -968,10 +968,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 12480318.78,
-          "stdDevNs": 197873.2347552657,
-          "allocatedBytes": 20268416,
-          "ratioToBaseline": 1.0641732279982714,
+          "meanNs": 1011253.4546875,
+          "stdDevNs": 17826.75499525677,
+          "allocatedBytes": 979290,
+          "ratioToBaseline": 1.0743929072468439,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -983,10 +983,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 13083108.923913041,
-          "stdDevNs": 493810.4427968658,
-          "allocatedBytes": 19374969,
-          "ratioToBaseline": 1.1155720059110168,
+          "meanNs": 1228447.690234375,
+          "stdDevNs": 18727.90578072221,
+          "allocatedBytes": 1117296,
+          "ratioToBaseline": 1.3051480607494577,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -998,10 +998,10 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 12083801.646875,
-          "stdDevNs": 195188.4995739018,
-          "allocatedBytes": 21789598,
-          "ratioToBaseline": 1.0303629604119613,
+          "meanNs": 1235414.8744673296,
+          "stdDevNs": 33754.80127176457,
+          "allocatedBytes": 1109892,
+          "ratioToBaseline": 1.312550253828424,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1013,9 +1013,9 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 111712213.65306123,
-          "stdDevNs": 6833432.982676315,
-          "allocatedBytes": 197682840,
+          "meanNs": 9483357.3515625,
+          "stdDevNs": 86996.07475884735,
+          "allocatedBytes": 8246916,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -1028,10 +1028,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 111823821.39795919,
-          "stdDevNs": 6823584.3058229,
-          "allocatedBytes": 197634000,
-          "ratioToBaseline": 1.0009990648403457,
+          "meanNs": 9409604.734375,
+          "stdDevNs": 156484.377477264,
+          "allocatedBytes": 8204341,
+          "ratioToBaseline": 0.9922229423132148,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1043,10 +1043,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 114932638.87234043,
-          "stdDevNs": 7674355.225987998,
-          "allocatedBytes": 197543304,
-          "ratioToBaseline": 1.0288278704178284,
+          "meanNs": 10328285.36351103,
+          "stdDevNs": 205430.84531237528,
+          "allocatedBytes": 8074099,
+          "ratioToBaseline": 1.089095874027073,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1058,10 +1058,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 113386226.93333334,
-          "stdDevNs": 8826851.499507427,
-          "allocatedBytes": 197683592,
-          "ratioToBaseline": 1.0149850515492513,
+          "meanNs": 9780291.985576924,
+          "stdDevNs": 265082.8946739786,
+          "allocatedBytes": 8247634,
+          "ratioToBaseline": 1.0313111299096518,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1073,10 +1073,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 59938262.43373495,
-          "stdDevNs": 3031332.5207258407,
-          "allocatedBytes": 112927459,
-          "ratioToBaseline": 0.5365417126177633,
+          "meanNs": 4648162.03671875,
+          "stdDevNs": 75852.87516667755,
+          "allocatedBytes": 4303293,
+          "ratioToBaseline": 0.4901388679561789,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1088,10 +1088,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 113225189.51612903,
-          "stdDevNs": 7271780.247160102,
-          "allocatedBytes": 198163696,
-          "ratioToBaseline": 1.0135435134046002,
+          "meanNs": 9016561.5703125,
+          "stdDevNs": 110858.2094081381,
+          "allocatedBytes": 7869300,
+          "ratioToBaseline": 0.9507773709304448,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1103,10 +1103,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 107574994.73684211,
-          "stdDevNs": 7139362.85476164,
-          "allocatedBytes": 194850600,
-          "ratioToBaseline": 0.9629653841694709,
+          "meanNs": 11042069.481971154,
+          "stdDevNs": 149463.56058631846,
+          "allocatedBytes": 9676142,
+          "ratioToBaseline": 1.1643629015152357,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1118,10 +1118,10 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 116837815.74747474,
-          "stdDevNs": 7495353.399025361,
-          "allocatedBytes": 220205608,
-          "ratioToBaseline": 1.0458821996879575,
+          "meanNs": 10900159.182291666,
+          "stdDevNs": 257771.13815018363,
+          "allocatedBytes": 9670797,
+          "ratioToBaseline": 1.149398760186521,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1133,9 +1133,9 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1101303116.7857144,
-          "stdDevNs": 17808684.11792122,
-          "allocatedBytes": 2056597264,
+          "meanNs": 92253409.78571428,
+          "stdDevNs": 1495971.441989383,
+          "allocatedBytes": 78310778,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
@@ -1148,10 +1148,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1129469526.0555556,
-          "stdDevNs": 37089547.30463435,
-          "allocatedBytes": 2056173184,
-          "ratioToBaseline": 1.0255755285175694,
+          "meanNs": 91448619.04285716,
+          "stdDevNs": 1296910.39669142,
+          "allocatedBytes": 77891147,
+          "ratioToBaseline": 0.9912763035564052,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1163,10 +1163,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1113682215.631579,
-          "stdDevNs": 24311676.389875133,
-          "allocatedBytes": 2055042552,
-          "ratioToBaseline": 1.0112404102532593,
+          "meanNs": 94485203.86666664,
+          "stdDevNs": 1653062.143503481,
+          "allocatedBytes": 76763749,
+          "ratioToBaseline": 1.0241919955710728,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1178,10 +1178,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1116134090.6923077,
-          "stdDevNs": 7428694.885423139,
-          "allocatedBytes": 2056603008,
-          "ratioToBaseline": 1.0134667501440286,
+          "meanNs": 90598369.48039216,
+          "stdDevNs": 1853719.618411239,
+          "allocatedBytes": 78312641,
+          "ratioToBaseline": 0.9820598467941029,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1193,10 +1193,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 623281379.4166666,
-          "stdDevNs": 4543315.294377653,
-          "allocatedBytes": 1189527760,
-          "ratioToBaseline": 0.5659489834513393,
+          "meanNs": 44306631.62337662,
+          "stdDevNs": 490059.8099740609,
+          "allocatedBytes": 40499503,
+          "ratioToBaseline": 0.48027093769533097,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1208,10 +1208,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1118442823.142857,
-          "stdDevNs": 16367188.922226386,
-          "allocatedBytes": 2049988808,
-          "ratioToBaseline": 1.0155631143650687,
+          "meanNs": 88334568.93846154,
+          "stdDevNs": 942322.7678437625,
+          "allocatedBytes": 75184941,
+          "ratioToBaseline": 0.9575209105402672,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1223,10 +1223,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1058535418.4,
-          "stdDevNs": 17224069.217090055,
-          "allocatedBytes": 2027357208,
-          "ratioToBaseline": 0.9611662786258727,
+          "meanNs": 114391370.828125,
+          "stdDevNs": 2102402.23129593,
+          "allocatedBytes": 104330100,
+          "ratioToBaseline": 1.2399690276362971,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1238,10 +1238,10 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 1142645732.9285715,
-          "stdDevNs": 7904149.844809637,
-          "allocatedBytes": 2283616272,
-          "ratioToBaseline": 1.0375397249973473,
+          "meanNs": 111488792.23333333,
+          "stdDevNs": 3328845.777805944,
+          "allocatedBytes": 105153192,
+          "ratioToBaseline": 1.2085059239793834,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
@@ -1253,13 +1253,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 10985000534.714285,
-          "stdDevNs": 53990714.283276804,
-          "allocatedBytes": 21481527976,
+          "meanNs": 889289151.8,
+          "stdDevNs": 15242853.00511524,
+          "allocatedBytes": 760008168,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1268,13 +1268,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 11048467289.214285,
-          "stdDevNs": 87878889.101522,
-          "allocatedBytes": 21477243040,
-          "ratioToBaseline": 1.0057775831962352,
+          "meanNs": 893523979.9285715,
+          "stdDevNs": 9978271.706449272,
+          "allocatedBytes": 755795672,
+          "ratioToBaseline": 1.0047620373193578,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1283,13 +1283,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 10987510506.2,
-          "stdDevNs": 77073458.2246766,
-          "allocatedBytes": 21468112816,
-          "ratioToBaseline": 1.0002284907932215,
+          "meanNs": 898244624.0625,
+          "stdDevNs": 27447019.96442435,
+          "allocatedBytes": 746696264,
+          "ratioToBaseline": 1.010070371649506,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1298,13 +1298,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 11372078521.086956,
-          "stdDevNs": 274799423.18424445,
-          "allocatedBytes": 21481551888,
-          "ratioToBaseline": 1.035236956534453,
+          "meanNs": 888925954.2857143,
+          "stdDevNs": 14135848.627005637,
+          "allocatedBytes": 760009920,
+          "ratioToBaseline": 0.9995915867032106,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1313,13 +1313,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 6239452955.083333,
-          "stdDevNs": 47460600.95622006,
-          "allocatedBytes": 12619834176,
-          "ratioToBaseline": 0.5679975103656759,
+          "meanNs": 450097238.6818182,
+          "stdDevNs": 10886339.7976148,
+          "allocatedBytes": 443031576,
+          "ratioToBaseline": 0.506131484647914,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Meets",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1328,13 +1328,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 11169272187.142857,
-          "stdDevNs": 61336245.943558976,
-          "allocatedBytes": 21421564424,
-          "ratioToBaseline": 1.016774842372219,
+          "meanNs": 902791030.4,
+          "stdDevNs": 14310287.960602963,
+          "allocatedBytes": 809276392,
+          "ratioToBaseline": 1.015182776684806,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1343,13 +1343,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 10882758648.23077,
-          "stdDevNs": 85547777.27538833,
-          "allocatedBytes": 21215154632,
-          "ratioToBaseline": 0.9906925915788156,
+          "meanNs": 1045093476.625,
+          "stdDevNs": 17356713.667712353,
+          "allocatedBytes": 994372696,
+          "ratioToBaseline": 1.1752009731701307,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         },
         {
@@ -1358,13 +1358,13 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 11519860034.142857,
-          "stdDevNs": 82298536.30658676,
-          "allocatedBytes": 23747595560,
-          "ratioToBaseline": 1.048689983922926,
+          "meanNs": 1045838794.6666666,
+          "stdDevNs": 24454956.89880414,
+          "allocatedBytes": 1002660312,
+          "ratioToBaseline": 1.1760390785716843,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
-          "slaResult": "Miss",
+          "slaResult": "Exceeds",
           "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
         }
       ]
@@ -1374,121 +1374,121 @@
     {
       "area": "ConvertToCsvBytes",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "980.97 \u00b5s",
+      "latest": "761.25 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvBytesAsync",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "917.7 \u00b5s",
+      "latest": "802.86 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvBytesUtf16",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "947.79 \u00b5s",
+      "latest": "776.13 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvStream",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "901.03 \u00b5s",
+      "latest": "773.02 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToHtmlTable",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "3.9 ms",
+      "latest": "2.99 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytes",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "10985 ms",
-      "result": "Miss"
+      "latest": "941.23 \u00b5s",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesAsync",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "11372.08 ms",
-      "result": "Miss"
+      "latest": "951.26 \u00b5s",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesFromDataTable",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "10882.76 ms",
-      "result": "Miss"
+      "latest": "1.23 ms",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesFromDictionary",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "11519.86 ms",
-      "result": "Miss"
+      "latest": "1.24 ms",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesMultiSheet",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "11169.27 ms",
-      "result": "Miss"
+      "latest": "1.01 ms",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesSelected",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "6239.45 ms",
-      "result": "Meets"
+      "latest": "509.63 \u00b5s",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxFile",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "10987.51 ms",
-      "result": "Miss"
+      "latest": "1.11 ms",
+      "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxStream",
       "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "11048.47 ms",
-      "result": "Miss"
+      "latest": "933.28 \u00b5s",
+      "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "3.45 ms",
+      "latest": "2.66 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDataTableAsync",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "3.61 ms",
+      "latest": "2.75 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDictionary",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "910.58 \u00b5s",
+      "latest": "741.2 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDictionaryAsync",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "927.7 \u00b5s",
+      "latest": "814.01 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseFileAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "3.46 ms",
+      "latest": "2.74 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "3.52 ms",
+      "latest": "2.64 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamAsDictionary",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "907.78 \u00b5s",
+      "latest": "746.7 \u00b5s",
       "result": "Exceeds"
     }
   ],
@@ -1505,19 +1505,19 @@
     },
     {
       "category": "XlsxWriteBenchmarks",
-      "grade": "D",
-      "rationale": "24 exceed, 1 meet, 7 miss of 32 SLA targets vs declared standards"
+      "grade": "A",
+      "rationale": "32 exceed of 32 SLA targets vs declared standards"
     }
   ],
   "schema": "lyo.bench/v1",
   "name": "xlsx",
   "title": "XLSX",
   "description": "XLSX write (ClosedXML) and read (ExcelDataReader) paths for Lyo.Xlsx over a flat 7-column SampleRecord. Row counts are smaller than CSV because XLSX is markedly heavier per row. RowCount is the number of records; the column set and types are captured in each class's data shape.",
-  "runId": "BenchmarkRun-joined-2026-07-03-03-28-41",
-  "generatedAt": "2026-07-03T03:28:42.2926164+00:00",
-  "runStarted": "2026-07-03T02:11:15.1318597+00:00",
-  "runEnded": "2026-07-03T03:28:42.2926164+00:00",
-  "durationSeconds": 4647.1607567,
+  "runId": "BenchmarkRun-joined-2026-07-03-18-19-40",
+  "generatedAt": "2026-07-03T18:19:40.8301115+00:00",
+  "runStarted": "2026-07-03T17:44:57.1178824+00:00",
+  "runEnded": "2026-07-03T18:19:40.8301115+00:00",
+  "durationSeconds": 2083.7122291,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",

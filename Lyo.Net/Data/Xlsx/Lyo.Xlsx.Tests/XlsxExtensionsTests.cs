@@ -14,9 +14,9 @@ public class XlsxExtensionsTests
         var provider = services.BuildServiceProvider();
         var xlsxService = provider.GetRequiredService<IXlsxService>();
         Assert.NotNull(xlsxService);
-        var exporter = provider.GetRequiredService<IXlsxExporter>();
+        var exporter = provider.GetRequiredService<IXlsxWriter>();
         Assert.NotNull(exporter);
-        var importer = provider.GetRequiredService<IXlsxImporter>();
+        var importer = provider.GetRequiredService<IXlsxReader>();
         Assert.NotNull(importer);
     }
 }

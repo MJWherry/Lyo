@@ -1,17 +1,30 @@
 # Lyo.Xlsx
 
-ClosedXML-and-ExcelDataReader-backed implementation of
+Implementation of
 [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an
-`XlsxExporter` (ClosedXML) and an `XlsxImporter` (ExcelDataReader) to read and write
-XLSX workbooks from files, streams, and byte arrays, with helpers for converting to
-CSV, HTML, and `Lyo.DataTable`. Multi-targets `netstandard2.0;net10.0`; async,
-custom-header, and formatter export overloads are only available on `net10.0`.
+`XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader`
+(ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams,
+and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`.
+Multi-targets `netstandard2.0;net10.0`; async, custom-header, and formatter export
+overloads are only available on `net10.0`.
+
+Export streams rows straight into the worksheet part via `OpenXmlWriter`, keeping
+memory bounded regardless of row count. Column widths are approximated from a bounded
+sample of the leading rows rather than a full-workbook auto-fit pass.
 
 ## Features
 
 - Strongly-typed read/write via `IEnumerable<T>`.
 - Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet
   name → rows).
+- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or
+  zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` overloads),
+  or parse every sheet at once (`ParseXlsx*AsAllSheets`).
+- Incremental multi-sheet writing sessions via `CreateDocumentWriter` /
+  `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or
+  row/column dictionary per sheet; dispose finalizes the workbook).
+- Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX
+  merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`,
   custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter
   (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
@@ -27,10 +40,10 @@ custom-header, and formatter export overloads are only available on `net10.0`.
   `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`,
   `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
 
-ClosedXML does not expose async APIs, so the async overloads dispatch CPU-bound work
-through `Task.Run` and observe the cancellation token at safe checkpoints. Treat
-single-call invocations as thread-safe; mutating the underlying configuration
-concurrently with calls is not.
+The OpenXML write path and ClosedXML read path are synchronous, so the async overloads
+dispatch CPU-bound work through `Task.Run` and observe the cancellation token at safe
+checkpoints (including per row while streaming). Treat single-call invocations as
+thread-safe; mutating the underlying configuration concurrently with calls is not.
 
 ## Dependency injection
 
@@ -41,7 +54,7 @@ services.AddXlsxService();
 ```
 
 `AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`,
-`IXlsxExporter`, and `IXlsxImporter` to the same instance.
+`IXlsxWriter`, and `IXlsxReader` to the same instance.
 
 ## Quick start
 
@@ -103,6 +116,40 @@ xlsx.ExportToXlsx(workbook, "people.xlsx");
 await xlsx.ExportToXlsxAsync(workbook, stream, ct);
 ```
 
+For heterogeneous sheets (different row types or sources per sheet), open an
+incremental writing session; each `AddSheet*` call streams one worksheet, and
+disposing the session finalizes the workbook:
+
+```csharp
+using (var doc = xlsx.CreateDocumentWriter("report.xlsx"))
+{
+    doc.AddSheet("People", people);                          // typed rows
+    doc.AddSheet("Names", people, selectedProps);            // selected properties
+    doc.AddSheetFromDataTable("Summary", summaryTable);      // Lyo DataTable
+    doc.AddSheetFromDictionary("Raw", grid, useHeaderRow: true);
+}
+```
+
+Duplicate sheet names (case-insensitive) are rejected. `CreateDocumentWriter(stream)`
+leaves the destination stream open for the caller; the file-path overload closes the
+file on dispose.
+
+## Sheet control (read)
+
+```csharp
+IReadOnlyList<string> names = xlsx.ListSheetNames("in.xlsx");
+
+// Select a sheet by name or zero-based index.
+var dict = xlsx.ParseXlsxBytesAsDictionary(bytes, "Archived");
+Result<DataTable> dt = xlsx.ParseXlsxFileAsDataTable("in.xlsx", 1, useHeaderRow: true);
+
+// Or parse everything, keyed by sheet name in workbook order.
+IReadOnlyDictionary<string, DataTable> all = xlsx.ParseXlsxStreamAsAllSheets(stream);
+```
+
+The no-arg parse methods keep their first-sheet behavior. Async variants of all
+sheet-control methods are available on `net10.0`.
+
 ## DataTable, dictionary, and HTML helpers
 
 ```csharp
@@ -149,6 +196,7 @@ IReadOnlyList<Result<DataTable>> async =
 | Package                                                 | Version    |
 |---------------------------------------------------------|------------|
 | `ClosedXML`                                             | `[0.100,)` |
+| `DocumentFormat.OpenXml`                                | `[2.16,)`  |
 | `ExcelDataReader`                                       | `[3.8,)`   |
 | `ExcelDataReader.DataSet`                               | `[3.8,)`   |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`    |

@@ -31,21 +31,37 @@ public static class DataTableToHtml
         sb.Append("th{background:#eee}tfoot td{background:#f5f5f5;font-weight:bold}</style></head><body><table>");
         if (headers.Count > 0) {
             sb.Append("<thead><tr>");
-            for (var col = 0; col <= maxCol; col++) {
-                var cell = headers.TryGetValue(col, out var h) ? h : DataTableCell.Empty;
-                sb.Append($"<th{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</th>");
-            }
-
+            AppendSingleRow(sb, headers, maxCol, "th");
             sb.Append("</tr></thead>");
         }
 
         if (rows.Count > 0) {
             sb.Append("<tbody>");
+            // pendingRows[col] > 0 means the column is covered by a rowspan from a previous row.
+            var pendingRows = new int[maxCol + 1];
             foreach (var row in rows) {
                 sb.Append("<tr>");
+                var coveredInRow = new HashSet<int>();
                 for (var col = 0; col <= maxCol; col++) {
+                    if (pendingRows[col] > 0) {
+                        pendingRows[col]--;
+                        continue;
+                    }
+
+                    if (coveredInRow.Contains(col))
+                        continue;
+
                     var cell = row.Cells.TryGetValue(col, out var v) ? v : DataTableCell.Empty;
-                    sb.Append($"<td{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</td>");
+                    var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
+                    var rowSpan = cell.RowSpan < 1 ? 1 : cell.RowSpan;
+                    sb.Append($"<td{GetSpanAttr(colSpan, rowSpan)}{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</td>");
+                    for (var k = col; k < col + colSpan; k++) {
+                        if (k > col)
+                            coveredInRow.Add(k);
+
+                        if (rowSpan > 1)
+                            pendingRows[k] += rowSpan - 1;
+                    }
                 }
 
                 sb.Append("</tr>");
@@ -56,15 +72,46 @@ public static class DataTableToHtml
 
         if (footer.Count > 0) {
             sb.Append("<tfoot><tr>");
-            for (var col = 0; col <= maxCol; col++) {
-                var cell = footer.TryGetValue(col, out var f) ? f : DataTableCell.Empty;
-                sb.Append($"<td{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</td>");
-            }
-
+            AppendSingleRow(sb, footer, maxCol, "td");
             sb.Append("</tr></tfoot>");
         }
 
         sb.Append("</table></body></html>");
+        return sb.ToString();
+    }
+
+    /// <summary>Renders a single header/footer row honoring ColSpan (RowSpan is ignored: the section is one row tall).</summary>
+    private static void AppendSingleRow(StringBuilder sb, IReadOnlyDictionary<int, IDataTableCell> cells, int maxCol, string tag)
+    {
+        var col = 0;
+        while (col <= maxCol) {
+            var cell = cells.TryGetValue(col, out var c) ? c : DataTableCell.Empty;
+            var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
+            sb.Append($"<{tag}{GetSpanAttr(colSpan, 1)}{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</{tag}>");
+            col += colSpan;
+        }
+    }
+
+    private static int ClampSpan(int span, int max)
+    {
+        if (span < 1)
+            return 1;
+
+        return span > max ? max : span;
+    }
+
+    private static string GetSpanAttr(int colSpan, int rowSpan)
+    {
+        if (colSpan <= 1 && rowSpan <= 1)
+            return "";
+
+        var sb = new StringBuilder();
+        if (colSpan > 1)
+            sb.Append($" colspan=\"{colSpan}\"");
+
+        if (rowSpan > 1)
+            sb.Append($" rowspan=\"{rowSpan}\"");
+
         return sb.ToString();
     }
 

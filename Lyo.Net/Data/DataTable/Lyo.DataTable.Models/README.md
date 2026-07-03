@@ -21,13 +21,15 @@ This project contains all of the runtime types. The sibling
   (`FontSize`, `FontName`, `FontBold`, `FontItalic`, `FontUnderline`,
   `FontStrikethrough`, `FontColor`, `BackgroundColor`, `HorizontalAlignment`,
   `VerticalAlignment`, `NumberFormat`, `TextRotation`, `WrapText`, `BorderTop`,
-  `BorderBottom`, `BorderLeft`, `BorderRight`, `BorderColor`).
+  `BorderBottom`, `BorderLeft`, `BorderRight`, `BorderColor`) and cell spanning
+  (`ColSpan`, `RowSpan`, default 1; the cell is the top-left anchor of the span).
 - `DataTableCell<T>` — sealed record implementing `IDataTableCell`; `DisplayValue` is
   `Value?.ToString() ?? ""`. `DataTableCell<string>.Empty` is the shared empty cell.
 - `DataTableCell` (static) — non-generic helpers: `Empty`, `FromValue(string?)`.
 - `DataTableToHtml.ToHtmlDocument(DataTable)` — renders a full HTML document with
   inline styles derived from the per-cell formatting (font, color, background,
-  alignment, wrap).
+  alignment, wrap). Cells with `ColSpan`/`RowSpan` > 1 emit `colspan`/`rowspan`
+  attributes and covered cells are skipped.
 
 ## Fluent builders
 
@@ -45,7 +47,8 @@ This project contains all of the runtime types. The sibling
   when a `SetCell<T>` value matches the predicate.
 - `DataTableCellBuilder` — fluent setter for every formatting property, e.g.
   `WithBold`, `WithFontColor`, `WithBackgroundColor`, `WithBorders`,
-  `WithNumberFormat`, `WithTextRotation`, plus `Build<T>()` / non-generic `Build()`.
+  `WithNumberFormat`, `WithTextRotation`, `WithColSpan` / `WithRowSpan`, plus
+  `Build<T>()` / non-generic `Build()`.
 
 ## Sum footers
 

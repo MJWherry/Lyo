@@ -9,6 +9,7 @@ public sealed class DataTableCellBuilder
     private string? _borderLeft;
     private string? _borderRight;
     private string? _borderTop;
+    private int _colSpan = 1;
     private bool? _fontBold;
     private string? _fontColor;
     private bool? _fontItalic;
@@ -18,6 +19,7 @@ public sealed class DataTableCellBuilder
     private bool? _fontUnderline;
     private string? _horizontalAlignment;
     private string? _numberFormat;
+    private int _rowSpan = 1;
     private int? _textRotation;
     private object? _value;
     private string? _verticalAlignment;
@@ -166,11 +168,25 @@ public sealed class DataTableCellBuilder
         return this;
     }
 
+    /// <summary>Sets the number of columns the cell spans (must be at least 1).</summary>
+    public DataTableCellBuilder WithColSpan(int colSpan)
+    {
+        _colSpan = colSpan < 1 ? 1 : colSpan;
+        return this;
+    }
+
+    /// <summary>Sets the number of rows the cell spans (must be at least 1).</summary>
+    public DataTableCellBuilder WithRowSpan(int rowSpan)
+    {
+        _rowSpan = rowSpan < 1 ? 1 : rowSpan;
+        return this;
+    }
+
     /// <summary>Builds the DataTableCell.</summary>
     public DataTableCell<T> Build<T>()
         => new(
             (T?)_value, _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment, _verticalAlignment,
-            _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor);
+            _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor, _colSpan, _rowSpan);
 
     /// <summary>Builds the DataTableCell as IDataTableCell. For value types this boxes to DataTableCell&lt;object?&gt;.</summary>
     public IDataTableCell Build() => Build<object?>();

@@ -10,5 +10,5 @@ public static class XlsxCellValueExtensions
         => new DataTableCell<string>(
             cell.Value, cell.FontSize, cell.FontName, cell.FontBold, cell.FontItalic, cell.FontUnderline, cell.FontStrikethrough, cell.FontColor, cell.BackgroundColor,
             cell.HorizontalAlignment, cell.VerticalAlignment, cell.NumberFormat, cell.TextRotation, cell.WrapText, cell.BorderTop, cell.BorderBottom, cell.BorderLeft,
-            cell.BorderRight, cell.BorderColor);
+            cell.BorderRight, cell.BorderColor, cell.ColSpan, cell.RowSpan);
 }
