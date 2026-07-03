@@ -4,19 +4,13 @@ using SzlBZip2 = ICSharpCode.SharpZipLib.BZip2.BZip2;
 namespace Lyo.Compression.BZip2;
 
 /// <summary>BZip2 compressor adapter implementing <see cref="ICompressor" /> using SharpZipLib.</summary>
-internal sealed class BZip2Compressor : ICompressor
+internal sealed class BZip2Compressor(string? name = null, int level = BZip2Compressor.DefaultCompressionLevel) : ICompressor
 {
     private const int DefaultCompressionLevel = 9;
 
-    private readonly int _level;
+    private readonly int _level = level < 1 ? 1 : level > 9 ? 9 : level;
 
-    public BZip2Compressor(string? name = null, int level = DefaultCompressionLevel)
-    {
-        Name = name;
-        _level = level < 1 ? 1 : level > 9 ? 9 : level;
-    }
-
-    public string? Name { get; }
+    public string? Name { get; } = name;
 
     public CompressionMethod Method => CompressionMethod.Deflate; // BZip2 - no enum value, use closest
 

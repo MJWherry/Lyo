@@ -17,8 +17,8 @@
           "parameters": {
             "Contenders": "2"
           },
-          "meanNs": 595.928403808957,
-          "stdDevNs": 14.212197872736244,
+          "meanNs": 565.0222432796771,
+          "stdDevNs": 5.859059088177821,
           "allocatedBytes": 448,
           "ratioToBaseline": 1,
           "isBaseline": true,
@@ -31,10 +31,10 @@
           "parameters": {
             "Contenders": "2"
           },
-          "meanNs": 427.21629645274237,
-          "stdDevNs": 5.983938009125702,
+          "meanNs": 424.53471953074137,
+          "stdDevNs": 4.904917838460969,
           "allocatedBytes": 848,
-          "ratioToBaseline": 0.7168919852152232,
+          "ratioToBaseline": 0.751359304133808,
           "isBaseline": false
         },
         {
@@ -42,8 +42,8 @@
           "parameters": {
             "Contenders": "8"
           },
-          "meanNs": 625.6217110157013,
-          "stdDevNs": 16.15767262800252,
+          "meanNs": 567.30758026668,
+          "stdDevNs": 9.138160234498804,
           "allocatedBytes": 448,
           "ratioToBaseline": 1,
           "isBaseline": true,
@@ -56,10 +56,10 @@
           "parameters": {
             "Contenders": "8"
           },
-          "meanNs": 1623.724469593593,
-          "stdDevNs": 18.2097195480383,
+          "meanNs": 1569.9073162078857,
+          "stdDevNs": 33.30455235624485,
           "allocatedBytes": 3104,
-          "ratioToBaseline": 2.5953774317669778,
+          "ratioToBaseline": 2.7672947988283596,
           "isBaseline": false
         }
       ]
@@ -72,8 +72,8 @@
         {
           "method": "Local_AcquireRelease",
           "parameters": {},
-          "meanNs": 610.3573324566796,
-          "stdDevNs": 13.866780560784939,
+          "meanNs": 575.7740620930989,
+          "stdDevNs": 7.6177617256675925,
           "allocatedBytes": 440,
           "ratioToBaseline": 1,
           "isBaseline": true,
@@ -84,10 +84,10 @@
         {
           "method": "Redis_AcquireRelease",
           "parameters": {},
-          "meanNs": 269208.99225097656,
-          "stdDevNs": 51339.28107197106,
+          "meanNs": 163513.63337590144,
+          "stdDevNs": 4439.287503961159,
           "allocatedBytes": 2624,
-          "ratioToBaseline": 441.0678432704563,
+          "ratioToBaseline": 283.9892314382553,
           "isBaseline": false,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
@@ -96,10 +96,10 @@
         {
           "method": "Local_ExecuteWithLock",
           "parameters": {},
-          "meanNs": 634.5403794740375,
-          "stdDevNs": 13.893542332098923,
+          "meanNs": 614.2923887797764,
+          "stdDevNs": 17.552556415465823,
           "allocatedBytes": 480,
-          "ratioToBaseline": 1.0396211296750077,
+          "ratioToBaseline": 1.0668983360359316,
           "isBaseline": false,
           "slaTarget": "<= 15 \u00b5s",
           "slaResult": "Exceeds",
@@ -108,10 +108,10 @@
         {
           "method": "Redis_ExecuteWithLock",
           "parameters": {},
-          "meanNs": 302268.32849609375,
-          "stdDevNs": 43874.10939393493,
+          "meanNs": 165141.0400057706,
+          "stdDevNs": 3892.4486780886223,
           "allocatedBytes": 2880,
-          "ratioToBaseline": 495.23174773614664,
+          "ratioToBaseline": 286.8156988618712,
           "isBaseline": false,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
@@ -124,31 +124,31 @@
     {
       "area": "Local_AcquireRelease",
       "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release should be a few microseconds (no network).",
-      "latest": "610.36 ns",
+      "latest": "575.77 ns",
       "result": "Exceeds"
     },
     {
       "area": "Local_ExecuteWithLock",
       "target": "<= 15 \u00b5s \u2014 In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.",
-      "latest": "634.54 ns",
+      "latest": "614.29 ns",
       "result": "Exceeds"
     },
     {
       "area": "Redis_AcquireRelease",
       "target": "<= 5 ms \u2014 A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.",
-      "latest": "269.21 \u00b5s",
+      "latest": "163.51 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Redis_ExecuteWithLock",
       "target": "<= 5 ms \u2014 Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.",
-      "latest": "302.27 \u00b5s",
+      "latest": "165.14 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Uncontended_AcquireRelease",
       "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.",
-      "latest": "595.93 ns",
+      "latest": "565.02 ns",
       "result": "Exceeds"
     }
   ],
@@ -168,13 +168,24 @@
   "name": "lock",
   "title": "Locking",
   "description": "Distributed-lock primitives for Lyo.Lock: uncontended acquire/release and execute-with-lock for the in-process LocalLockService vs the distributed RedisLockService (throwaway Docker Redis), plus a bounded contended local scenario. Each operation uses a unique key (GUID) so cases are uncontended unless stated; the contended case measures coordination overhead under N contenders, not raw throughput.",
-  "runId": "BenchmarkRun-joined-2026-06-28-10-41-24",
-  "generatedAt": "2026-06-28T14:41:24.4518484+00:00",
+  "runId": "BenchmarkRun-joined-2026-07-02-14-58-10",
+  "generatedAt": "2026-07-02T14:58:11.039292+00:00",
+  "runStarted": "2026-07-02T14:54:56.4974498+00:00",
+  "runEnded": "2026-07-02T14:58:11.039292+00:00",
+  "durationSeconds": 194.5418422,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
-    "runtime": ".NET 10.0.9",
-    "os": "Linux Mint 22.1"
+    "runtime": ".NET 10.0.0",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+    "os": "Ubuntu 24.04.3 LTS",
+    "architecture": "X64",
+    "logicalCores": 14,
+    "physicalCores": 12,
+    "memoryBytes": 6442450944,
+    "gcMode": "Workstation",
+    "configuration": "Release",
+    "dotnetSdkVersion": "10.0.100"
   },
   "notes": []
 }

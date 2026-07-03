@@ -59,8 +59,13 @@ WORKDIR /src
 # python3 runs scripts/benchmarks/build-manifests.py (stdlib only) after a bench run. The OCR tests
 # also load the native libs at runtime (the build-stage symlinks in /src point back at these system
 # libs), so install them here too when this image's target selects the OCR project.
+#
+# fontconfig + fonts-dejavu-core: ClosedXML (Lyo.Xlsx) resolves font metrics for column auto-fit via
+# SixLabors.Fonts, which reads the OS font store. The SDK base image ships no fonts, so without these
+# the exporter throws "Unable to find font Calibri or fallback font DejaVu Sans" (the code already sets
+# DejaVuSans as the fallback engine; the font files just have to exist).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 \
+    && apt-get install -y --no-install-recommends python3 fontconfig fonts-dejavu-core \
     && if bash scripts/docker/resolve-targets.sh "$TARGET" | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
          apt-get install -y --no-install-recommends libleptonica-dev libtesseract5 tesseract-ocr-eng; \
        fi \
