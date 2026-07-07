@@ -23,8 +23,11 @@
         <ProjectReference Include="..\..\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Audit\Lyo.Audit\Lyo.Audit.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
     </ItemGroup>
 
 

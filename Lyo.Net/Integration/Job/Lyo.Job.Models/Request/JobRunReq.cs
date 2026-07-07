@@ -32,6 +32,27 @@ public sealed class JobRunReq
     /// <summary>Number of retry attempts (0 = first attempt).</summary>
     public int RetryAttempt { get; set; }
 
+    /// <summary>Message priority (0-9) for dispatch. Null = inherit from the definition.</summary>
+    public int? Priority { get; set; }
+
+    /// <summary>Caller-supplied key for idempotent run creation within a definition.</summary>
+    public string? IdempotencyKey { get; set; }
+
+    /// <summary>When true, the worker executes validation only and does not commit side effects.</summary>
+    public bool DryRun { get; set; }
+
+    /// <summary>Distributed trace id propagated through the run lifecycle.</summary>
+    public string? TraceId { get; set; }
+
+    /// <summary>Parent run when this run is part of a batch or fan-out.</summary>
+    public Guid? ParentJobRunId { get; set; }
+
+    /// <summary>Zero-based index within a parent batch. Null when not part of a batch.</summary>
+    public int? BatchIndex { get; set; }
+
+    /// <summary>Total items in a parent batch. Null when not part of a batch.</summary>
+    public int? BatchTotal { get; set; }
+
     public List<JobRunParameterReq> JobRunParameters { get; init; } = [];
 
     //no need for update or delete, jobs shouldn't be modified after the job run is created from definition

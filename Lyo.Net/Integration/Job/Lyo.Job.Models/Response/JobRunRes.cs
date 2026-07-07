@@ -54,6 +54,39 @@ public sealed record JobRunRes
     /// <summary>UTC timestamp of the last heartbeat from the worker. Null until the first heartbeat arrives.</summary>
     public DateTime? LastHeartbeatUtc { get; init; }
 
+    /// <summary>Message priority (0-9) used when the run was dispatched.</summary>
+    public int Priority { get; init; }
+
+    /// <summary>Completion percentage (0-100) reported by the worker. Null until the worker reports progress.</summary>
+    public int? ProgressPercent { get; init; }
+
+    /// <summary>Short human-readable progress message reported by the worker.</summary>
+    public string? ProgressMessage { get; init; }
+
+    /// <summary>Caller-supplied key for idempotent run creation within a definition.</summary>
+    public string? IdempotencyKey { get; init; }
+
+    /// <summary>When true, the worker executed validation only and did not commit side effects.</summary>
+    public bool DryRun { get; init; }
+
+    /// <summary>Whether an SLA breach was detected for this run.</summary>
+    public bool SlaBreached { get; init; }
+
+    /// <summary>Distributed trace id propagated through the run lifecycle.</summary>
+    public string? TraceId { get; init; }
+
+    /// <summary>Parent run when this run is part of a batch or fan-out.</summary>
+    public Guid? ParentJobRunId { get; init; }
+
+    /// <summary>Zero-based index within a parent batch. Null when not part of a batch.</summary>
+    public int? BatchIndex { get; init; }
+
+    /// <summary>Total items in a parent batch. Null when not part of a batch.</summary>
+    public int? BatchTotal { get; init; }
+
+    /// <summary>Snapshot of the definition version at run creation for audit correlation.</summary>
+    public int? DefinitionAuditVersion { get; init; }
+
     public T? GetResultValueAs<T>(string key, string? format = null)
     {
         var strValue = JobRunResults?.FirstOrDefault(i => i.Key.Equals(key))?.Value;

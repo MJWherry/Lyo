@@ -25,7 +25,13 @@ public sealed record JobScheduleRes(
     string? Description,
     bool Enabled,
     IReadOnlyList<JobScheduleParameterRes>? Parameters,
-    string? CronExpression = null)
+    string? CronExpression = null,
+    Enums.JobMisfirePolicy MisfirePolicy = Enums.JobMisfirePolicy.Skip,
+    DateTime? StartDateUtc = null,
+    DateTime? EndDateUtc = null,
+    string? TimeZoneId = null,
+    Guid? JobCalendarId = null,
+    JobCalendarRes? JobCalendar = null)
 {
     public override string ToString()
         => $"{Id.Truncated()} {Description ?? (Type == ScheduleType.SetTimes && Times?.Count > 0 ? $"Times: {string.Join(",", Times)}" : $"{StartTime} - {EndTime}, {IntervalMinutes}m Intervals")} Parameters={Parameters?.Count}";

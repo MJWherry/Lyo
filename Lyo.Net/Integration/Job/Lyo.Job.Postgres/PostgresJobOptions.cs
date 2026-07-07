@@ -16,4 +16,11 @@ public sealed class PostgresJobOptions : IPostgresMigrationConfig
 
     /// <inheritdoc />
     string IPostgresMigrationConfig.Schema => Schema;
+
+    /// <summary>Validates the options, throwing <see cref="ArgumentException" /> when invalid.</summary>
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(ConnectionString))
+            throw new ArgumentException($"{nameof(PostgresJobOptions)}.{nameof(ConnectionString)} is required.", nameof(ConnectionString));
+    }
 }

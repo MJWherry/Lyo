@@ -1,13 +1,17 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
+using Lyo.Api.Models.Builders;
 using Lyo.Common.Enums;
 using Lyo.Common.Identifiers;
+using Lyo.Encryption;
 using Lyo.Exceptions;
+using Lyo.Health;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Events;
 using Lyo.MessageQueue;
@@ -37,7 +41,13 @@ public static class Extensions
             .WithCrud(
                 ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    AfterCreate = ctx => JobAuditHelper.RecordCreated(ctx.Services, nameof(JobDefinition), ctx.Entity.Id),
+                    BeforeUpdate = ctx => {
+                        ctx.Entity.DefinitionVersion++;
+                        ctx.Entity.UpdatedTimestamp = DateTime.UtcNow;
+                    },
                     AfterUpdate = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobDefinition), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
                     },
                     BeforeDelete = ctx => {
@@ -66,8 +76,19 @@ public static class Extensions
             .WithCrud(
                 ApiFeatureSet.DefaultCrud,
                 new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
-                    AfterUpdate = ctx => app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult()
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        EncryptJobParameterEntity(ctx.Services, ctx.Entity);
+                    },
+                    AfterCreate = ctx => {
+                        JobAuditHelper.RecordCreated(ctx.Services, nameof(JobParameter), ctx.Entity.Id);
+                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                    },
+                    BeforeUpdate = ctx => EncryptJobParameterEntity(ctx.Services, ctx.Entity),
+                    AfterUpdate = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobParameter), ctx.Entity.Id);
+                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                    }
                 })
             .Build();
 
@@ -75,7 +96,12 @@ public static class Extensions
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    AfterCreate = ctx => {
+                        JobAuditHelper.RecordCreated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
+                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                    },
                     AfterUpdate = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
                     }
                 })
@@ -85,7 +111,14 @@ public static class Extensions
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    AfterCreate = ctx => {
+                        JobAuditHelper.RecordCreated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
+                        var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
+                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
+                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                    },
                     AfterUpdate = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
                         var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
@@ -136,7 +169,65 @@ public static class Extensions
             .WithCreate(ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres())
             .Build();
 
+        app.CreateBuilder<JobContext, JobWorkerInstance, JobWorkerInstanceReq, JobWorkerInstanceRes, Guid>(Constants.Rest.Job.WorkerInstances, "Job")
+            .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobCalendar, JobCalendarReq, JobCalendarRes, Guid>(Constants.Rest.Job.Calendars, "Job")
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeDelete = ctx => ctx.DbContext.JobCalendarWindows.RemoveRange(ctx.Entity.JobCalendarWindows),
+                    DeleteIncludes = ["JobCalendarWindows"]
+                })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobCalendarWindow, JobCalendarWindowReq, JobCalendarWindowRes, Guid>(Constants.Rest.Job.CalendarWindows, "Job")
+            .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobWorkflow, JobWorkflowReq, JobWorkflowRes, Guid>(Constants.Rest.Job.Workflows, "Job")
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeDelete = ctx => {
+                        var workflow = ctx.Entity;
+                        var db = ctx.DbContext;
+                        foreach (var run in workflow.JobWorkflowRuns)
+                            db.JobWorkflowRunSteps.RemoveRange(run.JobWorkflowRunSteps);
+
+                        db.JobWorkflowRuns.RemoveRange(workflow.JobWorkflowRuns);
+                        db.JobWorkflowSteps.RemoveRange(workflow.JobWorkflowSteps);
+                    },
+                    DeleteIncludes = ["JobWorkflowRuns", "JobWorkflowRuns.JobWorkflowRunSteps", "JobWorkflowSteps"]
+                })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobWorkflowStep, JobWorkflowStepReq, JobWorkflowStepRes, Guid>(Constants.Rest.Job.WorkflowSteps, "Job")
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeDelete = ctx => ctx.DbContext.JobWorkflowRunSteps.RemoveRange(ctx.Entity.JobWorkflowRunSteps),
+                    DeleteIncludes = ["JobWorkflowRunSteps"]
+                })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobWorkflowRun, JobWorkflowRunReq, JobWorkflowRunRes, Guid>(Constants.Rest.Job.WorkflowRuns, "Job")
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeDelete = ctx => ctx.DbContext.JobWorkflowRunSteps.RemoveRange(ctx.Entity.JobWorkflowRunSteps),
+                    DeleteIncludes = ["JobWorkflowRunSteps"]
+                })
+            .Build();
+
+        app.CreateBuilder<JobContext, JobWorkflowRunStep, JobWorkflowRunStepReq, JobWorkflowRunStepRes, Guid>(Constants.Rest.Job.WorkflowRunSteps, "Job")
+            .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
+            .Build();
+
         MapStatsEndpoint(app);
+        MapNextRunsEndpoint(app);
+        MapLifecycleEndpoints(app);
         return app;
     }
 
@@ -151,6 +242,93 @@ public static class Extensions
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
 
+    /// <summary>Maps the <c>GET /Job/Definition/{id}/NextRuns</c> endpoint. Called by <see cref="BuildJobGroup" />.</summary>
+    private static void MapNextRunsEndpoint(WebApplication app)
+        => app.MapGet(
+                $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/NextRuns", async (Guid id, int count, JobService jobService, CancellationToken ct) => {
+                    count = count > 0 ? count : 20;
+                    var nextRuns = await jobService.GetNextRuns(id, count, ct).ConfigureAwait(false);
+                    return Results.Ok(nextRuns);
+                })
+            .WithTags("Job")
+            .WithName("GetJobDefinitionNextRuns");
+
+    /// <summary>
+    /// Maps the run lifecycle endpoints that delegate to <see cref="JobService" /> (Create, Started, Finished, Cancel, Rerun, Log). These are required by
+    /// <c>Lyo.Job.Scheduler</c> and <c>Lyo.Job.Worker</c> and are mapped automatically by <see cref="BuildJobGroup" />.
+    /// </summary>
+    private static void MapLifecycleEndpoints(WebApplication app)
+    {
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/Create", async (JobRunReq req, JobService jobService, CancellationToken ct) => {
+                    var result = await jobService.CreateJobRun(req, ct).ConfigureAwait(false);
+                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result.Data) : Results.BadRequest(result.Error);
+                })
+            .WithTags("Job")
+            .WithName("CreateJobRun");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started", async (Guid id, JobService jobService) => {
+                    var (run, error) = await jobService.StartedJobRun(id).ConfigureAwait(false);
+                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                })
+            .WithTags("Job")
+            .WithName("StartedJobRun");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Finished", async (Guid id, IReadOnlyList<JobRunResultReq> results, JobService jobService) => {
+                    var (run, error) = await jobService.FinishedJobRun(id, results).ConfigureAwait(false);
+                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                })
+            .WithTags("Job")
+            .WithName("FinishedJobRun");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Cancel", async (Guid id, JobService jobService) => {
+                    var (run, error) = await jobService.CancelJobRun(id).ConfigureAwait(false);
+                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                })
+            .WithTags("Job")
+            .WithName("CancelJobRun");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Rerun", async (Guid id, JobService jobService) => {
+                    var result = await jobService.RerunJob(id).ConfigureAwait(false);
+                    return result is { IsSuccess: true } ? Results.Ok(result.Data) : Results.BadRequest(result?.Error);
+                })
+            .WithTags("Job")
+            .WithName("RerunJob");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Log", async (Guid id, JobRunLogReq req, JobService jobService) => {
+                    var result = await jobService.Log(id, req).ConfigureAwait(false);
+                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.RunLogs}/{result.Data!.Id}", result.Data) : Results.BadRequest(result.Error);
+                })
+            .WithTags("Job")
+            .WithName("LogJobRun");
+
+        app.MapPatch(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Heartbeat", async (Guid id, JobRunHeartbeatReq? req, JobService jobService, CancellationToken ct) => {
+                    var (run, error) = await jobService.HeartbeatJobRun(id, req, ct).ConfigureAwait(false);
+                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                })
+            .WithTags("Job")
+            .WithName("HeartbeatJobRun");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Children", async (Guid id, JobCreateChildRunsReq req, JobService jobService, CancellationToken ct) => {
+                    try {
+                        var children = await jobService.CreateChildRunsAsync(id, req, ct).ConfigureAwait(false);
+                        return Results.Ok(children);
+                    }
+                    catch (InvalidOperationException ex) {
+                        return Results.BadRequest(LyoProblemDetailsBuilder.Create().WithMessage(ex.Message).Build());
+                    }
+                })
+            .WithTags("Job")
+            .WithName("CreateChildJobRuns");
+    }
+
     /// <summary>Configures Mapster job entity mappings. Call when configuring Mapster (e.g. config.Apply(ConfigureJobMappings)).</summary>
     /// <remarks>
     /// All entity→Res mappings for positional record types use <c>MapWith()</c> to bypass <c>RecordTypeAdapter.CreateBlockExpression</c>, which throws "Collection was modified"
@@ -159,16 +337,33 @@ public static class Extensions
     /// </remarks>
     public static TypeAdapterConfig ConfigureJobMappings(this TypeAdapterConfig config)
     {
+        config.NewConfig<JobCalendarReq, JobCalendar>().Map(to => to.JobCalendarWindows, from => from.CreateWindows);
+
+        config.NewConfig<JobCalendarWindowReq, JobCalendarWindow>()
+            .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
+            .Map(dest => dest.StartTime, src => src.StartTime.ToString())
+            .Map(dest => dest.EndTime, src => src.EndTime.ToString())
+            .Map(dest => dest.Policy, src => src.Policy.ToString());
+
+        config.NewConfig<JobWorkflowReq, JobWorkflow>().Map(to => to.JobWorkflowSteps, from => from.CreateSteps);
+
+        config.NewConfig<JobWorkflowStepReq, JobWorkflowStep>()
+            .Map(dest => dest.FailurePolicy, src => src.FailurePolicy.ToString());
+
+        config.NewConfig<JobWorkflowRunReq, JobWorkflowRun>().Map(to => to.JobWorkflowRunSteps, from => from.CreateRunSteps);
+
         config.NewConfig<JobDefinitionReq, JobDefinition>()
             .Map(to => to.JobParameters, from => from.CreateParameters)
             .Map(to => to.JobSchedules, from => from.CreateSchedules)
-            .Map(to => to.JobTriggerJobDefinitions, from => from.CreateTriggers);
+            .Map(to => to.JobTriggerJobDefinitions, from => from.CreateTriggers)
+            .Map(to => to.RetryBackoffType, from => from.RetryBackoffType.ToString());
 
         config.NewConfig<JobScheduleReq, JobSchedule>()
             .Map(dest => dest.Times, src => (src.Times ?? Enumerable.Empty<TimeOnly>()).Select(i => i.ToString()).ToList())
             .Map(dest => dest.Type, src => src.Type.ToString())
             .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
-            .Map(dest => dest.MonthFlags, src => src.MonthFlags.ToString());
+            .Map(dest => dest.MonthFlags, src => src.MonthFlags.ToString())
+            .Map(dest => dest.MisfirePolicy, src => src.MisfirePolicy.ToString());
 
         config.NewConfig<JobTriggerReq, JobTrigger>()
             .Map(dest => dest.TriggerComparator, from => from.Comparison)
@@ -197,11 +392,55 @@ public static class Extensions
                 src.EndTime != null ? TimeOnly.Parse(src.EndTime) : null, src.IntervalMinutes, src.Description, src.Enabled,
                 src.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
                         p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                    .ToList(), src.CronExpression));
+                    .ToList(), src.CronExpression, Enum.Parse<JobMisfirePolicy>(src.MisfirePolicy), src.StartDateUtc, src.EndDateUtc, src.TimeZoneId, src.JobCalendarId,
+                src.JobCalendar == null
+                    ? null
+                    : new JobCalendarRes(
+                        src.JobCalendar.Id, src.JobCalendar.Name, src.JobCalendar.Description, src.JobCalendar.Enabled,
+                        src.JobCalendar.JobCalendarWindows.Select(w => new JobCalendarWindowRes(
+                                w.Id, w.JobCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
+                                Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
+                            .ToList())));
+
+        config.NewConfig<JobCalendar, JobCalendarRes>()
+            .MapWith(src => new(
+                src.Id, src.Name, src.Description, src.Enabled,
+                src.JobCalendarWindows.Select(w => new JobCalendarWindowRes(
+                        w.Id, w.JobCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
+                        Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
+                    .ToList()));
+
+        config.NewConfig<JobCalendarWindow, JobCalendarWindowRes>()
+            .MapWith(src => new(
+                src.Id, src.JobCalendarId, src.Name, Enum.Parse<DayFlags>(src.DayFlags), TimeOnly.Parse(src.StartTime), TimeOnly.Parse(src.EndTime),
+                Enum.Parse<JobBlackoutPolicy>(src.Policy), src.Enabled));
+
+        config.NewConfig<JobWorkflow, JobWorkflowRes>()
+            .MapWith(src => new(
+                src.Id, src.Name, src.Description, src.Enabled,
+                src.JobWorkflowSteps.Select(s => new JobWorkflowStepRes(
+                        s.Id, s.JobWorkflowId, s.JobDefinitionId, s.StepName, s.StepOrder, s.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(s.FailurePolicy),
+                        s.ParametersJson, s.Enabled, null))
+                    .ToList()));
+
+        config.NewConfig<JobWorkflowStep, JobWorkflowStepRes>()
+            .MapWith(src => new(
+                src.Id, src.JobWorkflowId, src.JobDefinitionId, src.StepName, src.StepOrder, src.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(src.FailurePolicy),
+                src.ParametersJson, src.Enabled, null));
+
+        config.NewConfig<JobWorkflowRun, JobWorkflowRunRes>()
+            .MapWith(src => new(
+                src.Id, src.JobWorkflowId, src.State, src.StartedTimestamp, src.FinishedTimestamp, src.CreatedTimestamp,
+                src.JobWorkflowRunSteps.Select(s => new JobWorkflowRunStepRes(s.Id, s.JobWorkflowRunId, s.JobWorkflowStepId, s.JobRunId, s.State, null, null)).ToList(),
+                null));
+
+        config.NewConfig<JobWorkflowRunStep, JobWorkflowRunStepRes>()
+            .MapWith(src => new(src.Id, src.JobWorkflowRunId, src.JobWorkflowStepId, src.JobRunId, src.State, null, null));
 
         config.NewConfig<JobParameter, JobParameterRes>()
             .MapWith(src => new(
-                src.Id, src.JobDefinitionId, src.Key, src.Description, Enum.Parse<JobParameterType>(src.Type), src.Value, src.EncryptedValue, src.AllowMultiple, true, src.Required,
+                src.Id, src.JobDefinitionId, src.Key, src.Description, Enum.Parse<JobParameterType>(src.Type), MaskParameterValue(src.Value, src.EncryptedValue),
+                MaskParameterEncryptedValue(src.EncryptedValue), src.AllowMultiple, true, src.Required,
                 src.ValidationRegex, src.MinLength, src.MaxLength, src.AllowedValues));
 
         config.NewConfig<JobParallelRestriction, JobParallelRestrictionRes>()
@@ -212,7 +451,8 @@ public static class Extensions
             .MapWith(src => new(
                 src.Id, src.Name, src.Description, src.Type, src.WorkerType, src.Enabled,
                 src.JobParameters.Select(p => new JobParameterRes(
-                        p.Id, p.JobDefinitionId, p.Key, p.Description, Enum.Parse<JobParameterType>(p.Type), p.Value, p.EncryptedValue, p.AllowMultiple, true, p.Required,
+                        p.Id, p.JobDefinitionId, p.Key, p.Description, Enum.Parse<JobParameterType>(p.Type), MaskParameterValue(p.Value, p.EncryptedValue),
+                        MaskParameterEncryptedValue(p.EncryptedValue), p.AllowMultiple, true, p.Required,
                         p.ValidationRegex, p.MinLength, p.MaxLength, p.AllowedValues))
                     .ToList(),
                 src.JobSchedules.Select(s => new JobScheduleRes(
@@ -221,7 +461,7 @@ public static class Extensions
                         s.EndTime != null ? TimeOnly.Parse(s.EndTime) : null, s.IntervalMinutes, s.Description, s.Enabled,
                         s.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
                                 p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                            .ToList(), s.CronExpression))
+                            .ToList(), s.CronExpression, Enum.Parse<JobMisfirePolicy>(s.MisfirePolicy), s.StartDateUtc, s.EndDateUtc, s.TimeZoneId, s.JobCalendarId, null))
                     .ToList(),
                 src.JobTriggerJobDefinitions.Select(t => new JobTriggerRes(
                         t.Id, t.TriggersJobDefinitionId, t.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(t.TriggerComparator), t.TriggerJobResultValue, t.Description,
@@ -233,7 +473,8 @@ public static class Extensions
                 src.JobParallelRestrictionBaseJobDefinitions
                     .Select(r => new JobParallelRestrictionRes(r.Id, r.BaseJobDefinitionId, r.OtherJobDefinitionId, r.Description, r.Enabled, null))
                     .ToList(), src.MaxRetryCount, src.RetryBackoffSeconds, src.TimeoutMinutes, src.MaxConcurrentRuns, src.CircuitBreakerThreshold, src.CircuitBreakerResetMinutes,
-                src.CircuitBreakerTrippedAt));
+                src.CircuitBreakerTrippedAt, Enum.Parse<JobRetryBackoffType>(src.RetryBackoffType), src.Priority, src.RetentionDays, src.MaxRunsPerHour, src.ExpectedDurationMinutes,
+                src.MustStartByMinutes, src.AlertOnFailure, src.AlertAfterConsecutiveFailures, src.AlertWebhookUrl, src.DefinitionVersion));
 
         config.NewConfig<JobRun, JobRunRes>()
             .MapWith(src => new() {
@@ -255,9 +496,21 @@ public static class Extensions
                 ScheduledSlotUtc = src.ScheduledSlotUtc,
                 RetryAttempt = src.RetryAttempt,
                 LastHeartbeatUtc = src.LastHeartbeatUtc,
+                Priority = src.Priority,
+                ProgressPercent = src.ProgressPercent,
+                ProgressMessage = src.ProgressMessage,
+                IdempotencyKey = src.IdempotencyKey,
+                DryRun = src.DryRun,
+                SlaBreached = src.SlaBreached,
+                TraceId = src.TraceId,
+                ParentJobRunId = src.ParentJobRunId,
+                BatchIndex = src.BatchIndex,
+                BatchTotal = src.BatchTotal,
+                DefinitionAuditVersion = src.DefinitionAuditVersion,
                 JobRunParameters =
                     src.JobRunParameters.Select(p => new JobRunParameterRes(
-                            p.Id, p.JobRunId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, p.EncryptedValue, false))
+                            p.Id, p.JobRunId, p.Key, Enum.Parse<JobParameterType>(p.Type), MaskParameterValue(p.Value, p.EncryptedValue), p.Description,
+                            MaskParameterEncryptedValue(p.EncryptedValue), false))
                         .ToList(),
                 JobRunResults = src.JobRunResults.Select(r => new JobRunResultRes(r.Id, r.JobRunId, r.Key, Enum.Parse<JobParameterType>(r.Type), r.Value)).ToList(),
                 JobRunLogs = src.JobRunLogs.Select(l => new JobRunLogRes(l.Id, l.JobRunId, Enum.Parse<JobLogLevel>(l.Level), l.Message, l.Context, l.StackTrace, l.Timestamp))
@@ -265,14 +518,40 @@ public static class Extensions
             });
 
         config.NewConfig<JobRunParameter, JobRunParameterRes>()
-            .MapWith(src => new(src.Id, src.JobRunId, src.Key, Enum.Parse<JobParameterType>(src.Type), src.Value, src.Description, src.EncryptedValue, false));
+            .MapWith(src => new(
+                src.Id, src.JobRunId, src.Key, Enum.Parse<JobParameterType>(src.Type), MaskParameterValue(src.Value, src.EncryptedValue), src.Description,
+                MaskParameterEncryptedValue(src.EncryptedValue), false));
 
         config.NewConfig<JobRunResult, JobRunResultRes>().MapWith(src => new(src.Id, src.JobRunId, src.Key, Enum.Parse<JobParameterType>(src.Type), src.Value));
         config.NewConfig<JobRunLog, JobRunLogRes>()
             .MapWith(src => new(src.Id, src.JobRunId, Enum.Parse<JobLogLevel>(src.Level), src.Message, src.Context, src.StackTrace, src.Timestamp));
 
+        config.NewConfig<JobRunReq, JobRun>().Map(dest => dest.Priority, src => src.Priority ?? 0);
+        config.NewConfig<JobWorkerInstanceReq, JobWorkerInstance>().Map(dest => dest.State, src => src.State.ToString());
+        config.NewConfig<JobWorkerInstance, JobWorkerInstanceRes>()
+            .MapWith(src => new(
+                src.Id, src.WorkerType, src.MachineName, src.ProcessId, Enum.Parse<JobWorkerInstanceState>(src.State), src.InFlightCount, src.StartedTimestamp,
+                src.LastHeartbeatUtc));
+
         return config;
     }
+
+    private static void EncryptJobParameterEntity(IServiceProvider services, JobParameter entity)
+    {
+        var encryption = services.GetService<IJobParameterEncryptionService>();
+        if (encryption is null)
+            return;
+
+        var value = entity.Value;
+        var encrypted = entity.EncryptedValue;
+        encryption.EncryptParameterValue(ref value, ref encrypted);
+        entity.Value = value;
+        entity.EncryptedValue = encrypted ?? entity.EncryptedValue;
+    }
+
+    private static string? MaskParameterValue(string? value, byte[]? encryptedValue) => encryptedValue is not null ? "***" : value;
+
+    private static byte[]? MaskParameterEncryptedValue(byte[]? encryptedValue) => encryptedValue is not null ? null : encryptedValue;
 
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
@@ -335,7 +614,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            options.Validate();
             services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<JobContext, PostgresJobOptions>();
             services.AddDbContextFactory<JobContext>(dbOptions => dbOptions.UseNpgsql(
@@ -385,13 +664,44 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout) and resets circuit breakers. Requires
-        /// <see cref="IDbContextFactory{JobContext}" /> to be registered (call <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
+        /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout), resets circuit breakers, purges old
+        /// run history per retention settings, and prunes stale worker instances. Requires <see cref="IDbContextFactory{JobContext}" /> to be registered (call
+        /// <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
         /// </summary>
-        public IServiceCollection AddJobMaintenanceService()
+        /// <param name="configure">Optional action to configure <see cref="JobMaintenanceOptions" />.</param>
+        public IServiceCollection AddJobMaintenanceService(Action<JobMaintenanceOptions>? configure = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddHostedService<JobMaintenanceService>();
+            var options = new JobMaintenanceOptions();
+            configure?.Invoke(options);
+            options.Validate();
+            services.TryAddSingleton(options);
+            return services.AddJobMaintenanceServiceCore();
+        }
+
+        /// <summary>
+        /// Adds <see cref="JobMaintenanceService" /> like <see cref="AddJobMaintenanceService(IServiceCollection, Action{JobMaintenanceOptions}?)" />, binding
+        /// <see cref="JobMaintenanceOptions" /> from configuration and validating them on host start.
+        /// </summary>
+        public IServiceCollection AddJobMaintenanceServiceFromConfiguration(IConfiguration configuration, string configSectionName = JobMaintenanceOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddOptions<JobMaintenanceOptions>()
+                .Bind(configuration.GetSection(configSectionName))
+                .Validate(o => o.GetValidationErrors().Count == 0, $"Invalid {nameof(JobMaintenanceOptions)} — see {nameof(JobMaintenanceOptions.GetValidationErrors)}.")
+                .ValidateOnStart();
+
+            services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMaintenanceOptions>>().Value);
+            return services.AddJobMaintenanceServiceCore();
+        }
+
+        private IServiceCollection AddJobMaintenanceServiceCore()
+        {
+            services.AddSingleton<JobMaintenanceService>();
+            services.AddSingleton<IHealth>(p => p.GetRequiredService<JobMaintenanceService>());
+            services.AddHostedService(p => p.GetRequiredService<JobMaintenanceService>());
             return services;
         }
 
@@ -404,6 +714,19 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
             services.AddHostedService<JobEventPublisherStartupService>();
+            return services;
+        }
+
+        /// <summary>Registers <see cref="JobParameterEncryptionService" /> using an optional keyed <see cref="IEncryptionService" />.</summary>
+        /// <param name="keyName">Keyed service name for <see cref="IEncryptionService" />.</param>
+        public IServiceCollection AddJobParameterEncryption(string keyName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            services.TryAddSingleton<IJobParameterEncryptionService>(sp => {
+                var encryption = sp.GetKeyedService<IEncryptionService>(keyName);
+                return new JobParameterEncryptionService(encryption, keyName, sp.GetService<Microsoft.Extensions.Logging.ILogger<JobParameterEncryptionService>>());
+            });
             return services;
         }
     }

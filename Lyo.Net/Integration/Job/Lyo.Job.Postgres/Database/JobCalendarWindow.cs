@@ -1,0 +1,39 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Lyo.Job.Postgres.Database;
+
+public class JobCalendarWindow
+{
+    public Guid Id { get; set; }
+
+    public Guid JobCalendarId { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = null!;
+
+    [Required]
+    [MaxLength(51)]
+    public string DayFlags { get; set; } = null!;
+
+    [Required]
+    [MaxLength(8)]
+    public string StartTime { get; set; } = null!;
+
+    [Required]
+    [MaxLength(8)]
+    public string EndTime { get; set; } = null!;
+
+    /// <summary>How runs that fall inside this window are handled. Stored as string.</summary>
+    [Required]
+    [MaxLength(10)]
+    public string Policy { get; set; } = nameof(Models.Enums.JobBlackoutPolicy.Skip);
+
+    public bool Enabled { get; set; }
+
+    public DateTime CreatedTimestamp { get; set; }
+
+    public DateTime? UpdatedTimestamp { get; set; }
+
+    public virtual JobCalendar JobCalendar { get; set; } = null!;
+}

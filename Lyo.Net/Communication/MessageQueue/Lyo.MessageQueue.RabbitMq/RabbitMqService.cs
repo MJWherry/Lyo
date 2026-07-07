@@ -520,6 +520,48 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
     };
 
+    /// <inheritdoc />
+    public async Task<bool> SendToQueueWithPriority(string queueName, byte[] data, byte priority)
+    {
+        if (string.IsNullOrWhiteSpace(queueName)) {
+            _logger.LogWarning("Cannot send to queue: queue name is null or empty");
+            return false;
+        }
+
+        if (data.Length == 0) {
+            _logger.LogWarning("Cannot send to queue {QueueName}: data is null or empty", queueName);
+            return false;
+        }
+
+        if (!IsConnected()) {
+            _logger.LogWarning("Cannot send to queue {QueueName}: not connected", queueName);
+            if (_options.EnableMetrics)
+                _metrics.IncrementCounter(Constants.Metrics.SendToQueueFailure, 1, [(Constants.Metrics.Tags.Queue, queueName), (Constants.Metrics.Tags.Reason, "not_connected")]);
+
+            return false;
+        }
+
+        try {
+            var properties = CreateBasicProperties();
+            properties.Priority = priority;
+            await _publishChannel!.BasicPublishAsync(string.Empty, queueName, false, properties, data).ConfigureAwait(false);
+            _logger.LogDebug("Sent message to queue {QueueName} with priority {Priority} ({Size} bytes)", queueName, priority, data.Length);
+            if (_options.EnableMetrics)
+                _metrics.IncrementCounter(Constants.Metrics.SendToQueueSuccess, 1, [(Constants.Metrics.Tags.Queue, queueName)]);
+
+            return true;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to send prioritized message to queue {QueueName}", queueName);
+            if (_options.EnableMetrics) {
+                _metrics.IncrementCounter(Constants.Metrics.SendToQueueFailure, 1, [(Constants.Metrics.Tags.Queue, queueName), (Constants.Metrics.Tags.Reason, "exception")]);
+                _metrics.RecordError(Constants.Metrics.SendToQueueDuration, ex, [(Constants.Metrics.Tags.Queue, queueName)]);
+            }
+
+            return false;
+        }
+    }
+
     public async Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data)
     {
         if (string.IsNullOrWhiteSpace(exchangeName)) {

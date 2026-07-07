@@ -1,6 +1,7 @@
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
 @using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.DataGrid
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -33,6 +34,23 @@
         <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition"/>
         <LyoProjectedColumn Field="State" Title="State"/>
         <LyoProjectedColumn Field="Result" Title="Result"/>
+        <TemplateColumn T="object?" Title="Progress" Sortable="false" Hideable="true">
+            <CellTemplate Context="cell">
+                @{
+                    var percent = ProjectedValueHelper.ConvertTo<int?>(ProjectedValueHelper.GetValue(cell.Item, "ProgressPercent"));
+                }
+                @if (percent is int p) {
+                    <MudStack Spacing="0">
+                        <MudProgressLinear Color="Color.Primary" Value="@p" Class="my-1"/>
+                        <MudText Typo="Typo.caption">@p% @(ProjectedValueHelper.GetDisplayValue(cell.Item, "ProgressMessage"))</MudText>
+                    </MudStack>
+                }
+                else {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">-</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="ProgressPercent" Title="Progress %" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="CreatedTimestamp" Title="Created"/>
         <LyoProjectedColumn Field="StartedTimestamp" Title="Started"/>
         <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished"/>

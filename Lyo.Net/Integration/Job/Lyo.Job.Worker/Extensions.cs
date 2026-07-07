@@ -1,5 +1,7 @@
 using Lyo.Api.Client;
+using Lyo.Exceptions;
 using Lyo.Job.Models.Events;
+using Lyo.Job.Models.Security;
 using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -32,17 +34,22 @@ public static class Extensions
         string? dlqName = null)
         where TWorker : JobWorkerBase
     {
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(workerType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(apiBaseUrl);
         services.AddSingleton<TWorker>(sp => {
             var mqService = sp.GetRequiredService<IMqService>();
             var apiClient = sp.GetRequiredService<IApiClient>();
             var eventPublisher = sp.GetRequiredService<IJobEventPublisher>();
+            var parameterEncryption = sp.GetService<IJobParameterEncryptionService>();
             var logger = sp.GetService<ILogger<TWorker>>();
             var metrics = sp.GetService<IMetrics>();
             var workerOptions = sp.GetService<QueueWorkerOptions>() ?? new QueueWorkerOptions();
             var effectiveMaxRequeue = maxRequeueCount ?? workerOptions.DefaultMaxRequeueCount;
             var effectiveDlqName = dlqName ?? $"{Models.Constants.Mq.QueueGetJobRunCreated(workerType)}.dlq";
             var worker = (TWorker)Activator.CreateInstance(
-                typeof(TWorker), mqService, apiClient, eventPublisher, workerType, apiBaseUrl, logger, metrics, effectiveMaxRequeue, effectiveDlqName)!;
+                typeof(TWorker), mqService, apiClient, eventPublisher, workerType, apiBaseUrl, logger, metrics, effectiveMaxRequeue, effectiveDlqName,
+                parameterEncryption)!;
 
             // Set post-construction (not via ctor) to preserve the QueueWorkerBase constructor signature for binary compatibility.
             worker.RequeueDelay = workerOptions.RequeueDelay;

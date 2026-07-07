@@ -1,3 +1,5 @@
+using Lyo.Job.Models.Enums;
+
 namespace Lyo.Job.Models.Events;
 
 /// <summary>
@@ -16,8 +18,9 @@ public interface IJobEventPublisher
     /// <summary>Send the newly-created run ID to the per-worker-type delivery queue and broadcast the creation event to any interested subscribers.</summary>
     /// <param name="runId">The ID of the newly created job run.</param>
     /// <param name="workerType">The worker type used to derive the target queue name.</param>
+    /// <param name="priority">Message priority (0 = default). Honored only when the transport and queue support priorities; otherwise ignored.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task PublishRunCreatedAsync(Guid runId, string workerType, CancellationToken ct = default);
+    Task PublishRunCreatedAsync(Guid runId, string workerType, int priority = 0, CancellationToken ct = default);
 
     /// <summary>Broadcast that a run has started executing.</summary>
     /// <param name="runId">The ID of the job run that started.</param>
@@ -38,6 +41,14 @@ public interface IJobEventPublisher
     /// <param name="definitionId">The ID of the changed job definition.</param>
     /// <param name="ct">Cancellation token.</param>
     Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default);
+
+    /// <summary>Broadcast a job alert (failure, circuit breaker, dead job, SLA breach) to <c>job.notifications.alert</c>.</summary>
+    /// <param name="definitionId">The job definition the alert relates to.</param>
+    /// <param name="runId">The job run id, when applicable.</param>
+    /// <param name="alertType">Alert category.</param>
+    /// <param name="message">Human-readable alert message.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default);
 
     /// <summary>Subscribe to definition-change notifications. The scheduler calls this once on startup to invalidate its in-memory cache whenever a definition is updated.</summary>
     /// <param name="subscriberQueueName">The queue name to bind/subscribe on (transport-specific).</param>

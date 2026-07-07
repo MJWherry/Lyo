@@ -5,6 +5,10 @@ namespace Lyo.Job.Postgres.Database;
 
 public partial class JobContext : DbContext
 {
+    public virtual DbSet<JobCalendar> JobCalendars { get; set; }
+
+    public virtual DbSet<JobCalendarWindow> JobCalendarWindows { get; set; }
+
     public virtual DbSet<JobDefinition> JobDefinitions { get; set; }
 
     public virtual DbSet<JobFileUpload> JobFileUploads { get; set; }
@@ -29,12 +33,55 @@ public partial class JobContext : DbContext
 
     public virtual DbSet<JobTriggerParameter> JobTriggerParameters { get; set; }
 
+    public virtual DbSet<JobWorkerInstance> JobWorkerInstances { get; set; }
+
+    public virtual DbSet<JobWorkflow> JobWorkflows { get; set; }
+
+    public virtual DbSet<JobWorkflowRun> JobWorkflowRuns { get; set; }
+
+    public virtual DbSet<JobWorkflowRunStep> JobWorkflowRunSteps { get; set; }
+
+    public virtual DbSet<JobWorkflowStep> JobWorkflowSteps { get; set; }
+
     public JobContext(DbContextOptions<JobContext> options)
         : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("job");
+        modelBuilder.Entity<JobCalendar>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_calendar");
+            entity.ToTable("job_calendar");
+            entity.HasIndex(e => e.Name, "ix_job_calendar_name");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+        });
+
+        modelBuilder.Entity<JobCalendarWindow>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_calendar_window");
+            entity.ToTable("job_calendar_window");
+            entity.HasIndex(e => e.JobCalendarId, "ix_job_calendar_window_job_calendar_id");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.JobCalendarId).HasColumnName("job_calendar_id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
+            entity.Property(e => e.StartTime).HasMaxLength(8).HasColumnName("start_time");
+            entity.Property(e => e.EndTime).HasMaxLength(8).HasColumnName("end_time");
+            entity.Property(e => e.Policy).HasMaxLength(10).HasDefaultValue(nameof(JobBlackoutPolicy.Skip)).HasColumnName("policy");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+            entity.HasOne(d => d.JobCalendar)
+                .WithMany(p => p.JobCalendarWindows)
+                .HasForeignKey(d => d.JobCalendarId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_calendar_window_job_calendar_job_calendar_id");
+        });
+
         modelBuilder.Entity<JobDefinition>(entity => {
             entity.HasKey(e => e.Id).HasName("pk_job_definition");
             entity.ToTable("job_definition");
@@ -47,11 +94,21 @@ public partial class JobContext : DbContext
             entity.Property(e => e.WorkerType).HasMaxLength(7).HasColumnName("worker_type");
             entity.Property(e => e.MaxRetryCount).HasDefaultValue(0).HasColumnName("max_retry_count");
             entity.Property(e => e.RetryBackoffSeconds).HasDefaultValue(0).HasColumnName("retry_backoff_seconds");
+            entity.Property(e => e.RetryBackoffType).HasMaxLength(12).HasDefaultValue(nameof(JobRetryBackoffType.Linear)).HasColumnName("retry_backoff_type");
+            entity.Property(e => e.Priority).HasDefaultValue(0).HasColumnName("priority");
+            entity.Property(e => e.RetentionDays).HasDefaultValue(0).HasColumnName("retention_days");
             entity.Property(e => e.TimeoutMinutes).HasDefaultValue(0).HasColumnName("timeout_minutes");
             entity.Property(e => e.MaxConcurrentRuns).HasDefaultValue(0).HasColumnName("max_concurrent_runs");
             entity.Property(e => e.CircuitBreakerThreshold).HasDefaultValue(0).HasColumnName("circuit_breaker_threshold");
             entity.Property(e => e.CircuitBreakerResetMinutes).HasDefaultValue(0).HasColumnName("circuit_breaker_reset_minutes");
             entity.Property(e => e.CircuitBreakerTrippedAt).HasColumnType("timestamp with time zone").HasColumnName("circuit_breaker_tripped_at");
+            entity.Property(e => e.MaxRunsPerHour).HasDefaultValue(0).HasColumnName("max_runs_per_hour");
+            entity.Property(e => e.ExpectedDurationMinutes).HasDefaultValue(0).HasColumnName("expected_duration_minutes");
+            entity.Property(e => e.MustStartByMinutes).HasDefaultValue(0).HasColumnName("must_start_by_minutes");
+            entity.Property(e => e.AlertOnFailure).HasDefaultValue(false).HasColumnName("alert_on_failure");
+            entity.Property(e => e.AlertAfterConsecutiveFailures).HasDefaultValue(0).HasColumnName("alert_after_consecutive_failures");
+            entity.Property(e => e.AlertWebhookUrl).HasMaxLength(500).HasColumnName("alert_webhook_url");
+            entity.Property(e => e.DefinitionVersion).HasDefaultValue(1).HasColumnName("definition_version");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         });
@@ -153,6 +210,22 @@ public partial class JobContext : DbContext
             entity.Property(e => e.ScheduledSlotUtc).HasColumnType("timestamp with time zone").HasColumnName("scheduled_slot_utc");
             entity.Property(e => e.RetryAttempt).HasDefaultValue(0).HasColumnName("retry_attempt");
             entity.Property(e => e.LastHeartbeatUtc).HasColumnType("timestamp with time zone").HasColumnName("last_heartbeat_utc");
+            entity.Property(e => e.Priority).HasDefaultValue(0).HasColumnName("priority");
+            entity.Property(e => e.ProgressPercent).HasColumnName("progress_percent");
+            entity.Property(e => e.ProgressMessage).HasMaxLength(500).HasColumnName("progress_message");
+            entity.Property(e => e.IdempotencyKey).HasMaxLength(128).HasColumnName("idempotency_key");
+            entity.Property(e => e.DryRun).HasDefaultValue(false).HasColumnName("dry_run");
+            entity.Property(e => e.SlaBreached).HasDefaultValue(false).HasColumnName("sla_breached");
+            entity.Property(e => e.TraceId).HasMaxLength(64).HasColumnName("trace_id");
+            entity.Property(e => e.ParentJobRunId).HasColumnName("parent_job_run_id");
+            entity.Property(e => e.BatchIndex).HasColumnName("batch_index");
+            entity.Property(e => e.BatchTotal).HasColumnName("batch_total");
+            entity.Property(e => e.DefinitionAuditVersion).HasColumnName("definition_audit_version");
+            entity.HasIndex(e => new { e.JobDefinitionId, e.IdempotencyKey })
+                .HasFilter("idempotency_key IS NOT NULL")
+                .IsUnique()
+                .HasDatabaseName("ix_job_run_idempotency_key_unique");
+            entity.HasIndex(e => e.ParentJobRunId, "ix_job_run_parent_job_run_id");
             entity.HasIndex(e => new { e.JobScheduleId, e.ScheduledSlotUtc })
                 .HasFilter("job_schedule_id IS NOT NULL AND scheduled_slot_utc IS NOT NULL")
                 .IsUnique()
@@ -171,6 +244,10 @@ public partial class JobContext : DbContext
                 .WithMany(p => p.InverseTriggeredByJobRun)
                 .HasForeignKey(d => d.TriggeredByJobRunId)
                 .HasConstraintName("fk_job_run_triggered_by");
+            entity.HasOne(d => d.ParentJobRun)
+                .WithMany(p => p.InverseParentJobRun)
+                .HasForeignKey(d => d.ParentJobRunId)
+                .HasConstraintName("fk_job_run_parent");
         });
 
         modelBuilder.Entity<JobRunLog>(entity => {
@@ -232,6 +309,7 @@ public partial class JobContext : DbContext
             entity.HasKey(e => e.Id).HasName("pk_job_schedule");
             entity.ToTable("job_schedule");
             entity.HasIndex(e => e.JobDefinitionId, "ix_job_schedule_job_definition_id");
+            entity.HasIndex(e => e.JobCalendarId, "ix_job_schedule_job_calendar_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
@@ -239,6 +317,11 @@ public partial class JobContext : DbContext
             entity.Property(e => e.EndTime).HasMaxLength(8).HasColumnName("end_time");
             entity.Property(e => e.IntervalMinutes).HasColumnName("interval_minutes");
             entity.Property(e => e.CronExpression).HasMaxLength(120).HasColumnName("cron_expression");
+            entity.Property(e => e.MisfirePolicy).HasMaxLength(12).HasDefaultValue(nameof(JobMisfirePolicy.Skip)).HasColumnName("misfire_policy");
+            entity.Property(e => e.StartDateUtc).HasColumnType("timestamp with time zone").HasColumnName("start_date_utc");
+            entity.Property(e => e.EndDateUtc).HasColumnType("timestamp with time zone").HasColumnName("end_date_utc");
+            entity.Property(e => e.TimeZoneId).HasMaxLength(64).HasColumnName("time_zone_id");
+            entity.Property(e => e.JobCalendarId).HasColumnName("job_calendar_id");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
             entity.Property(e => e.MonthFlags).HasMaxLength(108).HasColumnName("month_flags");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
@@ -251,6 +334,10 @@ public partial class JobContext : DbContext
                 .HasForeignKey(d => d.JobDefinitionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
+            entity.HasOne(d => d.JobCalendar)
+                .WithMany(p => p.JobSchedules)
+                .HasForeignKey(d => d.JobCalendarId)
+                .HasConstraintName("fk_job_schedule_job_calendar_job_calendar_id");
         });
 
         modelBuilder.Entity<JobScheduleParameter>(entity => {
@@ -324,6 +411,111 @@ public partial class JobContext : DbContext
                 .HasConstraintName("fk_job_trigger_parameter_job_trigger_job_trigger_id");
         });
 
+        modelBuilder.Entity<JobWorkerInstance>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_worker_instance");
+            entity.ToTable("job_worker_instance");
+            entity.HasIndex(e => e.WorkerType, "ix_job_worker_instance_worker_type");
+            entity.HasIndex(e => e.LastHeartbeatUtc, "ix_job_worker_instance_last_heartbeat_utc");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.WorkerType).HasMaxLength(50).HasColumnName("worker_type");
+            entity.Property(e => e.MachineName).HasMaxLength(100).HasColumnName("machine_name");
+            entity.Property(e => e.ProcessId).HasColumnName("process_id");
+            entity.Property(e => e.State).HasMaxLength(10).HasColumnName("state");
+            entity.Property(e => e.InFlightCount).HasDefaultValue(0).HasColumnName("in_flight_count");
+            entity.Property(e => e.StartedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("started_timestamp");
+            entity.Property(e => e.LastHeartbeatUtc).HasColumnType("timestamp with time zone").HasColumnName("last_heartbeat_utc");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+        });
+
+        modelBuilder.Entity<JobWorkflow>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_workflow");
+            entity.ToTable("job_workflow");
+            entity.HasIndex(e => e.Name, "ix_job_workflow_name");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+        });
+
+        modelBuilder.Entity<JobWorkflowStep>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_workflow_step");
+            entity.ToTable("job_workflow_step");
+            entity.HasIndex(e => e.JobWorkflowId, "ix_job_workflow_step_job_workflow_id");
+            entity.HasIndex(e => e.JobDefinitionId, "ix_job_workflow_step_job_definition_id");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.JobWorkflowId).HasColumnName("job_workflow_id");
+            entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
+            entity.Property(e => e.StepName).HasMaxLength(100).HasColumnName("step_name");
+            entity.Property(e => e.StepOrder).HasColumnName("step_order");
+            entity.Property(e => e.DependsOnStepIds).HasColumnName("depends_on_step_ids");
+            entity.Property(e => e.FailurePolicy).HasMaxLength(20).HasDefaultValue(nameof(JobWorkflowFailurePolicy.Stop)).HasColumnName("failure_policy");
+            entity.Property(e => e.ParametersJson).HasColumnName("parameters_json");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+            entity.HasOne(d => d.JobWorkflow)
+                .WithMany(p => p.JobWorkflowSteps)
+                .HasForeignKey(d => d.JobWorkflowId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_workflow_step_job_workflow_job_workflow_id");
+            entity.HasOne(d => d.JobDefinition)
+                .WithMany(p => p.JobWorkflowSteps)
+                .HasForeignKey(d => d.JobDefinitionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_workflow_step_job_definition_job_definition_id");
+        });
+
+        modelBuilder.Entity<JobWorkflowRun>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_workflow_run");
+            entity.ToTable("job_workflow_run");
+            entity.HasIndex(e => e.JobWorkflowId, "ix_job_workflow_run_job_workflow_id");
+            entity.HasIndex(e => e.State, "ix_job_workflow_run_state");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.JobWorkflowId).HasColumnName("job_workflow_id");
+            entity.Property(e => e.State).HasConversion(v => v.ToString(), v => ToJobWorkflowRunState(v)).HasMaxLength(20).HasColumnName("state");
+            entity.Property(e => e.StartedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("started_timestamp");
+            entity.Property(e => e.FinishedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("finished_timestamp");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+            entity.HasOne(d => d.JobWorkflow)
+                .WithMany(p => p.JobWorkflowRuns)
+                .HasForeignKey(d => d.JobWorkflowId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_workflow_run_job_workflow_job_workflow_id");
+        });
+
+        modelBuilder.Entity<JobWorkflowRunStep>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_workflow_run_step");
+            entity.ToTable("job_workflow_run_step");
+            entity.HasIndex(e => e.JobWorkflowRunId, "ix_job_workflow_run_step_job_workflow_run_id");
+            entity.HasIndex(e => e.JobWorkflowStepId, "ix_job_workflow_run_step_job_workflow_step_id");
+            entity.HasIndex(e => e.JobRunId, "ix_job_workflow_run_step_job_run_id");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            entity.Property(e => e.JobWorkflowRunId).HasColumnName("job_workflow_run_id");
+            entity.Property(e => e.JobWorkflowStepId).HasColumnName("job_workflow_step_id");
+            entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
+            entity.Property(e => e.State).HasConversion(v => v.ToString(), v => ToJobWorkflowStepState(v)).HasMaxLength(20).HasColumnName("state");
+            entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+            entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+            entity.HasOne(d => d.JobWorkflowRun)
+                .WithMany(p => p.JobWorkflowRunSteps)
+                .HasForeignKey(d => d.JobWorkflowRunId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_workflow_run_step_job_workflow_run_job_workflow_run_id");
+            entity.HasOne(d => d.JobWorkflowStep)
+                .WithMany(p => p.JobWorkflowRunSteps)
+                .HasForeignKey(d => d.JobWorkflowStepId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_job_workflow_run_step_job_workflow_step_job_workflow_step_id");
+            entity.HasOne(d => d.JobRun)
+                .WithMany(p => p.JobWorkflowRunSteps)
+                .HasForeignKey(d => d.JobRunId)
+                .HasConstraintName("fk_job_workflow_run_step_job_run_job_run_id");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 
@@ -331,12 +523,26 @@ public partial class JobContext : DbContext
 
     private static JobState ToJobState(string v) => (JobState)Enum.Parse(typeof(JobState), v, true);
 
+    private static Models.Enums.JobWorkflowRunState ToJobWorkflowRunState(string v)
+        => (Models.Enums.JobWorkflowRunState)Enum.Parse(typeof(Models.Enums.JobWorkflowRunState), v, true);
+
+    private static Models.Enums.JobWorkflowStepState ToJobWorkflowStepState(string v)
+        => (Models.Enums.JobWorkflowStepState)Enum.Parse(typeof(Models.Enums.JobWorkflowStepState), v, true);
+
     public override int SaveChanges()
     {
         var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries()) {
             if (entry.State == EntityState.Added) {
-                if (entry.Entity is JobDefinition d) {
+                if (entry.Entity is JobCalendar c) {
+                    if (c.CreatedTimestamp == default)
+                        c.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobCalendarWindow cw) {
+                    if (cw.CreatedTimestamp == default)
+                        cw.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobDefinition d) {
                     if (d.CreatedTimestamp == default)
                         d.CreatedTimestamp = now;
                 }
@@ -368,9 +574,33 @@ public partial class JobContext : DbContext
                     if (tp.CreatedTimestamp == default)
                         tp.CreatedTimestamp = now;
                 }
+                else if (entry.Entity is JobWorkerInstance w) {
+                    if (w.CreatedTimestamp == default)
+                        w.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobWorkflow wf) {
+                    if (wf.CreatedTimestamp == default)
+                        wf.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobWorkflowStep wfs) {
+                    if (wfs.CreatedTimestamp == default)
+                        wfs.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobWorkflowRun wfr) {
+                    if (wfr.CreatedTimestamp == default)
+                        wfr.CreatedTimestamp = now;
+                }
+                else if (entry.Entity is JobWorkflowRunStep wfrs) {
+                    if (wfrs.CreatedTimestamp == default)
+                        wfrs.CreatedTimestamp = now;
+                }
             }
             else if (entry.State == EntityState.Modified) {
-                if (entry.Entity is JobDefinition d)
+                if (entry.Entity is JobCalendar c)
+                    c.UpdatedTimestamp = now;
+                else if (entry.Entity is JobCalendarWindow cw)
+                    cw.UpdatedTimestamp = now;
+                else if (entry.Entity is JobDefinition d)
                     d.UpdatedTimestamp = now;
                 else if (entry.Entity is JobFileUpload f)
                     f.UpdatedTimestamp = now;
@@ -388,6 +618,16 @@ public partial class JobContext : DbContext
                     t.UpdatedTimestamp = now;
                 else if (entry.Entity is JobTriggerParameter tp)
                     tp.UpdatedTimestamp = now;
+                else if (entry.Entity is JobWorkerInstance w)
+                    w.UpdatedTimestamp = now;
+                else if (entry.Entity is JobWorkflow wf)
+                    wf.UpdatedTimestamp = now;
+                else if (entry.Entity is JobWorkflowStep wfs)
+                    wfs.UpdatedTimestamp = now;
+                else if (entry.Entity is JobWorkflowRun wfr)
+                    wfr.UpdatedTimestamp = now;
+                else if (entry.Entity is JobWorkflowRunStep wfrs)
+                    wfrs.UpdatedTimestamp = now;
             }
         }
 

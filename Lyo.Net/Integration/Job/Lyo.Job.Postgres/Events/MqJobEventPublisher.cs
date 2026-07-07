@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Lyo.Job.Models;
+using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging;
@@ -41,11 +42,12 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     }
 
     /// <inheritdoc />
-    public async Task PublishRunCreatedAsync(Guid runId, string workerType, CancellationToken ct = default)
+    public async Task PublishRunCreatedAsync(Guid runId, string workerType, int priority = 0, CancellationToken ct = default)
     {
         var queue = Constants.Mq.QueueGetJobRunCreated(workerType);
-        _logger.LogDebug("Publishing run {RunId} created → queue {Queue}", runId, queue);
-        await _mqService.SendToQueueWithEnvelopeAsync(queue, runId, traceId: Activity.Current?.TraceId.ToString()).ConfigureAwait(false);
+        _logger.LogDebug("Publishing run {RunId} created → queue {Queue} (priority {Priority})", runId, queue, priority);
+        var clampedPriority = (byte)Math.Clamp(priority, 0, byte.MaxValue);
+        await _mqService.SendToQueueWithEnvelopeAsync(queue, runId, traceId: Activity.Current?.TraceId.ToString(), priority: clampedPriority).ConfigureAwait(false);
         await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(runId)).ConfigureAwait(false);
     }
 
@@ -78,6 +80,14 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         _logger.LogDebug("Publishing definition {DefinitionId} updated", definitionId);
         await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobDefinitionChangeKey, JsonSerializer.SerializeToUtf8Bytes(definitionId))
             .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default)
+    {
+        var alert = new { DefinitionId = definitionId, RunId = runId, AlertType = alertType, Message = message, Timestamp = DateTime.UtcNow };
+        _logger.LogDebug("Publishing alert {AlertType} for definition {DefinitionId} run {RunId}", alertType, definitionId, runId);
+        return _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobAlertRoutingKey, JsonSerializer.SerializeToUtf8Bytes(alert));
     }
 
     /// <inheritdoc />

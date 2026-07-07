@@ -6,7 +6,6 @@ using Lyo.Common.Identifiers;
 using Lyo.Discord.Postgres;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
-using Lyo.Job.Models.Request;
 using Lyo.Job.Postgres;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
@@ -14,7 +13,6 @@ using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.TestApi.FileStorageWorkbench;
 using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Lyo.TestApi;
 
@@ -25,7 +23,6 @@ public static class SetupEndpoints
         public WebApplication SetupCourtCanaryEndpoints()
         {
             app = app.BuildJobGroup()
-                .BuildJobServiceEndpoints()
                 //.BuildClientGroup()
                 //.BuildDocketGroup()
                 //.BuildEndatoCeGroup()
@@ -37,39 +34,6 @@ public static class SetupEndpoints
                 .BuildFileStorageWorkbenchGroup()
                 .BuildDirectFileUploadEndpoint()
                 .BuildFileStorageWorkbenchFileMetadataQuery();
-
-            return app;
-        }
-
-        /// <summary>
-        /// Custom endpoints that delegate to <see cref="JobService" /> so the gateway can trigger and cancel runs (the standard CRUD route for JobRun does not expose Create/Cancel —
-        /// those require MQ).
-        /// </summary>
-        private WebApplication BuildJobServiceEndpoints()
-        {
-            app.MapPost(
-                    "Job/Run/Create", async ([FromBody] JobRunReq req, JobService jobService, CancellationToken ct) => {
-                        var result = await jobService.CreateJobRun(req, ct);
-                        return result.IsSuccess ? Results.Created($"Job/Run/{result.Data!.Id}", result.Data) : Results.BadRequest(result.Error);
-                    })
-                .WithTags("Job")
-                .WithName("CreateJobRun");
-
-            app.MapPost(
-                    "Job/Run/{id}/Cancel", async (Guid id, JobService jobService) => {
-                        var (run, error) = await jobService.CancelJobRun(id);
-                        return error is null ? Results.Ok(run) : Results.BadRequest(error);
-                    })
-                .WithTags("Job")
-                .WithName("CancelJobRun");
-
-            app.MapPost(
-                    "Job/Run/{id}/Rerun", async (Guid id, JobService jobService, CancellationToken ct) => {
-                        var result = await jobService.RerunJob(id);
-                        return result is { IsSuccess: true } ? Results.Ok(result.Data) : Results.BadRequest(result?.Error);
-                    })
-                .WithTags("Job")
-                .WithName("RerunJob");
 
             return app;
         }

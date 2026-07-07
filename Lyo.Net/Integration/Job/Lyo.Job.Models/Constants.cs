@@ -16,6 +16,7 @@ public static class Constants
         public const string JobRunStartedRoutingKey = "job.notifications.run.started";
         public const string JobRunCancelledRoutingKey = "job.notifications.run.cancelled";
         public const string JobRunFinishedRoutingKey = "job.notifications.run.finished";
+        public const string JobAlertRoutingKey = "job.notifications.alert";
 
         //Multiple worker types, build queue based on worker type to simplify
         public static string QueueGetJobRunCreated(string workerType) => $"job.run.{workerType}";
@@ -40,6 +41,13 @@ public static class Constants
             public const string RunParameters = $"{Runs}/Parameter";
             public const string RunResults = $"{Runs}/Result";
             public const string Files = $"{Runs}/Files";
+            public const string WorkerInstances = $"{Route}/WorkerInstance";
+            public const string Calendars = $"{Route}/Calendar";
+            public const string CalendarWindows = $"{Route}/Calendar/Window";
+            public const string Workflows = $"{Route}/Workflow";
+            public const string WorkflowSteps = $"{Route}/Workflow/Step";
+            public const string WorkflowRuns = $"{Route}/Workflow/Run";
+            public const string WorkflowRunSteps = $"{Route}/Workflow/Run/Step";
 
             /// <summary>POST endpoint to transition a run to <c>Running</c> state.</summary>
             public static string RunStarted(Guid runId) => $"{Runs}/{runId}/Started";
@@ -50,11 +58,77 @@ public static class Constants
             /// <summary>POST endpoint to add a log entry to a run.</summary>
             public static string RunLog(Guid runId) => $"{Runs}/{runId}/Log";
 
+            /// <summary>POST endpoint to create fan-out child runs under a parent batch run.</summary>
+            public static string RunChildren(Guid parentRunId) => $"{Runs}/{parentRunId}/Children";
+
             /// <summary>PATCH endpoint for the worker to bump <c>LastHeartbeatUtc</c> on a running job.</summary>
             public static string RunHeartbeat(Guid runId) => $"{Runs}/{runId}/Heartbeat";
 
             /// <summary>GET endpoint for aggregated run statistics on a definition.</summary>
             public static string DefinitionStats(Guid definitionId) => $"{Definitions}/{definitionId}/Stats";
+        }
+    }
+
+    /// <summary>Metric names emitted by the job system (recorded via <c>IMetrics</c> when registered).</summary>
+    public static class Metrics
+    {
+        /// <summary>Metrics emitted by <c>Lyo.Job.Scheduler.JobScheduler</c>.</summary>
+        public static class Scheduler
+        {
+            public const string DefinitionsLoaded = "job.scheduler.definitions.loaded";
+            public const string RefreshDuration = "job.scheduler.refresh.duration";
+            public const string RefreshError = "job.scheduler.refresh.error";
+            public const string CheckDuration = "job.scheduler.check.duration";
+            public const string CheckError = "job.scheduler.check.error";
+            public const string RunsCreated = "job.scheduler.runs.created";
+            public const string RunCreateFailed = "job.scheduler.runs.create.failed";
+            public const string SlotConflicts = "job.scheduler.slot.conflicts";
+            public const string TriggersFired = "job.scheduler.triggers.fired";
+            public const string RetriesScheduled = "job.scheduler.retries.scheduled";
+            public const string CircuitBreakerTripped = "job.scheduler.circuit_breaker.tripped";
+            public const string MisfiresCaughtUp = "job.scheduler.misfires.caught_up";
+            public const string MisfiresSkipped = "job.scheduler.misfires.skipped";
+        }
+
+        /// <summary>Metrics emitted by <c>Lyo.Job.Postgres.JobService</c>.</summary>
+        public static class Service
+        {
+            public const string RunCreated = "job.service.run.created";
+            public const string RunCreateRejected = "job.service.run.create.rejected";
+            public const string RunStarted = "job.service.run.started";
+            public const string RunFinished = "job.service.run.finished";
+            public const string RunCancelled = "job.service.run.cancelled";
+            public const string RunRerun = "job.service.run.rerun";
+            public const string RunDuration = "job.service.run.duration";
+            public const string RunQueueLatency = "job.service.run.queue_latency";
+        }
+
+        /// <summary>Metrics emitted by <c>Lyo.Job.Worker.JobWorkerBase</c> (in addition to the inherited <c>queue.worker.*</c> metrics).</summary>
+        public static class Worker
+        {
+            public const string RunExecuted = "job.worker.run.executed";
+            public const string RunDuration = "job.worker.run.duration";
+            public const string HeartbeatSent = "job.worker.heartbeat.sent";
+            public const string HeartbeatFailed = "job.worker.heartbeat.failed";
+            public const string CancellationHonored = "job.worker.cancellation.honored";
+            public const string ProgressReported = "job.worker.progress.reported";
+        }
+
+        /// <summary>Metrics emitted by <c>Lyo.Job.Postgres.JobMaintenanceService</c>.</summary>
+        public static class Maintenance
+        {
+            public const string TickDuration = "job.maintenance.tick.duration";
+            public const string TickError = "job.maintenance.tick.error";
+            public const string DeadJobsFailed = "job.maintenance.dead_jobs.failed";
+            public const string CircuitBreakersReset = "job.maintenance.circuit_breakers.reset";
+            public const string RunsPurged = "job.maintenance.runs.purged";
+            public const string WorkerInstancesPruned = "job.maintenance.worker_instances.pruned";
+        }
+
+        /// <summary>Metrics emitted when job SLA thresholds are breached.</summary>
+        public static class Sla
+        {
+            public const string Breach = "job.sla.breach";
         }
     }
 

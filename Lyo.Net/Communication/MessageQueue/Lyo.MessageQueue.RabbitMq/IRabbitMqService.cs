@@ -1,7 +1,7 @@
 namespace Lyo.MessageQueue.RabbitMq;
 
 /// <summary>RabbitMQ-specific queue operations such as exchange management in addition to the base <see cref="IMqService" /> contract.</summary>
-public interface IRabbitMqService : IMqService, IDelayedMqService
+public interface IRabbitMqService : IMqService, IDelayedMqService, IPriorityMqService
 {
     /// <summary>Declares an exchange on the broker.</summary>
     Task<bool> CreateExchange(

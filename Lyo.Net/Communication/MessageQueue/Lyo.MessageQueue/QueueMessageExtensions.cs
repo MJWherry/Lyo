@@ -13,6 +13,10 @@ public static class QueueMessageExtensions
     /// <param name="messageId">Optional message ID. Defaults to a new GUID.</param>
     /// <param name="enqueuedAt">Optional enqueue timestamp. Defaults to UtcNow.</param>
     /// <param name="traceId">Optional trace ID for distributed tracing.</param>
+    /// <param name="priority">
+    /// Optional message priority (0 = default). Honored only when the transport implements <see cref="IPriorityMqService" /> and the queue supports priorities; otherwise the
+    /// message is sent normally.
+    /// </param>
     /// <returns>True if the message was sent successfully.</returns>
     public static Task<bool> SendToQueueWithEnvelopeAsync<T>(
         this IMqService mqService,
@@ -21,12 +25,15 @@ public static class QueueMessageExtensions
         JsonSerializerOptions? serializerOptions = null,
         string? messageId = null,
         DateTime? enqueuedAt = null,
-        string? traceId = null)
+        string? traceId = null,
+        byte priority = 0)
     {
         var envelope = new QueueMessageEnvelope<T>(payload, 0, messageId ?? Guid.NewGuid().ToString("D"), enqueuedAt ?? DateTime.UtcNow, traceId);
         var options = serializerOptions ?? new JsonSerializerOptions();
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, options);
-        return mqService.SendToQueue(queueName, bytes);
+        return priority > 0 && mqService is IPriorityMqService priorityMqService
+            ? priorityMqService.SendToQueueWithPriority(queueName, bytes, priority)
+            : mqService.SendToQueue(queueName, bytes);
     }
 
     /// <summary>

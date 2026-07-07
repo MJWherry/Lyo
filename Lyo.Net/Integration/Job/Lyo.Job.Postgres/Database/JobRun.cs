@@ -50,6 +50,42 @@ public class JobRun
     /// </summary>
     public DateTime? LastHeartbeatUtc { get; set; }
 
+    /// <summary>Message priority (0-9) used when dispatching this run. Copied from the definition at creation unless explicitly overridden.</summary>
+    public int Priority { get; set; }
+
+    /// <summary>Completion percentage (0-100) reported by the worker. Null until the worker reports progress.</summary>
+    public int? ProgressPercent { get; set; }
+
+    /// <summary>Short human-readable progress message reported by the worker.</summary>
+    [MaxLength(500)]
+    public string? ProgressMessage { get; set; }
+
+    /// <summary>Caller-supplied key for idempotent run creation within a definition.</summary>
+    [MaxLength(128)]
+    public string? IdempotencyKey { get; set; }
+
+    /// <summary>When true, the worker executes validation only and does not commit side effects.</summary>
+    public bool DryRun { get; set; }
+
+    /// <summary>Whether an SLA breach was detected for this run.</summary>
+    public bool SlaBreached { get; set; }
+
+    /// <summary>Distributed trace id propagated through the run lifecycle.</summary>
+    [MaxLength(64)]
+    public string? TraceId { get; set; }
+
+    /// <summary>Parent run when this run is part of a batch or fan-out.</summary>
+    public Guid? ParentJobRunId { get; set; }
+
+    /// <summary>Zero-based index within a parent batch. Null when not part of a batch.</summary>
+    public int? BatchIndex { get; set; }
+
+    /// <summary>Total items in a parent batch. Null when not part of a batch.</summary>
+    public int? BatchTotal { get; set; }
+
+    /// <summary>Snapshot of <see cref="JobDefinition.DefinitionVersion" /> at run creation for audit correlation.</summary>
+    public int? DefinitionAuditVersion { get; set; }
+
     public virtual ICollection<JobRun> InverseReRanFromJobRun { get; set; } = new List<JobRun>();
 
     public virtual ICollection<JobRun> InverseTriggeredByJobRun { get; set; } = new List<JobRun>();
@@ -69,4 +105,10 @@ public class JobRun
     public virtual JobRun? ReRanFromJobRun { get; set; }
 
     public virtual JobRun? TriggeredByJobRun { get; set; }
+
+    public virtual JobRun? ParentJobRun { get; set; }
+
+    public virtual ICollection<JobRun> InverseParentJobRun { get; set; } = new List<JobRun>();
+
+    public virtual ICollection<JobWorkflowRunStep> JobWorkflowRunSteps { get; set; } = new List<JobWorkflowRunStep>();
 }

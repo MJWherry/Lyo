@@ -13,6 +13,12 @@
     <MudTabPanel Text="Runs">
         <JobRunGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
     </MudTabPanel>
+    <MudTabPanel Text="Workers">
+        <JobWorkerInstanceGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Workflows">
+        <JobWorkflowView ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
 </MudTabs>
 
 @code {

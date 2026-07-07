@@ -1,0 +1,108 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2" Class="pa-2">
+    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+        <MudSelect T="Guid?" Label="Workflow" @bind-Value="_selectedWorkflowId" Dense Style="min-width: 280px;">
+            @foreach (var workflow in _workflows) {
+                <MudSelectItem T="Guid?" Value="workflow.Id">@workflow.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Outlined" OnClick="LoadWorkflowAsync" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+    </MudStack>
+
+    @if (_loading) {
+        <MudProgressLinear Indeterminate="true"/>
+    }
+    else if (_selectedWorkflow is null) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Select a workflow to visualize its steps.</MudText>
+    }
+    else {
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6">@_selectedWorkflow.Name</MudText>
+            @if (!string.IsNullOrWhiteSpace(_selectedWorkflow.Description)) {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_selectedWorkflow.Description</MudText>
+            }
+
+            <MudTimeline TimelinePosition="TimelinePosition.Start">
+                @foreach (var step in (_selectedWorkflow.Steps ?? []).OrderBy(s => s.StepOrder)) {
+                    <MudTimelineItem Color="@GetStepColor(step)">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2">@step.StepOrder. @step.StepName</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Definition: @(step.JobDefinition?.Name ?? step.JobDefinitionId.ToString()[..8])
+                                @if (!string.IsNullOrWhiteSpace(step.DependsOnStepIds)) {
+                                    <span> · Depends on: @step.DependsOnStepIds</span>
+                                }
+                            </MudText>
+                            <MudChip T="string" Size="Size.Small" Class="mt-1">@step.FailurePolicy on failure</MudChip>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
+
+    private string _workflowRoute => $"{BaseRoute.TrimEnd('/')}/Workflow";
+
+    private bool _loading;
+    private Guid? _selectedWorkflowId;
+    private JobWorkflowRes? _selectedWorkflow;
+    private IReadOnlyList<JobWorkflowRes> _workflows = [];
+
+    protected override async Task OnInitializedAsync() => await LoadWorkflowListAsync();
+
+    private async Task LoadWorkflowListAsync()
+    {
+        _loading = true;
+        try {
+            var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/Query",
+                new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
+            _workflows = res?.Items ?? [];
+            if (_selectedWorkflowId is null && _workflows.Count > 0)
+                _selectedWorkflowId = _workflows[0].Id;
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to load workflows: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _loading = false;
+        }
+
+        await LoadWorkflowAsync();
+    }
+
+    private async Task LoadWorkflowAsync()
+    {
+        if (_selectedWorkflowId is null) {
+            _selectedWorkflow = null;
+            return;
+        }
+
+        _loading = true;
+        try {
+            var include = string.Join("&include=", "JobWorkflowSteps", "JobWorkflowSteps.JobDefinition");
+            _selectedWorkflow = await ApiClient.GetAsAsync<JobWorkflowRes>($"{_workflowRoute}/{_selectedWorkflowId}?include={include}");
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to load workflow: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private static Color GetStepColor(JobWorkflowStepRes step)
+        => step.Enabled ? Color.Primary : Color.Default;
+
+}

@@ -1,9 +1,65 @@
 # Lyo.Job.Models
 
-Shared DTOs, builders, enums and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`,
-and any Blazor / client code that talks to the job service.
+Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`, `Lyo.Job.Alerts`, `Lyo.Job.SignalR`, and any Blazor / client code that talks to the job service.
 
 Multi-targets `netstandard2.0` and `net10.0` so the same DTOs flow through legacy callers and modern .NET hosts.
+
+This package is a **contract library** — it has no `AddXxx` DI registration. Hosts reference it for DTOs, builders, metrics constants, and `IJobEventPublisher`; wire persistence via [`Lyo.Job.Postgres`](../Lyo.Job.Postgres/README.md), scheduling via [`Lyo.Job.Scheduler`](../Lyo.Job.Scheduler/README.md), and workers via [`Lyo.Job.Worker`](../Lyo.Job.Worker/README.md).
+
+## Production hardening model
+
+Definitions, schedules, and runs carry the knobs that power priority dispatch, retention, misfire handling, exponential backoff, idempotency, rate limiting, SLA tracking, alerting, blackout calendars, batch fan-out, workflows, encryption markers, and audit correlation:
+
+| Concern | Where it lives |
+|---------|----------------|
+| Priority (0–9) | `JobDefinitionReq.Priority`, `JobRunReq.Priority` |
+| Retention | `JobDefinitionReq.RetentionDays` (per-definition override; host default in `JobMaintenanceOptions`) |
+| Misfire | `JobScheduleReq.MisfirePolicy` (`Skip` / `RunOnce`); scheduler defaults in `JobSchedulerOptions` |
+| Exponential backoff | `JobDefinitionReq.RetryBackoffType` + `JobRetryBackoff.ComputeBackoffSeconds` |
+| Idempotency | `JobRunReq.IdempotencyKey` (unique per definition) |
+| Rate limiting | `JobDefinitionReq.MaxRunsPerHour` |
+| SLA | `ExpectedDurationMinutes`, `MustStartByMinutes`; run flag `JobRunRes.SlaBreached` |
+| Alerting | `AlertOnFailure`, `AlertAfterConsecutiveFailures`, `AlertWebhookUrl`; `JobAlertType` |
+| Blackout calendars | `JobCalendarReq`, `JobCalendarWindowReq`, `JobScheduleReq.JobCalendarId` |
+| Batch jobs | `ParentJobRunId`, `BatchIndex`, `BatchTotal`; `JobCreateChildRunsReq` |
+| Workflows | `JobWorkflowReq`, `JobWorkflowStepReq`, `JobWorkflowRunReq`, … |
+| Encryption | `JobParameterReq.EncryptedValue`, `IJobParameterEncryptionService` |
+| Audit | `JobDefinitionRes.DefinitionVersion`, `JobRunRes.DefinitionAuditVersion` |
+| Tracing | `JobRunReq.TraceId`, `JobTracing` (`ActivitySource` name `Lyo.Job`) |
+| Worker registry | `JobWorkerInstanceReq` / `JobWorkerInstanceRes` |
+| Progress | `JobRunRes.ProgressPercent`, `ProgressMessage` |
+| Parallel restrictions | `JobParallelRestrictionReq` — blocks schedule when related definitions are Queued/Running |
+| Dry run | `JobRunReq.DryRun`, `JobRunBuilder.AsDryRun()` — validate without persisting or publishing |
+| Parameter validation | `JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues` — enforced in `JobService` |
+
+### `JobDefinitionReq` defaults
+
+| Property | Default |
+|----------|---------|
+| `Enabled` | `true` |
+| `RetryBackoffType` | `Linear` |
+| `AlertOnFailure` | `false` |
+| `MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`, `CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`, `Priority`, `RetentionDays`, `MaxRunsPerHour`, `ExpectedDurationMinutes`, `MustStartByMinutes`, `AlertAfterConsecutiveFailures` | `0` (disabled / unset) |
+
+```mermaid
+flowchart TB
+    subgraph models [Lyo.Job.Models]
+        Def[JobDefinitionReq]
+        Sch[JobScheduleReq + Calendar]
+        Run[JobRunReq]
+        Wf[JobWorkflowReq]
+    end
+    subgraph runtime [Runtime packages]
+        PG[Lyo.Job.Postgres]
+        SchSvc[Lyo.Job.Scheduler]
+        Wkr[Lyo.Job.Worker]
+    end
+    Def --> PG
+    Sch --> SchSvc
+    Run --> PG
+    Run --> Wkr
+    Wf --> SchSvc
+```
 
 ## Requests and responses
 
@@ -18,17 +74,19 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 | Trigger              | `JobTriggerReq`             | `JobTriggerRes`                           |
 | Trigger parameter    | `JobTriggerParameterReq`    | `JobTriggerParameterRes`                  |
 | Parallel restriction | `JobParallelRestrictionReq` | `JobParallelRestrictionRes`               |
+| Calendar             | `JobCalendarReq`            | `JobCalendarRes`, `JobCalendarWindowRes`    |
+| Workflow             | `JobWorkflowReq`            | `JobWorkflowRes`, `JobWorkflowStepRes`    |
+| Workflow run         | `JobWorkflowRunReq`         | `JobWorkflowRunRes`, `JobWorkflowRunStepRes`|
+| Worker instance      | `JobWorkerInstanceReq`      | `JobWorkerInstanceRes`                    |
 | Run                  | `JobRunReq`                 | `JobRunRes`                               |
 | Run parameter        | `JobRunParameterReq`        | `JobRunParameterRes`                      |
 | Run result           | `JobRunResultReq`           | `JobRunResultRes`                         |
 | Run log              | `JobRunLogReq`              | `JobRunLogRes`                            |
+| Batch children       | `JobCreateChildRunsReq`     | _(list of `JobRunRes`)_                   |
 | File upload          | _(N/A)_                     | `JobFileUploadRes`                        |
 | Definition stats     | _(N/A)_                     | `JobDefinitionStatsRes`, `SpJobStatistic` |
 
-`JobInfo` (top-level) bundles a `JobDefinitionRes` with its last / last successful / last failed runs for dashboards.
-
-`JobDefinitionReq` carries retry, timeout, concurrency and circuit-breaker knobs (`MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`,
-`CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`) plus nested `CreateParameters`, `CreateSchedules`, `CreateTriggers`, `CreateParallelRestrictions`.
+`JobInfo` bundles a `JobDefinitionRes` with its last / last successful / last failed runs for dashboards.
 
 `JobRunRes` exposes `GetParameterValueAs<T>`, `GetResultValueAs<T>`, `GetParameterDictionary`, and `GetResultDictionary` for typed access to parameter and result bags.
 
@@ -36,18 +94,11 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 
 Fluent factories for assembling request DTOs without dropping into raw initializers.
 
-- **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, `AddSchedule(...)` (overloads accept a
-  `JobScheduleBuilder` action, `MonthFlags`/`DayFlags` + times, or `MonthFlags`/`DayFlags` + start/end/interval), `AddDailySchedule`, `AddWorkDaySchedule`, `AddJobParameter`,
-  `AddEncryptedJobParameter`, `AddJobTrigger`, `AddJobParallelRestriction`, `AddPaginationAmount`, and the email-parameter helpers (`AddEmailTo`, `AddEmailCc`, `AddEmailBcc`,
-  `AddEmailAttachment`). `Build()` returns the underlying `JobDefinitionReq`.
-- **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval(start, end, intervalMinutes)`, `WithDescription`, `Enabled`. `Build()` returns
-  a `JobScheduleReq`; `BuildScheduleDefinition()` converts to `Lyo.Schedule.Models.ScheduleDefinition` for use with `Lyo.Scheduler`.
-- **`JobTriggerBuilder`** — `SetCondition(key, ComparisonOperatorEnum, value)`, `SetDescription`, `SetEnabled`, `AddTriggerParameter`, plus email-parameter helpers (
-  `AddEmailToParameter`, `AddEmailCcParameter`, `AddEmailBccParameter`, `AddEmailAttachmentParameter`).
-- **`JobRunBuilder`** — Constructs ad-hoc `JobRunReq` instances from a definition id and `createdBy`. `AddParameter` overloads cover `string`, `int?`, and any `JobParameterType`.
-  `AddEncryptedParameter` attaches a pre-encrypted blob.
-- **`JobRunResultBuilder`** — Dictionary-keyed builder for `List<JobRunResultReq>`. Typed `AddString`, `AddInt`, `AddLong`, `AddBool`, `AddDateTime`, `AddEnum<T>`, `AddAsJson<T>`,
-  plus mutators `IncrementInt`, `IncrementLong`, `AppendString`, `AddIntIfGreaterThan`, `AddIf`, `Remove`, `Clear`, `Contains`, `Get`.
+- **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers, email-parameter helpers. `Build()` returns `JobDefinitionReq`.
+- **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `Build()` → `JobScheduleReq`.
+- **`JobCalendarBuilder`** — `AddWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`). `Build()` → `JobCalendarReq`.
+- **`JobWorkflowBuilder`** — ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.
+- **`JobTriggerBuilder`**, **`JobRunBuilder`**, **`JobRunResultBuilder`** — as before; `JobRunBuilder` supports `AddEncryptedParameter`.
 
 ```csharp
 var definition = JobDefinitionBuilder
@@ -55,72 +106,153 @@ var definition = JobDefinitionBuilder
     .ForCSharpWorker()
     .SetType("Import")
     .AddJobParameter("BatchSize", JobParameterType.Int, 500)
-    .AddSchedule(s => s
-        .EveryDay()
-        .SetInterval("00:00", "23:59", intervalMinutes: 60)
-        .WithDescription("Hourly"))
     .Build();
 
 var run = JobRunBuilder
     .New(definition.Id, "scheduler")
     .AddParameter("BatchSize", 1000)
     .Build();
-
-var results = new JobRunResultBuilder()
-    .AddInt(Constants.Data.JobRunResultKey.CreateCount, 42)
-    .AddString(Constants.Data.JobRunResultKey.Result, "ok")
-    .Build();
 ```
 
 ## Enums
 
-- `JobState` — `Unknown`, `Queued`, `Running`, `Finished`, `Cancelled`, `Cancelling`.
-- `JobRunResult` — `Unknown`, `Success`, `SuccessWithWarnings`, `PartialSuccess`, `Failure`, `Cancelled`, `Skipped`, `Timeout`.
-- `JobParameterType` — `String`, `Bool`, `Enum`, `DateTime`, `DateOnly`, `TimeOnly`, `Int`, `Long`, `Decimal`, `Guid`, `Regex`, `Json`, `Xml`, plus `Unknown`.
-- `JobLogLevel` — log severity for `JobRunLogReq`.
+| Enum | Values / purpose |
+|------|------------------|
+| `JobState` | `Unknown`, `Queued`, `Running`, `Finished`, `Cancelled`, `Cancelling` |
+| `JobRunResult` | `Success`, `Failure`, `Timeout`, `Cancelled`, … |
+| `JobParameterType` | `String`, `Int`, `Json`, … |
+| `JobLogLevel` | Log severity for `JobRunLogReq` |
+| `JobMisfirePolicy` | `Skip`, `RunOnce` — missed schedule slots |
+| `JobRetryBackoffType` | `Linear`, `Exponential` (with jitter via `JobRetryBackoff`) |
+| `JobBlackoutPolicy` | `Skip`, `Defer` — calendar windows |
+| `JobAlertType` | `Failure`, `CircuitBreakerTripped`, `DeadJob`, `SlaBreach` |
+| `JobWorkerInstanceState` | `Running`, `Stopped` |
+| `JobWorkflowFailurePolicy` | `Stop`, `Continue` |
+| `JobWorkflowRunState` / `JobWorkflowStepState` | Workflow execution states |
+
+## Retry backoff (`JobRetryBackoff`)
+
+```csharp
+// Linear: baseSeconds × attempt
+// Exponential: baseSeconds × 2^(attempt-1) with ±25% jitter
+var delay = JobRetryBackoff.ComputeBackoffSeconds(
+    baseSeconds: 60, attempt: 3, JobRetryBackoffType.Exponential);
+```
+
+## Distributed tracing (`JobTracing`)
+
+`ActivitySource` name: **`Lyo.Job`**. Helpers: `StartCreateRun`, `StartRun`, `FinishRun`, `StartWorkerExecution` (links to queue envelope `TraceId`), `TryParseParentContext`.
+
+Register the source in your host OpenTelemetry / `ActivityListener` pipeline so spans from `Lyo.Job.Postgres`, `Lyo.Job.Worker`, and the scheduler correlate.
 
 ## Event publisher (`Events/IJobEventPublisher`)
 
-Transport-agnostic abstraction for job lifecycle messaging. Implementations wire up to RabbitMQ, Azure Service Bus, AWS SQS, etc. (the default `MqJobEventPublisher` in
-`Lyo.Job.Postgres` wraps `IMqService`).
+Transport-agnostic abstraction for job lifecycle messaging. Key members:
 
-Members:
+- `PublishRunCreatedAsync(runId, workerType, priority = 0)` — priority honored when the broker queue supports `x-max-priority`.
+- `PublishRunStartedAsync`, `PublishRunFinishedAsync`, `PublishRunCancelledAsync`, `PublishDefinitionUpdatedAsync`.
+- **`PublishAlertAsync(definitionId, runId, alertType, message)`** — routes to `job.notifications.alert`.
+- Subscribers: definition updates, run completions, per-worker-type cancellations.
 
-- `IsConnected()` and `SetupAsync(ct)` — connection / topology bootstrap.
-- Publishers: `PublishRunCreatedAsync(runId, workerType, ct)`, `PublishRunStartedAsync(runId, ct)`, `PublishRunFinishedAsync(runId, ct)`, `PublishRunCancelledAsync(runId, ct)`,
-  `PublishDefinitionUpdatedAsync(definitionId, ct)`.
-- Subscribers: `SubscribeToDefinitionUpdatesAsync(queueName, handler, ct)`, `SubscribeToRunCompletionsAsync(handler, ct)`,
-  `SubscribeToRunCancellationsAsync(workerType, handler, ct)`.
+## Metrics (`Constants.Metrics`)
+
+Recorded via `IMetrics` when registered in hosting packages:
+
+### `job.scheduler.*`
+
+| Metric | Description |
+|--------|-------------|
+| `job.scheduler.definitions.loaded` | Definitions loaded on refresh |
+| `job.scheduler.refresh.duration` | Definition refresh timer |
+| `job.scheduler.refresh.error` | Refresh failures |
+| `job.scheduler.check.duration` | Schedule check timer |
+| `job.scheduler.check.error` | Schedule check failures |
+| `job.scheduler.runs.created` | Runs created by scheduler |
+| `job.scheduler.runs.create.failed` | Run creation failures |
+| `job.scheduler.slot.conflicts` | Idempotent slot conflicts (23505) |
+| `job.scheduler.triggers.fired` | Trigger-driven runs |
+| `job.scheduler.retries.scheduled` | Automatic retry runs |
+| `job.scheduler.circuit_breaker.tripped` | Definitions auto-disabled |
+| `job.scheduler.misfires.caught_up` | Misfire catch-up runs created |
+| `job.scheduler.misfires.skipped` | Missed slots skipped |
+
+### `job.service.*`
+
+| Metric | Description |
+|--------|-------------|
+| `job.service.run.created` | Runs inserted |
+| `job.service.run.create.rejected` | Rejected (concurrency, rate limit, validation) |
+| `job.service.run.started` | Transitions to Running |
+| `job.service.run.finished` | Transitions to Finished |
+| `job.service.run.cancelled` | Cancellation requested |
+| `job.service.run.rerun` | Manual reruns |
+| `job.service.run.duration` | Run wall-clock duration |
+| `job.service.run.queue_latency` | Queued → started latency |
+
+### `job.worker.*`
+
+| Metric | Description |
+|--------|-------------|
+| `job.worker.run.executed` | Worker executions (tag `outcome`) |
+| `job.worker.run.duration` | Execute phase duration |
+| `job.worker.heartbeat.sent` / `heartbeat.failed` | Run heartbeat PATCHes |
+| `job.worker.cancellation.honored` | Runs cancelled mid-flight |
+| `job.worker.progress.reported` | Progress PATCHes |
+
+Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
+
+### `job.maintenance.*`
+
+| Metric | Description |
+|--------|-------------|
+| `job.maintenance.tick.duration` | Maintenance loop timer |
+| `job.maintenance.tick.error` | Tick failures |
+| `job.maintenance.dead_jobs.failed` | Dead runs timed out |
+| `job.maintenance.circuit_breakers.reset` | Auto re-enabled definitions |
+| `job.maintenance.runs.purged` | Retention purge count |
+| `job.maintenance.worker_instances.pruned` | Stale registry rows removed |
+
+### `job.sla.*`
+
+| Metric | Description |
+|--------|-------------|
+| `job.sla.breach` | SLA breaches detected |
 
 ## Constants
 
-`Constants.Mq` declares the MQ topology:
+`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`).
 
-| Constant                            | Value                                  |
-|-------------------------------------|----------------------------------------|
-| `QueueJobRunFinish`                 | `job.run.complete`                     |
-| `JobEventExchange`                  | `job.events`                           |
-| `JobDefinitionChangeKey`            | `job.notifications.definition.updated` |
-| `JobRunCreatedRoutingKey`           | `job.notifications.run.created`        |
-| `JobRunStartedRoutingKey`           | `job.notifications.run.started`        |
-| `JobRunCancelledRoutingKey`         | `job.notifications.run.cancelled`      |
-| `JobRunFinishedRoutingKey`          | `job.notifications.run.finished`       |
-| `QueueGetJobRunCreated(workerType)` | `job.run.{workerType}`                 |
+`Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunHeartbeat`, `RunChildren`, `WorkerInstances`, `Calendars`, `Workflows`, …).
 
-`Constants.Rest.Job` exposes the route prefixes (`Job`, `Job/Definition`, `Job/Run`, `Job/Run/Files`, …) and per-run lifecycle routes (`RunStarted(runId)`, `RunFinished(runId)`,
-`RunHeartbeat(runId)`, `RunLog(runId)`, `DefinitionStats(definitionId)`).
+## Parameter encryption (`Security/IJobParameterEncryptionService`)
 
-`Constants.Data.JobRunResultKey` and `Constants.Data.JobRunParameterKey` provide well-known keys (`Result`, `ExecutionTime`, `CreateCount`, …, plus pagination/parallelism/chunking
-keys). The email/file/business-domain keys are marked `[Obsolete]` so they migrate into the consuming application.
+Interface implemented by `Lyo.Job.Postgres.JobParameterEncryptionService`. Workers receive decrypted values when the service is registered; API responses mask encrypted parameters.
 
 ## Extensions
 
-- `JobScheduleExtensions.ToScheduleDefinition(...)` — converts a `JobScheduleReq` or `JobScheduleRes` to `Lyo.Schedule.Models.ScheduleDefinition`.
-- `JobRunParameterExtensions` (in `Extensions/`) — typed `GetString`, `GetInt`, `GetLong`, `GetDecimal`, `GetBool`, `GetGuid`, `GetDateTime`, `GetEnum<T>`, `GetAs<T>` on
-  `IReadOnlyList<JobRunParameterRes>?` and `IReadOnlyList<JobRunResultRes>?`. Useful outside a full `JobRunRes` context.
+- `JobScheduleExtensions.ToScheduleDefinition(...)` — converts schedule DTOs to `Lyo.Schedule.Models.ScheduleDefinition`.
+- `JobRunParameterExtensions` — typed getters on parameter/result lists.
 
 ## Related projects
 
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Schedule.Models`](../../../Core/Schedule/Lyo.Schedule.Models/README.md)
+
+## Dependencies
+
+*(Synchronized from `Lyo.Job.Models.csproj`.)*
+
+**Target frameworks:** `netstandard2.0`, `net10.0`
+
+### NuGet packages
+
+| Package | Version | Condition |
+|---------|---------|-----------|
+| `System.Diagnostics.DiagnosticSource` | `[10,)` | `netstandard2.0` only |
+
+### Project references
+
+- [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
+- [`Lyo.Schedule.Models`](../../../Core/Schedule/Lyo.Schedule.Models/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)

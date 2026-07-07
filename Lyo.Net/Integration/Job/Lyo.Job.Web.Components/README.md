@@ -1,9 +1,12 @@
 # Lyo.Job.Web.Components
 
-Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page and it renders the full Statistics / Definitions / Runs experience using only
-an injected `IApiClient` and the base route prefix.
+Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA breach** indicators), **worker registry**, and **workflow** views — all using an injected `IApiClient` and configurable base route prefix.
 
-All components target server-side or interactive Blazor in `net10.0` and pull in MudBlazor `>= 9.3` for layout and inputs.
+Pair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live-updating dashboard that receives `JobEvent` broadcasts without polling.
+
+All components target server-side or interactive Blazor in `net10.0` and pull in MudBlazor `>= 9.3`.
+
+This package is a **Razor component library** — it has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
 
 ## Top-level entry point
 
@@ -13,45 +16,85 @@ All components target server-side or interactive Blazor in `net10.0` and pull in
 <JobManagement BaseRoute="Job" StatisticsRoute="api/job-stats/recent" />
 ```
 
-| Parameter         | Notes                                                                                                                                                       |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `BaseRoute`       | Route prefix for job endpoints. Required. `JobDefinitionGrid` uses `{BaseRoute}/Definition`, `JobRunGrid` uses `{BaseRoute}/Run`, etc. Defaults to `"Job"`. |
-| `StatisticsRoute` | Optional URL that returns `SpJobStatistic` rows for the stats tab. When omitted, the stats tab is empty.                                                    |
+| Parameter         | Notes                                                                                                      |
+|-------------------|------------------------------------------------------------------------------------------------------------|
+| `BaseRoute`       | Route prefix for job endpoints. Required. Defaults to `"Job"`.                                             |
+| `StatisticsRoute` | Optional URL returning `SpJobStatistic` rows. When omitted, the stats tab shows an info alert.             |
 
-The component pulls `IApiClient` from DI and renders a tabbed `MudTabs` shell with `JobStats`, `JobDefinitionGrid`, and `JobRunGrid`.
+`JobManagement` renders tabbed `MudTabs`: Statistics, Definitions, Schedules, Runs, Workers, Workflows.
+
+## Live dashboard (SignalR)
+
+For real-time run/alert/definition updates, register SignalR in the host and subscribe from your page:
+
+```csharp
+// Program.cs
+services.AddJobSignalR();
+var app = builder.Build();
+app.MapJobHub(); // default /hubs/job
+```
+
+```javascript
+// Client-side (example)
+connection.on("JobEvent", (evt) => { /* refresh grids or patch rows */ });
+```
+
+See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.created`, `run.finished`, `alert`, …).
 
 ## Component catalog
 
-| Component           | Role                                                                                               |
-|---------------------|----------------------------------------------------------------------------------------------------|
-| `JobManagement`     | Tabbed dashboard shell (Statistics + Definitions + Runs).                                          |
-| `JobStats`          | Renders aggregated `SpJobStatistic` data for the stats tab.                                        |
-| `JobDefinitionGrid` | `LyoDataGrid` of `JobDefinitionRes` with create / edit / detail navigation.                        |
-| `JobDefinitionView` | Editor for a single definition; hosts `JobParameterView`, `JobScheduleView`, and `JobTriggerView`. |
-| `JobParameterView`  | CRUD grid for a definition's parameters.                                                           |
-| `JobScheduleView`   | CRUD grid for a definition's schedules.                                                            |
-| `JobTriggerView`    | CRUD grid for trigger relationships between definitions.                                           |
-| `JobRunGrid`        | `LyoDataGrid` of `JobRunRes` with status pills and drill-down to `JobRunDetailView`.               |
-| `JobRunDetailView`  | Single run view: parameters, results, logs, and re-run actions.                                    |
-| `RunJobDialog`      | Dialog for kicking off an ad-hoc run from a `JobDefinitionRes`, including parameter overrides.     |
+| Component               | Role                                                                                               |
+|-------------------------|----------------------------------------------------------------------------------------------------|
+| `JobManagement`         | Tabbed dashboard shell.                                                                            |
+| `JobStats`              | Aggregated `SpJobStatistic` success rates and counts.                                              |
+| `JobDefinitionGrid`     | CRUD grid for definitions.                                                                         |
+| `JobDefinitionView`     | Editor: parameters, schedules, triggers.                                                             |
+| `JobScheduleGrid`       | Standalone schedule CRUD (misfire, calendar, cron fields via API).                                 |
+| `JobParameterView`      | Definition parameter grid (including encrypted markers).                                           |
+| `JobScheduleView`       | Inline schedule editor on definition view.                                                         |
+| `JobTriggerView`        | Trigger relationships between definitions.                                                         |
+| `JobRunGrid`            | Runs with state pills, **progress bar** column, drill-down.                                        |
+| `JobRunDetailView`      | Parameters, results, logs, **progress**, **SLA breach** chip, alert flags, re-run.                |
+| `JobWorkerInstanceGrid` | Live worker registry (type, machine, PID, in-flight, heartbeat).                                   |
+| `JobWorkflowView`       | Workflow picker + ordered step diagram.                                                            |
+| `RunJobDialog`          | Ad-hoc run with parameter overrides.                                                               |
 
-Every grid / view component accepts at minimum the `IApiClient` and the relevant route (`BaseRoute`, `DefinitionRoute`, `ScheduleRoute`, `TriggerRoute`, `RunRoute`, …), so they can
-be hosted independently if you don't want the full `JobManagement` shell.
+Every grid / view accepts `IApiClient` and route parameters so components can be hosted independently of the full shell.
+
+## Production hardening in the UI
+
+| Feature | Where surfaced |
+|---------|----------------|
+| Progress | `JobRunGrid` progress column; `JobRunDetailView` linear bar + message |
+| SLA | `JobRunDetailView` breach indicator when `SlaBreached == true` |
+| Alerting | Definition/run alert flags in detail view |
+| Worker registry | **Workers** tab (`JobWorkerInstanceGrid`) |
+| Workflows | **Workflows** tab (`JobWorkflowView`) |
+| Schedules / blackout calendars | **Schedules** tab — misfire policy, linked `JobCalendarId`, cron fields via API |
+| Dry run | `RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch) |
 
 ## `JobColorHelper`
 
-Static helper for consistent visual treatment of job state, result, and log level. Mostly used internally but also useful when extending the components.
+Static helper for consistent visual treatment of job state, result, and log level.
 
 | Member                                       | Returns / behavior                                                                      |
 |----------------------------------------------|-----------------------------------------------------------------------------------------|
-| `ForState(JobState)`                         | `Color` — `Info`/`Warning`/`Success`/`Default`.                                         |
-| `ForResult(JobRunResult?)`                   | `Color` — success / warning / error / default mapping.                                  |
-| `ForLogLevel(JobLogLevel)`                   | `Color` — Trace/Debug→Default, Info→Info, Warning→Warning, Error/Critical→Error.        |
-| `StateIcon(JobState)`                        | MudBlazor material icon name.                                                           |
-| `ResultIcon(JobRunResult?)`                  | MudBlazor material icon name.                                                           |
-| `FormatDuration(double? ms)`                 | Human-readable ms / s / min. `"—"` for null.                                            |
-| `FormatDurationFromDates(started, finished)` | Same, computed from two timestamps.                                                     |
-| `GetEnumDescription<T>(T value)`             | Returns the `[Description]` attribute on an enum field, falling back to the field name. |
+| `ForState(JobState)`                         | MudBlazor `Color` mapping.                                                              |
+| `ForResult(JobRunResult?)`                   | Success / warning / error colors.                                                       |
+| `ForLogLevel(JobLogLevel)`                   | Trace/Debug→Default, Info→Info, Warning→Warning, Error/Critical→Error.                  |
+| `StateIcon` / `ResultIcon`                   | Material icon names.                                                                    |
+| `FormatDuration` / `FormatDurationFromDates` | Human-readable durations.                                                               |
+| `GetEnumDescription<T>(T value)`             | `[Description]` attribute or field name.                                                |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[JobManagement tabs] --> API[IApiClient → Job API]
+    UI -. optional .-> SR[SignalR JobHub]
+    SR --> MQ[job.events exchange]
+    MQ --> API
+```
 
 ## Dependencies
 
@@ -73,7 +116,12 @@ Static helper for consistent visual treatment of job state, result, and log leve
 
 - [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
 - [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
+- [`Lyo.Scheduler`](../../../Core/Scheduler/Lyo.Scheduler/README.md)
 - [`Lyo.Web.Components`](../../Web/Lyo.Web.Components/README.md)
 - [`Lyo.Web.Components.Export`](../../Web/Lyo.Web.Components.Export/README.md)
 - [`Lyo.Web.Components.Export.Csv`](../../Web/Lyo.Web.Components.Export.Csv/README.md)
 - [`Lyo.Web.Components.Export.Xlsx`](../../Web/Lyo.Web.Components.Export.Xlsx/README.md)
+
+### Related packages
+
+- [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) — optional live updates

@@ -1,3 +1,4 @@
+using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Microsoft.Extensions.Logging;
 
@@ -23,4 +24,10 @@ public interface IJobWorkerContext
 
     /// <summary>Fluent builder for collecting output results to report when the run finishes.</summary>
     JobWorkerResultBuilder Results { get; }
+
+    /// <summary>Reports execution progress to the Job API (percent complete and optional status message).</summary>
+    Task ReportProgressAsync(int percent, string? message = null, CancellationToken ct = default);
+
+    /// <summary>Creates fan-out child runs under the current parent run via the Job API.</summary>
+    Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(JobCreateChildRunsReq request, CancellationToken ct = default);
 }

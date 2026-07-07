@@ -290,6 +290,9 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         Logger.LogInformation("Worker for queue {QueueName} stopped.", QueueName);
     }
 
+    /// <summary>Envelope metadata for the message currently being processed, when the transport uses <see cref="QueueMessageEnvelope{T}" />.</summary>
+    protected QueueMessageEnvelope<TRequest>? CurrentMessageEnvelope { get; private set; }
+
     /// <summary>Processes a message.</summary>
     protected abstract Task<TResult> DoWorkAsync(TRequest request, CancellationToken ct);
 
@@ -302,8 +305,9 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         Interlocked.Increment(ref _inFlight);
         using var timer = Metrics.StartTimer("queue.worker.message.processing.duration", [("queue", QueueName)]);
         Metrics.IncrementCounter("queue.worker.messages.received", tags: [("queue", QueueName)]);
+        QueueMessageEnvelope<TRequest>? envelope = null;
         try {
-            if (!QueueWorkerHelpers.TryDeserializeMessage<TRequest>(messageBytes, SerializerOptions, out var payload, out var envelope) || payload is null) {
+            if (!QueueWorkerHelpers.TryDeserializeMessage<TRequest>(messageBytes, SerializerOptions, out var payload, out envelope) || payload is null) {
                 Metrics.IncrementCounter("queue.worker.messages.deserialization.failed", tags: [("queue", QueueName)]);
                 await HandlePoisonMessageAsync(messageBytes, "deserialization failed after envelope autocorrect").ConfigureAwait(false);
                 return false;
@@ -311,6 +315,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
             bool isSuccess;
             IReadOnlyDictionary<string, object>? metadata = null;
+            CurrentMessageEnvelope = envelope;
             try {
                 var workResult = await DoWorkAsync(payload, _cancellationTokenSource!.Token).ConfigureAwait(false);
                 isSuccess = workResult.IsSuccess;
@@ -325,6 +330,9 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
                 Logger.LogError(ex, "Unhandled exception processing message from queue {QueueName} — retrying via counted requeue", QueueName);
                 Metrics.RecordError("queue.worker.message.processing.error", ex, [("queue", QueueName)]);
                 isSuccess = false;
+            }
+            finally {
+                CurrentMessageEnvelope = null;
             }
 
             if (QueueWorkerHelpers.GetShouldRequeue(isSuccess, metadata))

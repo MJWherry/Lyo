@@ -30,6 +30,40 @@
                     <MudItem xs="6" md="3">
                         <MudText Typo="Typo.body2"><b>Retry #:</b> @JobRun?.RetryAttempt</MudText>
                     </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Trace ID:</b> @(JobRun?.TraceId ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2"><b>SLA:</b></MudText>
+                            @if (JobRun?.SlaBreached == true) {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error">Breached</MudChip>
+                            }
+                            else {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">OK</MudChip>
+                            }
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2"><b>Alerts:</b></MudText>
+                            @if (JobRun?.JobDefinition?.AlertOnFailure == true) {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">On Failure</MudChip>
+                            }
+                            else {
+                                <MudText Typo="Typo.body2">-</MudText>
+                            }
+                        </MudStack>
+                    </MudItem>
+                    @if (JobRun?.ProgressPercent is int progress) {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2" Class="mb-1"><b>Progress:</b> @progress%</MudText>
+                            <MudProgressLinear Color="Color.Primary" Value="@progress"/>
+                            @if (!string.IsNullOrWhiteSpace(JobRun.ProgressMessage)) {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@JobRun.ProgressMessage</MudText>
+                            }
+                        </MudItem>
+                    }
                 </MudGrid>
             </MudTabPanel>
             <MudTabPanel Text="@($"Parameters ({JobRun?.JobRunParameters?.Count ?? 0})")">

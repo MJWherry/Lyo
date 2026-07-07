@@ -13,6 +13,8 @@ using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.MessageQueue;
+using Lyo.Metrics;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -54,21 +56,34 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private readonly IJobEventPublisher _eventPublisher;
     private readonly IFormatterService _formatter;
     private readonly ILogger<JobScheduler> _logger;
+    private readonly IMqService? _mqService;
+    private readonly IMetrics _metrics;
     private readonly JobSchedulerOptions _options;
 
     private Dictionary<Guid, JobInfo> _jobs = new();
+    private Dictionary<Guid, JobCalendarRes> _calendars = new();
     private DateTime? _lastDefinitionsRefreshUtc;
     private DateTime? _lastScheduleCheckUtc;
 
-    public JobScheduler(JobSchedulerOptions options, IApiClient apiClient, IFormatterService formatter, IJobEventPublisher eventPublisher, ILogger<JobScheduler>? logger = null)
+    public JobScheduler(
+        JobSchedulerOptions options,
+        IApiClient apiClient,
+        IFormatterService formatter,
+        IJobEventPublisher eventPublisher,
+        ILogger<JobScheduler>? logger = null,
+        IMetrics? metrics = null,
+        IMqService? mqService = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNull(apiClient);
+        options.Validate();
         _options = options;
         _apiClient = apiClient;
         _formatter = formatter;
         _eventPublisher = eventPublisher;
         _logger = logger ?? NullLogger<JobScheduler>.Instance;
+        _metrics = metrics ?? NullMetrics.Instance;
+        _mqService = mqService;
     }
 
     /// <inheritdoc />
@@ -148,6 +163,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 break;
             }
             catch (Exception ex) {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RefreshError);
                 _logger.LogError(ex, "Definition refresh failed");
             }
         }
@@ -163,6 +179,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 break;
             }
             catch (Exception ex) {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.CheckError);
                 _logger.LogError(ex, "Schedule check failed");
             }
         }
@@ -233,9 +250,11 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     {
         _lastDefinitionsRefreshUtc = DateTime.UtcNow;
         _logger.LogInformation("Updating job definitions");
+        using var timer = _metrics.StartTimer(Constants.Metrics.Scheduler.RefreshDuration);
         var query = new QueryReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
         var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
         if (results.Items == null || !results.IsSuccess) {
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RefreshError);
             _logger.LogWarning("No definitions loaded or query failed");
             return;
         }
@@ -252,6 +271,24 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         }
 
         _jobs = updated;
+        _metrics.RecordGauge(Constants.Metrics.Scheduler.DefinitionsLoaded, updated.Count);
+        await RefreshCalendarsAsync(ct).ConfigureAwait(false);
+        await ProcessMisfiresAsync(ct).ConfigureAwait(false);
+    }
+
+    private async Task RefreshCalendarsAsync(CancellationToken ct)
+    {
+        var query = new QueryReqBuilder().AddIncludes("JobCalendarWindows").Build();
+        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobCalendarRes>>(BuildUri($"{Constants.Rest.Job.Calendars}/Query"), query, null, ct)
+            .ConfigureAwait(false);
+
+        if (results.Items == null || !results.IsSuccess) {
+            _logger.LogWarning("Failed to refresh job calendars");
+            return;
+        }
+
+        _calendars = results.Items.Where(c => c.Enabled).ToDictionary(c => c.Id);
+        _logger.LogDebug("Loaded {Count} enabled job calendars", _calendars.Count);
     }
 
     /// <summary>Evaluates schedules and creates job runs where due. Must be called under the definition lock.</summary>
@@ -263,6 +300,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             return;
         }
 
+        using var timer = _metrics.StartTimer(Constants.Metrics.Scheduler.CheckDuration);
         foreach (var kvp in _jobs) {
             var jobInfo = kvp.Value;
             var schedules = jobInfo.Definition.JobSchedules;
@@ -290,36 +328,192 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         if (!schedule.Enabled)
             return null;
 
+        var now = DateTime.UtcNow;
+        if (!IsWithinScheduleWindow(schedule, now))
+            return null;
+
         if (jobInfo.LastRun?.State is JobState.Queued or JobState.Running) {
             _logger.LogDebug("Job already queued or running");
             return null;
         }
 
-        // Enforce parallel restrictions
-        var restrictions = jobInfo.Definition.JobParallelRestrictions;
-        if (restrictions != null) {
-            foreach (var restriction in restrictions) {
-                if (!restriction.Enabled)
-                    continue;
-
-                if (_jobs.TryGetValue(restriction.OtherJobDefinitionId, out var otherJob) && otherJob.LastRun?.State is JobState.Queued or JobState.Running) {
-                    _logger.LogDebug(
-                        "Job {Name} blocked by parallel restriction with {OtherName}", jobInfo.Definition.Name,
-                        restriction.OtherJobDefinition?.Name ?? restriction.OtherJobDefinitionId.ToString());
-
-                    return null;
-                }
-            }
-        }
+        if (IsBlockedByParallelRestrictions(jobInfo))
+            return null;
 
         var definition = schedule.ToScheduleDefinition() with { TimeZone = _options.TimeZone };
         var lastRunTime = jobInfo.LastSuccessfulRun?.StartedTimestamp;
         var nextDue = ScheduleCalculator.GetNextRun(definition, lastRunTime ?? DateTime.UtcNow.AddYears(-10));
-        if (!nextDue.HasValue || nextDue.Value > DateTime.UtcNow)
+        if (!nextDue.HasValue || nextDue.Value > now)
             return null;
 
-        _logger.LogInformation("Schedule due for definition {Name} (slot {Slot:u})", jobInfo.Definition.Name, nextDue.Value);
-        return nextDue.Value;
+        if (!IsWithinScheduleWindow(schedule, nextDue.Value))
+            return null;
+
+        var calendar = ResolveCalendar(schedule);
+        var adjusted = JobCalendarEvaluator.AdjustSlotForBlackout(nextDue.Value, calendar, ResolveTimeZone(schedule));
+        if (!adjusted.HasValue)
+            return null;
+
+        if (adjusted.Value > now)
+            return null;
+
+        _logger.LogInformation("Schedule due for definition {Name} (slot {Slot:u})", jobInfo.Definition.Name, adjusted.Value);
+        return adjusted.Value;
+    }
+
+    private JobCalendarRes? ResolveCalendar(JobScheduleRes schedule)
+    {
+        if (schedule.JobCalendar is { Enabled: true })
+            return schedule.JobCalendar;
+
+        if (schedule.JobCalendarId.HasValue && _calendars.TryGetValue(schedule.JobCalendarId.Value, out var cached))
+            return cached;
+
+        return null;
+    }
+
+    private TimeZoneInfo? ResolveTimeZone(JobScheduleRes schedule)
+    {
+        if (!string.IsNullOrWhiteSpace(schedule.TimeZoneId)) {
+            try {
+                return TimeZoneInfo.FindSystemTimeZoneById(schedule.TimeZoneId);
+            }
+            catch (TimeZoneNotFoundException ex) {
+                _logger.LogWarning(ex, "Unknown schedule time zone {TimeZoneId}", schedule.TimeZoneId);
+            }
+            catch (InvalidTimeZoneException ex) {
+                _logger.LogWarning(ex, "Invalid schedule time zone {TimeZoneId}", schedule.TimeZoneId);
+            }
+        }
+
+        return _options.TimeZone;
+    }
+
+    /// <summary>Creates catch-up runs for the most recent missed slot on schedules with a RunOnce misfire policy.</summary>
+    private async Task ProcessMisfiresAsync(CancellationToken ct)
+    {
+        if (!_options.EnableMisfireCatchUp || !_eventPublisher.IsConnected())
+            return;
+
+        var now = DateTime.UtcNow;
+        var lookbackStart = now.AddMinutes(-_options.MisfireLookbackMinutes);
+
+        foreach (var jobInfo in _jobs.Values) {
+            var schedules = jobInfo.Definition.JobSchedules;
+            if (schedules == null)
+                continue;
+
+            foreach (var schedule in schedules) {
+                if (!schedule.Enabled || schedule.MisfirePolicy != JobMisfirePolicy.RunOnce)
+                    continue;
+
+                using (_logger.BeginScope("DefinitionId={DefinitionId} ScheduleId={ScheduleId}", jobInfo.Definition.Id, schedule.Id)) {
+                    if (!IsWithinScheduleWindow(schedule, now)) {
+                        _metrics.IncrementCounter(Constants.Metrics.Scheduler.MisfiresSkipped);
+                        continue;
+                    }
+
+                    if (jobInfo.LastRun?.State is JobState.Queued or JobState.Running || IsBlockedByParallelRestrictions(jobInfo)) {
+                        _metrics.IncrementCounter(Constants.Metrics.Scheduler.MisfiresSkipped);
+                        continue;
+                    }
+
+                    var missedSlot = FindMostRecentMissedSlot(jobInfo, schedule, lookbackStart, now);
+                    if (!missedSlot.HasValue) {
+                        _metrics.IncrementCounter(Constants.Metrics.Scheduler.MisfiresSkipped);
+                        continue;
+                    }
+
+                    if (await RunExistsForSlotAsync(schedule.Id, missedSlot.Value, ct).ConfigureAwait(false)) {
+                        _metrics.IncrementCounter(Constants.Metrics.Scheduler.MisfiresSkipped);
+                        continue;
+                    }
+
+                    _logger.LogInformation(
+                        "Misfire catch-up for definition {Name} (missed slot {Slot:u})", jobInfo.Definition.Name, missedSlot.Value);
+
+                    var created = await CreateScheduledRunAsync(jobInfo, schedule, missedSlot.Value, ct).ConfigureAwait(false);
+                    if (created)
+                        _metrics.IncrementCounter(Constants.Metrics.Scheduler.MisfiresCaughtUp);
+                }
+            }
+        }
+    }
+
+    private DateTime? FindMostRecentMissedSlot(JobInfo jobInfo, JobScheduleRes schedule, DateTime lookbackStart, DateTime now)
+    {
+        var definition = schedule.ToScheduleDefinition() with { TimeZone = _options.TimeZone };
+        var reference = jobInfo.LastSuccessfulRun?.StartedTimestamp ?? lookbackStart;
+        if (reference < lookbackStart)
+            reference = lookbackStart;
+
+        if (schedule.StartDateUtc.HasValue && schedule.StartDateUtc.Value > reference)
+            reference = schedule.StartDateUtc.Value;
+
+        DateTime? mostRecent = null;
+        var cursor = reference;
+        for (var i = 0; i < 10_000; i++) {
+            var next = ScheduleCalculator.GetNextRun(definition, cursor);
+            if (!next.HasValue || next.Value > now)
+                break;
+
+            if (next.Value >= lookbackStart && IsWithinScheduleWindow(schedule, next.Value)) {
+                var calendar = ResolveCalendar(schedule);
+                var adjusted = JobCalendarEvaluator.AdjustSlotForBlackout(next.Value, calendar, ResolveTimeZone(schedule));
+                if (adjusted.HasValue)
+                    mostRecent = adjusted.Value;
+            }
+
+            cursor = next.Value.AddMilliseconds(1);
+        }
+
+        return mostRecent;
+    }
+
+    private static bool IsWithinScheduleWindow(JobScheduleRes schedule, DateTime utcTime)
+    {
+        if (schedule.StartDateUtc.HasValue && utcTime < schedule.StartDateUtc.Value)
+            return false;
+
+        if (schedule.EndDateUtc.HasValue && utcTime > schedule.EndDateUtc.Value)
+            return false;
+
+        return true;
+    }
+
+    private bool IsBlockedByParallelRestrictions(JobInfo jobInfo)
+    {
+        var restrictions = jobInfo.Definition.JobParallelRestrictions;
+        if (restrictions == null)
+            return false;
+
+        foreach (var restriction in restrictions) {
+            if (!restriction.Enabled)
+                continue;
+
+            if (_jobs.TryGetValue(restriction.OtherJobDefinitionId, out var otherJob) && otherJob.LastRun?.State is JobState.Queued or JobState.Running) {
+                _logger.LogDebug(
+                    "Job {Name} blocked by parallel restriction with {OtherName}", jobInfo.Definition.Name,
+                    restriction.OtherJobDefinition?.Name ?? restriction.OtherJobDefinitionId.ToString());
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<bool> RunExistsForSlotAsync(Guid scheduleId, DateTime scheduledSlot, CancellationToken ct)
+    {
+        var where = WhereClauseBuilder.CombineAs(
+            GroupOperatorEnum.And,
+            WhereClauseBuilder.Condition("JobScheduleId", ComparisonOperatorEnum.Equals, scheduleId.ToString()),
+            WhereClauseBuilder.Condition("ScheduledSlotUtc", ComparisonOperatorEnum.Equals, scheduledSlot));
+
+        var result = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddWhere(where).First().Build(), null, ct).ConfigureAwait(false);
+
+        return result.Items?.Count > 0;
     }
 
     private async Task<JobInfo> LoadJobInfoAsync(JobDefinitionRes definition, CancellationToken ct = default)
@@ -347,9 +541,14 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     }
 
     private async Task ProcessScheduledJobDefinitionAsync(JobDefinitionRes definition, JobScheduleRes schedule, DateTime scheduledSlot, CancellationToken ct)
+        => await CreateScheduledRunAsync(_jobs[definition.Id], schedule, scheduledSlot, ct).ConfigureAwait(false);
+
+    /// <summary>Posts a scheduled job run and updates in-memory state. Returns true when a new run was created.</summary>
+    private async Task<bool> CreateScheduledRunAsync(JobInfo jobInfo, JobScheduleRes schedule, DateTime scheduledSlot, CancellationToken ct)
     {
-        if (!_jobs.TryGetValue(definition.Id, out var jobInfo))
-            return;
+        var definition = jobInfo.Definition;
+        if (!_jobs.TryGetValue(definition.Id, out jobInfo))
+            return false;
 
         var runReq = BuildRunRequest(definition.Id, schedule, null, null);
         runReq.JobScheduleId = schedule.Id;
@@ -358,13 +557,20 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq, null, ct).ConfigureAwait(false);
         if (created.IsSuccess && created.Data != null) {
             _logger.LogInformation("Created job run {JobRunId}", created.Data.Id);
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
             _jobs = new(_jobs) { [definition.Id] = jobInfo with { LastRun = created.Data } };
+            return true;
         }
-        else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
-            // Another scheduler instance already created a run for this slot — idempotent, not an error
+
+        if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true) {
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
             _logger.LogDebug("Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
-        else
-            _logger.LogWarning("Failed to create job run: {Error}", created?.Error);
+            return false;
+        }
+
+        _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
+        _logger.LogWarning("Failed to create job run: {Error}", created?.Error);
+        return false;
     }
 
     private async Task<bool> ProcessCompletedJobRunAsync(JobRunRes run)
@@ -396,13 +602,32 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                     "Circuit breaker tripped for {Name} ({DefinitionId}) after {Failures} consecutive failure(s)", jobInfo.Definition.Name, run.JobDefinitionId, next);
 
                 await TripCircuitBreakerAsync(run.JobDefinitionId).ConfigureAwait(false);
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.CircuitBreakerTripped);
+                if (_eventPublisher.IsConnected()) {
+                    await _eventPublisher.PublishAlertAsync(
+                        run.JobDefinitionId, run.Id, JobAlertType.CircuitBreakerTripped,
+                        $"Circuit breaker tripped for '{jobInfo.Definition.Name}' after {next} consecutive failure(s)").ConfigureAwait(false);
+                }
+
                 _consecutiveFailures.Remove(run.JobDefinitionId);
+            }
+            else if (jobInfo.Definition is { AlertOnFailure: true } && _eventPublisher.IsConnected()) {
+                var alertThreshold = jobInfo.Definition.AlertAfterConsecutiveFailures;
+                if (alertThreshold <= 0 || next >= alertThreshold) {
+                    await _eventPublisher.PublishAlertAsync(
+                        run.JobDefinitionId, run.Id, JobAlertType.Failure,
+                        $"Job '{jobInfo.Definition.Name}' failed ({next} consecutive failure(s))").ConfigureAwait(false);
+                }
             }
         }
 
         // Schedule a retry if the run failed and the definition allows it.
         if (run.Result == JobRunResult.Failure && jobInfo.Definition.MaxRetryCount > 0 && run.RetryAttempt < jobInfo.Definition.MaxRetryCount)
             await ScheduleRetryAsync(jobInfo, run).ConfigureAwait(false);
+
+        // Batch fan-in: when a child run completes, update parent progress and finalize when all siblings finish.
+        if (run.ParentJobRunId.HasValue)
+            await ProcessChildRunCompletionAsync(run).ConfigureAwait(false);
 
         if (!run.AllowTriggers || jobInfo.Definition.JobTriggers?.Count == 0)
             return true;
@@ -414,24 +639,39 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task ScheduleRetryAsync(JobInfo jobInfo, JobRunRes failedRun)
     {
         var nextAttempt = failedRun.RetryAttempt + 1;
-        var backoffSeconds = jobInfo.Definition.RetryBackoffSeconds * nextAttempt;
+        var backoffSeconds = JobRetryBackoff.ComputeBackoffSeconds(
+            jobInfo.Definition.RetryBackoffSeconds, nextAttempt, jobInfo.Definition.RetryBackoffType);
+        var useDelayedMq = backoffSeconds > 0 && _mqService is IDelayedMqService;
+
         _logger.LogInformation(
-            "Scheduling retry attempt {Attempt}/{Max} for definition {Name} (backoff {Backoff}s)", nextAttempt, jobInfo.Definition.MaxRetryCount, jobInfo.Definition.Name,
-            backoffSeconds);
+            "Scheduling retry attempt {Attempt}/{Max} for definition {Name} (backoff {Backoff}s, type {BackoffType})", nextAttempt, jobInfo.Definition.MaxRetryCount,
+            jobInfo.Definition.Name, backoffSeconds, jobInfo.Definition.RetryBackoffType);
 
         var retryReq = BuildRunRequest(failedRun.JobDefinitionId, null, null, null);
         retryReq.RetryAttempt = nextAttempt;
         retryReq.ReRanFromJobRunId = failedRun.Id;
 
-        // Use ScheduledSlotUtc as the "not-before" hint if backoff > 0; the worker can respect this or ignore it
-        if (backoffSeconds > 0)
+        if (backoffSeconds > 0 && !useDelayedMq)
             retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
 
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), retryReq).ConfigureAwait(false);
-        if (created.IsSuccess)
-            _logger.LogInformation("Created retry job run {JobRunId} (attempt {Attempt})", created.Data!.Id, nextAttempt);
-        else
+        if (created.IsSuccess && created.Data != null) {
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RetriesScheduled);
+            _logger.LogInformation("Created retry job run {JobRunId} (attempt {Attempt})", created.Data.Id, nextAttempt);
+
+            if (useDelayedMq && _mqService is IDelayedMqService delayedMq) {
+                var queue = Constants.Mq.QueueGetJobRunCreated(jobInfo.Definition.WorkerType);
+                var envelope = new QueueMessageEnvelope<Guid>(created.Data.Id, 0, Guid.NewGuid().ToString("D"), DateTime.UtcNow);
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope);
+                await delayedMq.SendToQueueDelayed(queue, bytes, TimeSpan.FromSeconds(backoffSeconds)).ConfigureAwait(false);
+            }
+        }
+        else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
+        else {
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
             _logger.LogWarning("Failed to create retry job run for definition {Name}: {Error}", jobInfo.Definition.Name, created.Error);
+        }
     }
 
     private async Task TripCircuitBreakerAsync(Guid definitionId)
@@ -447,6 +687,92 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Failed to trip circuit breaker for definition {DefinitionId}", definitionId);
+        }
+    }
+
+    private async Task ProcessChildRunCompletionAsync(JobRunRes childRun)
+    {
+        var parentId = childRun.ParentJobRunId!.Value;
+        var siblings = await GetChildRunsAsync(parentId).ConfigureAwait(false);
+        if (siblings.Count == 0)
+            return;
+
+        var finished = siblings.Where(r => r.State == JobState.Finished).ToList();
+        var progress = (int)Math.Round(finished.Count * 100.0 / siblings.Count);
+        await PatchRunProgressAsync(parentId, progress, $"{finished.Count}/{siblings.Count} children complete").ConfigureAwait(false);
+
+        if (finished.Count < siblings.Count)
+            return;
+
+        var parent = await GetJobRunAsync(parentId).ConfigureAwait(false);
+        if (parent is null || parent.State == JobState.Finished)
+            return;
+
+        var aggregated = AggregateChildResults(siblings);
+        if (!await FinalizeParentRunAsync(parentId, aggregated).ConfigureAwait(false))
+            return;
+    }
+
+    private async Task<IReadOnlyList<JobRunRes>> GetChildRunsAsync(Guid parentRunId)
+    {
+        var where = WhereClauseBuilder.Condition("ParentJobRunId", ComparisonOperatorEnum.Equals, parentRunId.ToString());
+        var result = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes("JobRunResults").AddWhere(where).Build()).ConfigureAwait(false);
+
+        return result.Items ?? [];
+    }
+
+    private async Task PatchRunProgressAsync(Guid runId, int progressPercent, string? message)
+    {
+        var patch = PatchRequestBuilder.ForId(runId).SetProperty("ProgressPercent", progressPercent).SetProperty("LastHeartbeatUtc", DateTime.UtcNow);
+        if (message is not null)
+            patch.SetProperty("ProgressMessage", message);
+
+        await _apiClient.PatchAsAsync<PatchRequest, object>(BuildUri($"{Constants.Rest.Job.Runs}/{runId}"), patch.Build()).ConfigureAwait(false);
+    }
+
+    private static IReadOnlyList<JobRunResultReq> AggregateChildResults(IReadOnlyList<JobRunRes> children)
+    {
+        var anyFailure = children.Any(c => c.Result == JobRunResult.Failure);
+        var anyPartial = children.Any(c => c.Result == JobRunResult.PartialSuccess);
+        var anyWarning = children.Any(c => c.Result == JobRunResult.SuccessWithWarnings);
+        var outcome = anyFailure ? JobRunResult.Failure : anyPartial ? JobRunResult.PartialSuccess : anyWarning ? JobRunResult.SuccessWithWarnings : JobRunResult.Success;
+
+        var results = new List<JobRunResultReq> {
+            new(Constants.Data.JobRunResultKey.Result, JobParameterType.String, outcome.ToString()),
+            new("ChildCount", JobParameterType.Int, children.Count)
+        };
+
+        var totalCreate = children.Sum(c => c.GetResultValueAs<int?>(Constants.Data.JobRunResultKey.CreateCount) ?? 0);
+        var totalUpdate = children.Sum(c => c.GetResultValueAs<int?>(Constants.Data.JobRunResultKey.UpdateCount) ?? 0);
+        var totalDelete = children.Sum(c => c.GetResultValueAs<int?>(Constants.Data.JobRunResultKey.DeleteCount) ?? 0);
+        var totalFailed = children.Sum(c => c.GetResultValueAs<int?>(Constants.Data.JobRunResultKey.FailedCount) ?? 0);
+
+        if (totalCreate > 0)
+            results.Add(new(Constants.Data.JobRunResultKey.CreateCount, JobParameterType.Int, totalCreate));
+
+        if (totalUpdate > 0)
+            results.Add(new(Constants.Data.JobRunResultKey.UpdateCount, JobParameterType.Int, totalUpdate));
+
+        if (totalDelete > 0)
+            results.Add(new(Constants.Data.JobRunResultKey.DeleteCount, JobParameterType.Int, totalDelete));
+
+        if (totalFailed > 0)
+            results.Add(new(Constants.Data.JobRunResultKey.FailedCount, JobParameterType.Int, totalFailed));
+
+        return results;
+    }
+
+    private async Task<bool> FinalizeParentRunAsync(Guid parentRunId, IReadOnlyList<JobRunResultReq> results)
+    {
+        try {
+            var finished = await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>(BuildUri(Constants.Rest.Job.RunFinished(parentRunId)), results)
+                .ConfigureAwait(false);
+            return finished is not null;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to finalize parent run {ParentRunId}", parentRunId);
+            return false;
         }
     }
 
@@ -471,10 +797,17 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
             var runReq = BuildRunRequest(triggeringDef.Id, null, trigger, triggeredByRun);
             var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq).ConfigureAwait(false);
-            if (created.IsSuccess)
-                _logger.LogInformation("Created triggered job run {JobRunId}", created.Data!.Id);
-            else
+            if (created.IsSuccess && created.Data != null) {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.TriggersFired);
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
+                _logger.LogInformation("Created triggered job run {JobRunId}", created.Data.Id);
+            }
+            else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
+            else {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
                 _logger.LogWarning("Failed to create triggered job run");
+            }
         }
     }
 

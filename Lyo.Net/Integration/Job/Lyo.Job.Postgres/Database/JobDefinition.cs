@@ -29,6 +29,17 @@ public class JobDefinition
     /// <summary>Base backoff in seconds between retry attempts. 0 = immediate retry. Multiplied by the attempt number for linear backoff.</summary>
     public int RetryBackoffSeconds { get; set; }
 
+    /// <summary>How the retry delay grows across attempts: Linear (backoff × attempt) or Exponential (backoff × 2^(attempt-1) with jitter). Stored as string.</summary>
+    [Required]
+    [MaxLength(12)]
+    public string RetryBackoffType { get; set; } = nameof(Models.Enums.JobRetryBackoffType.Linear);
+
+    /// <summary>Message priority (0-9) applied to runs of this definition. Higher values are consumed first when the worker queue supports priorities. 0 = default.</summary>
+    public int Priority { get; set; }
+
+    /// <summary>Days to keep finished runs (with logs, parameters, and results) before the maintenance service purges them. 0 = use the host's global default.</summary>
+    public int RetentionDays { get; set; }
+
     /// <summary>Number of minutes without a heartbeat before a <c>Running</c> job is considered dead. 0 = disabled (no timeout). <see cref="JobMaintenanceService" /> enforces this.</summary>
     public int TimeoutMinutes { get; set; }
 
@@ -43,6 +54,28 @@ public class JobDefinition
 
     /// <summary>UTC timestamp when the circuit breaker last tripped (i.e. when <c>Enabled</c> was set to false by the circuit breaker).</summary>
     public DateTime? CircuitBreakerTrippedAt { get; set; }
+
+    /// <summary>Maximum number of runs that may be created per hour. 0 = unlimited.</summary>
+    public int MaxRunsPerHour { get; set; }
+
+    /// <summary>Expected run duration in minutes, used for SLA tracking. 0 = not configured.</summary>
+    public int ExpectedDurationMinutes { get; set; }
+
+    /// <summary>Minutes after a run is queued within which it must start, or SLA is breached. 0 = not configured.</summary>
+    public int MustStartByMinutes { get; set; }
+
+    /// <summary>Whether to emit an alert when a run fails.</summary>
+    public bool AlertOnFailure { get; set; }
+
+    /// <summary>Consecutive failures before an alert is emitted. 0 = alert on every failure when <see cref="AlertOnFailure" /> is true.</summary>
+    public int AlertAfterConsecutiveFailures { get; set; }
+
+    /// <summary>Optional webhook URL to POST alert payloads to.</summary>
+    [MaxLength(500)]
+    public string? AlertWebhookUrl { get; set; }
+
+    /// <summary>Monotonic version bumped on definition changes for audit correlation with runs.</summary>
+    public int DefinitionVersion { get; set; } = 1;
 
     public DateTime CreatedTimestamp { get; set; }
 
@@ -61,4 +94,6 @@ public class JobDefinition
     public virtual ICollection<JobTrigger> JobTriggerJobDefinitions { get; set; } = new List<JobTrigger>();
 
     public virtual ICollection<JobTrigger> JobTriggerTriggersJobDefinitions { get; set; } = new List<JobTrigger>();
+
+    public virtual ICollection<JobWorkflowStep> JobWorkflowSteps { get; set; } = new List<JobWorkflowStep>();
 }

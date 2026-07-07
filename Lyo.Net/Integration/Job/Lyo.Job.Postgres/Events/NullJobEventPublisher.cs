@@ -1,3 +1,4 @@
+using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 
 namespace Lyo.Job.Postgres.Events;
@@ -13,7 +14,7 @@ internal sealed class NullJobEventPublisher : IJobEventPublisher
 
     public Task SetupAsync(CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task PublishRunCreatedAsync(Guid runId, string workerType, CancellationToken ct = default) => Task.CompletedTask;
+    public Task PublishRunCreatedAsync(Guid runId, string workerType, int priority = 0, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task PublishRunStartedAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
 
@@ -22,6 +23,8 @@ internal sealed class NullJobEventPublisher : IJobEventPublisher
     public Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task SubscribeToDefinitionUpdatesAsync(string subscriberQueueName, Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 

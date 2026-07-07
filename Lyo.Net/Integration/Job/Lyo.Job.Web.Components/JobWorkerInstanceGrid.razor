@@ -1,0 +1,49 @@
+@using Lyo.Web.Components.DataGrid
+@inject ISnackbar Snackbar
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="JobWorkerInstanceGrid"
+                      Route="@_route"
+                      KeySelector="@GetKey"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="WorkerType" Title="Worker Type"/>
+        <LyoProjectedColumn Field="MachineName" Title="Machine"/>
+        <LyoProjectedColumn Field="ProcessId" Title="PID"/>
+        <LyoProjectedColumn Field="State" Title="State"/>
+        <LyoProjectedColumn Field="InFlightCount" Title="In Flight"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started"/>
+        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
+
+    private string _route => $"{BaseRoute.TrimEnd('/')}/WorkerInstance";
+
+    private LyoDataGridProjected? _dataGrid;
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("WorkerType", "Worker Type"),
+        new("MachineName", "Machine"),
+        new("State")
+    ];
+
+    private static object[] GetKey(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return id != null ? [id] : [];
+    }
+
+}

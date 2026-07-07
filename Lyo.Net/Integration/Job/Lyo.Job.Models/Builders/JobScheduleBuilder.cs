@@ -99,6 +99,43 @@ public class JobScheduleBuilder
         return this;
     }
 
+    /// <summary>Sets a standard cron expression (5- or 6-field) and switches the schedule type to Cron.</summary>
+    public JobScheduleBuilder SetCron(string cronExpression)
+    {
+        _schedule.Type = ScheduleType.Cron;
+        _schedule.CronExpression = cronExpression;
+        return this;
+    }
+
+    /// <summary>Sets how slots missed while no scheduler was running are handled.</summary>
+    public JobScheduleBuilder WithMisfirePolicy(JobMisfirePolicy policy)
+    {
+        _schedule.MisfirePolicy = policy;
+        return this;
+    }
+
+    /// <summary>Restricts the schedule to a UTC validity window. Either bound may be null.</summary>
+    public JobScheduleBuilder WithValidityWindow(DateTime? startDateUtc, DateTime? endDateUtc)
+    {
+        _schedule.StartDateUtc = startDateUtc;
+        _schedule.EndDateUtc = endDateUtc;
+        return this;
+    }
+
+    /// <summary>Sets the IANA/Windows time zone id used when evaluating this schedule's times.</summary>
+    public JobScheduleBuilder WithTimeZone(string timeZoneId)
+    {
+        _schedule.TimeZoneId = timeZoneId;
+        return this;
+    }
+
+    /// <summary>Associates a calendar whose blackout windows apply to this schedule.</summary>
+    public JobScheduleBuilder WithCalendar(Guid jobCalendarId)
+    {
+        _schedule.JobCalendarId = jobCalendarId;
+        return this;
+    }
+
     /// <summary>Builds the request for API/DB persistence.</summary>
     public JobScheduleReq Build() => _schedule;
 

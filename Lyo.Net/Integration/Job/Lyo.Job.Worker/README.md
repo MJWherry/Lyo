@@ -1,9 +1,8 @@
 # Lyo.Job.Worker
 
-Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the worker-type queue (
-`job.run.{workerType}`), drives the full run lifecycle (fetch, start, heartbeat, finish), subscribes to cancellation messages, and reports results back to the Job API.
+Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled worker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the full run lifecycle (fetch, start, heartbeat, progress, finish), registers in the **worker registry**, decrypts encrypted parameters, supports **batch child runs**, subscribes to cancellation messages, links **distributed traces** from queue envelopes, and reports results back to the Job API.
 
-`JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, so the underlying ack / requeue / DLQ semantics come from the MQ worker base.
+`JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, inheriting ack / requeue / DLQ semantics and `queue.worker.*` metrics.
 
 ## Registration
 
@@ -13,93 +12,115 @@ services.AddJobWorker<MyImportWorker>(
     apiBaseUrl: "https://api.example.com",
     maxRequeueCount: 5,
     dlqName: "job.run.csharp.dlq");
+
+// Bind QueueWorkerOptions (section QueueWorkerOptions) for DefaultMaxRequeueCount / RequeueDelay:
+services.AddJobWorkerFromConfiguration<MyImportWorker>(
+    configuration, workerType: "csharp", apiBaseUrl: "https://api.example.com");
 ```
 
-Requires `IMqService`, `IApiClient`, and `IJobEventPublisher` to be registered (typically via `AddMqJobEventPublisher` from `Lyo.Job.Postgres`). `ILogger<TWorker>` and
-`Lyo.Metrics.IMetrics` are resolved when available.
+Requires `IMqService`, `IApiClient`, and `IJobEventPublisher` (typically `AddMqJobEventPublisher()`). Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`.
 
-`AddJobWorker<TWorker>` registers the worker as a singleton and as an `IHostedService`. It uses `Activator.CreateInstance` to construct the worker with the exact `JobWorkerBase`
-constructor signature, so subclasses just need to forward those parameters:
+When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`.
+
+## Configuration (`QueueWorkerOptions.SectionName` = `"QueueWorkerOptions"`)
+
+Shared with `Lyo.MessageQueue.QueueWorkerBase` (see [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)):
+
+| Property                 | Default | Purpose                                      |
+|--------------------------|---------|----------------------------------------------|
+| `DefaultMaxRequeueCount` | `5`     | Cap before DLQ routing                       |
+| `RequeueDelay`           | `2s`    | Linear retry delay (requires `IDelayedMqService`) |
+
+## Metrics (`job.worker.*`)
+
+| Metric | Description |
+|--------|-------------|
+| `job.worker.run.executed` | Execute completed (tag `outcome`) |
+| `job.worker.run.duration` | Execute phase wall time |
+| `job.worker.heartbeat.sent` | Run heartbeat PATCH success |
+| `job.worker.heartbeat.failed` | Run heartbeat PATCH failure |
+| `job.worker.cancellation.honored` | Run cancelled via MQ signal |
+| `job.worker.progress.reported` | `ReportProgressAsync` calls |
+
+Also emits inherited `queue.worker.*` metrics from the message-queue worker base.
+
+## Production features
+
+| Feature | Implementation |
+|---------|----------------|
+| **Priority queues** | Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`. |
+| **Worker registry** | `POST Job/WorkerInstance` on start; periodic PATCH with `InFlightCount`; `Stopped` on shutdown. |
+| **Progress** | Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`. |
+| **Batch jobs** | `ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`. |
+| **Encryption** | Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered. |
+| **Tracing** | `JobTracing.StartWorkerExecution` links to envelope `TraceId`. |
+| **Cancellation** | Per-run CTS + `SubscribeToRunCancellationsAsync`. |
+| **Dry run** | Not applicable — dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them. |
+
+Override `HeartbeatInterval` (default 30 s) in a subclass to tune heartbeat/progress PATCH cadence for long-running jobs.
+
+## Worker lifecycle
+
+```mermaid
+sequenceDiagram
+    participant Q as job.run.workerType
+    participant W as JobWorkerBase
+    participant API as Job API
+    Q->>W: runId message
+    W->>API: GET run
+    W->>API: POST Started
+    W->>API: PATCH heartbeat / progress
+    W->>W: ExecuteAsync(ctx)
+    W->>API: POST Finished
+    Note over W,API: Registry PATCH in parallel
+```
+
+1. **Fetch** — `GET Job/Run/{id}` with full includes.
+2. **Start** — `POST Job/Run/{id}/Started`; decrypt parameters.
+3. **Heartbeat loop** — PATCH `LastHeartbeatUtc` + progress fields every `HeartbeatInterval` (default 30 s).
+4. **`ExecuteAsync(ctx)`** — subclass work; use `ctx.ReportProgressAsync`, `ctx.CreateChildRunsAsync`, `ctx.CancellationToken`.
+5. **Finish** — `POST Job/Run/{id}/Finished` with `JobWorkerResultBuilder` results.
+
+`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`.
+
+## Example worker
 
 ```csharp
 public sealed class MyImportWorker : JobWorkerBase
 {
     public MyImportWorker(
-        IMqService mq,
-        IApiClient api,
-        IJobEventPublisher events,
-        string workerType,
-        string apiBaseUrl,
-        ILogger<MyImportWorker>? logger = null,
-        IMetrics? metrics = null,
-        int? maxRequeueCount = null,
-        string? dlqName = null)
-        : base(mq, api, events, workerType, apiBaseUrl, logger, metrics, maxRequeueCount, dlqName) { }
+        IMqService mq, IApiClient api, IJobEventPublisher events,
+        string workerType, string apiBaseUrl,
+        ILogger<MyImportWorker>? logger = null, IMetrics? metrics = null,
+        int? maxRequeueCount = null, string? dlqName = null,
+        IJobParameterEncryptionService? parameterEncryption = null)
+        : base(mq, api, events, workerType, apiBaseUrl, logger, metrics,
+               maxRequeueCount, dlqName, parameterEncryption) { }
 
     protected override async Task ExecuteAsync(IJobWorkerContext ctx)
     {
+        await ctx.ReportProgressAsync(10, "Starting import");
         var batch = ctx.Run.JobRunParameters.GetInt("BatchSize") ?? 100;
-        ctx.Logger.LogInformation("Importing batch of {Count}", batch);
-        ctx.CancellationToken.ThrowIfCancellationRequested();
         ctx.Results.AddCreateCount(batch);
+        await ctx.ReportProgressAsync(100, "Complete");
     }
 }
 ```
 
-## `JobWorkerBase` lifecycle
-
-Each message received from `Lyo.Job.Models.Constants.Mq.QueueGetJobRunCreated(workerType)` is processed by `DoWorkAsync(Guid runId, ct)`:
-
-1. **Fetch** — `GET {apiBaseUrl}/Job/Run/{id}?include=…` with includes for parameters, results, schedule, trigger, definition, and definition parameters. Missing runs short-circuit
-   with `ResultVoid.Failure("Job run not found", "NotFound")`.
-2. **Start** — `POST {apiBaseUrl}/Job/Run/{id}/Started?include=…` to transition the run to `Running` and return the fully-loaded `JobRunRes`.
-3. **Cancellation wiring** — Creates a linked `CancellationTokenSource`, stores it in a per-run dictionary, and constructs the `IJobWorkerContext`.
-4. **Heartbeat loop** — Spawns `RunHeartbeatAsync` which PATCHes `LastHeartbeatUtc = DateTime.UtcNow` to `Job/Run/{id}` every `HeartbeatInterval` (default 30 s, overridable).
-5. **`ExecuteAsync(ctx)`** — Subclass work. `OperationCanceledException` is caught and translated into `JobWorkerResultBuilder.Cancel()`. Any other exception is logged and recorded
-   via `JobWorkerResultBuilder.AddError` (which also sets the outcome to `Failure`).
-6. **Finish** — `POST {apiBaseUrl}/Job/Run/{id}/Finished` with the built `IReadOnlyList<JobRunResultReq>` (`JobWorkerResultBuilder.Build()` appends the `Result` key automatically).
-
-`StartAsync` also calls `IJobEventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct)` — incoming cancellation messages look up the per-run CTS and cancel it.
-
-Overridable members:
-
-- `HeartbeatInterval` — heartbeat PATCH cadence (default `TimeSpan.FromSeconds(30)`).
-- `ExecuteAsync(IJobWorkerContext)` — _required_, the actual work.
-- The protected `WorkerType` property is also available to subclasses.
-
 ## `IJobWorkerContext`
 
-```csharp
-public interface IJobWorkerContext
-{
-    JobRunRes Run { get; }
-    ILogger Logger { get; }
-    CancellationToken CancellationToken { get; }
-    JobWorkerResultBuilder Results { get; }
-}
-```
-
-`Run` is fully populated by the start call (parameters, definition, schedule, trigger). `Logger` is scoped with `JobRunId` and `WorkerType` for structured logs. `CancellationToken`
-reacts to both host shutdown and cancellation messages.
+| Member | Purpose |
+|--------|---------|
+| `Run` | Fully loaded `JobRunRes` |
+| `Logger` | Scoped structured logger |
+| `CancellationToken` | Host shutdown + MQ cancel |
+| `Results` | `JobWorkerResultBuilder` |
+| `ReportProgressAsync(percent, message?)` | Immediate progress PATCH |
+| `CreateChildRunsAsync(request)` | Batch fan-out child runs |
 
 ## `JobWorkerResultBuilder`
 
-Fluent builder for the `IReadOnlyList<JobRunResultReq>` reported on finish. `Build()` always appends a `Result` entry with the current outcome so the server can read it back.
-
-| Method                                                                                     | Purpose                                                                          |
-|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| `SetOutcome(JobRunResult)`                                                                 | Override the outcome explicitly.                                                 |
-| `Fail()`                                                                                   | Outcome `Failure`.                                                               |
-| `Cancel()`                                                                                 | Outcome `Cancelled`.                                                             |
-| `SucceedWithWarnings()`                                                                    | Outcome `SuccessWithWarnings`.                                                   |
-| `AddResult(key, value, type)`                                                              | Arbitrary entry.                                                                 |
-| `AddCount(key, count)`                                                                     | Integer counter entry.                                                           |
-| `AddCreateCount`, `AddUpdateCount`, `AddDeleteCount`, `AddFailedCount`, `AddNoChangeCount` | Well-known counters (`Constants.Data.JobRunResultKey.*`).                        |
-| `AddError(reason, index = -1)`                                                             | Adds a `FailureReason_{n}` entry and flips the outcome to `Failure`.             |
-| `AddFailedItem(index, item, reason?)`                                                      | Records a `FailedItem_{n}` and optional `FailureReason_{n}`, flips to `Failure`. |
-| `AddApiCallTime(apiName, milliseconds)`                                                    | Records `ApiCallTime_{name}` (long).                                             |
-| `CurrentOutcome`                                                                           | Read the current outcome.                                                        |
-| `Build()`                                                                                  | Materialises the list with the `Result` key appended.                            |
+Fluent builder for finish results. `Build()` appends the `Result` key. Helpers: `SetOutcome`, `Fail`, `Cancel`, counter helpers, `AddError`, `AddFailedItem`, `AddApiCallTime`.
 
 ## Dependencies
 

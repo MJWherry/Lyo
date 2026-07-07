@@ -24,6 +24,109 @@ namespace Lyo.Job.Postgres.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendar", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_calendar");
+
+                    b.HasIndex(new[] { "Name" }, "ix_job_calendar_name");
+
+                    b.ToTable("job_calendar", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendarWindow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<string>("DayFlags")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character varying(51)")
+                        .HasColumnName("day_flags");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("EndTime")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("end_time");
+
+                    b.Property<Guid>("JobCalendarId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_calendar_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Policy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Skip")
+                        .HasColumnName("policy");
+
+                    b.Property<string>("StartTime")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("start_time");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_calendar_window");
+
+                    b.HasIndex(new[] { "JobCalendarId" }, "ix_job_calendar_window_job_calendar_id");
+
+                    b.ToTable("job_calendar_window", "job");
+                });
+
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -31,6 +134,23 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("AlertAfterConsecutiveFailures")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("alert_after_consecutive_failures");
+
+                    b.Property<bool>("AlertOnFailure")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("alert_on_failure");
+
+                    b.Property<string>("AlertWebhookUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("alert_webhook_url");
 
                     b.Property<int>("CircuitBreakerResetMinutes")
                         .ValueGeneratedOnAdd()
@@ -52,6 +172,12 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
+                    b.Property<int>("DefinitionVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("definition_version");
+
                     b.Property<string>("Description")
                         .HasMaxLength(3000)
                         .HasColumnType("character varying(3000)")
@@ -60,6 +186,12 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("boolean")
                         .HasColumnName("enabled");
+
+                    b.Property<int>("ExpectedDurationMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("expected_duration_minutes");
 
                     b.Property<int>("MaxConcurrentRuns")
                         .ValueGeneratedOnAdd()
@@ -73,17 +205,49 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("max_retry_count");
 
+                    b.Property<int>("MaxRunsPerHour")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("max_runs_per_hour");
+
+                    b.Property<int>("MustStartByMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("must_start_by_minutes");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
+                    b.Property<int>("Priority")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("priority");
+
+                    b.Property<int>("RetentionDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("retention_days");
+
                     b.Property<int>("RetryBackoffSeconds")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("retry_backoff_seconds");
+
+                    b.Property<string>("RetryBackoffType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasDefaultValue("Linear")
+                        .HasColumnName("retry_backoff_type");
 
                     b.Property<int>("TimeoutMinutes")
                         .ValueGeneratedOnAdd()
@@ -333,6 +497,14 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("allow_triggers");
 
+                    b.Property<int?>("BatchIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("batch_index");
+
+                    b.Property<int?>("BatchTotal")
+                        .HasColumnType("integer")
+                        .HasColumnName("batch_total");
+
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -343,9 +515,24 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
+                    b.Property<int?>("DefinitionAuditVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("definition_audit_version");
+
+                    b.Property<bool>("DryRun")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("dry_run");
+
                     b.Property<DateTime?>("FinishedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("finished_timestamp");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
 
                     b.Property<Guid>("JobDefinitionId")
                         .HasColumnType("uuid")
@@ -362,6 +549,25 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Property<DateTime?>("LastHeartbeatUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_heartbeat_utc");
+
+                    b.Property<Guid?>("ParentJobRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_job_run_id");
+
+                    b.Property<int>("Priority")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("priority");
+
+                    b.Property<string>("ProgressMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("progress_message");
+
+                    b.Property<int?>("ProgressPercent")
+                        .HasColumnType("integer")
+                        .HasColumnName("progress_percent");
 
                     b.Property<Guid?>("ReRanFromJobRunId")
                         .HasColumnType("uuid")
@@ -382,6 +588,12 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("scheduled_slot_utc");
 
+                    b.Property<bool>("SlaBreached")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("sla_breached");
+
                     b.Property<DateTime?>("StartedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("started_timestamp");
@@ -391,6 +603,11 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)")
                         .HasColumnName("state");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("trace_id");
 
                     b.Property<Guid?>("TriggeredByJobRunId")
                         .HasColumnType("uuid")
@@ -403,7 +620,14 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasKey("Id")
                         .HasName("pk_job_run");
 
+                    b.HasIndex(new[] { "ParentJobRunId" }, "ix_job_run_parent_job_run_id");
+
                     b.HasIndex("ReRanFromJobRunId");
+
+                    b.HasIndex("JobDefinitionId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_job_run_idempotency_key_unique")
+                        .HasFilter("idempotency_key IS NOT NULL");
 
                     b.HasIndex("JobScheduleId", "ScheduledSlotUtc")
                         .IsUnique()
@@ -590,6 +814,10 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("enabled");
 
+                    b.Property<DateTime?>("EndDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date_utc");
+
                     b.Property<string>("EndTime")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
@@ -599,9 +827,21 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("interval_minutes");
 
+                    b.Property<Guid?>("JobCalendarId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_calendar_id");
+
                     b.Property<Guid>("JobDefinitionId")
                         .HasColumnType("uuid")
                         .HasColumnName("job_definition_id");
+
+                    b.Property<string>("MisfirePolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasDefaultValue("Skip")
+                        .HasColumnName("misfire_policy");
 
                     b.Property<string>("MonthFlags")
                         .IsRequired()
@@ -609,10 +849,19 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("character varying(108)")
                         .HasColumnName("month_flags");
 
+                    b.Property<DateTime?>("StartDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date_utc");
+
                     b.Property<string>("StartTime")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
                         .HasColumnName("start_time");
+
+                    b.Property<string>("TimeZoneId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("time_zone_id");
 
                     b.PrimitiveCollection<List<string>>("Times")
                         .HasColumnType("character varying(8)[]")
@@ -630,6 +879,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_job_schedule");
+
+                    b.HasIndex(new[] { "JobCalendarId" }, "ix_job_schedule_job_calendar_id");
 
                     b.HasIndex(new[] { "JobDefinitionId" }, "ix_job_schedule_job_definition_id");
 
@@ -814,6 +1065,272 @@ namespace Lyo.Job.Postgres.Migrations
                     b.ToTable("job_trigger_parameter", "job");
                 });
 
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkerInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<int>("InFlightCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("in_flight_count");
+
+                    b.Property<DateTime>("LastHeartbeatUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_heartbeat_utc");
+
+                    b.Property<string>("MachineName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("machine_name");
+
+                    b.Property<int>("ProcessId")
+                        .HasColumnType("integer")
+                        .HasColumnName("process_id");
+
+                    b.Property<DateTime>("StartedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_timestamp");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("state");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.Property<string>("WorkerType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("worker_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_worker_instance");
+
+                    b.HasIndex(new[] { "LastHeartbeatUtc" }, "ix_job_worker_instance_last_heartbeat_utc");
+
+                    b.HasIndex(new[] { "WorkerType" }, "ix_job_worker_instance_worker_type");
+
+                    b.ToTable("job_worker_instance", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_workflow");
+
+                    b.HasIndex(new[] { "Name" }, "ix_job_workflow_name");
+
+                    b.ToTable("job_workflow", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<DateTime?>("FinishedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_timestamp");
+
+                    b.Property<Guid>("JobWorkflowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_workflow_id");
+
+                    b.Property<DateTime?>("StartedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_timestamp");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_workflow_run");
+
+                    b.HasIndex(new[] { "JobWorkflowId" }, "ix_job_workflow_run_job_workflow_id");
+
+                    b.HasIndex(new[] { "State" }, "ix_job_workflow_run_state");
+
+                    b.ToTable("job_workflow_run", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRunStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<Guid?>("JobRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_run_id");
+
+                    b.Property<Guid>("JobWorkflowRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_workflow_run_id");
+
+                    b.Property<Guid>("JobWorkflowStepId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_workflow_step_id");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_workflow_run_step");
+
+                    b.HasIndex(new[] { "JobRunId" }, "ix_job_workflow_run_step_job_run_id");
+
+                    b.HasIndex(new[] { "JobWorkflowRunId" }, "ix_job_workflow_run_step_job_workflow_run_id");
+
+                    b.HasIndex(new[] { "JobWorkflowStepId" }, "ix_job_workflow_run_step_job_workflow_step_id");
+
+                    b.ToTable("job_workflow_run_step", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<string>("DependsOnStepIds")
+                        .HasColumnType("text")
+                        .HasColumnName("depends_on_step_ids");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("FailurePolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Stop")
+                        .HasColumnName("failure_policy");
+
+                    b.Property<Guid>("JobDefinitionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_definition_id");
+
+                    b.Property<Guid>("JobWorkflowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_workflow_id");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("text")
+                        .HasColumnName("parameters_json");
+
+                    b.Property<string>("StepName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("step_name");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("step_order");
+
+                    b.Property<DateTime?>("UpdatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_workflow_step");
+
+                    b.HasIndex(new[] { "JobDefinitionId" }, "ix_job_workflow_step_job_definition_id");
+
+                    b.HasIndex(new[] { "JobWorkflowId" }, "ix_job_workflow_step_job_workflow_id");
+
+                    b.ToTable("job_workflow_step", "job");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendarWindow", b =>
+                {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobCalendar", "JobCalendar")
+                        .WithMany("JobCalendarWindows")
+                        .HasForeignKey("JobCalendarId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_calendar_window_job_calendar_job_calendar_id");
+
+                    b.Navigation("JobCalendar");
+                });
+
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobParallelRestriction", b =>
                 {
                     b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "BaseJobDefinition")
@@ -862,6 +1379,11 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasForeignKey("JobTriggerId")
                         .HasConstraintName("fk_job_run_job_trigger_job_trigger_id");
 
+                    b.HasOne("Lyo.Job.Postgres.Database.JobRun", "ParentJobRun")
+                        .WithMany("InverseParentJobRun")
+                        .HasForeignKey("ParentJobRunId")
+                        .HasConstraintName("fk_job_run_parent");
+
                     b.HasOne("Lyo.Job.Postgres.Database.JobRun", "ReRanFromJobRun")
                         .WithMany("InverseReRanFromJobRun")
                         .HasForeignKey("ReRanFromJobRunId")
@@ -877,6 +1399,8 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobSchedule");
 
                     b.Navigation("JobTrigger");
+
+                    b.Navigation("ParentJobRun");
 
                     b.Navigation("ReRanFromJobRun");
 
@@ -918,11 +1442,18 @@ namespace Lyo.Job.Postgres.Migrations
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobSchedule", b =>
                 {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobCalendar", "JobCalendar")
+                        .WithMany("JobSchedules")
+                        .HasForeignKey("JobCalendarId")
+                        .HasConstraintName("fk_job_schedule_job_calendar_job_calendar_id");
+
                     b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "JobDefinition")
                         .WithMany("JobSchedules")
                         .HasForeignKey("JobDefinitionId")
                         .IsRequired()
                         .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
+
+                    b.Navigation("JobCalendar");
 
                     b.Navigation("JobDefinition");
                 });
@@ -968,6 +1499,69 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobTrigger");
                 });
 
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRun", b =>
+                {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobWorkflow", "JobWorkflow")
+                        .WithMany("JobWorkflowRuns")
+                        .HasForeignKey("JobWorkflowId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_workflow_run_job_workflow_job_workflow_id");
+
+                    b.Navigation("JobWorkflow");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRunStep", b =>
+                {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobRun", "JobRun")
+                        .WithMany("JobWorkflowRunSteps")
+                        .HasForeignKey("JobRunId")
+                        .HasConstraintName("fk_job_workflow_run_step_job_run_job_run_id");
+
+                    b.HasOne("Lyo.Job.Postgres.Database.JobWorkflowRun", "JobWorkflowRun")
+                        .WithMany("JobWorkflowRunSteps")
+                        .HasForeignKey("JobWorkflowRunId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_workflow_run_step_job_workflow_run_job_workflow_run_id");
+
+                    b.HasOne("Lyo.Job.Postgres.Database.JobWorkflowStep", "JobWorkflowStep")
+                        .WithMany("JobWorkflowRunSteps")
+                        .HasForeignKey("JobWorkflowStepId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_workflow_run_step_job_workflow_step_job_workflow_step_id");
+
+                    b.Navigation("JobRun");
+
+                    b.Navigation("JobWorkflowRun");
+
+                    b.Navigation("JobWorkflowStep");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowStep", b =>
+                {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "JobDefinition")
+                        .WithMany("JobWorkflowSteps")
+                        .HasForeignKey("JobDefinitionId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_workflow_step_job_definition_job_definition_id");
+
+                    b.HasOne("Lyo.Job.Postgres.Database.JobWorkflow", "JobWorkflow")
+                        .WithMany("JobWorkflowSteps")
+                        .HasForeignKey("JobWorkflowId")
+                        .IsRequired()
+                        .HasConstraintName("fk_job_workflow_step_job_workflow_job_workflow_id");
+
+                    b.Navigation("JobDefinition");
+
+                    b.Navigation("JobWorkflow");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendar", b =>
+                {
+                    b.Navigation("JobCalendarWindows");
+
+                    b.Navigation("JobSchedules");
+                });
+
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobDefinition", b =>
                 {
                     b.Navigation("JobParallelRestrictionBaseJobDefinitions");
@@ -983,10 +1577,14 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobTriggerJobDefinitions");
 
                     b.Navigation("JobTriggerTriggersJobDefinitions");
+
+                    b.Navigation("JobWorkflowSteps");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobRun", b =>
                 {
+                    b.Navigation("InverseParentJobRun");
+
                     b.Navigation("InverseReRanFromJobRun");
 
                     b.Navigation("InverseTriggeredByJobRun");
@@ -996,6 +1594,8 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobRunParameters");
 
                     b.Navigation("JobRunResults");
+
+                    b.Navigation("JobWorkflowRunSteps");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobSchedule", b =>
@@ -1010,6 +1610,23 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobRuns");
 
                     b.Navigation("JobTriggerParameters");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflow", b =>
+                {
+                    b.Navigation("JobWorkflowRuns");
+
+                    b.Navigation("JobWorkflowSteps");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRun", b =>
+                {
+                    b.Navigation("JobWorkflowRunSteps");
+                });
+
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowStep", b =>
+                {
+                    b.Navigation("JobWorkflowRunSteps");
                 });
 #pragma warning restore 612, 618
         }

@@ -448,10 +448,14 @@
         <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football/Lyo.Espn.Fantasy.Football.csproj"/>
     </Folder>
     <Folder Name="/Integration/Job/">
+        <Project Path="Integration/Job/Lyo.Job.Alerts/Lyo.Job.Alerts.csproj"/>
+        <Project Path="Integration/Job/Lyo.Job.SignalR/Lyo.Job.SignalR.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Postgres/Lyo.Job.Postgres.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Postgres.Tests/Lyo.Job.Postgres.Tests.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Models/Lyo.Job.Models.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Scheduler/Lyo.Job.Scheduler.csproj"/>
+        <Project Path="Integration/Job/Lyo.Job.Scheduler.Tests/Lyo.Job.Scheduler.Tests.csproj"/>
+        <Project Path="Integration/Job/Lyo.Job.Worker.Tests/Lyo.Job.Worker.Tests.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Web.Components/Lyo.Job.Web.Components.csproj"/>
         <Project Path="Integration/Job/Lyo.Job.Worker/Lyo.Job.Worker.csproj"/>
     </Folder>

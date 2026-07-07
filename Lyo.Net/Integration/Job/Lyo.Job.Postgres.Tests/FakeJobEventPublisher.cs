@@ -1,3 +1,4 @@
+using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 
 namespace Lyo.Job.Postgres.Tests;
@@ -12,13 +13,19 @@ public sealed class FakeJobEventPublisher : IJobEventPublisher
 
     public List<(string Event, Guid RunId)> Published { get; } = [];
 
+    public List<(Guid DefinitionId, Guid? RunId, JobAlertType AlertType, string Message)> PublishedAlerts { get; } = [];
+
+    /// <summary>Priorities passed to <see cref="PublishRunCreatedAsync" />, keyed by run id — lets tests assert priority propagation.</summary>
+    public Dictionary<Guid, int> PublishedPriorities { get; } = [];
+
     public bool IsConnected() => _connected;
 
     public Task SetupAsync(CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task PublishRunCreatedAsync(Guid runId, string workerType, CancellationToken ct = default)
+    public Task PublishRunCreatedAsync(Guid runId, string workerType, int priority = 0, CancellationToken ct = default)
     {
         Published.Add(("RunCreated", runId));
+        PublishedPriorities[runId] = priority;
         return Task.CompletedTask;
     }
 
@@ -43,6 +50,12 @@ public sealed class FakeJobEventPublisher : IJobEventPublisher
     public Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default)
     {
         Published.Add(("DefinitionUpdated", definitionId));
+        return Task.CompletedTask;
+    }
+
+    public Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default)
+    {
+        PublishedAlerts.Add((definitionId, runId, alertType, message));
         return Task.CompletedTask;
     }
 

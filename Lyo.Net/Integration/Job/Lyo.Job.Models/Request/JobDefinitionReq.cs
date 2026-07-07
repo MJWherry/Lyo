@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Request;
 
@@ -32,6 +33,33 @@ public sealed class JobDefinitionReq
 
     /// <summary>Minutes before the circuit breaker auto-resets and re-enables the definition. 0 = never auto-reset.</summary>
     public int CircuitBreakerResetMinutes { get; set; }
+
+    /// <summary>How the retry delay grows across attempts.</summary>
+    public JobRetryBackoffType RetryBackoffType { get; set; } = JobRetryBackoffType.Linear;
+
+    /// <summary>Message priority (0-9) applied to runs of this definition. Higher values are consumed first. 0 = default.</summary>
+    public int Priority { get; set; }
+
+    /// <summary>Days to keep finished runs before they are purged by the maintenance service. 0 = use the host's global default.</summary>
+    public int RetentionDays { get; set; }
+
+    /// <summary>Maximum number of runs that may be created per hour. 0 = unlimited.</summary>
+    public int MaxRunsPerHour { get; set; }
+
+    /// <summary>Expected run duration in minutes, used for SLA tracking. 0 = not configured.</summary>
+    public int ExpectedDurationMinutes { get; set; }
+
+    /// <summary>Minutes after a run is queued within which it must start, or SLA is breached. 0 = not configured.</summary>
+    public int MustStartByMinutes { get; set; }
+
+    /// <summary>Whether to emit an alert when a run fails.</summary>
+    public bool AlertOnFailure { get; set; }
+
+    /// <summary>Consecutive failures before an alert is emitted. 0 = alert on every failure when <see cref="AlertOnFailure" /> is true.</summary>
+    public int AlertAfterConsecutiveFailures { get; set; }
+
+    /// <summary>Optional webhook URL to POST alert payloads to.</summary>
+    public string? AlertWebhookUrl { get; set; }
 
     public List<JobParameterReq> CreateParameters { get; set; } = [];
 

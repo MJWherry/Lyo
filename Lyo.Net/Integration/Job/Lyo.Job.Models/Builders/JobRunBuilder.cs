@@ -45,6 +45,32 @@ public class JobRunBuilder(Guid jobDefinitionId, string createdBy, bool allowTri
         return this;
     }
 
+    public JobRunBuilder WithIdempotencyKey(string idempotencyKey)
+    {
+        _request.IdempotencyKey = idempotencyKey;
+        return this;
+    }
+
+    public JobRunBuilder AsDryRun(bool dryRun = true)
+    {
+        _request.DryRun = dryRun;
+        return this;
+    }
+
+    public JobRunBuilder WithTraceId(string traceId)
+    {
+        _request.TraceId = traceId;
+        return this;
+    }
+
+    public JobRunBuilder WithParent(Guid parentJobRunId, int? batchIndex = null, int? batchTotal = null)
+    {
+        _request.ParentJobRunId = parentJobRunId;
+        _request.BatchIndex = batchIndex;
+        _request.BatchTotal = batchTotal;
+        return this;
+    }
+
     public JobRunReq Build() => _request;
 
     public static JobRunBuilder New(Guid jobDefinitionId, string createdBy) => new(jobDefinitionId, createdBy);

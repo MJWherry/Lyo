@@ -32,6 +32,21 @@ public sealed class JobScheduleReq
     /// <summary>Standard cron expression (5- or 6-field). Only required when <see cref="Type" /> is <c>Cron</c>.</summary>
     public string? CronExpression { get; set; }
 
+    /// <summary>How slots missed while no scheduler was running are handled.</summary>
+    public Enums.JobMisfirePolicy MisfirePolicy { get; set; } = Enums.JobMisfirePolicy.Skip;
+
+    /// <summary>UTC date before which this schedule never fires. Null = no lower bound.</summary>
+    public DateTime? StartDateUtc { get; set; }
+
+    /// <summary>UTC date after which this schedule never fires. Null = no upper bound.</summary>
+    public DateTime? EndDateUtc { get; set; }
+
+    /// <summary>IANA/Windows time zone id used when evaluating this schedule's times. Null = use the scheduler-level time zone (or UTC).</summary>
+    public string? TimeZoneId { get; set; }
+
+    /// <summary>Optional calendar whose blackout windows apply to this schedule.</summary>
+    public Guid? JobCalendarId { get; set; }
+
     public string? Description { get; set; }
 
     public bool Enabled { get; set; } = true;

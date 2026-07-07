@@ -185,6 +185,75 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
         return AddJobParameter($"{Constants.Data.JobRunParameterKey.EmailAttachmentPrefix}{id}", JobParameterType.String, fileId);
     }
 
+    /// <summary>Configures automatic retries: <paramref name="maxRetryCount" /> attempts with <paramref name="backoffSeconds" /> base delay growing per <paramref name="backoffType" />.</summary>
+    public JobDefinitionBuilder WithRetries(int maxRetryCount, int backoffSeconds = 0, JobRetryBackoffType backoffType = JobRetryBackoffType.Linear)
+    {
+        _request.MaxRetryCount = maxRetryCount;
+        _request.RetryBackoffSeconds = backoffSeconds;
+        _request.RetryBackoffType = backoffType;
+        return this;
+    }
+
+    /// <summary>Sets the heartbeat timeout in minutes after which a Running job is considered dead.</summary>
+    public JobDefinitionBuilder WithTimeout(int timeoutMinutes)
+    {
+        _request.TimeoutMinutes = timeoutMinutes;
+        return this;
+    }
+
+    /// <summary>Limits the number of concurrent active runs (Queued + Running). 0 = unlimited.</summary>
+    public JobDefinitionBuilder WithMaxConcurrentRuns(int maxConcurrentRuns)
+    {
+        _request.MaxConcurrentRuns = maxConcurrentRuns;
+        return this;
+    }
+
+    /// <summary>Enables the circuit breaker: auto-disable after <paramref name="threshold" /> consecutive failures, auto-reset after <paramref name="resetMinutes" /> minutes.</summary>
+    public JobDefinitionBuilder WithCircuitBreaker(int threshold, int resetMinutes = 0)
+    {
+        _request.CircuitBreakerThreshold = threshold;
+        _request.CircuitBreakerResetMinutes = resetMinutes;
+        return this;
+    }
+
+    /// <summary>Sets the message priority (0-9) applied to runs of this definition. Higher values are consumed first.</summary>
+    public JobDefinitionBuilder WithPriority(int priority)
+    {
+        _request.Priority = priority;
+        return this;
+    }
+
+    /// <summary>Sets how many days finished runs are kept before the maintenance service purges them. 0 = host default.</summary>
+    public JobDefinitionBuilder WithRetention(int retentionDays)
+    {
+        _request.RetentionDays = retentionDays;
+        return this;
+    }
+
+    /// <summary>Limits how many runs may be created per hour. 0 = unlimited.</summary>
+    public JobDefinitionBuilder WithMaxRunsPerHour(int maxRunsPerHour)
+    {
+        _request.MaxRunsPerHour = maxRunsPerHour;
+        return this;
+    }
+
+    /// <summary>Configures SLA expectations for runs of this definition.</summary>
+    public JobDefinitionBuilder WithSla(int expectedDurationMinutes, int mustStartByMinutes = 0)
+    {
+        _request.ExpectedDurationMinutes = expectedDurationMinutes;
+        _request.MustStartByMinutes = mustStartByMinutes;
+        return this;
+    }
+
+    /// <summary>Enables failure alerting with optional consecutive-failure threshold and webhook URL.</summary>
+    public JobDefinitionBuilder WithAlerts(bool alertOnFailure = true, int afterConsecutiveFailures = 0, string? webhookUrl = null)
+    {
+        _request.AlertOnFailure = alertOnFailure;
+        _request.AlertAfterConsecutiveFailures = afterConsecutiveFailures;
+        _request.AlertWebhookUrl = webhookUrl;
+        return this;
+    }
+
     public JobDefinitionReq Build() => _request;
 
     public static JobDefinitionBuilder New(string definitionName, string? description = null) => new(definitionName, description);

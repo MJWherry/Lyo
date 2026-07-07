@@ -1,9 +1,11 @@
 @using System.Text
 @using System.Text.Json
 @using Lyo.Health
+@using Lyo.MessageQueue
 @using Lyo.MessageQueue.Web.Components
 @inject IRabbitMqService MqService
 @inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <MudPaper Class="pa-4">
     <MudStack Spacing="3">
@@ -84,8 +86,22 @@
                                         <MudCheckBox T="bool" Label="Delete only if unused" @bind-Value="_queueDeleteIfUnused"/>
                                         <MudCheckBox T="bool" Label="Delete only if empty" @bind-Value="_queueDeleteIfEmpty"/>
                                     </MudStack>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="int" Label="Max priority (x-max-priority)" Min="0" Max="255" HelperText="0 = no priority support" @bind-Value="_queueMaxPriority"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudCheckBox T="bool" Label="Create with DLQ" @bind-Value="_createWithDlq" Class="mt-4"/>
+                                        </MudItem>
+                                        @if (_createWithDlq) {
+                                            <MudItem xs="12" md="4">
+                                                <MudTextField T="string" Label="DLQ name (optional)" HelperText="Defaults to {queue}.dlq" @bind-Value="_dlqName"/>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                                         <MudButton Variant="Variant.Filled" OnClick="CreateQueueAsync" Disabled="@_busy">Create Queue</MudButton>
+                                        <MudButton Variant="Variant.Outlined" OnClick="ShowSelectedQueueInfoAsync" Disabled="@_busy">Queue Info</MudButton>
                                         <MudButton Variant="Variant.Outlined" OnClick="PeekQueueMessagesAsync" Disabled="@_busy">Peek Queue</MudButton>
                                         <MudButton Variant="Variant.Text" OnClick="ClearQueueAsync" Disabled="@_busy">Clear Queue</MudButton>
                                         <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="DeleteQueueAsync" Disabled="@_busy">Delete Queue</MudButton>
@@ -117,8 +133,17 @@
                                             </MudItem>
                                         </MudGrid>
                                     }
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="int" Label="Priority" Min="0" Max="255" HelperText="0 = default (requires x-max-priority queue)" @bind-Value="_messagePriority"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="double" Label="Delay (seconds)" Min="0" Max="86400" HelperText="0 = send immediately" @bind-Value="_sendDelaySeconds"/>
+                                        </MudItem>
+                                    </MudGrid>
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendToQueueAsync" Disabled="@_busy">Send To Queue</MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SendDelayedToQueueAsync" Disabled="@_busy">Send Delayed To Queue</MudButton>
                                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SendToExchangeAsync" Disabled="@_busy">Send To Exchange</MudButton>
                                     </MudStack>
                                 </MudStack>
@@ -128,11 +153,23 @@
                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                         Live queue statistics from the management API (message counts, consumers, state).
                                     </MudText>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <MudTextField T="string" Label="Filter queue" @bind-Value="_statsFilter" HelperText="Optional name filter for the table"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="int" Label="Refresh interval (s)" Min="2" Max="120" @bind-Value="_statsRefreshIntervalSeconds"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudCheckBox T="bool" Label="Auto refresh" Value="_statsAutoRefresh" ValueChanged="OnStatsAutoRefreshChanged" Class="mt-4"/>
+                                        </MudItem>
+                                    </MudGrid>
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                        <MudButton Variant="Variant.Filled" OnClick="RefreshQueueStatsAsync" Disabled="@_busy">Refresh Stats</MudButton>
+                                        <MudButton Variant="Variant.Filled" OnClick="@(() => RefreshQueueStatsAsync())" Disabled="@_busy">Refresh All</MudButton>
+                                        <MudButton Variant="Variant.Outlined" OnClick="ShowSelectedQueueInfoAsync" Disabled="@_busy">Info For Queue Field</MudButton>
                                     </MudStack>
-                                    @if (_queueStats.Count > 0) {
-                                        <MudTable Items="_queueStats" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                                    @if (FilteredQueueStats.Count() > 0) {
+                                        <MudTable Items="FilteredQueueStats" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
                                             <HeaderContent>
                                                 <MudTh>Queue</MudTh>
                                                 <MudTh>State</MudTh>
@@ -172,7 +209,9 @@
 
 @code {
     private bool _busy;
+    private bool _createWithDlq;
     private readonly List<KeyValuePair<string, string>> _details = [];
+    private string _dlqName = string.Empty;
     private bool _exchangeAutoDelete;
     private bool _exchangeDeleteIfUnused;
     private bool _exchangeDurable = true;
@@ -182,6 +221,7 @@
     private string _exchangeType = "direct";
     private HealthResult? _lastHealth;
     private string _messageBody = """{"message":"hello from lyo gateway"}""";
+    private int _messagePriority;
     private int _peekCount = 10;
     private List<QueuePeekMessage> _peekedMessages = [];
     private bool _queueAutoDelete;
@@ -189,13 +229,24 @@
     private bool _queueDeleteIfUnused;
     private bool _queueDurable = true;
     private bool _queueExclusive;
+    private int _queueMaxPriority;
     private string _queueName = "test.gateway.queue";
     private List<MessageQueueInfo> _queueStats = [];
     private string _routingKey = "test.gateway";
+    private double _sendDelaySeconds;
+    private bool _statsAutoRefresh;
+    private string _statsFilter = string.Empty;
+    private int _statsRefreshIntervalSeconds = 5;
+    private CancellationTokenSource? _statsRefreshCts;
     private string _statusMessage = string.Empty;
     private bool _wrapInEnvelope;
     private Severity _statusSeverity = Severity.Info;
     private int _statusVersion;
+
+    private IEnumerable<MessageQueueInfo> FilteredQueueStats =>
+        string.IsNullOrWhiteSpace(_statsFilter)
+            ? _queueStats
+            : _queueStats.Where(q => q.Name.Contains(_statsFilter.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private async Task CheckHealthAsync()
     {
@@ -219,8 +270,26 @@
 
         _busy = true;
         try {
-            var ok = await MqService.CreateQueue(_queueName, _queueDurable, _queueExclusive, _queueAutoDelete);
-            SetDetails("Create Queue", ok, [Detail("Queue", _queueName), Detail("Durable", _queueDurable.ToString()), Detail("Exclusive", _queueExclusive.ToString()), Detail("Auto Delete", _queueAutoDelete.ToString())]);
+            IDictionary<string, object>? arguments = _queueMaxPriority > 0
+                ? new Dictionary<string, object> { ["x-max-priority"] = _queueMaxPriority }
+                : null;
+
+            bool ok;
+            if (_createWithDlq) {
+                var dlqName = string.IsNullOrWhiteSpace(_dlqName) ? null : _dlqName.Trim();
+                ok = await MqService.CreateQueueWithDlq(_queueName, _queueDurable, dlqName, arguments);
+            }
+            else
+                ok = await MqService.CreateQueue(_queueName, _queueDurable, _queueExclusive, _queueAutoDelete, arguments);
+
+            SetDetails(
+                "Create Queue", ok,
+                [
+                    Detail("Queue", _queueName), Detail("Durable", _queueDurable.ToString()), Detail("Exclusive", _queueExclusive.ToString()),
+                    Detail("Auto Delete", _queueAutoDelete.ToString()), Detail("With DLQ", _createWithDlq.ToString()),
+                    Detail("DLQ Name", _createWithDlq ? (string.IsNullOrWhiteSpace(_dlqName) ? $"{_queueName}.dlq" : _dlqName.Trim()) : "(none)"),
+                    Detail("Max Priority", _queueMaxPriority > 0 ? _queueMaxPriority.ToString() : "(none)")
+                ]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -296,13 +365,9 @@
 
         _busy = true;
         try {
-            if (!TryBuildPublishBytes(out var bytes, out var buildError)) {
-                SetStatus(buildError!, Severity.Warning);
-                return;
-            }
-
-            var ok = await MqService.SendToQueue(_queueName, bytes);
-            SetDetails("Send To Queue", ok, [Detail("Queue", _queueName), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()), Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))]);
+            var ok = await PublishToQueueAsync(useDelay: false);
+            if (ok.HasValue)
+                SetPublishDetails("Send To Queue", ok.Value);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -310,6 +375,75 @@
         finally {
             _busy = false;
         }
+    }
+
+    private async Task SendDelayedToQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        if (_sendDelaySeconds <= 0) {
+            SetStatus("Enter a delay greater than zero seconds, or use Send To Queue for immediate delivery.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var ok = await PublishToQueueAsync(useDelay: true);
+            if (ok.HasValue)
+                SetPublishDetails("Send Delayed To Queue", ok.Value);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    /// <summary>Publishes to the queue field using the current envelope, priority, and optional delay settings.</summary>
+    private async Task<bool?> PublishToQueueAsync(bool useDelay)
+    {
+        if (!TryBuildPublishBytes(out var bytes, out var buildError)) {
+            SetStatus(buildError!, Severity.Warning);
+            return null;
+        }
+
+        if (useDelay) {
+            if (_messagePriority > 0)
+                SetStatus("Delayed publish does not set message priority; priority is ignored for this send.", Severity.Info);
+
+            var delay = TimeSpan.FromSeconds(_sendDelaySeconds);
+            return await MqService.SendToQueueDelayed(_queueName, bytes, delay);
+        }
+
+        if (_wrapInEnvelope) {
+            var json = string.IsNullOrWhiteSpace(_messageBody) ? "{}" : _messageBody;
+            var payload = JsonSerializer.Deserialize<JsonElement>(json);
+            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? Guid.NewGuid().ToString("D") : _envelopeMessageId.Trim();
+            var traceId = string.IsNullOrWhiteSpace(_envelopeTraceId) ? null : _envelopeTraceId.Trim();
+            return await MqService.SendToQueueWithEnvelopeAsync(_queueName, payload, messageId: messageId, traceId: traceId, priority: (byte)Math.Clamp(_messagePriority, 0, 255));
+        }
+
+        if (_messagePriority > 0)
+            return await MqService.SendToQueueWithPriority(_queueName, bytes, (byte)Math.Clamp(_messagePriority, 0, 255));
+
+        return await MqService.SendToQueue(_queueName, bytes);
+    }
+
+    private void SetPublishDetails(string operation, bool ok)
+    {
+        if (!TryBuildPublishBytes(out var bytes, out _))
+            bytes = [];
+
+        SetDetails(
+            operation, ok,
+            [
+                Detail("Queue", _queueName), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()),
+                Detail("Priority", _messagePriority > 0 ? _messagePriority.ToString() : "(default)"),
+                Detail("Delay", operation.Contains("Delayed", StringComparison.Ordinal) ? $"{_sendDelaySeconds}s" : "(none)"),
+                Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))
+            ]);
     }
 
     private async Task CreateExchangeAsync()
@@ -391,12 +525,57 @@
         }
     }
 
-    private async Task RefreshQueueStatsAsync()
+    private async Task RefreshQueueStatsAsync(bool updateStatus = true)
     {
-        _busy = true;
+        if (!_statsAutoRefresh)
+            _busy = true;
+
         try {
             _queueStats = (await MqService.GetAllQueuesInfoAsync()).ToList();
-            SetDetails("Queue Stats", true, [Detail("Queues", _queueStats.Count.ToString()), Detail("Total Messages", _queueStats.Sum(q => q.Messages).ToString()), Detail("Total Consumers", _queueStats.Sum(q => q.Consumers).ToString())]);
+            if (updateStatus)
+                SetDetails(
+                    "Queue Stats", true,
+                    [
+                        Detail("Queues", _queueStats.Count.ToString()), Detail("Filtered", FilteredQueueStats.Count().ToString()),
+                        Detail("Total Messages", _queueStats.Sum(q => q.Messages).ToString()), Detail("Total Consumers", _queueStats.Sum(q => q.Consumers).ToString()),
+                        Detail("Auto Refresh", _statsAutoRefresh ? $"every {_statsRefreshIntervalSeconds}s" : "off")
+                    ]);
+        }
+        catch (Exception ex) {
+            if (updateStatus)
+                SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            if (!_statsAutoRefresh)
+                _busy = false;
+        }
+    }
+
+    private async Task ShowSelectedQueueInfoAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_queueName)) {
+            SetStatus("Enter a queue name.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var info = await MqService.GetQueueInfoAsync(_queueName);
+            if (info is null) {
+                SetDetails("Queue Info", false, [Detail("Queue", _queueName), Detail("Reason", "Queue not found or management API call failed")]);
+                return;
+            }
+
+            var details = new List<KeyValuePair<string, string>> {
+                Detail("Queue", info.Name), Detail("State", info.State ?? "(unknown)"), Detail("Type", info.Type ?? "(unknown)"),
+                Detail("Messages", info.Messages.ToString()), Detail("Ready", info.MessagesReady.ToString()),
+                Detail("Unacked", info.MessagesUnacknowledged.ToString()), Detail("Consumers", info.Consumers.ToString())
+            };
+
+            foreach (var (key, value) in info.AdditionalProperties)
+                details.Add(Detail(key, value?.ToString() ?? "(null)"));
+
+            SetDetails("Queue Info", true, details);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -405,6 +584,47 @@
             _busy = false;
         }
     }
+
+    private async Task OnStatsAutoRefreshChanged(bool enabled)
+    {
+        _statsAutoRefresh = enabled;
+        await StopStatsAutoRefreshAsync();
+
+        if (!enabled)
+            return;
+
+        _statsRefreshCts = new CancellationTokenSource();
+        _ = RunStatsAutoRefreshAsync(_statsRefreshCts.Token);
+    }
+
+    private async Task RunStatsAutoRefreshAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(Math.Max(2, _statsRefreshIntervalSeconds)));
+        try {
+            await RefreshQueueStatsAsync(updateStatus: false);
+            await InvokeAsync(StateHasChanged);
+
+            while (await timer.WaitForNextTickAsync(ct)) {
+                await RefreshQueueStatsAsync(updateStatus: false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) {
+            // Expected when auto refresh is turned off or the component is disposed.
+        }
+    }
+
+    private async Task StopStatsAutoRefreshAsync()
+    {
+        if (_statsRefreshCts is null)
+            return;
+
+        await _statsRefreshCts.CancelAsync();
+        _statsRefreshCts.Dispose();
+        _statsRefreshCts = null;
+    }
+
+    public async ValueTask DisposeAsync() => await StopStatsAutoRefreshAsync();
 
     private async Task<bool> EnsureConnectedAsync()
     {
