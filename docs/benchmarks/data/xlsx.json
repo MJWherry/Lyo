@@ -61,14 +61,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 761253.7291666666,
-          "stdDevNs": 25159.115914806287,
+          "meanNs": 814667.446875,
+          "stdDevNs": 21439.94839871683,
           "allocatedBytes": 619742,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -29.823039021246938,
+          "deltaAllocPct": -4.846554932535758
         },
         {
           "method": "ConvertToCsvBytesUtf16",
@@ -76,14 +78,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 776134.6473011364,
-          "stdDevNs": 31638.544098846516,
+          "meanNs": 819269.7385253906,
+          "stdDevNs": 25224.61824180327,
           "allocatedBytes": 640929,
-          "ratioToBaseline": 1.019547908357388,
+          "ratioToBaseline": 1.0056492887595356,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -11.965628038136868,
+          "deltaAllocPct": -4.614718344130477
         },
         {
           "method": "ConvertToCsvStream",
@@ -91,14 +95,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 773020.5227272727,
-          "stdDevNs": 24176.55960248005,
+          "meanNs": 804344.4182291667,
+          "stdDevNs": 10430.4387475104,
           "allocatedBytes": 612846,
-          "ratioToBaseline": 1.0154571243591635,
+          "ratioToBaseline": 0.9873285367109835,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": 3.721098908830467,
+          "deltaAllocPct": -4.859589939594721
         },
         {
           "method": "ConvertToCsvBytesAsync",
@@ -106,14 +112,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 802862.883828125,
-          "stdDevNs": 97879.59731019886,
+          "meanNs": 763970.4826171875,
+          "stdDevNs": 16654.077903598503,
           "allocatedBytes": 619622,
-          "ratioToBaseline": 1.0546587203021092,
+          "ratioToBaseline": 0.9377697434059971,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -2.954550371457547,
+          "deltaAllocPct": -4.852123706274377
         },
         {
           "method": "ExportToHtmlTable",
@@ -121,14 +129,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 2994004.0942382812,
-          "stdDevNs": 91665.73462939501,
+          "meanNs": 3014059.5948660714,
+          "stdDevNs": 37560.86664645302,
           "allocatedBytes": 3053042,
-          "ratioToBaseline": 3.932991037713239,
+          "ratioToBaseline": 3.699742276959471,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -8.479853953307433,
+          "deltaAllocPct": -11.626831264856504
         },
         {
           "method": "ConvertToCsvBytes",
@@ -136,14 +146,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7122268.096875,
-          "stdDevNs": 115777.30303523556,
-          "allocatedBytes": 4717771,
+          "meanNs": 7223199.002604167,
+          "stdDevNs": 94000.01215663526,
+          "allocatedBytes": 4717782,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -4.5493358343537595,
+          "deltaAllocPct": 1.6421853088585108
         },
         {
           "method": "ConvertToCsvBytesUtf16",
@@ -151,14 +163,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7561479.834134615,
-          "stdDevNs": 56347.857520090976,
-          "allocatedBytes": 5049091,
-          "ratioToBaseline": 1.0616673974196964,
+          "meanNs": 7455778.100520833,
+          "stdDevNs": 109728.95280233964,
+          "allocatedBytes": 5049098,
+          "ratioToBaseline": 1.0321989049218796,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.444349582766713,
+          "deltaAllocPct": 1.7125203486562584
         },
         {
           "method": "ConvertToCsvStream",
@@ -166,14 +180,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7057802.998798077,
-          "stdDevNs": 66482.48663330218,
-          "allocatedBytes": 4646420,
-          "ratioToBaseline": 0.9909487964788621,
+          "meanNs": 7208055.499441965,
+          "stdDevNs": 102724.18460016015,
+          "allocatedBytes": 4646434,
+          "ratioToBaseline": 0.997903490800026,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.891837384442241,
+          "deltaAllocPct": 1.71765501189587
         },
         {
           "method": "ConvertToCsvBytesAsync",
@@ -181,14 +197,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7057657.405133928,
-          "stdDevNs": 116527.23191617112,
-          "allocatedBytes": 4716931,
-          "ratioToBaseline": 0.9909283544423972,
+          "meanNs": 7330915.227384868,
+          "stdDevNs": 157733.30066717142,
+          "allocatedBytes": 4716942,
+          "ratioToBaseline": 1.0149125373317094,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.57337595032212,
+          "deltaAllocPct": 1.6360436827046163
         },
         {
           "method": "ExportToHtmlTable",
@@ -196,14 +214,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 35530159.17058823,
-          "stdDevNs": 1916778.8756375785,
-          "allocatedBytes": 27894262,
-          "ratioToBaseline": 4.988601761028571,
+          "meanNs": 32210097.50877193,
+          "stdDevNs": 1337168.684016947,
+          "allocatedBytes": 27892916,
+          "ratioToBaseline": 4.459256556154591,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -13.026552188634744,
+          "deltaAllocPct": -8.179855442995922
         },
         {
           "method": "ConvertToCsvBytes",
@@ -211,14 +231,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 83032917.8205128,
-          "stdDevNs": 1912625.4163395723,
-          "allocatedBytes": 46909760,
+          "meanNs": 84696694.07142857,
+          "stdDevNs": 896217.555534849,
+          "allocatedBytes": 46909765,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.407002726603644,
+          "deltaAllocPct": 2.1210391380462186
         },
         {
           "method": "ConvertToCsvBytesUtf16",
@@ -226,14 +248,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 88773576.24444444,
-          "stdDevNs": 1343641.393915514,
-          "allocatedBytes": 49754173,
-          "ratioToBaseline": 1.0691371395178582,
+          "meanNs": 87234375.29629628,
+          "stdDevNs": 1856344.0467677426,
+          "allocatedBytes": 49754203,
+          "ratioToBaseline": 1.0299619867420986,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.4697137120027906,
+          "deltaAllocPct": 2.1544514635905068
         },
         {
           "method": "ConvertToCsvStream",
@@ -241,14 +265,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 83023093.40350878,
-          "stdDevNs": 1838869.8621218635,
-          "allocatedBytes": 46160760,
-          "ratioToBaseline": 0.9998816804556326,
+          "meanNs": 83244859.05000001,
+          "stdDevNs": 1859497.0660300618,
+          "allocatedBytes": 46159629,
+          "ratioToBaseline": 0.9828584216025698,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -7.951285755317287,
+          "deltaAllocPct": 2.208747456274853
         },
         {
           "method": "ConvertToCsvBytesAsync",
@@ -256,14 +282,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 82422908.59166667,
-          "stdDevNs": 2893216.617581287,
-          "allocatedBytes": 46903557,
-          "ratioToBaseline": 0.9926534048801615,
+          "meanNs": 83459611.75,
+          "stdDevNs": 1261093.0102098125,
+          "allocatedBytes": 46903600,
+          "ratioToBaseline": 0.9853939715712483,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -8.70301154245575,
+          "deltaAllocPct": 2.1168015510112106
         },
         {
           "method": "ExportToHtmlTable",
@@ -271,14 +299,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 389623118.078125,
-          "stdDevNs": 17879022.77283711,
-          "allocatedBytes": 276371728,
-          "ratioToBaseline": 4.692393430282067,
+          "meanNs": 368091049.1111111,
+          "stdDevNs": 10123726.704150783,
+          "allocatedBytes": 276371248,
+          "ratioToBaseline": 4.34599075142984,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -12.317045202638871,
+          "deltaAllocPct": -7.897483366834498
         },
         {
           "method": "ConvertToCsvBytes",
@@ -286,14 +316,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 935974986,
-          "stdDevNs": 9860164.272719674,
-          "allocatedBytes": 466592360,
+          "meanNs": 920560350.0666667,
+          "stdDevNs": 14893642.321591929,
+          "allocatedBytes": 466592392,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.035842202455047,
+          "deltaAllocPct": 2.2848537836753273
         },
         {
           "method": "ConvertToCsvBytesUtf16",
@@ -301,14 +333,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 949626225.4666667,
-          "stdDevNs": 17732402.160524383,
-          "allocatedBytes": 491258536,
-          "ratioToBaseline": 1.014585047325898,
+          "meanNs": 938681157.8666667,
+          "stdDevNs": 16073582.830361944,
+          "allocatedBytes": 491258512,
+          "ratioToBaseline": 1.0196845408328608,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -3.9774186786078705,
+          "deltaAllocPct": 2.290170712288557
         },
         {
           "method": "ConvertToCsvStream",
@@ -316,14 +350,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 929814745.8571428,
-          "stdDevNs": 12221432.620979952,
-          "allocatedBytes": 458691608,
-          "ratioToBaseline": 0.9934183709661049,
+          "meanNs": 916858461.7333333,
+          "stdDevNs": 11695225.777586482,
+          "allocatedBytes": 458686312,
+          "ratioToBaseline": 0.9959786576370954,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -4.231283399551763,
+          "deltaAllocPct": 2.3914572179876536
         },
         {
           "method": "ConvertToCsvBytesAsync",
@@ -331,14 +367,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 942350189.4761904,
-          "stdDevNs": 21671300.651089285,
-          "allocatedBytes": 466543168,
-          "ratioToBaseline": 1.006811296852532,
+          "meanNs": 917859848.2142857,
+          "stdDevNs": 10634438.345546447,
+          "allocatedBytes": 466547104,
+          "ratioToBaseline": 0.997066458649685,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -5.5430216833651365,
+          "deltaAllocPct": 2.2824112622501787
         },
         {
           "method": "ExportToHtmlTable",
@@ -346,14 +384,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3701089682.357143,
-          "stdDevNs": 40742517.84008808,
-          "allocatedBytes": 2865550240,
-          "ratioToBaseline": 3.954261318642914,
+          "meanNs": 3535445877,
+          "stdDevNs": 51675213.9768035,
+          "allocatedBytes": 2868755912,
+          "ratioToBaseline": 3.8405367738725267,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s."
+          "slaStandard": "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
+          "deltaMeanPct": -14.622885403828468,
+          "deltaAllocPct": -7.508010275032692
         }
       ]
     },
@@ -417,14 +457,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 741204.0486111111,
-          "stdDevNs": 24171.725669782863,
+          "meanNs": 782469.3842329546,
+          "stdDevNs": 18795.185349634667,
           "allocatedBytes": 619222,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -11.704119976246691,
+          "deltaAllocPct": -4.746214288790849
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -432,44 +474,50 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 2659874.4669331396,
-          "stdDevNs": 152411.43169393568,
-          "allocatedBytes": 2351796,
-          "ratioToBaseline": 3.588585993178649,
-          "isBaseline": false,
-          "slaTarget": "<= 10000 ms",
-          "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
-        },
-        {
-          "method": "ParseStreamAsDictionary",
-          "description": "Parse a workbook stream into a row/column dictionary.",
-          "parameters": {
-            "RowCount": "100"
-          },
-          "meanNs": 746696.7408854166,
-          "stdDevNs": 19161.390491215694,
-          "allocatedBytes": 619222,
-          "ratioToBaseline": 1.007410499557575,
-          "isBaseline": false,
-          "slaTarget": "<= 10000 ms",
-          "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
-        },
-        {
-          "method": "ParseStreamAsDataTable",
-          "description": "Parse a workbook stream into a DataTable and count rows.",
-          "parameters": {
-            "RowCount": "100"
-          },
-          "meanNs": 2635154.32109375,
-          "stdDevNs": 87980.44637220434,
+          "meanNs": 2652896.7291666665,
+          "stdDevNs": 74133.8361171178,
           "allocatedBytes": 2351704,
-          "ratioToBaseline": 3.5552346564101693,
+          "ratioToBaseline": 3.3904160119533233,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -17.28303306460982,
+          "deltaAllocPct": -11.197977536151164
+        },
+        {
+          "method": "ParseStreamAsDictionary",
+          "description": "Parse a workbook stream into a row/column dictionary.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 794448.4194078947,
+          "stdDevNs": 16929.697624208846,
+          "allocatedBytes": 619222,
+          "ratioToBaseline": 1.0153092701341702,
+          "isBaseline": false,
+          "slaTarget": "<= 10000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -11.77975213486577,
+          "deltaAllocPct": -4.746214288790849
+        },
+        {
+          "method": "ParseStreamAsDataTable",
+          "description": "Parse a workbook stream into a DataTable and count rows.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 2597906.98828125,
+          "stdDevNs": 49854.523724927625,
+          "allocatedBytes": 2351256,
+          "ratioToBaseline": 3.3201388330713377,
+          "isBaseline": false,
+          "slaTarget": "<= 10000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -18.999896112595206,
+          "deltaAllocPct": -11.214894336081684
         },
         {
           "method": "ParseFileAsDataTable",
@@ -477,14 +525,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 2743937.0639349488,
-          "stdDevNs": 165090.55158895339,
-          "allocatedBytes": 2355716,
-          "ratioToBaseline": 3.7019995628418583,
+          "meanNs": 2686361.997916667,
+          "stdDevNs": 30944.00689890142,
+          "allocatedBytes": 2356164,
+          "ratioToBaseline": 3.433184801920494,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -17.47505351734672,
+          "deltaAllocPct": -11.186147812753022
         },
         {
           "method": "ParseBytesAsDataTableAsync",
@@ -492,14 +542,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 2747590.394230769,
-          "stdDevNs": 95700.5062869612,
-          "allocatedBytes": 2351880,
-          "ratioToBaseline": 3.7069284758755443,
+          "meanNs": 2754337.6739130435,
+          "stdDevNs": 68544.32692626218,
+          "allocatedBytes": 2352328,
+          "ratioToBaseline": 3.520058074365539,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -16.124492843053467,
+          "deltaAllocPct": -11.19604364075654
         },
         {
           "method": "ParseBytesAsDictionaryAsync",
@@ -507,14 +559,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 814014.0574048914,
-          "stdDevNs": 31003.398245885386,
+          "meanNs": 799272.3875,
+          "stdDevNs": 21093.171070297907,
           "allocatedBytes": 619838,
-          "ratioToBaseline": 1.0982320710878652,
+          "ratioToBaseline": 1.0214743267987632,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -17.96917800071785,
+          "deltaAllocPct": -4.741721121513712
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -522,14 +576,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7077300.865056818,
-          "stdDevNs": 173799.50162643558,
-          "allocatedBytes": 4649416,
+          "meanNs": 7099963.515104166,
+          "stdDevNs": 87591.00245718427,
+          "allocatedBytes": 4649412,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -11.259694407356637,
+          "deltaAllocPct": 1.8760045094050017
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -537,44 +593,50 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 30976650.73453608,
-          "stdDevNs": 1816504.1179331776,
-          "allocatedBytes": 21065922,
-          "ratioToBaseline": 4.3769017772692065,
-          "isBaseline": false,
-          "slaTarget": "<= 10000 ms",
-          "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
-        },
-        {
-          "method": "ParseStreamAsDictionary",
-          "description": "Parse a workbook stream into a row/column dictionary.",
-          "parameters": {
-            "RowCount": "1000"
-          },
-          "meanNs": 6953903.09375,
-          "stdDevNs": 103034.81657186296,
-          "allocatedBytes": 4649416,
-          "ratioToBaseline": 0.9825642891746941,
-          "isBaseline": false,
-          "slaTarget": "<= 10000 ms",
-          "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
-        },
-        {
-          "method": "ParseStreamAsDataTable",
-          "description": "Parse a workbook stream into a DataTable and count rows.",
-          "parameters": {
-            "RowCount": "1000"
-          },
-          "meanNs": 31363859.482323233,
-          "stdDevNs": 2172693.2167891846,
+          "meanNs": 29472453.240909092,
+          "stdDevNs": 1224685.2132736233,
           "allocatedBytes": 21066384,
-          "ratioToBaseline": 4.431613136185561,
+          "ratioToBaseline": 4.151071083423263,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -13.462125980777415,
+          "deltaAllocPct": -6.357592791239647
+        },
+        {
+          "method": "ParseStreamAsDictionary",
+          "description": "Parse a workbook stream into a row/column dictionary.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 7318871.225183823,
+          "stdDevNs": 143341.82740382323,
+          "allocatedBytes": 4649412,
+          "ratioToBaseline": 1.0308322302803334,
+          "isBaseline": false,
+          "slaTarget": "<= 10000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -7.459671580516676,
+          "deltaAllocPct": 1.8760045094050017
+        },
+        {
+          "method": "ParseStreamAsDataTable",
+          "description": "Parse a workbook stream into a DataTable and count rows.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 28952068.865384616,
+          "stdDevNs": 776370.5899323184,
+          "allocatedBytes": 21065922,
+          "ratioToBaseline": 4.077777132768809,
+          "isBaseline": false,
+          "slaTarget": "<= 10000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -12.356541741243838,
+          "deltaAllocPct": -6.359646432345327
         },
         {
           "method": "ParseFileAsDataTable",
@@ -582,14 +644,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 30435683.685185187,
-          "stdDevNs": 1592977.4463910558,
-          "allocatedBytes": 21070692,
-          "ratioToBaseline": 4.300464861605236,
+          "meanNs": 29347104.82142857,
+          "stdDevNs": 1172160.7958880465,
+          "allocatedBytes": 21070524,
+          "ratioToBaseline": 4.133416285731154,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -16.55886135669429,
+          "deltaAllocPct": -6.35926961513417
         },
         {
           "method": "ParseBytesAsDataTableAsync",
@@ -597,14 +661,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 31498678.71551724,
-          "stdDevNs": 1710160.8549622819,
-          "allocatedBytes": 21067066,
-          "ratioToBaseline": 4.450662663083543,
+          "meanNs": 30151311.21153846,
+          "stdDevNs": 1391334.0705453902,
+          "allocatedBytes": 21066616,
+          "ratioToBaseline": 4.246685373438303,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -15.647175442699949,
+          "deltaAllocPct": -6.363204491163392
         },
         {
           "method": "ParseBytesAsDictionaryAsync",
@@ -612,14 +678,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 7148073.091145833,
-          "stdDevNs": 151279.16873929236,
+          "meanNs": 7502733.3076171875,
+          "stdDevNs": 142932.4382780094,
           "allocatedBytes": 4650032,
-          "ratioToBaseline": 1.0099998894265527,
+          "ratioToBaseline": 1.0567284313019618,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -7.948691308130602,
+          "deltaAllocPct": 1.8753925735759835
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -627,14 +695,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 94457836.1,
-          "stdDevNs": 2175014.1790434727,
-          "allocatedBytes": 46603328,
+          "meanNs": 88473887.28571428,
+          "stdDevNs": 1027669.6279436118,
+          "allocatedBytes": 46602563,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -13.054867478899537,
+          "deltaAllocPct": 2.31576359455819
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -642,14 +712,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 335660540.25,
-          "stdDevNs": 7647895.209599109,
-          "allocatedBytes": 208578264,
-          "ratioToBaseline": 3.5535489072038993,
+          "meanNs": 316983588.53846157,
+          "stdDevNs": 8574680.562883379,
+          "allocatedBytes": 208577360,
+          "ratioToBaseline": 3.5827925986207267,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -12.319698519587078,
+          "deltaAllocPct": -5.7486342732850275
         },
         {
           "method": "ParseStreamAsDictionary",
@@ -657,14 +729,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 94461407.25,
-          "stdDevNs": 1693997.8853735346,
-          "allocatedBytes": 46601484,
-          "ratioToBaseline": 1.000037806815691,
+          "meanNs": 90452002.16666667,
+          "stdDevNs": 1653602.2008844817,
+          "allocatedBytes": 46601645,
+          "ratioToBaseline": 1.022358177555422,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -8.207945139172553,
+          "deltaAllocPct": 2.314529845324334
         },
         {
           "method": "ParseStreamAsDataTable",
@@ -672,14 +746,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 332918558.5964912,
-          "stdDevNs": 14465864.5810157,
-          "allocatedBytes": 208575168,
-          "ratioToBaseline": 3.5245202763700747,
+          "meanNs": 322942312.95,
+          "stdDevNs": 7185673.349827195,
+          "allocatedBytes": 208579992,
+          "ratioToBaseline": 3.650142690205327,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -13.81181965671773,
+          "deltaAllocPct": -5.7457889812530185
         },
         {
           "method": "ParseFileAsDataTable",
@@ -687,14 +763,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 334472609.0677966,
-          "stdDevNs": 14792923.027569162,
-          "allocatedBytes": 208585120,
-          "ratioToBaseline": 3.5409725955790408,
+          "meanNs": 317453626.9285714,
+          "stdDevNs": 5161390.09213592,
+          "allocatedBytes": 208583616,
+          "ratioToBaseline": 3.5881053344406406,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -17.225516496892435,
+          "deltaAllocPct": -5.746379753100826
         },
         {
           "method": "ParseBytesAsDataTableAsync",
@@ -702,14 +780,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 336314706.74358976,
-          "stdDevNs": 11520518.71446953,
-          "allocatedBytes": 208579080,
-          "ratioToBaseline": 3.5604743939670853,
+          "meanNs": 319145382.7894737,
+          "stdDevNs": 6853498.683006964,
+          "allocatedBytes": 208582552,
+          "ratioToBaseline": 3.6072268618517627,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -13.77268826202923,
+          "deltaAllocPct": -5.74596443301645
         },
         {
           "method": "ParseBytesAsDictionaryAsync",
@@ -717,14 +797,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 94426442.93055555,
-          "stdDevNs": 3083443.5719621796,
-          "allocatedBytes": 46602920,
-          "ratioToBaseline": 0.9996676488606916,
+          "meanNs": 92750043,
+          "stdDevNs": 2083603.5169148804,
+          "allocatedBytes": 46603197,
+          "ratioToBaseline": 1.0483324045712659,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -8.889509457411995,
+          "deltaAllocPct": 2.315026025312845
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -732,14 +814,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1030618080.2142857,
-          "stdDevNs": 16888910.682588242,
-          "allocatedBytes": 465598800,
+          "meanNs": 1012102158.2,
+          "stdDevNs": 14280158.22159356,
+          "allocatedBytes": 465597408,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -7.079208331599954,
+          "deltaAllocPct": 2.458815771950053
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -747,14 +831,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3334776730.5333333,
-          "stdDevNs": 60564868.40081775,
-          "allocatedBytes": 2189350296,
-          "ratioToBaseline": 3.2357056358258025,
+          "meanNs": 3235060400.866667,
+          "stdDevNs": 52575627.23943992,
+          "allocatedBytes": 2189354840,
+          "ratioToBaseline": 3.196377336671375,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -15.051849915711038,
+          "deltaAllocPct": -5.326720051101759
         },
         {
           "method": "ParseStreamAsDictionary",
@@ -762,14 +848,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1041801724.3846154,
-          "stdDevNs": 15789800.730357014,
-          "allocatedBytes": 465600656,
-          "ratioToBaseline": 1.0108513952792333,
+          "meanNs": 1006417613.4666667,
+          "stdDevNs": 11394499.661529798,
+          "allocatedBytes": 465597456,
+          "ratioToBaseline": 0.9943834279106338,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -6.089449227328605,
+          "deltaAllocPct": 2.4584818182557577
         },
         {
           "method": "ParseStreamAsDataTable",
@@ -777,14 +865,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3356882961.4,
-          "stdDevNs": 49725125.33163372,
-          "allocatedBytes": 2189356112,
-          "ratioToBaseline": 3.257155124526865,
+          "meanNs": 3187982503.0625,
+          "stdDevNs": 59638262.77127691,
+          "allocatedBytes": 2189352856,
+          "ratioToBaseline": 3.1498623703483175,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -16.365656562096927,
+          "deltaAllocPct": -5.3268117395454775
         },
         {
           "method": "ParseFileAsDataTable",
@@ -792,14 +882,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3451727816.071429,
-          "stdDevNs": 48619704.74135391,
-          "allocatedBytes": 2189362664,
-          "ratioToBaseline": 3.3491822842402947,
+          "meanNs": 3201836833.8333335,
+          "stdDevNs": 55927245.117880285,
+          "allocatedBytes": 2186155944,
+          "ratioToBaseline": 3.1635510386893406,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -14.6411252343876,
+          "deltaAllocPct": -5.465349987195923
         },
         {
           "method": "ParseBytesAsDataTableAsync",
@@ -807,14 +899,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 3336507930.1764708,
-          "stdDevNs": 58357721.07470611,
-          "allocatedBytes": 2189355720,
-          "ratioToBaseline": 3.2373854041865298,
+          "meanNs": 3257761103.9333334,
+          "stdDevNs": 58762416.37850927,
+          "allocatedBytes": 2186157296,
+          "ratioToBaseline": 3.2188065972778728,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -12.292918370086928,
+          "deltaAllocPct": -5.4651247364954285
         },
         {
           "method": "ParseBytesAsDictionaryAsync",
@@ -822,20 +916,22 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1031672506.4,
-          "stdDevNs": 13786801.36835305,
-          "allocatedBytes": 465599624,
-          "ratioToBaseline": 1.0010231008032529,
+          "meanNs": 1020673395.0769231,
+          "stdDevNs": 12897907.035627773,
+          "allocatedBytes": 465599600,
+          "ratioToBaseline": 1.0084687467638314,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s."
+          "slaStandard": "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
+          "deltaMeanPct": -2.295381326191533,
+          "deltaAllocPct": 2.458643378090429
         }
       ]
     },
     {
       "name": "XlsxWriteBenchmarks",
-      "description": "Serializes RowCount SampleRecords to XLSX via ClosedXML across every write surface: typed-list to bytes / stream / file, the async byte path, a selected-columns subset (3 of 7), a 3-worksheet workbook, and the dynamic DataTable and row/column-dictionary sources. Shows the relative cost of file I/O, multi-sheet workbooks, and dynamic vs typed column construction.",
+      "description": "Serializes RowCount SampleRecords to XLSX via the streaming OpenXML writer across every write surface: typed-list to bytes / stream / file, the async byte path, a selected-columns subset (3 of 7), a 3-worksheet workbook, and the dynamic DataTable and row/column-dictionary sources. Shows the relative cost of file I/O, multi-sheet workbooks, and dynamic vs typed column construction.",
       "parameters": [
         {
           "name": "RowCount",
@@ -893,14 +989,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 941232.4372829861,
-          "stdDevNs": 19044.109587550345,
+          "meanNs": 948876.837109375,
+          "stdDevNs": 21419.723311090336,
           "allocatedBytes": 875476,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.38452039826086,
+          "deltaAllocPct": -95.54793029784882
         },
         {
           "method": "ExportToXlsxStream",
@@ -908,14 +1006,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 933282.2713694853,
-          "stdDevNs": 29917.56397350911,
-          "allocatedBytes": 868754,
-          "ratioToBaseline": 0.991553450987675,
+          "meanNs": 951406.7557091346,
+          "stdDevNs": 23025.785693770067,
+          "allocatedBytes": 868818,
+          "ratioToBaseline": 1.0026662244253601,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.19566183408683,
+          "deltaAllocPct": -95.57931747561666
         },
         {
           "method": "ExportToXlsxFile",
@@ -923,14 +1023,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1108021.9639423077,
-          "stdDevNs": 32351.226153010615,
-          "allocatedBytes": 855280,
-          "ratioToBaseline": 1.1772033347477755,
+          "meanNs": 1069913.5591947115,
+          "stdDevNs": 28834.311605416413,
+          "allocatedBytes": 855312,
+          "ratioToBaseline": 1.1275578845976033,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.63593608279542,
+          "deltaAllocPct": -95.64187063594473
         },
         {
           "method": "ExportToXlsxBytesAsync",
@@ -938,14 +1040,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 951263.9288411458,
-          "stdDevNs": 16787.66769255208,
+          "meanNs": 1022367.8799715909,
+          "stdDevNs": 24653.397322278437,
           "allocatedBytes": 876156,
-          "ratioToBaseline": 1.0106578260170433,
+          "ratioToBaseline": 1.0774505604816915,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.94979487453148,
+          "deltaAllocPct": -95.54461615693216
         },
         {
           "method": "ExportToXlsxBytesSelected",
@@ -953,14 +1057,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 509630.9221047794,
-          "stdDevNs": 10383.500219371563,
-          "allocatedBytes": 505182,
-          "ratioToBaseline": 0.5414506575824228,
+          "meanNs": 512384.8645019531,
+          "stdDevNs": 8414.139831845285,
+          "allocatedBytes": 505183,
+          "ratioToBaseline": 0.5399909076322954,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -92.00647782802842,
+          "deltaAllocPct": -95.45213649199025
         },
         {
           "method": "ExportToXlsxBytesMultiSheet",
@@ -968,14 +1074,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1011253.4546875,
-          "stdDevNs": 17826.75499525677,
-          "allocatedBytes": 979290,
-          "ratioToBaseline": 1.0743929072468439,
+          "meanNs": 1007785.3552083333,
+          "stdDevNs": 14261.869614288516,
+          "allocatedBytes": 979291,
+          "ratioToBaseline": 1.062082364955198,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.3128967038532,
+          "deltaAllocPct": -95.16836047786158
         },
         {
           "method": "ExportToXlsxBytesFromDataTable",
@@ -983,14 +1091,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1228447.690234375,
-          "stdDevNs": 18727.90578072221,
+          "meanNs": 1206355.9694010417,
+          "stdDevNs": 14128.376297174957,
           "allocatedBytes": 1117296,
-          "ratioToBaseline": 1.3051480607494577,
+          "ratioToBaseline": 1.2713514781075719,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -88.53624686841123,
+          "deltaAllocPct": -94.23564556847609
         },
         {
           "method": "ExportToXlsxBytesFromDictionary",
@@ -998,14 +1108,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1235414.8744673296,
-          "stdDevNs": 33754.80127176457,
-          "allocatedBytes": 1109892,
-          "ratioToBaseline": 1.312550253828424,
+          "meanNs": 1185502.4252232143,
+          "stdDevNs": 8918.38746873224,
+          "allocatedBytes": 1109861,
+          "ratioToBaseline": 1.249374395980291,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -89.64190207356997,
+          "deltaAllocPct": -94.9770369794761
         },
         {
           "method": "ExportToXlsxBytes",
@@ -1013,14 +1125,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 9483357.3515625,
-          "stdDevNs": 86996.07475884735,
-          "allocatedBytes": 8246916,
+          "meanNs": 9328206.545833332,
+          "stdDevNs": 154092.88422111733,
+          "allocatedBytes": 8247416,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.24239994877954,
+          "deltaAllocPct": -95.82795687784919
         },
         {
           "method": "ExportToXlsxStream",
@@ -1028,14 +1142,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 9409604.734375,
-          "stdDevNs": 156484.377477264,
-          "allocatedBytes": 8204341,
-          "ratioToBaseline": 0.9922229423132148,
+          "meanNs": 9385494.0375,
+          "stdDevNs": 139233.96019764701,
+          "allocatedBytes": 8204234,
+          "ratioToBaseline": 1.0061413189539907,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.01985366923164,
+          "deltaAllocPct": -95.84871524563862
         },
         {
           "method": "ExportToXlsxFile",
@@ -1043,14 +1159,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 10328285.36351103,
-          "stdDevNs": 205430.84531237528,
-          "allocatedBytes": 8074099,
-          "ratioToBaseline": 1.089095874027073,
+          "meanNs": 9814047.770507812,
+          "stdDevNs": 182318.37036522615,
+          "allocatedBytes": 8074137,
+          "ratioToBaseline": 1.0520830260658725,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.42105290369479,
+          "deltaAllocPct": -95.91274193281889
         },
         {
           "method": "ExportToXlsxBytesAsync",
@@ -1058,14 +1176,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 9780291.985576924,
-          "stdDevNs": 265082.8946739786,
-          "allocatedBytes": 8247634,
-          "ratioToBaseline": 1.0313111299096518,
+          "meanNs": 9552452.159375,
+          "stdDevNs": 138973.73202402578,
+          "allocatedBytes": 8247696,
+          "ratioToBaseline": 1.0240395206130843,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.16254108130958,
+          "deltaAllocPct": -95.82781979564062
         },
         {
           "method": "ExportToXlsxBytesSelected",
@@ -1073,14 +1193,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 4648162.03671875,
-          "stdDevNs": 75852.87516667755,
-          "allocatedBytes": 4303293,
-          "ratioToBaseline": 0.4901388679561789,
+          "meanNs": 4606801.200520833,
+          "stdDevNs": 63320.6461927443,
+          "allocatedBytes": 4303389,
+          "ratioToBaseline": 0.4938571179664296,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.70951246148185,
+          "deltaAllocPct": -96.18925314926702
         },
         {
           "method": "ExportToXlsxBytesMultiSheet",
@@ -1088,14 +1210,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 9016561.5703125,
-          "stdDevNs": 110858.2094081381,
-          "allocatedBytes": 7869300,
-          "ratioToBaseline": 0.9507773709304448,
+          "meanNs": 9084635.199479166,
+          "stdDevNs": 165048.4977162948,
+          "allocatedBytes": 7869395,
+          "ratioToBaseline": 0.9738887271462741,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.29865641886244,
+          "deltaAllocPct": -96.02882936270518
         },
         {
           "method": "ExportToXlsxBytesFromDataTable",
@@ -1103,14 +1227,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 11042069.481971154,
-          "stdDevNs": 149463.56058631846,
-          "allocatedBytes": 9676142,
-          "ratioToBaseline": 1.1643629015152357,
+          "meanNs": 10730948.964285715,
+          "stdDevNs": 161800.20873717737,
+          "allocatedBytes": 9676085,
+          "ratioToBaseline": 1.1503764321212366,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -89.72081233397707,
+          "deltaAllocPct": -95.03410109684842
         },
         {
           "method": "ExportToXlsxBytesFromDictionary",
@@ -1118,14 +1244,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 10900159.182291666,
-          "stdDevNs": 257771.13815018363,
-          "allocatedBytes": 9670797,
-          "ratioToBaseline": 1.149398760186521,
+          "meanNs": 10710861.332291666,
+          "stdDevNs": 145446.96810886488,
+          "allocatedBytes": 9671074,
+          "ratioToBaseline": 1.1482230029604061,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.38259094474729,
+          "deltaAllocPct": -95.65598281084966
         },
         {
           "method": "ExportToXlsxBytes",
@@ -1133,14 +1261,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 92253409.78571428,
-          "stdDevNs": 1495971.441989383,
-          "allocatedBytes": 78310778,
+          "meanNs": 91270194.73333332,
+          "stdDevNs": 1082142.6621981396,
+          "allocatedBytes": 78310659,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.31543724202574,
+          "deltaAllocPct": -96.19222730661356
         },
         {
           "method": "ExportToXlsxStream",
@@ -1148,14 +1278,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 91448619.04285716,
-          "stdDevNs": 1296910.39669142,
-          "allocatedBytes": 77891147,
-          "ratioToBaseline": 0.9912763035564052,
+          "meanNs": 89245710.94444443,
+          "stdDevNs": 439501.8462000373,
+          "allocatedBytes": 77890967,
+          "ratioToBaseline": 0.9778187852583872,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.28694274722575,
+          "deltaAllocPct": -96.21184747468148
         },
         {
           "method": "ExportToXlsxFile",
@@ -1163,14 +1295,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 94485203.86666664,
-          "stdDevNs": 1653062.143503481,
-          "allocatedBytes": 76763749,
-          "ratioToBaseline": 1.0241919955710728,
+          "meanNs": 95824633.62222221,
+          "stdDevNs": 1615154.7147625838,
+          "allocatedBytes": 76763585,
+          "ratioToBaseline": 1.04990061544402,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.76042529976117,
+          "deltaAllocPct": -96.26462228916115
         },
         {
           "method": "ExportToXlsxBytesAsync",
@@ -1178,14 +1312,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 90598369.48039216,
-          "stdDevNs": 1853719.618411239,
-          "allocatedBytes": 78312641,
-          "ratioToBaseline": 0.9820598467941029,
+          "meanNs": 91981889.10416667,
+          "stdDevNs": 1804415.3735497724,
+          "allocatedBytes": 78311440,
+          "ratioToBaseline": 1.0077976646473992,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.04076983345551,
+          "deltaAllocPct": -96.19219537462833
         },
         {
           "method": "ExportToXlsxBytesSelected",
@@ -1193,14 +1329,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 44306631.62337662,
-          "stdDevNs": 490059.8099740609,
-          "allocatedBytes": 40499503,
-          "ratioToBaseline": 0.48027093769533097,
+          "meanNs": 45016791.26060606,
+          "stdDevNs": 567215.1904768462,
+          "allocatedBytes": 40499487,
+          "ratioToBaseline": 0.4932255419431598,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -92.19203768579649,
+          "deltaAllocPct": -96.59535646000069
         },
         {
           "method": "ExportToXlsxBytesMultiSheet",
@@ -1208,14 +1346,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 88334568.93846154,
-          "stdDevNs": 942322.7678437625,
-          "allocatedBytes": 75184941,
-          "ratioToBaseline": 0.9575209105402672,
+          "meanNs": 90752673.48888889,
+          "stdDevNs": 1406635.8214874638,
+          "allocatedBytes": 75185249,
+          "ratioToBaseline": 0.9943297891939807,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.14460051625093,
+          "deltaAllocPct": -96.3324079711646
         },
         {
           "method": "ExportToXlsxBytesFromDataTable",
@@ -1223,14 +1363,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 114391370.828125,
-          "stdDevNs": 2102402.23129593,
-          "allocatedBytes": 104330100,
-          "ratioToBaseline": 1.2399690276362971,
+          "meanNs": 111090997.94666667,
+          "stdDevNs": 1084863.9774338736,
+          "allocatedBytes": 104330163,
+          "ratioToBaseline": 1.2171662202676827,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -88.84426902064004,
+          "deltaAllocPct": -94.85388790514158
         },
         {
           "method": "ExportToXlsxBytesFromDictionary",
@@ -1238,14 +1380,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 111488792.23333333,
-          "stdDevNs": 3328845.777805944,
-          "allocatedBytes": 105153192,
-          "ratioToBaseline": 1.2085059239793834,
+          "meanNs": 107954322.37333332,
+          "stdDevNs": 731825.1074379563,
+          "allocatedBytes": 105153299,
+          "ratioToBaseline": 1.1827992992536773,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.15649586495996,
+          "deltaAllocPct": -95.44404127908265
         },
         {
           "method": "ExportToXlsxBytes",
@@ -1253,14 +1397,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 889289151.8,
-          "stdDevNs": 15242853.00511524,
-          "allocatedBytes": 760008168,
+          "meanNs": 895999164.5294118,
+          "stdDevNs": 17978058.76084373,
+          "allocatedBytes": 760010224,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.4104732923634,
+          "deltaAllocPct": -96.46203306569878
         },
         {
           "method": "ExportToXlsxStream",
@@ -1268,14 +1414,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 893523979.9285715,
-          "stdDevNs": 9978271.706449272,
-          "allocatedBytes": 755795672,
-          "ratioToBaseline": 1.0047620373193578,
+          "meanNs": 884808919.2142857,
+          "stdDevNs": 9559880.246574158,
+          "allocatedBytes": 755794600,
+          "ratioToBaseline": 0.9875108752796624,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.49622465590672,
+          "deltaAllocPct": -96.4809507247813
         },
         {
           "method": "ExportToXlsxFile",
@@ -1283,14 +1431,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 898244624.0625,
-          "stdDevNs": 27447019.96442435,
-          "allocatedBytes": 746696264,
-          "ratioToBaseline": 1.010070371649506,
+          "meanNs": 873846817.6666666,
+          "stdDevNs": 14527754.941279579,
+          "allocatedBytes": 746696408,
+          "ratioToBaseline": 0.9752763755372699,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.58901285822338,
+          "deltaAllocPct": -96.5218346337031
         },
         {
           "method": "ExportToXlsxBytesAsync",
@@ -1298,14 +1448,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 888925954.2857143,
-          "stdDevNs": 14135848.627005637,
-          "allocatedBytes": 760009920,
-          "ratioToBaseline": 0.9995915867032106,
+          "meanNs": 913803855.25,
+          "stdDevNs": 16619604.659244487,
+          "allocatedBytes": 760008848,
+          "ratioToBaseline": 1.0198713251367142,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.81556769122656,
+          "deltaAllocPct": -96.46204318281649
         },
         {
           "method": "ExportToXlsxBytesSelected",
@@ -1313,14 +1465,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 450097238.6818182,
-          "stdDevNs": 10886339.7976148,
-          "allocatedBytes": 443031576,
-          "ratioToBaseline": 0.506131484647914,
+          "meanNs": 446011550.3333333,
+          "stdDevNs": 4059613.9534084527,
+          "allocatedBytes": 443031744,
+          "ratioToBaseline": 0.4977812122934102,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -92.13197356750484,
+          "deltaAllocPct": -96.49069991882003
         },
         {
           "method": "ExportToXlsxBytesMultiSheet",
@@ -1328,14 +1482,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 902791030.4,
-          "stdDevNs": 14310287.960602963,
-          "allocatedBytes": 809276392,
-          "ratioToBaseline": 1.015182776684806,
+          "meanNs": 889718897.3846154,
+          "stdDevNs": 10459855.647972813,
+          "allocatedBytes": 809275376,
+          "ratioToBaseline": 0.9929907667401734,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -91.19507379102791,
+          "deltaAllocPct": -96.22215055363024
         },
         {
           "method": "ExportToXlsxBytesFromDataTable",
@@ -1343,14 +1499,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1045093476.625,
-          "stdDevNs": 17356713.667712353,
-          "allocatedBytes": 994372696,
-          "ratioToBaseline": 1.1752009731701307,
+          "meanNs": 1037120742.4285715,
+          "stdDevNs": 5156925.041807714,
+          "allocatedBytes": 994372664,
+          "ratioToBaseline": 1.1575019079100126,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -89.40321156326871,
+          "deltaAllocPct": -95.31291915622518
         },
         {
           "method": "ExportToXlsxBytesFromDictionary",
@@ -1358,14 +1516,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1045838794.6666666,
-          "stdDevNs": 24454956.89880414,
-          "allocatedBytes": 1002660312,
-          "ratioToBaseline": 1.1760390785716843,
+          "meanNs": 1030394626.7142857,
+          "stdDevNs": 7451325.269514456,
+          "allocatedBytes": 1002659376,
+          "ratioToBaseline": 1.1499950753363257,
           "isBaseline": false,
           "slaTarget": "<= 10000 ms",
           "slaResult": "Exceeds",
-          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s."
+          "slaStandard": "XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+          "deltaMeanPct": -90.49500598935477,
+          "deltaAllocPct": -95.84181046981128
         }
       ]
     }
@@ -1374,85 +1534,85 @@
     {
       "area": "ConvertToCsvBytes",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "761.25 \u00b5s",
+      "latest": "814.67 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvBytesAsync",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "802.86 \u00b5s",
+      "latest": "763.97 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvBytesUtf16",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "776.13 \u00b5s",
+      "latest": "819.27 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ConvertToCsvStream",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "773.02 \u00b5s",
+      "latest": "804.34 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToHtmlTable",
       "target": "<= 10000 ms \u2014 Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.",
-      "latest": "2.99 ms",
+      "latest": "3.01 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytes",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "941.23 \u00b5s",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "948.88 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesAsync",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "951.26 \u00b5s",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "1.02 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesFromDataTable",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "1.23 ms",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "1.21 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesFromDictionary",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "1.24 ms",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "1.19 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesMultiSheet",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
       "latest": "1.01 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxBytesSelected",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "509.63 \u00b5s",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "512.38 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxFile",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "1.11 ms",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "1.07 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToXlsxStream",
-      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via ClosedXML should complete within ~10s.",
-      "latest": "933.28 \u00b5s",
+      "target": "<= 10000 ms \u2014 XLSX is markedly heavier than CSV; a bulk export of up to 100k rows via the streaming OpenXML writer should complete within ~10s.",
+      "latest": "951.41 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "2.66 ms",
+      "latest": "2.65 ms",
       "result": "Exceeds"
     },
     {
@@ -1464,31 +1624,31 @@
     {
       "area": "ParseBytesAsDictionary",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "741.2 \u00b5s",
+      "latest": "782.47 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDictionaryAsync",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "814.01 \u00b5s",
+      "latest": "799.27 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseFileAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "2.74 ms",
+      "latest": "2.69 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamAsDataTable",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "2.64 ms",
+      "latest": "2.6 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamAsDictionary",
       "target": "<= 10000 ms \u2014 XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.",
-      "latest": "746.7 \u00b5s",
+      "latest": "794.45 \u00b5s",
       "result": "Exceeds"
     }
   ],
@@ -1512,12 +1672,12 @@
   "schema": "lyo.bench/v1",
   "name": "xlsx",
   "title": "XLSX",
-  "description": "XLSX write (ClosedXML) and read (ExcelDataReader) paths for Lyo.Xlsx over a flat 7-column SampleRecord. Row counts are smaller than CSV because XLSX is markedly heavier per row. RowCount is the number of records; the column set and types are captured in each class's data shape.",
-  "runId": "BenchmarkRun-joined-2026-07-03-18-19-40",
-  "generatedAt": "2026-07-03T18:19:40.8301115+00:00",
-  "runStarted": "2026-07-03T17:44:57.1178824+00:00",
-  "runEnded": "2026-07-03T18:19:40.8301115+00:00",
-  "durationSeconds": 2083.7122291,
+  "description": "XLSX write (streaming OpenXML) and read (ExcelDataReader) paths for Lyo.Xlsx over a flat 7-column SampleRecord. Row counts are smaller than CSV because XLSX is markedly heavier per row. RowCount is the number of records; the column set and types are captured in each class's data shape.",
+  "runId": "BenchmarkRun-joined-2026-07-04-08-00-11",
+  "generatedAt": "2026-07-04T08:00:11.742103+00:00",
+  "runStarted": "2026-07-04T07:29:54.145524+00:00",
+  "runEnded": "2026-07-04T08:00:11.742103+00:00",
+  "durationSeconds": 1817.596579,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
@@ -1532,5 +1692,33 @@
     "configuration": "Release",
     "dotnetSdkVersion": "10.0.100"
   },
-  "notes": []
+  "notes": [],
+  "history": [
+    {
+      "file": "20260628T165223Z_BenchmarkRun-joined-2026-06-28-12-52-23.json",
+      "runId": "BenchmarkRun-joined-2026-06-28-12-52-23",
+      "runStarted": null,
+      "runEnded": null,
+      "generatedAt": "2026-06-28T16:52:23.9628038+00:00",
+      "isCurrent": false,
+      "measurementCount": 80,
+      "medianMeanNs": 102454347.76744185
+    },
+    {
+      "file": "20260704T080011Z_BenchmarkRun-joined-2026-07-04-08-00-11.json",
+      "runId": "BenchmarkRun-joined-2026-07-04-08-00-11",
+      "runStarted": "2026-07-04T07:29:54.145524+00:00",
+      "runEnded": "2026-07-04T08:00:11.742103+00:00",
+      "generatedAt": "2026-07-04T08:00:11.742103+00:00",
+      "isCurrent": true,
+      "measurementCount": 80,
+      "medianMeanNs": 45016791.26060606
+    }
+  ],
+  "deltaBaseline": {
+    "kind": "previousRun",
+    "runId": "BenchmarkRun-joined-2026-06-28-12-52-23",
+    "runStarted": null,
+    "runEnded": null
+  }
 }

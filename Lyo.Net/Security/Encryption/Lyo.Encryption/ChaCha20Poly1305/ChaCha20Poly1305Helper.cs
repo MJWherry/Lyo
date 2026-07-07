@@ -12,19 +12,20 @@ public static class ChaCha20Poly1305Helper
 
     public const int TagSize = 16; // 128 bits
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
+        => Encrypt(plaintext.AsSpan(), key, nonce, associatedData);
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
 #if NET10_0_OR_GREATER
         var tag = new byte[TagSize];
         var ciphertext = new byte[plaintext.Length];
         using var chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
-        chacha.Encrypt(nonce, plaintext, ciphertext, tag);
+        chacha.Encrypt(nonce, plaintext, ciphertext, tag, associatedData);
         return (ciphertext, tag);
 #else
         var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-        chacha.Init(true, new AeadParameters(new(key), 128, nonce, null));
+        chacha.Init(true, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
         var outBuf = new byte[chacha.GetOutputSize(plaintext.Length)];
         var tlen = 0;
         if (plaintext.Length > 0) {
@@ -45,12 +46,12 @@ public static class ChaCha20Poly1305Helper
 #endif
     }
 
-    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce)
+    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
 #if NET10_0_OR_GREATER
         var plaintext = new byte[ciphertext.Length];
         using var chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
-        chacha.Decrypt(nonce, ciphertext, tag, plaintext);
+        chacha.Decrypt(nonce, ciphertext, tag, plaintext, associatedData);
         return plaintext;
 #else
         var combined = new byte[ciphertext.Length + TagSize];
@@ -58,7 +59,7 @@ public static class ChaCha20Poly1305Helper
         Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
         try {
             var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-            chacha.Init(false, new AeadParameters(new(key), 128, nonce, null));
+            chacha.Init(false, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
             var outBuf = new byte[chacha.GetOutputSize(combined.Length)];
             var len = chacha.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
             len += chacha.DoFinal(outBuf, len);

@@ -403,6 +403,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
+            services.AddHostedService<JobEventPublisherStartupService>();
             return services;
         }
     }

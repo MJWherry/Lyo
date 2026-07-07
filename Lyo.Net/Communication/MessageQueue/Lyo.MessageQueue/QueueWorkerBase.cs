@@ -22,35 +22,102 @@ internal static class QueueWorkerHelpers
         return !isSuccess;
     }
 
-    /// <summary>Tries to deserialize as QueueMessageEnvelope first; falls back to raw TRequest for legacy messages.</summary>
-    internal static (TRequest? Payload, QueueMessageEnvelope<TRequest>? Envelope) DeserializeMessage<TRequest>(byte[] messageBytes, JsonSerializerOptions options)
+    /// <summary>
+    /// Deserializes a queue message with an autocorrect ladder. Envelope-shaped JSON is unwrapped via the full <see cref="QueueMessageEnvelope{T}" /> first; if that fails, the
+    /// <c>Payload</c> element alone is deserialized as <typeparamref name="TRequest" /> and the envelope metadata is reconstructed from the root JSON. Non-envelope JSON is
+    /// deserialized as a raw legacy <typeparamref name="TRequest" />. Returns false when the message cannot be recovered by any path (caller should treat it as poison).
+    /// </summary>
+    internal static bool TryDeserializeMessage<TRequest>(byte[] messageBytes, JsonSerializerOptions options, out TRequest? payload, out QueueMessageEnvelope<TRequest>? envelope)
     {
+        payload = default;
+        envelope = null;
+        JsonDocument doc;
         try {
-            using var doc = JsonDocument.Parse(messageBytes);
+            doc = JsonDocument.Parse(messageBytes);
+        }
+        catch (JsonException) {
+            return false;
+        }
+
+        using (doc) {
             var root = doc.RootElement;
-            var hasEnvelopeShape = (root.TryGetProperty("RequeueCount", out var _) || root.TryGetProperty("requeueCount", out var _)) &&
+            var hasEnvelopeShape = root.ValueKind == JsonValueKind.Object &&
+                (root.TryGetProperty("RequeueCount", out var _) || root.TryGetProperty("requeueCount", out var _)) &&
                 (root.TryGetProperty("Payload", out var _) || root.TryGetProperty("payload", out var _));
 
             if (hasEnvelopeShape) {
-                var envelope = JsonSerializer.Deserialize<QueueMessageEnvelope<TRequest>>(messageBytes, options);
-                if (envelope != null && envelope.Payload != null)
-                    return (envelope.Payload, envelope);
+                // 1. Full envelope deserialize.
+                try {
+                    var full = JsonSerializer.Deserialize<QueueMessageEnvelope<TRequest>>(messageBytes, options);
+                    if (full is not null && full.Payload is not null) {
+                        payload = full.Payload;
+                        envelope = full;
+                        return true;
+                    }
+                }
+                catch (JsonException) {
+                    /* Fall through to payload-only autocorrect */
+                }
+
+                // 2. Autocorrect: deserialize only the Payload element as TRequest, then rebuild envelope metadata from the root
+                // so requeue tracking survives partially malformed envelopes. Never deserialize the whole envelope JSON as TRequest.
+                if (!TryGetPropertyIgnoreCase(root, "Payload", out var payloadElement))
+                    return false;
+
+                if (!TryDeserializeElement(payloadElement, options, out payload) || payload is null)
+                    return false;
+
+                envelope = new(
+                    payload, GetInt(root, "RequeueCount") ?? 0, GetString(root, "MessageId"), GetDateTime(root, "EnqueuedAt"), GetString(root, "TraceId"),
+                    GetInt(root, "Version") ?? 1);
+
+                return true;
             }
         }
+
+        // Legacy producers publish the bare TRequest JSON without an envelope.
+        try {
+            payload = JsonSerializer.Deserialize<TRequest>(messageBytes, options);
+        }
         catch (JsonException) {
-            /* Fall through to raw deserialize */
+            return false;
         }
 
-        var payload = JsonSerializer.Deserialize<TRequest>(messageBytes, options);
-        return (payload, null);
+        return payload is not null;
     }
 
-    /// <summary>Wraps a raw byte payload in a new <see cref="QueueMessageEnvelope{T}" /> with requeue count 1.</summary>
-    internal static byte[] WrapInEnvelope<TRequest>(TRequest payload, JsonSerializerOptions options)
+    /// <summary>Deserializes a payload element as <typeparamref name="TRequest" />, also handling double-encoded payloads (a JSON string containing the payload JSON).</summary>
+    private static bool TryDeserializeElement<TRequest>(JsonElement element, JsonSerializerOptions options, out TRequest? payload)
     {
-        var envelope = new QueueMessageEnvelope<TRequest>(payload, 1, Guid.NewGuid().ToString("N"), DateTime.UtcNow);
-        return JsonSerializer.SerializeToUtf8Bytes(envelope, options);
+        payload = default;
+        try {
+            payload = element.Deserialize<TRequest>(options);
+            return true;
+        }
+        catch (JsonException) {
+            if (element.ValueKind != JsonValueKind.String)
+                return false;
+        }
+
+        try {
+            payload = JsonSerializer.Deserialize<TRequest>(element.GetString()!, options);
+            return true;
+        }
+        catch (JsonException) {
+            return false;
+        }
     }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement root, string pascalName, out JsonElement value)
+        => root.TryGetProperty(pascalName, out value) || root.TryGetProperty(char.ToLowerInvariant(pascalName[0]) + pascalName[1..], out value);
+
+    private static int? GetInt(JsonElement root, string pascalName)
+        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var i) ? i : null;
+
+    private static string? GetString(JsonElement root, string pascalName) => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.String ? el.GetString() : null;
+
+    private static DateTime? GetDateTime(JsonElement root, string pascalName)
+        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.String && el.TryGetDateTime(out var dt) ? dt : null;
 }
 
 /// <summary>Abstract base class for queue workers. Implements <see cref="IHostedService" /> for automatic start/stop via the DI host.</summary>
@@ -91,7 +158,10 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// <param name="logger">Optional logger.</param>
     /// <param name="metrics">Optional metrics.</param>
     /// <param name="serializerOptions">Optional JSON serializer options.</param>
-    /// <param name="maxRequeueCount">Maximum number of requeues before routing to the DLQ (or dropping). Null means no limit.</param>
+    /// <param name="maxRequeueCount">
+    /// Maximum number of requeues before routing to the DLQ (or dropping). Null means no limit. DI registration paths (e.g. <c>AddJobWorker</c>) resolve a configurable default
+    /// from <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" /> before invoking this constructor.
+    /// </param>
     /// <param name="dlqName">
     /// Dead-letter queue name. When <paramref name="maxRequeueCount" /> is reached, the message is published here instead of being dropped. When null, messages that
     /// exceed the requeue limit are dropped (logged at Error level).
@@ -161,62 +231,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
         IsRunning = true;
         Logger.LogInformation("Starting worker for queue {QueueName}...", QueueName);
-        var result = await MqService.SubscribeToQueue(
-                QueueName, async messageBytes => {
-                    Interlocked.Increment(ref _inFlight);
-                    using var timer = Metrics.StartTimer("queue.worker.message.processing.duration", [("queue", QueueName)]);
-                    Metrics.IncrementCounter("queue.worker.messages.received", tags: [("queue", QueueName)]);
-                    try {
-                        var (payload, envelope) = QueueWorkerHelpers.DeserializeMessage<TRequest>(messageBytes, SerializerOptions);
-                        if (payload == null) {
-                            Logger.LogError("Failed to deserialize message from queue {QueueName} - null result", QueueName);
-                            Metrics.IncrementCounter("queue.worker.messages.deserialization.failed", tags: [("queue", QueueName)]);
-                            return true;
-                        }
-
-                        var workResult = await DoWorkAsync(payload, _cancellationTokenSource!.Token).ConfigureAwait(false);
-                        var shouldRequeue = QueueWorkerHelpers.GetShouldRequeue(workResult.IsSuccess, workResult.Metadata);
-                        if (shouldRequeue) {
-                            // Legacy message: wrap in envelope so requeue count is tracked going forward
-                            if (envelope == null) {
-                                var wrappedBytes = QueueWorkerHelpers.WrapInEnvelope(payload, SerializerOptions);
-                                await MqService.SendToQueue(QueueName, wrappedBytes).ConfigureAwait(false);
-                                Metrics.IncrementCounter("queue.worker.messages.requeued", tags: [("queue", QueueName)]);
-                                return false;
-                            }
-
-                            var maxRequeue = _maxRequeueCount;
-                            if (maxRequeue.HasValue && envelope.RequeueCount >= maxRequeue.Value) {
-                                await HandleMaxRequeueExceededAsync(envelope, messageBytes).ConfigureAwait(false);
-                                return false;
-                            }
-
-                            var requeuedEnvelope = envelope with { RequeueCount = envelope.RequeueCount + 1 };
-                            var requeueBytes = JsonSerializer.SerializeToUtf8Bytes(requeuedEnvelope, SerializerOptions);
-                            await MqService.SendToQueue(QueueName, requeueBytes).ConfigureAwait(false);
-                            Metrics.IncrementCounter("queue.worker.messages.requeued", tags: [("queue", QueueName)]);
-                            return false;
-                        }
-
-                        Metrics.IncrementCounter("queue.worker.messages.processed", tags: [("queue", QueueName)]);
-                        return false;
-                    }
-                    catch (JsonException ex) {
-                        Logger.LogError(ex, "Failed to deserialize message from queue {QueueName}", QueueName);
-                        Metrics.RecordError("queue.worker.message.deserialization.error", ex, [("queue", QueueName)]);
-                        Metrics.IncrementCounter("queue.worker.messages.deserialization.failed", tags: [("queue", QueueName)]);
-                        return true;
-                    }
-                    catch (Exception ex) {
-                        Logger.LogError(ex, "Error processing message from queue {QueueName}", QueueName);
-                        Metrics.RecordError("queue.worker.message.processing.error", ex, [("queue", QueueName)]);
-                        return true;
-                    }
-                    finally {
-                        Interlocked.Decrement(ref _inFlight);
-                    }
-                }, _cancellationTokenSource.Token)
-            .ConfigureAwait(false);
+        var result = await MqService.SubscribeToQueue(QueueName, ProcessMessageAsync, _cancellationTokenSource.Token).ConfigureAwait(false);
 
         if (result) {
             Logger.LogInformation("Worker for queue {QueueName} started successfully.", QueueName);
@@ -271,6 +286,97 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// <summary>Processes a message.</summary>
     protected abstract Task<TResult> DoWorkAsync(TRequest request, CancellationToken ct);
 
+    /// <summary>
+    /// Message handler for the queue subscription. Always returns false (ack) except during host shutdown — retries happen via counted application-level requeues
+    /// (<see cref="ApplicationRequeueAsync" />) so a bad message or a repeatedly-throwing <see cref="DoWorkAsync" /> can never spin in an infinite broker redelivery loop.
+    /// </summary>
+    private async Task<bool> ProcessMessageAsync(byte[] messageBytes)
+    {
+        Interlocked.Increment(ref _inFlight);
+        using var timer = Metrics.StartTimer("queue.worker.message.processing.duration", [("queue", QueueName)]);
+        Metrics.IncrementCounter("queue.worker.messages.received", tags: [("queue", QueueName)]);
+        try {
+            if (!QueueWorkerHelpers.TryDeserializeMessage<TRequest>(messageBytes, SerializerOptions, out var payload, out var envelope) || payload is null) {
+                Metrics.IncrementCounter("queue.worker.messages.deserialization.failed", tags: [("queue", QueueName)]);
+                await HandlePoisonMessageAsync(messageBytes, "deserialization failed after envelope autocorrect").ConfigureAwait(false);
+                return false;
+            }
+
+            bool isSuccess;
+            IReadOnlyDictionary<string, object>? metadata = null;
+            try {
+                var workResult = await DoWorkAsync(payload, _cancellationTokenSource!.Token).ConfigureAwait(false);
+                isSuccess = workResult.IsSuccess;
+                metadata = workResult.Metadata;
+            }
+            catch (OperationCanceledException) when (_cancellationTokenSource?.IsCancellationRequested ?? true) {
+                // Host shutdown: hand the message back to the broker unchanged so another consumer (or a restart) picks it up. Not a retry.
+                Logger.LogInformation("Processing cancelled during shutdown for queue {QueueName}; message returned to broker", QueueName);
+                return true;
+            }
+            catch (Exception ex) {
+                Logger.LogError(ex, "Unhandled exception processing message from queue {QueueName} — retrying via counted requeue", QueueName);
+                Metrics.RecordError("queue.worker.message.processing.error", ex, [("queue", QueueName)]);
+                isSuccess = false;
+            }
+
+            if (QueueWorkerHelpers.GetShouldRequeue(isSuccess, metadata))
+                return await ApplicationRequeueAsync(payload, envelope, messageBytes).ConfigureAwait(false);
+
+            Metrics.IncrementCounter("queue.worker.messages.processed", tags: [("queue", QueueName)]);
+            return false;
+        }
+        catch (Exception ex) {
+            // Requeue/poison bookkeeping itself failed. Ack anyway — broker redelivery would bypass the requeue count and loop forever.
+            Logger.LogError(ex, "Error handling message from queue {QueueName}; message dropped to avoid infinite redelivery", QueueName);
+            Metrics.RecordError("queue.worker.message.processing.error", ex, [("queue", QueueName)]);
+            return false;
+        }
+        finally {
+            Interlocked.Decrement(ref _inFlight);
+        }
+    }
+
+    /// <summary>
+    /// Retries a failed message by republishing it with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />. Legacy (non-enveloped) messages are wrapped so the
+    /// count is tracked going forward. When the count reaches the max requeue limit the message is routed to the DLQ (or dropped). Always returns false — the original delivery
+    /// is acked and the republished copy is the retry.
+    /// </summary>
+    private async Task<bool> ApplicationRequeueAsync(TRequest payload, QueueMessageEnvelope<TRequest>? envelope, byte[] originalBytes)
+    {
+        envelope ??= new(payload, 0, Guid.NewGuid().ToString("N"), DateTime.UtcNow);
+        if (_maxRequeueCount.HasValue && envelope.RequeueCount >= _maxRequeueCount.Value) {
+            await HandleMaxRequeueExceededAsync(envelope, originalBytes).ConfigureAwait(false);
+            return false;
+        }
+
+        var requeuedEnvelope = envelope with { RequeueCount = envelope.RequeueCount + 1 };
+        var requeueBytes = JsonSerializer.SerializeToUtf8Bytes(requeuedEnvelope, SerializerOptions);
+        await MqService.SendToQueue(QueueName, requeueBytes).ConfigureAwait(false);
+        Metrics.IncrementCounter("queue.worker.messages.requeued", tags: [("queue", QueueName)]);
+        return false;
+    }
+
+    /// <summary>Handles a message that cannot be deserialized by any recovery path: forwards the original bytes to the DLQ when configured, otherwise drops it. Never throws.</summary>
+    private async Task HandlePoisonMessageAsync(byte[] originalBytes, string reason)
+    {
+        Logger.LogError(
+            "Poison message from queue {QueueName} ({Size} bytes) — {Reason}. Routing to DLQ: {DlqName}", QueueName, originalBytes.Length, reason, _dlqName ?? "(dropped)");
+
+        Metrics.IncrementCounter("queue.worker.messages.poison", tags: [("queue", QueueName)]);
+        if (_dlqName.IsNullOrWhitespace())
+            return;
+
+        try {
+            await MqService.CreateQueue(_dlqName).ConfigureAwait(false);
+            await MqService.SendToQueue(_dlqName, originalBytes).ConfigureAwait(false);
+            Metrics.IncrementCounter("queue.worker.messages.dlq", tags: [("queue", QueueName), ("dlq", _dlqName)]);
+        }
+        catch (Exception ex) {
+            Logger.LogError(ex, "Failed to send poison message to DLQ {DlqName}", _dlqName);
+        }
+    }
+
     /// <summary>Sends a message to the specified queue, wrapped in a QueueMessageEnvelope. Use when publishing to queues consumed by QueueWorkerBase.</summary>
     protected Task<bool> SendToQueueWithEnvelopeAsync<T>(
         string queueName,
@@ -295,6 +401,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         Metrics.IncrementCounter("queue.worker.messages.dropped.max_requeue", tags: [("queue", QueueName)]);
         if (!_dlqName.IsNullOrWhitespace()) {
             try {
+                await MqService.CreateQueue(_dlqName).ConfigureAwait(false);
                 await MqService.SendToQueue(_dlqName, originalBytes).ConfigureAwait(false);
                 Metrics.IncrementCounter("queue.worker.messages.dlq", tags: [("queue", QueueName), ("dlq", _dlqName)]);
             }

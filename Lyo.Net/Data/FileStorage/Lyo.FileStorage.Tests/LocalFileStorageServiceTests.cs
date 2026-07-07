@@ -1344,6 +1344,54 @@ public class LocalFileStorageServiceTests : IDisposable
         Assert.Equal(originalData, decrypted);
     }
 
+    /// <summary>
+    /// Migrating between KEKs that differ in AES Key Wrap eligibility changes the DEK blob's encoding; the rewritten on-disk header must carry the recomputed
+    /// DekEncoding byte (a stale byte from the old header makes the file undecryptable).
+    /// </summary>
+    [Fact]
+    public async Task MigrateDeksAsync_KekChangesDekEncoding_RewritesHeaderEncodingAndStillDecrypts()
+    {
+        const string sourceKeyId = "aes-kw-key";
+        const string targetKeyId = "envelope-key";
+        var keyStore = new LocalKeyStore();
+        // 32-byte source KEK -> DEK protected via AES Key Wrap; 64-byte target KEK (AES-SIV) is not AES-KW eligible -> KEK-service envelope.
+        keyStore.AddKey(sourceKeyId, "1", System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        keyStore.SetCurrentVersion(sourceKeyId, "1");
+        keyStore.AddKey(targetKeyId, "1", System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        keyStore.SetCurrentVersion(targetKeyId, "1");
+
+        var dekService = new AesGcmEncryptionService(keyStore);
+        var kekService = new Lyo.Encryption.AesSiv.AesSivEncryptionService(keyStore, Lyo.Encryption.AesSiv.AesSivKeySizeBits.Bits512);
+        var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
+        using var service = CreateService(encryptionService: encryptionService);
+
+        var originalData = "DEK encoding must follow the KEK across migration"u8.ToArray();
+        var saveResult = await service.SaveFileAsync(originalData, "encoding.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken);
+
+        var filePath = Directory
+            .GetFiles(_tempSession.SessionDirectory, saveResult.Id.ToString("N") + "*", SearchOption.AllDirectories)
+            .Single(p => !p.EndsWith(".meta", StringComparison.Ordinal));
+        using (var headerStream = File.OpenRead(filePath))
+            Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, EncryptionHeader.Read(headerStream).DekEncoding);
+
+        var migrationResult = await service.MigrateDeksAsync(sourceKeyId, "1", targetKeyId, ct: TestContext.Current.CancellationToken);
+        Assert.True(migrationResult.AllSucceeded);
+        Assert.Equal(1, migrationResult.SuccessfullyMigrated);
+
+        // The rewritten header's encoding byte must match the new blob format (envelope), and the blob length must match the encoding heuristic.
+        EncryptionHeader migratedHeader;
+        using (var headerStream = File.OpenRead(filePath))
+            migratedHeader = EncryptionHeader.Read(headerStream);
+
+        Assert.Equal(EncryptionHeader.DekEncodingEnvelope, migratedHeader.DekEncoding);
+        Assert.Equal(
+            migratedHeader.DekEncoding, EncryptionHeader.InferDekEncoding(migratedHeader.EncryptedDataEncryptionKey.Length, migratedHeader.DekKeyMaterialBytes));
+
+        // Roundtrip: the file must still decrypt under the target KEK.
+        var decrypted = await service.GetFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(originalData, decrypted);
+    }
+
     [Fact]
     public async Task MigrateDeksAsync_AlreadyMigrated_IsIdempotent()
     {

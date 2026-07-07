@@ -765,7 +765,7 @@ public abstract class FileStorageServiceBase
                 using var inputHashStream = new HashingStream(processingStream, originalHashAlgo);
                 using var compressedHashAlgo = hashAlg.Create();
                 using var compressedHashStream = new HashingStream(intermediateStream, compressedHashAlgo);
-                await CompressionService.Resolver.CompressAsync(inputHashStream, compressedHashStream, selectedCompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
+                await CompressionService.Resolver.CompressAsync(inputHashStream, compressedHashStream, selectedCompressAlgorithm, chunkSize, ct: ct).ConfigureAwait(false);
                 await compressedHashStream.FlushAsync(ct).ConfigureAwait(false);
                 await inputHashStream.FlushAsync(ct).ConfigureAwait(false);
                 compressedSize = intermediateStream.Length;

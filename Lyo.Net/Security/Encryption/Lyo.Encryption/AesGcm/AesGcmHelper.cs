@@ -24,19 +24,20 @@ public static class AesGcmHelper
         ArgumentHelpers.ThrowIf(key.Length != expectedLengthBytes, $"AES-GCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
+        => Encrypt(plaintext.AsSpan(), key, nonce, associatedData);
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
 #if NET10_0_OR_GREATER
         var tag = new byte[TagSize];
         var ciphertext = new byte[plaintext.Length];
         using var aes = new System.Security.Cryptography.AesGcm(key, TagSize);
-        aes.Encrypt(nonce, plaintext, ciphertext, tag);
+        aes.Encrypt(nonce, plaintext, ciphertext, tag, associatedData);
         return (ciphertext, tag);
 #else
         var cipher = new GcmBlockCipher(new AesEngine());
-        cipher.Init(true, new AeadParameters(new(key), 128, nonce, null));
+        cipher.Init(true, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
         var outBuf = new byte[cipher.GetOutputSize(plaintext.Length)];
         var tlen = 0;
         if (plaintext.Length > 0) {
@@ -57,12 +58,12 @@ public static class AesGcmHelper
 #endif
     }
 
-    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce)
+    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
 #if NET10_0_OR_GREATER
         var plaintext = new byte[ciphertext.Length];
         using var aes = new System.Security.Cryptography.AesGcm(key, TagSize);
-        aes.Decrypt(nonce, ciphertext, tag, plaintext);
+        aes.Decrypt(nonce, ciphertext, tag, plaintext, associatedData);
         return plaintext;
 #else
         try {
@@ -70,7 +71,7 @@ public static class AesGcmHelper
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
             var cipher = new GcmBlockCipher(new AesEngine());
-            cipher.Init(false, new AeadParameters(new(key), 128, nonce, null));
+            cipher.Init(false, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
             var outBuf = new byte[cipher.GetOutputSize(combined.Length)];
             var len = cipher.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
             len += cipher.DoFinal(outBuf, len);

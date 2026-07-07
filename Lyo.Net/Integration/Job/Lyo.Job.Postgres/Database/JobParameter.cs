@@ -19,7 +19,7 @@ public class JobParameter
     [MaxLength(15)]
     public string Type { get; set; } = null!;
 
-    [MaxLength(300)]
+    [MaxLength(3000)]
     public string? Value { get; set; }
 
     public byte[]? EncryptedValue { get; set; }

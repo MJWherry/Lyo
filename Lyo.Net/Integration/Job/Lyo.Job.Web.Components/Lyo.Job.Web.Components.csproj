@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>

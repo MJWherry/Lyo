@@ -75,12 +75,15 @@
     private static object[] GetKey(object? item)
     {
         var id = ProjectedValueHelper.GetValue(item, "Id");
-        return id != null ? [id] : [];
+        return ProjectedValueHelper.TryGetGuid(id, out var guid) ? [guid] : id != null ? [id] : [];
     }
 
     private async Task<JobDefinitionRes?> FetchDefinition(object? id, string[]? includes = null)
     {
-        var req = new QueryReq { Keys = [[id!]], Amount = 1 };
+        if (!ProjectedValueHelper.TryGetGuid(id, out var guid))
+            return null;
+
+        var req = new QueryReq { Keys = [[guid]], Amount = 1 };
         if (includes != null)
             req.Include.AddRange(includes);
 
@@ -166,11 +169,11 @@
 
         var id = ProjectedValueHelper.GetValue(item, "Id");
         var enabledVal = ProjectedValueHelper.GetValue(item, "Enabled");
-        if (id == null)
+        if (id == null || !ProjectedValueHelper.TryGetGuid(id, out var guid))
             return;
 
         var currentEnabled = enabledVal is true || enabledVal?.ToString() == "True";
-        var patch = new PatchRequestBuilder().WithKey(id).SetProperty("Enabled", !currentEnabled).Build();
+        var patch = new PatchRequestBuilder().WithKey(guid).SetProperty("Enabled", !currentEnabled).Build();
         await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(_definitionRoute, patch);
         Snackbar.Add($"Definition {(!currentEnabled ? "enabled" : "disabled")}", Severity.Success);
         await _dataGrid!.RefreshData();
@@ -181,7 +184,12 @@
         if (_dataGrid?.SelectedItems is not { Count: > 0 } selected)
             return;
 
-        var ids = selected.Select(i => ProjectedValueHelper.GetValue(i, "Id")).Where(i => i != null).ToList();
+        var ids = selected
+            .Select(i => ProjectedValueHelper.GetValue(i, "Id"))
+            .Select(v => ProjectedValueHelper.TryGetGuid(v, out var g) ? g : (Guid?)null)
+            .Where(g => g.HasValue)
+            .Select(g => g!.Value)
+            .ToList();
         var patch = new PatchRequestBuilder().WithOneOfIdentifier("Id", ids).SetProperty("Enabled", value).AllowMultiple().Build();
         await ApiClient.PatchAsAsync<PatchRequest, PatchBulkResult<object>>($"{_definitionRoute}/Bulk", patch);
         Snackbar.Add($"{(value ? "Enabled" : "Disabled")} {ids.Count} definition(s)", Severity.Success);

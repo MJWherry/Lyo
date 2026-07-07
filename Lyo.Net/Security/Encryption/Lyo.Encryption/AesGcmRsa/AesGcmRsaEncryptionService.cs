@@ -106,13 +106,14 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="plaintext">The data to encrypt. Must not be null or empty.</param>
     /// <param name="keyId">This parameter is ignored. AES-GCM-RSA uses RSA keys from constructor. Provided for interface compliance only.</param>
     /// <param name="key">Optional AES key. If null, a random key is generated and encrypted with RSA.</param>
+    /// <param name="associatedData">Optional associated data authenticated (but not encrypted) by the AES-GCM tag; the same bytes must be supplied on decrypt.</param>
     /// <returns>Encrypted data</returns>
     /// <exception cref="ArgumentException">Thrown when keyId parameter is provided</exception>
     /// <exception cref="ArgumentOutsideRangeException">
     /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is
     /// not 32 bytes
     /// </exception>
-    public byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null)
+    public byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext, MinInputSize, MaxInputSize);
         // AES-GCM-RSA uses RSA keys from constructor, not keyId
@@ -127,7 +128,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         var hasExternalKey = key != null;
         var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
         try {
-            var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, aesKey, nonce);
+            var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, aesKey, nonce, associatedData);
             using var ms = new MemoryStream();
             using var bw = new BinaryWriter(ms);
             if (!hasExternalKey) {
@@ -164,6 +165,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="encryptedData">The encrypted data to decrypt</param>
     /// <param name="keyId">This parameter is ignored. AES-GCM-RSA uses RSA keys from constructor. Provided for interface compliance only.</param>
     /// <param name="key">Optional AES key. Only used if data was encrypted with external key (not embedded).</param>
+    /// <param name="associatedData">Optional associated data that was authenticated during encryption; must match the bytes supplied to <see cref="Encrypt(byte[], string, byte[], byte[])" />.</param>
     /// <returns>Decrypted data</returns>
     /// <exception cref="ArgumentException">Thrown when keyId parameter is provided</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedData is empty (length is less than 1) or too small (below minimum required size)</exception>
@@ -173,7 +175,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// Thrown when decryption fails due to wrong RSA key (for embedded key), wrong AES key (for external key), corrupted data, authentication
     /// failure, or tampered data
     /// </exception>
-    public byte[] Decrypt(byte[] encryptedData, string? keyId = null, byte[]? key = null)
+    public byte[] Decrypt(byte[] encryptedData, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         // AES-GCM-RSA uses RSA keys from constructor, not keyId
         ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA decryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
@@ -257,7 +259,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
             var tag = br.ReadBytes(AesGcmHelper.TagSize);
             var ciphertext = br.ReadBytes((int)(ms.Length - ms.Position));
             try {
-                return AesGcmHelper.Decrypt(ciphertext, tag, aesKey, nonce);
+                return AesGcmHelper.Decrypt(ciphertext, tag, aesKey, nonce, associatedData);
             }
 #if NET10_0_OR_GREATER
             catch (AuthenticationTagMismatchException ex) {
@@ -287,18 +289,19 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     }
 
     /// <inheritdoc />
-    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
+    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+        => Encrypt(plaintext.ToArray(), keyId, key, associatedData);
 
     /// <inheritdoc />
     public byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => Encrypt((encoding ?? GetEncryptionEncoding()).GetBytes(text), keyId, key);
 
     /// <inheritdoc />
-    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
+    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         var chunk = new byte[count];
         Array.Copy(buffer, offset, chunk, 0, count);
-        return Decrypt(chunk, keyId, key);
+        return Decrypt(chunk, keyId, key, associatedData);
     }
 
     /// <inheritdoc />
@@ -306,12 +309,22 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedBytes, keyId, key));
 
     /// <inheritdoc />
-    public Task EncryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
+    public Task EncryptToStreamAsync(
+        Stream input,
+        Stream output,
+        string? keyId = null,
+        byte[]? key = null,
+        int chunkSize = 1024 * 1024,
+        byte[]? associatedData = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        if (associatedData != null)
+            throw new NotSupportedException("AES-GCM-RSA streaming does not support associated data.");
+
         return RsaStreamCodec.EncryptAsync(input, output, (byte)EncryptionAlgorithm.AesGcmRsa, (byte)StreamFormatVersion.V1, chunkSize, EncryptChunkTransform(keyId, key), ct);
     }
 
@@ -332,16 +345,19 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         ArgumentHelpers.ThrowIfNegative(chunkSize);
         using var outputStream = File.Create(outputPath);
-        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
+        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct: ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, byte[]? associatedData = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        if (associatedData != null)
+            throw new NotSupportedException("AES-GCM-RSA streaming does not support associated data.");
+
         return RsaStreamCodec.DecryptAsync(input, output, (byte)EncryptionAlgorithm.AesGcmRsa, (byte)StreamFormatVersion.V1, DecryptChunkTransform(keyId, key), ct);
     }
 
@@ -351,7 +367,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
-        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
+        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
         return outputStream.ToArray();
     }
 

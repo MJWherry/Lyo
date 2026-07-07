@@ -10,21 +10,32 @@ Two sources feed one schema:
   ``*.summary.json`` files into a ``LoadTestReport`` (``type: "load"``).
 
 For every report it writes ``<name>.json`` (portable) and ``<name>.js``
-(``window.LyoBench.reports["<name>"] = …`` for file:// viewing), then a ``registry.js`` listing all
-reports for the index page.
+(``window.LyoBench.reports["<name>"] = …`` for file:// viewing), archives a timestamped
+snapshot under ``docs/benchmarks/history/<name>/``, attaches Δ-vs-prior-run fields and a
+run-history summary, then a ``registry.js`` listing all reports for the index page.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
+import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "docs" / "benchmarks" / "data"
+HISTORY_DIR = REPO_ROOT / "docs" / "benchmarks" / "history"
 SCHEMA = "lyo.bench/v1"
+
+# BenchmarkDotNet defaults to cwd/BenchmarkDotNet.Artifacts when --artifacts is omitted.
+FALLBACK_ARTIFACT_ROOTS = (
+    REPO_ROOT / "BenchmarkDotNet.Artifacts",
+    REPO_ROOT / "Lyo.Net" / "BenchmarkDotNet.Artifacts",
+)
 
 K6_RESULTS = REPO_ROOT / "k6" / "framework-person" / "results"
 K6_RUN_PREFIXES = ("prod-like-", "prod-matrix-")
@@ -162,6 +173,417 @@ def read_json(path: Path) -> Any:
         return json.load(f)
 
 
+def _history_dir(name: str) -> Path:
+    return HISTORY_DIR / name
+
+
+def _history_sort_key(path: Path) -> tuple[str, float]:
+    """Order snapshots oldest-first by embedded timestamp prefix, then mtime."""
+    stem = path.stem
+    if len(stem) >= 16 and stem[8] == "T":
+        return (stem[:16], path.stat().st_mtime)
+    return (stem, path.stat().st_mtime)
+
+
+def list_history_paths(name: str) -> list[Path]:
+    hist_dir = _history_dir(name)
+    if not hist_dir.is_dir():
+        return []
+    return sorted(hist_dir.glob("*.json"), key=_history_sort_key)
+
+
+def _archive_stamp(report: dict[str, Any]) -> str:
+    for key in ("runEnded", "generatedAt", "runStarted"):
+        raw = report.get(key)
+        if not raw:
+            continue
+        try:
+            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            return dt.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        except ValueError:
+            continue
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def archive_report(report: dict[str, Any]) -> Path:
+    """Persist a timestamped snapshot under docs/benchmarks/history/<name>/."""
+    clean = strip_view_metadata(report)
+    name = clean["name"]
+    paths = list_history_paths(name)
+    if paths:
+        latest = strip_view_metadata(_load_snapshot(paths[-1]) or {})
+        if latest.get("runId") == clean.get("runId"):
+            print(f"{name}: snapshot already archived for run {clean.get('runId')}")
+            return paths[-1]
+
+    hist_dir = _history_dir(name)
+    hist_dir.mkdir(parents=True, exist_ok=True)
+    run_id = clean.get("runId") or "run"
+    safe_run = re.sub(r"[^\w.-]+", "_", str(run_id))[:80]
+    path = hist_dir / f"{_archive_stamp(clean)}_{safe_run}.json"
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(clean, f, indent=2)
+        f.write("\n")
+    print(f"Archived {path.relative_to(REPO_ROOT)}")
+    return path
+
+
+def _history_entry(filename: str, snap: dict[str, Any], *, is_current: bool) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "file": filename,
+        "runId": snap.get("runId"),
+        "runStarted": snap.get("runStarted"),
+        "runEnded": snap.get("runEnded"),
+        "generatedAt": snap.get("generatedAt"),
+        "isCurrent": is_current,
+    }
+    if snap.get("type") == "micro":
+        means = [
+            m.get("meanNs")
+            for g in snap.get("groups") or []
+            for m in g.get("measurements") or []
+            if m.get("meanNs") is not None
+        ]
+        if means:
+            entry["measurementCount"] = len(means)
+            entry["medianMeanNs"] = sorted(means)[len(means) // 2]
+    elif snap.get("type") == "load":
+        p95s = [
+            (s.get("latency") or {}).get("p95")
+            for s in snap.get("scenarios") or []
+            if (s.get("latency") or {}).get("p95") is not None
+        ]
+        if p95s:
+            entry["scenarioCount"] = len(p95s)
+            entry["medianP95Ms"] = sorted(p95s)[len(p95s) // 2]
+    return entry
+
+
+def write_history_snapshot(name: str, filename: str, report: dict[str, Any]) -> None:
+    hist_dir = _history_dir(name)
+    hist_dir.mkdir(parents=True, exist_ok=True)
+    json_path = hist_dir / filename
+    js_path = hist_dir / f"{Path(filename).stem}.js"
+    with json_path.open("w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+        f.write("\n")
+    with js_path.open("w", encoding="utf-8") as f:
+        f.write("window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };\n")
+        f.write(f"window.LyoBench.history[{json.dumps(name)}] = window.LyoBench.history[{json.dumps(name)}] || {{}};\n")
+        f.write(f"window.LyoBench.history[{json.dumps(name)}][{json.dumps(filename)}] = ")
+        json.dump(report, f)
+        f.write(";\n")
+
+
+def write_history_index(name: str, entries: list[dict[str, Any]]) -> None:
+    hist_dir = _history_dir(name)
+    hist_dir.mkdir(parents=True, exist_ok=True)
+    index_path = hist_dir / "index.js"
+    with index_path.open("w", encoding="utf-8") as f:
+        f.write("window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };\n")
+        f.write(f"window.LyoBench.historyIndex[{json.dumps(name)}] = ")
+        json.dump(entries, f)
+        f.write(";\n")
+    print(f"Wrote {index_path.relative_to(REPO_ROOT)} ({len(entries)} snapshots)")
+
+
+def rebuild_history_views(name: str) -> dict[str, Any] | None:
+    """Rebuild every archived snapshot with Δ vs the immediately prior run; return the latest view."""
+    paths = list_history_paths(name)
+    if not paths:
+        return None
+
+    snapshots: list[tuple[str, dict[str, Any]]] = []
+    for path in paths:
+        snap = strip_view_metadata(_load_snapshot(path) or {})
+        if snap:
+            snapshots.append((path.name, snap))
+
+    if not snapshots:
+        return None
+
+    latest_index = max(range(len(snapshots)), key=lambda i: _report_rank(snapshots[i][1]))
+    history_meta = [
+        _history_entry(filename, snap, is_current=(index == latest_index))
+        for index, (filename, snap) in enumerate(snapshots)
+    ]
+
+    latest_view: dict[str, Any] | None = None
+    for index, (filename, snap) in enumerate(snapshots):
+        previous = snapshots[index - 1][1] if index > 0 else None
+        view = copy.deepcopy(snap)
+        if previous:
+            if view.get("type") == "micro":
+                attach_micro_deltas(view, previous)
+            elif view.get("type") == "load":
+                attach_load_deltas(view, previous)
+        view["history"] = history_meta
+        if previous:
+            view["deltaBaseline"] = {
+                "kind": "previousRun",
+                "runId": previous.get("runId"),
+                "runStarted": previous.get("runStarted"),
+                "runEnded": previous.get("runEnded"),
+            }
+        else:
+            view.pop("deltaBaseline", None)
+        write_history_snapshot(name, filename, view)
+        if index == latest_index:
+            latest_view = view
+
+    write_history_index(name, history_meta)
+    return latest_view
+
+
+def build_history_meta(name: str) -> list[dict[str, Any]]:
+    """Summarize every snapshot on disk (oldest first); marks the newest as current."""
+    paths = list_history_paths(name)
+    snapshots = []
+    for path in paths:
+        snap = strip_view_metadata(_load_snapshot(path) or {})
+        if snap:
+            snapshots.append((path.name, snap))
+    if not snapshots:
+        return []
+    latest_index = max(range(len(snapshots)), key=lambda i: _report_rank(snapshots[i][1]))
+    return [
+        _history_entry(filename, snap, is_current=(index == latest_index))
+        for index, (filename, snap) in enumerate(snapshots)
+    ]
+
+
+def _parse_report_timestamp(report: dict[str, Any]) -> float:
+    for key in ("runEnded", "generatedAt", "runStarted"):
+        raw = report.get(key)
+        if not raw:
+            continue
+        try:
+            return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            continue
+    return 0.0
+
+
+def _report_richness(report: dict[str, Any]) -> int:
+    if report.get("type") == "load":
+        return len(report.get("scenarios") or [])
+    return sum(len(group.get("measurements") or []) for group in report.get("groups") or [])
+
+
+def _report_rank(report: dict[str, Any]) -> tuple[float, int, int]:
+    """Higher is better: newest timestamp, then joined, then measurement count."""
+    ts = _parse_report_timestamp(report)
+    joined = 1 if "joined" in str(report.get("runId", "")).lower() else 0
+    return (ts, joined, _report_richness(report))
+
+
+def _collect_report_candidates(name: str) -> list[dict[str, Any]]:
+    """Every known snapshot for a suite: dashboard data file plus archived history."""
+    candidates: list[dict[str, Any]] = []
+    seen_run_ids: set[str | None] = set()
+    data_path = DATA_DIR / f"{name}.json"
+    if data_path.is_file():
+        snap = strip_view_metadata(_load_snapshot(data_path) or {})
+        if snap:
+            candidates.append(snap)
+            seen_run_ids.add(snap.get("runId"))
+    for path in list_history_paths(name):
+        snap = strip_view_metadata(_load_snapshot(path) or {})
+        if snap and snap.get("runId") not in seen_run_ids:
+            candidates.append(snap)
+            seen_run_ids.add(snap.get("runId"))
+    return candidates
+
+
+def _best_report(name: str, incoming: dict[str, Any]) -> dict[str, Any]:
+    best = incoming
+    for candidate in _collect_report_candidates(name):
+        if _report_rank(candidate) > _report_rank(best):
+            best = candidate
+    return best
+
+
+def publish_report(report: dict[str, Any]) -> None:
+    """Archive, rebuild all history views (Δ vs historical average), and write dashboard files."""
+    name = report["name"]
+    incoming = strip_view_metadata(report)
+    best = _best_report(name, incoming)
+    if best.get("runId") != incoming.get("runId"):
+        print(
+            f"{name}: keeping newer {best.get('runId')} "
+            f"(ignoring stale artifact {incoming.get('runId')})"
+        )
+    archive_report(best)
+    latest_view = rebuild_history_views(name)
+    if latest_view is None:
+        latest_view = copy.deepcopy(best)
+        latest_view["history"] = []
+    write_report(latest_view)
+
+
+def _pct_delta(current: float | None, previous: float | None) -> float | None:
+    if current is None or previous is None or previous == 0:
+        return None
+    return (current - previous) / previous * 100.0
+
+
+def _param_key(parameters: dict[str, Any] | None) -> tuple[tuple[str, str], ...]:
+    return tuple(sorted((k, str(v)) for k, v in (parameters or {}).items()))
+
+
+def _micro_measurement_key(group: str, measurement: dict[str, Any]) -> tuple[Any, ...]:
+    return (group, measurement.get("method"), _param_key(measurement.get("parameters")))
+
+
+def _comparison_row_key(axis: str, row: dict[str, Any]) -> tuple[Any, ...]:
+    return (axis, row.get("algorithm"), _param_key(row.get("parameters")))
+
+
+def _load_snapshot(path: Path) -> dict[str, Any] | None:
+    try:
+        data = read_json(path)
+    except (ValueError, OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _previous_snapshot(name: str) -> dict[str, Any] | None:
+    """Deprecated: kept for compatibility; deltas now use historical averages."""
+    paths = list_history_paths(name)
+    if paths:
+        return _load_snapshot(paths[-1])
+    current_path = DATA_DIR / f"{name}.json"
+    if current_path.is_file():
+        return _load_snapshot(current_path)
+    return None
+
+
+def strip_view_metadata(report: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy without dashboard-only fields (history, deltas, baseline refs)."""
+    clean = copy.deepcopy(report)
+    clean.pop("history", None)
+    clean.pop("deltaBaseline", None)
+    for group in clean.get("groups") or []:
+        for measurement in group.get("measurements") or []:
+            measurement.pop("deltaMeanPct", None)
+            measurement.pop("deltaAllocPct", None)
+    comparison = clean.get("comparison")
+    if comparison:
+        for group in comparison.get("groups") or []:
+            for row in group.get("rows") or []:
+                row.pop("deltaMeanPct", None)
+                row.pop("deltaAllocPct", None)
+    for scenario in clean.get("scenarios") or []:
+        scenario.pop("deltaP95Pct", None)
+        scenario.pop("deltaP99Pct", None)
+        scenario.pop("deltaThroughputPct", None)
+    return clean
+
+
+def _mean(values: list[float]) -> float | None:
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
+def attach_micro_deltas_vs_average(report: dict[str, Any], others: list[dict[str, Any]]) -> None:
+    if not others:
+        return
+    mean_values: dict[tuple[Any, ...], list[float]] = {}
+    alloc_values: dict[tuple[Any, ...], list[float]] = {}
+    for snap in others:
+        for group in snap.get("groups") or []:
+            gname = group.get("name", "")
+            for measurement in group.get("measurements") or []:
+                key = _micro_measurement_key(gname, measurement)
+                if measurement.get("meanNs") is not None:
+                    mean_values.setdefault(key, []).append(float(measurement["meanNs"]))
+                if measurement.get("allocatedBytes") is not None:
+                    alloc_values.setdefault(key, []).append(float(measurement["allocatedBytes"]))
+
+    for group in report.get("groups") or []:
+        gname = group.get("name", "")
+        for measurement in group.get("measurements") or []:
+            key = _micro_measurement_key(gname, measurement)
+            avg_mean = _mean(mean_values.get(key, []))
+            avg_alloc = _mean(alloc_values.get(key, []))
+            if avg_mean is not None:
+                measurement["deltaMeanPct"] = _pct_delta(measurement.get("meanNs"), avg_mean)
+            if avg_alloc is not None:
+                measurement["deltaAllocPct"] = _pct_delta(measurement.get("allocatedBytes"), avg_alloc)
+
+    mean_cmp: dict[tuple[Any, ...], list[float]] = {}
+    alloc_cmp: dict[tuple[Any, ...], list[float]] = {}
+    for snap in others:
+        for group in (snap.get("comparison") or {}).get("groups") or []:
+            axis = group.get("axis", "")
+            for row in group.get("rows") or []:
+                key = _comparison_row_key(axis, row)
+                if row.get("meanNs") is not None:
+                    mean_cmp.setdefault(key, []).append(float(row["meanNs"]))
+                if row.get("allocatedBytes") is not None:
+                    alloc_cmp.setdefault(key, []).append(float(row["allocatedBytes"]))
+
+    comparison = report.get("comparison")
+    if not comparison:
+        return
+    for group in comparison.get("groups") or []:
+        axis = group.get("axis", "")
+        for row in group.get("rows") or []:
+            key = _comparison_row_key(axis, row)
+            avg_mean = _mean(mean_cmp.get(key, []))
+            avg_alloc = _mean(alloc_cmp.get(key, []))
+            if avg_mean is not None:
+                row["deltaMeanPct"] = _pct_delta(row.get("meanNs"), avg_mean)
+            if avg_alloc is not None:
+                row["deltaAllocPct"] = _pct_delta(row.get("allocatedBytes"), avg_alloc)
+
+
+def attach_load_deltas_vs_average(report: dict[str, Any], others: list[dict[str, Any]]) -> None:
+    if not others:
+        return
+    p95_values: dict[str, list[float]] = {}
+    p99_values: dict[str, list[float]] = {}
+    throughput_values: dict[str, list[float]] = {}
+    for snap in others:
+        for scenario in snap.get("scenarios") or []:
+            sname = scenario.get("name")
+            if not sname:
+                continue
+            lat = scenario.get("latency") or {}
+            if lat.get("p95") is not None:
+                p95_values.setdefault(sname, []).append(float(lat["p95"]))
+            if lat.get("p99") is not None:
+                p99_values.setdefault(sname, []).append(float(lat["p99"]))
+            if scenario.get("throughput") is not None:
+                throughput_values.setdefault(sname, []).append(float(scenario["throughput"]))
+
+    for scenario in report.get("scenarios") or []:
+        sname = scenario.get("name")
+        if not sname:
+            continue
+        lat = scenario.get("latency") or {}
+        avg_p95 = _mean(p95_values.get(sname, []))
+        avg_p99 = _mean(p99_values.get(sname, []))
+        avg_tp = _mean(throughput_values.get(sname, []))
+        if avg_p95 is not None:
+            scenario["deltaP95Pct"] = _pct_delta(lat.get("p95"), avg_p95)
+        if avg_p99 is not None:
+            scenario["deltaP99Pct"] = _pct_delta(lat.get("p99"), avg_p99)
+        if avg_tp is not None:
+            scenario["deltaThroughputPct"] = _pct_delta(scenario.get("throughput"), avg_tp)
+
+
+def attach_micro_deltas(report: dict[str, Any], previous: dict[str, Any] | None) -> None:
+    if previous:
+        attach_micro_deltas_vs_average(report, [previous])
+
+
+def attach_load_deltas(report: dict[str, Any], previous: dict[str, Any] | None) -> None:
+    if previous:
+        attach_load_deltas_vs_average(report, [previous])
+
+
 def write_report(report: dict[str, Any]) -> None:
     """Write <name>.json plus a file://-friendly <name>.js registering the report."""
     name = report["name"]
@@ -172,7 +594,7 @@ def write_report(report: dict[str, Any]) -> None:
         json.dump(report, f, indent=2)
         f.write("\n")
     with js_path.open("w", encoding="utf-8") as f:
-        f.write("window.LyoBench = window.LyoBench || { reports: {}, registry: [] };\n")
+        f.write("window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };\n")
         f.write(f'window.LyoBench.reports[{json.dumps(name)}] = ')
         json.dump(report, f)
         f.write(";\n")
@@ -201,7 +623,7 @@ def write_registry() -> None:
     entries.sort(key=lambda e: (e["type"], e["title"]))
     registry_path = DATA_DIR / "registry.js"
     with registry_path.open("w", encoding="utf-8") as f:
-        f.write("window.LyoBench = window.LyoBench || { reports: {}, registry: [] };\n")
+        f.write("window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };\n")
         f.write("window.LyoBench.registry = ")
         json.dump(entries, f)
         f.write(";\n")
@@ -260,25 +682,66 @@ def grade_micro(report: dict[str, Any]) -> list[dict[str, str]]:
     return grades
 
 
-def find_lyobench_json(artifacts_dir: Path) -> Path | None:
-    candidates = list(artifacts_dir.glob("*.lyobench.json"))
-    candidates += list(artifacts_dir.glob("results/*.lyobench.json"))
+def find_lyobench_json(name: str, *artifact_dirs: Path) -> Path | None:
+    """Find the best ``<name>.lyobench.json`` across the project dir and fallback cwd artifact roots."""
+    candidates: list[Path] = []
+    seen: set[Path] = set()
+    for artifacts_dir in artifact_dirs:
+        if not artifacts_dir.is_dir():
+            continue
+        path = artifacts_dir / f"{name}.lyobench.json"
+        resolved = path.resolve()
+        if path.is_file() and resolved not in seen:
+            candidates.append(path)
+            seen.add(resolved)
     if not candidates:
         return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return max(candidates, key=_lyobench_rank)
+
+
+def _lyobench_rank(path: Path) -> tuple[float, int, int, float]:
+    """Rank candidates: newest timestamp first, then joined, then fuller reports."""
+    report = _load_snapshot(path) or {}
+    joined = 1 if "joined" in str(report.get("runId", "")).lower() else 0
+    return (_parse_report_timestamp(report), joined, _report_richness(report), path.stat().st_mtime)
+
+
+def artifact_dirs_for(category: dict[str, Any]) -> list[Path]:
+    return [category["dir"], *FALLBACK_ARTIFACT_ROOTS]
+
+
+def sync_lyobench_source(name: str, source: Path, canonical_dir: Path) -> None:
+    """Copy a fallback-root export into the suite's canonical artifacts directory when newer."""
+    if not canonical_dir.is_dir():
+        return
+    canonical = canonical_dir / f"{name}.lyobench.json"
+    if source.resolve() == canonical.resolve():
+        return
+    source_report = strip_view_metadata(_load_snapshot(source) or {})
+    if canonical.is_file():
+        canonical_report = strip_view_metadata(_load_snapshot(canonical) or {})
+        if _report_rank(canonical_report) >= _report_rank(source_report):
+            return
+    shutil.copy2(source, canonical)
+    print(f"{name}: synced {source.relative_to(REPO_ROOT)} -> {canonical.relative_to(REPO_ROOT)}")
 
 
 def build_micro_category(category: dict[str, Any]) -> bool:
     name = category["name"]
-    artifacts_dir = category["dir"]
-    if not artifacts_dir.is_dir():
-        print(f"{name}: artifacts directory not found (run the {name} suite first).")
+    search_dirs = artifact_dirs_for(category)
+    if not any(path.is_dir() for path in search_dirs):
+        print(f"{name}: no artifacts directory found (run the {name} suite first).")
         return False
-    source = find_lyobench_json(artifacts_dir)
+    source = find_lyobench_json(name, *search_dirs)
     if source is None:
-        print(f"{name}: no <name>.lyobench.json found (run the {name} suite first).")
+        searched = ", ".join(str(path.relative_to(REPO_ROOT)) for path in search_dirs)
+        print(f"{name}: no {name}.lyobench.json found (searched: {searched}).")
         return False
-    report = read_json(source)
+    sync_lyobench_source(name, source, category["dir"])
+    canonical = category["dir"] / f"{name}.lyobench.json"
+    if source.resolve() != canonical.resolve():
+        print(f"{name}: using {source.relative_to(REPO_ROOT)}")
+    report = read_json(canonical if canonical.is_file() else source)
     if not isinstance(report, dict):
         print(f"{name}: malformed exporter JSON at {source}.")
         return False
@@ -287,7 +750,7 @@ def build_micro_category(category: dict[str, Any]) -> bool:
     grades = grade_micro(report)
     if grades:
         report["grades"] = grades
-    write_report(report)
+    publish_report(report)
     return True
 
 
@@ -630,7 +1093,7 @@ def build_k6(run_dir: Path | None) -> bool:
         "slo": slo_assessment(scenarios),
         "grades": grade_k6(scenarios),
     }
-    write_report(report)
+    publish_report(report)
     return True
 
 

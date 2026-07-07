@@ -1,7 +1,9 @@
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Sms.Builders;
 using Lyo.Sms.Models;
 using Lyo.Sms.Twilio;
+using Lyo.Sms.Twilio.Builders;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
 using Twilio.Clients;
@@ -141,6 +143,73 @@ public class TwilioSmsServiceTests
         result.Items.ShouldNotBeNull();
         result.Start.ShouldBe(0);
         result.Amount.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task GetMessagesAsync_NullBuilder_ThrowsArgumentNullException()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessagesAsync((TwilioMessageQueryBuilder)null!, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetMessagesAsync_Builder_ReturnsPaginatedResults()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        var builder = TwilioMessageQueryBuilder.New().Inbound().WithPageSize(10);
+        var result = await service.GetMessagesAsync(builder, TestContext.Current.CancellationToken);
+        result.ShouldNotBeNull();
+        result.Items.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task GetMessagesAsync_BuilderWithInvertedDates_ThrowsArgumentOutOfRangeException()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        var builder = TwilioMessageQueryBuilder.New()
+            .WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc))
+            .WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetMessagesAsync(builder, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetInboundMessagesAsync_DefaultArguments_ReturnsPaginatedResults()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        var result = await service.GetInboundMessagesAsync(ct: TestContext.Current.CancellationToken);
+        result.ShouldNotBeNull();
+        result.Items.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task GetInboundMessagesAsync_InvalidPageSize_ThrowsArgumentOutOfRangeException()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetInboundMessagesAsync(pageSize: 0, ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetInboundMessagesAsync_InvalidToNumber_ThrowsInvalidFormatException()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetInboundMessagesAsync("invalid", ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetOutboundMessagesAsync_DefaultArguments_ReturnsPaginatedResults()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        var result = await service.GetOutboundMessagesAsync(ct: TestContext.Current.CancellationToken);
+        result.ShouldNotBeNull();
+        result.Items.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task GetOutboundMessagesAsync_InvalidFromNumber_ThrowsInvalidFormatException()
+    {
+        var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
+        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetOutboundMessagesAsync("invalid", ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -88,6 +88,80 @@
     return el("p", { className: "report-lead", text: text });
   }
 
+  function deltaBaselineNote(report) {
+    var baseline = report.deltaBaseline;
+    if (!baseline) return null;
+    if (baseline.kind === "historicalAverage") {
+      var count = baseline.runCount || 0;
+      if (!count) return null;
+      return el("p", {
+        className: "table-note",
+        text: "Δ vs historical average of " + count + " other run" + (count === 1 ? "" : "s") + ".",
+      });
+    }
+    if (!baseline.runId) return null;
+    var when = formatTimestamp(baseline.runEnded || baseline.runStarted);
+    var text = "Δ vs prior run" + (when ? " (" + when + ")" : "") + ": " + baseline.runId;
+    return el("p", { className: "table-note", text: text });
+  }
+
+  function historyOptionLabel(entry) {
+    var parts = [];
+    if (entry.runId) parts.push(entry.runId);
+    var when = formatTimestamp(entry.runEnded || entry.runStarted || entry.generatedAt);
+    if (when) parts.push(when);
+    if (entry.isCurrent) parts.push("latest");
+    return parts.join(" · ") || entry.file || "snapshot";
+  }
+
+  function mountHistoryBar(container, name, entries, onSelect) {
+    if (!container || !entries || !entries.length) return;
+    container.innerHTML = "";
+
+    var select = el("select", { id: "history-select", className: "history-select" });
+    entries.slice().reverse().forEach(function (entry) {
+      var option = el("option", {
+        value: entry.file || "",
+        text: historyOptionLabel(entry),
+      });
+      if (entry.isCurrent) option.selected = true;
+      select.appendChild(option);
+    });
+
+    select.addEventListener("change", function () {
+      onSelect(select.value || null);
+    });
+
+    container.appendChild(
+      el("div", { className: "history-bar" }, [
+        el("label", { className: "history-label", html: "Snapshot&nbsp;", "for": "history-select" }),
+        select,
+        el("span", {
+          className: "history-hint",
+          text: entries.length + " archived run" + (entries.length === 1 ? "" : "s") + " · Δ vs prior run",
+        }),
+      ])
+    );
+  }
+
+  function loadHistorySnapshot(name, file, onLoad, onError) {
+    if (!file) {
+      onLoad(null);
+      return;
+    }
+    var stem = file.replace(/\.json$/i, "");
+    var script = document.createElement("script");
+    script.src = "history/" + encodeURIComponent(name) + "/" + encodeURIComponent(stem) + ".js";
+    script.onload = function () {
+      var bucket = window.LyoBench && window.LyoBench.history && window.LyoBench.history[name];
+      onLoad(bucket && bucket[file] ? bucket[file] : null);
+    };
+    script.onerror = function () {
+      onError(new Error("Could not load history/" + name + "/" + stem + ".js"));
+    };
+    document.body.appendChild(script);
+  }
+
   /* Legend explaining parameters: "Name (unit) — description". */
   function paramLegend(parameters) {
     if (!parameters || !parameters.length) return null;
@@ -141,6 +215,9 @@
 
     var lead = reportLead(report.description);
     if (lead) root.appendChild(lead);
+
+    var deltaNote = deltaBaselineNote(report);
+    if (deltaNote) root.appendChild(deltaNote);
 
     if (report.comparison && report.comparison.groups && report.comparison.groups.length) {
       root.appendChild(comparisonSection(report.comparison));
@@ -225,14 +302,39 @@
     return Math.min.apply(null, items.map(function (m) { return m.meanNs || 0; }));
   }
 
+  function fmtDeltaPctText(pct, lowerIsBetter) {
+    var formatted = R.fmtDeltaPct(pct, lowerIsBetter);
+    return typeof formatted === "string" ? formatted : formatted.text;
+  }
+
+  function tdDelta(pct, lowerIsBetter) {
+    var formatted = R.fmtDeltaPct(pct, lowerIsBetter);
+    if (typeof formatted === "string") return td(formatted, "num");
+    return el("td", { className: formatted.className, text: formatted.text });
+  }
+
+  /* Collapsed matrix row: show a min–max delta range when cases differ. */
+  function deltaRangeCell(items, field, lowerIsBetter) {
+    var vals = items.map(function (m) { return m[field]; }).filter(function (v) { return v != null && !isNaN(v); });
+    if (!vals.length) return td("—", "num");
+    var min = Math.min.apply(null, vals);
+    var max = Math.max.apply(null, vals);
+    if (min === max) return tdDelta(min, lowerIsBetter);
+    return td(fmtDeltaPctText(min, lowerIsBetter) + " – " + fmtDeltaPctText(max, lowerIsBetter), "num");
+  }
+
   /* Detail table shown when a matrix (multi-parameter) method row is expanded. */
-  function matrixBreakdown(items, hasSla) {
+  function matrixBreakdown(items, hasSla, showDelta, showDeltaAlloc) {
     var headers = [
       { label: "Parameters" },
       { label: "Mean", className: "num" },
       { label: "Allocated", className: "num" },
       { label: "Ratio", className: "num" },
     ];
+    if (showDelta) {
+      headers.push({ label: "Δ mean", className: "num" });
+      if (showDeltaAlloc) headers.push({ label: "Δ alloc", className: "num" });
+    }
     if (hasSla) headers.push({ label: "SLA" });
     var rows = items.map(function (m) {
       var cells = [
@@ -241,6 +343,10 @@
         { className: "num", text: R.fmtBytes(m.allocatedBytes) },
         { className: "num", text: m.ratioToBaseline != null ? R.fmtRatio(m.ratioToBaseline) : "—" },
       ];
+      if (showDelta) {
+        cells.push(R.fmtDeltaPct(m.deltaMeanPct, true));
+        if (showDeltaAlloc) cells.push(R.fmtDeltaPct(m.deltaAllocPct, true));
+      }
       if (hasSla) cells.push(slaCell(m.slaResult, m.slaTarget));
       return cells;
     });
@@ -254,6 +360,8 @@
   function measurementTable(measurements) {
     if (!measurements.length) return el("p", { className: "empty", text: "No measurements." });
     var hasSla = measurements.some(function (m) { return m.slaResult; });
+    var showDelta = R.hasDeltaField(measurements, "deltaMeanPct");
+    var showDeltaAlloc = R.hasDeltaField(measurements, "deltaAllocPct");
 
     var byMethod = {};
     var order = [];
@@ -264,6 +372,10 @@
     order.sort(function (a, b) { return minMean(byMethod[a]) - minMean(byMethod[b]); });
 
     var headers = [{ label: "" }, { label: "Method" }, { label: "Parameters" }, { label: "Mean", className: "num" }, { label: "Allocated", className: "num" }, { label: "Ratio", className: "num" }];
+    if (showDelta) {
+      headers.push({ label: "Δ mean", className: "num" });
+      if (showDeltaAlloc) headers.push({ label: "Δ alloc", className: "num" });
+    }
     if (hasSla) headers.push({ label: "SLA" });
     var colspan = headers.length;
     var thead = el("thead", {}, [el("tr", {}, headers.map(function (h) { return el("th", { text: h.label, className: h.className || "" }); }))]);
@@ -283,6 +395,10 @@
           td(R.fmtBytes(first.allocatedBytes), "num"),
           td(first.ratioToBaseline != null ? R.fmtRatio(first.ratioToBaseline) : "—", "num"),
         ];
+        if (showDelta) {
+          single.push(tdDelta(first.deltaMeanPct, true));
+          if (showDeltaAlloc) single.push(tdDelta(first.deltaAllocPct, true));
+        }
         if (hasSla) single.push(td(slaCell(first.slaResult, first.slaTarget)));
         tbody.appendChild(el("tr", {}, single));
         return;
@@ -303,11 +419,15 @@
         td(allocRange, "num"),
         td("—", "num"),
       ];
+      if (showDelta) {
+        summary.push(deltaRangeCell(items, "deltaMeanPct", true));
+        if (showDeltaAlloc) summary.push(deltaRangeCell(items, "deltaAllocPct", true));
+      }
       if (hasSla) summary.push(td(worst ? slaCell(worst.slaResult, worst.slaTarget) : "—"));
       var mainRow = el("tr", { className: "expandable" }, summary);
       tbody.appendChild(mainRow);
 
-      var detailRow = el("tr", { className: "detail-row hidden" }, [el("td", { colspan: String(colspan) }, [matrixBreakdown(items, hasSla)])]);
+      var detailRow = el("tr", { className: "detail-row hidden" }, [el("td", { colspan: String(colspan) }, [matrixBreakdown(items, hasSla, showDelta, showDeltaAlloc)])]);
       tbody.appendChild(detailRow);
       mainRow.addEventListener("click", function () {
         var hidden = detailRow.classList.toggle("hidden");
@@ -317,7 +437,7 @@
     });
 
     var children = [el("div", { className: "table-wrap" }, [el("table", {}, [thead, tbody])])];
-    if (anyMatrix) children.push(el("p", { className: "table-note", text: "Click a row (\u25B8) to expand its per-parameter matrix breakdown (mean/allocated shown as a range across parameters; SLA shows the worst verdict)." }));
+    if (anyMatrix) children.push(el("p", { className: "table-note", text: "Click a row (\u25B8) to expand its per-parameter matrix breakdown (mean/allocated and Δ shown as a range across parameters; SLA shows the worst verdict)." }));
     if (measurements.some(function (m) { return m.isBaseline; })) {
       children.push(el("p", { className: "table-note", text: "The baseline tag marks the reference method; Ratio is each row's mean relative to it (1.00× = same speed)." }));
     }
@@ -342,12 +462,18 @@
       order.forEach(function (label) {
         var rowsForLabel = byLabel[label];
         var hasSla = rowsForLabel.some(function (r) { return r.slaResult; });
+        var showDelta = R.hasDeltaField(rowsForLabel, "deltaMeanPct");
+        var showDeltaAlloc = R.hasDeltaField(rowsForLabel, "deltaAllocPct");
         var headers = [
           { label: "Algorithm" },
           { label: "Mean", className: "num" },
           { label: "vs baseline", className: "num" },
           { label: "Allocated", className: "num" },
         ];
+        if (showDelta) {
+          headers.push({ label: "Δ mean", className: "num" });
+          if (showDeltaAlloc) headers.push({ label: "Δ alloc", className: "num" });
+        }
         if (hasSla) headers.push({ label: "SLA" });
         wrap.appendChild(
           el("div", { className: "card" }, [
@@ -364,6 +490,10 @@
                     { className: "num", text: r.ratioToBaseline != null ? R.fmtRatio(r.ratioToBaseline) : "—" },
                     { className: "num", text: R.fmtBytes(r.allocatedBytes) },
                   ];
+                  if (showDelta) {
+                    cells.push(R.fmtDeltaPct(r.deltaMeanPct, true));
+                    if (showDeltaAlloc) cells.push(R.fmtDeltaPct(r.deltaAllocPct, true));
+                  }
                   if (hasSla) cells.push(slaCell(r.slaResult, r.slaTarget));
                   return cells;
                 })
@@ -383,6 +513,9 @@
     var lead = reportLead(report.description);
     if (lead) root.appendChild(lead);
 
+    var deltaNote = deltaBaselineNote(report);
+    if (deltaNote) root.appendChild(deltaNote);
+
     var casesById = {};
     (report.cases || []).forEach(function (c) { casesById[c.case] = c; });
 
@@ -397,8 +530,10 @@
   }
 
   function scenariosSection(scenarios, casesById) {
+    var showDelta = R.hasDeltaField(scenarios, "deltaP95Pct");
     var headers = ["", "Scenario", "Profile", "p95", "p99", "avg", "Throughput", "Requests", "Checks", "Dropped"];
-    var numeric = { p95: 1, p99: 1, avg: 1, Throughput: 1, Requests: 1, Checks: 1, Dropped: 1 };
+    if (showDelta) headers.splice(4, 0, "Δ p95");
+    var numeric = { p95: 1, p99: 1, avg: 1, Throughput: 1, Requests: 1, Checks: 1, Dropped: 1, "Δ p95": 1 };
     var thead = el("thead", {}, [
       el("tr", {}, headers.map(function (h) { return el("th", { text: h, className: numeric[h] ? "num" : "" }); })),
     ]);
@@ -412,18 +547,27 @@
       if (hasHot) anyExpandable = true;
 
       var nameCell = el("td", {}, [el("span", { className: "scenario-name", text: s.name })]);
-      var mainRow = el("tr", { className: hasHot ? "expandable" : "" }, [
+      var rowCells = [
         el("td", { className: "toggle-cell", text: hasHot ? "\u25B8" : "" }),
         nameCell,
         el("td", { text: s.profile || "—" }),
         el("td", { className: "num", text: R.fmtMs(lat.p95) }),
+      ];
+      if (showDelta) {
+        var delta = R.fmtDeltaPct(s.deltaP95Pct, true);
+        rowCells.push(typeof delta === "string"
+          ? el("td", { className: "num", text: delta })
+          : el("td", { className: delta.className, text: delta.text }));
+      }
+      rowCells.push(
         el("td", { className: "num", text: R.fmtMs(lat.p99) }),
         el("td", { className: "num", text: R.fmtMs(lat.avg) }),
         el("td", { className: "num", text: R.fmtRate(s.throughput) }),
         el("td", { className: "num", text: R.fmtInt(s.requests) }),
         el("td", { className: "num", text: R.fmtPct(s.checksPass) }),
-        el("td", { className: "num", text: R.fmtInt(s.droppedIterations) }),
-      ]);
+        el("td", { className: "num", text: R.fmtInt(s.droppedIterations) })
+      );
+      var mainRow = el("tr", { className: hasHot ? "expandable" : "" }, rowCells);
       tbody.appendChild(mainRow);
 
       if (hasHot) {
@@ -569,5 +713,9 @@
     else R.renderError(root, "Unknown report type: " + report.type);
   }
 
-  window.LyoBenchViewer = { renderReport: renderReport };
+  window.LyoBenchViewer = {
+    renderReport: renderReport,
+    mountHistoryBar: mountHistoryBar,
+    loadHistorySnapshot: loadHistorySnapshot,
+  };
 })();

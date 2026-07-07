@@ -11,7 +11,7 @@ internal static class XChaCha20Poly1305Helper
 
     public const int TagSize = 16;
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce24)
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce24, byte[]? associatedData = null)
     {
         var subkey = new byte[32];
         try {
@@ -23,7 +23,7 @@ internal static class XChaCha20Poly1305Helper
             nonce12[3] = 0;
             Buffer.BlockCopy(nonce24, 16, nonce12, 4, 8);
             var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-            chacha.Init(true, new AeadParameters(new(subkey), 128, nonce12, null));
+            chacha.Init(true, new AeadParameters(new(subkey), 128, nonce12, associatedData is { Length: > 0 } ? associatedData : null));
             var outBuf = new byte[chacha.GetOutputSize(plaintext.Length)];
             var tlen = 0;
             if (plaintext.Length > 0) {
@@ -47,9 +47,10 @@ internal static class XChaCha20Poly1305Helper
         }
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce24) => Encrypt(plaintext.AsSpan(), key, nonce24);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce24, byte[]? associatedData = null)
+        => Encrypt(plaintext.AsSpan(), key, nonce24, associatedData);
 
-    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce24)
+    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce24, byte[]? associatedData = null)
     {
         var subkey = new byte[32];
         try {
@@ -65,7 +66,7 @@ internal static class XChaCha20Poly1305Helper
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
             try {
                 var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-                chacha.Init(false, new AeadParameters(new(subkey), 128, nonce12, null));
+                chacha.Init(false, new AeadParameters(new(subkey), 128, nonce12, associatedData is { Length: > 0 } ? associatedData : null));
                 var outBuf = new byte[chacha.GetOutputSize(combined.Length)];
                 var len = chacha.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
                 len += chacha.DoFinal(outBuf, len);

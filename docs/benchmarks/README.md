@@ -14,7 +14,9 @@ editing after a run.
   `*.summary.json` files into a `LoadTestReport` (`type: "load"`).
 - `build-manifests.py` then writes, per report, `data/<name>.json` (portable) and
   `data/<name>.js` (sets `window.LyoBench.reports["<name>"]`), plus `data/registry.js`
-  listing every report.
+  listing every report. Each export also archives a timestamped snapshot under
+  `history/<name>/`, computes Δ columns vs the immediately prior snapshot, and embeds a
+  run-history summary in the report JSON for the viewer.
 
 Reports are self-describing: each carries a suite `description`, per-class/per-method descriptions,
 parameter legends (units + meaning, e.g. `DataSize` in bytes), an auto-derived `dataset` (columns,
@@ -46,7 +48,7 @@ reports the context comes from attributes (`[BenchmarkReport(Description=…)]`,
 
 ```bash
 # Run the BenchmarkDotNet suites (Release) and rebuild all dashboard data
-scripts/benchmarks/run-dotnet-benchmarks.sh                 # all suites
+scripts/benchmarks/run-dotnet-benchmarks.sh                 # all suites — exports each category as it finishes
 scripts/benchmarks/run-dotnet-benchmarks.sh --no-docker hashing csv
 
 # Or just rebuild dashboard data from existing artifacts / k6 results
@@ -54,6 +56,30 @@ python3 scripts/benchmarks/build-manifests.py               # micro + k6
 python3 scripts/benchmarks/build-manifests.py --k6-only
 python3 scripts/benchmarks/build-manifests.py --hashing-only
 ```
+
+Each successful export appends to `history/<name>/` (unless that `runId` was already
+archived). Re-open a report to use the **Snapshot** dropdown (older runs load from
+`history/<name>/*.js`). **Δ** columns compare each snapshot to the **immediately prior
+archived run** (green = better; red = worse). The first archived run has no Δ columns.
+
+### Troubleshooting stale runs
+
+`build-manifests.py` searches the suite's project `BenchmarkDotNet.Artifacts/` plus fallback
+`BenchmarkDotNet.Artifacts/` at the repo root and under `Lyo.Net/`. It prefers **joined**
+runs (`runId` contains `joined`) over ad-hoc filtered runs, then the newest timestamp.
+
+If the dashboard still shows a June run after you benchmarked in July:
+
+1. **Use the run script** — it passes `--join` and `--artifacts` so the exporter writes
+   `<name>.lyobench.json` next to the project:
+   `scripts/benchmarks/run-dotnet-benchmarks.sh csv`
+2. **Avoid bare `dotnet run` from the repo root** — without `--artifacts`, BenchmarkDotNet
+   writes to `./BenchmarkDotNet.Artifacts/` and without `--join` you only get the last
+   benchmark class, not the full suite.
+3. **Regenerate** — `python3 scripts/benchmarks/build-manifests.py --csv-only` (or `--<name>-only`
+   for the suite you ran).
+4. Check the manifest output for `using …` / `synced …` lines to see which artifact file
+   was picked.
 
 k6 matrix runs also refresh automatically at the end of
 [`k6/framework-person/run_all.sh`](../../k6/framework-person/run_all.sh).

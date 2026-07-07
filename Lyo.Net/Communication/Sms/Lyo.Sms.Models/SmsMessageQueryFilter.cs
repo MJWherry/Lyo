@@ -21,7 +21,12 @@ public class SmsMessageQueryFilter
     /// <summary>Number of messages per page (1–1000). Default 50.</summary>
     public int PageSize { get; set; } = 50;
 
+    /// <summary>Filter by message direction(s). Empty means no direction filtering. Direction filtering may be applied client-side by providers that do not support it server-side.</summary>
+    public IList<Direction> Directions { get; } = [];
+
     /// <summary>Returns a readable summary of filter criteria.</summary>
-    /// <returns>A string containing sender, recipient, date bounds, and page size.</returns>
-    public override string ToString() => $"From: {From}, To: {To}, DateSentAfter: {DateSentAfter}, DateSentBefore: {DateSentBefore}, PageSize: {PageSize}";
+    /// <returns>A string containing sender, recipient, date bounds, page size, and directions.</returns>
+    public override string ToString()
+        => $"From: {From}, To: {To}, DateSentAfter: {DateSentAfter}, DateSentBefore: {DateSentBefore}, PageSize: {PageSize}, Directions: "
+            + (Directions.Count == 0 ? "(any)" : string.Join("|", Directions));
 }

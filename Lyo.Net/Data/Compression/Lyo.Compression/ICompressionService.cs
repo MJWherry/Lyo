@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using Lyo.Compression.Models;
 
@@ -31,8 +32,9 @@ public interface ICompressionService
     /// <summary>Compresses a byte array in memory.</summary>
     /// <param name="bytes">Uncompressed input; must be non-empty and within configured max size.</param>
     /// <param name="compressed">Compressed output buffer.</param>
+    /// <param name="level">Optional per-call compression level; null uses the configured default level.</param>
     /// <returns>Timing and size metadata.</returns>
-    CompressionInfo Compress(byte[] bytes, out byte[] compressed);
+    CompressionInfo Compress(byte[] bytes, out byte[] compressed, CompressionLevel? level = null);
 
     /// <summary>Decompresses a byte array produced by the same algorithm.</summary>
     /// <param name="compressedBytes">Compressed input.</param>
@@ -41,13 +43,16 @@ public interface ICompressionService
     DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed);
 
     /// <summary>Compresses all bytes read from <paramref name="inputStream" /> into <paramref name="outputStream" />. Does not dispose streams.</summary>
-    void Compress(Stream inputStream, Stream outputStream);
+    /// <param name="inputStream">Readable input stream.</param>
+    /// <param name="outputStream">Writable output stream.</param>
+    /// <param name="level">Optional per-call compression level; null uses the configured default level.</param>
+    void Compress(Stream inputStream, Stream outputStream, CompressionLevel? level = null);
 
     /// <summary>Decompresses from <paramref name="inputStream" /> into <paramref name="outputStream" />. Does not dispose streams.</summary>
     void Decompress(Stream inputStream, Stream outputStream);
 
-    /// <summary>Async stream compress; optional <paramref name="chunkSize" /> controls read buffer sizing.</summary>
-    Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default);
+    /// <summary>Async stream compress. <paramref name="chunkSize" /> is retained for signature compatibility; the underlying codecs manage their own buffering.</summary>
+    Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CompressionLevel? level = null, CancellationToken ct = default);
 
     /// <summary>Async stream decompress.</summary>
     Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default);
@@ -94,8 +99,17 @@ public interface ICompressionService
     /// <summary>Compressed size divided by original size (0–1+); convenience over metadata types.</summary>
     double GetCompressionRatio(byte[] originalBytes, byte[] compressedBytes);
 
-    /// <summary>Heuristic check for common compressed magic bytes (e.g. GZip, zlib wrapper, Brotli-ish leading byte). Not a guarantee — treat as a hint only.</summary>
+    /// <summary>
+    /// Heuristic check for known compressed magic bytes (GZip, ZLib, Zstd, LZ4, XZ, BZip2). Raw Deflate and Brotli have no magic bytes and are never detected. Not a
+    /// guarantee — treat as a hint only.
+    /// </summary>
     bool IsLikelyCompressed(byte[] data);
+
+    /// <summary>
+    /// Detects the compression algorithm from known magic bytes. Returns <see langword="true" /> only when a magic matches AND the corresponding
+    /// <see cref="CompressionAlgorithm" /> is registered (addon algorithm assemblies self-register when loaded). Raw Deflate and Brotli are never detected (no magic bytes).
+    /// </summary>
+    bool TryDetectAlgorithm(byte[]? data, out CompressionAlgorithm? algorithm);
 
     /// <summary>Compresses each dictionary entry in parallel; keys are preserved.</summary>
     Dictionary<string, byte[]> Compress(Dictionary<string, byte[]> items);

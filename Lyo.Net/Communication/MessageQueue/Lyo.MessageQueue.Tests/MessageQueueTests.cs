@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Result;
 using Xunit;
 
 namespace Lyo.MessageQueue.Tests;
@@ -143,5 +144,123 @@ public sealed class MessageQueueTests
         Assert.Single(worker.ProcessedRequests);
         Assert.Equal("e1", worker.ProcessedRequests[0].Id);
         Assert.Equal("envelope-payload", worker.ProcessedRequests[0].Payload);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_autocorrects_envelope_with_malformed_metadata()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("autocorrect-test", ct: TestContext.Current.CancellationToken);
+
+        // EnqueuedAt is not a valid DateTime, so the full envelope deserialize throws — the Payload element alone is still recoverable.
+        const string json = """{"Payload":{"Id":"a1","Payload":"autocorrected"},"RequeueCount":2,"MessageId":"m-1","EnqueuedAt":"not-a-date"}""";
+        await mq.SendToQueue("autocorrect-test", Encoding.UTF8.GetBytes(json));
+        using var worker = new TestQueueWorker(mq, "autocorrect-test");
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        await worker.StartAsync(cts.Token);
+        for (var i = 0; i < 50 && worker.ProcessedRequests.Count < 1; i++)
+            await Task.Delay(50, cts.Token);
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+        Assert.Single(worker.ProcessedRequests);
+        Assert.Equal("a1", worker.ProcessedRequests[0].Id);
+        Assert.Equal("autocorrected", worker.ProcessedRequests[0].Payload);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_garbage_json_routed_to_dlq_not_redelivered()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("poison-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("poison-test", Encoding.UTF8.GetBytes("this is not json"));
+        using var worker = new ConfigurableTestQueueWorker(mq, "poison-test", (r, _) => Result<TestRequest>.Success(r), dlqName: "poison-test.dlq");
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await worker.StartAsync(cts.Token);
+        IReadOnlyList<QueuePeekMessage> dlq = [];
+        for (var i = 0; i < 50 && dlq.Count < 1; i++) {
+            await Task.Delay(50, cts.Token);
+            dlq = await mq.PeekQueueMessages("poison-test.dlq", ct: cts.Token);
+        }
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+        Assert.Single(dlq);
+        Assert.Equal("this is not json", dlq[0].Payload);
+        Assert.Equal(0, worker.CallCount);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_exception_retries_capped_then_dlq()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("throw-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("throw-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
+        using var worker = new ConfigurableTestQueueWorker(
+            mq, "throw-test", (_, _) => throw new InvalidOperationException("boom"), 3, "throw-test.dlq");
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await worker.StartAsync(cts.Token);
+        IReadOnlyList<QueuePeekMessage> dlq = [];
+        for (var i = 0; i < 50 && dlq.Count < 1; i++) {
+            await Task.Delay(50, cts.Token);
+            dlq = await mq.PeekQueueMessages("throw-test.dlq", ct: cts.Token);
+        }
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+
+        // Initial attempt + 3 counted requeues, then DLQ — never an infinite broker loop.
+        Assert.Equal(4, worker.CallCount);
+        Assert.Single(dlq);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_failure_result_retries_capped_then_dlq()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("fail-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("fail-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
+        using var worker = new ConfigurableTestQueueWorker(
+            mq, "fail-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), 3, "fail-test.dlq");
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await worker.StartAsync(cts.Token);
+        IReadOnlyList<QueuePeekMessage> dlq = [];
+        for (var i = 0; i < 50 && dlq.Count < 1; i++) {
+            await Task.Delay(50, cts.Token);
+            dlq = await mq.PeekQueueMessages("fail-test.dlq", ct: cts.Token);
+        }
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(4, worker.CallCount);
+        Assert.Single(dlq);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_default_max_requeue_from_options()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("options-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("options-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
+        using var worker = new ConfigurableTestQueueWorker(
+            mq, "options-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), null, "options-test.dlq",
+            new QueueWorkerOptions { DefaultMaxRequeueCount = 2 });
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await worker.StartAsync(cts.Token);
+        IReadOnlyList<QueuePeekMessage> dlq = [];
+        for (var i = 0; i < 50 && dlq.Count < 1; i++) {
+            await Task.Delay(50, cts.Token);
+            dlq = await mq.PeekQueueMessages("options-test.dlq", ct: cts.Token);
+        }
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+
+        // Initial attempt + 2 counted requeues from QueueWorkerOptions.DefaultMaxRequeueCount.
+        Assert.Equal(3, worker.CallCount);
+        Assert.Single(dlq);
     }
 }

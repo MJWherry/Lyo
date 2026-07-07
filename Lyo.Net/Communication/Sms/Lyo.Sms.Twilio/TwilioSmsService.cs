@@ -6,6 +6,7 @@ using Lyo.Metrics;
 using Lyo.Result;
 using Lyo.Sms.Builders;
 using Lyo.Sms.Models;
+using Lyo.Sms.Twilio.Builders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Twilio.Clients;
@@ -280,8 +281,8 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
             readMessageOptions.DateSentBefore = dateSentBefore;
 
         Logger.LogInformation(
-            "Fetching messages: From={From}, To={To}, DateSentAfter={DateSentAfter}, DateSentBefore={DateSentBefore}, PageSize={PageSize}", filter.From, filter.To, dateSentAfter,
-            dateSentBefore, pageSize);
+            "Fetching messages: From={From}, To={To}, DateSentAfter={DateSentAfter}, DateSentBefore={DateSentBefore}, PageSize={PageSize}, Directions={Directions}", filter.From,
+            filter.To, dateSentAfter, dateSentBefore, pageSize, filter.Directions.Count == 0 ? "(any)" : string.Join("|", filter.Directions));
 
         try {
             var results = new List<TwilioSmsResult>();
@@ -300,8 +301,14 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
                 if (dateSentBefore.HasValue && messageResource.DateSent.HasValue && messageResource.DateSent.Value > dateSentBefore.Value)
                     continue;
 
-                var smsRequest = new SmsRequest { To = messageResource.To ?? string.Empty, From = messageResource.From?.ToString(), Body = messageResource.Body };
-                results.Add(TwilioSmsResult.FromMessageResource(messageResource, smsRequest));
+                var result = TwilioSmsResult.FromMessageResource(
+                    messageResource, new() { To = messageResource.To ?? string.Empty, From = messageResource.From?.ToString(), Body = messageResource.Body });
+
+                // Twilio's list API has no server-side direction parameter, so direction filtering is applied client-side.
+                if (filter.Directions.Count > 0 && !filter.Directions.Contains(result.Direction))
+                    continue;
+
+                results.Add(result);
             }
 
             sw.Stop();
@@ -328,6 +335,74 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
             Metrics.RecordError(Constants.Metrics.ApiGetMessagesDuration, ex);
             return new([TwilioSmsResult.FromException(ex, new(), _options.AccountSid)], pageSize, false);
         }
+    }
+
+    /// <summary>Retrieves SMS messages matching the criteria from a <see cref="TwilioMessageQueryBuilder" /> with cursor-based pagination.</summary>
+    /// <param name="builder">The query builder containing filter criteria.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <returns>Paginated results with Items, HasMore, and NextCursor for the next page.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when builder is null.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when the builder's date range is invalid.</exception>
+    public async Task<SmsMessageQueryResults<TwilioSmsResult>> GetMessagesAsync(TwilioMessageQueryBuilder builder, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(builder);
+        return await GetMessagesAsync(builder.Build(), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Retrieves inbound SMS messages (received by your Twilio numbers) with cursor-based pagination.</summary>
+    /// <param name="to">Optional recipient (your Twilio number) to filter by, in E.164 or US format.</param>
+    /// <param name="after">Optional lower date bound (inclusive).</param>
+    /// <param name="before">Optional upper date bound (inclusive). Use NextCursor from a previous result for the next page.</param>
+    /// <param name="pageSize">Number of messages per page (1–1000). Default 50.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <returns>Paginated inbound message results.</returns>
+    /// <remarks>Direction filtering is applied client-side because Twilio's list API has no direction parameter.</remarks>
+    public async Task<SmsMessageQueryResults<TwilioSmsResult>> GetInboundMessagesAsync(
+        string? to = null,
+        DateTime? after = null,
+        DateTime? before = null,
+        int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var builder = TwilioMessageQueryBuilder.New().Inbound().WithPageSize(pageSize);
+        if (!string.IsNullOrWhiteSpace(to))
+            builder.WithTo(to!);
+
+        if (after.HasValue)
+            builder.WithDateSentAfter(after.Value);
+
+        if (before.HasValue)
+            builder.WithDateSentBefore(before.Value);
+
+        return await GetMessagesAsync(builder.Build(), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Retrieves outbound SMS messages (sent via API, call, or reply) with cursor-based pagination.</summary>
+    /// <param name="from">Optional sender (your Twilio number) to filter by, in E.164 or US format.</param>
+    /// <param name="after">Optional lower date bound (inclusive).</param>
+    /// <param name="before">Optional upper date bound (inclusive). Use NextCursor from a previous result for the next page.</param>
+    /// <param name="pageSize">Number of messages per page (1–1000). Default 50.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <returns>Paginated outbound message results.</returns>
+    /// <remarks>Direction filtering is applied client-side because Twilio's list API has no direction parameter.</remarks>
+    public async Task<SmsMessageQueryResults<TwilioSmsResult>> GetOutboundMessagesAsync(
+        string? from = null,
+        DateTime? after = null,
+        DateTime? before = null,
+        int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var builder = TwilioMessageQueryBuilder.New().Outbound().WithPageSize(pageSize);
+        if (!string.IsNullOrWhiteSpace(from))
+            builder.WithFrom(from!);
+
+        if (after.HasValue)
+            builder.WithDateSentAfter(after.Value);
+
+        if (before.HasValue)
+            builder.WithDateSentBefore(before.Value);
+
+        return await GetMessagesAsync(builder.Build(), ct).ConfigureAwait(false);
     }
 
     /// <summary>Tests the connection to Twilio by fetching account details.</summary>

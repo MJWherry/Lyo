@@ -17,11 +17,11 @@ internal sealed class ChaCha20Poly1305StreamCryptor : IAeadStreamCryptor
 
     public ChaCha20Poly1305StreamCryptor(ReadOnlySpan<byte> key) => _chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
 
-    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag)
-        => _chacha.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, ChaCha20Poly1305Helper.TagSize));
+    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
+        => _chacha.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, ChaCha20Poly1305Helper.TagSize), associatedData);
 
-    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext)
-        => _chacha.Decrypt(nonce, ciphertextAndTag[..^ChaCha20Poly1305Helper.TagSize], ciphertextAndTag[^ChaCha20Poly1305Helper.TagSize..], plaintext);
+    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext, ReadOnlySpan<byte> associatedData = default)
+        => _chacha.Decrypt(nonce, ciphertextAndTag[..^ChaCha20Poly1305Helper.TagSize], ciphertextAndTag[^ChaCha20Poly1305Helper.TagSize..], plaintext, associatedData);
 
     public void Dispose() => _chacha.Dispose();
 #else
@@ -34,10 +34,10 @@ internal sealed class ChaCha20Poly1305StreamCryptor : IAeadStreamCryptor
 
     public ChaCha20Poly1305StreamCryptor(ReadOnlySpan<byte> key) => _key = new(key.ToArray());
 
-    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag)
+    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
     {
         nonce.CopyTo(_nonceBuffer);
-        _cipher.Init(true, new AeadParameters(_key, ChaCha20Poly1305Helper.TagSize * 8, _nonceBuffer, null));
+        _cipher.Init(true, new AeadParameters(_key, ChaCha20Poly1305Helper.TagSize * 8, _nonceBuffer, associatedData.IsEmpty ? null : associatedData.ToArray()));
         EnsureBuffers(plaintext.Length, _cipher.GetOutputSize(plaintext.Length));
         plaintext.CopyTo(_inBuffer);
         var written = _cipher.ProcessBytes(_inBuffer, 0, plaintext.Length, _outBuffer, 0);
@@ -45,10 +45,10 @@ internal sealed class ChaCha20Poly1305StreamCryptor : IAeadStreamCryptor
         _outBuffer.AsSpan(0, written).CopyTo(ciphertextAndTag);
     }
 
-    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext)
+    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext, ReadOnlySpan<byte> associatedData = default)
     {
         nonce.CopyTo(_nonceBuffer);
-        _cipher.Init(false, new AeadParameters(_key, ChaCha20Poly1305Helper.TagSize * 8, _nonceBuffer, null));
+        _cipher.Init(false, new AeadParameters(_key, ChaCha20Poly1305Helper.TagSize * 8, _nonceBuffer, associatedData.IsEmpty ? null : associatedData.ToArray()));
         EnsureBuffers(ciphertextAndTag.Length, _cipher.GetOutputSize(ciphertextAndTag.Length));
         ciphertextAndTag.CopyTo(_inBuffer);
         var written = _cipher.ProcessBytes(_inBuffer, 0, ciphertextAndTag.Length, _outBuffer, 0);

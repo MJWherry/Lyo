@@ -10,4 +10,10 @@ public sealed record SnappierCompressionAlgorithm : CompressionAlgorithm
 
     private SnappierCompressionAlgorithm()
         : base("Snappier", ".snappy") { }
+
+    /// <summary>
+    /// Snappy's raw block format (EasyCompressor's binary API) is not readable by its framed stream format, and EasyCompressor offers no stream-compatible binary mode —
+    /// so byte[] compression must go through the stream path.
+    /// </summary>
+    public override bool BinaryCompressMatchesStreamFormat => false;
 }

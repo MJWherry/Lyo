@@ -21,10 +21,10 @@ internal static class AesCcmHelper
         ArgumentHelpers.ThrowIf(key.Length != expectedLengthBytes, $"AES-CCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
         var cipher = new CcmBlockCipher(new AesEngine());
-        cipher.Init(true, new AeadParameters(new(key), 128, nonce, null));
+        cipher.Init(true, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
         byte[] packed;
         if (plaintext.Length == 0)
             packed = cipher.ProcessPacket([], 0, 0);
@@ -43,16 +43,17 @@ internal static class AesCcmHelper
         return (ciphertext, tag);
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
+        => Encrypt(plaintext.AsSpan(), key, nonce, associatedData);
 
-    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce)
+    public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
         try {
             var combined = new byte[ciphertext.Length + TagSize];
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
             var cipher = new CcmBlockCipher(new AesEngine());
-            cipher.Init(false, new AeadParameters(new(key), 128, nonce, null));
+            cipher.Init(false, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
             return cipher.ProcessPacket(combined, 0, combined.Length);
         }
         catch (InvalidCipherTextException ex) {

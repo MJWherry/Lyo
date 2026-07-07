@@ -19,64 +19,71 @@ public interface IAeadStreamCryptor : IDisposable
 
     /// <summary>
     /// Encrypts <paramref name="plaintext" /> with <paramref name="nonce" /> and writes <c>ciphertext||tag</c> into <paramref name="ciphertextAndTag" />, which must be exactly
-    /// <c>plaintext.Length + TagSize</c> bytes. The tag trails the ciphertext so the output is contiguous.
+    /// <c>plaintext.Length + TagSize</c> bytes. The tag trails the ciphertext so the output is contiguous. <paramref name="associatedData" /> is authenticated but not encrypted
+    /// (pass <see cref="ReadOnlySpan{T}.Empty" /> for none).
     /// </summary>
-    void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag);
+    void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default);
 
     /// <summary>
     /// Decrypts the contiguous <c>ciphertext||tag</c> in <paramref name="ciphertextAndTag" /> with <paramref name="nonce" /> into <paramref name="plaintext" />, which must be
-    /// exactly <c>ciphertextAndTag.Length - TagSize</c> bytes. Throws <see cref="System.Security.Cryptography.CryptographicException" /> (or <c>AuthenticationTagMismatchException</c>) on
-    /// tag mismatch.
+    /// exactly <c>ciphertextAndTag.Length - TagSize</c> bytes. <paramref name="associatedData" /> must match the value supplied at encryption time. Throws
+    /// <see cref="System.Security.Cryptography.CryptographicException" /> (or <c>AuthenticationTagMismatchException</c>) on tag mismatch.
     /// </summary>
-    void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext);
+    void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext, ReadOnlySpan<byte> associatedData = default);
 }
 
 /// <summary>
-/// Encodes/decodes the compact streaming chunk frame <c>[ciphertextLen:int32 LE][nonce:NonceSize][ciphertext][tag:TagSize]</c> into caller-owned buffers, with no per-chunk
-/// heap allocation. The nonce is supplied by the caller (a per-stream random prefix plus a per-chunk counter) so the codec is agnostic to how the nonce was produced.
+/// Encodes/decodes streaming chunk frames into caller-owned buffers with no per-chunk heap allocation. Frame layout:
+/// <c>[lengthAndFinalFlag:uint32 LE][ciphertext][tag:TagSize]</c> — the nonce is derived (per-stream prefix + chunk counter) and never written to the wire; the top bit of the
+/// length prefix marks the final chunk.
 /// </summary>
 internal static class AeadChunkCodec
 {
     /// <summary>Fixed-size length prefix preceding each chunk body.</summary>
     public const int LengthPrefixSize = 4;
 
-    /// <summary>Bytes of framing overhead added to each plaintext chunk: length prefix + nonce + tag.</summary>
-    public static int Overhead(IAeadStreamCryptor cryptor) => LengthPrefixSize + cryptor.NonceSize + cryptor.TagSize;
+    /// <summary>Bit marking the final chunk in the length prefix.</summary>
+    public const uint FinalChunkFlag = 0x8000_0000u;
+
+    /// <summary>Bytes of framing overhead added to each plaintext chunk: length prefix + tag (the nonce is derived, not stored).</summary>
+    public static int Overhead(IAeadStreamCryptor cryptor) => LengthPrefixSize + cryptor.TagSize;
 
     /// <summary>
-    /// Writes one chunk (length prefix, nonce, ciphertext, tag) for <paramref name="plaintextLength" /> plaintext bytes read into <paramref name="plaintext" /> at offset 0 into
-    /// <paramref name="destination" /> and returns the total number of bytes written. <paramref name="nonce" /> is copied into the frame and used for encryption.
+    /// Writes one chunk (<c>[lengthAndFinalFlag][ciphertext][tag]</c>) for <paramref name="plaintext" /> into <paramref name="destination" /> and returns the total number of
+    /// bytes written. The nonce is supplied by the caller (derived, never written to the wire) and <paramref name="associatedData" /> is authenticated with the chunk.
     /// </summary>
-    public static int Encode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> destination)
+    public static int Encode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> associatedData, bool isFinal, Span<byte> destination)
     {
-        var nonceSize = cryptor.NonceSize;
         var plaintextLength = plaintext.Length;
-        BinaryPrimitives.WriteInt32LittleEndian(destination[..LengthPrefixSize], plaintextLength);
-        nonce.CopyTo(destination.Slice(LengthPrefixSize, nonceSize));
-        cryptor.Encrypt(plaintext, nonce, destination.Slice(LengthPrefixSize + nonceSize, plaintextLength + cryptor.TagSize));
-        return LengthPrefixSize + nonceSize + plaintextLength + cryptor.TagSize;
+        var lengthAndFlag = (uint)plaintextLength | (isFinal ? FinalChunkFlag : 0u);
+        BinaryPrimitives.WriteUInt32LittleEndian(destination[..LengthPrefixSize], lengthAndFlag);
+        cryptor.Encrypt(plaintext, nonce, destination.Slice(LengthPrefixSize, plaintextLength + cryptor.TagSize), associatedData);
+        return LengthPrefixSize + plaintextLength + cryptor.TagSize;
     }
 
     /// <summary>
-    /// Decrypts one chunk body (<c>nonce + ciphertext + tag</c>) of length <paramref name="bodyLength" /> held in <paramref name="body" /> at offset 0 into
-    /// <paramref name="plaintext" /> and returns the plaintext length. The length prefix must already have been consumed by the caller.
+    /// Decrypts one chunk body (<c>ciphertext + tag</c>) of length <paramref name="bodyLength" /> held in <paramref name="body" /> at offset 0 into
+    /// <paramref name="plaintext" /> using the caller-derived <paramref name="nonce" /> and <paramref name="associatedData" />; returns the plaintext length. The length prefix must
+    /// already have been consumed by the caller.
     /// </summary>
-    public static int Decode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> body, int bodyLength, Span<byte> plaintext)
+    public static int Decode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> body, int bodyLength, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> associatedData, Span<byte> plaintext)
     {
-        var nonceSize = cryptor.NonceSize;
-        var ciphertextLength = bodyLength - nonceSize - cryptor.TagSize;
-        cryptor.Decrypt(body.Slice(nonceSize, ciphertextLength + cryptor.TagSize), body[..nonceSize], plaintext[..ciphertextLength]);
+        var ciphertextLength = bodyLength - cryptor.TagSize;
+        cryptor.Decrypt(body[..bodyLength], nonce, plaintext[..ciphertextLength], associatedData);
         return ciphertextLength;
     }
 
-    /// <summary>Ensures <paramref name="buffer" /> is rented from <see cref="ArrayPool{T}" /> and at least <paramref name="size" /> bytes; grows (return + re-rent) if too small.</summary>
-    public static void EnsureCapacity([NotNull]ref byte[]? buffer, int size)
+    /// <summary>
+    /// Ensures <paramref name="buffer" /> is rented from <see cref="ArrayPool{T}" /> and at least <paramref name="size" /> bytes; grows (return + re-rent) if too small. When
+    /// <paramref name="clearOnReturn" /> is true the outgrown buffer is zeroed before returning to the shared pool (use for buffers holding plaintext or key material).
+    /// </summary>
+    public static void EnsureCapacity([NotNull]ref byte[]? buffer, int size, bool clearOnReturn = false)
     {
         if (buffer != null && buffer.Length >= size)
             return;
 
         if (buffer != null)
-            ArrayPool<byte>.Shared.Return(buffer);
+            ArrayPool<byte>.Shared.Return(buffer, clearOnReturn);
 
         buffer = ArrayPool<byte>.Shared.Rent(size);
     }

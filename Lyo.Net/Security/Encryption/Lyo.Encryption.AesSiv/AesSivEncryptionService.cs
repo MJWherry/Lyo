@@ -50,8 +50,8 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         return new AesSivStreamCryptor(key);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
-    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
+    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[], byte[])" />
+    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
@@ -72,7 +72,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         var total = new byte[SivSize + plaintext.Length];
         using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-            siv.Encrypt(plaintext, total.AsSpan(), ReadOnlySpan<byte>.Empty);
+            siv.Encrypt(plaintext, total.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
 
         var sivBlock = new byte[SivSize];
         Buffer.BlockCopy(total, 0, sivBlock, 0, SivSize);
@@ -101,7 +101,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         }
     }
 
-    public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
+    public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
         if (key != null)
@@ -122,7 +122,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         var total = new byte[SivSize + bytes.Length];
         using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-            siv.Encrypt(bytes, total.AsSpan(), ReadOnlySpan<byte>.Empty);
+            siv.Encrypt(bytes, total.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
 
         var sivBlock = new byte[SivSize];
         Buffer.BlockCopy(total, 0, sivBlock, 0, SivSize);
@@ -151,37 +151,33 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         }
     }
 
-    public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null)
+    public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 27;
         ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(encryptedBytes);
-        return DecryptFromStream(ms, keyId, key);
+        return DecryptFromStream(ms, keyId, key, associatedData);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[])" />
-    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
+    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[], byte[])" />
+    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+        => DecryptChunk(buffer, offset, count, keyId, key, associatedData);
 
-    protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
+    protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 27;
         ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(buffer, offset, count, false);
-        return DecryptFromStream(ms, keyId, key);
+        return DecryptFromStream(ms, keyId, key, associatedData);
     }
 
-    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key)
+    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key, byte[]? associatedData)
     {
         using var br = new BinaryReader(ms);
         var firstByte = br.ReadByte();
         var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
         if (firstByte != expectedFormatVersion)
             throw new InvalidDataException($"Invalid encrypted data format: expected format version {expectedFormatVersion}, got {firstByte}.");
-
-        var formatVersion = (StreamFormatVersion)firstByte;
-        var maxSupportedVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
-        if (formatVersion > (StreamFormatVersion)maxSupportedVersion)
-            throw new InvalidDataException($"Unsupported format version: {formatVersion}. Maximum supported version: {(StreamFormatVersion)maxSupportedVersion}.");
 
         var keyIdLength = br.ReadInt32();
         if (keyIdLength < 0 || keyIdLength > 1024)
@@ -241,7 +237,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var plaintext = new byte[body.Length];
         try {
             using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-                siv.Decrypt(combined.AsSpan(), plaintext.AsSpan(), ReadOnlySpan<byte>.Empty);
+                siv.Decrypt(combined.AsSpan(), plaintext.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
 
             return plaintext;
         }

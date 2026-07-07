@@ -12,8 +12,8 @@
 #   --filter GLOB  Extra BenchmarkDotNet filter passed through to every suite (default '*').
 #
 # Each suite's in-process LyoBenchmarkExporter writes <name>.lyobench.json into BenchmarkDotNet.Artifacts
-# next to its project. The post-run export step (build-manifests.py) copies those into
-# docs/benchmarks/data/<name>.{json,js}, normalizes k6 into the same schema, and emits registry.js.
+# next to its project. After each suite finishes, build-manifests.py exports that category immediately
+# (archives a history snapshot, computes deltas vs the prior run, and updates data/<name>.{json,js}).
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -86,9 +86,8 @@ for category in "${CATEGORIES[@]}"; do
     args+=("$FILTER")
   fi
   dotnet "${args[@]}"
+  echo "==> Exporting $category dashboard data"
+  python3 "$ROOT_DIR/scripts/benchmarks/build-manifests.py" --"${category}-only"
 done
-
-echo "==> Rebuilding dashboard manifests"
-python3 "$ROOT_DIR/scripts/benchmarks/build-manifests.py"
 
 echo "Done. Reload docs/benchmarks/index.html to view results."

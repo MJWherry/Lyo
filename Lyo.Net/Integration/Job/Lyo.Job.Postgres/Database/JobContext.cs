@@ -114,7 +114,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
             entity.Property(e => e.Required).HasDefaultValue(true).HasColumnName("required");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
-            entity.Property(e => e.Value).HasMaxLength(300).HasColumnName("value");
+            entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.ValidationRegex).HasMaxLength(500).HasColumnName("validation_regex");
             entity.Property(e => e.MinLength).HasColumnName("min_length");
             entity.Property(e => e.MaxLength).HasColumnName("max_length");
@@ -203,7 +203,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
-            entity.Property(e => e.Value).HasMaxLength(300).HasColumnName("value");
+            entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.HasOne(d => d.JobRun)
                 .WithMany(p => p.JobRunParameters)
                 .HasForeignKey(d => d.JobRunId)
@@ -264,7 +264,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.JobScheduleId).HasColumnName("job_schedule_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
-            entity.Property(e => e.Value).HasMaxLength(300).HasColumnName("value");
+            entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
             entity.HasOne(d => d.JobSchedule)
@@ -314,7 +314,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.JobTriggerId).HasColumnName("job_trigger_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
-            entity.Property(e => e.Value).HasMaxLength(300).HasColumnName("value");
+            entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
             entity.HasOne(d => d.JobTrigger)

@@ -1,0 +1,233 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.h5">Job Schedules</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                All schedules across job definitions, ordered by next run (UTC).
+            </MudText>
+            <MudSpacer/>
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshAsync"
+                       StartIcon="@Icons.Material.Filled.Refresh" Disabled="@_loading">
+                Refresh
+            </MudButton>
+        </MudStack>
+
+        @if (_loading) {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+        }
+        else if (_rows.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No job schedules found.</MudText>
+        }
+        else {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                <tr>
+                    <th>Job Definition</th>
+                    <th>Schedule</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Next Run (UTC)</th>
+                    <th>Enabled</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in _rows) {
+                    <tr>
+                        <td>
+                            <MudText Typo="Typo.body2">@row.DefinitionName</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@row.DefinitionId.ToString()[..8]…</MudText>
+                        </td>
+                        <td>
+                            <MudText Typo="Typo.body2">@row.Schedule.Id.ToString()[..8]…</MudText>
+                        </td>
+                        <td>
+                            <MudChip T="string" Text="@row.Schedule.Type.ToString()" Size="Size.Small" Color="Color.Primary"/>
+                        </td>
+                        <td>@(row.Schedule.Description ?? "—")</td>
+                        <td>
+                            @if (row.NextRunUtc.HasValue) {
+                                <span>@row.NextRunUtc.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            }
+                            else {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
+                            }
+                        </td>
+                        <td>
+                            <MudTooltip Text="@(row.Schedule.Enabled ? "Disable schedule" : "Enable schedule")">
+                                <MudIconButton Icon="@(row.Schedule.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                               Color="@(row.Schedule.Enabled ? Color.Success : Color.Default)"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ToggleScheduleAsync(row))"/>
+                            </MudTooltip>
+                        </td>
+                        <td>
+                            <MudTooltip Text="View job definition">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                               OnClick="@(() => ViewDefinitionAsync(row.DefinitionId))"/>
+                            </MudTooltip>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+
+            <MudDivider/>
+
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Upcoming Runs (next @_upcomingRuns.Count across all schedules)</MudText>
+                @if (_upcomingRuns.Count == 0) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found.</MudText>
+                }
+                else {
+                    <MudSimpleTable Dense="true" Hover="true">
+                        <thead>
+                        <tr>
+                            <th>Run At (UTC)</th>
+                            <th>Job Definition</th>
+                            <th>Schedule</th>
+                            <th>Type</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var run in _upcomingRuns) {
+                            <tr>
+                                <td>@run.RunAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>@run.DefinitionName</td>
+                                <td>@(run.ScheduleDescription ?? run.ScheduleId.ToString()[..8] + "…")</td>
+                                <td>@run.ScheduleType</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </div>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    private const int MaxUpcomingRuns = 20;
+    private const int RunsPerScheduleLookAhead = 5;
+    private const int DefinitionQueryAmount = 200;
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
+
+    private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
+    private string _scheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
+    private string _triggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
+
+    private bool _loading;
+    private List<ScheduleRow> _rows = [];
+    private List<UpcomingRunRow> _upcomingRuns = [];
+
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        _loading = true;
+        try {
+            var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(
+                $"{_definitionRoute}/Query",
+                new QueryReq {
+                    Amount = DefinitionQueryAmount,
+                    Include = ["JobSchedules"]
+                });
+
+            var definitions = res?.Items ?? [];
+            _rows = BuildScheduleRows(definitions);
+            _upcomingRuns = BuildUpcomingRuns(_rows);
+        }
+        catch (ApiException ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+            _rows = [];
+            _upcomingRuns = [];
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private static List<ScheduleRow> BuildScheduleRows(IReadOnlyList<JobDefinitionRes> definitions)
+    {
+        var rows = new List<ScheduleRow>();
+        foreach (var def in definitions) {
+            if (def.JobSchedules is not { Count: > 0 })
+                continue;
+
+            foreach (var schedule in def.JobSchedules) {
+                var nextRun = schedule.Enabled
+                    ? ScheduleCalculator.GetNextRun(schedule.ToScheduleDefinition())
+                    : null;
+
+                rows.Add(new ScheduleRow(def.Name, def.Id, schedule, nextRun));
+            }
+        }
+
+        return rows
+            .OrderBy(r => r.NextRunUtc ?? DateTime.MaxValue)
+            .ThenBy(r => r.DefinitionName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<UpcomingRunRow> BuildUpcomingRuns(IEnumerable<ScheduleRow> rows)
+        => rows
+            .Where(r => r.Schedule.Enabled)
+            .SelectMany(r => ScheduleCalculator
+                .GetNextRuns(r.Schedule.ToScheduleDefinition(), maxCount: RunsPerScheduleLookAhead)
+                .Select(runAt => new UpcomingRunRow(runAt, r.DefinitionName, r.Schedule.Id, r.Schedule.Description, r.Schedule.Type)))
+            .OrderBy(r => r.RunAtUtc)
+            .Take(MaxUpcomingRuns)
+            .ToList();
+
+    private async Task ToggleScheduleAsync(ScheduleRow row)
+    {
+        var patch = new PatchRequestBuilder()
+            .WithKey(row.Schedule.Id)
+            .SetProperty("Enabled", !row.Schedule.Enabled)
+            .Build();
+
+        await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(_scheduleRoute, patch);
+        Snackbar.Add($"Schedule {(row.Schedule.Enabled ? "disabled" : "enabled")}", Severity.Success);
+        await RefreshAsync();
+    }
+
+    private async Task ViewDefinitionAsync(Guid definitionId)
+    {
+        var req = new QueryReq {
+            Keys = [[definitionId]],
+            Amount = 1,
+            Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]
+        };
+
+        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", req);
+        var def = res?.Items?.FirstOrDefault();
+        if (def == null)
+            return;
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<JobDefinitionView> {
+            { d => d.JobDefinition, def },
+            { d => d.DefinitionRoute, _definitionRoute },
+            { d => d.ScheduleRoute, _scheduleRoute },
+            { d => d.TriggerRoute, _triggerRoute }
+        };
+
+        await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, options);
+    }
+
+    private sealed record ScheduleRow(string DefinitionName, Guid DefinitionId, JobScheduleRes Schedule, DateTime? NextRunUtc);
+
+    private sealed record UpcomingRunRow(DateTime RunAtUtc, string DefinitionName, Guid ScheduleId, string? ScheduleDescription, ScheduleType ScheduleType);
+
+}

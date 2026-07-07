@@ -64,6 +64,23 @@
     return Number(value).toFixed(2) + "×";
   }
 
+  /* Percent change vs a prior run. lowerIsBetter=true for latency/allocation (negative = green). */
+  function fmtDeltaPct(pct, lowerIsBetter) {
+    if (pct == null || isNaN(pct)) return "—";
+    var n = Number(pct);
+    var improved = lowerIsBetter ? n < -0.5 : n > 0.5;
+    var regressed = lowerIsBetter ? n > 0.5 : n < -0.5;
+    var cls = improved ? "delta-good" : regressed ? "delta-bad" : "";
+    var sign = n >= 0 ? "+" : "";
+    return { className: ("num " + cls).trim(), text: sign + n.toFixed(1) + "%" };
+  }
+
+  function hasDeltaField(items, field) {
+    return (items || []).some(function (item) {
+      return item && item[field] != null && !isNaN(item[field]);
+    });
+  }
+
   function gradeClass(grade) {
     var normalized = String(grade || "")
       .replace(/\+/g, "plus")
@@ -157,6 +174,8 @@
     fmtNs: fmtNs,
     fmtBytes: fmtBytes,
     fmtRatio: fmtRatio,
+    fmtDeltaPct: fmtDeltaPct,
+    hasDeltaField: hasDeltaField,
     gradeClass: gradeClass,
     sloBadge: sloBadge,
     table: table,

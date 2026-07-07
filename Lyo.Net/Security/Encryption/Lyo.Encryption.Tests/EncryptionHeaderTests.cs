@@ -1,4 +1,9 @@
+using System.Security.Cryptography;
 using System.Text;
+using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
+using Lyo.Encryption.TwoKey;
+using Lyo.Keystore;
 
 namespace Lyo.Encryption.Tests;
 
@@ -31,6 +36,7 @@ public class EncryptionHeaderTests
         buffer.Add(dekAlgorithmId); // DEK Algorithm ID
         buffer.Add(kekAlgorithmId); // KEK Algorithm ID
         buffer.Add(32); // DekKeyMaterialBytes (AES-GCM)
+        buffer.Add(0); // DekEncoding (envelope)
         var keyIdBytes = Encoding.UTF8.GetBytes(keyId);
         buffer.AddRange(BitConverter.GetBytes(keyIdBytes.Length)); // KeyId length
         buffer.AddRange(keyIdBytes); // KeyId
@@ -64,6 +70,7 @@ public class EncryptionHeaderTests
         buffer.Add(dekAlgorithmId); // DEK Algorithm ID
         buffer.Add(kekAlgorithmId); // KEK Algorithm ID
         buffer.Add(32); // DekKeyMaterialBytes (ChaCha20-Poly1305)
+        buffer.Add(0); // DekEncoding (envelope)
         var keyIdBytes = Encoding.UTF8.GetBytes(keyId);
         buffer.AddRange(BitConverter.GetBytes(keyIdBytes.Length));
         buffer.AddRange(keyIdBytes);
@@ -95,6 +102,7 @@ public class EncryptionHeaderTests
         buffer.Add(dekAlgorithmId); // DEK Algorithm ID
         buffer.Add(kekAlgorithmId); // KEK Algorithm ID
         buffer.Add(32); // DekKeyMaterialBytes (AES-GCM)
+        buffer.Add(0); // DekEncoding (envelope)
         var keyIdBytes = Encoding.UTF8.GetBytes(keyId);
         buffer.AddRange(BitConverter.GetBytes(keyIdBytes.Length));
         buffer.AddRange(keyIdBytes);
@@ -235,8 +243,8 @@ public class EncryptionHeaderTests
             EncryptedDataEncryptionKey = new byte[] { 1, 2, 3 } // 3 bytes
         };
 
-        // Expected: 1 + 1 + 1 + 1 (DekKeyMaterialBytes) + 4 + 4 + 4 + 1 + 4 + 3
-        var expectedSize = 1 + 1 + 1 + 1 + 4 + 4 + 4 + 1 + 4 + 3;
+        // Expected: 1 + 1 + 1 + 1 (DekKeyMaterialBytes) + 1 (DekEncoding) + 4 + 4 + 4 + 1 + 4 + 3
+        var expectedSize = 1 + 1 + 1 + 1 + 1 + 4 + 4 + 4 + 1 + 4 + 3;
         Assert.Equal(expectedSize, header.GetHeaderSize());
     }
 
@@ -251,8 +259,8 @@ public class EncryptionHeaderTests
             EncryptedDataEncryptionKey = new byte[] { 1, 2 }
         };
 
-        // Expected: 1 + 1 + 1 + 1 (DekKeyMaterialBytes) + 4 + 0 + 4 + 0 + 4 + 2
-        var expectedSize = 1 + 1 + 1 + 1 + 4 + 0 + 4 + 0 + 4 + 2;
+        // Expected: 1 + 1 + 1 + 1 (DekKeyMaterialBytes) + 1 (DekEncoding) + 4 + 0 + 4 + 0 + 4 + 2
+        var expectedSize = 1 + 1 + 1 + 1 + 1 + 4 + 0 + 4 + 0 + 4 + 2;
         Assert.Equal(expectedSize, header.GetHeaderSize());
     }
 
@@ -349,6 +357,66 @@ public class EncryptionHeaderTests
     }
 
     [Fact]
+    public void With_NewEncryptedDek_RecomputesDekEncoding()
+    {
+        var original = new EncryptionHeader {
+            DekKeyMaterialBytes = 32,
+            DekEncoding = EncryptionHeader.DekEncodingAesKeyWrap,
+            KeyId = "test",
+            KeyVersion = "1",
+            EncryptedDataEncryptionKey = new byte[32 + EncryptionHeader.AesKeyWrapOverhead]
+        };
+
+        // AES-KW -> envelope (blob larger than dekLength + 8): the stale AES-KW byte must be replaced.
+        var envelopeDek = new byte[61];
+        var toEnvelope = original.With("new-key", "2", envelopeDek);
+        Assert.Equal(EncryptionHeader.DekEncodingEnvelope, toEnvelope.DekEncoding);
+
+        // Envelope -> AES-KW (blob exactly dekLength + 8 bytes).
+        var wrappedDek = new byte[32 + EncryptionHeader.AesKeyWrapOverhead];
+        var toAesKw = toEnvelope.With(encryptedDataEncryptionKey: wrappedDek);
+        Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, toAesKw.DekEncoding);
+
+        // No new DEK supplied: encoding untouched.
+        Assert.Equal(EncryptionHeader.DekEncodingEnvelope, toEnvelope.With(keyVersion: "3").DekEncoding);
+    }
+
+    /// <summary>
+    /// Proves the <see cref="EncryptionHeader.InferDekEncoding" /> length heuristic against real two-key stream output: an AES Key Wrapped DEK is exactly
+    /// <c>DekKeyMaterialBytes + 8</c> bytes, a KEK-service envelope is always larger, and in both cases inference agrees with the DekEncoding byte the encryptor wrote.
+    /// </summary>
+    [Fact]
+    public async Task InferDekEncoding_MatchesActualStreamHeaderEncoding()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var keyStore = new LocalKeyStore();
+
+        // 32-byte KEK with a symmetric AEAD KEK service -> AES Key Wrap.
+        using (var aesKwService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
+                   new AesGcmEncryptionService(keyStore), new AesGcmEncryptionService(keyStore), keyStore)) {
+            using var output = new MemoryStream();
+            await aesKwService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(32), ct: ct);
+            output.Position = 0;
+            var header = EncryptionHeader.Read(output);
+            Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, header.DekEncoding);
+            Assert.Equal(header.DekKeyMaterialBytes + EncryptionHeader.AesKeyWrapOverhead, header.EncryptedDataEncryptionKey.Length);
+            Assert.Equal(header.DekEncoding, EncryptionHeader.InferDekEncoding(header.EncryptedDataEncryptionKey.Length, header.DekKeyMaterialBytes));
+        }
+
+        // 64-byte KEK (AES-SIV) is not a valid AES Key Wrap key -> KEK-service envelope, always larger than dekLength + 8.
+        using (var envelopeService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
+                   new AesGcmEncryptionService(keyStore), new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512), keyStore)) {
+            using var output = new MemoryStream();
+            await envelopeService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(64), ct: ct);
+            output.Position = 0;
+            var header = EncryptionHeader.Read(output);
+            Assert.Equal(EncryptionHeader.DekEncodingEnvelope, header.DekEncoding);
+            Assert.True(header.EncryptedDataEncryptionKey.Length > header.DekKeyMaterialBytes + EncryptionHeader.AesKeyWrapOverhead);
+            Assert.Equal(header.DekEncoding, EncryptionHeader.InferDekEncoding(header.EncryptedDataEncryptionKey.Length, header.DekKeyMaterialBytes));
+        }
+    }
+
+    [Fact]
     public void With_NullParameters_KeepsOriginalValues()
     {
         var original = new EncryptionHeader {
@@ -374,6 +442,7 @@ public class EncryptionHeaderTests
         buffer.Add(0); // DEK Algorithm ID
         buffer.Add(0); // KEK Algorithm ID
         buffer.Add(32); // DekKeyMaterialBytes (AES-GCM)
+        buffer.Add(0); // DekEncoding (envelope)
         buffer.AddRange(BitConverter.GetBytes(0)); // Empty KeyId
         var keyVersionBytes = Encoding.UTF8.GetBytes("1");
         buffer.AddRange(BitConverter.GetBytes(keyVersionBytes.Length)); // KeyVersion length

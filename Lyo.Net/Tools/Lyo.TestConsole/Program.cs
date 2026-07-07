@@ -44,8 +44,10 @@ using Lyo.Query.Models.Common;
 using Lyo.Scheduler;
 using Lyo.ShortUrl;
 using Lyo.ShortUrl.Postgres;
+using Lyo.Sms;
 using Lyo.Sms.Models;
 using Lyo.Sms.Twilio;
+using Lyo.Sms.Twilio.Builders;
 using Lyo.Sms.Twilio.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.Tag.Postgres;
@@ -203,6 +205,14 @@ using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
 var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
+
+var twilio = sp.GetRequiredService<ISmsService>() as TwilioSmsService;
+var results = await twilio.GetMessagesAsync(TwilioMessageQueryBuilder.
+    New()
+    .Inbound()
+    .WithDateRange(new (2026,7,4,0,0,0), 
+        new(2026,7,4,23,59,59))
+    .Build());
 //var pws = pw.CreateSession();
 //await pws.StartBrowserAsync();
 //await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");

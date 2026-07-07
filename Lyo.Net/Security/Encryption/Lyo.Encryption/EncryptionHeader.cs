@@ -4,10 +4,19 @@ namespace Lyo.Encryption;
 
 /// <summary>
 /// Represents the encryption header for two-key encrypted stream files. Format version <see cref="StreamFormatVersion.V1" />:
-/// [FormatVersion:1][DEKAlgorithmId:1][KEKAlgorithmId:1][DekKeyMaterialBytes:1][KeyIdLength:4][KeyId][KeyVersionLength:4][KeyVersion][EncryptedDEKLength:4][EncryptedDEK].
+/// [FormatVersion:1][DEKAlgorithmId:1][KEKAlgorithmId:1][DekKeyMaterialBytes:1][DekEncoding:1][KeyIdLength:4][KeyId][KeyVersionLength:4][KeyVersion][EncryptedDEKLength:4][EncryptedDEK].
 /// </summary>
 public sealed record EncryptionHeader
 {
+    /// <summary><see cref="DekEncoding" /> value: the DEK is encrypted with the KEK encryption service's regular single-shot format (used when no raw AES-sized KEK is available, e.g. RSA KEKs).</summary>
+    public const byte DekEncodingEnvelope = 0;
+
+    /// <summary><see cref="DekEncoding" /> value: the DEK is wrapped with AES Key Wrap (RFC 3394) — deterministic, integrity-checked, and always exactly <c>dekLength + 8</c> bytes.</summary>
+    public const byte DekEncodingAesKeyWrap = 1;
+
+    /// <summary>AES Key Wrap (RFC 3394) output is always exactly this many bytes longer than the plaintext key it wraps.</summary>
+    public const int AesKeyWrapOverhead = 8;
+
     /// <summary>First byte of the header; use <see cref="StreamFormatVersion.V1" />.</summary>
     public byte FormatVersion { get; init; } = (byte)StreamFormatVersion.V1;
 
@@ -17,6 +26,9 @@ public sealed record EncryptionHeader
 
     /// <summary>Length in bytes of the plaintext DEK after KEK unwrap.</summary>
     public byte DekKeyMaterialBytes { get; init; } = 32;
+
+    /// <summary>How the DEK is protected: 0 = encrypted with the KEK service's single-shot envelope, 1 = wrapped with AES Key Wrap (RFC 3394).</summary>
+    public byte DekEncoding { get; init; }
 
     public string KeyId { get; init; } = string.Empty;
 
@@ -34,6 +46,7 @@ public sealed record EncryptionHeader
         var dekAlgorithmId = reader.ReadByte();
         var kekAlgorithmId = reader.ReadByte();
         var dekKeyMaterialBytes = reader.ReadByte();
+        var dekEncoding = reader.ReadByte();
         TwoKeyDekValidation.ValidateHeader(dekAlgorithmId, dekKeyMaterialBytes);
         var keyIdLen = reader.ReadInt32();
         if (keyIdLen is < 0 or > 1024)
@@ -57,6 +70,7 @@ public sealed record EncryptionHeader
             DekAlgorithmId = dekAlgorithmId,
             KekAlgorithmId = kekAlgorithmId,
             DekKeyMaterialBytes = dekKeyMaterialBytes,
+            DekEncoding = dekEncoding,
             KeyId = keyId,
             KeyVersion = keyVersion,
             EncryptedDataEncryptionKey = encryptedDek
@@ -86,6 +100,7 @@ public sealed record EncryptionHeader
         writer.Write(DekAlgorithmId);
         writer.Write(KekAlgorithmId);
         writer.Write(DekKeyMaterialBytes);
+        writer.Write(DekEncoding);
         writer.Write(keyIdBytes.Length);
         if (keyIdBytes.Length > 0)
             writer.Write(keyIdBytes);
@@ -114,6 +129,7 @@ public sealed record EncryptionHeader
         buffer.Add(DekAlgorithmId);
         buffer.Add(KekAlgorithmId);
         buffer.Add(DekKeyMaterialBytes);
+        buffer.Add(DekEncoding);
         buffer.AddRange(BitConverter.GetBytes(keyIdBytes.Length));
         if (keyIdBytes.Length > 0)
             buffer.AddRange(keyIdBytes);
@@ -135,6 +151,7 @@ public sealed record EncryptionHeader
             1 + // DEK Algorithm ID
             1 + // KEK Algorithm ID
             1 + // DekKeyMaterialBytes
+            1 + // DekEncoding
             4 + // KeyId length
             keyIdBytes.Length + // KeyId
             4 + // KeyVersion length
@@ -143,7 +160,18 @@ public sealed record EncryptionHeader
             EncryptedDataEncryptionKey.Length; // Encrypted DEK
     }
 
-    /// <summary>Creates a copy of this header with updated values.</summary>
+    /// <summary>
+    /// Infers how an encrypted DEK blob is encoded from its length: AES Key Wrap output is always exactly
+    /// <paramref name="dekKeyMaterialBytes" /> + <see cref="AesKeyWrapOverhead" /> bytes, while KEK-service envelopes (version + nonce + tag + ciphertext) are always larger.
+    /// </summary>
+    public static byte InferDekEncoding(int encryptedDekLength, byte dekKeyMaterialBytes)
+        => encryptedDekLength == dekKeyMaterialBytes + AesKeyWrapOverhead ? DekEncodingAesKeyWrap : DekEncodingEnvelope;
+
+    /// <summary>
+    /// Creates a copy of this header with updated values. When <paramref name="encryptedDataEncryptionKey" /> is supplied (e.g. during DEK migration to a different KEK),
+    /// <see cref="DekEncoding" /> is recomputed from the new blob via <see cref="InferDekEncoding" /> — the old value may no longer match when the source and target KEKs
+    /// differ in AES Key Wrap eligibility, and a stale byte would make the file undecryptable.
+    /// </summary>
     public EncryptionHeader With(
         string? keyId = null,
         string? keyVersion = null,
@@ -152,13 +180,17 @@ public sealed record EncryptionHeader
         byte? dekAlgorithmId = null,
         byte? kekAlgorithmId = null,
         byte? dekKeyMaterialBytes = null)
-        => this with {
+    {
+        var newDekKeyMaterialBytes = dekKeyMaterialBytes ?? DekKeyMaterialBytes;
+        return this with {
             FormatVersion = formatVersion ?? FormatVersion,
             DekAlgorithmId = dekAlgorithmId ?? DekAlgorithmId,
             KekAlgorithmId = kekAlgorithmId ?? KekAlgorithmId,
-            DekKeyMaterialBytes = dekKeyMaterialBytes ?? DekKeyMaterialBytes,
+            DekKeyMaterialBytes = newDekKeyMaterialBytes,
+            DekEncoding = encryptedDataEncryptionKey == null ? DekEncoding : InferDekEncoding(encryptedDataEncryptionKey.Length, newDekKeyMaterialBytes),
             KeyId = keyId ?? KeyId,
             KeyVersion = keyVersion ?? KeyVersion,
             EncryptedDataEncryptionKey = encryptedDataEncryptionKey ?? EncryptedDataEncryptionKey
         };
+    }
 }

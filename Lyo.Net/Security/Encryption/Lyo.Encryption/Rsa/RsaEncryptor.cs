@@ -42,13 +42,13 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
         ArgumentHelpers.ThrowIf(
             _padding.Mode == RSAEncryptionPaddingMode.Pkcs1, "PKCS1 padding is not recommended for security. Use OAEP padding (e.g., OAEP-SHA256) instead.", nameof(padding));
 
-        _rsa = RSA.Create();
+        // Assign exactly one RSA instance (no throwaway RSA.Create() that would leak on reassignment).
         if (!publicPemPath.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadPublicFromPem(publicPemPath);
         else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            OperationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either publicPemPath or (pfxPath, password).");
+            throw new InvalidOperationException("No RSA key configuration provided. Specify either publicPemPath or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(
@@ -84,15 +84,19 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     /// <param name="bytes">The data to encrypt. Must not be null or empty.</param>
     /// <param name="keyId">This parameter is ignored. RSA uses keys from constructor. Provided for interface compliance only.</param>
     /// <param name="key">This parameter is ignored. RSA uses keys from constructor. Provided for interface compliance only.</param>
+    /// <param name="associatedData">Not supported by RSA; must be null.</param>
     /// <returns>Encrypted data</returns>
     /// <exception cref="ArgumentException">Thrown when keyId or key parameters are provided</exception>
+    /// <exception cref="NotSupportedException">Thrown when associatedData is provided (RSA-OAEP has no associated-data input)</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when bytes is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize)</exception>
-    public byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
+    public byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, MinInputSize, MaxInputSize);
         // RSA uses keys from constructor, not parameters (for interface compliance)
         ArgumentHelpers.ThrowIf(keyId != null, "RSA encryption service uses keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
         ArgumentHelpers.ThrowIf(key != null, "RSA encryption service uses keys from constructor. The 'key' parameter is not supported.", nameof(key));
+        if (associatedData != null)
+            throw new NotSupportedException("RSA encryption does not support associated data.");
 
         // If data fits in one chunk, encrypt directly
         if (bytes.Length <= _maxChunkSize)
@@ -116,19 +120,30 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
+    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+        => Encrypt(plaintext.ToArray(), keyId, key, associatedData);
 
     /// <inheritdoc />
     public byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => Encrypt((encoding ?? GetEncryptionEncoding()).GetBytes(text), keyId, key);
 
     /// <inheritdoc />
-    public Task EncryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
+    public Task EncryptToStreamAsync(
+        Stream input,
+        Stream output,
+        string? keyId = null,
+        byte[]? key = null,
+        int chunkSize = 1024 * 1024,
+        byte[]? associatedData = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        if (associatedData != null)
+            throw new NotSupportedException("RSA encryption does not support associated data.");
+
         return RsaStreamCodec.EncryptAsync(input, output, (byte)EncryptionAlgorithm.Rsa, (byte)StreamFormatVersion.V1, chunkSize, EncryptChunk(keyId, key), ct);
     }
 
@@ -149,7 +164,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         ArgumentHelpers.ThrowIfNegative(chunkSize);
         using var outputStream = File.Create(outputPath);
-        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
+        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct: ct).ConfigureAwait(false);
     }
 
     /// <summary>Calculates the maximum chunk size that can be encrypted with RSA based on key size and padding.</summary>

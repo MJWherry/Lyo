@@ -43,6 +43,9 @@ dist-ssr
 #k6 Results
 k6/framework-person/results/*
 
+# Local benchmark run history (current snapshot lives in docs/benchmarks/data/)
+docs/benchmarks/history/
+
 # Python (Lyo.Net/_scripts helpers)
 Lyo.Net/_scripts/__pycache__/
 **/__pycache__/

@@ -98,10 +98,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         // 2. Mark as Running.
         var include = string.Join("&include=", RunIncludes);
         var startedRun = await _apiClient.PostAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunStarted(runId)}?include={include}", ct: ct).ConfigureAwait(false);
-        //if (startedRun is null) {
-        //    Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
-        //    return ResultVoid.Failure("Failed to start run", "StartFailed");
-        //}
+        if (startedRun is null) {
+            Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
+            return ResultVoid.Failure("Failed to start run", "StartFailed");
+        }
 
         // 3. Create per-run linked CancellationTokenSource so cancellation signals can stop ExecuteAsync.
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -133,8 +133,11 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
             }
         }
 
-        // 4. Report results.
-        await ReportFinishedAsync(runId, results.Build(), ct).ConfigureAwait(false);
+        // 4. Report results. A failed report means the run row was never transitioned — return failure so the message is retried (capped) instead of silently acked.
+        var reported = await ReportFinishedAsync(runId, results.Build(), ct).ConfigureAwait(false);
+        if (!reported)
+            return ResultVoid.Failure("Failed to report run finish", "FinishReportFailed");
+
         return ResultVoid.Success();
     }
 
@@ -170,14 +173,21 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         }
     }
 
-    private async Task ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
+    /// <summary>Reports the run's results to the Job API. Returns false when the finish POST failed (the run row was not transitioned to Finished).</summary>
+    private async Task<bool> ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
     {
         try {
-            await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunFinished(runId)}", results, ct: ct)
+            var finished = await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunFinished(runId)}", results, ct: ct)
                 .ConfigureAwait(false);
+
+            if (finished is null)
+                Logger.LogError("Finish report for run {RunId} returned no result — run state may not have been updated", runId);
+
+            return finished is not null;
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Failed to report finish for run {RunId}", runId);
+            return false;
         }
     }
 

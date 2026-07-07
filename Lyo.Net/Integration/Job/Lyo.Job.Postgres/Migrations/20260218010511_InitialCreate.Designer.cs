@@ -243,8 +243,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("type");
 
                     b.Property<string>("Value")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("value");
 
                     b.Property<DateTime>("CreatedTimestamp")
@@ -430,8 +430,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("type");
 
                     b.Property<string>("Value")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("value");
 
                     b.HasKey("Id")
@@ -592,8 +592,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("type");
 
                     b.Property<string>("Value")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("value");
 
                     b.Property<DateTime>("CreatedTimestamp")
@@ -712,8 +712,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("type");
 
                     b.Property<string>("Value")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("value");
 
                     b.Property<DateTime>("CreatedTimestamp")

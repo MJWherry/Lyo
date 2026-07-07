@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Events;
@@ -43,10 +44,9 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     public async Task PublishRunCreatedAsync(Guid runId, string workerType, CancellationToken ct = default)
     {
         var queue = Constants.Mq.QueueGetJobRunCreated(workerType);
-        var data = JsonSerializer.SerializeToUtf8Bytes(runId);
         _logger.LogDebug("Publishing run {RunId} created → queue {Queue}", runId, queue);
-        await _mqService.SendToQueue(queue, data).ConfigureAwait(false);
-        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobRunCreatedRoutingKey, data).ConfigureAwait(false);
+        await _mqService.SendToQueueWithEnvelopeAsync(queue, runId, traceId: Activity.Current?.TraceId.ToString()).ConfigureAwait(false);
+        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(runId)).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

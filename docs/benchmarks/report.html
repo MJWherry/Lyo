@@ -12,6 +12,7 @@
       <p><a href="index.html">&larr; All benchmarks</a></p>
       <h1 id="report-title">Benchmark Report</h1>
       <p class="subtitle" id="report-subtitle"></p>
+      <div id="history-bar"></div>
     </header>
 
     <main id="report"></main>
@@ -25,9 +26,13 @@
   <script>
     (function () {
       var root = document.getElementById("report");
-      var name = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+      var historyBar = document.getElementById("history-bar");
+      var hashBody = (location.hash || "").replace(/^#/, "");
+      var name = decodeURIComponent(hashBody.split("@")[0] || "").trim();
+      var snapshotFile = decodeURIComponent((hashBody.split("@")[1] || "").trim());
       var registry = (window.LyoBench && window.LyoBench.registry) || [];
       var entry = registry.filter(function (r) { return r.name === name; })[0];
+      var latestReport = null;
 
       if (!name) {
         window.BenchmarkDashboard.renderError(root, "No report selected. Open this page from the index.");
@@ -37,23 +42,79 @@
       document.getElementById("report-title").textContent = entry ? entry.title : name;
       document.getElementById("report-subtitle").textContent = entry ? (entry.type === "load" ? "Load test (k6)" : "Micro-benchmark (BenchmarkDotNet)") : "";
 
-      function render() {
-        var report = window.LyoBench && window.LyoBench.reports && window.LyoBench.reports[name];
+      function setSnapshotHash(file) {
+        var next = name + (file ? "@" + encodeURIComponent(file) : "");
+        if (location.hash.replace(/^#/, "") !== next) {
+          history.replaceState(null, "", "#" + next);
+        }
+      }
+
+      function renderBody(report) {
         if (!report) {
-          window.BenchmarkDashboard.renderError(root, "No data for report '" + name + "'. Run scripts/benchmarks/build-manifests.py, then reload.");
+          window.BenchmarkDashboard.renderError(root, "Snapshot not found.");
           return;
         }
         window.LyoBenchViewer.renderReport(report, root);
       }
 
-      // Data files register window.LyoBench.reports[name]; load on demand for file:// friendliness.
-      var script = document.createElement("script");
-      script.src = "data/" + name + ".js";
-      script.onload = render;
-      script.onerror = function () {
+      function showReport(report, file) {
+        renderBody(report);
+        setSnapshotHash(file || null);
+      }
+
+      function selectSnapshot(file) {
+        if (!file) {
+          showReport(latestReport, null);
+          return;
+        }
+        var latestEntry = (latestReport.history || []).filter(function (h) { return h.isCurrent; })[0];
+        if (latestEntry && latestEntry.file === file) {
+          showReport(latestReport, file);
+          return;
+        }
+        window.LyoBenchViewer.loadHistorySnapshot(
+          name,
+          file,
+          function (report) {
+            if (!report) {
+              window.BenchmarkDashboard.renderError(root, "Could not read snapshot '" + file + "'.");
+              return;
+            }
+            showReport(report, file);
+          },
+          function (err) {
+            window.BenchmarkDashboard.renderError(root, err);
+          }
+        );
+      }
+
+      function mountHistory(report) {
+        var entries = report.history || [];
+        if (!entries.length) return;
+        window.LyoBenchViewer.mountHistoryBar(historyBar, name, entries, selectSnapshot);
+      }
+
+      function afterLatestLoaded() {
+        latestReport = window.LyoBench.reports[name];
+        if (!latestReport) {
+          window.BenchmarkDashboard.renderError(root, "No data for report '" + name + "'. Run scripts/benchmarks/build-manifests.py, then reload.");
+          return;
+        }
+        mountHistory(latestReport);
+        if (snapshotFile) {
+          selectSnapshot(snapshotFile);
+        } else {
+          showReport(latestReport, null);
+        }
+      }
+
+      var mainScript = document.createElement("script");
+      mainScript.src = "data/" + name + ".js";
+      mainScript.onload = afterLatestLoaded;
+      mainScript.onerror = function () {
         window.BenchmarkDashboard.renderError(root, "Could not load data/" + name + ".js. Run scripts/benchmarks/build-manifests.py, then reload.");
       };
-      document.body.appendChild(script);
+      document.body.appendChild(mainScript);
 
       window.addEventListener("hashchange", function () { location.reload(); });
     })();

@@ -83,17 +83,20 @@ public sealed class QueryPathExecutor(
             return new(Array.Empty<TDbModel>().AsQueryable(), 0, true, false);
         }
 
+        var convertedKeySets = new List<object[]>(validKeySets.Count);
+        foreach (var keySet in validKeySets)
+            convertedKeySets.Add(typeConversion.ConvertKeysForFind<TDbModel>(keySet, context));
+
         List<TDbModel> entities;
         var singlePkOptimized = pkCount == 1
-            ? await TryLoadBySinglePrimaryKeyAsync<TDbModel>(context, validKeySets, primaryKey!.Properties[0].Name, primaryKey.Properties[0].ClrType, ct).ConfigureAwait(false)
+            ? await TryLoadBySinglePrimaryKeyAsync<TDbModel>(context, convertedKeySets, primaryKey!.Properties[0].Name, primaryKey.Properties[0].ClrType, ct).ConfigureAwait(false)
             : null;
 
         if (singlePkOptimized is not null)
             entities = singlePkOptimized;
         else {
-            entities = new(validKeySets.Count);
-            foreach (var keySet in validKeySets) {
-                var convertedKeys = typeConversion.ConvertKeysForFind<TDbModel>(keySet, context);
+            entities = new(convertedKeySets.Count);
+            foreach (var convertedKeys in convertedKeySets) {
                 var entity = await context.Set<TDbModel>().FindAsync(convertedKeys, ct).ConfigureAwait(false);
                 if (entity != null)
                     entities.Add(entity);

@@ -5,7 +5,7 @@
   "title": "Query API (k6)",
   "description": "k6 load/stress/spike/soak against the Lyo person API. The /person/query endpoint returns full Person entities; /person/QueryProject returns field-projected rows. Every iteration pages 100-300 persons (varied by VU/iteration to bypass caches). Randomized multi-key sorting over unindexed columns is disabled by default (only filter_sort carries a fixed sort); other cases use the server default (PK) order. The 'cases' below describe the request shape behind each scenario; hotspots reference these case ids.",
   "runId": "prod-like-20260624-234715",
-  "generatedAt": "2026-06-29T02:30:33+00:00",
+  "generatedAt": "2026-07-04T02:20:04+00:00",
   "environment": {
     "tool": "k6"
   },
@@ -686,6 +686,18 @@
       "category": "QueryProject path",
       "grade": "A",
       "rationale": "load/spike/soak p95 46/72/67 ms; stress p95 463 ms; 100.00% checks"
+    }
+  ],
+  "history": [
+    {
+      "file": "20260704T022004Z_prod-like-20260624-234715.json",
+      "runId": "prod-like-20260624-234715",
+      "runStarted": null,
+      "runEnded": null,
+      "generatedAt": "2026-07-04T02:20:04+00:00",
+      "isCurrent": true,
+      "scenarioCount": 8,
+      "medianP95Ms": 173.64581360000003
     }
   ]
 }

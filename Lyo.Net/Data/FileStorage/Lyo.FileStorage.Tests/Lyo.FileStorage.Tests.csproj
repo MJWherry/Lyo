@@ -13,6 +13,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\..\Compression\Lyo.Compression.LZ4\Lyo.Compression.LZ4.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
         <ProjectReference Include="..\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
     </ItemGroup>
 

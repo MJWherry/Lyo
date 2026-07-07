@@ -15,6 +15,19 @@ namespace Lyo.Encryption;
 /// material), so there are no shared mutable state concerns. However, if using a KeyStore or other dependencies that aren't thread-safe, ensure proper synchronization at those
 /// levels.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Nonce collision bounds and key rotation.</b> Algorithms with 96-bit (12-byte) random nonces (AES-GCM, ChaCha20-Poly1305, AES-CCM) are subject to the birthday bound:
+/// after roughly 2^32 encryptions under one key the probability of a nonce collision — which is catastrophic for GCM/Poly1305 — becomes non-negligible. NIST SP 800-38D
+/// recommends staying well below that (collision probability ≤ 2^-32, i.e. at most ~2^32 random-nonce operations per key). Each single-shot <c>Encrypt</c> call and each
+/// encrypted stream consumes one random nonce (streams derive per-chunk nonces from a counter, so chunk count does not matter). Rotate keys (via the KeyStore key versioning)
+/// long before approaching these volumes.
+/// </para>
+/// <para>
+/// <b>High-volume workloads.</b> When a single key must protect very large numbers of messages, prefer XChaCha20-Poly1305 (192-bit nonces make random collisions negligible,
+/// ~2^80 messages) or AES-SIV (nonce misuse-resistant: a repeated nonce only reveals whether two plaintexts are identical, never the key stream).
+/// </para>
+/// </remarks>
 public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlgorithmProvider
 {
     /// <summary>The KeyStore used for retrieving encryption keys. May be null if service doesn't use KeyStore.</summary>
@@ -57,20 +70,21 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     public virtual void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
     /// <inheritdoc />
-    public abstract byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null);
+    public abstract byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
 
     /// <inheritdoc />
-    public abstract byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null);
+    public abstract byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
 
     /// <inheritdoc />
-    public virtual byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
+    public virtual byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+        => Encrypt(plaintext.ToArray(), keyId, key, associatedData);
 
     /// <inheritdoc />
-    public virtual byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
+    public virtual byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         var chunk = new byte[count];
         Array.Copy(buffer, offset, chunk, 0, count);
-        return Decrypt(chunk, keyId, key);
+        return Decrypt(chunk, keyId, key, associatedData);
     }
 
     /// <inheritdoc />
@@ -82,12 +96,18 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedBytes, keyId, key));
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Writes <c>[version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion][noncePrefix: NonceSize-4 bytes]</c> followed by compact chunk frames.
+    /// Per-chunk nonces are derived from the header nonce prefix plus a chunk counter, the last chunk carries a final-flag, and every chunk authenticates the full header (plus
+    /// <paramref name="associatedData" />) as AAD — so header tampering, chunk reordering, replay, and truncation all fail authentication.
+    /// </remarks>
     public virtual async Task EncryptToStreamAsync(
         Stream input,
         Stream output,
         string? keyId = null,
         byte[]? key = null,
         int chunkSize = 1024 * 1024,
+        byte[]? associatedData = null,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
@@ -102,9 +122,9 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         if (key != null)
             actualKey = key;
         else if (keyId != null && KeyStore != null) {
-            actualKey = KeyStore.GetCurrentKey(keyId);
+            actualKey = await KeyStore.GetCurrentKeyAsync(keyId, ct).ConfigureAwait(false);
             OperationHelpers.ThrowIfNull(actualKey, $"No encryption key available for key ID '{keyId}'. Ensure a key is configured.");
-            keyVersion = KeyStore.GetCurrentVersion(keyId);
+            keyVersion = await KeyStore.GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
         }
         else {
             OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
@@ -113,55 +133,44 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
 
         // keyId/version are persisted exactly when the single-shot format would embed them (KeyStore-resolved key).
         var embedKeyInfo = key == null && keyId != null && keyVersion != null;
-        var headerKeyId = embedKeyInfo ? keyId! : "";
-        var headerKeyVersion = embedKeyInfo ? keyVersion! : "";
-
-        // One-time stream header: [version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion].
-        var keyIdBytes = Encoding.UTF8.GetBytes(headerKeyId);
-        var keyVersionBytes = Encoding.UTF8.GetBytes(headerKeyVersion);
-        var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
-        var headerLength = 1 + 1 + 4 + keyIdBytes.Length + 4 + keyVersionBytes.Length;
-        var header = ArrayPool<byte>.Shared.Rent(headerLength);
-        try {
-            header[0] = formatVersion;
-            header[1] = GetAlgorithmId();
-            BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(2, 4), keyIdBytes.Length);
-            keyIdBytes.CopyTo(header.AsSpan(6));
-            var versionLengthOffset = 6 + keyIdBytes.Length;
-            BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(versionLengthOffset, 4), keyVersionBytes.Length);
-            keyVersionBytes.CopyTo(header.AsSpan(versionLengthOffset + 4));
-            await output.WriteAsync(header, 0, headerLength, ct).ConfigureAwait(false);
-        }
-        finally {
-            ArrayPool<byte>.Shared.Return(header);
-        }
-
-        // Nonces are produced by the stream processor itself (per-stream random prefix + per-chunk counter),
-        // so this path no longer needs a nonce callback or any KeyStore round-trips.
+        var keyIdBytes = embedKeyInfo ? Encoding.UTF8.GetBytes(keyId!) : [];
+        var keyVersionBytes = embedKeyInfo ? Encoding.UTF8.GetBytes(keyVersion!) : [];
         using var cryptor = CreateStreamCryptor(actualKey);
-        await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, ct).ConfigureAwait(false);
+
+        // Per-stream random nonce prefix; per-chunk nonces are derived as prefix || counter and never written to the wire.
+        var noncePrefix = CryptographicRandom.GetBytes(cryptor.NonceSize - AeadStreamProcessor.CounterSize);
+        var header = BuildStreamHeader((byte)StreamFormatVersion.V1, GetAlgorithmId(), keyIdBytes, keyVersionBytes, noncePrefix);
+        var (aadNonFinal, aadFinal) = BuildChunkAads(header, associatedData);
+        await output.WriteAsync(header, 0, header.Length, ct).ConfigureAwait(false);
+        await AeadStreamProcessor.EncryptChunksAsync(input, output, cryptor, effectiveChunkSize, noncePrefix, aadNonFinal, aadFinal, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public virtual async Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    public virtual async Task DecryptToStreamAsync(
+        Stream input,
+        Stream output,
+        string? keyId = null,
+        byte[]? key = null,
+        byte[]? associatedData = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
 
-        // Read the one-time header: [version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion].
+        // Read the one-time header: [version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion][noncePrefix].
         var fixedHeader = ArrayPool<byte>.Shared.Rent(2);
-        string? headerKeyId;
-        string? headerKeyVersion;
+        byte formatVersion;
+        byte[] keyIdBytes;
+        byte[] keyVersionBytes;
         try {
             if (await AeadChunkCodec.ReadAtLeastAsync(input, fixedHeader, 2, ct).ConfigureAwait(false) != 2)
                 throw new InvalidDataException("Invalid encrypted stream format: insufficient data for header.");
 
-            var firstByte = fixedHeader[0];
-            var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
-            if (firstByte != expectedFormatVersion)
-                throw new InvalidDataException($"Invalid encrypted stream format: expected format version {expectedFormatVersion}, got {firstByte}.");
+            formatVersion = fixedHeader[0];
+            if (formatVersion != (byte)StreamFormatVersion.V1)
+                throw new InvalidDataException($"Unsupported stream format version: {formatVersion}. Supported version: {(byte)StreamFormatVersion.V1}.");
 
             var algorithmId = fixedHeader[1];
             var expectedAlgorithmId = GetAlgorithmId();
@@ -170,16 +179,15 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
                     $"Stream algorithm ID mismatch. Expected {expectedAlgorithmId} ({(EncryptionAlgorithm)expectedAlgorithmId}), got {algorithmId} ({(EncryptionAlgorithm)algorithmId}).");
             }
 
-            headerKeyId = await ReadHeaderStringAsync(input, ct).ConfigureAwait(false);
-            headerKeyVersion = await ReadHeaderStringAsync(input, ct).ConfigureAwait(false);
+            keyIdBytes = await ReadHeaderBytesAsync(input, ct).ConfigureAwait(false);
+            keyVersionBytes = await ReadHeaderBytesAsync(input, ct).ConfigureAwait(false);
         }
         finally {
             ArrayPool<byte>.Shared.Return(fixedHeader);
         }
 
-        if (string.IsNullOrEmpty(headerKeyId))
-            headerKeyId = null;
-
+        var headerKeyId = keyIdBytes.Length > 0 ? Encoding.UTF8.GetString(keyIdBytes) : null;
+        var headerKeyVersion = keyVersionBytes.Length > 0 ? Encoding.UTF8.GetString(keyVersionBytes) : null;
         if (string.IsNullOrWhiteSpace(headerKeyVersion))
             headerKeyVersion = null;
 
@@ -207,7 +215,46 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         }
 
         using var cryptor = CreateStreamCryptor(actualKey!);
-        await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, ct).ConfigureAwait(false);
+
+        // Read the per-stream nonce prefix, then rebuild the exact header bytes so each chunk can authenticate them as AAD.
+        var noncePrefix = new byte[cryptor.NonceSize - AeadStreamProcessor.CounterSize];
+        if (noncePrefix.Length > 0 && await AeadChunkCodec.ReadAtLeastAsync(input, noncePrefix, noncePrefix.Length, ct).ConfigureAwait(false) != noncePrefix.Length)
+            throw new InvalidDataException("Invalid encrypted stream format: insufficient data for nonce prefix.");
+
+        var header = BuildStreamHeader(formatVersion, GetAlgorithmId(), keyIdBytes, keyVersionBytes, noncePrefix);
+        var (aadNonFinal, aadFinal) = BuildChunkAads(header, associatedData);
+        await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, noncePrefix, aadNonFinal, aadFinal, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Composes the full stream header (<c>[version][algorithmId][keyIdLen][keyId][keyVersionLen][keyVersion][noncePrefix]</c>) as a single buffer.</summary>
+    internal static byte[] BuildStreamHeader(byte formatVersion, byte algorithmId, byte[] keyIdBytes, byte[] keyVersionBytes, byte[] noncePrefix)
+    {
+        var header = new byte[1 + 1 + 4 + keyIdBytes.Length + 4 + keyVersionBytes.Length + noncePrefix.Length];
+        header[0] = formatVersion;
+        header[1] = algorithmId;
+        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(2, 4), keyIdBytes.Length);
+        keyIdBytes.CopyTo(header.AsSpan(6));
+        var offset = 6 + keyIdBytes.Length;
+        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(offset, 4), keyVersionBytes.Length);
+        keyVersionBytes.CopyTo(header.AsSpan(offset + 4));
+        noncePrefix.CopyTo(header.AsSpan(offset + 4 + keyVersionBytes.Length));
+        return header;
+    }
+
+    /// <summary>
+    /// Builds the two per-chunk AAD variants for a stream: <c>header || finalFlagByte (0/1) || callerAssociatedData</c>. Binding the final-flag byte into the AAD prevents an
+    /// attacker from clearing or setting the (plaintext) final marker on an existing chunk.
+    /// </summary>
+    internal static (byte[] AadNonFinal, byte[] AadFinal) BuildChunkAads(byte[] header, byte[]? associatedData)
+    {
+        var userLength = associatedData?.Length ?? 0;
+        var aadNonFinal = new byte[header.Length + 1 + userLength];
+        header.CopyTo(aadNonFinal.AsSpan());
+        aadNonFinal[header.Length] = 0;
+        associatedData?.CopyTo(aadNonFinal.AsSpan(header.Length + 1));
+        var aadFinal = (byte[])aadNonFinal.Clone();
+        aadFinal[header.Length] = 1;
+        return (aadNonFinal, aadFinal);
     }
 
     // File operation methods from IEncryptionService
@@ -234,7 +281,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         ArgumentHelpers.ThrowIfNegative(chunkSize);
         using var outputStream = File.Create(outputPath);
-        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
+        await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct: ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -242,8 +289,12 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         using var inputStream = File.OpenRead(inputPath);
-        using var outputStream = new MemoryStream();
-        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
+
+        // Pre-size to the ciphertext length (plaintext is always smaller: header + per-chunk tag overhead),
+        // avoiding the repeated grow-and-copy of an unsized MemoryStream. One exact-size copy remains in ToArray.
+        var capacity = (int)Math.Min(inputStream.Length, int.MaxValue);
+        using var outputStream = new MemoryStream(capacity);
+        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
         return outputStream.ToArray();
     }
 
@@ -253,8 +304,8 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     /// </summary>
     public abstract IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key);
 
-    /// <summary>Reads an <c>[length:int32][utf8 bytes]</c> header string (length capped at 1024 bytes). Returns the decoded string (possibly empty).</summary>
-    private static async Task<string> ReadHeaderStringAsync(Stream input, CancellationToken ct)
+    /// <summary>Reads a <c>[length:int32][utf8 bytes]</c> header field (length capped at 1024 bytes). Returns the raw bytes (possibly empty) so V2 header AAD can be rebuilt exactly.</summary>
+    private static async Task<byte[]> ReadHeaderBytesAsync(Stream input, CancellationToken ct)
     {
         var lengthBuffer = ArrayPool<byte>.Shared.Rent(4);
         try {
@@ -266,18 +317,13 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
                 throw new InvalidDataException($"Invalid header string length: {length}. Maximum allowed: 1024 bytes.");
 
             if (length == 0)
-                return "";
+                return [];
 
-            var valueBuffer = ArrayPool<byte>.Shared.Rent(length);
-            try {
-                if (await AeadChunkCodec.ReadAtLeastAsync(input, valueBuffer, length, ct).ConfigureAwait(false) != length)
-                    throw new InvalidDataException("Invalid encrypted stream format: header string truncated.");
+            var value = new byte[length];
+            if (await AeadChunkCodec.ReadAtLeastAsync(input, value, length, ct).ConfigureAwait(false) != length)
+                throw new InvalidDataException("Invalid encrypted stream format: header string truncated.");
 
-                return Encoding.UTF8.GetString(valueBuffer, 0, length);
-            }
-            finally {
-                ArrayPool<byte>.Shared.Return(valueBuffer);
-            }
+            return value;
         }
         finally {
             ArrayPool<byte>.Shared.Return(lengthBuffer);
@@ -288,11 +334,11 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     protected virtual byte GetAlgorithmId() => 0; // Default, override in derived classes
 
     /// <summary>Decrypts a buffer slice. Override to avoid copying when the implementation can decrypt in-place from a buffer.</summary>
-    protected virtual byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
+    protected virtual byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key, byte[]? associatedData = null)
     {
         var chunk = new byte[count];
         Array.Copy(buffer, offset, chunk, 0, count);
-        return Decrypt(chunk, keyId, key);
+        return Decrypt(chunk, keyId, key, associatedData);
     }
 
     // File helpers
@@ -319,7 +365,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = File.Create(outputPath);
-        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
+        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
     /// <summary>

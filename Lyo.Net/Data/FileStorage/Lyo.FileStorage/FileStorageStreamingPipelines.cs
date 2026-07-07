@@ -213,7 +213,7 @@ internal sealed class FileStorageStreamingPipelines
         CancellationToken ct)
     {
         try {
-            await compressionResolver.CompressAsync(inputForHash, compressedHashStream, algorithm, chunkSize, ct).ConfigureAwait(false);
+            await compressionResolver.CompressAsync(inputForHash, compressedHashStream, algorithm, chunkSize, ct: ct).ConfigureAwait(false);
             await compressedHashStream.FlushAsync(ct).ConfigureAwait(false);
             await inputForHash.FlushAsync(ct).ConfigureAwait(false);
             await pipe.Writer.CompleteAsync().ConfigureAwait(false);

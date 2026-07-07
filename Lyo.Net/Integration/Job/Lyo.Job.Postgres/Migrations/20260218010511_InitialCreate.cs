@@ -98,7 +98,7 @@ namespace Lyo.Job.Postgres.Migrations
                     description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    value = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     encrypted_value = table.Column<byte[]>(type: "bytea", nullable: true),
                     allow_multiple = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     required = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
@@ -189,7 +189,7 @@ namespace Lyo.Job.Postgres.Migrations
                     description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    value = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -270,7 +270,7 @@ namespace Lyo.Job.Postgres.Migrations
                     description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    value = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -320,7 +320,7 @@ namespace Lyo.Job.Postgres.Migrations
                     description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    value = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    value = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
                     encrypted_value = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
                 constraints: table =>

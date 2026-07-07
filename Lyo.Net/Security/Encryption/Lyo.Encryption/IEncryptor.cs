@@ -29,25 +29,32 @@ public interface IEncryptor
     /// <param name="bytes">The data to encrypt. Must not be empty.</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided key directly.</param>
     /// <param name="key">Optional encryption key. If null and keyId is provided, uses the key from KeyStore.</param>
+    /// <param name="associatedData">
+    /// Optional associated data authenticated (but not encrypted or stored) with the ciphertext. The identical value must be supplied at decryption time or
+    /// authentication fails. Only AEAD implementations support it; others throw <see cref="NotSupportedException" /> when a non-null value is provided.
+    /// </param>
     /// <returns>Encrypted data</returns>
     /// <exception cref="ArgumentOutsideRangeException">
     /// Thrown when bytes is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is
     /// invalid
     /// </exception>
     /// <exception cref="InvalidOperationException">Thrown when no encryption key is available (neither keyId nor key provided, or keyId not found in KeyStore)</exception>
-    byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null);
+    /// <exception cref="NotSupportedException">Thrown when associatedData is provided but the implementation does not support associated data</exception>
+    byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
 
     /// <summary>Encrypts the provided span. Implementations may override to avoid copying to a new array when they support span-based encryption.</summary>
     /// <param name="plaintext">The data to encrypt. Must not be empty.</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided key directly.</param>
     /// <param name="key">Optional encryption key. If null and keyId is provided, uses the key from KeyStore.</param>
+    /// <param name="associatedData">Optional associated data authenticated (but not encrypted or stored) with the ciphertext; see <see cref="Encrypt(byte[], string, byte[], byte[])" />.</param>
     /// <returns>Encrypted data.</returns>
     /// <exception cref="ArgumentOutsideRangeException">
     /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is
     /// invalid.
     /// </exception>
     /// <exception cref="InvalidOperationException">Thrown when no encryption key is available (neither keyId nor key provided, or keyId not found in KeyStore).</exception>
-    byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null);
+    /// <exception cref="NotSupportedException">Thrown when associatedData is provided but the implementation does not support associated data.</exception>
+    byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
 
     /// <summary> Encrypts a string and returns the encrypted data as bytes.</summary>
     /// <param name="text">The text to encrypt. Must not be empty.</param>
@@ -68,11 +75,23 @@ public interface IEncryptor
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided key directly.</param>
     /// <param name="key">Optional encryption key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <param name="chunkSize">Size of chunks to read and encrypt. Default is 1MB.</param>
+    /// <param name="associatedData">
+    /// Optional associated data authenticated (but not encrypted or stored) with every chunk of the stream. The identical value must be supplied to
+    /// <see cref="IDecryptor.DecryptToStreamAsync" /> or authentication fails. Only AEAD implementations support it.
+    /// </param>
     /// <param name="ct">Cancellation token</param>
     /// <exception cref="ArgumentException">Thrown when chunkSize is invalid</exception>
     /// <exception cref="InvalidOperationException">Thrown when no encryption key is available (neither keyId nor key provided, or keyId not found in KeyStore)</exception>
+    /// <exception cref="NotSupportedException">Thrown when associatedData is provided but the implementation does not support associated data</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via ct</exception>
-    Task EncryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, int chunkSize = 1024 * 1024, CancellationToken ct = default);
+    Task EncryptToStreamAsync(
+        Stream input,
+        Stream output,
+        string? keyId = null,
+        byte[]? key = null,
+        int chunkSize = 1024 * 1024,
+        byte[]? associatedData = null,
+        CancellationToken ct = default);
 
     /// <summary> Encrypts data and writes it to a file. </summary>
     /// <param name="data">The data to encrypt</param>

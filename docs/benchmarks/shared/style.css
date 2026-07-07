@@ -41,7 +41,7 @@ a:hover {
 }
 
 .page {
-  max-width: 1200px;
+  max-width: min(1680px, 96vw);
   margin: 0 auto;
   padding: 2rem 1.25rem 4rem;
 }
@@ -67,6 +67,41 @@ a:hover {
 .hero .subtitle {
   color: var(--text-muted);
   max-width: 70ch;
+}
+
+.history-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.history-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.history-select {
+  min-width: min(28rem, 100%);
+  max-width: 100%;
+  flex: 1 1 16rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.history-hint {
+  color: var(--text-muted);
+  font-size: 0.82rem;
 }
 
 .meta-row {

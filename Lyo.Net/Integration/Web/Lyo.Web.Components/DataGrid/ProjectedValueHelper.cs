@@ -44,6 +44,27 @@ public static class ProjectedValueHelper
         return v.ToString() ?? string.Empty;
     }
 
+    /// <summary>Best-effort conversion of a projected id/key value to <see cref="Guid" />.</summary>
+    public static bool TryGetGuid(object? value, out Guid guid)
+    {
+        guid = default;
+        if (value is null)
+            return false;
+
+        if (value is Guid g) {
+            guid = g;
+            return true;
+        }
+
+        if (value is string s && Guid.TryParse(s, out guid))
+            return true;
+
+        if (value is JsonElement je && je.ValueKind == JsonValueKind.String && Guid.TryParse(je.GetString(), out guid))
+            return true;
+
+        return false;
+    }
+
     /// <summary>Best-effort conversion for projected values (JSON numbers often arrive as strings; <see cref="JsonElement" /> is handled).</summary>
     public static long GetInt64(object? value)
     {

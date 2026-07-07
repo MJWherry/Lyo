@@ -502,7 +502,9 @@ public class TwoKeyAesGcmTests
         using var outputStream = new MemoryStream();
         await svc.EncryptToStreamAsync(inputStream, outputStream, keyId, ct: TestContext.Current.CancellationToken);
 
-        // Verify stream format: [FormatVersion: 1][DEKAlgorithmId: 1][KEKAlgorithmId: 1][KeyIdLength: 4][KeyId][KeyVersionLength: 4][KeyVersion][EncryptedDEKLength: 4][EncryptedDEK][Chunks...]
+        // Verify stream format:
+        // [FormatVersion: 1][DEKAlgorithmId: 1][KEKAlgorithmId: 1][DekKeyMaterialBytes: 1][DekEncoding: 1][KeyIdLength: 4][KeyId][KeyVersionLength: 4][KeyVersion]
+        // [EncryptedDEKLength: 4][EncryptedDEK][NoncePrefix][Chunks...]
         outputStream.Position = 0;
         using var br = new BinaryReader(outputStream);
 
@@ -518,6 +520,7 @@ public class TwoKeyAesGcmTests
         var kekAlgorithmId = br.ReadByte();
         Assert.Equal(0, kekAlgorithmId);
         Assert.Equal(32, br.ReadByte()); // DekKeyMaterialBytes
+        Assert.Equal(1, br.ReadByte()); // DekEncoding (1 = AES Key Wrap: raw AES-sized KEK resolved from keystore)
 
         // Read keyId length
         var keyIdLength = br.ReadInt32();
@@ -570,6 +573,7 @@ public class TwoKeyAesGcmTests
         var kekAlgorithmId = br.ReadByte();
         Assert.Equal(0, kekAlgorithmId);
         Assert.Equal(32, br.ReadByte()); // DekKeyMaterialBytes (ChaCha DEK)
+        Assert.Equal(1, br.ReadByte()); // DekEncoding (1 = AES Key Wrap)
     }
 
     [Fact]

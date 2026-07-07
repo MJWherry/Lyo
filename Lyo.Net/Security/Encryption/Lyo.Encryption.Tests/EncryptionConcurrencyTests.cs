@@ -90,7 +90,7 @@ public class EncryptionConcurrencyTests
             Enumerable.Range(0, Concurrency), ct, async (i, token) => {
                 using var input = new MemoryStream(plaintexts[i]);
                 using var output = new MemoryStream();
-                await svc.EncryptToStreamAsync(input, output, keyId, null, 16, token);
+                await svc.EncryptToStreamAsync(input, output, keyId, null, 16, ct: token);
                 encrypted[i] = output.ToArray();
             });
 
@@ -127,7 +127,7 @@ public class EncryptionConcurrencyTests
                     var plaintext = RandomNumberGenerator.GetBytes(16 * 8);
                     using var input = new MemoryStream(plaintext);
                     using var output = new MemoryStream();
-                    await svc.EncryptToStreamAsync(input, output, keyId, null, 16, token);
+                    await svc.EncryptToStreamAsync(input, output, keyId, null, 16, ct: token);
                     foreach (var nonce in ExtractStreamNonces(output.ToArray()))
                         nonces.Add(nonce);
                 }
@@ -156,9 +156,14 @@ public class EncryptionConcurrencyTests
         return br.ReadBytes(nonceLength);
     }
 
-    /// <summary>Parses the streaming format header then walks each compact chunk frame, returning the nonce from each chunk.</summary>
+    /// <summary>
+    /// Parses the streaming format header (which carries the per-stream nonce prefix) then walks each compact chunk frame (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>),
+    /// deriving each chunk's nonce as <c>prefix || counter</c> exactly as the codec does — the wire itself carries no nonces.
+    /// </summary>
     private static List<byte[]> ExtractStreamNonces(byte[] encrypted)
     {
+        const int counterSize = 4;
+        const uint finalChunkFlag = 0x8000_0000;
         using var ms = new MemoryStream(encrypted);
         using var br = new BinaryReader(ms);
         br.ReadByte(); // format version
@@ -167,11 +172,18 @@ public class EncryptionConcurrencyTests
         br.ReadBytes(keyIdLength);
         var keyVersionLength = br.ReadInt32();
         br.ReadBytes(keyVersionLength);
+        var noncePrefix = br.ReadBytes(NonceSize - counterSize);
         var nonces = new List<byte[]>();
+        var chunkIndex = 0u;
         while (ms.Position < ms.Length) {
-            var ciphertextLength = br.ReadInt32();
-            nonces.Add(br.ReadBytes(NonceSize));
+            var lengthAndFlag = br.ReadUInt32();
+            var ciphertextLength = (int)(lengthAndFlag & ~finalChunkFlag);
             br.ReadBytes(ciphertextLength + TagSize);
+            var nonce = new byte[NonceSize];
+            noncePrefix.CopyTo(nonce, 0);
+            BitConverter.GetBytes(chunkIndex).CopyTo(nonce, NonceSize - counterSize);
+            nonces.Add(nonce);
+            chunkIndex++;
         }
 
         return nonces;

@@ -37,13 +37,13 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         ArgumentHelpers.ThrowIf(
             _padding.Mode == RSAEncryptionPaddingMode.Pkcs1, "PKCS1 padding is not recommended for security. Use OAEP padding (e.g., OAEP-SHA256) instead.", nameof(padding));
 
-        _rsa = RSA.Create();
+        // Assign exactly one RSA instance (no throwaway RSA.Create() that would leak on reassignment).
         if (!privatePemPath.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadPrivateFromPem(privatePemPath);
         else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            OperationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either privatePemPath or (pfxPath, password).");
+            throw new InvalidOperationException("No RSA key configuration provided. Specify either privatePemPath or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(
@@ -71,16 +71,20 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
     /// <param name="encryptedBytes">The encrypted data to decrypt</param>
     /// <param name="keyId">This parameter is ignored. RSA uses keys from constructor. Provided for interface compliance only.</param>
     /// <param name="key">This parameter is ignored. RSA uses keys from constructor. Provided for interface compliance only.</param>
+    /// <param name="associatedData">Not supported by RSA-OAEP; must be null or a <see cref="NotSupportedException" /> is thrown.</param>
     /// <returns>Decrypted data</returns>
     /// <exception cref="ArgumentException">Thrown when keyId or key parameters are provided</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedBytes is empty (length is less than 1) or too small (below minimum required size based on RSA key size)</exception>
     /// <exception cref="InvalidDataException">Thrown when encrypted data format is invalid, invalid chunk length, or corrupted</exception>
+    /// <exception cref="NotSupportedException">Thrown when associatedData is provided (RSA-OAEP has no associated-data input)</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong key, corrupted data, invalid padding, or authentication failure</exception>
-    public byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null)
+    public byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         // RSA uses keys from constructor, not parameters (for interface compliance)
         ArgumentHelpers.ThrowIf(keyId != null, "RSA decryption service uses keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
         ArgumentHelpers.ThrowIf(key != null, "RSA decryption service uses keys from constructor. The 'key' parameter is not supported.", nameof(key));
+        if (associatedData != null)
+            throw new NotSupportedException("RSA decryption does not support associated data.");
 
         // Minimum size: at least one RSA encrypted block
         // Check if this is chunked data (starts with length prefix) or single encrypted block
@@ -146,11 +150,11 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
+    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         var chunk = new byte[count];
         Array.Copy(buffer, offset, chunk, 0, count);
-        return Decrypt(chunk, keyId, key);
+        return Decrypt(chunk, keyId, key, associatedData);
     }
 
     /// <inheritdoc />
@@ -158,12 +162,15 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         => (encoding ?? GetDecryptionEncoding()).GetString(Decrypt(encryptedBytes, keyId, key));
 
     /// <inheritdoc />
-    public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
+    public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, byte[]? associatedData = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        if (associatedData != null)
+            throw new NotSupportedException("RSA decryption does not support associated data.");
+
         return RsaStreamCodec.DecryptAsync(input, output, (byte)EncryptionAlgorithm.Rsa, (byte)StreamFormatVersion.V1, DecryptChunk(keyId, key), ct);
     }
 
@@ -173,7 +180,7 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
-        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
+        await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
         return outputStream.ToArray();
     }
 

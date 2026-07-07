@@ -66,20 +66,22 @@ public sealed class JobMaintenanceService : BackgroundService
     {
         var now = DateTime.UtcNow;
 
-        // Load running/cancelling runs that have a heartbeat timeout defined on their definition.
+        // Load running/cancelling runs that have a heartbeat timeout defined on their definition. Runs that died before their first
+        // heartbeat have a null LastHeartbeatUtc — fall back to StartedTimestamp/CreatedTimestamp so they cannot stay orphaned forever.
         var candidates = await db.JobRuns.Include(r => r.JobDefinition)
-            .Where(r => (r.State == JobState.Running || r.State == JobState.Cancelling) && r.LastHeartbeatUtc != null && r.JobDefinition.TimeoutMinutes > 0)
+            .Where(r => (r.State == JobState.Running || r.State == JobState.Cancelling) && r.JobDefinition.TimeoutMinutes > 0)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
         foreach (var run in candidates) {
-            var deadline = run.LastHeartbeatUtc!.Value.AddMinutes(run.JobDefinition.TimeoutMinutes);
+            var baseline = run.LastHeartbeatUtc ?? run.StartedTimestamp ?? run.CreatedTimestamp;
+            var deadline = baseline.AddMinutes(run.JobDefinition.TimeoutMinutes);
             if (now < deadline)
                 continue;
 
             _logger.LogWarning(
-                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastHeartbeat:u} " + "(timeout {TimeoutMinutes} min) — marking as failed", run.Id,
-                run.JobDefinition.Name, run.LastHeartbeatUtc, run.JobDefinition.TimeoutMinutes);
+                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastActivity:u} " + "(timeout {TimeoutMinutes} min) — marking as failed", run.Id,
+                run.JobDefinition.Name, baseline, run.JobDefinition.TimeoutMinutes);
 
             run.State = JobState.Finished;
             run.Result = JobRunResult.Timeout;

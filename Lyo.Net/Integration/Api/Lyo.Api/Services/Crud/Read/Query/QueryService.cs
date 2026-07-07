@@ -174,7 +174,7 @@ public class QueryService<TContext>(
                 cacheKey, async ct2 => {
                     await using var context = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                    var result = await context.Set<TDbModel>().FindAsync(keys, ct2).ConfigureAwait(false);
+                    var result = await context.Set<TDbModel>().FindAsync(pkOrdered, ct2).ConfigureAwait(false);
                     if (result is not null)
                         await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 
@@ -246,7 +246,7 @@ public class QueryService<TContext>(
                 cacheKey, async ct2 => {
                     await using var context = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                    var result = await context.Set<TDbModel>().FindAsync(keys, ct2).ConfigureAwait(false);
+                    var result = await context.Set<TDbModel>().FindAsync(pkOrdered, ct2).ConfigureAwait(false);
                     if (result is not null)
                         await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 

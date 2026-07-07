@@ -19,11 +19,11 @@ internal sealed class AesGcmStreamCryptor : IAeadStreamCryptor
 
     public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _aes = new System.Security.Cryptography.AesGcm(key, AesGcmHelper.TagSize);
 
-    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag)
-        => _aes.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, AesGcmHelper.TagSize));
+    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
+        => _aes.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, AesGcmHelper.TagSize), associatedData);
 
-    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext)
-        => _aes.Decrypt(nonce, ciphertextAndTag[..^AesGcmHelper.TagSize], ciphertextAndTag[^AesGcmHelper.TagSize..], plaintext);
+    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext, ReadOnlySpan<byte> associatedData = default)
+        => _aes.Decrypt(nonce, ciphertextAndTag[..^AesGcmHelper.TagSize], ciphertextAndTag[^AesGcmHelper.TagSize..], plaintext, associatedData);
 
     public void Dispose() => _aes.Dispose();
 #else
@@ -36,10 +36,10 @@ internal sealed class AesGcmStreamCryptor : IAeadStreamCryptor
 
     public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _key = new(key.ToArray());
 
-    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag)
+    public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
     {
         nonce.CopyTo(_nonceBuffer);
-        _cipher.Init(true, new AeadParameters(_key, AesGcmHelper.TagSize * 8, _nonceBuffer, null));
+        _cipher.Init(true, new AeadParameters(_key, AesGcmHelper.TagSize * 8, _nonceBuffer, associatedData.IsEmpty ? null : associatedData.ToArray()));
         EnsureBuffers(plaintext.Length, _cipher.GetOutputSize(plaintext.Length));
         plaintext.CopyTo(_inBuffer);
         var written = _cipher.ProcessBytes(_inBuffer, 0, plaintext.Length, _outBuffer, 0);
@@ -47,10 +47,10 @@ internal sealed class AesGcmStreamCryptor : IAeadStreamCryptor
         _outBuffer.AsSpan(0, written).CopyTo(ciphertextAndTag);
     }
 
-    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext)
+    public void Decrypt(ReadOnlySpan<byte> ciphertextAndTag, ReadOnlySpan<byte> nonce, Span<byte> plaintext, ReadOnlySpan<byte> associatedData = default)
     {
         nonce.CopyTo(_nonceBuffer);
-        _cipher.Init(false, new AeadParameters(_key, AesGcmHelper.TagSize * 8, _nonceBuffer, null));
+        _cipher.Init(false, new AeadParameters(_key, AesGcmHelper.TagSize * 8, _nonceBuffer, associatedData.IsEmpty ? null : associatedData.ToArray()));
         EnsureBuffers(ciphertextAndTag.Length, _cipher.GetOutputSize(ciphertextAndTag.Length));
         ciphertextAndTag.CopyTo(_inBuffer);
         var written = _cipher.ProcessBytes(_inBuffer, 0, ciphertextAndTag.Length, _outBuffer, 0);

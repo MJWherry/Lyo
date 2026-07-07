@@ -35,8 +35,8 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         return new XChaCha20Poly1305StreamCryptor(key);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
-    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
+    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[], byte[])" />
+    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
@@ -57,7 +57,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
         try {
-            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
+            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce, associatedData);
             using var ms = new MemoryStream();
             using var bw = new BinaryWriter(ms);
             bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
@@ -78,7 +78,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         }
     }
 
-    public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
+    public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
         if (key != null)
@@ -99,7 +99,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
         var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
         try {
-            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);
+            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce, associatedData);
             using var ms = new MemoryStream();
             using var bw = new BinaryWriter(ms);
             bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
@@ -120,37 +120,33 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         }
     }
 
-    public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null)
+    public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 50;
         ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(encryptedBytes);
-        return DecryptFromStream(ms, keyId, key);
+        return DecryptFromStream(ms, keyId, key, associatedData);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[])" />
-    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
+    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[], byte[])" />
+    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+        => DecryptChunk(buffer, offset, count, keyId, key, associatedData);
 
-    protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
+    protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 50;
         ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(buffer, offset, count, false);
-        return DecryptFromStream(ms, keyId, key);
+        return DecryptFromStream(ms, keyId, key, associatedData);
     }
 
-    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key)
+    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key, byte[]? associatedData)
     {
         using var br = new BinaryReader(ms);
         var firstByte = br.ReadByte();
         var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
         if (firstByte != expectedFormatVersion)
             throw new InvalidDataException($"Invalid encrypted data format: expected format version {expectedFormatVersion}, got {firstByte}.");
-
-        var formatVersion = (StreamFormatVersion)firstByte;
-        var maxSupportedVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
-        if (formatVersion > (StreamFormatVersion)maxSupportedVersion)
-            throw new InvalidDataException($"Unsupported format version: {formatVersion}. Maximum supported version: {(StreamFormatVersion)maxSupportedVersion}.");
 
         var keyIdLength = br.ReadInt32();
         if (keyIdLength < 0 || keyIdLength > 1024)
@@ -203,7 +199,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         }
 
         try {
-            return XChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey!, nonce);
+            return XChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey!, nonce, associatedData);
         }
 #if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {

@@ -111,6 +111,25 @@ public class CompressionServiceTests : IDisposable
         Assert.True(decompressInfo.ExpansionRatio > 0);
     }
 
+    /// <summary>
+    /// Every algorithm must produce one wire format across all APIs: byte[] Compress output must be readable by the stream Decompress path. Guards the
+    /// <see cref="CompressionAlgorithm.BinaryCompressMatchesStreamFormat" /> flags and the LZ4 StreamCompatible binary mode (whose default block modes are NOT
+    /// stream-readable).
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllAlgorithms))]
+    public void Compress_Bytes_Output_IsReadableByStreamDecompress(CompressionAlgorithm algorithm)
+    {
+        var service = NewService(new() { DefaultAlgorithm = algorithm });
+        var original = Encoding.UTF8.GetBytes(new string('A', 1000) + "cross-API format consistency" + new string('B', 1000));
+        service.Compress(original, out var compressed);
+
+        using var compressedStream = new MemoryStream(compressed);
+        using var decompressedStream = new MemoryStream();
+        service.Decompress(compressedStream, decompressedStream);
+        Assert.Equal(original, decompressedStream.ToArray());
+    }
+
     [Theory]
     [MemberData(nameof(AllAlgorithms))]
     public void CompressString_DecompressString_RoundTrip(CompressionAlgorithm algorithm)
@@ -283,9 +302,14 @@ public class CompressionServiceTests : IDisposable
     [InlineData(new byte[] { 0x78, 0x5E }, true)] // ZLib
     [InlineData(new byte[] { 0x78, 0x9C }, true)] // ZLib
     [InlineData(new byte[] { 0x78, 0xDA }, true)] // ZLib
-    [InlineData(new byte[] { 0x81, 0x00 }, true)] // Brotli (needs at least 2 bytes)
-    [InlineData(new byte[] { 0x82, 0x00 }, true)] // Brotli
-    [InlineData(new byte[] { 0x83, 0x00 }, true)] // Brotli
+    [InlineData(new byte[] { 0x28, 0xB5, 0x2F, 0xFD }, true)] // Zstd frame
+    [InlineData(new byte[] { 0x04, 0x22, 0x4D, 0x18 }, true)] // LZ4 frame
+    [InlineData(new byte[] { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00 }, true)] // XZ container
+    [InlineData(new byte[] { 0x42, 0x5A, 0x68 }, true)] // BZip2 ("BZh")
+    [InlineData(new byte[] { 0x81, 0x00 }, false)] // Brotli has no magic bytes; the old 0x81-0x83 heuristic was bogus
+    [InlineData(new byte[] { 0x82, 0x00 }, false)]
+    [InlineData(new byte[] { 0x83, 0x00 }, false)]
+    [InlineData(new byte[] { 0x78, 0x00 }, false)] // 0x78 with a non-standard FLG byte is not zlib
     [InlineData(new byte[] { 0x00, 0x00 }, false)]
     [InlineData(new byte[] { 0xFF, 0xFF }, false)]
     public void IsLikelyCompressed_DetectsCompressedData(byte[] data, bool expected)
@@ -293,6 +317,88 @@ public class CompressionServiceTests : IDisposable
         var service = NewService();
         var result = service.IsLikelyCompressed(data);
         Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x1F, 0x8B, 0x08 }, "GZip")]
+    [InlineData(new byte[] { 0x28, 0xB5, 0x2F, 0xFD }, "ZstdSharp")]
+    [InlineData(new byte[] { 0x04, 0x22, 0x4D, 0x18 }, "LZ4")]
+    [InlineData(new byte[] { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00 }, "XZ")]
+    [InlineData(new byte[] { 0x42, 0x5A, 0x68, 0x39 }, "BZip2")]
+    [InlineData(new byte[] { 0x78, 0x9C, 0x00 }, "ZLib")]
+    public void TryDetectAlgorithm_KnownMagics_ReturnsRegisteredAlgorithm(byte[] data, string expectedName)
+    {
+        // All addon algorithm assemblies are referenced by this test project, so their CompressionAlgorithm records are registered.
+        var service = NewService();
+        Assert.True(service.TryDetectAlgorithm(data, out var algorithm));
+        Assert.Equal(expectedName, algorithm!.Name);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(new byte[0])]
+    [InlineData(new byte[] { 0x00, 0x11, 0x22 })] // no known magic
+    [InlineData(new byte[] { 0x81, 0x00 })] // raw Brotli/Deflate have no magic and are never detected
+    public void TryDetectAlgorithm_UnknownOrInvalid_ReturnsFalse(byte[]? data)
+    {
+        var service = NewService();
+        Assert.False(service.TryDetectAlgorithm(data, out var algorithm));
+        Assert.Null(algorithm);
+    }
+
+    [Fact]
+    public void Decompress_Stream_ExceedingMaxInputSize_Throws_EvenForNonSeekableOutput()
+    {
+        // Highly compressible payload: 64 KB of zeros compresses to well under the 1 KB decompression limit, so the bomb is only caught while inflating.
+        var service = NewService();
+        using var compressed = new MemoryStream();
+        service.Compress(new MemoryStream(new byte[64 * 1024]), compressed);
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        compressed.Position = 0;
+        using var nonSeekableOutput = new NonSeekableWriteStream(Stream.Null);
+        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, nonSeekableOutput));
+    }
+
+    [Fact]
+    public async Task DecompressAsync_Stream_ExceedingMaxInputSize_Throws_EvenForNonSeekableOutput()
+    {
+        var service = NewService();
+        using var compressed = new MemoryStream();
+        service.Compress(new MemoryStream(new byte[64 * 1024]), compressed);
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        compressed.Position = 0;
+        using var nonSeekableOutput = new NonSeekableWriteStream(Stream.Null);
+        await Assert.ThrowsAsync<InvalidDataException>(() => limitedService.DecompressAsync(compressed, nonSeekableOutput, ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public void Decompress_Bytes_ExceedingMaxInputSize_Throws_BeforeFullExpansion()
+    {
+        // 64 KB of zeros compresses to well under the 1 KB limit, so the bomb can only be caught while inflating — the byte[] path must not fully expand first.
+        var service = NewService();
+        service.Compress(new byte[64 * 1024], out var compressed);
+
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, out _));
+
+        // An unrestricted service still roundtrips the same payload.
+        service.Decompress(compressed, out var decompressed);
+        Assert.Equal(new byte[64 * 1024], decompressed);
+    }
+
+    /// <summary>Write-only, non-seekable stream wrapper: forces the bomb guard (rather than a seek-based position check) to catch oversized decompression output.</summary>
+    private sealed class NonSeekableWriteStream(Stream inner) : Stream
+    {
+        public override bool CanRead => false;
+        public override bool CanSeek => false;
+        public override bool CanWrite => true;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() => inner.Flush();
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
     }
 
     [Fact]
@@ -431,15 +537,6 @@ public class CompressionServiceTests : IDisposable
     {
         var service = NewService(new() { DefaultAlgorithm = algorithm });
         Assert.Equal(algorithm.Extension, service.FileExtension);
-    }
-
-    [Fact]
-    public void SetCompressionAlgorithm_DoesNotThrow()
-    {
-        var service = NewService();
-        service.SetCompressionAlgorithm(CompressionAlgorithm.GZip, CompressionLevel.Fastest);
-        service.SetCompressionAlgorithm(CompressionAlgorithm.Deflate, CompressionLevel.Optimal);
-        // No-op implementation; verify it can be called without error
     }
 
     [Fact]

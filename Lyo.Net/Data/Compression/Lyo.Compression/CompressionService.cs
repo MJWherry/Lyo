@@ -35,7 +35,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
 
     private readonly ICompressor _compressor;
 
-    private readonly ConcurrentDictionary<CompressionAlgorithm, ICompressor> _compressorCache = new();
+    private readonly ConcurrentDictionary<(CompressionAlgorithm Algorithm, CompressionLevel Level), ICompressor> _compressorCache = new();
 
     private readonly IMetrics _metrics;
 
@@ -94,44 +94,46 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     }
 
     /// <inheritdoc />
-    public ICompressor GetCompressor(CompressionAlgorithm algorithm)
+    public ICompressor GetCompressor(CompressionAlgorithm algorithm, CompressionLevel? level = null)
     {
         ArgumentHelpers.ThrowIfNull(algorithm);
-        return _compressorCache.GetOrAdd(algorithm, CreateCompressorInstance);
+        return _compressorCache.GetOrAdd((algorithm, level ?? _options.DefaultCompressionLevel), CreateCompressorInstance);
     }
 
-    private ICompressor CreateCompressorInstance(CompressionAlgorithm algorithm)
+    private ICompressor CreateCompressorInstance((CompressionAlgorithm Algorithm, CompressionLevel Level) key)
     {
-        if (!_factories.TryGetValue(algorithm, out var factory)) {
+        if (!_factories.TryGetValue(key.Algorithm, out var factory)) {
             throw new NotSupportedException(
-                $"No compressor registered for algorithm '{algorithm.Name}'. " + $"Did you forget to install/register the Lyo.Compression.{algorithm.Name} addon package " +
-                $"(e.g. services.Add{algorithm.Name}Compressor())?");
+                $"No compressor registered for algorithm '{key.Algorithm.Name}'. " +
+                $"Did you forget to install/register the Lyo.Compression.{key.Algorithm.Name} addon package " + $"(e.g. services.Add{key.Algorithm.Name}Compressor())?");
         }
 
-        return factory.Create(_options.DefaultCompressionLevel);
+        return factory.Create(key.Level);
     }
 
     /// <inheritdoc />
-    public CompressionInfo Compress(byte[] bytes, CompressionAlgorithm algorithm, out byte[] compressed) => CompressWithCompressor(bytes, GetCompressor(algorithm), out compressed);
+    public CompressionInfo Compress(byte[] bytes, CompressionAlgorithm algorithm, out byte[] compressed, CompressionLevel? level = null)
+        => CompressWithCompressor(bytes, GetCompressor(algorithm, level), algorithm.BinaryCompressMatchesStreamFormat, out compressed);
 
     /// <inheritdoc />
     public DecompressionInfo Decompress(byte[] compressedBytes, CompressionAlgorithm algorithm, out byte[] decompressed)
         => DecompressWithCompressor(compressedBytes, GetCompressor(algorithm), out decompressed);
 
     /// <inheritdoc />
-    public void Compress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm) => CompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
+    public void Compress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, CompressionLevel? level = null)
+        => CompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm, level));
 
     /// <inheritdoc />
     public void Decompress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm)
         => DecompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
 
     /// <inheritdoc />
-    public Task CompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CancellationToken ct = default)
-        => CompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm), chunkSize, ct);
+    public Task CompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CompressionLevel? level = null, CancellationToken ct = default)
+        => CompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm, level), ct);
 
     /// <inheritdoc />
     public Task DecompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CancellationToken ct = default)
-        => DecompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm), chunkSize, ct);
+        => DecompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm), ct);
 
     private string GetCompressedFilePath(string inputFilePath)
     {
@@ -187,12 +189,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         var tempFilePath = string.IsNullOrEmpty(tempDir) ? tempFileName : Path.Combine(tempDir, tempFileName);
         try {
             writeOperation(tempFilePath);
-
-            // Atomic rename - this is atomic on most file systems
-            if (File.Exists(targetFilePath))
-                File.Delete(targetFilePath);
-
-            File.Move(tempFilePath, targetFilePath);
+            MoveOverwrite(tempFilePath, targetFilePath);
         }
         catch {
             // Clean up temp file on failure
@@ -218,12 +215,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         var tempFilePath = string.IsNullOrEmpty(tempDir) ? tempFileName : Path.Combine(tempDir, tempFileName);
         try {
             await writeOperationAsync(tempFilePath, ct).ConfigureAwait(false);
-
-            // Atomic rename - this is atomic on most file systems
-            if (File.Exists(targetFilePath))
-                File.Delete(targetFilePath);
-
-            File.Move(tempFilePath, targetFilePath);
+            MoveOverwrite(tempFilePath, targetFilePath);
         }
         catch {
             if (!File.Exists(tempFilePath))
@@ -238,6 +230,23 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// Replaces <paramref name="targetFilePath" /> with <paramref name="tempFilePath" /> in a single rename where the platform supports it. On net10+ this is
+    /// <c>File.Move(…, overwrite: true)</c> (one atomic rename, no window where the target is missing); netstandard2.0 has no overwrite overload, so it falls back to
+    /// delete-then-move.
+    /// </summary>
+    private static void MoveOverwrite(string tempFilePath, string targetFilePath)
+    {
+#if NETSTANDARD2_0
+        if (File.Exists(targetFilePath))
+            File.Delete(targetFilePath);
+
+        File.Move(tempFilePath, targetFilePath);
+#else
+        File.Move(tempFilePath, targetFilePath, true);
+#endif
     }
 
     private void ValidateInput(byte[]? bytes, string paramName) => ArgumentHelpers.ThrowIfNullOrNotInRange(bytes, 1, _options.MaxInputSize, paramName);
@@ -273,20 +282,31 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         }
     }
 
-    public void SetCompressionAlgorithm(CompressionAlgorithm algorithm, CompressionLevel level) { }
-
     /// <inheritdoc />
-    public CompressionInfo Compress(byte[] bytes, out byte[] compressed) => CompressWithCompressor(bytes, _compressor, out compressed);
+    public CompressionInfo Compress(byte[] bytes, out byte[] compressed, CompressionLevel? level = null)
+        => CompressWithCompressor(bytes, level == null ? _compressor : GetCompressor(Algorithm, level), Algorithm.BinaryCompressMatchesStreamFormat, out compressed);
 
-    private CompressionInfo CompressWithCompressor(byte[] bytes, ICompressor compressor, out byte[] compressed)
+    private CompressionInfo CompressWithCompressor(byte[] bytes, ICompressor compressor, bool binaryCompressMatchesStreamFormat, out byte[] compressed)
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.CompressDuration);
         ValidateInput(bytes, nameof(bytes));
         _logger.LogDebug("Compressing data of length {} ({Length})", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.Length), bytes.Length);
         var stopwatch = Stopwatch.StartNew();
         try {
-            // Use span for internal operations - EasyCompressor still needs array, but we avoid extra copies
-            compressed = compressor.Compress(bytes);
+            if (binaryCompressMatchesStreamFormat) {
+                // Fast path: the binary API emits the same wire format the stream Decompress path reads, and for block codecs (LZ4/Zstd) it is a direct
+                // buffer-to-buffer operation with exact-size output allocation.
+                compressed = compressor.Compress(bytes);
+            }
+            else {
+                // The codec's binary format differs from its stream format (e.g. Snappy raw block vs framed), so compress through the stream path to keep one
+                // consistent wire format per algorithm. Presize the output near the worst case to avoid MemoryStream doubling-growth copies.
+                using var inputStream = new MemoryStream(bytes, false);
+                using var outputStream = new MemoryStream(bytes.Length + bytes.Length / 6 + 64);
+                compressor.Compress(inputStream, outputStream);
+                compressed = outputStream.ToArray();
+            }
+
             stopwatch.Stop();
             var info = new CompressionInfo(bytes.Length, compressed.Length, stopwatch.ElapsedMilliseconds);
             _logger.LogDebug(
@@ -320,11 +340,13 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         _logger.LogDebug("Decompressing data of length {Length}", compressedBytes.Length);
         var stopwatch = Stopwatch.StartNew();
         try {
-            decompressed = compressor.Decompress(compressedBytes);
-
-            // Validate decompressed size to prevent decompression bombs
-            OperationHelpers.ThrowIf(
-                decompressed.Length > _options.MaxInputSize, $"Decompressed size ({decompressed.Length} bytes) exceeds maximum allowed input size ({_options.MaxInputSize} bytes)");
+            // Decompress through the stream path so MaxLengthStream stops a decompression bomb mid-flight, instead of materializing the full output and only then
+            // checking its size. Presizing the output at the compressed length (output is almost always at least that big) skips most doubling-growth copies.
+            using (var inputStream = new MemoryStream(compressedBytes, false)) {
+                using var outputStream = new MemoryStream(compressedBytes.Length);
+                compressor.Decompress(inputStream, new MaxLengthStream(outputStream, _options.MaxInputSize));
+                decompressed = outputStream.ToArray();
+            }
 
             stopwatch.Stop();
             var info = new DecompressionInfo(compressedBytes.Length, decompressed.Length, stopwatch.ElapsedMilliseconds);
@@ -348,7 +370,8 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         }
     }
 
-    public void Compress(Stream inputStream, Stream outputStream) => CompressWithCompressor(inputStream, outputStream, _compressor);
+    public void Compress(Stream inputStream, Stream outputStream, CompressionLevel? level = null)
+        => CompressWithCompressor(inputStream, outputStream, level == null ? _compressor : GetCompressor(Algorithm, level));
 
     private void CompressWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor)
     {
@@ -389,16 +412,9 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                 _logger.LogDebug("Reset input stream position to 0");
             }
 
-            var initialPosition = outputStream.CanSeek ? outputStream.Position : 0L;
-            compressor.Decompress(inputStream, outputStream);
-
-            // Validate decompressed size to prevent decompression bombs
-            if (outputStream.CanSeek) {
-                var decompressedSize = outputStream.Position - initialPosition;
-                OperationHelpers.ThrowIf(
-                    decompressedSize > _options.MaxInputSize, $"Decompressed size ({decompressedSize} bytes) exceeds maximum allowed input size ({_options.MaxInputSize} bytes)");
-            }
-
+            // Guard against decompression bombs mid-flight (works for non-seekable outputs too, unlike an after-the-fact position check).
+            var guardedOutput = new MaxLengthStream(outputStream, _options.MaxInputSize);
+            compressor.Decompress(inputStream, guardedOutput);
             _logger.LogDebug("Stream decompression complete");
         }
         catch (Exception ex) {
@@ -407,20 +423,17 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         }
     }
 
-    public Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
-        => CompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
+    public Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CompressionLevel? level = null, CancellationToken ct = default)
+        => CompressAsyncWithCompressor(inputStream, outputStream, level == null ? _compressor : GetCompressor(Algorithm, level), ct);
 
-    private async Task CompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, int? chunkSize, CancellationToken ct)
+    private async Task CompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ct.ThrowIfCancellationRequested();
-
-        // Determine chunk size if not provided
-        var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(inputStream);
-        _logger.LogDebug("Compressing stream asynchronously with chunk size: {ChunkSize} bytes", effectiveChunkSize);
+        _logger.LogDebug("Compressing stream asynchronously");
         try {
             // Reset position if stream supports seeking
             if (inputStream.CanSeek && inputStream.Position != 0) {
@@ -428,9 +441,6 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                 _logger.LogDebug("Reset input stream position to 0");
             }
 
-            // Use ArrayPool for buffering if we need to process in chunks
-            // Note: EasyCompressor may not support chunk size directly, but we pass it for future use
-            // If the compressor supports it, it will be used; otherwise it's ignored
             await compressor.CompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
             _logger.LogDebug("Async compression complete");
         }
@@ -445,19 +455,16 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     }
 
     public Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
-        => DecompressAsyncWithCompressor(inputStream, outputStream, _compressor, chunkSize, ct);
+        => DecompressAsyncWithCompressor(inputStream, outputStream, _compressor, ct);
 
-    private async Task DecompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, int? chunkSize, CancellationToken ct)
+    private async Task DecompressAsyncWithCompressor(Stream inputStream, Stream outputStream, ICompressor compressor, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ct.ThrowIfCancellationRequested();
-
-        // Determine chunk size if not provided
-        var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(inputStream);
-        _logger.LogDebug("Decompressing stream asynchronously with chunk size: {ChunkSize} bytes", effectiveChunkSize);
+        _logger.LogDebug("Decompressing stream asynchronously");
         try {
             // Reset position if stream supports seeking
             if (inputStream.CanSeek && inputStream.Position != 0) {
@@ -465,16 +472,9 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                 _logger.LogDebug("Reset input stream position to 0");
             }
 
-            var initialPosition = outputStream.CanSeek ? outputStream.Position : 0L;
-            await compressor.DecompressAsync(inputStream, outputStream, ct).ConfigureAwait(false);
-
-            // Validate decompressed size to prevent decompression bombs
-            if (outputStream.CanSeek) {
-                var decompressedSize = outputStream.Position - initialPosition;
-                OperationHelpers.ThrowIf(
-                    decompressedSize > _options.MaxInputSize, $"Decompressed size ({decompressedSize} bytes) exceeds maximum allowed input size ({_options.MaxInputSize} bytes)");
-            }
-
+            // Guard against decompression bombs mid-flight (works for non-seekable outputs too, unlike an after-the-fact position check).
+            var guardedOutput = new MaxLengthStream(outputStream, _options.MaxInputSize);
+            await compressor.DecompressAsync(inputStream, guardedOutput, ct).ConfigureAwait(false);
             _logger.LogDebug("Async decompression complete");
         }
         catch (OperationCanceledException) {
@@ -582,14 +582,10 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                 });
 
             stopwatch.Stop();
+
+            // The streaming bomb guard (MaxLengthStream) already enforced MaxInputSize during decompression.
             var decompressedFileInfo = new FileInfo(outputFilePath);
-            ArgumentHelpers.ThrowIfNullOrNotInRange(decompressedFileInfo.Length, 0, _options.MaxInputSize, nameof(decompressedFileInfo.Length));
             var decompressedSize = decompressedFileInfo.Length;
-
-            // Validate decompressed size to prevent decompression bombs
-            OperationHelpers.ThrowIf(
-                decompressedSize > _options.MaxInputSize, $"Decompressed file size ({decompressedSize} bytes) exceeds maximum allowed input size ({_options.MaxInputSize} bytes)");
-
             var info = new FileDecompressionInfo(compressedSize, decompressedSize, stopwatch.ElapsedMilliseconds, inputFilePath, outputFilePath);
             _logger.LogDebug(
                 "File decompression complete, ratio {ExpansionRatio:P2}, increased {SizeIncreasePercent:P2}, time {TimeMs}ms", info.ExpansionRatio, info.SizeIncreasePercent,
@@ -634,7 +630,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                         await using var inputStream = CreateAsyncReadStream(inputFilePath);
                         await using var outputStream = CreateAsyncWriteStream(tempFilePath);
 #endif
-                        await CompressAsync(inputStream, outputStream, chunkSize, ct2).ConfigureAwait(false);
+                        await CompressAsync(inputStream, outputStream, chunkSize, ct: ct2).ConfigureAwait(false);
                     }, ct)
                 .ConfigureAwait(false);
 
@@ -695,14 +691,10 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
                 .ConfigureAwait(false);
 
             stopwatch.Stop();
+
+            // The streaming bomb guard (MaxLengthStream) already enforced MaxInputSize during decompression.
             var decompressedFileInfo = new FileInfo(outputFilePath);
-            ArgumentHelpers.ThrowIfNullOrNotInRange(decompressedFileInfo.Length, 0, _options.MaxInputSize, nameof(decompressedFileInfo.Length));
             var decompressedSize = decompressedFileInfo.Length;
-
-            // Validate decompressed size to prevent decompression bombs
-            OperationHelpers.ThrowIf(
-                decompressedSize > _options.MaxInputSize, $"Decompressed file size ({decompressedSize} bytes) exceeds maximum allowed input size ({_options.MaxInputSize} bytes)");
-
             var info = new FileDecompressionInfo(compressedSize, decompressedSize, stopwatch.ElapsedMilliseconds, inputFilePath, outputFilePath);
             _logger.LogDebug(
                 "Async file decompression complete, ratio {ExpansionRatio:P2}, increased {SizeIncreasePercent:P2}, time {TimeMs}ms", info.ExpansionRatio, info.SizeIncreasePercent,
@@ -797,36 +789,64 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         }
     }
 
+    // Known magic-number prefixes for compressed container formats, paired with the algorithm Name used by CompressionAlgorithm.TryFromName.
+    // Note: raw Deflate and Brotli have no magic bytes and cannot be detected this way (the old 0x81-0x83 "Brotli" heuristic was bogus and matched arbitrary binary data).
+    private static readonly (byte[] Magic, string AlgorithmName)[] MagicNumbers = [
+        ([0x1F, 0x8B], "GZip"), // RFC 1952
+        ([0x28, 0xB5, 0x2F, 0xFD], "ZstdSharp"), // Zstandard frame
+        ([0x04, 0x22, 0x4D, 0x18], "LZ4"), // LZ4 frame
+        ([0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00], "XZ"), // .xz container
+        ([0x42, 0x5A, 0x68], "BZip2"), // "BZh"
+        // ZLib (RFC 1950): 0x78 CMF + the four standard FLG values (level 1/fast/default/best), each keeping the (CMF<<8|FLG) % 31 == 0 invariant.
+        ([0x78, 0x01], "ZLib"),
+        ([0x78, 0x5E], "ZLib"),
+        ([0x78, 0x9C], "ZLib"),
+        ([0x78, 0xDA], "ZLib")
+    ];
+
     public bool IsLikelyCompressed(byte[]? data)
     {
         if (data is null || data.Length < 2)
             return false;
 
-        _logger.LogDebug("Checking if data is likely compressed, length {Length}", data.Length);
-
-        // GZip: 0x1F 0x8B
-        if (data[0] == 0x1F && data[1] == 0x8B) {
-            _logger.LogDebug("Data appears to be GZip compressed");
-            return true;
+        foreach (var (magic, _) in MagicNumbers) {
+            if (StartsWith(data, magic))
+                return true;
         }
 
-        // Brotli: Common patterns (Brotli streams often start with specific byte patterns)
-        // Brotli compressed data typically starts with 0x81-0x83 range for window size
-        if (data[0] >= 0x81 && data[0] <= 0x83) {
-            _logger.LogDebug("Data appears to be Brotli compressed");
-            return true;
-        }
-
-        // Zlib: 0x78 followed by various values
-        // Use HashSet for O(1) lookup performance instead of List O(n)
-        HashSet<byte> zlib = [0x01, 0x5E, 0x9C, 0xDA];
-        if (data[0] == 0x78 && zlib.Contains(data[1])) {
-            _logger.LogDebug("Data appears to be Zlib compressed");
-            return true;
-        }
-
-        _logger.LogDebug("Data does not appear to be compressed");
         return false;
+    }
+
+    /// <inheritdoc />
+    public bool TryDetectAlgorithm(byte[]? data, out CompressionAlgorithm? algorithm)
+    {
+        algorithm = null;
+        if (data is null || data.Length < 2)
+            return false;
+
+        foreach (var (magic, name) in MagicNumbers) {
+            if (!StartsWith(data, magic))
+                continue;
+
+            // Detection only reports algorithms whose assemblies are loaded (addon algorithms self-register on load).
+            algorithm = CompressionAlgorithm.TryFromName(name);
+            return algorithm != null;
+        }
+
+        return false;
+    }
+
+    private static bool StartsWith(byte[] data, byte[] prefix)
+    {
+        if (data.Length < prefix.Length)
+            return false;
+
+        for (var i = 0; i < prefix.Length; i++) {
+            if (data[i] != prefix[i])
+                return false;
+        }
+
+        return true;
     }
 
     public Dictionary<string, byte[]> Compress(Dictionary<string, byte[]> items)
@@ -1215,7 +1235,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
             // Determine chunk size based on string data size
             var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(bytes.Length);
             using var inputStream = new MemoryStream(bytes);
-            await CompressAsync(inputStream, outputStream, chunkSize, ct).ConfigureAwait(false);
+            await CompressAsync(inputStream, outputStream, chunkSize, ct: ct).ConfigureAwait(false);
             _logger.LogDebug("String compression to stream complete");
         }
         catch (OperationCanceledException) {
