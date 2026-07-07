@@ -42,8 +42,8 @@ public static class Constants
             public const string RunResults = $"{Runs}/Result";
             public const string Files = $"{Runs}/Files";
             public const string WorkerInstances = $"{Route}/WorkerInstance";
-            public const string Calendars = $"{Route}/Calendar";
-            public const string CalendarWindows = $"{Route}/Calendar/Window";
+            public const string BlackoutCalendars = $"{Route}/BlackoutCalendar";
+            public const string BlackoutWindows = $"{Route}/BlackoutCalendar/Window";
             public const string Workflows = $"{Route}/Workflow";
             public const string WorkflowSteps = $"{Route}/Workflow/Step";
             public const string WorkflowRuns = $"{Route}/Workflow/Run";

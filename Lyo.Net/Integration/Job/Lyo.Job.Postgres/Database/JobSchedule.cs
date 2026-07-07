@@ -52,8 +52,8 @@ public class JobSchedule
     [MaxLength(64)]
     public string? TimeZoneId { get; set; }
 
-    /// <summary>Optional calendar whose blackout windows apply to this schedule.</summary>
-    public Guid? JobCalendarId { get; set; }
+    /// <summary>Optional blackout calendar whose do-not-run windows apply to this schedule.</summary>
+    public Guid? JobBlackoutCalendarId { get; set; }
 
     public bool Enabled { get; set; }
 
@@ -63,7 +63,7 @@ public class JobSchedule
 
     public virtual JobDefinition JobDefinition { get; set; } = null!;
 
-    public virtual JobCalendar? JobCalendar { get; set; }
+    public virtual JobBlackoutCalendar? JobBlackoutCalendar { get; set; }
 
     public virtual ICollection<JobRun> JobRuns { get; set; } = new List<JobRun>();
 

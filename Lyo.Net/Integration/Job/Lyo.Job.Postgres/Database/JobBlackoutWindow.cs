@@ -2,11 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Lyo.Job.Postgres.Database;
 
-public class JobCalendarWindow
+/// <summary>A single do-not-run (or defer) window within a <see cref="JobBlackoutCalendar" />.</summary>
+public class JobBlackoutWindow
 {
     public Guid Id { get; set; }
 
-    public Guid JobCalendarId { get; set; }
+    public Guid JobBlackoutCalendarId { get; set; }
 
     [Required]
     [MaxLength(100)]
@@ -35,5 +36,5 @@ public class JobCalendarWindow
 
     public DateTime? UpdatedTimestamp { get; set; }
 
-    public virtual JobCalendar JobCalendar { get; set; } = null!;
+    public virtual JobBlackoutCalendar JobBlackoutCalendar { get; set; } = null!;
 }

@@ -5,9 +5,9 @@ namespace Lyo.Job.Postgres.Database;
 
 public partial class JobContext : DbContext
 {
-    public virtual DbSet<JobCalendar> JobCalendars { get; set; }
+    public virtual DbSet<JobBlackoutCalendar> JobBlackoutCalendars { get; set; }
 
-    public virtual DbSet<JobCalendarWindow> JobCalendarWindows { get; set; }
+    public virtual DbSet<JobBlackoutWindow> JobBlackoutWindows { get; set; }
 
     public virtual DbSet<JobDefinition> JobDefinitions { get; set; }
 
@@ -49,10 +49,10 @@ public partial class JobContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("job");
-        modelBuilder.Entity<JobCalendar>(entity => {
-            entity.HasKey(e => e.Id).HasName("pk_job_calendar");
-            entity.ToTable("job_calendar");
-            entity.HasIndex(e => e.Name, "ix_job_calendar_name");
+        modelBuilder.Entity<JobBlackoutCalendar>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_blackout_calendar");
+            entity.ToTable("job_blackout_calendar");
+            entity.HasIndex(e => e.Name, "ix_job_blackout_calendar_name");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
             entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
@@ -61,12 +61,12 @@ public partial class JobContext : DbContext
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         });
 
-        modelBuilder.Entity<JobCalendarWindow>(entity => {
-            entity.HasKey(e => e.Id).HasName("pk_job_calendar_window");
-            entity.ToTable("job_calendar_window");
-            entity.HasIndex(e => e.JobCalendarId, "ix_job_calendar_window_job_calendar_id");
+        modelBuilder.Entity<JobBlackoutWindow>(entity => {
+            entity.HasKey(e => e.Id).HasName("pk_job_blackout_window");
+            entity.ToTable("job_blackout_window");
+            entity.HasIndex(e => e.JobBlackoutCalendarId, "ix_job_blackout_window_job_blackout_calendar_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.JobCalendarId).HasColumnName("job_calendar_id");
+            entity.Property(e => e.JobBlackoutCalendarId).HasColumnName("job_blackout_calendar_id");
             entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
             entity.Property(e => e.StartTime).HasMaxLength(8).HasColumnName("start_time");
@@ -75,11 +75,11 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-            entity.HasOne(d => d.JobCalendar)
-                .WithMany(p => p.JobCalendarWindows)
-                .HasForeignKey(d => d.JobCalendarId)
+            entity.HasOne(d => d.JobBlackoutCalendar)
+                .WithMany(p => p.JobBlackoutWindows)
+                .HasForeignKey(d => d.JobBlackoutCalendarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_job_calendar_window_job_calendar_job_calendar_id");
+                .HasConstraintName("fk_job_blackout_window_job_blackout_calendar_job_blackout_calendar_id");
         });
 
         modelBuilder.Entity<JobDefinition>(entity => {
@@ -309,7 +309,7 @@ public partial class JobContext : DbContext
             entity.HasKey(e => e.Id).HasName("pk_job_schedule");
             entity.ToTable("job_schedule");
             entity.HasIndex(e => e.JobDefinitionId, "ix_job_schedule_job_definition_id");
-            entity.HasIndex(e => e.JobCalendarId, "ix_job_schedule_job_calendar_id");
+            entity.HasIndex(e => e.JobBlackoutCalendarId, "ix_job_schedule_job_blackout_calendar_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
@@ -321,7 +321,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.StartDateUtc).HasColumnType("timestamp with time zone").HasColumnName("start_date_utc");
             entity.Property(e => e.EndDateUtc).HasColumnType("timestamp with time zone").HasColumnName("end_date_utc");
             entity.Property(e => e.TimeZoneId).HasMaxLength(64).HasColumnName("time_zone_id");
-            entity.Property(e => e.JobCalendarId).HasColumnName("job_calendar_id");
+            entity.Property(e => e.JobBlackoutCalendarId).HasColumnName("job_blackout_calendar_id");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
             entity.Property(e => e.MonthFlags).HasMaxLength(108).HasColumnName("month_flags");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
@@ -334,10 +334,10 @@ public partial class JobContext : DbContext
                 .HasForeignKey(d => d.JobDefinitionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
-            entity.HasOne(d => d.JobCalendar)
+            entity.HasOne(d => d.JobBlackoutCalendar)
                 .WithMany(p => p.JobSchedules)
-                .HasForeignKey(d => d.JobCalendarId)
-                .HasConstraintName("fk_job_schedule_job_calendar_job_calendar_id");
+                .HasForeignKey(d => d.JobBlackoutCalendarId)
+                .HasConstraintName("fk_job_schedule_job_blackout_calendar_job_blackout_calendar_id");
         });
 
         modelBuilder.Entity<JobScheduleParameter>(entity => {
@@ -534,11 +534,11 @@ public partial class JobContext : DbContext
         var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries()) {
             if (entry.State == EntityState.Added) {
-                if (entry.Entity is JobCalendar c) {
+                if (entry.Entity is JobBlackoutCalendar c) {
                     if (c.CreatedTimestamp == default)
                         c.CreatedTimestamp = now;
                 }
-                else if (entry.Entity is JobCalendarWindow cw) {
+                else if (entry.Entity is JobBlackoutWindow cw) {
                     if (cw.CreatedTimestamp == default)
                         cw.CreatedTimestamp = now;
                 }
@@ -596,9 +596,9 @@ public partial class JobContext : DbContext
                 }
             }
             else if (entry.State == EntityState.Modified) {
-                if (entry.Entity is JobCalendar c)
+                if (entry.Entity is JobBlackoutCalendar c)
                     c.UpdatedTimestamp = now;
-                else if (entry.Entity is JobCalendarWindow cw)
+                else if (entry.Entity is JobBlackoutWindow cw)
                     cw.UpdatedTimestamp = now;
                 else if (entry.Entity is JobDefinition d)
                     d.UpdatedTimestamp = now;

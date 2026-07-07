@@ -61,7 +61,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private readonly JobSchedulerOptions _options;
 
     private Dictionary<Guid, JobInfo> _jobs = new();
-    private Dictionary<Guid, JobCalendarRes> _calendars = new();
+    private Dictionary<Guid, JobBlackoutCalendarRes> _blackoutCalendars = new();
     private DateTime? _lastDefinitionsRefreshUtc;
     private DateTime? _lastScheduleCheckUtc;
 
@@ -272,14 +272,14 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
         _jobs = updated;
         _metrics.RecordGauge(Constants.Metrics.Scheduler.DefinitionsLoaded, updated.Count);
-        await RefreshCalendarsAsync(ct).ConfigureAwait(false);
+        await RefreshBlackoutCalendarsAsync(ct).ConfigureAwait(false);
         await ProcessMisfiresAsync(ct).ConfigureAwait(false);
     }
 
-    private async Task RefreshCalendarsAsync(CancellationToken ct)
+    private async Task RefreshBlackoutCalendarsAsync(CancellationToken ct)
     {
-        var query = new QueryReqBuilder().AddIncludes("JobCalendarWindows").Build();
-        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobCalendarRes>>(BuildUri($"{Constants.Rest.Job.Calendars}/Query"), query, null, ct)
+        var query = new QueryReqBuilder().AddIncludes("JobBlackoutWindows").Build();
+        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobBlackoutCalendarRes>>(BuildUri($"{Constants.Rest.Job.BlackoutCalendars}/Query"), query, null, ct)
             .ConfigureAwait(false);
 
         if (results.Items == null || !results.IsSuccess) {
@@ -287,8 +287,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             return;
         }
 
-        _calendars = results.Items.Where(c => c.Enabled).ToDictionary(c => c.Id);
-        _logger.LogDebug("Loaded {Count} enabled job calendars", _calendars.Count);
+        _blackoutCalendars = results.Items.Where(c => c.Enabled).ToDictionary(c => c.Id);
+        _logger.LogDebug("Loaded {Count} enabled job blackout calendars", _blackoutCalendars.Count);
     }
 
     /// <summary>Evaluates schedules and creates job runs where due. Must be called under the definition lock.</summary>
@@ -349,8 +349,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         if (!IsWithinScheduleWindow(schedule, nextDue.Value))
             return null;
 
-        var calendar = ResolveCalendar(schedule);
-        var adjusted = JobCalendarEvaluator.AdjustSlotForBlackout(nextDue.Value, calendar, ResolveTimeZone(schedule));
+        var calendar = ResolveBlackoutCalendar(schedule);
+        var adjusted = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(nextDue.Value, calendar, ResolveTimeZone(schedule));
         if (!adjusted.HasValue)
             return null;
 
@@ -361,12 +361,12 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         return adjusted.Value;
     }
 
-    private JobCalendarRes? ResolveCalendar(JobScheduleRes schedule)
+    private JobBlackoutCalendarRes? ResolveBlackoutCalendar(JobScheduleRes schedule)
     {
-        if (schedule.JobCalendar is { Enabled: true })
-            return schedule.JobCalendar;
+        if (schedule.JobBlackoutCalendar is { Enabled: true })
+            return schedule.JobBlackoutCalendar;
 
-        if (schedule.JobCalendarId.HasValue && _calendars.TryGetValue(schedule.JobCalendarId.Value, out var cached))
+        if (schedule.JobBlackoutCalendarId.HasValue && _blackoutCalendars.TryGetValue(schedule.JobBlackoutCalendarId.Value, out var cached))
             return cached;
 
         return null;
@@ -458,8 +458,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 break;
 
             if (next.Value >= lookbackStart && IsWithinScheduleWindow(schedule, next.Value)) {
-                var calendar = ResolveCalendar(schedule);
-                var adjusted = JobCalendarEvaluator.AdjustSlotForBlackout(next.Value, calendar, ResolveTimeZone(schedule));
+                var calendar = ResolveBlackoutCalendar(schedule);
+                var adjusted = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(next.Value, calendar, ResolveTimeZone(schedule));
                 if (adjusted.HasValue)
                     mostRecent = adjusted.Value;
             }

@@ -153,7 +153,7 @@ Tag `"Job"`. CRUD + export on definitions; runs expose Query/Get/Delete/DeleteBu
 | `Job/Definition/Parameter` | `JobParameter` | Encryption on write |
 | `Job/Schedule` | `JobSchedule` | Misfire policy, calendar link, cron |
 | `Job/Triggers` | `JobTrigger` | |
-| `Job/Calendar`, `Job/Calendar/Window` | Blackout calendars | |
+| `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window` | Blackout calendars | |
 | `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows | |
 | `Job/WorkerInstance` | Worker registry | Created by workers |
 | `Job/Run` | `JobRun` | Progress, SLA, idempotency fields |

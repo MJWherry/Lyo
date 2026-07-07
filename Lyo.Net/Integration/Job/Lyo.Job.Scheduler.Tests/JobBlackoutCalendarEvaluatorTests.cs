@@ -5,7 +5,7 @@ using Lyo.Job.Scheduler;
 
 namespace Lyo.Job.Scheduler.Tests;
 
-public class JobCalendarEvaluatorTests
+public class JobBlackoutCalendarEvaluatorTests
 {
     private static readonly TimeZoneInfo Utc = TimeZoneInfo.Utc;
 
@@ -13,7 +13,7 @@ public class JobCalendarEvaluatorTests
     public void AdjustSlotForBlackout_WhenNoCalendar_ReturnsOriginalSlot()
     {
         var slot = new DateTime(2026, 7, 7, 10, 0, 0, DateTimeKind.Utc);
-        var result = JobCalendarEvaluator.AdjustSlotForBlackout(slot, null, Utc);
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, null, Utc);
         Assert.Equal(slot, result);
     }
 
@@ -23,7 +23,7 @@ public class JobCalendarEvaluatorTests
         var slot = new DateTime(2026, 7, 7, 14, 0, 0, DateTimeKind.Utc);
         var calendar = CreateCalendar(JobBlackoutPolicy.Skip, "09:00", "12:00");
 
-        var result = JobCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
 
         Assert.Equal(slot, result);
     }
@@ -34,7 +34,7 @@ public class JobCalendarEvaluatorTests
         var slot = new DateTime(2026, 7, 7, 10, 30, 0, DateTimeKind.Utc);
         var calendar = CreateCalendar(JobBlackoutPolicy.Skip, "09:00", "12:00");
 
-        var result = JobCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
 
         Assert.Null(result);
     }
@@ -45,7 +45,7 @@ public class JobCalendarEvaluatorTests
         var slot = new DateTime(2026, 7, 7, 10, 30, 0, DateTimeKind.Utc);
         var calendar = CreateCalendar(JobBlackoutPolicy.Defer, "09:00", "12:00");
 
-        var result = JobCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
 
         Assert.NotNull(result);
         Assert.Equal(new DateTime(2026, 7, 7, 12, 0, 0, DateTimeKind.Utc), result);
@@ -57,22 +57,22 @@ public class JobCalendarEvaluatorTests
         var slot = new DateTime(2026, 7, 7, 23, 30, 0, DateTimeKind.Utc);
         var calendar = CreateCalendar(JobBlackoutPolicy.Defer, "22:00", "06:00");
 
-        var result = JobCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
 
         Assert.NotNull(result);
         Assert.Equal(new DateTime(2026, 7, 8, 6, 0, 0, DateTimeKind.Utc), result);
     }
 
-    private static JobCalendarRes CreateCalendar(JobBlackoutPolicy policy, string start, string end)
+    private static JobBlackoutCalendarRes CreateCalendar(JobBlackoutPolicy policy, string start, string end)
     {
         var calendarId = Guid.NewGuid();
-        return new JobCalendarRes(
+        return new JobBlackoutCalendarRes(
             calendarId,
             "Test calendar",
             null,
             true,
             [
-                new JobCalendarWindowRes(
+                new JobBlackoutWindowRes(
                     Guid.NewGuid(),
                     calendarId,
                     "Blackout",

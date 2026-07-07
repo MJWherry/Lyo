@@ -173,16 +173,16 @@ public static class Extensions
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
             .Build();
 
-        app.CreateBuilder<JobContext, JobCalendar, JobCalendarReq, JobCalendarRes, Guid>(Constants.Rest.Job.Calendars, "Job")
+        app.CreateBuilder<JobContext, JobBlackoutCalendar, JobBlackoutCalendarReq, JobBlackoutCalendarRes, Guid>(Constants.Rest.Job.BlackoutCalendars, "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
-                    BeforeDelete = ctx => ctx.DbContext.JobCalendarWindows.RemoveRange(ctx.Entity.JobCalendarWindows),
-                    DeleteIncludes = ["JobCalendarWindows"]
+                    BeforeDelete = ctx => ctx.DbContext.JobBlackoutWindows.RemoveRange(ctx.Entity.JobBlackoutWindows),
+                    DeleteIncludes = ["JobBlackoutWindows"]
                 })
             .Build();
 
-        app.CreateBuilder<JobContext, JobCalendarWindow, JobCalendarWindowReq, JobCalendarWindowRes, Guid>(Constants.Rest.Job.CalendarWindows, "Job")
+        app.CreateBuilder<JobContext, JobBlackoutWindow, JobBlackoutWindowReq, JobBlackoutWindowRes, Guid>(Constants.Rest.Job.BlackoutWindows, "Job")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
             .Build();
 
@@ -337,9 +337,9 @@ public static class Extensions
     /// </remarks>
     public static TypeAdapterConfig ConfigureJobMappings(this TypeAdapterConfig config)
     {
-        config.NewConfig<JobCalendarReq, JobCalendar>().Map(to => to.JobCalendarWindows, from => from.CreateWindows);
+        config.NewConfig<JobBlackoutCalendarReq, JobBlackoutCalendar>().Map(to => to.JobBlackoutWindows, from => from.CreateBlackoutWindows);
 
-        config.NewConfig<JobCalendarWindowReq, JobCalendarWindow>()
+        config.NewConfig<JobBlackoutWindowReq, JobBlackoutWindow>()
             .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
             .Map(dest => dest.StartTime, src => src.StartTime.ToString())
             .Map(dest => dest.EndTime, src => src.EndTime.ToString())
@@ -392,27 +392,27 @@ public static class Extensions
                 src.EndTime != null ? TimeOnly.Parse(src.EndTime) : null, src.IntervalMinutes, src.Description, src.Enabled,
                 src.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
                         p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                    .ToList(), src.CronExpression, Enum.Parse<JobMisfirePolicy>(src.MisfirePolicy), src.StartDateUtc, src.EndDateUtc, src.TimeZoneId, src.JobCalendarId,
-                src.JobCalendar == null
+                    .ToList(), src.CronExpression, Enum.Parse<JobMisfirePolicy>(src.MisfirePolicy), src.StartDateUtc, src.EndDateUtc, src.TimeZoneId, src.JobBlackoutCalendarId,
+                src.JobBlackoutCalendar == null
                     ? null
-                    : new JobCalendarRes(
-                        src.JobCalendar.Id, src.JobCalendar.Name, src.JobCalendar.Description, src.JobCalendar.Enabled,
-                        src.JobCalendar.JobCalendarWindows.Select(w => new JobCalendarWindowRes(
-                                w.Id, w.JobCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
+                    : new JobBlackoutCalendarRes(
+                        src.JobBlackoutCalendar.Id, src.JobBlackoutCalendar.Name, src.JobBlackoutCalendar.Description, src.JobBlackoutCalendar.Enabled,
+                        src.JobBlackoutCalendar.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
+                                w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
                                 Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
                             .ToList())));
 
-        config.NewConfig<JobCalendar, JobCalendarRes>()
+        config.NewConfig<JobBlackoutCalendar, JobBlackoutCalendarRes>()
             .MapWith(src => new(
                 src.Id, src.Name, src.Description, src.Enabled,
-                src.JobCalendarWindows.Select(w => new JobCalendarWindowRes(
-                        w.Id, w.JobCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
+                src.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
+                        w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
                         Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
                     .ToList()));
 
-        config.NewConfig<JobCalendarWindow, JobCalendarWindowRes>()
+        config.NewConfig<JobBlackoutWindow, JobBlackoutWindowRes>()
             .MapWith(src => new(
-                src.Id, src.JobCalendarId, src.Name, Enum.Parse<DayFlags>(src.DayFlags), TimeOnly.Parse(src.StartTime), TimeOnly.Parse(src.EndTime),
+                src.Id, src.JobBlackoutCalendarId, src.Name, Enum.Parse<DayFlags>(src.DayFlags), TimeOnly.Parse(src.StartTime), TimeOnly.Parse(src.EndTime),
                 Enum.Parse<JobBlackoutPolicy>(src.Policy), src.Enabled));
 
         config.NewConfig<JobWorkflow, JobWorkflowRes>()
@@ -461,7 +461,7 @@ public static class Extensions
                         s.EndTime != null ? TimeOnly.Parse(s.EndTime) : null, s.IntervalMinutes, s.Description, s.Enabled,
                         s.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
                                 p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                            .ToList(), s.CronExpression, Enum.Parse<JobMisfirePolicy>(s.MisfirePolicy), s.StartDateUtc, s.EndDateUtc, s.TimeZoneId, s.JobCalendarId, null))
+                            .ToList(), s.CronExpression, Enum.Parse<JobMisfirePolicy>(s.MisfirePolicy), s.StartDateUtc, s.EndDateUtc, s.TimeZoneId, s.JobBlackoutCalendarId, null))
                     .ToList(),
                 src.JobTriggerJobDefinitions.Select(t => new JobTriggerRes(
                         t.Id, t.TriggersJobDefinitionId, t.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(t.TriggerComparator), t.TriggerJobResultValue, t.Description,

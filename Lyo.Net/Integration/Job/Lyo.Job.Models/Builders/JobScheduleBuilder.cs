@@ -129,10 +129,10 @@ public class JobScheduleBuilder
         return this;
     }
 
-    /// <summary>Associates a calendar whose blackout windows apply to this schedule.</summary>
-    public JobScheduleBuilder WithCalendar(Guid jobCalendarId)
+    /// <summary>Associates a blackout calendar whose do-not-run windows apply to this schedule.</summary>
+    public JobScheduleBuilder WithBlackoutCalendar(Guid jobBlackoutCalendarId)
     {
-        _schedule.JobCalendarId = jobCalendarId;
+        _schedule.JobBlackoutCalendarId = jobBlackoutCalendarId;
         return this;
     }
 

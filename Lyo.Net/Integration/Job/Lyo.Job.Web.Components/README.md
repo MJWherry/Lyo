@@ -70,7 +70,7 @@ Every grid / view accepts `IApiClient` and route parameters so components can be
 | Alerting | Definition/run alert flags in detail view |
 | Worker registry | **Workers** tab (`JobWorkerInstanceGrid`) |
 | Workflows | **Workflows** tab (`JobWorkflowView`) |
-| Schedules / blackout calendars | **Schedules** tab — misfire policy, linked `JobCalendarId`, cron fields via API |
+| Schedules / blackout calendars | **Schedules** tab — misfire policy, linked `JobBlackoutCalendarId`, cron fields via API |
 | Dry run | `RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch) |
 
 ## `JobColorHelper`

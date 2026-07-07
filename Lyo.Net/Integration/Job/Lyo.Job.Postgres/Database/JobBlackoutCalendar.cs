@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Lyo.Job.Postgres.Database;
 
-public class JobCalendar
+/// <summary>
+/// A reusable set of blackout windows — time ranges when linked schedules must not fire (or must defer). Attach to a <see cref="JobSchedule" /> via
+/// <see cref="JobSchedule.JobBlackoutCalendarId" />.
+/// </summary>
+public class JobBlackoutCalendar
 {
     public Guid Id { get; set; }
 
@@ -19,7 +23,7 @@ public class JobCalendar
 
     public DateTime? UpdatedTimestamp { get; set; }
 
-    public virtual ICollection<JobCalendarWindow> JobCalendarWindows { get; set; } = new List<JobCalendarWindow>();
+    public virtual ICollection<JobBlackoutWindow> JobBlackoutWindows { get; set; } = new List<JobBlackoutWindow>();
 
     public virtual ICollection<JobSchedule> JobSchedules { get; set; } = new List<JobSchedule>();
 }

@@ -128,7 +128,7 @@ namespace Lyo.Job.Postgres.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "job_calendar",
+                name: "job_blackout_calendar",
                 schema: "job",
                 columns: table => new
                 {
@@ -141,7 +141,7 @@ namespace Lyo.Job.Postgres.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_job_calendar", x => x.id);
+                    table.PrimaryKey("pk_job_blackout_calendar", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -162,12 +162,12 @@ namespace Lyo.Job.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "job_calendar_window",
+                name: "job_blackout_window",
                 schema: "job",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    job_calendar_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    job_blackout_calendar_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     day_flags = table.Column<string>(type: "character varying(51)", maxLength: 51, nullable: false),
                     start_time = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
@@ -179,17 +179,17 @@ namespace Lyo.Job.Postgres.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_job_calendar_window", x => x.id);
+                    table.PrimaryKey("pk_job_blackout_window", x => x.id);
                     table.ForeignKey(
-                        name: "fk_job_calendar_window_job_calendar_job_calendar_id",
-                        column: x => x.job_calendar_id,
+                        name: "fk_job_blackout_window_job_blackout_calendar_job_blackout_calendar_id",
+                        column: x => x.job_blackout_calendar_id,
                         principalSchema: "job",
-                        principalTable: "job_calendar",
+                        principalTable: "job_blackout_calendar",
                         principalColumn: "id");
                 });
 
             migrationBuilder.AddColumn<Guid>(
-                name: "job_calendar_id",
+                name: "job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule",
                 type: "uuid",
@@ -290,22 +290,22 @@ namespace Lyo.Job.Postgres.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_job_calendar_name",
+                name: "ix_job_blackout_calendar_name",
                 schema: "job",
-                table: "job_calendar",
+                table: "job_blackout_calendar",
                 column: "name");
 
             migrationBuilder.CreateIndex(
-                name: "ix_job_calendar_window_job_calendar_id",
+                name: "ix_job_blackout_window_job_blackout_calendar_id",
                 schema: "job",
-                table: "job_calendar_window",
-                column: "job_calendar_id");
+                table: "job_blackout_window",
+                column: "job_blackout_calendar_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_job_schedule_job_calendar_id",
+                name: "ix_job_schedule_job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule",
-                column: "job_calendar_id");
+                column: "job_blackout_calendar_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_job_workflow_name",
@@ -379,12 +379,12 @@ namespace Lyo.Job.Postgres.Migrations
                 principalColumn: "id");
 
             migrationBuilder.AddForeignKey(
-                name: "fk_job_schedule_job_calendar_job_calendar_id",
+                name: "fk_job_schedule_job_blackout_calendar_job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule",
-                column: "job_calendar_id",
+                column: "job_blackout_calendar_id",
                 principalSchema: "job",
-                principalTable: "job_calendar",
+                principalTable: "job_blackout_calendar",
                 principalColumn: "id");
         }
 
@@ -397,12 +397,12 @@ namespace Lyo.Job.Postgres.Migrations
                 table: "job_run");
 
             migrationBuilder.DropForeignKey(
-                name: "fk_job_schedule_job_calendar_job_calendar_id",
+                name: "fk_job_schedule_job_blackout_calendar_job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule");
 
             migrationBuilder.DropTable(
-                name: "job_calendar_window",
+                name: "job_blackout_window",
                 schema: "job");
 
             migrationBuilder.DropTable(
@@ -422,7 +422,7 @@ namespace Lyo.Job.Postgres.Migrations
                 schema: "job");
 
             migrationBuilder.DropTable(
-                name: "job_calendar",
+                name: "job_blackout_calendar",
                 schema: "job");
 
             migrationBuilder.DropIndex(
@@ -436,7 +436,7 @@ namespace Lyo.Job.Postgres.Migrations
                 table: "job_run");
 
             migrationBuilder.DropIndex(
-                name: "ix_job_schedule_job_calendar_id",
+                name: "ix_job_schedule_job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule");
 
@@ -516,7 +516,7 @@ namespace Lyo.Job.Postgres.Migrations
                 table: "job_run");
 
             migrationBuilder.DropColumn(
-                name: "job_calendar_id",
+                name: "job_blackout_calendar_id",
                 schema: "job",
                 table: "job_schedule");
         }

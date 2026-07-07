@@ -2,13 +2,14 @@ using System.Diagnostics;
 
 namespace Lyo.Job.Models.Response;
 
+/// <summary>A blackout calendar with its do-not-run windows.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record JobCalendarRes(
+public sealed record JobBlackoutCalendarRes(
     Guid Id,
     string Name,
     string? Description,
     bool Enabled,
-    IReadOnlyList<JobCalendarWindowRes>? Windows)
+    IReadOnlyList<JobBlackoutWindowRes>? BlackoutWindows)
 {
     public override string ToString() => $"{Name}, {Description} (Enabled={Enabled})";
 }

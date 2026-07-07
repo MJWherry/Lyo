@@ -95,7 +95,7 @@ flowchart TB
 
 1. **Startup** — `SetupAsync`, subscribe to definition-change and run-completion queues, initial refresh + misfire pass, start periodic timers.
 2. **Definition refresh** — loads enabled definitions with schedules, triggers, parallel restrictions; caches last run snapshots as `JobInfo`.
-3. **Calendar refresh** — loads `JobCalendar` + windows for blackout evaluation (`JobCalendarEvaluator`: `Skip` or `Defer`).
+3. **Calendar refresh** — loads `JobBlackoutCalendar` + windows for blackout evaluation (`JobBlackoutCalendarEvaluator`: `Skip` or `Defer`).
 4. **Schedule check** — skips when a run is already `Queued`/`Running`; respects parallel restrictions; applies misfire policy; creates runs with `ScheduledSlotUtc` for idempotency.
 5. **Misfire catch-up** — when `EnableMisfireCatchUp` and schedule `MisfirePolicy == RunOnce`, creates one run for the most recent missed slot within lookback.
 6. **Run completion** — updates cached last-run pointers; circuit breaker on consecutive failures; retries via `JobRetryBackoff.ComputeBackoffSeconds` (`Linear` or `Exponential`); batch parent progress; failure alerts when `AlertOnFailure` and `AlertAfterConsecutiveFailures` threshold is met.

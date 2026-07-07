@@ -30,8 +30,8 @@ public sealed record JobScheduleRes(
     DateTime? StartDateUtc = null,
     DateTime? EndDateUtc = null,
     string? TimeZoneId = null,
-    Guid? JobCalendarId = null,
-    JobCalendarRes? JobCalendar = null)
+    Guid? JobBlackoutCalendarId = null,
+    JobBlackoutCalendarRes? JobBlackoutCalendar = null)
 {
     public override string ToString()
         => $"{Id.Truncated()} {Description ?? (Type == ScheduleType.SetTimes && Times?.Count > 0 ? $"Times: {string.Join(",", Times)}" : $"{StartTime} - {EndTime}, {IntervalMinutes}m Intervals")} Parameters={Parameters?.Count}";

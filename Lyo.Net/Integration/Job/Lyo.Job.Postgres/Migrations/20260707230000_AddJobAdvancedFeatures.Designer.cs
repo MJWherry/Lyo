@@ -731,9 +731,9 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("job_definition_id");
 
-                    b.Property<Guid?>("JobCalendarId")
+                    b.Property<Guid?>("JobBlackoutCalendarId")
                         .HasColumnType("uuid")
-                        .HasColumnName("job_calendar_id");
+                        .HasColumnName("job_blackout_calendar_id");
 
                     b.Property<string>("MisfirePolicy")
                         .IsRequired()
@@ -782,12 +782,12 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.HasIndex(new[] { "JobDefinitionId" }, "ix_job_schedule_job_definition_id");
 
-                    b.HasIndex(new[] { "JobCalendarId" }, "ix_job_schedule_job_calendar_id");
+                    b.HasIndex(new[] { "JobBlackoutCalendarId" }, "ix_job_schedule_job_blackout_calendar_id");
 
                     b.ToTable("job_schedule", "job");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendar", b =>
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobBlackoutCalendar", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -819,14 +819,14 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("updated_timestamp");
 
                     b.HasKey("Id")
-                        .HasName("pk_job_calendar");
+                        .HasName("pk_job_blackout_calendar");
 
-                    b.HasIndex(new[] { "Name" }, "ix_job_calendar_name");
+                    b.HasIndex(new[] { "Name" }, "ix_job_blackout_calendar_name");
 
-                    b.ToTable("job_calendar", "job");
+                    b.ToTable("job_blackout_calendar", "job");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendarWindow", b =>
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobBlackoutWindow", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -854,9 +854,9 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("end_time");
 
-                    b.Property<Guid>("JobCalendarId")
+                    b.Property<Guid>("JobBlackoutCalendarId")
                         .HasColumnType("uuid")
-                        .HasColumnName("job_calendar_id");
+                        .HasColumnName("job_blackout_calendar_id");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -883,11 +883,11 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("updated_timestamp");
 
                     b.HasKey("Id")
-                        .HasName("pk_job_calendar_window");
+                        .HasName("pk_job_blackout_window");
 
-                    b.HasIndex(new[] { "JobCalendarId" }, "ix_job_calendar_window_job_calendar_id");
+                    b.HasIndex(new[] { "JobBlackoutCalendarId" }, "ix_job_blackout_window_job_blackout_calendar_id");
 
-                    b.ToTable("job_calendar_window", "job");
+                    b.ToTable("job_blackout_window", "job");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflow", b =>
@@ -1440,12 +1440,12 @@ namespace Lyo.Job.Postgres.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
 
-                    b.HasOne("Lyo.Job.Postgres.Database.JobCalendar", "JobCalendar")
+                    b.HasOne("Lyo.Job.Postgres.Database.JobBlackoutCalendar", "JobBlackoutCalendar")
                         .WithMany("JobSchedules")
-                        .HasForeignKey("JobCalendarId")
-                        .HasConstraintName("fk_job_schedule_job_calendar_job_calendar_id");
+                        .HasForeignKey("JobBlackoutCalendarId")
+                        .HasConstraintName("fk_job_schedule_job_blackout_calendar_job_blackout_calendar_id");
 
-                    b.Navigation("JobCalendar");
+                    b.Navigation("JobBlackoutCalendar");
 
                     b.Navigation("JobDefinition");
                 });
@@ -1491,15 +1491,15 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobTrigger");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendarWindow", b =>
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobBlackoutWindow", b =>
                 {
-                    b.HasOne("Lyo.Job.Postgres.Database.JobCalendar", "JobCalendar")
-                        .WithMany("JobCalendarWindows")
-                        .HasForeignKey("JobCalendarId")
+                    b.HasOne("Lyo.Job.Postgres.Database.JobBlackoutCalendar", "JobBlackoutCalendar")
+                        .WithMany("JobBlackoutWindows")
+                        .HasForeignKey("JobBlackoutCalendarId")
                         .IsRequired()
-                        .HasConstraintName("fk_job_calendar_window_job_calendar_job_calendar_id");
+                        .HasConstraintName("fk_job_blackout_window_job_blackout_calendar_job_blackout_calendar_id");
 
-                    b.Navigation("JobCalendar");
+                    b.Navigation("JobBlackoutCalendar");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowStep", b =>
@@ -1608,9 +1608,9 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobTriggerParameters");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobCalendar", b =>
+            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobBlackoutCalendar", b =>
                 {
-                    b.Navigation("JobCalendarWindows");
+                    b.Navigation("JobBlackoutWindows");
 
                     b.Navigation("JobSchedules");
                 });

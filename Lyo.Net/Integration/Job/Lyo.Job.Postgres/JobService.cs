@@ -240,8 +240,8 @@ public class JobService(
 
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var schedules = await db.JobSchedules.AsNoTracking()
-            .Include(s => s.JobCalendar!)
-            .ThenInclude(c => c.JobCalendarWindows)
+            .Include(s => s.JobBlackoutCalendar!)
+            .ThenInclude(c => c.JobBlackoutWindows)
             .Where(s => s.JobDefinitionId == definitionId && s.Enabled)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -254,7 +254,7 @@ public class JobService(
         foreach (var schedule in schedules) {
             var definition = schedule.ToScheduleDefinition();
             foreach (var runAt in ScheduleCalculator.GetNextRuns(definition, maxCount: perSchedule)) {
-                if (!schedule.IsWithinScheduleWindow(runAt) || !schedule.IsAllowedByCalendar(runAt))
+                if (!schedule.IsWithinScheduleWindow(runAt) || !schedule.IsAllowedByBlackoutCalendar(runAt))
                     continue;
 
                 merged.Add(runAt);

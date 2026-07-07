@@ -44,8 +44,8 @@ public sealed class JobScheduleReq
     /// <summary>IANA/Windows time zone id used when evaluating this schedule's times. Null = use the scheduler-level time zone (or UTC).</summary>
     public string? TimeZoneId { get; set; }
 
-    /// <summary>Optional calendar whose blackout windows apply to this schedule.</summary>
-    public Guid? JobCalendarId { get; set; }
+    /// <summary>Optional blackout calendar whose do-not-run windows apply to this schedule.</summary>
+    public Guid? JobBlackoutCalendarId { get; set; }
 
     public string? Description { get; set; }
 

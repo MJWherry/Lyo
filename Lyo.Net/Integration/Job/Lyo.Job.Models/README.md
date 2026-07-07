@@ -20,7 +20,7 @@ Definitions, schedules, and runs carry the knobs that power priority dispatch, r
 | Rate limiting | `JobDefinitionReq.MaxRunsPerHour` |
 | SLA | `ExpectedDurationMinutes`, `MustStartByMinutes`; run flag `JobRunRes.SlaBreached` |
 | Alerting | `AlertOnFailure`, `AlertAfterConsecutiveFailures`, `AlertWebhookUrl`; `JobAlertType` |
-| Blackout calendars | `JobCalendarReq`, `JobCalendarWindowReq`, `JobScheduleReq.JobCalendarId` |
+| Blackout calendars | `JobBlackoutCalendarReq`, `JobBlackoutWindowReq`, `JobScheduleReq.JobBlackoutCalendarId` |
 | Batch jobs | `ParentJobRunId`, `BatchIndex`, `BatchTotal`; `JobCreateChildRunsReq` |
 | Workflows | `JobWorkflowReq`, `JobWorkflowStepReq`, `JobWorkflowRunReq`, … |
 | Encryption | `JobParameterReq.EncryptedValue`, `IJobParameterEncryptionService` |
@@ -74,7 +74,7 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 | Trigger              | `JobTriggerReq`             | `JobTriggerRes`                           |
 | Trigger parameter    | `JobTriggerParameterReq`    | `JobTriggerParameterRes`                  |
 | Parallel restriction | `JobParallelRestrictionReq` | `JobParallelRestrictionRes`               |
-| Calendar             | `JobCalendarReq`            | `JobCalendarRes`, `JobCalendarWindowRes`    |
+| Calendar             | `JobBlackoutCalendarReq`            | `JobBlackoutCalendarRes`, `JobBlackoutWindowRes`    |
 | Workflow             | `JobWorkflowReq`            | `JobWorkflowRes`, `JobWorkflowStepRes`    |
 | Workflow run         | `JobWorkflowRunReq`         | `JobWorkflowRunRes`, `JobWorkflowRunStepRes`|
 | Worker instance      | `JobWorkerInstanceReq`      | `JobWorkerInstanceRes`                    |
@@ -96,7 +96,7 @@ Fluent factories for assembling request DTOs without dropping into raw initializ
 
 - **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers, email-parameter helpers. `Build()` returns `JobDefinitionReq`.
 - **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `Build()` → `JobScheduleReq`.
-- **`JobCalendarBuilder`** — `AddWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`). `Build()` → `JobCalendarReq`.
+- **`JobBlackoutCalendarBuilder`** — `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`). `Build()` → `JobBlackoutCalendarReq`.
 - **`JobWorkflowBuilder`** — ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.
 - **`JobTriggerBuilder`**, **`JobRunBuilder`**, **`JobRunResultBuilder`** — as before; `JobRunBuilder` supports `AddEncryptedParameter`.
 
@@ -222,7 +222,7 @@ Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
 
 `Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`).
 
-`Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunHeartbeat`, `RunChildren`, `WorkerInstances`, `Calendars`, `Workflows`, …).
+`Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunHeartbeat`, `RunChildren`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
 
 ## Parameter encryption (`Security/IJobParameterEncryptionService`)
 

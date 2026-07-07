@@ -10,16 +10,14 @@ using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 
 namespace Lyo.Job.Models.Response;
 
+/// <summary>A single blackout window within a <see cref="JobBlackoutCalendarRes" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record JobCalendarWindowRes(
+public sealed record JobBlackoutWindowRes(
     Guid Id,
-    Guid JobCalendarId,
+    Guid JobBlackoutCalendarId,
     string Name,
     DayFlags DayFlags,
     TimeOnly StartTime,
     TimeOnly EndTime,
     JobBlackoutPolicy Policy,
-    bool Enabled)
-{
-    public override string ToString() => $"{Name} {DayFlags} {StartTime}-{EndTime} ({Policy})";
-}
+    bool Enabled);

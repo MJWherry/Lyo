@@ -10,10 +10,11 @@ using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 
 namespace Lyo.Job.Models.Request;
 
+/// <summary>A single blackout window within a <see cref="JobBlackoutCalendarReq" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed class JobCalendarWindowReq
+public sealed class JobBlackoutWindowReq
 {
-    public Guid JobCalendarId { get; set; }
+    public Guid JobBlackoutCalendarId { get; set; }
 
     public string Name { get; set; } = null!;
 
