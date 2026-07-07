@@ -94,18 +94,19 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         var queueName = $"job.run.{workerType}.cancel";
         await _mqService.CreateQueue(queueName, true, false, false, null, ct).ConfigureAwait(false);
         await _mqService.BindQueueToExchange(queueName, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
-        await _mqService.SubscribeToQueue(
-                queueName, async body => {
+
+        // Typed subscribe handles both enveloped and legacy raw-Guid messages, and acks unparseable messages instead of redelivering them forever.
+        await _mqService.SubscribeToQueueAsync<Guid>(
+                queueName, async (runId, _) => {
                     try {
-                        var runId = JsonSerializer.Deserialize<Guid>(body);
                         await handler(runId).ConfigureAwait(false);
                         return false;
                     }
                     catch (Exception ex) {
-                        _logger.LogError(ex, "Error processing cancellation message");
+                        _logger.LogError(ex, "Error processing cancellation message for run {RunId}", runId);
                         return true;
                     }
-                }, ct)
+                }, ct: ct)
             .ConfigureAwait(false);
     }
 }

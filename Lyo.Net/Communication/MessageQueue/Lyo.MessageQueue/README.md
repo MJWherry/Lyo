@@ -35,6 +35,15 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
   is a typed publish helper that wraps `payload` in a fresh `QueueMessageEnvelope<T>` (requeue count `0`,
   generated `MessageId`, `EnqueuedAt = UtcNow`) and forwards the JSON bytes to `SendToQueue`. Use it when
   publishing to queues consumed by `QueueWorkerBase` so requeue tracking starts on the first hop.
+- **`QueueMessageExtensions.SubscribeToQueueAsync<T>(this IMqService, string queueName, Func<T, QueueMessageEnvelope<T>?, Task<bool>> handler, JsonSerializerOptions?, CancellationToken)`**
+  is the typed consuming counterpart: it deserializes each message with the same autocorrect ladder used by
+  `QueueWorkerBase` (full envelope → payload-only → bare legacy `T`), passes the payload plus envelope
+  (null for legacy messages) to your handler, and **acks unparseable messages** instead of letting them
+  redeliver forever. Use it for lightweight non-worker consumers (event subscriptions, cancellation
+  listeners) that don't need the full hosted-worker machinery.
+- **`IDelayedMqService`** is an optional capability interface for transports that support delayed delivery
+  (`SendToQueueDelayed(queueName, data, delay, ct)`). The RabbitMQ implementation uses TTL + dead-letter
+  wait queues; `QueueWorkerBase` type-checks for it to space out retries with broker-side delays.
 
 **Topics / exchanges**
 
@@ -68,6 +77,37 @@ Subclass for **typed JSON consumers**:
   `!IsSuccess` requeue.
 - Supports `maxRequeueCount` + optional DLQ publish (`dlqName`); when the count is exceeded, the original
   message bytes are forwarded to the DLQ if configured, otherwise the message is dropped at Error level.
+- Optional retry backoff via the public `RequeueDelay` property: when set and the transport implements
+  `IDelayedMqService`, each counted requeue is republished with a broker-side delay of
+  `RequeueDelay × attempt` (linear backoff), so a failing message cannot burn through its retry budget in
+  milliseconds. Transports without delay support republish immediately.
+
+### Envelope retry flow
+
+Every failure path acks the original delivery and republishes a counted copy — a bad message or a
+repeatedly-throwing `DoWorkAsync` can never spin in an infinite broker redelivery loop:
+
+```mermaid
+flowchart LR
+    msg[Message delivered] --> des{Deserialize\nautocorrect ladder}
+    des -->|unrecoverable| poison[Ack + forward original bytes to DLQ]
+    des -->|ok| work[DoWorkAsync]
+    work -->|success| ack[Ack]
+    work -->|failure / exception| cap{RequeueCount < max?}
+    cap -->|yes| requeue["Ack + republish with RequeueCount+1\n(delayed by RequeueDelay × attempt when supported)"]
+    requeue --> msg
+    cap -->|no| dlq[Ack + route to DLQ or drop]
+```
+
+### `QueueWorkerOptions`
+
+Shared defaults resolved by DI registration paths (e.g. `AddJobWorker` / `AddJobWorkerFromConfiguration`,
+section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signature stays unchanged:
+
+| Property                 | Type        | Default | Purpose                                                                                                          |
+|--------------------------|-------------|---------|------------------------------------------------------------------------------------------------------------------|
+| `DefaultMaxRequeueCount` | `int?`      | `5`     | Requeue cap applied when a worker doesn't pass an explicit `maxRequeueCount`. `null` = unlimited retries.        |
+| `RequeueDelay`           | `TimeSpan?` | `2s`    | Base retry delay (linear backoff by attempt). Requires an `IDelayedMqService` transport; `null`/zero = no delay. |
 - Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and
   emits metrics via the injected `IMetrics`:
     - `queue.worker.message.processing.duration` (timer; tag `queue`)

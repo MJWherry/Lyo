@@ -1,7 +1,7 @@
 # Lyo.Testing.Containers
 
 xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover *
-*PostgreSQL** — other backends can be added by following the same shape.
+*PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
 
 > **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
 
@@ -9,7 +9,8 @@ xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin
 
 | Package                       | Version  | Purpose                                                                     |
 |-------------------------------|----------|-----------------------------------------------------------------------------|
-| `Testcontainers.PostgreSql`   | `4.10.0` | Spins up the Docker container.                                              |
+| `Testcontainers.PostgreSql`   | `4.10.0` | Spins up the PostgreSQL Docker container.                                   |
+| `Testcontainers.RabbitMq`     | `4.10.0` | Spins up the RabbitMQ Docker container.                                     |
 | `xunit.v3.extensibility.core` | `3.2.2`  | Provides `IAsyncLifetime` + `TestContext.Current` used by the fixture base. |
 
 Docker (or a compatible runtime) must be available on the host running the tests.
@@ -17,10 +18,13 @@ Docker (or a compatible runtime) must be available on the host running the tests
 ## Public surface
 
 | Type                               | Role                                                                                                                                                                                                                                                                                                        |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **`PostgresTestContainer`**        | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`.                                                                                   |
 | **`PostgresContainerOptions`**     | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc.                                                                                                                                                     |
 | **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
+| **`RabbitMqTestContainer`**        | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`.                                                                                            |
+| **`RabbitMqContainerOptions`**     | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook.                                                                                                                             |
+| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown.                                                                   |
 
 ## Quick start — xUnit v3 class fixture
 
@@ -71,14 +75,40 @@ public sealed class TrgmFixture() : PostgresContainerFixtureBase(new PostgresCon
 });
 ```
 
+## RabbitMQ fixture
+
+`RabbitMqContainerFixtureBase` follows the same pattern. `Lyo.MessageQueue.RabbitMq.Tests` uses it to run
+`RabbitMqService` against a real broker:
+
+```csharp
+public sealed class RabbitMqBrokerFixture : RabbitMqContainerFixtureBase
+{
+    public RabbitMqService CreateService(Action<RabbitMqOptions>? configure = null)
+    {
+        var options = new RabbitMqOptions { Host = Host, Port = Port, AdminUrl = AdminUrl, Username = Username, Password = Password };
+        configure?.Invoke(options);
+        var factory = new ConnectionFactory { HostName = options.Host, Port = options.Port, UserName = options.Username, Password = options.Password };
+        return new(options, factory);
+    }
+}
+
+[assembly: AssemblyFixture(typeof(RabbitMqBrokerFixture))]
+```
+
+The management HTTP API (`AdminUrl`) is exposed so peek and queue-statistics operations work in tests.
+
 ## Standalone use (no fixture)
 
-For ad-hoc scripts or non-xUnit harnesses, `PostgresTestContainer` is usable directly:
+For ad-hoc scripts or non-xUnit harnesses, the containers are usable directly:
 
 ```csharp
 await using var container = new PostgresTestContainer();
 await container.StartAsync(ct);
 var connectionString = container.ConnectionString;
+
+await using var broker = new RabbitMqTestContainer();
+await broker.StartAsync(ct);
+var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
 ```
 
 ## See also

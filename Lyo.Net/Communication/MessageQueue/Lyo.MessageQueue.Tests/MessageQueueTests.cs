@@ -247,7 +247,7 @@ public sealed class MessageQueueTests
         await mq.SendToQueue("options-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         using var worker = new ConfigurableTestQueueWorker(
             mq, "options-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), null, "options-test.dlq",
-            new QueueWorkerOptions { DefaultMaxRequeueCount = 2 });
+            new QueueWorkerOptions { DefaultMaxRequeueCount = 2, RequeueDelay = null });
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await worker.StartAsync(cts.Token);
@@ -262,5 +262,91 @@ public sealed class MessageQueueTests
         // Initial attempt + 2 counted requeues from QueueWorkerOptions.DefaultMaxRequeueCount.
         Assert.Equal(3, worker.CallCount);
         Assert.Single(dlq);
+    }
+
+    [Fact]
+    public async Task QueueWorkerBase_requeue_delay_spaces_retry_attempts()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("delay-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("delay-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
+        var attemptTimes = new List<DateTime>();
+        using var worker = new ConfigurableTestQueueWorker(
+            mq, "delay-test", (_, _) => {
+                attemptTimes.Add(DateTime.UtcNow);
+                return Result<TestRequest>.Failure("nope", "TestFailure");
+            }, 2, "delay-test.dlq", new QueueWorkerOptions { RequeueDelay = TimeSpan.FromMilliseconds(300) });
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await worker.StartAsync(cts.Token);
+        for (var i = 0; i < 100 && worker.CallCount < 3; i++)
+            await Task.Delay(50, cts.Token);
+
+        await worker.StopAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(3, attemptTimes.Count);
+
+        // Linear backoff: attempt 2 is delayed ~1x the base delay, attempt 3 ~2x. Allow generous scheduling slack but assert a real gap.
+        Assert.True(attemptTimes[1] - attemptTimes[0] >= TimeSpan.FromMilliseconds(200), $"first retry gap too small: {attemptTimes[1] - attemptTimes[0]}");
+        Assert.True(attemptTimes[2] - attemptTimes[1] >= TimeSpan.FromMilliseconds(400), $"second retry gap too small: {attemptTimes[2] - attemptTimes[1]}");
+    }
+
+    [Fact]
+    public async Task SubscribeToQueueAsync_typed_roundtrip_enveloped_and_legacy()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("typed-test", ct: TestContext.Current.CancellationToken);
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        // One enveloped message and one legacy (bare payload) message — both must arrive typed.
+        await mq.SendToQueueWithEnvelopeAsync("typed-test", new TestRequest("e1", "enveloped"), options, traceId: "trace-1");
+        await mq.SendToQueue("typed-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("l1", "legacy"), options));
+
+        var received = new List<(TestRequest Payload, QueueMessageEnvelope<TestRequest>? Envelope)>();
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        _ = mq.SubscribeToQueueAsync<TestRequest>(
+            "typed-test", (payload, envelope) => {
+                received.Add((payload, envelope));
+                return Task.FromResult(false);
+            }, options, cts.Token);
+
+        for (var i = 0; i < 50 && received.Count < 2; i++)
+            await Task.Delay(50, cts.Token);
+
+        Assert.Equal(2, received.Count);
+        Assert.Equal("e1", received[0].Payload.Id);
+        Assert.NotNull(received[0].Envelope);
+        Assert.Equal("trace-1", received[0].Envelope!.TraceId);
+        Assert.Equal("l1", received[1].Payload.Id);
+        Assert.Null(received[1].Envelope);
+    }
+
+    [Fact]
+    public async Task SubscribeToQueueAsync_acks_unparseable_messages_instead_of_looping()
+    {
+        using var mq = new InMemoryMqService();
+        await mq.ConnectAsync(TestContext.Current.CancellationToken);
+        await mq.CreateQueue("typed-poison-test", ct: TestContext.Current.CancellationToken);
+        await mq.SendToQueue("typed-poison-test", Encoding.UTF8.GetBytes("not json at all"));
+        await mq.SendToQueue("typed-poison-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("ok", "good"), new JsonSerializerOptions()));
+
+        var received = new List<TestRequest>();
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        _ = mq.SubscribeToQueueAsync<TestRequest>(
+            "typed-poison-test", (payload, _) => {
+                received.Add(payload);
+                return Task.FromResult(false);
+            }, new() { PropertyNameCaseInsensitive = true }, cts.Token);
+
+        for (var i = 0; i < 50 && received.Count < 1; i++)
+            await Task.Delay(50, cts.Token);
+
+        // The poison message is dropped (acked) — only the valid one reaches the handler, and the queue drains to empty instead of redelivering forever.
+        await Task.Delay(200, cts.Token);
+        Assert.Single(received);
+        Assert.Equal("ok", received[0].Id);
+        var remaining = await mq.PeekQueueMessages("typed-poison-test", ct: cts.Token);
+        Assert.Empty(remaining);
     }
 }

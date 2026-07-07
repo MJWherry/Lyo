@@ -28,4 +28,35 @@ public static class QueueMessageExtensions
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, options);
         return mqService.SendToQueue(queueName, bytes);
     }
+
+    /// <summary>
+    /// Subscribes to a queue with typed message handling — the consuming counterpart of <see cref="SendToQueueWithEnvelopeAsync{T}" />. Messages are deserialized with the
+    /// same autocorrect ladder used by <see cref="QueueWorkerBase{TRequest, TResult}" /> (full envelope → payload-only → bare legacy <typeparamref name="T" />), so enveloped
+    /// and legacy producers are both supported. Messages that cannot be deserialized by any path are acknowledged (dropped) instead of being redelivered forever.
+    /// </summary>
+    /// <param name="mqService">The message queue service.</param>
+    /// <param name="queueName">The queue to subscribe to.</param>
+    /// <param name="handler">
+    /// Receives the deserialized payload and the envelope (null for legacy non-enveloped messages). Return true to requeue the message, false to acknowledge it.
+    /// </param>
+    /// <param name="serializerOptions">Optional serializer options.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the subscription was established.</returns>
+    public static Task<bool> SubscribeToQueueAsync<T>(
+        this IMqService mqService,
+        string queueName,
+        Func<T, QueueMessageEnvelope<T>?, Task<bool>> handler,
+        JsonSerializerOptions? serializerOptions = null,
+        CancellationToken ct = default)
+    {
+        var options = serializerOptions ?? new JsonSerializerOptions();
+        return mqService.SubscribeToQueue(
+            queueName, messageBytes => {
+                if (QueueWorkerHelpers.TryDeserializeMessage<T>(messageBytes, options, out var payload, out var envelope) && payload is not null)
+                    return handler(payload, envelope);
+
+                // Poison: never hand it back to the broker — that would redeliver the same unparseable bytes forever.
+                return Task.FromResult(false);
+            }, ct);
+    }
 }

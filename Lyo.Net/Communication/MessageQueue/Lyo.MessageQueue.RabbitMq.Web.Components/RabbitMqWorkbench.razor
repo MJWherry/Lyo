@@ -123,6 +123,36 @@
                                     </MudStack>
                                 </MudStack>
                             </MudTabPanel>
+                            <MudTabPanel Text="Stats">
+                                <MudStack Spacing="3" Class="pt-3">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Live queue statistics from the management API (message counts, consumers, state).
+                                    </MudText>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" OnClick="RefreshQueueStatsAsync" Disabled="@_busy">Refresh Stats</MudButton>
+                                    </MudStack>
+                                    @if (_queueStats.Count > 0) {
+                                        <MudTable Items="_queueStats" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                                            <HeaderContent>
+                                                <MudTh>Queue</MudTh>
+                                                <MudTh>State</MudTh>
+                                                <MudTh Style="text-align:right">Messages</MudTh>
+                                                <MudTh Style="text-align:right">Ready</MudTh>
+                                                <MudTh Style="text-align:right">Unacked</MudTh>
+                                                <MudTh Style="text-align:right">Consumers</MudTh>
+                                            </HeaderContent>
+                                            <RowTemplate>
+                                                <MudTd DataLabel="Queue">@context.Name</MudTd>
+                                                <MudTd DataLabel="State">@(context.State ?? "-")</MudTd>
+                                                <MudTd DataLabel="Messages" Style="text-align:right">@context.Messages</MudTd>
+                                                <MudTd DataLabel="Ready" Style="text-align:right">@context.MessagesReady</MudTd>
+                                                <MudTd DataLabel="Unacked" Style="text-align:right">@context.MessagesUnacknowledged</MudTd>
+                                                <MudTd DataLabel="Consumers" Style="text-align:right">@context.Consumers</MudTd>
+                                            </RowTemplate>
+                                        </MudTable>
+                                    }
+                                </MudStack>
+                            </MudTabPanel>
                         </MudTabs>
                     </MudPaper>
                 </MudStack>
@@ -160,6 +190,7 @@
     private bool _queueDurable = true;
     private bool _queueExclusive;
     private string _queueName = "test.gateway.queue";
+    private List<MessageQueueInfo> _queueStats = [];
     private string _routingKey = "test.gateway";
     private string _statusMessage = string.Empty;
     private bool _wrapInEnvelope;
@@ -351,6 +382,21 @@
         try {
             _peekedMessages = (await MqService.PeekQueueMessages(_queueName, _peekCount)).ToList();
             SetDetails("Peek Messages", true, [Detail("Queue", _queueName), Detail("Requested", _peekCount.ToString()), Detail("Returned", _peekedMessages.Count.ToString()), Detail("Ack Mode", "Requeue (no ack/remove)")]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task RefreshQueueStatsAsync()
+    {
+        _busy = true;
+        try {
+            _queueStats = (await MqService.GetAllQueuesInfoAsync()).ToList();
+            SetDetails("Queue Stats", true, [Detail("Queues", _queueStats.Count.ToString()), Detail("Total Messages", _queueStats.Sum(q => q.Messages).ToString()), Detail("Total Consumers", _queueStats.Sum(q => q.Consumers).ToString())]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);

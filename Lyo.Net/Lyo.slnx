@@ -352,6 +352,7 @@
     <Folder Name="/Communication/MessageQueue/">
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue/Lyo.MessageQueue.csproj"/>
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/Lyo.MessageQueue.RabbitMq.csproj"/>
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Tests/Lyo.MessageQueue.RabbitMq.Tests.csproj"/>
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.Tests/Lyo.MessageQueue.Tests.csproj"/>
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.Web.Components/Lyo.MessageQueue.Web.Components.csproj"/>
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Web.Components/Lyo.MessageQueue.RabbitMq.Web.Components.csproj"/>

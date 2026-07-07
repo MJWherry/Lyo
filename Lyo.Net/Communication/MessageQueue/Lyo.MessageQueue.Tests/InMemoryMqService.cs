@@ -4,8 +4,8 @@ using Lyo.Health;
 
 namespace Lyo.MessageQueue.Tests;
 
-/// <summary>In-memory IMqService implementation for unit testing without external dependencies.</summary>
-public sealed class InMemoryMqService : IMqService, IDisposable
+/// <summary>In-memory IMqService implementation for unit testing without external dependencies. Delay-capable so retry backoff paths can be tested without a broker.</summary>
+public sealed class InMemoryMqService : IMqService, IDelayedMqService, IDisposable
 {
     private readonly ConcurrentDictionary<string, ConcurrentQueue<byte[]>> _queues = new();
     private bool _connected;
@@ -60,6 +60,20 @@ public sealed class InMemoryMqService : IMqService, IDisposable
     {
         var queue = _queues.GetOrAdd(queueName, _ => new());
         queue.Enqueue(data);
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
+    {
+        if (delay <= TimeSpan.Zero)
+            return SendToQueue(queueName, data);
+
+        _ = Task.Run(
+            async () => {
+                await Task.Delay(delay, ct);
+                await SendToQueue(queueName, data);
+            }, ct);
+
         return Task.FromResult(true);
     }
 

@@ -3,6 +3,15 @@ namespace Lyo.MessageQueue.RabbitMq;
 /// <summary>Consolidated constants for the RabbitMQ message queue library.</summary>
 public static class Constants
 {
+    /// <summary>Consumer dispatch concurrency applied to subscription channels when the queue has no processing limit (0 = unlimited). Bounds handler parallelism per channel without acting as backpressure.</summary>
+    public const ushort UnlimitedDispatchConcurrency = 32;
+
+    /// <summary>Suffix appended to a queue name to derive its companion delay wait queue (TTL + dead-letter pattern).</summary>
+    public const string WaitQueueSuffix = ".wait";
+
+    /// <summary>Suffix appended to a queue name to derive its companion dead-letter queue.</summary>
+    public const string DeadLetterQueueSuffix = ".dlq";
+
     /// <summary>Metric names and tags.</summary>
     public static class Metrics
     {
@@ -10,6 +19,10 @@ public static class Constants
         public const string ConnectionFailed = "mq.connection.failed";
         public const string ConnectionClosed = "mq.connection.closed";
         public const string ConnectionLost = "mq.connection.lost";
+        public const string ConnectionRecovered = "mq.connection.recovered";
+
+        public const string PublishUnconfirmed = "mq.publish.unconfirmed";
+        public const string SendToQueueDelayed = "mq.queue.send.delayed";
 
         public const string QueueOperationDuration = "mq.queue.operation.duration";
         public const string QueueOperationDurationMs = "mq.queue.operation.duration_ms";

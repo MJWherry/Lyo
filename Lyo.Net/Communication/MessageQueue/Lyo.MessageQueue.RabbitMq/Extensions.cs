@@ -20,7 +20,10 @@ public static class Extensions
                 UserName = options.Username,
                 Password = options.Password,
                 ClientProvidedName = $"{Environment.MachineName} - {environment.ApplicationName} ({environment.EnvironmentName})",
-                ClientProperties = connectionProperties ?? []
+                ClientProperties = connectionProperties ?? [],
+                AutomaticRecoveryEnabled = options.AutomaticRecovery,
+                TopologyRecoveryEnabled = options.AutomaticRecovery,
+                NetworkRecoveryInterval = options.NetworkRecoveryInterval
             };
 
             return factory;

@@ -40,7 +40,12 @@ internal sealed class ConfigurableTestQueueWorker : QueueWorkerBase<TestRequest,
         QueueWorkerOptions? workerOptions = null)
         : base(
             mqService, queueName, NullLogger.Instance, null, new() { PropertyNameCaseInsensitive = true }, maxRequeueCount ?? workerOptions?.DefaultMaxRequeueCount, dlqName)
-        => _behavior = behavior;
+    {
+        _behavior = behavior;
+
+        // Mirror the DI registration path: RequeueDelay comes from options post-construction. Tests default to no delay to stay fast.
+        RequeueDelay = workerOptions?.RequeueDelay;
+    }
 
     protected override Task<Result<TestRequest>> DoWorkAsync(TestRequest request, CancellationToken ct)
     {

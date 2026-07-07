@@ -38,11 +38,15 @@ public static class Extensions
             var eventPublisher = sp.GetRequiredService<IJobEventPublisher>();
             var logger = sp.GetService<ILogger<TWorker>>();
             var metrics = sp.GetService<IMetrics>();
-            var workerOptions = sp.GetService<QueueWorkerOptions>();
-            var effectiveMaxRequeue = maxRequeueCount ?? (workerOptions ?? new QueueWorkerOptions()).DefaultMaxRequeueCount;
+            var workerOptions = sp.GetService<QueueWorkerOptions>() ?? new QueueWorkerOptions();
+            var effectiveMaxRequeue = maxRequeueCount ?? workerOptions.DefaultMaxRequeueCount;
             var effectiveDlqName = dlqName ?? $"{Models.Constants.Mq.QueueGetJobRunCreated(workerType)}.dlq";
-            return (TWorker)Activator.CreateInstance(
+            var worker = (TWorker)Activator.CreateInstance(
                 typeof(TWorker), mqService, apiClient, eventPublisher, workerType, apiBaseUrl, logger, metrics, effectiveMaxRequeue, effectiveDlqName)!;
+
+            // Set post-construction (not via ctor) to preserve the QueueWorkerBase constructor signature for binary compatibility.
+            worker.RequeueDelay = workerOptions.RequeueDelay;
+            return worker;
         });
 
         services.AddHostedService(sp => sp.GetRequiredService<TWorker>());

@@ -149,6 +149,13 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// <summary>Gets a value indicating whether the worker is currently running.</summary>
     public bool IsRunning { get; private set; }
 
+    /// <summary>
+    /// Base delay between retry attempts, scaled linearly by the attempt number. Only honored when the transport supports delayed delivery (<see cref="IDelayedMqService" />);
+    /// otherwise retries republish immediately. Null or zero = no delay. Set by DI registration (e.g. <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.RequeueDelay" />)
+    /// rather than the constructor to preserve binary compatibility; workers may also set it directly.
+    /// </summary>
+    public TimeSpan? RequeueDelay { get; set; }
+
     /// <summary>Milliseconds to wait during <see cref="StopAsync" /> for in-flight messages to complete before giving up. Defaults to 30 000 ms (30 seconds).</summary>
     protected virtual int DrainTimeoutMs => 30_000;
 
@@ -352,7 +359,17 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
         var requeuedEnvelope = envelope with { RequeueCount = envelope.RequeueCount + 1 };
         var requeueBytes = JsonSerializer.SerializeToUtf8Bytes(requeuedEnvelope, SerializerOptions);
-        await MqService.SendToQueue(QueueName, requeueBytes).ConfigureAwait(false);
+
+        // Linear backoff (base delay x attempt number) via broker-side delayed delivery when the transport supports it.
+        // Transports without delay support republish immediately — an in-process wait here would hold a prefetch slot for the whole delay.
+        if (RequeueDelay is { } baseDelay && baseDelay > TimeSpan.Zero && MqService is IDelayedMqService delayedMqService) {
+            var delay = TimeSpan.FromTicks(baseDelay.Ticks * requeuedEnvelope.RequeueCount);
+            await delayedMqService.SendToQueueDelayed(QueueName, requeueBytes, delay).ConfigureAwait(false);
+            Metrics.IncrementCounter("queue.worker.messages.requeued.delayed", tags: [("queue", QueueName)]);
+        }
+        else
+            await MqService.SendToQueue(QueueName, requeueBytes).ConfigureAwait(false);
+
         Metrics.IncrementCounter("queue.worker.messages.requeued", tags: [("queue", QueueName)]);
         return false;
     }
