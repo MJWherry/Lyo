@@ -20,6 +20,12 @@ public sealed class JobBlackoutWindowReq
 
     public DayFlags DayFlags { get; set; }
 
+    /// <summary>UTC calendar date when this window starts applying. When set with <see cref="EndDateUtc" />, overrides <see cref="DayFlags" />.</summary>
+    public DateTime? StartDateUtc { get; set; }
+
+    /// <summary>UTC calendar date when this window stops applying. Null = same day as <see cref="StartDateUtc" />.</summary>
+    public DateTime? EndDateUtc { get; set; }
+
     public TimeOnly StartTime { get; set; }
 
     public TimeOnly EndTime { get; set; }
@@ -28,5 +34,8 @@ public sealed class JobBlackoutWindowReq
 
     public bool Enabled { get; set; } = true;
 
-    public override string ToString() => $"{Name} {DayFlags} {StartTime}-{EndTime} ({Policy})";
+    public override string ToString()
+        => StartDateUtc.HasValue
+            ? $"{Name} {StartDateUtc:yyyy-MM-dd}{(EndDateUtc.HasValue && EndDateUtc != StartDateUtc ? $"..{EndDateUtc:yyyy-MM-dd}" : "")} {StartTime}-{EndTime} ({Policy})"
+            : $"{Name} {DayFlags} {StartTime}-{EndTime} ({Policy})";
 }

@@ -69,6 +69,8 @@ public partial class JobContext : DbContext
             entity.Property(e => e.JobBlackoutCalendarId).HasColumnName("job_blackout_calendar_id");
             entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
+            entity.Property(e => e.StartDateUtc).HasColumnType("timestamp with time zone").HasColumnName("start_date_utc");
+            entity.Property(e => e.EndDateUtc).HasColumnType("timestamp with time zone").HasColumnName("end_date_utc");
             entity.Property(e => e.StartTime).HasMaxLength(8).HasColumnName("start_time");
             entity.Property(e => e.EndTime).HasMaxLength(8).HasColumnName("end_time");
             entity.Property(e => e.Policy).HasMaxLength(10).HasDefaultValue(nameof(JobBlackoutPolicy.Skip)).HasColumnName("policy");

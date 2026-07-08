@@ -1,5 +1,6 @@
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Query.Models.Enums;
@@ -55,7 +56,52 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
     {
         var builder = new JobScheduleBuilder();
         configureSchedule(builder);
-        _request.CreateSchedules.Add(builder.Build());
+        _request.CreateSchedules.Add(ApplyScheduleBlackoutDefaults(builder.Build()));
+        return this;
+    }
+
+    /// <summary>Links an existing blackout calendar to every schedule on this definition (unless a schedule overrides it).</summary>
+    public JobDefinitionBuilder WithBlackoutCalendar(Guid jobBlackoutCalendarId)
+    {
+        _request.JobBlackoutCalendarId = jobBlackoutCalendarId;
+        _request.CreateBlackoutCalendar = null;
+        CascadeBlackoutToExistingSchedules();
+        return this;
+    }
+
+    /// <summary>Creates an inline blackout calendar on this definition and applies it to every schedule (unless a schedule overrides it).</summary>
+    public JobDefinitionBuilder WithBlackoutCalendar(string name, Action<JobBlackoutCalendarBuilder> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var builder = JobBlackoutCalendarBuilder.New(name);
+        configure(builder);
+        _request.CreateBlackoutCalendar = builder.Build();
+        _request.JobBlackoutCalendarId = null;
+        CascadeBlackoutToExistingSchedules();
+        return this;
+    }
+
+    /// <summary>Creates an inline blackout calendar on this definition and applies it to every schedule (unless a schedule overrides it).</summary>
+    public JobDefinitionBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure)
+        => WithBlackoutCalendar("Blackout", configure);
+
+    /// <summary>Adds a do-not-run window to the definition-level inline blackout calendar.</summary>
+    public JobDefinitionBuilder AddBlackoutWindow(string name, DayFlags days, string startTime, string endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+        => AddBlackoutWindow(name, days, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, enabled);
+
+    /// <summary>Adds a do-not-run window to the definition-level inline blackout calendar.</summary>
+    public JobDefinitionBuilder AddBlackoutWindow(string name, DayFlags days, TimeOnly startTime, TimeOnly endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    {
+        EnsureDefinitionBlackoutCalendar();
+        _request.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(new() {
+            Name = name,
+            DayFlags = days,
+            StartTime = startTime,
+            EndTime = endTime,
+            Policy = policy,
+            Enabled = enabled
+        });
+        CascadeBlackoutToExistingSchedules();
         return this;
     }
 
@@ -70,7 +116,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
             Type = ScheduleType.SetTimes
         };
 
-        _request.CreateSchedules.Add(schedule);
+        _request.CreateSchedules.Add(ApplyScheduleBlackoutDefaults(schedule));
         return this;
     }
 
@@ -87,7 +133,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
             Description = description
         };
 
-        _request.CreateSchedules.Add(schedule);
+        _request.CreateSchedules.Add(ApplyScheduleBlackoutDefaults(schedule));
         return this;
     }
 
@@ -254,7 +300,41 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
         return this;
     }
 
-    public JobDefinitionReq Build() => _request;
+    public JobDefinitionReq Build()
+    {
+        for (var i = 0; i < _request.CreateSchedules.Count; i++)
+            _request.CreateSchedules[i] = ApplyScheduleBlackoutDefaults(_request.CreateSchedules[i]);
+
+        return _request;
+    }
 
     public static JobDefinitionBuilder New(string definitionName, string? description = null) => new(definitionName, description);
+
+    private void EnsureDefinitionBlackoutCalendar()
+    {
+        _request.CreateBlackoutCalendar ??= new() { Name = "Blackout", Enabled = true };
+        _request.JobBlackoutCalendarId = null;
+    }
+
+    private void CascadeBlackoutToExistingSchedules()
+    {
+        for (var i = 0; i < _request.CreateSchedules.Count; i++)
+            _request.CreateSchedules[i] = ApplyScheduleBlackoutDefaults(_request.CreateSchedules[i]);
+    }
+
+    private JobScheduleReq ApplyScheduleBlackoutDefaults(JobScheduleReq schedule)
+    {
+        if (schedule.JobBlackoutCalendarId.HasValue || HasScheduleInlineBlackoutOverride(schedule))
+            return schedule;
+
+        if (_request.JobBlackoutCalendarId.HasValue)
+            schedule.JobBlackoutCalendarId = _request.JobBlackoutCalendarId;
+        else if (_request.CreateBlackoutCalendar != null)
+            schedule.CreateBlackoutCalendar = _request.CreateBlackoutCalendar;
+
+        return schedule;
+    }
+
+    private bool HasScheduleInlineBlackoutOverride(JobScheduleReq schedule)
+        => schedule.CreateBlackoutCalendar != null && !ReferenceEquals(schedule.CreateBlackoutCalendar, _request.CreateBlackoutCalendar);
 }

@@ -81,6 +81,10 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("character varying(51)")
                         .HasColumnName("day_flags");
 
+                    b.Property<DateTime?>("EndDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date_utc");
+
                     b.Property<bool>("Enabled")
                         .HasColumnType("boolean")
                         .HasColumnName("enabled");
@@ -114,6 +118,10 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
                         .HasColumnName("start_time");
+
+                    b.Property<DateTime?>("StartDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date_utc");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")

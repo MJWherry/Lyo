@@ -26,7 +26,7 @@ internal static class JobBlackoutCalendarEvaluator
         var dayFlag = GetDayFlagForDate(local);
 
         foreach (var window in calendar.BlackoutWindows.Where(w => w.Enabled)) {
-            if (!window.DayFlags.HasFlag(dayFlag))
+            if (!MatchesWindowDate(window, local, dayFlag))
                 continue;
 
             var windowStart = local.Date + window.StartTime.ToTimeSpan();
@@ -45,6 +45,18 @@ internal static class JobBlackoutCalendarEvaluator
         }
 
         return slotUtc;
+    }
+
+    private static bool MatchesWindowDate(JobBlackoutWindowRes window, DateTime local, DayFlags dayFlag)
+    {
+        if (window.StartDateUtc.HasValue) {
+            var start = window.StartDateUtc.Value.Date;
+            var end = (window.EndDateUtc ?? window.StartDateUtc).Value.Date;
+            var localDate = local.Date;
+            return localDate >= start && localDate <= end;
+        }
+
+        return window.DayFlags.HasFlag(dayFlag);
     }
 
     private static DayFlags GetDayFlagForDate(DateTime date) => (DayFlags)(1 << (int)date.DayOfWeek);

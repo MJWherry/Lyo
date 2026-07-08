@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
     </ItemGroup>

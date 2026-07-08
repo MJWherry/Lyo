@@ -170,6 +170,8 @@ namespace Lyo.Job.Postgres.Migrations
                     job_blackout_calendar_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     day_flags = table.Column<string>(type: "character varying(51)", maxLength: 51, nullable: false),
+                    start_date_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    end_date_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     start_time = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     end_time = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     policy = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false, defaultValue: "Skip"),

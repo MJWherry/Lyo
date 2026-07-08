@@ -47,6 +47,9 @@ public sealed class JobScheduleReq
     /// <summary>Optional blackout calendar whose do-not-run windows apply to this schedule.</summary>
     public Guid? JobBlackoutCalendarId { get; set; }
 
+    /// <summary>Inline blackout calendar to create and link when this schedule is persisted. Mutually exclusive with <see cref="JobBlackoutCalendarId" />.</summary>
+    public JobBlackoutCalendarReq? CreateBlackoutCalendar { get; set; }
+
     public string? Description { get; set; }
 
     public bool Enabled { get; set; } = true;

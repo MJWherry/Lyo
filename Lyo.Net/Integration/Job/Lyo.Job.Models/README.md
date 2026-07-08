@@ -20,7 +20,7 @@ Definitions, schedules, and runs carry the knobs that power priority dispatch, r
 | Rate limiting | `JobDefinitionReq.MaxRunsPerHour` |
 | SLA | `ExpectedDurationMinutes`, `MustStartByMinutes`; run flag `JobRunRes.SlaBreached` |
 | Alerting | `AlertOnFailure`, `AlertAfterConsecutiveFailures`, `AlertWebhookUrl`; `JobAlertType` |
-| Blackout calendars | `JobBlackoutCalendarReq`, `JobBlackoutWindowReq`, `JobScheduleReq.JobBlackoutCalendarId` |
+| Blackout calendars | `JobBlackoutCalendarReq`, `JobBlackoutWindowReq`, `JobDefinitionReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (definition default for all schedules), `JobScheduleReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (per-schedule override) |
 | Batch jobs | `ParentJobRunId`, `BatchIndex`, `BatchTotal`; `JobCreateChildRunsReq` |
 | Workflows | `JobWorkflowReq`, `JobWorkflowStepReq`, `JobWorkflowRunReq`, … |
 | Encryption | `JobParameterReq.EncryptedValue`, `IJobParameterEncryptionService` |
@@ -94,9 +94,10 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 
 Fluent factories for assembling request DTOs without dropping into raw initializers.
 
-- **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers, email-parameter helpers. `Build()` returns `JobDefinitionReq`.
-- **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `Build()` → `JobScheduleReq`.
-- **`JobBlackoutCalendarBuilder`** — `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`). `Build()` → `JobBlackoutCalendarReq`.
+- **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers, email-parameter helpers. `WithBlackoutCalendar` / `AddBlackoutWindow` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns `JobDefinitionReq`.
+- **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`, `AddBlackoutWindow`, `Build()` → `JobScheduleReq`.
+- **`JobBlackoutCalendarBuilder`** — `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` / `AddFederalHolidayBlackouts()` expand `Lyo.DateAndTime.HolidayInfo` records into concrete dated windows at build time. `Build()` → `JobBlackoutCalendarReq`.
+- **`JobScheduleBuilder.WithBlackoutCalendar`** — per-schedule override: link by `Guid`, or inline create via `Action<JobBlackoutCalendarBuilder>`.
 - **`JobWorkflowBuilder`** — ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.
 - **`JobTriggerBuilder`**, **`JobRunBuilder`**, **`JobRunResultBuilder`** — as before; `JobRunBuilder` supports `AddEncryptedParameter`.
 

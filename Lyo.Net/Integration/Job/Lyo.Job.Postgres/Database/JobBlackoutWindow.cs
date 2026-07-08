@@ -17,6 +17,12 @@ public class JobBlackoutWindow
     [MaxLength(51)]
     public string DayFlags { get; set; } = null!;
 
+    /// <summary>UTC calendar date when this window starts applying. When set, overrides <see cref="DayFlags" />.</summary>
+    public DateTime? StartDateUtc { get; set; }
+
+    /// <summary>UTC calendar date when this window stops applying.</summary>
+    public DateTime? EndDateUtc { get; set; }
+
     [Required]
     [MaxLength(8)]
     public string StartTime { get; set; } = null!;

@@ -20,4 +20,6 @@ public sealed record JobBlackoutWindowRes(
     TimeOnly StartTime,
     TimeOnly EndTime,
     JobBlackoutPolicy Policy,
-    bool Enabled);
+    bool Enabled,
+    DateTime? StartDateUtc = null,
+    DateTime? EndDateUtc = null);

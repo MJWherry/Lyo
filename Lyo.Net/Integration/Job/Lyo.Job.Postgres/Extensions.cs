@@ -40,7 +40,10 @@ public static class Extensions
         app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>(Constants.Rest.Job.Definitions, "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
+                    },
                     AfterCreate = ctx => JobAuditHelper.RecordCreated(ctx.Services, nameof(JobDefinition), ctx.Entity.Id),
                     BeforeUpdate = ctx => {
                         ctx.Entity.DefinitionVersion++;
@@ -95,7 +98,10 @@ public static class Extensions
         app.CreateBuilder<JobContext, JobSchedule, JobScheduleReq, JobScheduleRes, Guid>($"{Constants.Rest.Job.Schedules}", "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
+                    },
                     AfterCreate = ctx => {
                         JobAuditHelper.RecordCreated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
@@ -356,14 +362,17 @@ public static class Extensions
             .Map(to => to.JobParameters, from => from.CreateParameters)
             .Map(to => to.JobSchedules, from => from.CreateSchedules)
             .Map(to => to.JobTriggerJobDefinitions, from => from.CreateTriggers)
-            .Map(to => to.RetryBackoffType, from => from.RetryBackoffType.ToString());
+            .Map(to => to.RetryBackoffType, from => from.RetryBackoffType.ToString())
+            .AfterMapping((src, dest) => JobBlackoutCalendarEntityHelper.ApplyDefinitionBlackoutDefaults(src, dest));
 
         config.NewConfig<JobScheduleReq, JobSchedule>()
             .Map(dest => dest.Times, src => (src.Times ?? Enumerable.Empty<TimeOnly>()).Select(i => i.ToString()).ToList())
             .Map(dest => dest.Type, src => src.Type.ToString())
             .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
             .Map(dest => dest.MonthFlags, src => src.MonthFlags.ToString())
-            .Map(dest => dest.MisfirePolicy, src => src.MisfirePolicy.ToString());
+            .Map(dest => dest.MisfirePolicy, src => src.MisfirePolicy.ToString())
+            .Map(to => to.JobBlackoutCalendar, from => from.CreateBlackoutCalendar)
+            .Map(to => to.JobBlackoutCalendarId, from => from.JobBlackoutCalendarId);
 
         config.NewConfig<JobTriggerReq, JobTrigger>()
             .Map(dest => dest.TriggerComparator, from => from.Comparison)
@@ -399,7 +408,7 @@ public static class Extensions
                         src.JobBlackoutCalendar.Id, src.JobBlackoutCalendar.Name, src.JobBlackoutCalendar.Description, src.JobBlackoutCalendar.Enabled,
                         src.JobBlackoutCalendar.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
                                 w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
-                                Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
+                                Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled, w.StartDateUtc, w.EndDateUtc))
                             .ToList())));
 
         config.NewConfig<JobBlackoutCalendar, JobBlackoutCalendarRes>()
@@ -407,13 +416,13 @@ public static class Extensions
                 src.Id, src.Name, src.Description, src.Enabled,
                 src.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
                         w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
-                        Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled))
+                        Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled, w.StartDateUtc, w.EndDateUtc))
                     .ToList()));
 
         config.NewConfig<JobBlackoutWindow, JobBlackoutWindowRes>()
             .MapWith(src => new(
                 src.Id, src.JobBlackoutCalendarId, src.Name, Enum.Parse<DayFlags>(src.DayFlags), TimeOnly.Parse(src.StartTime), TimeOnly.Parse(src.EndTime),
-                Enum.Parse<JobBlackoutPolicy>(src.Policy), src.Enabled));
+                Enum.Parse<JobBlackoutPolicy>(src.Policy), src.Enabled, src.StartDateUtc, src.EndDateUtc));
 
         config.NewConfig<JobWorkflow, JobWorkflowRes>()
             .MapWith(src => new(

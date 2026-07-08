@@ -1,4 +1,5 @@
 using Lyo.Common.Enums;
+using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Schedule.Models;
@@ -129,10 +130,45 @@ public class JobScheduleBuilder
         return this;
     }
 
-    /// <summary>Associates a blackout calendar whose do-not-run windows apply to this schedule.</summary>
+    /// <summary>Associates an existing blackout calendar by id.</summary>
     public JobScheduleBuilder WithBlackoutCalendar(Guid jobBlackoutCalendarId)
     {
         _schedule.JobBlackoutCalendarId = jobBlackoutCalendarId;
+        _schedule.CreateBlackoutCalendar = null;
+        return this;
+    }
+
+    /// <summary>Creates and links a new inline blackout calendar when this schedule is persisted.</summary>
+    public JobScheduleBuilder WithBlackoutCalendar(string name, Action<JobBlackoutCalendarBuilder> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var builder = JobBlackoutCalendarBuilder.New(name);
+        configure(builder);
+        _schedule.CreateBlackoutCalendar = builder.Build();
+        _schedule.JobBlackoutCalendarId = null;
+        return this;
+    }
+
+    /// <summary>Creates and links a new inline blackout calendar when this schedule is persisted.</summary>
+    public JobScheduleBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure)
+        => WithBlackoutCalendar("Blackout", configure);
+
+    /// <summary>Adds a do-not-run window to this schedule's inline blackout calendar.</summary>
+    public JobScheduleBuilder AddBlackoutWindow(string name, DayFlags days, string startTime, string endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+        => AddBlackoutWindow(name, days, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, enabled);
+
+    /// <summary>Adds a do-not-run window to this schedule's inline blackout calendar.</summary>
+    public JobScheduleBuilder AddBlackoutWindow(string name, DayFlags days, TimeOnly startTime, TimeOnly endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    {
+        EnsureScheduleBlackoutCalendar();
+        _schedule.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(new() {
+            Name = name,
+            DayFlags = days,
+            StartTime = startTime,
+            EndTime = endTime,
+            Policy = policy,
+            Enabled = enabled
+        });
         return this;
     }
 
@@ -141,4 +177,10 @@ public class JobScheduleBuilder
 
     /// <summary>Builds a ScheduleDefinition for use with Lyo.Scheduler.AddSchedule.</summary>
     public ScheduleDefinition BuildScheduleDefinition() => _schedule.ToScheduleDefinition();
+
+    private void EnsureScheduleBlackoutCalendar()
+    {
+        _schedule.CreateBlackoutCalendar ??= new() { Name = "Blackout", Enabled = true };
+        _schedule.JobBlackoutCalendarId = null;
+    }
 }

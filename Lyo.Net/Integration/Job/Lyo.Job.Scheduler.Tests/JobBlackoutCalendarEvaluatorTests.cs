@@ -63,6 +63,63 @@ public class JobBlackoutCalendarEvaluatorTests
         Assert.Equal(new DateTime(2026, 7, 8, 6, 0, 0, DateTimeKind.Utc), result);
     }
 
+    [Fact]
+    public void AdjustSlotForBlackout_WhenDatedWindowMatches_SkipsSlot()
+    {
+        var slot = new DateTime(2026, 12, 25, 10, 0, 0, DateTimeKind.Utc);
+        var calendar = CreateDatedCalendar(JobBlackoutPolicy.Skip, new DateTime(2026, 12, 25, 0, 0, 0, DateTimeKind.Utc));
+
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void AdjustSlotForBlackout_WhenDatedWindowDoesNotMatch_ReturnsOriginalSlot()
+    {
+        var slot = new DateTime(2026, 7, 7, 10, 0, 0, DateTimeKind.Utc);
+        var calendar = CreateDatedCalendar(JobBlackoutPolicy.Skip, new DateTime(2026, 12, 25, 0, 0, 0, DateTimeKind.Utc));
+
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+
+        Assert.Equal(slot, result);
+    }
+
+    [Fact]
+    public void AdjustSlotForBlackout_WhenObservedHolidayDateMatches_SkipsSlot()
+    {
+        // July 4 2026 is Saturday; observed Friday July 3.
+        var slot = new DateTime(2026, 7, 3, 10, 0, 0, DateTimeKind.Utc);
+        var calendar = CreateDatedCalendar(JobBlackoutPolicy.Skip, new DateTime(2026, 7, 3, 0, 0, 0, DateTimeKind.Utc));
+
+        var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
+
+        Assert.Null(result);
+    }
+
+    private static JobBlackoutCalendarRes CreateDatedCalendar(JobBlackoutPolicy policy, DateTime dateUtc)
+    {
+        var calendarId = Guid.NewGuid();
+        return new JobBlackoutCalendarRes(
+            calendarId,
+            "Dated calendar",
+            null,
+            true,
+            [
+                new JobBlackoutWindowRes(
+                    Guid.NewGuid(),
+                    calendarId,
+                    "Holiday",
+                    DayFlags.EveryDay,
+                    TimeOnly.Parse("00:00"),
+                    TimeOnly.Parse("23:59"),
+                    policy,
+                    true,
+                    dateUtc,
+                    dateUtc)
+            ]);
+    }
+
     private static JobBlackoutCalendarRes CreateCalendar(JobBlackoutPolicy policy, string start, string end)
     {
         var calendarId = Guid.NewGuid();

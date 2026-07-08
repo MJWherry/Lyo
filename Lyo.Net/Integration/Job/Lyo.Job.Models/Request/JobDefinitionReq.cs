@@ -61,6 +61,12 @@ public sealed class JobDefinitionReq
     /// <summary>Optional webhook URL to POST alert payloads to.</summary>
     public string? AlertWebhookUrl { get; set; }
 
+    /// <summary>Default blackout calendar id applied to every schedule unless a schedule sets its own.</summary>
+    public Guid? JobBlackoutCalendarId { get; set; }
+
+    /// <summary>Inline default blackout calendar applied to every schedule unless a schedule sets its own.</summary>
+    public JobBlackoutCalendarReq? CreateBlackoutCalendar { get; set; }
+
     public List<JobParameterReq> CreateParameters { get; set; } = [];
 
     public List<JobScheduleReq> CreateSchedules { get; set; } = [];
