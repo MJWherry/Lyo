@@ -17,20 +17,21 @@ public sealed class SampleRecord
 
     public DateTime CreatedAt { get; set; }
 
-    public static List<SampleRecord> Generate(int count)
+    public static List<SampleRecord> Generate(int count, int startId = 0)
     {
         var rows = new List<SampleRecord>(count);
         var baseDate = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         for (var i = 0; i < count; i++) {
+            var id = startId + i;
             rows.Add(
                 new() {
-                    Id = i,
-                    Name = $"Person {i}",
-                    Email = $"person{i}@example.com",
-                    Age = 18 + i % 60,
-                    Balance = 100.50m + i,
-                    IsActive = i % 2 == 0,
-                    CreatedAt = baseDate.AddMinutes(i)
+                    Id = id,
+                    Name = $"Person {id}",
+                    Email = $"person{id}@example.com",
+                    Age = 18 + id % 60,
+                    Balance = 100.50m + id,
+                    IsActive = id % 2 == 0,
+                    CreatedAt = baseDate.AddMinutes(id)
                 });
         }
 
