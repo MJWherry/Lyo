@@ -1,3 +1,4 @@
+@using System.IO.Compression
 @using System.Text
 @using System.Text.Json
 @using System.Text.Json.Nodes
@@ -21,7 +22,7 @@
         <div>
             <MudText Typo="Typo.h5">CSV &amp; XLSX</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, merge tables, convert formats, and download results.
+                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, split or merge files, convert formats, and download results.
             </MudText>
         </div>
 
@@ -118,6 +119,59 @@
                 </MudStack>
             </MudTabPanel>
 
+            <MudTabPanel Text="Split">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Split a <strong>.csv</strong> or <strong>.xlsx</strong> into parts and download a <strong>.zip</strong>. CSV splits by row count; XLSX splits by worksheet or row count.
+                    </MudText>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                       ButtonText="Upload file to split"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnSplitUploadReadyAsync"/>
+                        @if (!string.IsNullOrEmpty(_splitFileName)) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_splitFileName</MudText>
+                        }
+                    </MudPaper>
+
+                    @if (_splitBytes != null) {
+                        @if (_splitIsXlsx) {
+                            <MudSelect T="string" @bind-Value="_splitXlsxMode" Label="XLSX split mode" Variant="Variant.Outlined">
+                                <MudSelectItem Value="@("sheet")">One file per worksheet</MudSelectItem>
+                                <MudSelectItem Value="@("rows")">By row count (first or named sheet)</MudSelectItem>
+                            </MudSelect>
+                            @if (_splitXlsxMode == "rows") {
+                                <MudTextField T="string"
+                                              @bind-Value="_splitSheetName"
+                                              Label="Worksheet name (optional; first sheet when empty)"
+                                              Variant="Variant.Outlined"/>
+                            }
+                        }
+
+                        @if (!_splitIsXlsx || _splitXlsxMode == "rows") {
+                            <MudNumericField T="int"
+                                             @bind-Value="_splitRowsPerFile"
+                                             Label="Rows per part"
+                                             Min="1"
+                                             Variant="Variant.Outlined"/>
+                        }
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SplitAndDownloadZipAsync">Split &amp; download .zip</MudButton>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_splitError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_splitError</MudAlert>
+                    }
+
+                    @if (_splitPartCount > 0) {
+                        <MudAlert Severity="Severity.Success" Dense="true">Created @_splitPartCount part(s) in the downloaded zip.</MudAlert>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
             <MudTabPanel Text="Merge">
                 <MudStack Spacing="3" Class="mt-3">
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
@@ -133,6 +187,12 @@
                         </MudItem>
                         <MudItem xs="12" md="4">
                             <MudSwitch @bind-Value="_mergeSkipFirstRowB" Color="Color.Primary" Label="Skip first row of B when merging"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="XlsxMergeMode" @bind-Value="_xlsxMergeMode" Label="XLSX merge mode" Variant="Variant.Outlined" Dense="true">
+                                <MudSelectItem Value="XlsxMergeMode.PreserveSheets">Preserve worksheets</MudSelectItem>
+                                <MudSelectItem Value="XlsxMergeMode.ConcatenateRows">Append all rows</MudSelectItem>
+                            </MudSelect>
                         </MudItem>
                     </MudGrid>
 
@@ -183,6 +243,36 @@
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedXlsxAsync">Download merged .xlsx</MudButton>
                         </MudStack>
                     }
+
+                    <MudDivider Class="my-2"/>
+
+                    <MudText Typo="Typo.subtitle2">Combine multiple files (service API)</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Upload two or more files of the same type. Uses <code>CombineCsvBytesAsync</code> or <code>MergeXlsxBytesAsync</code>.
+                    </MudText>
+
+                    <LyoFileUpload MaxFiles="20"
+                                   MaxFileSize="@MaxUploadBytes"
+                                   ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                   ButtonText="Upload files to combine"
+                                   InlineLayout="true"
+                                   OnClientFileReady="OnMultiCombineFileReadyAsync"
+                                   OnClientFileRemoved="OnMultiCombineFileRemovedAsync"/>
+
+                    @if (_multiCombineFiles.Count > 0) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_multiCombineFiles.Count file(s) selected</MudText>
+                    }
+
+                    @if (_multiCombineAllXlsx) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">XLSX merge mode uses the setting above.</MudText>
+                    }
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               OnClick="CombineMultipleAsync"
+                               Disabled="@(_multiCombineFiles.Count < 2)">
+                        Combine @_multiCombineFiles.Count file(s)
+                    </MudButton>
                 </MudStack>
             </MudTabPanel>
 
@@ -264,6 +354,22 @@
     private byte[]? _mergeBytesA;
     private byte[]? _mergeBytesB;
     private DataTable? _mergedTable;
+    private byte[]? _mergedCombinedBytes;
+    private bool _mergedCombinedIsXlsx;
+
+    private readonly List<LocalBrowserFile> _multiCombineFiles = [];
+    private XlsxMergeMode _xlsxMergeMode = XlsxMergeMode.PreserveSheets;
+    private bool _multiCombineAllXlsx => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsXlsx(f.FileName));
+    private bool _multiCombineAllCsv => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsCsv(f.FileName));
+
+    private byte[]? _splitBytes;
+    private string _splitFileName = string.Empty;
+    private bool _splitIsXlsx;
+    private string _splitXlsxMode = "sheet";
+    private int _splitRowsPerFile = 1000;
+    private string _splitSheetName = string.Empty;
+    private int _splitPartCount;
+    private string _splitError = string.Empty;
 
     private string _convertXlsxName = string.Empty;
     private byte[]? _convertXlsxBytes;
@@ -277,8 +383,9 @@
     protected override void OnInitialized()
         => _tabIndex = InitialTab switch {
             "xlsx" => 1,
-            "merge" => 2,
-            "more" => 3,
+            "split" => 2,
+            "merge" => 3,
+            "more" => 4,
             var _ => 0
         };
 
@@ -381,6 +488,7 @@
         _mergeBytesA = file.Content;
         _mergeError = string.Empty;
         _mergedTable = null;
+        _mergedCombinedBytes = null;
         return Task.CompletedTask;
     }
 
@@ -390,6 +498,34 @@
         _mergeBytesB = file.Content;
         _mergeError = string.Empty;
         _mergedTable = null;
+        _mergedCombinedBytes = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnMultiCombineFileReadyAsync(LocalBrowserFile file)
+    {
+        _multiCombineFiles.Add(file);
+        _mergeError = string.Empty;
+        _mergedTable = null;
+        _mergedCombinedBytes = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnMultiCombineFileRemovedAsync(LocalBrowserFile file)
+    {
+        _multiCombineFiles.Remove(file);
+        _mergedTable = null;
+        _mergedCombinedBytes = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnSplitUploadReadyAsync(LocalBrowserFile file)
+    {
+        _splitBytes = file.Content;
+        _splitFileName = file.FileName;
+        _splitIsXlsx = IsXlsx(file.FileName);
+        _splitError = string.Empty;
+        _splitPartCount = 0;
         return Task.CompletedTask;
     }
 
@@ -397,30 +533,151 @@
     {
         _mergeError = string.Empty;
         _mergedTable = null;
+        _mergedCombinedBytes = null;
         if (_mergeBytesA == null || _mergeBytesB == null) {
             _mergeError = "Upload both sources.";
             return;
         }
 
         try {
-            var a = await ParseToDataTableAsync(_mergeNameA, _mergeBytesA, _mergeHeaderA).ConfigureAwait(false);
-            var b = await ParseToDataTableAsync(_mergeNameB, _mergeBytesB, _mergeHeaderB).ConfigureAwait(false);
-            if (!a.IsSuccess || a.Data == null) {
-                _mergeError = "Source A: " + FormatResultErrors(a);
-                return;
+            if (IsCsv(_mergeNameA) && IsCsv(_mergeNameB) && _mergeSkipFirstRowB) {
+                _mergedCombinedBytes = await CsvService.CombineCsvBytesAsync([_mergeBytesA, _mergeBytesB]).ConfigureAwait(false);
+                _mergedCombinedIsXlsx = false;
+                var parsed = await CsvService.ParseBytesAsDataTableAsync(_mergedCombinedBytes, _mergeHeaderA).ConfigureAwait(false);
+                if (!parsed.IsSuccess || parsed.Data == null) {
+                    _mergeError = FormatResultErrors(parsed);
+                    return;
+                }
+
+                _mergedTable = parsed.Data;
+            }
+            else if (IsXlsx(_mergeNameA) && IsXlsx(_mergeNameB)) {
+                _mergedCombinedBytes = await XlsxService.MergeXlsxBytesAsync([_mergeBytesA, _mergeBytesB], _xlsxMergeMode).ConfigureAwait(false);
+                _mergedCombinedIsXlsx = true;
+                _mergedTable = await ParseMergedXlsxPreviewAsync(_mergedCombinedBytes, _xlsxMergeMode).ConfigureAwait(false);
+            }
+            else {
+                var a = await ParseToDataTableAsync(_mergeNameA, _mergeBytesA, _mergeHeaderA).ConfigureAwait(false);
+                var b = await ParseToDataTableAsync(_mergeNameB, _mergeBytesB, _mergeHeaderB).ConfigureAwait(false);
+                if (!a.IsSuccess || a.Data == null) {
+                    _mergeError = "Source A: " + FormatResultErrors(a);
+                    return;
+                }
+
+                if (!b.IsSuccess || b.Data == null) {
+                    _mergeError = "Source B: " + FormatResultErrors(b);
+                    return;
+                }
+
+                _mergedTable = AppendRows(a.Data, b.Data, _mergeSkipFirstRowB);
             }
 
-            if (!b.IsSuccess || b.Data == null) {
-                _mergeError = "Source B: " + FormatResultErrors(b);
-                return;
-            }
-
-            _mergedTable = AppendRows(a.Data, b.Data, _mergeSkipFirstRowB);
             Snackbar.Add($"Merged {_mergedTable.Rows.Count} row(s).", Severity.Success);
         }
         catch (Exception ex) {
             _mergeError = ex.Message;
         }
+    }
+
+    private async Task CombineMultipleAsync()
+    {
+        _mergeError = string.Empty;
+        _mergedTable = null;
+        _mergedCombinedBytes = null;
+        if (_multiCombineFiles.Count < 2) {
+            _mergeError = "Upload at least two files.";
+            return;
+        }
+
+        try {
+            if (_multiCombineAllCsv) {
+                _mergedCombinedBytes = await CsvService.CombineCsvBytesAsync(_multiCombineFiles.Select(f => f.Content)).ConfigureAwait(false);
+                _mergedCombinedIsXlsx = false;
+                var parsed = await CsvService.ParseBytesAsDataTableAsync(_mergedCombinedBytes, true).ConfigureAwait(false);
+                if (!parsed.IsSuccess || parsed.Data == null) {
+                    _mergeError = FormatResultErrors(parsed);
+                    return;
+                }
+
+                _mergedTable = parsed.Data;
+            }
+            else if (_multiCombineAllXlsx) {
+                _mergedCombinedBytes = await XlsxService.MergeXlsxBytesAsync(_multiCombineFiles.Select(f => f.Content), _xlsxMergeMode).ConfigureAwait(false);
+                _mergedCombinedIsXlsx = true;
+                _mergedTable = await ParseMergedXlsxPreviewAsync(_mergedCombinedBytes, _xlsxMergeMode).ConfigureAwait(false);
+            }
+            else {
+                _mergeError = "All files must be the same type (.csv or .xlsx).";
+                return;
+            }
+
+            Snackbar.Add($"Combined {_multiCombineFiles.Count} file(s); preview shows {_mergedTable.Rows.Count} row(s).", Severity.Success);
+        }
+        catch (Exception ex) {
+            _mergeError = ex.Message;
+        }
+    }
+
+    private async Task SplitAndDownloadZipAsync()
+    {
+        _splitError = string.Empty;
+        _splitPartCount = 0;
+        if (_splitBytes == null) {
+            _splitError = "Upload a file first.";
+            return;
+        }
+
+        if (_splitRowsPerFile < 1 && (!_splitIsXlsx || _splitXlsxMode == "rows")) {
+            _splitError = "Rows per part must be at least 1.";
+            return;
+        }
+
+        try {
+            Dictionary<string, byte[]> entries;
+            if (_splitIsXlsx) {
+                if (_splitXlsxMode == "sheet") {
+                    var parts = XlsxService.SplitXlsxBytesBySheet(_splitBytes);
+                    entries = parts.ToDictionary(
+                        kv => $"{SanitizeZipEntryName(kv.Key)}.xlsx",
+                        kv => kv.Value,
+                        StringComparer.OrdinalIgnoreCase);
+                }
+                else {
+                    var sheetName = string.IsNullOrWhiteSpace(_splitSheetName) ? null : _splitSheetName.Trim();
+                    var parts = await XlsxService.SplitXlsxBytesByRowsAsync(_splitBytes, _splitRowsPerFile, sheetName).ConfigureAwait(false);
+                    entries = parts.Select((part, index) => ($"part_{index + 1}.xlsx", part)).ToDictionary(x => x.Item1, x => x.part);
+                }
+            }
+            else {
+                var parts = await CsvService.SplitCsvBytesAsync(_splitBytes, _splitRowsPerFile).ConfigureAwait(false);
+                entries = parts.Select((part, index) => ($"part_{index + 1}.csv", part)).ToDictionary(x => x.Item1, x => x.part);
+            }
+
+            if (entries.Count == 0) {
+                _splitError = "Nothing to split (file may be empty).";
+                return;
+            }
+
+            var zipBytes = CreateZipArchive(entries);
+            var baseName = Path.GetFileNameWithoutExtension(_splitFileName);
+            await Js.DownloadFile(zipBytes, $"{baseName}-split.zip", FileTypeInfo.Zip.MimeType).ConfigureAwait(false);
+            _splitPartCount = entries.Count;
+            Snackbar.Add($"Downloaded zip with {_splitPartCount} part(s).", Severity.Success);
+        }
+        catch (Exception ex) {
+            _splitError = ex.Message;
+        }
+    }
+
+    private async Task<DataTable> ParseMergedXlsxPreviewAsync(byte[] mergedBytes, XlsxMergeMode mode)
+    {
+        if (mode == XlsxMergeMode.ConcatenateRows) {
+            var result = await XlsxService.ParseXlsxBytesAsDataTableAsync(mergedBytes, "Merged").ConfigureAwait(false);
+            return result.ValueOrThrow();
+        }
+
+        var sheets = XlsxService.ParseXlsxBytesAsAllSheets(mergedBytes);
+        return sheets.Values.First();
     }
 
     private async Task<Result<DataTable>> ParseToDataTableAsync(string fileName, byte[] bytes, bool useHeaderRow)
@@ -440,15 +697,25 @@
 
     private async Task DownloadMergedCsvAsync()
     {
+        if (_mergedCombinedBytes != null && !_mergedCombinedIsXlsx) {
+            await Js.DownloadFile(_mergedCombinedBytes, "merged.csv", FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
+            return;
+        }
+
         if (_mergedTable == null)
             return;
 
-        var bytes = CsvService.ExportToCsvBytesFromDataTable(_mergedTable);
+        var bytes = await CsvService.ExportToCsvBytesFromDataTableAsync(_mergedTable);
         await Js.DownloadFile(bytes, "merged.csv", FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
     }
 
     private async Task DownloadMergedXlsxAsync()
     {
+        if (_mergedCombinedBytes != null && _mergedCombinedIsXlsx) {
+            await Js.DownloadFile(_mergedCombinedBytes, "merged.xlsx", FileTypeInfo.Xlsx.MimeType).ConfigureAwait(false);
+            return;
+        }
+
         if (_mergedTable == null)
             return;
 
@@ -552,6 +819,27 @@
             return string.Join("; ", result.Errors.Select(e => $"{e.Code}: {e.Message}"));
 
         return "Operation failed.";
+    }
+
+    private static byte[] CreateZipArchive(IReadOnlyDictionary<string, byte[]> entries)
+    {
+        using var zipStream = new MemoryStream();
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true)) {
+            foreach (var (fileName, content) in entries) {
+                var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
+                using var entryStream = entry.Open();
+                entryStream.Write(content, 0, content.Length);
+            }
+        }
+
+        return zipStream.ToArray();
+    }
+
+    private static string SanitizeZipEntryName(string value)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(value.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray()).Trim();
+        return string.IsNullOrWhiteSpace(sanitized) ? "part" : sanitized;
     }
 
 }

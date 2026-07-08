@@ -502,29 +502,76 @@ public sealed class CsvService : ICsvService
         ArgumentHelpers.ThrowIfNullOrEmpty(fileList, nameof(inputFiles));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFile);
         await using var outputStream = new FileStream(outputFile, FileMode.Create, FileAccess.Write, FileShare.Read);
-        await using var outputWriter = new StreamWriter(outputStream, _csvConfiguration.Encoding);
-        await using var outputCsv = new HelperCsvWriter(outputWriter, _csvConfiguration);
-        var firstFile = true;
-        foreach (var inputFile in fileList) {
-            ArgumentHelpers.ThrowIfFileNotFound(inputFile);
-            if (firstFile) {
-                var headers = await ReadHeaderRowAsync(inputFile).ConfigureAwait(false);
-                if (headers != null)
-                    await WriteHeaderRowAsync(outputCsv, headers).ConfigureAwait(false);
+        var inputStreams = new List<Stream>();
+        try {
+            foreach (var inputFile in fileList) {
+                ArgumentHelpers.ThrowIfFileNotFound(inputFile);
+                inputStreams.Add(File.OpenRead(inputFile));
             }
 
-            await using var inputStream = File.OpenRead(inputFile);
-            using var inputReader = new StreamReader(inputStream, _csvConfiguration.Encoding);
+            await CombineCsvStreamsAsync(inputStreams, outputStream, includeHeaders, leaveOpen: true, ct).ConfigureAwait(false);
+        }
+        finally {
+            foreach (var stream in inputStreams)
+                await stream.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.CombineCsvStreamsAsync(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
+    public async Task CombineCsvStreamsAsync(IEnumerable<Stream> inputs, Stream output, bool includeHeaders = true, bool leaveOpen = false, CancellationToken ct = default)
+    {
+        var inputList = inputs.ToList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
+        ArgumentHelpers.ThrowIfNull(output);
+        OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        await using var outputWriter = new StreamWriter(output, _csvConfiguration.Encoding, 1024, leaveOpen);
+        await using var outputCsv = new HelperCsvWriter(outputWriter, _csvConfiguration);
+        var firstInput = true;
+        foreach (var inputStream in inputList) {
+            ArgumentHelpers.ThrowIfNull(inputStream);
+            OperationHelpers.ThrowIfNotReadable(inputStream, $"Each input stream must be readable.");
+            ct.ThrowIfCancellationRequested();
+            using var inputReader = new StreamReader(inputStream, _csvConfiguration.Encoding, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
             using var inputCsv = new HelperCsvReader(inputReader, _csvConfiguration);
-            await CopyDataRowsAsync(inputCsv, outputCsv, ct).ConfigureAwait(false);
-            firstFile = false;
+            if (firstInput && includeHeaders) {
+                var headers = await ReadHeaderRowAsync(inputCsv).ConfigureAwait(false);
+                if (headers != null)
+                    await WriteHeaderRowAsync(outputCsv, headers).ConfigureAwait(false);
+
+                await CopyDataRowsAsync(inputCsv, outputCsv, skipHeader: false, ct).ConfigureAwait(false);
+            }
+            else
+                await CopyDataRowsAsync(inputCsv, outputCsv, skipHeader: includeHeaders && _csvConfiguration.HasHeaderRecord, ct).ConfigureAwait(false);
+
+            firstInput = false;
         }
 
         await outputCsv.FlushAsync().ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.CombineCsvBytesAsync(System.Collections.Generic.IEnumerable{System.Byte[]},System.Boolean,System.Threading.CancellationToken)' />
+    public async Task<byte[]> CombineCsvBytesAsync(IEnumerable<byte[]> inputs, bool includeHeaders = true, CancellationToken ct = default)
+    {
+        var inputList = inputs.ToList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
+        await using var outputStream = new MemoryStream();
+        var inputStreams = inputList.Select(bytes => {
+            ArgumentHelpers.ThrowIfNull(bytes);
+            return (Stream)new MemoryStream(bytes);
+        }).ToList();
+        try {
+            await CombineCsvStreamsAsync(inputStreams, outputStream, includeHeaders, leaveOpen: true, ct).ConfigureAwait(false);
+        }
+        finally {
+            foreach (var stream in inputStreams)
+                await stream.DisposeAsync().ConfigureAwait(false);
+        }
+
+        return outputStream.ToArray();
+    }
+
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.SplitCsvFileAsync(System.String,System.Int32,System.String,System.Threading.CancellationToken)' />
-    public async Task SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputFile);
         ArgumentHelpers.ThrowIfFileNotFound(inputFile);
@@ -532,22 +579,39 @@ public sealed class CsvService : ICsvService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputDirectory);
         ExceptionThrower.ThrowIfDirectoryNotFound(outputDirectory);
         var baseFileName = Path.GetFileNameWithoutExtension(inputFile);
-        var extension = ".csv";
-        var fileNumber = 1;
-        var rowCount = 0;
-        var headers = await ReadHeaderRowAsync(inputFile).ConfigureAwait(false);
+        var createdPaths = new List<string>();
         await using var inputStream = File.OpenRead(inputFile);
-        using var inputReader = new StreamReader(inputStream, _csvConfiguration.Encoding);
-        using var inputCsv = new HelperCsvReader(inputReader, _csvConfiguration);
-        if (_csvConfiguration.HasHeaderRecord)
-            await inputCsv.ReadAsync().ConfigureAwait(false);
+        await SplitCsvStreamAsync(
+            inputStream,
+            rowsPerFile,
+            partNumber => {
+                var outputPath = Path.Combine(outputDirectory, $"{baseFileName}_{partNumber}.csv");
+                createdPaths.Add(outputPath);
+                return new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            },
+            leaveOpen: true,
+            ct).ConfigureAwait(false);
+        return createdPaths;
+    }
 
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.SplitCsvStreamAsync(System.IO.Stream,System.Int32,System.Func{System.Int32,System.IO.Stream},System.Boolean,System.Threading.CancellationToken)' />
+    public async Task SplitCsvStreamAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, bool leaveOpen = false, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(outputStreamFactory);
+        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
+        OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
+        using var inputReader = new StreamReader(input, _csvConfiguration.Encoding, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen);
+        using var inputCsv = new HelperCsvReader(inputReader, _csvConfiguration);
+        var headers = await ReadHeaderRowAsync(inputCsv).ConfigureAwait(false);
+        var partNumber = 0;
+        var rowCountInPart = 0;
         StreamWriter? outputWriter = null;
         HelperCsvWriter? outputCsv = null;
         try {
             while (await inputCsv.ReadAsync().ConfigureAwait(false)) {
                 ct.ThrowIfCancellationRequested();
-                if (rowCount % rowsPerFile == 0) {
+                if (rowCountInPart == 0) {
                     if (outputCsv != null) {
                         await outputCsv.FlushAsync().ConfigureAwait(false);
                         await outputCsv.DisposeAsync().ConfigureAwait(false);
@@ -556,13 +620,13 @@ public sealed class CsvService : ICsvService
                     if (outputWriter != null)
                         await outputWriter.DisposeAsync().ConfigureAwait(false);
 
-                    var outputPath = Path.Combine(outputDirectory, $"{baseFileName}_{fileNumber}{extension}");
-                    outputWriter = new(outputPath, false, _csvConfiguration.Encoding);
-                    outputCsv = new(outputWriter, _csvConfiguration);
+                    partNumber++;
+                    var outputStream = outputStreamFactory(partNumber);
+                    ArgumentHelpers.ThrowIfNull(outputStream);
+                    outputWriter = new StreamWriter(outputStream, _csvConfiguration.Encoding, 1024, leaveOpen: false);
+                    outputCsv = new HelperCsvWriter(outputWriter, _csvConfiguration);
                     if (headers != null)
                         await WriteHeaderRowAsync(outputCsv, headers).ConfigureAwait(false);
-
-                    fileNumber++;
                 }
 
                 var columnCount = inputCsv.Context.Reader?.ColumnCount ?? 0;
@@ -570,7 +634,9 @@ public sealed class CsvService : ICsvService
                     outputCsv!.WriteField(inputCsv.GetField(i));
 
                 await outputCsv!.NextRecordAsync().ConfigureAwait(false);
-                rowCount++;
+                rowCountInPart++;
+                if (rowCountInPart >= rowsPerFile)
+                    rowCountInPart = 0;
             }
         }
         finally {
@@ -579,8 +645,28 @@ public sealed class CsvService : ICsvService
                 await outputCsv.DisposeAsync().ConfigureAwait(false);
             }
 
-            outputWriter?.Dispose();
+            if (outputWriter != null)
+                await outputWriter.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.SplitCsvBytesAsync(System.Byte[],System.Int32,System.Threading.CancellationToken)' />
+    public async Task<IReadOnlyList<byte[]>> SplitCsvBytesAsync(byte[] csvBytes, int rowsPerFile, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(csvBytes);
+        var partStreams = new List<MemoryStream>();
+        await using var inputStream = new MemoryStream(csvBytes);
+        await SplitCsvStreamAsync(
+            inputStream,
+            rowsPerFile,
+            _ => {
+                var partStream = new MemoryStream();
+                partStreams.Add(partStream);
+                return partStream;
+            },
+            leaveOpen: true,
+            ct).ConfigureAwait(false);
+        return partStreams.Select(ms => ms.ToArray()).ToList();
     }
 
     private async Task<string[]?> ReadHeaderRowAsync(string filePath)
@@ -597,13 +683,21 @@ public sealed class CsvService : ICsvService
 
         using var headerStringReader = new StringReader(headerLine);
         using var headerCsv = new HelperCsvReader(headerStringReader, _csvConfiguration);
-        if (!await headerCsv.ReadAsync().ConfigureAwait(false))
+        return await ReadHeaderRowAsync(headerCsv).ConfigureAwait(false);
+    }
+
+    private async Task<string[]?> ReadHeaderRowAsync(HelperCsvReader csv)
+    {
+        if (!_csvConfiguration.HasHeaderRecord)
             return null;
 
-        var columnCount = headerCsv.Context.Reader?.ColumnCount ?? 0;
+        if (!await csv.ReadAsync().ConfigureAwait(false))
+            return null;
+
+        var columnCount = csv.Context.Reader?.ColumnCount ?? 0;
         var headers = new string[columnCount];
         for (var i = 0; i < columnCount; i++)
-            headers[i] = headerCsv.GetField(i) ?? $"Column{i}";
+            headers[i] = csv.GetField(i) ?? $"Column{i}";
 
         return headers;
     }
@@ -616,9 +710,9 @@ public sealed class CsvService : ICsvService
         await csv.NextRecordAsync().ConfigureAwait(false);
     }
 
-    private async Task CopyDataRowsAsync(HelperCsvReader reader, HelperCsvWriter writer, CancellationToken ct = default)
+    private async Task CopyDataRowsAsync(HelperCsvReader reader, HelperCsvWriter writer, bool skipHeader, CancellationToken ct = default)
     {
-        if (_csvConfiguration.HasHeaderRecord)
+        if (skipHeader && _csvConfiguration.HasHeaderRecord)
             await reader.ReadAsync().ConfigureAwait(false);
 
         while (await reader.ReadAsync().ConfigureAwait(false)) {

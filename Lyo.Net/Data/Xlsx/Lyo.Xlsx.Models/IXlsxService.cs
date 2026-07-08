@@ -180,6 +180,43 @@ public interface IXlsxService
     /// <summary>Parses every worksheet of workbook bytes into data tables, keyed by sheet name in workbook order.</summary>
     IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheets(byte[] xlsxBytes, bool? useHeaderRow = null);
 
+    /// <summary>Splits a workbook into one XLSX file per worksheet.</summary>
+    /// <returns>Paths of the created workbooks, in sheet order.</returns>
+    IReadOnlyList<string> SplitXlsxBySheet(string xlsxFilePath, string outputDirectory);
+
+    /// <summary>Splits a workbook stream into one XLSX stream per worksheet.</summary>
+    /// <param name="input">Source workbook stream.</param>
+    /// <param name="outputStreamFactory">Receives the sheet name and returns the destination stream for that sheet.</param>
+    /// <param name="leaveOpen">When true, leaves <paramref name="input" /> open after the operation completes.</param>
+    void SplitXlsxBySheet(Stream input, Func<string, Stream> outputStreamFactory, bool leaveOpen = false);
+
+    /// <summary>Splits workbook bytes into one XLSX payload per worksheet, keyed by sheet name.</summary>
+    IReadOnlyDictionary<string, byte[]> SplitXlsxBytesBySheet(byte[] xlsxBytes);
+
+    /// <summary>Splits one worksheet into multiple workbooks with at most <paramref name="rowsPerFile" /> data rows each.</summary>
+    /// <returns>Paths of the created part workbooks, in order.</returns>
+    IReadOnlyList<string> SplitXlsxByRows(string xlsxFilePath, int rowsPerFile, string outputDirectory, string? sheetName = null);
+
+    /// <summary>Splits one worksheet from a workbook stream into multiple output streams.</summary>
+    /// <param name="input">Source workbook stream.</param>
+    /// <param name="rowsPerFile">Maximum data rows per output part.</param>
+    /// <param name="outputStreamFactory">Receives a 1-based part number and returns the destination stream for that part.</param>
+    /// <param name="sheetName">Optional worksheet name; when null, uses the first worksheet.</param>
+    /// <param name="leaveOpen">When true, leaves <paramref name="input" /> open after the operation completes.</param>
+    void SplitXlsxByRows(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false);
+
+    /// <summary>Splits one worksheet from workbook bytes into multiple XLSX payloads.</summary>
+    IReadOnlyList<byte[]> SplitXlsxBytesByRows(byte[] xlsxBytes, int rowsPerFile, string? sheetName = null);
+
+    /// <summary>Merges multiple XLSX files into one workbook.</summary>
+    void MergeXlsxFiles(IEnumerable<string> inputFiles, string outputFile, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets);
+
+    /// <summary>Merges multiple XLSX streams into one output stream.</summary>
+    void MergeXlsxStreams(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false);
+
+    /// <summary>Merges multiple XLSX byte arrays into one workbook payload.</summary>
+    byte[] MergeXlsxBytes(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets);
+
 #if !NETSTANDARD2_0
     /// <summary>Exports rows to an XLSX file asynchronously.</summary>
     Task ExportToXlsxAsync<T>(IEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default);
@@ -359,5 +396,32 @@ public interface IXlsxService
 
     /// <summary>Asynchronously parses every worksheet of workbook bytes into data tables, keyed by sheet name in workbook order.</summary>
     Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits a workbook into one XLSX file per worksheet.</summary>
+    Task<IReadOnlyList<string>> SplitXlsxBySheetAsync(string xlsxFilePath, string outputDirectory, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits a workbook stream into one XLSX stream per worksheet.</summary>
+    Task SplitXlsxBySheetAsync(Stream input, Func<string, Stream> outputStreamFactory, bool leaveOpen = false, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits workbook bytes into one XLSX payload per worksheet, keyed by sheet name.</summary>
+    Task<IReadOnlyDictionary<string, byte[]>> SplitXlsxBytesBySheetAsync(byte[] xlsxBytes, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits one worksheet into multiple workbooks with at most <paramref name="rowsPerFile" /> data rows each.</summary>
+    Task<IReadOnlyList<string>> SplitXlsxByRowsAsync(string xlsxFilePath, int rowsPerFile, string outputDirectory, string? sheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits one worksheet from a workbook stream into multiple output streams.</summary>
+    Task SplitXlsxByRowsAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false, CancellationToken ct = default);
+
+    /// <summary>Asynchronously splits one worksheet from workbook bytes into multiple XLSX payloads.</summary>
+    Task<IReadOnlyList<byte[]>> SplitXlsxBytesByRowsAsync(byte[] xlsxBytes, int rowsPerFile, string? sheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously merges multiple XLSX files into one workbook.</summary>
+    Task MergeXlsxFilesAsync(IEnumerable<string> inputFiles, string outputFile, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default);
+
+    /// <summary>Asynchronously merges multiple XLSX streams into one output stream.</summary>
+    Task MergeXlsxStreamsAsync(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false, CancellationToken ct = default);
+
+    /// <summary>Asynchronously merges multiple XLSX byte arrays into one workbook payload.</summary>
+    Task<byte[]> MergeXlsxBytesAsync(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default);
 #endif
 }

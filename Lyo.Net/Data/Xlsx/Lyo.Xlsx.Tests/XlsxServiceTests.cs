@@ -3,6 +3,7 @@ using System.Text;
 using ExcelDataReader;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
+using Lyo.Xlsx.Models;
 using Lyo.Xlsx.Tests.TestModels;
 using Microsoft.Extensions.Logging;
 
@@ -1037,6 +1038,90 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
 
         var dt = svc.ParseXlsxBytesAsDataTable(ms.ToArray(), "Spans").ValueOrThrow();
         Assert.Equal(2, dt.Rows[0][0].ColSpan);
+    }
+
+    [Fact]
+    public void SplitXlsxBytesBySheet_ProducesOneWorkbookPerSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var parts = svc.SplitXlsxBytesBySheet(bytes);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("A", svc.ParseXlsxBytesAsDataTable(parts["SheetA"]).ValueOrThrow().Rows[0][1].DisplayValue);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts["SheetB"]).ValueOrThrow().Rows.Count);
+    }
+
+    [Fact]
+    public void SplitXlsxByRows_RepeatsHeaderAndChunksData()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 5).Select(i => new TestModel { Id = i, Name = $"N{i}", Age = i }).ToList();
+        var bytes = svc.ExportToXlsxBytes(data);
+        var parts = svc.SplitXlsxBytesByRows(bytes, 2);
+        Assert.Equal(3, parts.Count);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts[0]).ValueOrThrow().Rows.Count);
+        Assert.Single(svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Rows);
+        Assert.Equal("Name", svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Headers[1].DisplayValue);
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_PreserveSheets_KeepsAllSheetsWithDedupe()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> {
+            { "SheetA", [new() { Id = 1, Name = "A", Age = 10 }] },
+            { "Shared", [new() { Id = 2, Name = "B", Age = 20 }] }
+        });
+        var wb2 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> {
+            { "Shared", [new() { Id = 3, Name = "C", Age = 30 }] }
+        });
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.PreserveSheets);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(mergedBytes);
+        Assert.Equal(3, sheets.Count);
+        Assert.True(sheets.ContainsKey("SheetA"));
+        Assert.True(sheets.ContainsKey("Shared"));
+        Assert.True(sheets.ContainsKey("Shared (2)"));
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_ConcatenateRows_AppendsAllDataRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes([new TestModel { Id = 1, Name = "A", Age = 10 }]);
+        var wb2 = svc.ExportToXlsxBytes([new TestModel { Id = 2, Name = "B", Age = 20 }]);
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.ConcatenateRows);
+        var merged = svc.ParseXlsxBytesAsDataTable(mergedBytes, "Merged").ValueOrThrow();
+        Assert.Equal(2, merged.Rows.Count);
+        Assert.Equal("A", merged.Rows[0][1].DisplayValue);
+        Assert.Equal("B", merged.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void SplitXlsxBySheet_FileAndStreamVariants_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var path = _tempSession.GetFilePath("split-by-sheet.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var outputDir = Path.Combine(Path.GetDirectoryName(path)!, "split-out");
+        Directory.CreateDirectory(outputDir);
+        var createdPaths = svc.SplitXlsxBySheet(path, outputDir);
+        Assert.Equal(2, createdPaths.Count);
+        Assert.Equal("A", svc.ParseXlsxFileAsDataTable(createdPaths[0]).ValueOrThrow().Rows[0][1].DisplayValue);
+
+        var streamSheetNames = new List<string>();
+        using (var input = BytesToStream(bytes))
+            svc.SplitXlsxBySheet(input, sheetName => {
+                streamSheetNames.Add(sheetName);
+                return new MemoryStream();
+            }, leaveOpen: true);
+
+        Assert.Equal(["SheetA", "SheetB"], streamSheetNames);
     }
 
 #if NET

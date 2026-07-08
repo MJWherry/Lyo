@@ -329,7 +329,25 @@ public interface ICsvService
     /// <summary>Concatenates multiple CSV files into one, optionally repeating headers.</summary>
     Task CombineCsvFilesAsync(IEnumerable<string> inputFiles, string outputFile, bool includeHeaders = true, CancellationToken ct = default);
 
+    /// <summary>Concatenates multiple CSV streams into one output stream; header is taken from the first input.</summary>
+    Task CombineCsvStreamsAsync(IEnumerable<Stream> inputs, Stream output, bool includeHeaders = true, bool leaveOpen = false, CancellationToken ct = default);
+
+    /// <summary>Concatenates multiple CSV byte arrays into one CSV payload; header is taken from the first input.</summary>
+    Task<byte[]> CombineCsvBytesAsync(IEnumerable<byte[]> inputs, bool includeHeaders = true, CancellationToken ct = default);
+
     /// <summary>Splits one CSV file into multiple files with at most <paramref name="rowsPerFile" /> data rows each.</summary>
-    Task SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default);
+    /// <returns>Paths of the created part files, in order.</returns>
+    Task<IReadOnlyList<string>> SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default);
+
+    /// <summary>Splits a CSV stream into multiple output streams with at most <paramref name="rowsPerFile" /> data rows each.</summary>
+    /// <param name="input">Source CSV stream.</param>
+    /// <param name="rowsPerFile">Maximum data rows per output part.</param>
+    /// <param name="outputStreamFactory">Receives a 1-based part number and returns the destination stream for that part.</param>
+    /// <param name="leaveOpen">When true, leaves <paramref name="input" /> open after the operation completes.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task SplitCsvStreamAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, bool leaveOpen = false, CancellationToken ct = default);
+
+    /// <summary>Splits CSV bytes into multiple CSV payloads with at most <paramref name="rowsPerFile" /> data rows each.</summary>
+    Task<IReadOnlyList<byte[]>> SplitCsvBytesAsync(byte[] csvBytes, int rowsPerFile, CancellationToken ct = default);
 #endif
 }

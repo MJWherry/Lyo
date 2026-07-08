@@ -271,6 +271,161 @@ public class XlsxService : IXlsxService
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ExportToXlsxBytesFromDataTable(Lyo.DataTable.Models.DataTable)' />
     public byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable) => _writer.ExportToXlsxBytesFromDataTable(dataTable);
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBySheet(System.String,System.String)' />
+    public IReadOnlyList<string> SplitXlsxBySheet(string xlsxFilePath, string outputDirectory)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputDirectory);
+        ExceptionThrower.ThrowIfDirectoryNotFound(outputDirectory);
+        var baseFileName = Path.GetFileNameWithoutExtension(xlsxFilePath);
+        var sheets = ParseXlsxFileAsAllSheets(xlsxFilePath);
+        var paths = new List<string>();
+        foreach (var sheet in sheets) {
+            var outputPath = Path.Combine(outputDirectory, $"{baseFileName}_{SanitizeFileName(sheet.Key)}.xlsx");
+            ExportToXlsxFromDataTable(sheet.Value, outputPath);
+            paths.Add(outputPath);
+        }
+
+        return paths;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBySheet(System.IO.Stream,System.Func{System.String,System.IO.Stream},System.Boolean)' />
+    public void SplitXlsxBySheet(Stream input, Func<string, Stream> outputStreamFactory, bool leaveOpen = false)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(outputStreamFactory);
+        var parts = SplitXlsxBytesBySheet(ReadAllBytes(input, leaveOpen));
+        foreach (var part in parts) {
+            var outputStream = outputStreamFactory(part.Key);
+            ArgumentHelpers.ThrowIfNull(outputStream);
+            try {
+                outputStream.Write(part.Value, 0, part.Value.Length);
+            }
+            finally {
+                outputStream.Dispose();
+            }
+        }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBytesBySheet(System.Byte[])' />
+    public IReadOnlyDictionary<string, byte[]> SplitXlsxBytesBySheet(byte[] xlsxBytes)
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        var sheets = ParseXlsxBytesAsAllSheets(xlsxBytes);
+        var result = new Dictionary<string, byte[]>();
+        foreach (var sheet in sheets)
+            result[sheet.Key] = ExportToXlsxBytesFromDataTable(sheet.Value);
+
+        return result;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxByRows(System.String,System.Int32,System.String,System.String)' />
+    public IReadOnlyList<string> SplitXlsxByRows(string xlsxFilePath, int rowsPerFile, string outputDirectory, string? sheetName = null)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputDirectory);
+        ExceptionThrower.ThrowIfDirectoryNotFound(outputDirectory);
+        var baseFileName = Path.GetFileNameWithoutExtension(xlsxFilePath);
+        var sourceTable = ReadSheetAsDataTable(xlsxFilePath, sheetName).ValueOrThrow();
+        var paths = new List<string>();
+        var partNumber = 0;
+        foreach (var part in SplitDataTableByRows(sourceTable, rowsPerFile)) {
+            partNumber++;
+            var outputPath = Path.Combine(outputDirectory, $"{baseFileName}_{partNumber}.xlsx");
+            ExportToXlsxFromDataTable(part, outputPath);
+            paths.Add(outputPath);
+        }
+
+        return paths;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxByRows(System.IO.Stream,System.Int32,System.Func{System.Int32,System.IO.Stream},System.String,System.Boolean)' />
+    public void SplitXlsxByRows(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false)
+    {
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(outputStreamFactory);
+        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
+        var bytes = ReadAllBytes(input, leaveOpen);
+        var parts = SplitXlsxBytesByRows(bytes, rowsPerFile, sheetName);
+        for (var i = 0; i < parts.Count; i++) {
+            var outputStream = outputStreamFactory(i + 1);
+            ArgumentHelpers.ThrowIfNull(outputStream);
+            try {
+                outputStream.Write(parts[i], 0, parts[i].Length);
+            }
+            finally {
+                outputStream.Dispose();
+            }
+        }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBytesByRows(System.Byte[],System.Int32,System.String)' />
+    public IReadOnlyList<byte[]> SplitXlsxBytesByRows(byte[] xlsxBytes, int rowsPerFile, string? sheetName = null)
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
+        var sourceTable = ReadSheetAsDataTable(xlsxBytes, sheetName).ValueOrThrow();
+        return SplitDataTableByRows(sourceTable, rowsPerFile).Select(ExportToXlsxBytesFromDataTable).ToList();
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxFiles(System.Collections.Generic.IEnumerable{System.String},System.String,Lyo.Xlsx.Models.XlsxMergeMode)' />
+    public void MergeXlsxFiles(IEnumerable<string> inputFiles, string outputFile, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets)
+    {
+        var fileList = inputFiles.ToList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(fileList, nameof(inputFiles));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFile);
+        var inputStreams = new List<Stream>();
+        try {
+            foreach (var inputFile in fileList) {
+                ArgumentHelpers.ThrowIfFileNotFound(inputFile);
+                inputStreams.Add(File.OpenRead(inputFile));
+            }
+
+            using var outputStream = File.Create(outputFile);
+            MergeXlsxStreams(inputStreams, outputStream, mode, leaveOpen: true);
+        }
+        finally {
+            foreach (var stream in inputStreams)
+                stream.Dispose();
+        }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxStreams(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,Lyo.Xlsx.Models.XlsxMergeMode,System.Boolean)' />
+    public void MergeXlsxStreams(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false)
+    {
+        var inputList = inputs.ToList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
+        ArgumentHelpers.ThrowIfNull(output);
+        OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        using var documentWriter = CreateDocumentWriter(output);
+        if (mode == XlsxMergeMode.PreserveSheets)
+            MergePreserveSheets(inputList, documentWriter);
+        else
+            documentWriter.AddSheetFromDataTable("Merged", MergeConcatenateRows(inputList));
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxBytes(System.Collections.Generic.IEnumerable{System.Byte[]},Lyo.Xlsx.Models.XlsxMergeMode)' />
+    public byte[] MergeXlsxBytes(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets)
+    {
+        var inputList = inputs.ToList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
+        using var outputStream = new MemoryStream();
+        var inputStreams = inputList.Select(bytes => {
+            ArgumentHelpers.ThrowIfNull(bytes);
+            return (Stream)new MemoryStream(bytes);
+        }).ToList();
+        try {
+            MergeXlsxStreams(inputStreams, outputStream, mode, leaveOpen: true);
+        }
+        finally {
+            foreach (var stream in inputStreams)
+                stream.Dispose();
+        }
+
+        return outputStream.ToArray();
+    }
+
     /// <summary>Replaces the ExcelDataReader data-table configuration used for CSV conversion and parsing.</summary>
     public void SetExcelDataTableConfiguration(ExcelDataTableConfiguration excelDataTableConfiguration)
     {
@@ -297,6 +452,115 @@ public class XlsxService : IXlsxService
             return $"\"{s.Replace("\"", "\"\"")}\"";
 
         return s;
+    }
+
+    private Result<DataTable.Models.DataTable> ReadSheetAsDataTable(string xlsxFilePath, string? sheetName)
+        => sheetName != null ? ParseXlsxFileAsDataTable(xlsxFilePath, sheetName) : ParseXlsxFileAsDataTable(xlsxFilePath);
+
+    private Result<DataTable.Models.DataTable> ReadSheetAsDataTable(byte[] xlsxBytes, string? sheetName)
+        => sheetName != null ? ParseXlsxBytesAsDataTable(xlsxBytes, sheetName) : ParseXlsxBytesAsDataTable(xlsxBytes);
+
+    private IEnumerable<DataTable.Models.DataTable> SplitDataTableByRows(DataTable.Models.DataTable source, int rowsPerFile)
+    {
+        if (source.Rows.Count == 0)
+            yield break;
+
+        for (var startRow = 0; startRow < source.Rows.Count; startRow += rowsPerFile) {
+            var count = Math.Min(rowsPerFile, source.Rows.Count - startRow);
+            yield return CreatePartFromRows(source, startRow, count);
+        }
+    }
+
+    private static DataTable.Models.DataTable CreatePartFromRows(DataTable.Models.DataTable source, int startRow, int count)
+    {
+        var part = new DataTable.Models.DataTable();
+        foreach (var header in source.Headers)
+            part.SetHeader(header.Key, header.Value);
+
+        for (var i = 0; i < count; i++) {
+            var sourceRow = source.Rows[startRow + i];
+            var destRow = part.AddRow();
+            foreach (var cell in sourceRow.Cells)
+                destRow.SetCell(cell.Key, cell.Value);
+        }
+
+        return part;
+    }
+
+    private void MergePreserveSheets(IReadOnlyList<Stream> inputs, IXlsxDocumentWriter documentWriter)
+    {
+        var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var input in inputs) {
+            var sheets = ParseXlsxStreamAsAllSheets(input);
+            foreach (var sheet in sheets) {
+                var uniqueName = DeduplicateSheetName(sheet.Key, usedNames);
+                documentWriter.AddSheetFromDataTable(uniqueName, sheet.Value);
+                usedNames.Add(uniqueName);
+            }
+        }
+    }
+
+    private DataTable.Models.DataTable MergeConcatenateRows(IReadOnlyList<Stream> inputs)
+    {
+        var merged = new DataTable.Models.DataTable();
+        var headersCopied = false;
+        foreach (var input in inputs) {
+            var sheets = ParseXlsxStreamAsAllSheets(input);
+            foreach (var dataTable in sheets.Values) {
+                if (!headersCopied) {
+                    foreach (var header in dataTable.Headers)
+                        merged.SetHeader(header.Key, header.Value);
+
+                    headersCopied = true;
+                }
+
+                AppendDataRows(merged, dataTable);
+            }
+        }
+
+        return merged;
+    }
+
+    private static void AppendDataRows(DataTable.Models.DataTable target, DataTable.Models.DataTable source)
+    {
+        foreach (var row in source.Rows) {
+            var destRow = target.AddRow();
+            foreach (var cell in row.Cells)
+                destRow.SetCell(cell.Key, cell.Value);
+        }
+    }
+
+    private static string DeduplicateSheetName(string name, HashSet<string> usedNames)
+    {
+        if (usedNames.Contains(name)) {
+            var suffix = 2;
+            string candidate;
+            do
+                candidate = $"{name} ({suffix++})";
+            while (usedNames.Contains(candidate));
+
+            return candidate;
+        }
+
+        return name;
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(value.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray()).Trim();
+        return string.IsNullOrWhiteSpace(sanitized) ? "Sheet" : sanitized;
+    }
+
+    private static byte[] ReadAllBytes(Stream stream, bool leaveOpen)
+    {
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        if (!leaveOpen)
+            stream.Dispose();
+
+        return buffer.ToArray();
     }
 
 #if !NETSTANDARD2_0
@@ -612,5 +876,41 @@ public class XlsxService : IXlsxService
             await writer.WriteLineAsync(string.Join(",", fields)).ConfigureAwait(false);
         }
     }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBySheetAsync(System.String,System.String,System.Threading.CancellationToken)' />
+    public Task<IReadOnlyList<string>> SplitXlsxBySheetAsync(string xlsxFilePath, string outputDirectory, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxBySheet(xlsxFilePath, outputDirectory), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBySheetAsync(System.IO.Stream,System.Func{System.String,System.IO.Stream},System.Boolean,System.Threading.CancellationToken)' />
+    public Task SplitXlsxBySheetAsync(Stream input, Func<string, Stream> outputStreamFactory, bool leaveOpen = false, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxBySheet(input, outputStreamFactory, leaveOpen), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBytesBySheetAsync(System.Byte[],System.Threading.CancellationToken)' />
+    public Task<IReadOnlyDictionary<string, byte[]>> SplitXlsxBytesBySheetAsync(byte[] xlsxBytes, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxBytesBySheet(xlsxBytes), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxByRowsAsync(System.String,System.Int32,System.String,System.String,System.Threading.CancellationToken)' />
+    public Task<IReadOnlyList<string>> SplitXlsxByRowsAsync(string xlsxFilePath, int rowsPerFile, string outputDirectory, string? sheetName = null, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxByRows(xlsxFilePath, rowsPerFile, outputDirectory, sheetName), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxByRowsAsync(System.IO.Stream,System.Int32,System.Func{System.Int32,System.IO.Stream},System.String,System.Boolean,System.Threading.CancellationToken)' />
+    public Task SplitXlsxByRowsAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxByRows(input, rowsPerFile, outputStreamFactory, sheetName, leaveOpen), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBytesByRowsAsync(System.Byte[],System.Int32,System.String,System.Threading.CancellationToken)' />
+    public Task<IReadOnlyList<byte[]>> SplitXlsxBytesByRowsAsync(byte[] xlsxBytes, int rowsPerFile, string? sheetName = null, CancellationToken ct = default)
+        => Task.Run(() => SplitXlsxBytesByRows(xlsxBytes, rowsPerFile, sheetName), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxFilesAsync(System.Collections.Generic.IEnumerable{System.String},System.String,Lyo.Xlsx.Models.XlsxMergeMode,System.Threading.CancellationToken)' />
+    public Task MergeXlsxFilesAsync(IEnumerable<string> inputFiles, string outputFile, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default)
+        => Task.Run(() => MergeXlsxFiles(inputFiles, outputFile, mode), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxStreamsAsync(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,Lyo.Xlsx.Models.XlsxMergeMode,System.Boolean,System.Threading.CancellationToken)' />
+    public Task MergeXlsxStreamsAsync(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false, CancellationToken ct = default)
+        => Task.Run(() => MergeXlsxStreams(inputs, output, mode, leaveOpen), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxBytesAsync(System.Collections.Generic.IEnumerable{System.Byte[]},Lyo.Xlsx.Models.XlsxMergeMode,System.Threading.CancellationToken)' />
+    public Task<byte[]> MergeXlsxBytesAsync(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default)
+        => Task.Run(() => MergeXlsxBytes(inputs, mode), ct);
 #endif
 }

@@ -969,14 +969,56 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 10).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
         await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
-        await svc.SplitCsvFileAsync(tempFile, 3, outputDir, TestContext.Current.CancellationToken);
-        var files = Directory.GetFiles(outputDir, "*.csv");
-        Assert.True(files.Length >= 3); // Should create multiple files
+        var createdPaths = await svc.SplitCsvFileAsync(tempFile, 3, outputDir, TestContext.Current.CancellationToken);
+        Assert.Equal(4, createdPaths.Count);
 
-        // Verify first file has correct data
-        var firstFile = files.OrderBy(f => f).First();
-        var firstFileData = svc.ParseFile<Person>(firstFile).ToList();
+        var firstFileData = svc.ParseFile<Person>(createdPaths[0]).ToList();
         Assert.Equal(3, firstFileData.Count);
+    }
+
+    [Fact]
+    public async Task SplitCsvBytesAsync_ThenCombineCsvBytesAsync_RoundTripsRows()
+    {
+        var svc = new CsvService(_logger);
+        var data = Enumerable.Range(1, 7).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
+        var originalBytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var parts = await svc.SplitCsvBytesAsync(originalBytes, 3, TestContext.Current.CancellationToken);
+        Assert.Equal(3, parts.Count);
+        var combinedBytes = await svc.CombineCsvBytesAsync(parts, ct: TestContext.Current.CancellationToken);
+        var combined = (await svc.ParseBytesAsync<Person>(combinedBytes, TestContext.Current.CancellationToken)).ToList();
+        Assert.Equal(7, combined.Count);
+        Assert.Equal("Person7", combined[^1].Name);
+    }
+
+    [Fact]
+    public async Task CombineCsvStreamsAsync_CombinesMultipleStreams()
+    {
+        var svc = new CsvService(_logger);
+        var data1 = new List<Person> { new() { Id = 1, Name = "Alice" } };
+        var data2 = new List<Person> { new() { Id = 2, Name = "Bob" } };
+        await using var stream1 = new MemoryStream(await svc.ExportToCsvBytesAsync(data1, TestContext.Current.CancellationToken));
+        await using var stream2 = new MemoryStream(await svc.ExportToCsvBytesAsync(data2, TestContext.Current.CancellationToken));
+        await using var output = new MemoryStream();
+        await svc.CombineCsvStreamsAsync([stream1, stream2], output, leaveOpen: true, ct: TestContext.Current.CancellationToken);
+        output.Position = 0;
+        var combined = (await svc.ParseStreamAsync<Person>(output, TestContext.Current.CancellationToken)).ToList();
+        Assert.Equal(2, combined.Count);
+        Assert.Equal("Bob", combined[1].Name);
+    }
+
+    [Fact]
+    public async Task SplitCsvBytesAsync_RepeatsHeaderInEachPart()
+    {
+        var svc = new CsvService(_logger);
+        var data = Enumerable.Range(1, 5).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
+        var csvBytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var parts = await svc.SplitCsvBytesAsync(csvBytes, 2, TestContext.Current.CancellationToken);
+        Assert.Equal(3, parts.Count);
+        foreach (var part in parts) {
+            var rows = (await svc.ParseBytesAsync<Person>(part, TestContext.Current.CancellationToken)).ToList();
+            Assert.True(rows.Count <= 2);
+            Assert.All(rows, row => Assert.False(string.IsNullOrWhiteSpace(row.Name)));
+        }
     }
 
     // Additional edge case tests
