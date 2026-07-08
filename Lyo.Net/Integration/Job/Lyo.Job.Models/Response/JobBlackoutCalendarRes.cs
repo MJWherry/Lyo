@@ -11,5 +11,5 @@ public sealed record JobBlackoutCalendarRes(
     bool Enabled,
     IReadOnlyList<JobBlackoutWindowRes>? BlackoutWindows)
 {
-    public override string ToString() => $"{Name}, {Description} (Enabled={Enabled})";
+    public override string ToString() => $"{Name}, {Description} (Enabled={Enabled}) Windows(C={BlackoutWindows?.Count ?? 0})";
 }

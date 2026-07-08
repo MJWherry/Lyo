@@ -22,4 +22,10 @@ public sealed record JobBlackoutWindowRes(
     JobBlackoutPolicy Policy,
     bool Enabled,
     DateTime? StartDateUtc = null,
-    DateTime? EndDateUtc = null);
+    DateTime? EndDateUtc = null)
+{
+    public override string ToString()
+        => StartDateUtc.HasValue
+            ? $"{Name} {StartDateUtc:yyyy-MM-dd}{(EndDateUtc.HasValue && EndDateUtc != StartDateUtc ? $"..{EndDateUtc:yyyy-MM-dd}" : "")} {StartTime}-{EndTime} ({Policy})"
+            : $"{Name} {DayFlags} {StartTime}-{EndTime} ({Policy})";
+}
