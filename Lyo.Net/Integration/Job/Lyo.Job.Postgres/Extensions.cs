@@ -176,7 +176,14 @@ public static class Extensions
             .Build();
 
         app.CreateBuilder<JobContext, JobWorkerInstance, JobWorkerInstanceReq, JobWorkerInstanceRes, Guid>(Constants.Rest.Job.WorkerInstances, "Job")
-            .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        NormalizeJobWorkerInstanceTimestamps(ctx.Entity);
+                    },
+                    BeforePatch = ctx => NormalizeJobWorkerInstanceTimestamps(ctx.Entity)
+                })
             .Build();
 
         app.CreateBuilder<JobContext, JobBlackoutCalendar, JobBlackoutCalendarReq, JobBlackoutCalendarRes, Guid>(Constants.Rest.Job.BlackoutCalendars, "Job")
@@ -536,7 +543,10 @@ public static class Extensions
             .MapWith(src => new(src.Id, src.JobRunId, Enum.Parse<JobLogLevel>(src.Level), src.Message, src.Context, src.StackTrace, src.Timestamp));
 
         config.NewConfig<JobRunReq, JobRun>().Map(dest => dest.Priority, src => src.Priority ?? 0);
-        config.NewConfig<JobWorkerInstanceReq, JobWorkerInstance>().Map(dest => dest.State, src => src.State.ToString());
+        config.NewConfig<JobWorkerInstanceReq, JobWorkerInstance>()
+            .Map(dest => dest.State, src => src.State.ToString())
+            .Map(dest => dest.StartedTimestamp, src => ToUtcDateTime(src.StartedTimestamp))
+            .Map(dest => dest.LastHeartbeatUtc, src => ToUtcDateTime(src.LastHeartbeatUtc));
         config.NewConfig<JobWorkerInstance, JobWorkerInstanceRes>()
             .MapWith(src => new(
                 src.Id, src.WorkerType, src.MachineName, src.ProcessId, Enum.Parse<JobWorkerInstanceState>(src.State), src.InFlightCount, src.StartedTimestamp,
@@ -561,6 +571,23 @@ public static class Extensions
     private static string? MaskParameterValue(string? value, byte[]? encryptedValue) => encryptedValue is not null ? "***" : value;
 
     private static byte[]? MaskParameterEncryptedValue(byte[]? encryptedValue) => encryptedValue is not null ? null : encryptedValue;
+
+    private static DateTime ToUtcDateTime(DateTime value) => value.Kind switch {
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    };
+
+    private static void NormalizeJobWorkerInstanceTimestamps(JobWorkerInstance entity)
+    {
+        entity.StartedTimestamp = ToUtcDateTime(entity.StartedTimestamp);
+        entity.LastHeartbeatUtc = ToUtcDateTime(entity.LastHeartbeatUtc);
+        if (entity.CreatedTimestamp != default)
+            entity.CreatedTimestamp = ToUtcDateTime(entity.CreatedTimestamp);
+
+        if (entity.UpdatedTimestamp.HasValue)
+            entity.UpdatedTimestamp = ToUtcDateTime(entity.UpdatedTimestamp.Value);
+    }
 
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
@@ -721,8 +748,27 @@ public static class Extensions
         public IServiceCollection AddMqJobEventPublisher()
         {
             ArgumentHelpers.ThrowIfNull(services);
+            services.AddOptions<JobMqOptions>();
+            services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMqOptions>>().Value);
             services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
             services.AddHostedService<JobEventPublisherStartupService>();
+            return services;
+        }
+
+        /// <summary>
+        /// Registers <see cref="MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> (worker types for queue provisioning at startup) from configuration.
+        /// </summary>
+        public IServiceCollection AddMqJobEventPublisherFromConfiguration(IConfiguration configuration, string configSectionName = JobMqOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(configuration);
+            services.AddOptions<JobMqOptions>();
+            services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMqOptions>>().Value);
+            services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
+            services.AddHostedService<JobEventPublisherStartupService>();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                services.Configure<JobMqOptions>(section);
+
             return services;
         }
 

@@ -1,7 +1,7 @@
 using Lyo.Api.Mapping;
 using MapsterMapper;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>ILyoMapper implementation that delegates to Mapster's IMapper.</summary>
 internal sealed class MapsterLyoMapper(IMapper mapster) : ILyoMapper

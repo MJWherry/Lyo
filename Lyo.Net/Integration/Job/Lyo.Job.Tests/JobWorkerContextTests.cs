@@ -4,7 +4,7 @@ using Lyo.Job.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Lyo.Job.Worker.Tests;
+namespace Lyo.Job.Tests;
 
 public class JobWorkerContextTests
 {

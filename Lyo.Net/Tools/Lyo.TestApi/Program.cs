@@ -101,6 +101,7 @@ builder.Services.AddPostgresJobManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
+builder.Services.AddJobMaintenanceService();
 
 builder.Services.AddLyoCrudServices<JobContext>();
 builder.Services.AddScoped<JobService>();

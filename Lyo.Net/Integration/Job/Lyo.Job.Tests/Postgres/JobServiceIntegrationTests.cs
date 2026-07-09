@@ -5,6 +5,7 @@ using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Mapster;
 using MapsterMapper;
@@ -13,8 +14,9 @@ using Microsoft.Extensions.Logging;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
+[Trait("Category", "Integration")]
 public class JobServiceIntegrationTests
 {
     private readonly JobPostgresFixture _fixture;
@@ -106,6 +108,8 @@ public class JobServiceIntegrationTests
         Assert.Null(error);
         Assert.NotNull(result);
         Assert.Equal(JobState.Running, result.State);
+        Assert.NotNull(result.JobDefinition);
+        Assert.Equal(_fixture.JobDefinitionId, result.JobDefinition.Id);
     }
 
     [Fact]

@@ -1,10 +1,11 @@
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Request;
+using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Schedule.Models;
 using Mapster;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
 public class JobBlackoutCalendarMappingTests
 {

@@ -3,8 +3,12 @@ using System.Text.Json;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
+using Lyo.Job.Postgres.Database;
 using Lyo.MessageQueue;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Job.Postgres.Events;
 
@@ -17,11 +21,19 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
 {
     private readonly ILogger<MqJobEventPublisher> _logger;
     private readonly IMqService _mqService;
+    private readonly JobMqOptions _mqOptions;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
-    public MqJobEventPublisher(IMqService mqService, ILogger<MqJobEventPublisher> logger)
+    public MqJobEventPublisher(
+        IMqService mqService,
+        ILogger<MqJobEventPublisher> logger,
+        IOptions<JobMqOptions> mqOptions,
+        IServiceScopeFactory? scopeFactory = null)
     {
         _mqService = mqService;
         _logger = logger;
+        _mqOptions = mqOptions.Value;
+        _scopeFactory = scopeFactory;
     }
 
     /// <inheritdoc />
@@ -33,12 +45,15 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         await _mqService.ConnectAsync(ct).ConfigureAwait(false);
 
         // Completion queue — scheduler subscribes here to detect finished runs.
-        await _mqService.CreateQueue(Constants.Mq.QueueJobRunFinish, true, false, false, null, ct).ConfigureAwait(false);
+        await EnsureQueueCreatedAsync(Constants.Mq.QueueJobRunFinish, null, ct).ConfigureAwait(false);
 
         // Definition-update queue — scheduler subscribes here to refresh its cache.
         var defQueue = Constants.Mq.JobDefinitionChangeKey;
-        await _mqService.CreateQueue(defQueue, true, false, false, null, ct).ConfigureAwait(false);
-        await _mqService.BindQueueToExchange(defQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobDefinitionChangeKey, ct).ConfigureAwait(false);
+        await EnsureQueueCreatedAsync(defQueue, null, ct).ConfigureAwait(false);
+        await EnsureBoundAsync(defQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobDefinitionChangeKey, ct).ConfigureAwait(false);
+
+        var workerTypes = await ResolveWorkerTypesAsync(ct).ConfigureAwait(false);
+        await SetupWorkerQueuesAsync(workerTypes, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -99,14 +114,12 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         => _mqService.SubscribeToQueue(Constants.Mq.QueueJobRunFinish, handler, ct);
 
     /// <inheritdoc />
-    public async Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
     {
-        var queueName = $"job.run.{workerType}.cancel";
-        await _mqService.CreateQueue(queueName, true, false, false, null, ct).ConfigureAwait(false);
-        await _mqService.BindQueueToExchange(queueName, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
+        var queueName = Constants.Mq.QueueGetJobRunCancel(workerType);
 
         // Typed subscribe handles both enveloped and legacy raw-Guid messages, and acks unparseable messages instead of redelivering them forever.
-        await _mqService.SubscribeToQueueAsync<Guid>(
+        return _mqService.SubscribeToQueueAsync<Guid>(
                 queueName, async (runId, _) => {
                     try {
                         await handler(runId).ConfigureAwait(false);
@@ -116,7 +129,64 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
                         _logger.LogError(ex, "Error processing cancellation message for run {RunId}", runId);
                         return true;
                     }
-                }, ct: ct)
-            .ConfigureAwait(false);
+                }, ct: ct);
+    }
+
+    private async Task SetupWorkerQueuesAsync(IReadOnlyList<string> workerTypes, CancellationToken ct)
+    {
+        if (workerTypes.Count == 0) {
+            _logger.LogWarning(
+                "No worker types configured for job run queue provisioning. Add JobMqOptions:WorkerTypes or create job definitions before startup, or declare queues manually.");
+            return;
+        }
+
+        _logger.LogInformation("Provisioning job run queues for {Count} worker type(s)", workerTypes.Count);
+        foreach (var workerType in workerTypes) {
+            var runQueue = Constants.Mq.QueueGetJobRunCreated(workerType);
+            await EnsureQueueCreatedAsync(runQueue, null, ct).ConfigureAwait(false);
+
+            var cancelQueue = Constants.Mq.QueueGetJobRunCancel(workerType);
+            await EnsureQueueCreatedAsync(cancelQueue, null, ct).ConfigureAwait(false);
+            await EnsureBoundAsync(cancelQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<IReadOnlyList<string>> ResolveWorkerTypesAsync(CancellationToken ct)
+    {
+        var types = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var workerType in _mqOptions.WorkerTypes) {
+            if (!string.IsNullOrWhiteSpace(workerType))
+                types.Add(workerType.Trim());
+        }
+
+        if (_scopeFactory is null)
+            return types.ToList();
+
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetService<JobContext>();
+        if (db is null)
+            return types.ToList();
+
+        var fromDb = await db.JobDefinitions.AsNoTracking().Select(d => d.WorkerType).Distinct().ToListAsync(ct).ConfigureAwait(false);
+        foreach (var workerType in fromDb) {
+            if (!string.IsNullOrWhiteSpace(workerType))
+                types.Add(workerType.Trim());
+        }
+
+        return types.ToList();
+    }
+
+    private async Task EnsureQueueCreatedAsync(string queueName, IReadOnlyDictionary<string, object>? arguments, CancellationToken ct)
+    {
+        IDictionary<string, object>? args = arguments is null ? null : new Dictionary<string, object>(arguments);
+        if (!await _mqService.CreateQueue(queueName, true, false, false, args, ct).ConfigureAwait(false))
+            throw new InvalidOperationException(
+                $"Failed to declare queue '{queueName}'. If it already exists with different arguments, delete it in RabbitMQ and restart the host.");
+    }
+
+    private async Task EnsureBoundAsync(string queueName, string exchangeName, string routingKey, CancellationToken ct)
+    {
+        if (!await _mqService.BindQueueToExchange(queueName, exchangeName, routingKey, ct).ConfigureAwait(false))
+            throw new InvalidOperationException($"Failed to bind queue '{queueName}' to exchange '{exchangeName}' with routing key '{routingKey}'.");
     }
 }

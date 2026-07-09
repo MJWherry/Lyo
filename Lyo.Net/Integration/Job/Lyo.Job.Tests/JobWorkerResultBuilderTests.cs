@@ -3,7 +3,7 @@ using Lyo.Job.Models.Request;
 using Lyo.Job.Worker;
 using Constants = Lyo.Job.Models.Constants;
 
-namespace Lyo.Job.Worker.Tests;
+namespace Lyo.Job.Tests;
 
 public class JobWorkerResultBuilderTests
 {

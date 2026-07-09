@@ -68,6 +68,18 @@ public sealed class RabbitMqServiceTests
     }
 
     [Fact]
+    public async Task SubscribeToQueue_fails_when_queue_does_not_exist()
+    {
+        await using var service = _broker.CreateService();
+        await service.ConnectAsync(Ct);
+        var queue = UniqueQueue("missing");
+
+        Assert.False(
+            await service.SubscribeToQueue(
+                queue, _ => Task.FromResult(false), Ct));
+    }
+
+    [Fact]
     public async Task Publish_subscribe_roundtrip_delivers_persistent_message()
     {
         await using var service = _broker.CreateService();

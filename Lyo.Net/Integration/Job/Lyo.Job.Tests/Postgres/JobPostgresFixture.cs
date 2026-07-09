@@ -6,6 +6,7 @@ using Lyo.Common.Records;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Testing.Containers;
 using Mapster;
@@ -14,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
 public sealed class JobPostgresFixture : PostgresContainerFixtureBase
 {

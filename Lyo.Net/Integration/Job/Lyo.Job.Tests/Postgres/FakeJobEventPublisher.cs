@@ -1,7 +1,7 @@
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
 /// In-memory <see cref="IJobEventPublisher" /> for integration tests. Captures every publish call so tests can assert what was sent, and exposes <see cref="SetConnected" />

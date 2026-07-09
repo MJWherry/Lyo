@@ -1,7 +1,7 @@
 using Lyo.Health;
 using Lyo.MessageQueue;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>Fake MQ service for integration tests — always connected, all operations succeed.</summary>
 public sealed class FakeMqService : IMqService

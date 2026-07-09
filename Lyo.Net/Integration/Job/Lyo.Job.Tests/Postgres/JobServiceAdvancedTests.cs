@@ -4,12 +4,14 @@ using Lyo.Job.Models.Builders;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Lyo.Job.Postgres.Tests;
+namespace Lyo.Job.Tests.Postgres;
 
+[Trait("Category", "Integration")]
 public class JobServiceAdvancedTests
 {
     private readonly JobPostgresFixture _fixture;

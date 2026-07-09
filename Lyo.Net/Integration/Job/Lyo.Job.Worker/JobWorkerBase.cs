@@ -3,6 +3,8 @@ using System.Diagnostics;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
+using Lyo.Exceptions;
+using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -32,9 +34,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 {
     private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
 
-    private readonly string _apiBaseUrl;
-
-    private readonly IApiClient _apiClient;
+    private readonly IJobClient _jobClient;
     private readonly IJobEventPublisher _eventPublisher;
     private readonly IJobParameterEncryptionService? _parameterEncryption;
 
@@ -57,23 +57,21 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     protected string WorkerType { get; }
 
     /// <param name="mqService">Message queue service (provides the input queue subscription).</param>
-    /// <param name="apiClient">HTTP client used to call the Job API.</param>
+    /// <param name="jobClient">Typed client for the Job API.</param>
     /// <param name="eventPublisher">Job event publisher used for cancellation subscription.</param>
     /// <param name="workerType">
     /// Worker type identifier. Must match the <c>WorkerType</c> on the <see cref="JobDefinition" /> entities this worker handles. Determines both the queue name
     /// (<c>job.run.{workerType}</c>) and the cancellation subscription queue.
     /// </param>
-    /// <param name="apiBaseUrl">Base URL of the Job API (e.g. <c>https://api.example.com</c>).</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="metrics">Optional metrics.</param>
     /// <param name="maxRequeueCount">Max requeue attempts before the message is routed to the DLQ.</param>
     /// <param name="dlqName">Dead-letter queue name. When null, messages exceeding the requeue limit are dropped.</param>
     protected JobWorkerBase(
         IMqService mqService,
-        IApiClient apiClient,
+        IJobClient jobClient,
         IJobEventPublisher eventPublisher,
         string workerType,
-        string apiBaseUrl,
         ILogger? logger = null,
         IMetrics? metrics = null,
         int? maxRequeueCount = null,
@@ -81,23 +79,20 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         IJobParameterEncryptionService? parameterEncryption = null)
         : base(mqService, Constants.Mq.QueueGetJobRunCreated(workerType), logger, metrics, maxRequeueCount: maxRequeueCount, dlqName: dlqName)
     {
-        _apiClient = apiClient;
+        _jobClient = jobClient;
         _eventPublisher = eventPublisher;
         _parameterEncryption = parameterEncryption;
-        _apiBaseUrl = apiBaseUrl.TrimEnd('/');
         WorkerType = workerType;
     }
 
     /// <inheritdoc />
     public override async Task StartAsync(CancellationToken ct = default)
     {
-        if (!MqService.IsConnected())
-            await MqService.ConnectAsync(ct).ConfigureAwait(false);
-
-        await MqService.CreateQueue(QueueName, arguments: new Dictionary<string, object> { ["x-max-priority"] = 10 }, ct: ct).ConfigureAwait(false);
-        await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
-
         await base.StartAsync(ct).ConfigureAwait(false);
+        if (!IsRunning)
+            throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
+
+        await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
 
         await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct).ConfigureAwait(false);
 
@@ -146,10 +141,12 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             return ResultVoid.Failure("Job run not found", "NotFound");
         }
 
-        var include = string.Join("&include=", RunIncludes);
-        var startedRun = await _apiClient.PostAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunStarted(runId)}?include={include}", ct: ct).ConfigureAwait(false);
-        if (startedRun is null) {
-            Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
+        JobRunRes startedRun;
+        try {
+            startedRun = await _jobClient.Runs.StartAsync(runId, RunIncludes, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
             return ResultVoid.Failure("Failed to start run", "StartFailed");
         }
 
@@ -158,7 +155,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _runCancellationSources[runId] = runCts;
         var results = new JobWorkerResultBuilder();
-        var ctx = new JobWorkerContextImpl(startedRun, Logger, runCts.Token, results, _apiClient, _apiBaseUrl, Metrics, this);
+        var ctx = new JobWorkerContextImpl(startedRun, Logger, runCts.Token, results, _jobClient, Metrics, this);
         using var heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var heartbeatTask = RunHeartbeatAsync(runId, heartbeatCts.Token);
         var wasCancelled = false;
@@ -218,13 +215,14 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
                 LastHeartbeatUtc = now
             };
 
-            var instance = await _apiClient.PostAsAsync<JobWorkerInstanceReq, JobWorkerInstanceRes>($"{_apiBaseUrl}/{Constants.Rest.Job.WorkerInstances}", req, ct: ct)
-                .ConfigureAwait(false);
+            var result = await _jobClient.WorkerInstances.RegisterAsync(req, ct).ConfigureAwait(false);
 
-            if (instance is null)
-                Logger.LogWarning("Worker instance registration for {WorkerType} returned no result", WorkerType);
+            if (!result.IsSuccess || result.Data is null)
+                Logger.LogWarning("Worker instance registration for {WorkerType} failed: {Error}", WorkerType, result.Error?.Detail ?? result.Error?.Title ?? "unknown");
+            else if (result.Data.Id == Guid.Empty)
+                Logger.LogWarning("Worker instance registration for {WorkerType} returned an empty id", WorkerType);
             else
-                _workerInstanceId = instance.Id;
+                _workerInstanceId = result.Data.Id;
         }
         catch (Exception ex) {
             Logger.LogWarning(ex, "Failed to register worker instance for {WorkerType}", WorkerType);
@@ -233,18 +231,11 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
     private async Task DeregisterWorkerInstanceAsync(CancellationToken ct)
     {
-        if (!_workerInstanceId.HasValue)
+        if (!_workerInstanceId.HasValue || _workerInstanceId.Value == Guid.Empty)
             return;
 
         try {
-            var patch = PatchRequestBuilder.ForId(_workerInstanceId.Value)
-                .SetProperty("State", JobWorkerInstanceState.Stopped)
-                .SetProperty("InFlightCount", 0)
-                .SetProperty("LastHeartbeatUtc", DateTime.UtcNow)
-                .Build();
-
-            await _apiClient.PatchAsAsync<PatchRequest, object>($"{_apiBaseUrl}/{Constants.Rest.Job.WorkerInstances}/{_workerInstanceId.Value}", patch, ct: ct)
-                .ConfigureAwait(false);
+            await _jobClient.WorkerInstances.StopAsync(_workerInstanceId.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
             Logger.LogWarning(ex, "Failed to deregister worker instance {WorkerInstanceId}", _workerInstanceId);
@@ -258,21 +249,19 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     {
         using var timer = new PeriodicTimer(HeartbeatInterval);
         while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false)) {
-            if (!_workerInstanceId.HasValue)
+            if (!_workerInstanceId.HasValue || _workerInstanceId.Value == Guid.Empty)
                 continue;
 
             try {
-                var patch = PatchRequestBuilder.ForId(_workerInstanceId.Value)
-                    .SetProperty("LastHeartbeatUtc", DateTime.UtcNow)
-                    .SetProperty("InFlightCount", InFlightCount)
-                    .SetProperty("State", JobWorkerInstanceState.Running)
-                    .Build();
-
-                await _apiClient.PatchAsAsync<PatchRequest, object>($"{_apiBaseUrl}/{Constants.Rest.Job.WorkerInstances}/{_workerInstanceId.Value}", patch, ct: ct)
-                    .ConfigureAwait(false);
+                await _jobClient.WorkerInstances.HeartbeatAsync(_workerInstanceId.Value, InFlightCount, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 break;
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404) {
+                Logger.LogWarning("Worker instance {WorkerInstanceId} not found — re-registering", _workerInstanceId);
+                _workerInstanceId = null;
+                await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 Logger.LogWarning(ex, "Worker instance heartbeat failed for {WorkerInstanceId}", _workerInstanceId);
@@ -283,8 +272,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     private async Task<JobRunRes?> FetchRunAsync(Guid runId, CancellationToken ct)
     {
         try {
-            var include = string.Join("&include=", RunIncludes);
-            return await _apiClient.GetAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.Runs}/{runId}?include={include}", ct: ct).ConfigureAwait(false);
+            return await _jobClient.Runs.GetAsync(runId, RunIncludes, ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error fetching run {RunId}", runId);
@@ -304,7 +292,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
                 if (_progressMessage is not null)
                     patch.SetProperty("ProgressMessage", _progressMessage);
 
-                await _apiClient.PatchAsAsync<PatchRequest, object>($"{_apiBaseUrl}/{Constants.Rest.Job.Runs}/{runId}", patch.Build(), ct: ct).ConfigureAwait(false);
+                await _jobClient.Runs.PatchAsync(runId, patch.Build(), ct).ConfigureAwait(false);
                 Metrics.IncrementCounter(Constants.Metrics.Worker.HeartbeatSent);
             }
             catch (OperationCanceledException) {
@@ -321,13 +309,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     private async Task<bool> ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
     {
         try {
-            var finished = await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunFinished(runId)}", results, ct: ct)
-                .ConfigureAwait(false);
-
-            if (finished is null)
-                Logger.LogError("Finish report for run {RunId} returned no result — run state may not have been updated", runId);
-
-            return finished is not null;
+            await _jobClient.Runs.FinishAsync(runId, results, ct).ConfigureAwait(false);
+            return true;
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Failed to report finish for run {RunId}", runId);
@@ -368,8 +351,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         ILogger logger,
         CancellationToken ct,
         JobWorkerResultBuilder results,
-        IApiClient apiClient,
-        string apiBaseUrl,
+        IJobClient jobClient,
         IMetrics metrics,
         JobWorkerBase worker) : IJobWorkerContext
     {
@@ -386,20 +368,11 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             worker._progressPercent = percent;
             worker._progressMessage = message;
 
-            var patch = PatchRequestBuilder.ForId(Run.Id).SetProperty("ProgressPercent", percent).SetProperty("LastHeartbeatUtc", DateTime.UtcNow);
-            if (message is not null)
-                patch.SetProperty("ProgressMessage", message);
-
-            await apiClient.PatchAsAsync<PatchRequest, object>($"{apiBaseUrl}/{Constants.Rest.Job.Runs}/{Run.Id}", patch.Build(), ct: ct).ConfigureAwait(false);
+            await jobClient.Runs.PatchProgressAsync(Run.Id, percent, message, ct).ConfigureAwait(false);
             metrics.IncrementCounter(Constants.Metrics.Worker.ProgressReported);
         }
 
-        public async Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(JobCreateChildRunsReq request, CancellationToken ct = default)
-        {
-            var created = await apiClient.PostAsAsync<JobCreateChildRunsReq, IReadOnlyList<JobRunRes>>(
-                $"{apiBaseUrl}/{Constants.Rest.Job.RunChildren(Run.Id)}", request, ct: ct).ConfigureAwait(false);
-
-            return created ?? [];
-        }
+        public Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(JobCreateChildRunsReq request, CancellationToken ct = default)
+            => jobClient.Runs.CreateChildrenAsync(Run.Id, request, ct);
     }
 }

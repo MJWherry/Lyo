@@ -18,7 +18,7 @@ services.AddJobWorkerFromConfiguration<MyImportWorker>(
     configuration, workerType: "csharp", apiBaseUrl: "https://api.example.com");
 ```
 
-Requires `IMqService`, `IApiClient`, and `IJobEventPublisher` (typically `AddMqJobEventPublisher()`). Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`.
+Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher` (typically `AddMqJobEventPublisher()`). Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`.
 
 When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`.
 

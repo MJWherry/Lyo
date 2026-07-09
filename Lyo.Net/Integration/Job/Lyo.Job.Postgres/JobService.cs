@@ -319,7 +319,13 @@ public class JobService(
         if (!notified)
             return (null, LogAndReturnApiError("Could not notify to start job", ApiErrCodes.MessageQueueConnectionIssue));
 
-        return (MaskRunResponse(result.NewData!), null);
+        // Re-fetch with includes so workers get a fully-loaded run (patch returns bare entity with unloaded navigations).
+        var savedResult = await queryService.Get<JobRun, JobRunRes>(
+                [jobRunId],
+                ["JobRunParameters", "JobRunResults", "JobDefinition", "JobDefinition.JobParameters"])
+            .ConfigureAwait(false);
+
+        return (MaskRunResponse(savedResult!), null);
     }
 
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> CancelJobRun(Guid jobRunId)

@@ -20,6 +20,8 @@ public static class Constants
 
         //Multiple worker types, build queue based on worker type to simplify
         public static string QueueGetJobRunCreated(string workerType) => $"job.run.{workerType}";
+
+        public static string QueueGetJobRunCancel(string workerType) => $"job.run.{workerType}.cancel";
     }
 
     /// <summary>REST API route constants.</summary>

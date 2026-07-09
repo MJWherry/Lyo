@@ -833,8 +833,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
             var channelOptions = new CreateChannelOptions(publisherConfirmationsEnabled: false, publisherConfirmationTrackingEnabled: false, consumerDispatchConcurrency: dispatchConcurrency);
             var subscriptionChannel = await _connection!.CreateChannelAsync(channelOptions, ct).ConfigureAwait(false);
 
-            // Ensure queue exists on the subscription channel
-            await subscriptionChannel.QueueDeclareAsync(queueName, true, false, false, cancellationToken: ct).ConfigureAwait(false);
+            await AssertQueueExistsForSubscriptionAsync(subscriptionChannel, queueName, ct).ConfigureAwait(false);
 
             // Broker-side backpressure: only `limit` unacked messages are delivered to this consumer at a time; the rest stay on the server.
             if (limit > 0)
@@ -863,6 +862,22 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
                 _metrics.IncrementCounter(Constants.Metrics.QueueSubscriptionFailed, 1, [(Constants.Metrics.Tags.Queue, queueName)]);
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Verifies the queue already exists (passive declare). Subscribers never create queues — provision them at host startup via <see cref="CreateQueue" /> or
+    /// <c>DefinedQueues</c>.
+    /// </summary>
+    private static async Task AssertQueueExistsForSubscriptionAsync(IChannel channel, string queueName, CancellationToken ct)
+    {
+        try {
+            await channel.QueueDeclareAsync(queueName, true, false, false, null, passive: true, cancellationToken: ct).ConfigureAwait(false);
+        }
+        catch (OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 404) {
+            throw new InvalidOperationException(
+                $"Queue '{queueName}' does not exist. Declare it at application startup before subscribing — workers must not create queues on register/start.",
+                ex);
         }
     }
 
