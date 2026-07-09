@@ -29,6 +29,7 @@
     <ItemGroup>
         <PackageReference Include="Mapster" Version="[10,)"/>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[10,)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="[10,)"/>
     </ItemGroup>
 
     <ItemGroup>

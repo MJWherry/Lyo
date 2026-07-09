@@ -882,13 +882,13 @@ public class QueryService<TContext>(
     private async Task<TResult[]> MapResultsAsync<TDbModel, TResult>(IReadOnlyList<TDbModel> dbResults, CancellationToken ct)
         where TDbModel : class
     {
-        var results = new TResult[dbResults.Count];
-        var counter = 0;
+        if (dbResults.Count == 0)
+            return [];
+
+        var results = new List<TResult>(dbResults.Count);
         foreach (var dbResult in dbResults) {
             try {
-                var result = MapOrCast<TDbModel, TResult>(Mapper, dbResult);
-                results[counter] = result;
-                counter++;
+                results.Add(MapOrCast<TDbModel, TResult>(Mapper, dbResult));
             }
             catch (Exception ex) {
                 await using var context = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
@@ -897,7 +897,7 @@ public class QueryService<TContext>(
             }
         }
 
-        return results;
+        return results.ToArray();
     }
 
     private static LyoProblemDetails AggregatedValidationProblemDetails(IReadOnlyList<ApiError> errors, string rootSummary)

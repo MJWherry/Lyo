@@ -117,6 +117,44 @@ builder.Services.AddXlsxExport();  // Lyo.Api.Export.Xlsx + AddXlsxService()
 // builder.Services.AddLyoDiffServices();
 ```
 
+### Cross-schema / same-context navigations (DI, no `OnModelCreating` edits)
+
+When related rows live in the **same database** but another schema/module (or an unmapped FK on the same context), register navigations at startup. EF then JOINs in one SQL query so Include / Where / Sort / Select keep correct pagination — do **not** post-filter in memory.
+
+Requirements:
+
+1. CLR navigation properties on the root entity (a `partial` next to a scaffolded type is fine).
+2. `AddCrossSchemaNavigations<TContext>(...)` then `AddDbContextFactoryWithLyoNavigations<TContext>(...)` (replaces a plain `AddDbContextFactory`).
+3. Same database connection. Cross-schema mappings use `ExcludeFromMigrations` so the root context never owns the related tables.
+
+```csharp
+// Root entity partial — required for Include/Where/Select path walking
+public partial class OrderEntity
+{
+    public virtual PersonEntity? Person { get; set; }
+}
+
+builder.Services.AddCrossSchemaNavigations<AppDbContext>(navs =>
+{
+    // Related type already on this context
+    navs.AddSameContext<OrderEntity, CustomerEntity>(
+        e => e.Customer, e => e.CustomerId);
+
+    // Related type owned by another module's migrations (same Postgres DB)
+    navs.AddCrossSchema<OrderEntity, PersonEntity>(
+        e => e.Person, e => e.PersonId,
+        table: "person", schema: "people",
+        configureRelated: b => b.ApplyConfiguration(new PersonEntityConfiguration()));
+});
+
+builder.Services.AddDbContextFactoryWithLyoNavigations<AppDbContext>(ob =>
+    ob.UseNpgsql(connectionString));
+```
+
+`LyoComposingModelCustomizer` runs after the context’s `OnModelCreating` and applies the registrations. Clients then use normal includes (`Person`, `Person.FirstName` filters, QueryProject `Select`).
+
+DI navigations intentionally diverge from the EF migration snapshot (soft FKs / `ExcludeFromMigrations`). When registrations exist, `AddDbContextFactoryWithLyoNavigations` ignores `PendingModelChangesWarning` so `MigrateAsync` is not blocked.
+
 ### `ApiClientOptions` and integration HTTP clients
 
 [`Lyo.Api.Client.ApiClientOptions`](../Lyo.Api.Client/ApiClientOptions.cs) is the shared configuration base for [`ApiClient`](../Lyo.Api.Client/ApiClient.cs) and for
@@ -130,6 +168,8 @@ All registrations are extension methods on `IServiceCollection` (no `IServiceCol
 | Method                                           | Registers                                                                                                                                                                                                                                                                                           |
 |--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AddLyoQueryServices()`                          | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.                      |
+| `AddCrossSchemaNavigations<TContext>(configure)` | Registers same-context / cross-schema navigations applied after `OnModelCreating` (see [Cross-schema navigations](#cross-schema--same-context-navigations-di-no-onmodelcreating-edits)).                                                                                                              |
+| `AddDbContextFactoryWithLyoNavigations<TContext>` | `IDbContextFactory<TContext>` + `LyoComposingModelCustomizer` so cross-schema registrations take effect. Call after `AddCrossSchemaNavigations`.                                                                                                                                                      |
 | `AddLyoCrudServices<TContext>()`                 | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
 | `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`) | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`.                                                                                                                                                                                |
 | `AddCsvExport()` / `AddXlsxExport()`             | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`).                                                                                                                                                                                                                                          |

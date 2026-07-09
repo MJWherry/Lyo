@@ -23,7 +23,7 @@ namespace Lyo.Api;
 /// Registers Lyo.Api query services including TypeConversionService, EntityLoaderService, and Lyo.Query services. Requires CacheService and CacheOptions to be registered
 /// (e.g. via AddFusionCache or AddLocalCache).
 /// </summary>
-public static class ServiceCollectionExtensions
+public static partial class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {

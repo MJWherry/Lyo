@@ -168,6 +168,24 @@ Update individual fields without sending the full entity:
 
 Query your data and export it directly as CSV, XLSX, or JSON — with column mapping and formatting.
 
+### Cross-Schema Navigations (same database)
+
+Register relationships at DI startup without editing scaffolded `OnModelCreating`. Related tables must share the host’s database; EF emits JOINs so Include / Where / Sort / Select stay one query with correct paging.
+
+```csharp
+services.AddCrossSchemaNavigations<AppDbContext>(navs =>
+{
+    navs.AddSameContext<Order, Customer>(e => e.Customer, e => e.CustomerId);
+    navs.AddCrossSchema<Order, PersonEntity>(
+        e => e.Person, e => e.PersonId,
+        table: "person", schema: "people",
+        configureRelated: b => b.ApplyConfiguration(new PersonEntityConfiguration()));
+});
+services.AddDbContextFactoryWithLyoNavigations<AppDbContext>(ob => ob.UseNpgsql(conn));
+```
+
+Add CLR navigation properties on the root entity (partials are fine). Cross-schema mappings use `ExcludeFromMigrations`.
+
 ### Before/After Hooks
 
 Inject custom logic at every stage of every operation:
