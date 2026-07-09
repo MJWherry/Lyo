@@ -18,16 +18,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 934.7820379892985,
-          "stdDevNs": 7.60123048061093,
+          "meanNs": 927.0405509131296,
+          "stdDevNs": 10.662480038980533,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 1095.4425292580588,
+          "throughputMbps": 1104.5902997353953,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -38.60020963970595,
+          "deltaMeanPct": -0.8281595881774487,
           "deltaAllocPct": 0.0
         },
         {
@@ -36,16 +36,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1798.3539587656658,
-          "stdDevNs": 13.709043931043146,
+          "meanNs": 1861.806037267049,
+          "stdDevNs": 36.5240007961222,
           "allocatedBytes": 72,
-          "ratioToBaseline": 1.9238216885659216,
+          "ratioToBaseline": 2.008332899173807,
           "isBaseline": false,
-          "throughputMbps": 569.4095953740062,
+          "throughputMbps": 550.0035876471499,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -12.941148485745432,
+          "deltaMeanPct": 3.528342025889878,
           "deltaAllocPct": 0.0
         },
         {
@@ -54,16 +54,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1778.1405191421509,
-          "stdDevNs": 15.428411187831065,
+          "meanNs": 1843.2972957611084,
+          "stdDevNs": 40.27581268576537,
           "allocatedBytes": 88,
-          "ratioToBaseline": 1.9021979957669097,
+          "ratioToBaseline": 1.9883674926037176,
           "isBaseline": false,
-          "throughputMbps": 575.8824957737426,
+          "throughputMbps": 555.5262313652905,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -19.228826886703168,
+          "deltaMeanPct": 3.6643210093649916,
           "deltaAllocPct": 0.0
         },
         {
@@ -72,16 +72,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1513.1494540434617,
-          "stdDevNs": 6.439590831836304,
+          "meanNs": 1582.0546983083088,
+          "stdDevNs": 17.654297491851104,
           "allocatedBytes": 40,
-          "ratioToBaseline": 1.618719008869942,
+          "ratioToBaseline": 1.7065647201193024,
           "isBaseline": false,
-          "throughputMbps": 676.7342097395939,
+          "throughputMbps": 647.2595423501875,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -21.828484730152535,
+          "deltaMeanPct": 4.553763283641117,
           "deltaAllocPct": 0.0
         },
         {
@@ -90,16 +90,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 491325.2578822545,
-          "stdDevNs": 1539.7351894033914,
+          "meanNs": 508892.06110491074,
+          "stdDevNs": 6843.848432299958,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2134.178903237435,
+          "throughputMbps": 2060.5076796115127,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -14.44230854804694,
+          "deltaMeanPct": 3.575391849052082,
           "deltaAllocPct": 0.0
         },
         {
@@ -108,16 +108,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1173842.4985677083,
-          "stdDevNs": 15721.800692164377,
+          "meanNs": 1219996.350455729,
+          "stdDevNs": 22270.694660927384,
           "allocatedBytes": 72,
-          "ratioToBaseline": 2.3891352616946437,
+          "ratioToBaseline": 2.3973577968712316,
           "isBaseline": false,
-          "throughputMbps": 893.2850883141859,
+          "throughputMbps": 859.4910956973805,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -8.624083070952585,
+          "deltaMeanPct": 3.931860700591133,
           "deltaAllocPct": 0.0
         },
         {
@@ -126,16 +126,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1168673.6602313702,
-          "stdDevNs": 5858.958469379896,
+          "meanNs": 1219594.5709635417,
+          "stdDevNs": 25936.640966874682,
           "allocatedBytes": 88,
-          "ratioToBaseline": 2.378615065035882,
+          "ratioToBaseline": 2.3965682787731994,
           "isBaseline": false,
-          "throughputMbps": 897.2359313654816,
+          "throughputMbps": 859.7742438059328,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -7.29532452051337,
+          "deltaMeanPct": 4.357153965640874,
           "deltaAllocPct": 0.0
         },
         {
@@ -144,16 +144,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1096685.7534505208,
-          "stdDevNs": 12287.31797948925,
+          "meanNs": 1137744.6080078124,
+          "stdDevNs": 18582.913333806653,
           "allocatedBytes": 40,
-          "ratioToBaseline": 2.232097242827561,
+          "ratioToBaseline": 2.2357287428252106,
           "isBaseline": false,
-          "throughputMbps": 956.1316874053007,
+          "throughputMbps": 921.6268682969666,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -12.97108252007216,
+          "deltaMeanPct": 3.743903340415196,
           "deltaAllocPct": 0.0
         },
         {
@@ -162,16 +162,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 4957110.161458333,
-          "stdDevNs": 51531.74010688076,
+          "meanNs": 5209976.282151442,
+          "stdDevNs": 45201.07932830049,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2115.296948921384,
+          "throughputMbps": 2012.6310432395944,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -15.083513009457224,
+          "deltaMeanPct": 5.10107930743904,
           "deltaAllocPct": 0.0
         },
         {
@@ -180,16 +180,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 11841235.375520833,
-          "stdDevNs": 136146.85258958885,
+          "meanNs": 12294223.92734375,
+          "stdDevNs": 238190.44825124004,
           "allocatedBytes": 72,
-          "ratioToBaseline": 2.3887375890063454,
+          "ratioToBaseline": 2.3597466210089717,
           "isBaseline": false,
-          "throughputMbps": 885.5292262559882,
+          "throughputMbps": 852.9013349658028,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -2.445856753404961,
+          "deltaMeanPct": 3.8255176715714345,
           "deltaAllocPct": 0.0
         },
         {
@@ -198,16 +198,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 11840835.460416667,
-          "stdDevNs": 105059.47792185636,
+          "meanNs": 12295561.877604166,
+          "stdDevNs": 157010.63212333713,
           "allocatedBytes": 88,
-          "ratioToBaseline": 2.3886569139575484,
+          "ratioToBaseline": 2.3600034264506777,
           "isBaseline": false,
-          "throughputMbps": 885.5591343240417,
+          "throughputMbps": 852.8085259039165,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -4.835025704579054,
+          "deltaMeanPct": 3.8403237567790467,
           "deltaAllocPct": 0.0
         },
         {
@@ -216,16 +216,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 11024073.51141827,
-          "stdDevNs": 78515.3955454657,
+          "meanNs": 11392156.5546875,
+          "stdDevNs": 98849.60662103166,
           "allocatedBytes": 40,
-          "ratioToBaseline": 2.223891168917476,
+          "ratioToBaseline": 2.1866043025407302,
           "isBaseline": false,
-          "throughputMbps": 951.1692741471012,
+          "throughputMbps": 920.4367890893716,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-          "deltaMeanPct": -4.095096100416045,
+          "deltaMeanPct": 3.3389022931313477,
           "deltaAllocPct": 0.0
         }
       ]
@@ -247,15 +247,17 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 29.31565194328626,
-          "stdDevNs": 0.4822260519908331,
+          "meanNs": 30.77700440779976,
+          "stdDevNs": 0.7918264746684348,
           "allocatedBytes": 0,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 34930.145915943445,
+          "throughputMbps": 33271.5941562035,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 4.98488816602346,
+          "deltaAllocPct": null
         },
         {
           "method": "Crc32C_Value",
@@ -263,15 +265,17 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1719.9533063343592,
-          "stdDevNs": 7.644341006956681,
+          "meanNs": 1760.3479333605085,
+          "stdDevNs": 8.076755750094609,
           "allocatedBytes": 32,
-          "ratioToBaseline": 58.67013667858256,
+          "ratioToBaseline": 57.19685743406485,
           "isBaseline": false,
-          "throughputMbps": 595.3649998687431,
+          "throughputMbps": 581.7031852590536,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 2.348588585363405,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Crc64_Value",
@@ -279,15 +283,17 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 29.29379589511798,
-          "stdDevNs": 0.2237945293261063,
+          "meanNs": 30.70779931194642,
+          "stdDevNs": 0.6377807793399761,
           "allocatedBytes": 0,
-          "ratioToBaseline": 0.9992544580550158,
+          "ratioToBaseline": 0.9977514024777602,
           "isBaseline": false,
-          "throughputMbps": 34956.20723467445,
+          "throughputMbps": 33346.57718704146,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 4.826972311444599,
+          "deltaAllocPct": null
         },
         {
           "method": "Adler32_Value",
@@ -295,15 +301,17 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 513.4140041215079,
-          "stdDevNs": 5.837934315497543,
+          "meanNs": 514.9153003011431,
+          "stdDevNs": 6.696390188880967,
           "allocatedBytes": 24,
-          "ratioToBaseline": 17.513306718020566,
+          "ratioToBaseline": 16.73052040667899,
           "isBaseline": false,
-          "throughputMbps": 1994.4917586580934,
+          "throughputMbps": 1988.676583121775,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 0.2924143415612649,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Crc32_Value",
@@ -311,15 +319,17 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 30522.802502441406,
-          "stdDevNs": 471.8843226104457,
+          "meanNs": 32710.284486897788,
+          "stdDevNs": 466.5353848324587,
           "allocatedBytes": 0,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 34353.85724872833,
+          "throughputMbps": 32056.46225486087,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 7.166714079683261,
+          "deltaAllocPct": null
         },
         {
           "method": "Crc32C_Value",
@@ -327,15 +337,17 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1779759.6831752232,
-          "stdDevNs": 5103.152403396022,
+          "meanNs": 1831978.8046875,
+          "stdDevNs": 35387.28835592348,
           "allocatedBytes": 32,
-          "ratioToBaseline": 58.30918320927008,
+          "ratioToBaseline": 56.006202129526116,
           "isBaseline": false,
-          "throughputMbps": 589.1671835881026,
+          "throughputMbps": 572.3734342979294,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 2.9340546370347056,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Crc64_Value",
@@ -343,15 +355,17 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 30411.570786539713,
-          "stdDevNs": 303.66447613913545,
+          "meanNs": 32336.25909423828,
+          "stdDevNs": 550.7139163730849,
           "allocatedBytes": 0,
-          "ratioToBaseline": 0.9963557829955885,
+          "ratioToBaseline": 0.9885655108622083,
           "isBaseline": false,
-          "throughputMbps": 34479.508058298125,
+          "throughputMbps": 32427.251307707287,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 6.328802682400225,
+          "deltaAllocPct": null
         },
         {
           "method": "Adler32_Value",
@@ -359,15 +373,17 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 512437.9874348958,
-          "stdDevNs": 6229.5629160510125,
+          "meanNs": 526088.2350463867,
+          "stdDevNs": 10165.827011854628,
           "allocatedBytes": 24,
-          "ratioToBaseline": 16.78869387546926,
+          "ratioToBaseline": 16.083266877642508,
           "isBaseline": false,
-          "throughputMbps": 2046.2495476747213,
+          "throughputMbps": 1993.1561478609078,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 2.663785266939276,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Crc32_Value",
@@ -375,15 +391,17 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 655737.2315899885,
-          "stdDevNs": 27183.65108368094,
+          "meanNs": 657922.7987141927,
+          "stdDevNs": 27882.257141628066,
           "allocatedBytes": 0,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 15990.79554256027,
+          "throughputMbps": 15937.675393667432,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 0.333299227024951,
+          "deltaAllocPct": null
         },
         {
           "method": "Crc32C_Value",
@@ -391,15 +409,17 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 17950845.96875,
-          "stdDevNs": 125399.06822897874,
+          "meanNs": 18542645.738839287,
+          "stdDevNs": 194013.37731585,
           "allocatedBytes": 32,
-          "ratioToBaseline": 27.375059862353663,
+          "ratioToBaseline": 28.183619377650373,
           "isBaseline": false,
-          "throughputMbps": 584.1373725925949,
+          "throughputMbps": 565.4942745326038,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 3.2967792778096965,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Crc64_Value",
@@ -407,15 +427,17 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 562022.7486837636,
-          "stdDevNs": 14096.638033319725,
+          "meanNs": 571466.5708759015,
+          "stdDevNs": 15293.35697254359,
           "allocatedBytes": 0,
-          "ratioToBaseline": 0.8570853104085729,
+          "ratioToBaseline": 0.8685921387626993,
           "isBaseline": false,
-          "throughputMbps": 18657.180736113016,
+          "throughputMbps": 18348.859818568573,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 1.6803273914187684,
+          "deltaAllocPct": null
         },
         {
           "method": "Adler32_Value",
@@ -423,15 +445,17 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 5246950.912760417,
-          "stdDevNs": 53575.6799840902,
+          "meanNs": 5384758.49375,
+          "stdDevNs": 73116.19466637759,
           "allocatedBytes": 24,
-          "ratioToBaseline": 8.001605917720969,
+          "ratioToBaseline": 8.184483809154614,
           "isBaseline": false,
-          "throughputMbps": 1998.44827488265,
+          "throughputMbps": 1947.3036742818917,
           "slaTarget": ">= 300 MB/s",
           "slaResult": "Exceeds",
-          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor."
+          "slaStandard": "Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
+          "deltaMeanPct": 2.626431679672088,
+          "deltaAllocPct": 0.0
         }
       ]
     },
@@ -452,16 +476,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 893.8272845586141,
-          "stdDevNs": 5.308974035149529,
+          "meanNs": 932.0416238149007,
+          "stdDevNs": 14.596245619804943,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 1145.635200099835,
+          "throughputMbps": 1098.6633792262498,
           "slaTarget": ">= 200 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-          "deltaMeanPct": -3.5537529539985417,
+          "deltaMeanPct": 4.27536056646083,
           "deltaAllocPct": 0.0
         },
         {
@@ -470,16 +494,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 901.3514523506165,
-          "stdDevNs": 7.944861771761264,
+          "meanNs": 937.9202395847866,
+          "stdDevNs": 12.593414250129472,
           "allocatedBytes": 56,
-          "ratioToBaseline": 1.008417921361304,
+          "ratioToBaseline": 1.0063072459637847,
           "isBaseline": false,
-          "throughputMbps": 1136.0718367175543,
+          "throughputMbps": 1091.777271437623,
           "slaTarget": ">= 200 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-          "deltaMeanPct": -7.524021541702969,
+          "deltaMeanPct": 4.057106374966517,
           "deltaAllocPct": 0.0
         },
         {
@@ -488,16 +512,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 490300.3130859375,
-          "stdDevNs": 6311.580321554945,
+          "meanNs": 513842.27622357535,
+          "stdDevNs": 10473.471820716357,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2138.6402823206245,
+          "throughputMbps": 2040.657315521776,
           "slaTarget": ">= 200 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-          "deltaMeanPct": -6.055775308858253,
+          "deltaMeanPct": 4.801539486986112,
           "deltaAllocPct": 0.0
         },
         {
@@ -506,16 +530,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 485093.8982096354,
-          "stdDevNs": 1364.1152164799093,
+          "meanNs": 504396.8537034255,
+          "stdDevNs": 2866.44208160738,
           "allocatedBytes": 56,
-          "ratioToBaseline": 0.9893811716261548,
+          "ratioToBaseline": 0.9816180509911175,
           "isBaseline": false,
-          "throughputMbps": 2161.593876711377,
+          "throughputMbps": 2078.8710165439297,
           "slaTarget": ">= 200 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-          "deltaMeanPct": -5.357167624974322,
+          "deltaMeanPct": 3.9792204282578387,
           "deltaAllocPct": 0.0
         }
       ]
@@ -537,16 +561,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 485859.8,
-          "stdDevNs": 4528.222102666591,
+          "meanNs": 513807.2135959201,
+          "stdDevNs": 10543.946715814485,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2158.1863739292694,
+          "throughputMbps": 2040.796571658577,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-          "deltaMeanPct": -5.431968458184386,
+          "deltaMeanPct": 5.752155991485638,
           "deltaAllocPct": 0.0
         },
         {
@@ -555,16 +579,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 513495.9956430289,
-          "stdDevNs": 2912.298197533191,
+          "meanNs": 544835.1939453125,
+          "stdDevNs": 5844.439902625529,
           "allocatedBytes": 82363,
-          "ratioToBaseline": 1.056881008972195,
+          "ratioToBaseline": 1.0603883704400345,
           "isBaseline": false,
-          "throughputMbps": 2042.0334508877984,
+          "throughputMbps": 1924.5746450535833,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-          "deltaMeanPct": -6.567682526962279,
+          "deltaMeanPct": 6.103104711272174,
           "deltaAllocPct": 0.0
         },
         {
@@ -573,16 +597,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 4911828.507254465,
-          "stdDevNs": 14780.6703010003,
+          "meanNs": 5242194.43984375,
+          "stdDevNs": 71392.85172619479,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2134.7976592654218,
+          "throughputMbps": 2000.2615546462907,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-          "deltaMeanPct": -4.968974331823586,
+          "deltaMeanPct": 6.7259256324066525,
           "deltaAllocPct": 0.0
         },
         {
@@ -591,16 +615,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 5299746.919270833,
-          "stdDevNs": 35360.05920898442,
+          "meanNs": 5908612.1828125,
+          "stdDevNs": 70158.07187998517,
           "allocatedBytes": 82364,
-          "ratioToBaseline": 1.0789763753851416,
+          "ratioToBaseline": 1.1271257200808091,
           "isBaseline": false,
-          "throughputMbps": 1978.5397604311802,
+          "throughputMbps": 1774.6570049904303,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-          "deltaMeanPct": -5.6962274084446625,
+          "deltaMeanPct": 11.4885724321613,
           "deltaAllocPct": 0.0
         }
       ]
@@ -622,15 +646,15 @@
           "parameters": {
             "DigestSize": "32"
           },
-          "meanNs": 54.84542717536291,
-          "stdDevNs": 0.5958725763837454,
+          "meanNs": 57.331724727595294,
+          "stdDevNs": 1.667527784138641,
           "allocatedBytes": 304,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-          "deltaMeanPct": -8.012048837191406,
+          "deltaMeanPct": 4.5332814060918745,
           "deltaAllocPct": 0.0
         },
         {
@@ -639,15 +663,15 @@
           "parameters": {
             "DigestSize": "32"
           },
-          "meanNs": 49.81870471055691,
-          "stdDevNs": 0.2558464181212515,
+          "meanNs": 60.65133266604465,
+          "stdDevNs": 1.5998493911241787,
           "allocatedBytes": 56,
-          "ratioToBaseline": 0.9083474644342993,
+          "ratioToBaseline": 1.0579017630155394,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-          "deltaMeanPct": -14.826259475797453,
+          "deltaMeanPct": 21.744097961648208,
           "deltaAllocPct": 0.0
         },
         {
@@ -656,15 +680,15 @@
           "parameters": {
             "DigestSize": "64"
           },
-          "meanNs": 86.32400560379028,
-          "stdDevNs": 0.6217268775132642,
+          "meanNs": 97.5455596106393,
+          "stdDevNs": 1.408625195322057,
           "allocatedBytes": 560,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-          "deltaMeanPct": -8.77656630094939,
+          "deltaMeanPct": 12.999343494732718,
           "deltaAllocPct": 0.0
         },
         {
@@ -673,15 +697,15 @@
           "parameters": {
             "DigestSize": "64"
           },
-          "meanNs": 98.67488408088684,
-          "stdDevNs": 0.6193573833861895,
+          "meanNs": 103.42586728701225,
+          "stdDevNs": 0.8385915514136685,
           "allocatedBytes": 88,
-          "ratioToBaseline": 1.143075826830657,
+          "ratioToBaseline": 1.0602826791895466,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-          "deltaMeanPct": -9.139212660782494,
+          "deltaMeanPct": 4.814784684450082,
           "deltaAllocPct": 0.0
         }
       ]
@@ -703,16 +727,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1633.0377531051636,
-          "stdDevNs": 11.065246052948707,
+          "meanNs": 1717.715329170227,
+          "stdDevNs": 20.237170474903515,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 627.052251580161,
+          "throughputMbps": 596.14068909466,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-          "deltaMeanPct": -12.669665416967451,
+          "deltaMeanPct": 5.1852797587840245,
           "deltaAllocPct": 0.0
         },
         {
@@ -721,16 +745,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2966.6723267873126,
-          "stdDevNs": 31.810688681308008,
+          "meanNs": 3047.9048224229077,
+          "stdDevNs": 25.961789463497812,
           "allocatedBytes": 88,
-          "ratioToBaseline": 1.8166587521606834,
+          "ratioToBaseline": 1.7743946104825485,
           "isBaseline": false,
-          "throughputMbps": 345.1678807780287,
+          "throughputMbps": 335.96849628197356,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-          "deltaMeanPct": -13.930446474827102,
+          "deltaMeanPct": 2.7381687860203936,
           "deltaAllocPct": 0.0
         },
         {
@@ -739,16 +763,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 483978.6271409255,
-          "stdDevNs": 1425.436901807155,
+          "meanNs": 507304.06798377406,
+          "stdDevNs": 6582.321898427035,
           "allocatedBytes": 56,
           "ratioToBaseline": 1,
           "isBaseline": true,
-          "throughputMbps": 2166.5750121950623,
+          "throughputMbps": 2066.9576023063514,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-          "deltaMeanPct": -5.136383513382131,
+          "deltaMeanPct": 4.819518783431036,
           "deltaAllocPct": 0.0
         },
         {
@@ -757,16 +781,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1171696.1681082589,
-          "stdDevNs": 9185.550291432215,
+          "meanNs": 1222240.8310546875,
+          "stdDevNs": 16768.9400662607,
           "allocatedBytes": 88,
-          "ratioToBaseline": 2.42096675844961,
+          "ratioToBaseline": 2.409286477658958,
           "isBaseline": false,
-          "throughputMbps": 894.9214212187444,
+          "throughputMbps": 857.9127561097515,
           "slaTarget": ">= 150 MB/s",
           "slaResult": "Exceeds",
           "slaStandard": "Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-          "deltaMeanPct": -6.224371289308231,
+          "deltaMeanPct": 4.31380287161258,
           "deltaAllocPct": 0.0
         }
       ]
@@ -779,98 +803,122 @@
         {
           "method": "Hash_Sha256_100MB",
           "parameters": {},
-          "meanNs": 56151261.07407406,
-          "stdDevNs": 652564.4142750043,
-          "allocatedBytes": 273,
-          "isBaseline": false
+          "meanNs": 60629811.35,
+          "stdDevNs": 688152.5473605639,
+          "allocatedBytes": 276,
+          "isBaseline": false,
+          "deltaMeanPct": 7.975867665764253,
+          "deltaAllocPct": 1.098901098901099
         },
         {
           "method": "Hash_Sha256_1GB",
           "parameters": {},
-          "meanNs": 629587845.1428572,
-          "stdDevNs": 1704351.5656200503,
-          "allocatedBytes": 472,
-          "isBaseline": false
+          "meanNs": 703469364.8666667,
+          "stdDevNs": 5959990.424046141,
+          "allocatedBytes": 12808,
+          "isBaseline": false,
+          "deltaMeanPct": 11.734902491175847,
+          "deltaAllocPct": 2613.5593220338983
         },
         {
           "method": "Hash_Sha256_2GB",
           "parameters": {},
-          "meanNs": 1215143191.2142856,
-          "stdDevNs": 5532104.352752842,
+          "meanNs": 1421379973.1333334,
+          "stdDevNs": 26301518.179858174,
           "allocatedBytes": 472,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 16.972220509498687,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Hash_Sha512_100MB",
           "parameters": {},
-          "meanNs": 125617853.30357143,
-          "stdDevNs": 497926.01892982994,
-          "allocatedBytes": 368,
-          "isBaseline": false
+          "meanNs": 136707468.13333333,
+          "stdDevNs": 1727609.0734732407,
+          "allocatedBytes": 387,
+          "isBaseline": false,
+          "deltaMeanPct": 8.828056313748998,
+          "deltaAllocPct": 5.163043478260869
         },
         {
           "method": "Hash_Sha512_1GB",
           "parameters": {},
-          "meanNs": 1338766631.4666667,
-          "stdDevNs": 7797609.105571994,
+          "meanNs": 1487132469.4285715,
+          "stdDevNs": 24936496.58279873,
           "allocatedBytes": 536,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 11.0822778574459,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Hash_Sha512_2GB",
           "parameters": {},
-          "meanNs": 2628320342.285714,
-          "stdDevNs": 15788511.556587161,
+          "meanNs": 2909871649.076923,
+          "stdDevNs": 26222788.058399457,
           "allocatedBytes": 536,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 10.712214270896604,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc32_100MB",
           "parameters": {},
-          "meanNs": 188800123.46666667,
-          "stdDevNs": 2093885.213505465,
+          "meanNs": 195264808.54761907,
+          "stdDevNs": 1627837.914876927,
           "allocatedBytes": 64,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 3.4240894350335367,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc32_1GB",
           "parameters": {},
-          "meanNs": 1953351497.2,
-          "stdDevNs": 18571963.502129547,
+          "meanNs": 2074216137.8,
+          "stdDevNs": 14188412.809749743,
           "allocatedBytes": 64,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 6.1875520495543865,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc32_2GB",
           "parameters": {},
-          "meanNs": 3849572330.8,
-          "stdDevNs": 25553716.305671968,
+          "meanNs": 4177541250.214286,
+          "stdDevNs": 68559649.11643337,
           "allocatedBytes": 64,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 8.519619615671143,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc64_100MB",
           "parameters": {},
-          "meanNs": 210050120.75555557,
-          "stdDevNs": 881422.5573609235,
+          "meanNs": 219393436.43333334,
+          "stdDevNs": 2404143.351666941,
           "allocatedBytes": 56,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 4.4481363039305215,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc64_1GB",
           "parameters": {},
-          "meanNs": 2168746143.9333334,
-          "stdDevNs": 5831846.91016276,
+          "meanNs": 2324906008.4666667,
+          "stdDevNs": 30703210.86460522,
           "allocatedBytes": 56,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 7.20046765132755,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Checksum_Crc64_2GB",
           "parameters": {},
-          "meanNs": 4293558558.8,
-          "stdDevNs": 16631942.364746077,
+          "meanNs": 4599374651.25,
+          "stdDevNs": 17704933.302949145,
           "allocatedBytes": 56,
-          "isBaseline": false
+          "isBaseline": false,
+          "deltaMeanPct": 7.122671980872479,
+          "deltaAllocPct": 0.0
         }
       ]
     }
@@ -895,13 +943,13 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 934.7820379892985,
+            "meanNs": 927.0405509131296,
             "allocatedBytes": 56,
             "ratioToBaseline": 1,
-            "throughputMbps": 1095.4425292580588,
+            "throughputMbps": 1104.5902997353953,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -38.60020963970595,
+            "deltaMeanPct": -0.8281595881774487,
             "deltaAllocPct": 0.0
           },
           {
@@ -910,13 +958,13 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 1798.3539587656658,
+            "meanNs": 1861.806037267049,
             "allocatedBytes": 72,
-            "ratioToBaseline": 1.9238216885659216,
-            "throughputMbps": 569.4095953740062,
+            "ratioToBaseline": 2.008332899173807,
+            "throughputMbps": 550.0035876471499,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -12.941148485745432,
+            "deltaMeanPct": 3.528342025889878,
             "deltaAllocPct": 0.0
           },
           {
@@ -925,13 +973,13 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 1778.1405191421509,
+            "meanNs": 1843.2972957611084,
             "allocatedBytes": 88,
-            "ratioToBaseline": 1.9021979957669097,
-            "throughputMbps": 575.8824957737426,
+            "ratioToBaseline": 1.9883674926037176,
+            "throughputMbps": 555.5262313652905,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -19.228826886703168,
+            "deltaMeanPct": 3.6643210093649916,
             "deltaAllocPct": 0.0
           },
           {
@@ -940,13 +988,13 @@
               "DataSize": "1024"
             },
             "paramLabel": "1 KB",
-            "meanNs": 1513.1494540434617,
+            "meanNs": 1582.0546983083088,
             "allocatedBytes": 40,
-            "ratioToBaseline": 1.618719008869942,
-            "throughputMbps": 676.7342097395939,
+            "ratioToBaseline": 1.7065647201193024,
+            "throughputMbps": 647.2595423501875,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -21.828484730152535,
+            "deltaMeanPct": 4.553763283641117,
             "deltaAllocPct": 0.0
           },
           {
@@ -955,13 +1003,13 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 491325.2578822545,
+            "meanNs": 508892.06110491074,
             "allocatedBytes": 56,
             "ratioToBaseline": 1,
-            "throughputMbps": 2134.178903237435,
+            "throughputMbps": 2060.5076796115127,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -14.44230854804694,
+            "deltaMeanPct": 3.575391849052082,
             "deltaAllocPct": 0.0
           },
           {
@@ -970,13 +1018,13 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 1173842.4985677083,
+            "meanNs": 1219996.350455729,
             "allocatedBytes": 72,
-            "ratioToBaseline": 2.3891352616946437,
-            "throughputMbps": 893.2850883141859,
+            "ratioToBaseline": 2.3973577968712316,
+            "throughputMbps": 859.4910956973805,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -8.624083070952585,
+            "deltaMeanPct": 3.931860700591133,
             "deltaAllocPct": 0.0
           },
           {
@@ -985,13 +1033,13 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 1168673.6602313702,
+            "meanNs": 1219594.5709635417,
             "allocatedBytes": 88,
-            "ratioToBaseline": 2.378615065035882,
-            "throughputMbps": 897.2359313654816,
+            "ratioToBaseline": 2.3965682787731994,
+            "throughputMbps": 859.7742438059328,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -7.29532452051337,
+            "deltaMeanPct": 4.357153965640874,
             "deltaAllocPct": 0.0
           },
           {
@@ -1000,13 +1048,13 @@
               "DataSize": "1048576"
             },
             "paramLabel": "1 MB",
-            "meanNs": 1096685.7534505208,
+            "meanNs": 1137744.6080078124,
             "allocatedBytes": 40,
-            "ratioToBaseline": 2.232097242827561,
-            "throughputMbps": 956.1316874053007,
+            "ratioToBaseline": 2.2357287428252106,
+            "throughputMbps": 921.6268682969666,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -12.97108252007216,
+            "deltaMeanPct": 3.743903340415196,
             "deltaAllocPct": 0.0
           },
           {
@@ -1015,13 +1063,13 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 4957110.161458333,
+            "meanNs": 5209976.282151442,
             "allocatedBytes": 56,
             "ratioToBaseline": 1,
-            "throughputMbps": 2115.296948921384,
+            "throughputMbps": 2012.6310432395944,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -15.083513009457224,
+            "deltaMeanPct": 5.10107930743904,
             "deltaAllocPct": 0.0
           },
           {
@@ -1030,13 +1078,13 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 11841235.375520833,
+            "meanNs": 12294223.92734375,
             "allocatedBytes": 72,
-            "ratioToBaseline": 2.3887375890063454,
-            "throughputMbps": 885.5292262559882,
+            "ratioToBaseline": 2.3597466210089717,
+            "throughputMbps": 852.9013349658028,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -2.445856753404961,
+            "deltaMeanPct": 3.8255176715714345,
             "deltaAllocPct": 0.0
           },
           {
@@ -1045,13 +1093,13 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 11840835.460416667,
+            "meanNs": 12295561.877604166,
             "allocatedBytes": 88,
-            "ratioToBaseline": 2.3886569139575484,
-            "throughputMbps": 885.5591343240417,
+            "ratioToBaseline": 2.3600034264506777,
+            "throughputMbps": 852.8085259039165,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -4.835025704579054,
+            "deltaMeanPct": 3.8403237567790467,
             "deltaAllocPct": 0.0
           },
           {
@@ -1060,13 +1108,13 @@
               "DataSize": "10485760"
             },
             "paramLabel": "10 MB",
-            "meanNs": 11024073.51141827,
+            "meanNs": 11392156.5546875,
             "allocatedBytes": 40,
-            "ratioToBaseline": 2.223891168917476,
-            "throughputMbps": 951.1692741471012,
+            "ratioToBaseline": 2.1866043025407302,
+            "throughputMbps": 920.4367890893716,
             "slaTarget": ">= 150 MB/s",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -4.095096100416045,
+            "deltaMeanPct": 3.3389022931313477,
             "deltaAllocPct": 0.0
           }
         ]
@@ -1077,97 +1125,97 @@
     {
       "area": "Adler32_Value",
       "target": ">= 300 MB/s \u2014 Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
-      "latest": "513.41 ns (1994 MB/s)",
+      "latest": "514.92 ns (1989 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Crc32C_Value",
       "target": ">= 300 MB/s \u2014 Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
-      "latest": "1.72 \u00b5s (595 MB/s)",
+      "latest": "1.76 \u00b5s (582 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Crc32_Value",
       "target": ">= 300 MB/s \u2014 Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
-      "latest": "29.32 ns (34930 MB/s)",
+      "latest": "30.78 ns (33272 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Crc64_Value",
       "target": ">= 300 MB/s \u2014 Non-cryptographic checksums (CRC/Adler) are far cheaper than SHA-2; hardware-accelerated CRC-32 reaches multiple GB/s while table-driven variants stay well above this conservative 300 MB/s production floor.",
-      "latest": "29.29 ns (34956 MB/s)",
+      "latest": "30.71 ns (33347 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "HmacSha256",
       "target": ">= 150 MB/s \u2014 Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-      "latest": "1.63 \u00b5s (627 MB/s)",
+      "latest": "1.72 \u00b5s (596 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "HmacSha512",
       "target": ">= 150 MB/s \u2014 Keyed hashing (HMAC over SHA-2) should sustain >= 150 MB/s on production hardware.",
-      "latest": "2.97 \u00b5s (345 MB/s)",
+      "latest": "3.05 \u00b5s (336 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Md5_Hash",
       "target": ">= 150 MB/s \u2014 Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-      "latest": "1.51 \u00b5s (677 MB/s)",
+      "latest": "1.58 \u00b5s (647 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "OneShot_Sha256",
       "target": ">= 150 MB/s \u2014 Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-      "latest": "485.86 \u00b5s (2158 MB/s)",
+      "latest": "513.81 \u00b5s (2041 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "ParseHex",
       "target": "<= 5 \u00b5s \u2014 Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-      "latest": "49.82 ns",
+      "latest": "60.65 ns",
       "result": "Exceeds"
     },
     {
       "area": "Service_Sha256",
       "target": ">= 200 MB/s \u2014 SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-      "latest": "901.35 ns (1136 MB/s)",
+      "latest": "937.92 ns (1092 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Sha256_Hash",
       "target": ">= 150 MB/s \u2014 Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-      "latest": "934.78 ns (1095 MB/s)",
+      "latest": "927.04 ns (1105 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Sha384_Hash",
       "target": ">= 150 MB/s \u2014 Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-      "latest": "1.8 \u00b5s (569 MB/s)",
+      "latest": "1.86 \u00b5s (550 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Sha512_Hash",
       "target": ">= 150 MB/s \u2014 Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.",
-      "latest": "1.78 \u00b5s (576 MB/s)",
+      "latest": "1.84 \u00b5s (556 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "StaticHasher_Sha256",
       "target": ">= 200 MB/s \u2014 SHA-256 on hardware-accelerated CPUs should sustain >= 200 MB/s; the service facade must not materially erode that throughput.",
-      "latest": "893.83 ns (1146 MB/s)",
+      "latest": "932.04 ns (1099 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "Stream_Sha256",
       "target": ">= 150 MB/s \u2014 Both one-shot and incremental SHA-256 should sustain >= 150 MB/s; streaming must not collapse throughput versus the one-shot path.",
-      "latest": "513.5 \u00b5s (2042 MB/s)",
+      "latest": "544.84 \u00b5s (1925 MB/s)",
       "result": "Exceeds"
     },
     {
       "area": "ToHex",
       "target": "<= 5 \u00b5s \u2014 Hex encode/decode of a 32-64 byte digest is a trivial transform and should stay well under 5 microseconds.",
-      "latest": "54.85 ns",
+      "latest": "57.33 ns",
       "result": "Exceeds"
     }
   ],
@@ -1207,11 +1255,11 @@
   "name": "hashing",
   "title": "Hashing",
   "description": "SHA-2/MD5 content digests, non-cryptographic checksums (CRC-32/CRC-32C/CRC-64/Adler-32), HMAC keyed hashes, incremental stream hashing, the static-vs-injectable hashing surface, and hex encode/decode for Lyo.Hashing. Every payload is a buffer of cryptographically random bytes of the given DataSize, so timings reflect raw per-byte throughput (random data is incompressible and cannot be short-circuited).",
-  "runId": "BenchmarkRun-joined-2026-07-04-12-26-50",
-  "generatedAt": "2026-07-04T12:26:51.0298194+00:00",
-  "runStarted": "2026-07-04T12:03:42.558207+00:00",
-  "runEnded": "2026-07-04T12:26:51.0298194+00:00",
-  "durationSeconds": 1388.4716124,
+  "runId": "BenchmarkRun-joined-2026-07-08-12-23-55",
+  "generatedAt": "2026-07-08T12:23:55.8441008+00:00",
+  "runStarted": "2026-07-08T12:00:44.1131078+00:00",
+  "runEnded": "2026-07-08T12:23:55.8441008+00:00",
+  "durationSeconds": 1391.730993,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
@@ -1244,15 +1292,25 @@
       "runStarted": "2026-07-04T12:03:42.558207+00:00",
       "runEnded": "2026-07-04T12:26:51.0298194+00:00",
       "generatedAt": "2026-07-04T12:26:51.0298194+00:00",
-      "isCurrent": true,
+      "isCurrent": false,
       "measurementCount": 52,
       "medianMeanNs": 655737.2315899885
+    },
+    {
+      "file": "20260708T122355Z_BenchmarkRun-joined-2026-07-08-12-23-55.json",
+      "runId": "BenchmarkRun-joined-2026-07-08-12-23-55",
+      "runStarted": "2026-07-08T12:00:44.1131078+00:00",
+      "runEnded": "2026-07-08T12:23:55.8441008+00:00",
+      "generatedAt": "2026-07-08T12:23:55.8441008+00:00",
+      "isCurrent": true,
+      "measurementCount": 52,
+      "medianMeanNs": 657922.7987141927
     }
   ],
   "deltaBaseline": {
     "kind": "previousRun",
-    "runId": "BenchmarkRun-joined-2026-06-28-21-59-46",
-    "runStarted": null,
-    "runEnded": null
+    "runId": "BenchmarkRun-joined-2026-07-04-12-26-50",
+    "runStarted": "2026-07-04T12:03:42.558207+00:00",
+    "runEnded": "2026-07-04T12:26:51.0298194+00:00"
   }
 }
