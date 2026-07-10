@@ -17,7 +17,7 @@ public static class ChapterEndpoints
     {
         var group = app.MapGroup("/chapters").WithTags("Chapters");
 
-        // Enriched reads — builder handles Query (POST /Query) and plain CRUD
+        // Enriched reads — builder handles Query (POST /QueryConcrete) and plain CRUD
         group.MapGet("/{id:guid}", GetChapterById);
         group.MapGet("/{id:guid}/pages", GetPages);
 

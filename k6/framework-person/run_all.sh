@@ -10,8 +10,9 @@ CONTINUE_ON_FAILURE="${CONTINUE_ON_FAILURE:-false}"
 TEST_FILTER="${TEST_FILTER:-}"
 
 BASE_URL="${BASE_URL:-http://localhost:5251}"
-ENDPOINT_PATH="${ENDPOINT_PATH:-/person/query}"
+ENDPOINT_PATH="${ENDPOINT_PATH:-/person/QueryConcrete}"
 QUERY_PROJECT_PATH="${QUERY_PROJECT_PATH:-/person/QueryProject}"
+ROOT_QUERY_PATH="${ROOT_QUERY_PATH:-/Query}"
 TOKEN="${TOKEN:-}"
 
 mkdir -p "$OUT_DIR"
@@ -25,6 +26,10 @@ declare -a MATRIX_TESTS=(
   "queryproject_stress.js"
   "queryproject_spike.js"
   "queryproject_soak.js"
+  "queryroot_load.js"
+  "queryroot_stress.js"
+  "queryroot_spike.js"
+  "queryroot_soak.js"
 )
 
 declare -a FILTER_KEYWORDS=()
@@ -36,13 +41,14 @@ Usage: ./run_all.sh [keyword ...]
 
 Keywords can be scenario names (substring match) or group aliases:
   - load | stress | spike | soak
-  - query | queryproject
+  - query | queryproject | queryroot
   - nonsoak (alias: no-soak, nosoak)
   - all (or matrix)
 
 Examples:
   ./run_all.sh spike
   ./run_all.sh query spike
+  ./run_all.sh queryroot
   TEST_FILTER="query_spike,queryproject_load" ./run_all.sh
 EOF
 }
@@ -70,6 +76,9 @@ matches_keyword() {
       ;;
     queryproject|projected|projection)
       [[ "$test_name" == queryproject_* ]] && return 0
+      ;;
+    queryroot|rootquery|root)
+      [[ "$test_name" == queryroot_* ]] && return 0
       ;;
     nonsoak|no-soak|nosoak)
       [[ "$test_name" != *_soak ]] && return 0
@@ -124,7 +133,7 @@ done
 if [[ "${#SELECTED_TESTS[@]}" -eq 0 ]]; then
   echo "No tests matched filter(s): ${FILTER_KEYWORDS[*]}"
   echo "Available tests: ${MATRIX_TESTS[*]}"
-  echo "Supported groups: load stress spike soak query queryproject nonsoak all"
+  echo "Supported groups: load stress spike soak query queryproject queryroot nonsoak all"
   exit 1
 fi
 
@@ -156,6 +165,7 @@ for test_file in "${SELECTED_TESTS[@]}"; do
     "-e" "BASE_URL=$BASE_URL"
     "-e" "ENDPOINT_PATH=$ENDPOINT_PATH"
     "-e" "QUERY_PROJECT_PATH=$QUERY_PROJECT_PATH"
+    "-e" "ROOT_QUERY_PATH=$ROOT_QUERY_PATH"
     "--summary-export" "$summary_file"
     "$test_path"
   )

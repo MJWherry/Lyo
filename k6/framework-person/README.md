@@ -12,7 +12,7 @@ Shared reusable API code lives outside k6 in:
 
 The primary production path is now a **symmetric matrix**:
 
-- Endpoints: `/person/query`, `/person/QueryProject`
+- Endpoints: `/person/QueryConcrete`, `/person/QueryProject`
 - Profiles: `load`, `stress`, `spike`, `soak`
 - Dedicated suites: 8 scenario files (one per endpoint x profile)
 
@@ -77,7 +77,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `k6Transport.js` transport adapter for shared TS API client
   - `matrixRunner.js` shared execution flow for endpoint/profile suites
   - `personModels.js` shared field names and source-type constants
-  - `queryFactory.js` `QueryReq` body builders (`/person/query`)
+  - `queryFactory.js` `QueryConcreteReq` body builders (`/person/QueryConcrete`)
   - `projectionQueries.js` `ProjectionQueryReq` body builders (`/person/QueryProject`)
 - `scenarios/`
   - `query_load.js`
@@ -104,7 +104,7 @@ cd ../../
 Then run a scenario:
 
 ```bash
-k6 run -e BASE_URL="http://localhost:5251" -e ENDPOINT_PATH="/person/query" \
+k6 run -e BASE_URL="http://localhost:5251" -e ENDPOINT_PATH="/person/QueryConcrete" \
   k6/framework-person/scenarios/01_load_mixed_queries.js
 ```
 
@@ -139,7 +139,7 @@ MODE=smoke ./k6/framework-person/run_all.sh
 
 - Core:
   - `BASE_URL` (default `http://localhost:5251`)
-  - `ENDPOINT_PATH` (default `/person/query`) — full entity queries only
+  - `ENDPOINT_PATH` (default `/person/QueryConcrete`) — full entity queries only
   - `QUERY_PROJECT_PATH` (default `/person/QueryProject`) — projection scenarios (01 case 3, 03, 04 case 2, 06, 07)
   - `TOKEN` (optional bearer token)
   - `SLEEP_SECONDS`
@@ -147,7 +147,7 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - `MODE` (`full` or `smoke`) in `run_all.sh`
   - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.
   - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
-  - Fairness default: both `/person/query` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
+  - Fairness default: both `/person/QueryConcrete` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
   - `MATRIX_SLEEP_SECONDS` (global matrix iteration sleep override)
   - `RANDOMIZE_CASE_SELECTION` (`true|false`, default `true`) weighted random case selection instead of strict round-robin
   - `RANDOM_SEED` (integer, default `20260623`) deterministic replay seed for case/shape/sort generation
@@ -187,7 +187,7 @@ Heavy include stress, cache bypass:
 ```bash
 k6 run \
   -e BASE_URL="http://localhost:5251" \
-  -e ENDPOINT_PATH="/person/query" \
+  -e ENDPOINT_PATH="/person/QueryConcrete" \
   -e BYPASS_CACHE=true \
   -e STRESS_TARGET1=20 \
   -e STRESS_TARGET2=40 \
@@ -209,7 +209,7 @@ Soak (leak watch) for 1 hour:
 ```bash
 k6 run \
   -e BASE_URL="http://localhost:5251" \
-  -e ENDPOINT_PATH="/person/query" \
+  -e ENDPOINT_PATH="/person/QueryConcrete" \
   -e SOAK_DURATION="1h" \
   -e SOAK_VUS=12 \
   k6/framework-person/scenarios/04_soak_mixed_leak_watch.js
@@ -217,7 +217,7 @@ k6 run \
 
 ## Notes
 
-- Query paths use entity property names (e.g. `SourceEntityType`). Values are full `EntityRef` type names such as `Lyo.Endato.Postgres.Database.EndatoPsPersonEntity` (Person Search) and `Lyo.Endato.Postgres.Database.EndatoCePersonEntity` (Contact Enrichment). JSON responses from `/person/query` expose the mapped field as `source` on `PersonRes`.
+- Query paths use entity property names (e.g. `SourceEntityType`). Values are full `EntityRef` type names such as `Lyo.Endato.Postgres.Database.EndatoPsPersonEntity` (Person Search) and `Lyo.Endato.Postgres.Database.EndatoCePersonEntity` (Contact Enrichment). JSON responses from `/person/QueryConcrete` expose the mapped field as `source` on `PersonRes`.
 - `QueryProject` keeps `Include` empty by design in these workloads; navigation loading is derived from `Select` (and where-clause collection paths) by the API.
 - Query and QueryProject generators now share seeded randomization and probability controls so cross-endpoint comparisons can use matched shape distributions (nav branches, sort count, sort direction mix).
 - Matrix suites emit per-case tagged success metrics: `status_success_rate`, `latency_success_rate`, `shape_success_rate`, and per-case `query_duration`.

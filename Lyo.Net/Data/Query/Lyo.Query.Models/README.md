@@ -5,7 +5,7 @@ Filter / sort / projection DTOs and fluent builders for query requests. The same
 LINQ on `IQueryable`) and by `Lyo.Api` endpoints, so HTTP clients and in-process tests
 build queries the same way.
 
-> **Caching:** Result caching for `POST …/Query` and `POST …/QueryProject` is configured
+> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured
 > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `CacheOptions`), not
 > on these DTOs. Both endpoints share the same option; see the *Query result caching*
 > section in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
@@ -48,22 +48,31 @@ JSON property names match the C# property names under the default camelCase poli
 - `GroupOperatorEnum` — `And`, `Or`.
 - `QueryTotalCountMode` — `Exact`, `None`, `HasMore`.
 - `QueryIncludeFilterMode` — `Full`, `MatchedOnly`.
+- `JoinType` — `Inner`, `Left` (root `/Query` joins; v1).
 
 ## Request DTOs (`Common/Request`)
 
-- `QueryRequestBase` — shared fields: `Start`, `Amount` (paging), `Keys`
+- `QueryRequestBase` — shared fields: `Start`, `Amount` (paging), `Keys`.
+  Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can
+  deserialize `ProjectedQueryRes.QueryRequest`
   (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation
   paths for eager load), `SortBy` (`List<SortBy>`).
-- `QueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for `/Query`
+- `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest` — request body for `/QueryConcrete`
   (full entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).
 - `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for
   `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`.
   `Include` is ignored — navigations are derived from `Select` and any collection
   paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds
   `ZipSiblingCollectionSelections` (default `true`).
+- `QueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for **root** `/Query`
+  (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`),
+  required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden.
+  Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not
+  `WhereClause.SubClause`.
+- `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope` — join AST for root Query.
 - `ComputedField(Name, Template)` — adds a column derived from a SmartFormat template
   evaluated against the projected row (requires `IFormatterService` in the host).
-- `IQueryExecutionRequest` — common execution surface for `QueryReq` and projection.
+- `IQueryExecutionRequest` — common execution surface for concrete / projection / root query.
 
 ## Sort
 
@@ -87,8 +96,9 @@ detail for failed `Or` groups.
 |-----------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `WhereClauseBuilder`        | `WhereClause`        | `WhereClauseBuilder.And()` / `Or()` start a group; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `GreaterThan`, `LessThan`, …); `AddCondition`, `AddConditionWithSubClause`; nested `And()` / `Or()` for groups; static `Condition(...)` and `ConditionWithSubClause(...)` factories. |
 | `WhereClauseBuilderFor<T>`  | `WhereClause`        | Returned by `WhereClauseBuilder.For<T>()`; resolves property paths from `Expression<Func<T, …>>` lambdas.                                                                                                                                                                                          |
-| `QueryReqBuilder`           | `QueryReq`           | `AddIncludes`, `AddWhere(WhereClause)` / `AddWhere(Action<WhereClauseBuilder>)`, `AddSort`, `SetPagination(start, amount)`, `First()`, `SetTotalCountMode`, `SetIncludeFilterMode`, `For<T>()`.                                                                                                    |
-| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same shape as `QueryReqBuilder` plus `AddSelect`, `AddComputedField`, and projection options.                                                                                                                                                                                                      |
+| `QueryConcreteReqBuilder`           | `QueryConcreteReq`           | `AddIncludes`, `AddWhere(WhereClause)` / `AddWhere(Action<WhereClauseBuilder>)`, `AddSort`, `SetPagination(start, amount)`, `First()`, `SetTotalCountMode`, `SetIncludeFilterMode`, `For<T>()`.                                                                                                    |
+| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same shape as `QueryConcreteReqBuilder` plus `AddSelect`, `AddComputedField`, and projection options.                                                                                                                                                                                                      |
+| `QueryReqBuilder`           | `QueryReq`           | Root `/Query`: `From`, `Join`, `AddSelects`, where/sort/paging, zip option.                                                                                                                                                                                                                              |
 
 ## Attributes and exceptions
 

@@ -66,7 +66,7 @@
     {
         _loading = true;
         try {
-            var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/Query",
+            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/QueryConcrete",
                 new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
             _workflows = res?.Items ?? [];
             if (_selectedWorkflowId is null && _workflows.Count > 0)

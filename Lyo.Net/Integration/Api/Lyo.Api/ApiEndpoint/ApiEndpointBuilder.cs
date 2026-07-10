@@ -872,8 +872,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             return;
 
         var routeBuilder = app.MapPost(
-                $"{baseRoute}/Query", async (
-                    [FromBody] QueryReq queryRequest,
+                $"{baseRoute}/QueryConcrete", async (
+                    [FromBody] QueryConcreteReq queryRequest,
                     [FromServices] IQueryService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
@@ -896,7 +896,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
                     return Results.Json(error, statusCode: error.Status);
                 })
-            .WithName($"Query{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithName($"QueryConcrete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
             .Produces<QueryRes<TResponse>>()
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
@@ -945,7 +945,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         ApplyAuthorization(projectedRouteBuilder, _queryConfig.Auth);
     }
 
-    private static List<ApiError> ValidateQueryPolicy(QueryReq queryRequest, QueryConfig<TDbEntity> queryConfig)
+    private static List<ApiError> ValidateQueryPolicy(QueryConcreteReq queryRequest, QueryConfig<TDbEntity> queryConfig)
     {
         var errors = new List<ApiError>();
         if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)

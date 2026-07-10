@@ -251,8 +251,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         _lastDefinitionsRefreshUtc = DateTime.UtcNow;
         _logger.LogInformation("Updating job definitions");
         using var timer = _metrics.StartTimer(Constants.Metrics.Scheduler.RefreshDuration);
-        var query = new QueryReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
-        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
+        var query = new QueryConcreteReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
+        var results = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
         if (results.Items == null || !results.IsSuccess) {
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.RefreshError);
             _logger.LogWarning("No definitions loaded or query failed");
@@ -278,8 +278,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private async Task RefreshBlackoutCalendarsAsync(CancellationToken ct)
     {
-        var query = new QueryReqBuilder().AddIncludes("JobBlackoutWindows").Build();
-        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobBlackoutCalendarRes>>(BuildUri($"{Constants.Rest.Job.BlackoutCalendars}/Query"), query, null, ct)
+        var query = new QueryConcreteReqBuilder().AddIncludes("JobBlackoutWindows").Build();
+        var results = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobBlackoutCalendarRes>>(BuildUri($"{Constants.Rest.Job.BlackoutCalendars}/QueryConcrete"), query, null, ct)
             .ConfigureAwait(false);
 
         if (results.Items == null || !results.IsSuccess) {
@@ -510,8 +510,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             WhereClauseBuilder.Condition("JobScheduleId", ComparisonOperatorEnum.Equals, scheduleId.ToString()),
             WhereClauseBuilder.Condition("ScheduledSlotUtc", ComparisonOperatorEnum.Equals, scheduledSlot));
 
-        var result = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddWhere(where).First().Build(), null, ct).ConfigureAwait(false);
+        var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryConcreteReqBuilder().AddWhere(where).First().Build(), null, ct).ConfigureAwait(false);
 
         return result.Items?.Count > 0;
     }
@@ -519,22 +519,22 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task<JobInfo> LoadJobInfoAsync(JobDefinitionRes definition, CancellationToken ct = default)
     {
         var baseWhere = WhereClauseBuilder.Condition("JobDefinitionId", ComparisonOperatorEnum.Equals, definition.Id.ToString());
-        var lastRunTask = _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes(JobRunIncludes).AddWhere(baseWhere).AddSort("CreatedTimestamp").First().Build(), null, ct);
+        var lastRunTask = _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryConcreteReqBuilder().AddIncludes(JobRunIncludes).AddWhere(baseWhere).AddSort("CreatedTimestamp").First().Build(), null, ct);
 
         var successFilter = WhereClauseBuilder.CombineAs(
             GroupOperatorEnum.And, baseWhere,
             WhereClauseBuilder.Condition("Result", ComparisonOperatorEnum.In, new[] { nameof(JobRunResult.Success), nameof(JobRunResult.SuccessWithWarnings) }));
 
-        var lastSuccessTask = _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes(JobRunIncludes).AddWhere(successFilter).AddSort("CreatedTimestamp").First().Build(), null,
+        var lastSuccessTask = _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryConcreteReqBuilder().AddIncludes(JobRunIncludes).AddWhere(successFilter).AddSort("CreatedTimestamp").First().Build(), null,
             ct);
 
         var failFilter = WhereClauseBuilder.CombineAs(
             GroupOperatorEnum.And, baseWhere, WhereClauseBuilder.Condition("Result", ComparisonOperatorEnum.Equals, nameof(JobRunResult.Failure)));
 
-        var lastFailedTask = _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes(JobRunIncludes).AddWhere(failFilter).AddSort("CreatedTimestamp").First().Build(), null, ct);
+        var lastFailedTask = _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryConcreteReqBuilder().AddIncludes(JobRunIncludes).AddWhere(failFilter).AddSort("CreatedTimestamp").First().Build(), null, ct);
 
         await Task.WhenAll(lastRunTask, lastSuccessTask, lastFailedTask).ConfigureAwait(false);
         return new(definition, lastRunTask.Result.Items?.FirstOrDefault(), lastSuccessTask.Result.Items?.FirstOrDefault(), lastFailedTask.Result?.Items?.FirstOrDefault());
@@ -716,8 +716,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task<IReadOnlyList<JobRunRes>> GetChildRunsAsync(Guid parentRunId)
     {
         var where = WhereClauseBuilder.Condition("ParentJobRunId", ComparisonOperatorEnum.Equals, parentRunId.ToString());
-        var result = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes("JobRunResults").AddWhere(where).Build()).ConfigureAwait(false);
+        var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            BuildUri(Constants.Rest.Job.RunsQuery), new QueryConcreteReqBuilder().AddIncludes("JobRunResults").AddWhere(where).Build()).ConfigureAwait(false);
 
         return result.Items ?? [];
     }

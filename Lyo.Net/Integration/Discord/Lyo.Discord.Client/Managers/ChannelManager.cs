@@ -10,8 +10,8 @@ namespace Lyo.Discord.Client.Managers;
 /// <summary>Discord channel endpoints on the Lyo API.</summary>
 public sealed class ChannelManager(LyoDiscordClient client)
 {
-    public Task<QueryRes<DiscordChannelRes>> QueryAsync(QueryReq request, CancellationToken ct = default)
-        => client.PostAsAsync<QueryReq, QueryRes<DiscordChannelRes>>($"{Constants.Rest.Discord.Channels}/Query", request, ct: ct);
+    public Task<QueryRes<DiscordChannelRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordChannelRes>>($"{Constants.Rest.Discord.Channels}/QueryConcrete", request, ct: ct);
 
     public Task<UpsertResult<DiscordChannelRes>> UpsertAsync(DiscordChannelReq request, CancellationToken ct = default)
         => client.PostAsAsync<UpsertRequest<DiscordChannelReq>, UpsertResult<DiscordChannelRes>>(

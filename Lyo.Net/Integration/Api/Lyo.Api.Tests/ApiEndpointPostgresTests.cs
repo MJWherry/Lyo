@@ -55,8 +55,8 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Query_Endpoint_ReturnsJobDefinitions()
     {
         await _fixture.SeedJobDefinitionAsync("EndpointQueryTest");
-        var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Query", request, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10 };
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -71,8 +71,8 @@ public class ApiEndpointPostgresTests : IDisposable
     {
         await _fixture.SeedJobDefinitionAsync("EndpointQueryFilterA");
         await _fixture.SeedJobDefinitionAsync("EndpointQueryFilterB");
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "EndpointQueryFilterA") };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Query", request, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "EndpointQueryFilterA") };
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -86,14 +86,14 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Query_Endpoint_WithInclude_LoadsNavigationProperties()
     {
         await _fixture.SeedJobDefinitionAsync("EndpointQueryInclude");
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Include = ["JobParameters", "JobSchedules"],
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "EndpointQueryInclude")
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Query", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -109,7 +109,7 @@ public class ApiEndpointPostgresTests : IDisposable
         var prefix = $"EndpointHasMore_{Guid.NewGuid():N}";
         await _fixture.SeedJobDefinitionAsync($"{prefix}_A");
         await _fixture.SeedJobDefinitionAsync($"{prefix}_B");
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 1,
             Options = new() { TotalCountMode = QueryTotalCountMode.HasMore },
@@ -117,7 +117,7 @@ public class ApiEndpointPostgresTests : IDisposable
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Query", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -283,6 +283,7 @@ public class ApiEndpointPostgresTests : IDisposable
         Assert.NotNull(result);
         Assert.Equal(defId, result.Id);
         Assert.Equal("EndpointGetTest", result.Name);
+        // beforeGet mutates the entity before mapping; afterGet runs after Map so it does not affect the response body.
         Assert.Contains("[beforeGet]", result.Description ?? "");
     }
 

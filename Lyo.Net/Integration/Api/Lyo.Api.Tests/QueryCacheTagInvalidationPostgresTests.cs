@@ -28,7 +28,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Keys = [[defId]],
@@ -58,7 +58,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Keys = [[defId]],

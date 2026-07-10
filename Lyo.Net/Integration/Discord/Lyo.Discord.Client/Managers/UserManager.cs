@@ -10,8 +10,8 @@ namespace Lyo.Discord.Client.Managers;
 /// <summary>Discord user endpoints on the Lyo API.</summary>
 public sealed class UserManager(LyoDiscordClient client)
 {
-    public Task<QueryRes<DiscordUserRes>> QueryAsync(QueryReq request, CancellationToken ct = default)
-        => client.PostAsAsync<QueryReq, QueryRes<DiscordUserRes>>($"{Constants.Rest.Discord.Users}/Query", request, ct: ct);
+    public Task<QueryRes<DiscordUserRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordUserRes>>($"{Constants.Rest.Discord.Users}/QueryConcrete", request, ct: ct);
 
     public Task<DiscordUserRes?> GetAsync(long id, CancellationToken ct = default) => client.GetAsAsync<DiscordUserRes>($"{Constants.Rest.Discord.Users}/{id}", ct: ct);
 

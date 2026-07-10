@@ -8,7 +8,7 @@ namespace Lyo.Api.Models.Common.Response;
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryRes<T>(
-    QueryReq QueryRequest,
+    QueryConcreteReq QueryRequest,
     bool IsSuccess,
     IReadOnlyList<T>? Items,
     int? Start,
@@ -21,10 +21,10 @@ public sealed record QueryRes<T>(
     public override string ToString() => IsSuccess ? $"Start={Start} Amount={Amount} Total: {Total} HasMore: {HasMore} Score: {QueryScore}" : Error?.ToString() ?? "";
 }
 
-/// <summary>Result of <c>/QueryProject</c> (projected rows).</summary>
+/// <summary>Result of <c>/QueryProject</c> or root <c>/Query</c> (projected rows).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ProjectedQueryRes<T>(
-    ProjectionQueryReq QueryRequest,
+    QueryRequestBase QueryRequest,
     bool IsSuccess,
     IReadOnlyList<T>? Items,
     int? Start,

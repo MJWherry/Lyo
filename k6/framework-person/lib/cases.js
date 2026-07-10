@@ -15,6 +15,12 @@ import {
   computedCollectionParallelQuery,
   computedScalarTemplateQuery,
 } from "./projectionQueries.js";
+import {
+  rootFlatPersonQuery,
+  rootLeftJoinContactAddressQuery,
+  rootChainedJoinAddressQuery,
+  rootChainedJoinExactCountQuery,
+} from "./rootQueries.js";
 
 const QUERY_CASES = [
   {
@@ -102,6 +108,40 @@ const QUERYPROJECT_CASES = [
   },
 ];
 
+const QUERYROOT_CASES = [
+  {
+    caseId: "root_flat",
+    endpointKind: "queryroot",
+    defaultSlowMs: 1500,
+    buildBody: ({ start, amount }) => rootFlatPersonQuery({ start, amount }),
+  },
+  {
+    caseId: "root_left_join",
+    endpointKind: "queryroot",
+    defaultSlowMs: 2200,
+    buildBody: ({ start, amount }) => rootLeftJoinContactAddressQuery({ start, amount }),
+  },
+  {
+    caseId: "root_chained_join",
+    endpointKind: "queryroot",
+    defaultSlowMs: 2500,
+    buildBody: ({ start, amount }) => rootChainedJoinAddressQuery({ start, amount }),
+  },
+  {
+    caseId: "root_chained_exact_count",
+    endpointKind: "queryroot",
+    defaultSlowMs: 2800,
+    buildBody: ({ start, amount }) => rootChainedJoinExactCountQuery({ start, amount }),
+  },
+];
+
+function casesForEndpoint(endpointKind) {
+  if (endpointKind === "query") return QUERY_CASES;
+  if (endpointKind === "queryproject") return QUERYPROJECT_CASES;
+  if (endpointKind === "queryroot") return QUERYROOT_CASES;
+  return [];
+}
+
 function slowEnvKey(caseId) {
   return `CASE_${caseId.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_SLOW_MS`;
 }
@@ -111,11 +151,11 @@ export function resolveCaseSlowMs(caseDef) {
 }
 
 export function getEndpointCaseIds(endpointKind) {
-  return (endpointKind === "query" ? QUERY_CASES : QUERYPROJECT_CASES).map((c) => c.caseId);
+  return casesForEndpoint(endpointKind).map((c) => c.caseId);
 }
 
 export function getCaseDefinitions(endpointKind, caseIds) {
-  const source = endpointKind === "query" ? QUERY_CASES : QUERYPROJECT_CASES;
+  const source = casesForEndpoint(endpointKind);
   if (!caseIds || caseIds.length === 0) {
     return source;
   }

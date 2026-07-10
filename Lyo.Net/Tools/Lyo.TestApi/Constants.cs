@@ -22,7 +22,7 @@ public static class Constants
         public const string ServiceKey = "gateway-filestorage";
         public const string MetadataKey = "gateway-filestorage-metadata";
 
-        /// <summary>Base route for Lyo.Api Query/QueryProject over Postgres <c>file_metadata</c> (append <c>/Query</c>, <c>/QueryProject</c>).</summary>
+        /// <summary>Base route for Lyo.Api Query/QueryProject over Postgres <c>file_metadata</c> (append <c>/QueryConcrete</c>, <c>/QueryProject</c>).</summary>
         public const string FileMetadata = "Workbench/FileStorage/FileMetadata";
     }
 

@@ -36,7 +36,7 @@ public interface IQueryPagingHelper
     Task<(TDbModel[] QueryResults, int? Total, bool? HasMore)> ApplyPagingAndMaterializeAsync<TContext, TDbModel>(
         TContext context,
         QueryExecutionState<TDbModel> state,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         bool keysProvided,
@@ -114,7 +114,7 @@ public sealed class QueryPagingHelper(IEntityLoaderService loaderService, QueryO
     public async Task<(TDbModel[] QueryResults, int? Total, bool? HasMore)> ApplyPagingAndMaterializeAsync<TContext, TDbModel>(
         TContext context,
         QueryExecutionState<TDbModel> state,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         bool keysProvided,

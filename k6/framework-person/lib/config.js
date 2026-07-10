@@ -34,8 +34,10 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     profile,
     baseUrl,
     token,
-    queryPath: env("ENDPOINT_PATH", "/person/query"),
+    queryPath: env("ENDPOINT_PATH", "/person/QueryConcrete"),
     queryProjectPath: env("QUERY_PROJECT_PATH", env("QUERY_SELECT_PATH", "/person/QueryProject")),
+    // TestApi maps root From/Joins at POST /Query (not under /person).
+    rootQueryPath: env("ROOT_QUERY_PATH", "/Query"),
     requestedCases,
     amountMin,
     amountMax,

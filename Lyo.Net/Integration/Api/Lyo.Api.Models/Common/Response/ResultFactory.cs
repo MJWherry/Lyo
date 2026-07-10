@@ -7,14 +7,14 @@ namespace Lyo.Api.Models.Common.Response;
 
 public static class ResultFactory
 {
-    public static QueryRes<T> QuerySuccess<T>(QueryReq queryRequest, IReadOnlyList<T> items, int? start, int? amount, int? total, bool? hasMore = null, int? queryScore = null)
+    public static QueryRes<T> QuerySuccess<T>(QueryConcreteReq queryRequest, IReadOnlyList<T> items, int? start, int? amount, int? total, bool? hasMore = null, int? queryScore = null)
         => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? QueryRequestScorer.Score(queryRequest), null);
 
-    public static QueryRes<T> QueryFailure<T>(QueryReq queryRequest, LyoProblemDetails error, int? queryScore = null)
+    public static QueryRes<T> QueryFailure<T>(QueryConcreteReq queryRequest, LyoProblemDetails error, int? queryScore = null)
         => new(queryRequest, false, null, null, null, null, null, queryScore ?? QueryRequestScorer.Score(queryRequest), error);
 
     public static ProjectedQueryRes<T> ProjectedQuerySuccess<T>(
-        ProjectionQueryReq queryRequest,
+        QueryRequestBase queryRequest,
         IReadOnlyList<T> items,
         int? start,
         int? amount,
@@ -22,14 +22,22 @@ public static class ResultFactory
         bool? hasMore = null,
         int? queryScore = null,
         IReadOnlyList<string>? entityTypes = null)
-        => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? QueryRequestScorer.Score(queryRequest), null, entityTypes);
+        => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? ScoreProjected(queryRequest), null, entityTypes);
 
     public static ProjectedQueryRes<T> ProjectedQueryFailure<T>(
-        ProjectionQueryReq queryRequest,
+        QueryRequestBase queryRequest,
         LyoProblemDetails error,
         int? queryScore = null,
         IReadOnlyList<string>? entityTypes = null)
-        => new(queryRequest, false, null, null, null, null, null, queryScore ?? QueryRequestScorer.Score(queryRequest), error, entityTypes);
+        => new(queryRequest, false, null, null, null, null, null, queryScore ?? ScoreProjected(queryRequest), error, entityTypes);
+
+    private static int ScoreProjected(QueryRequestBase queryRequest)
+        => queryRequest switch {
+            ProjectionQueryReq projection => QueryRequestScorer.Score(projection),
+            QueryReq root => QueryRequestScorer.Score(root),
+            QueryConcreteReq concrete => QueryRequestScorer.Score(concrete),
+            _ => 0
+        };
 
     // Create
     public static CreateResult<T> CreateSuccess<T>(T data) => new(true, data, null);

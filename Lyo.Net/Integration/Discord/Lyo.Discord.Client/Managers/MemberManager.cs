@@ -11,8 +11,8 @@ namespace Lyo.Discord.Client.Managers;
 /// <summary>Discord guild member endpoints on the Lyo API.</summary>
 public sealed class MemberManager(LyoDiscordClient client)
 {
-    public Task<QueryRes<DiscordMemberRes>> QueryAsync(QueryReq request, CancellationToken ct = default)
-        => client.PostAsAsync<QueryReq, QueryRes<DiscordMemberRes>>($"{Constants.Rest.Discord.Members}/Query", request, ct: ct);
+    public Task<QueryRes<DiscordMemberRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordMemberRes>>($"{Constants.Rest.Discord.Members}/QueryConcrete", request, ct: ct);
 
     public Task<UpsertResult<DiscordMemberRes>> UpsertAsync(DiscordMemberReq request, CancellationToken ct = default)
     {

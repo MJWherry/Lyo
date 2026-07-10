@@ -49,13 +49,13 @@ public class CompressionPostgresTests : IDisposable
     public async Task Post_WithGzipContentEncoding_ProcessesCompressedRequestBody()
     {
         await _fixture.SeedJobDefinitionAsync("CompressionQueryTarget");
-        var requestBody = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget") };
+        var requestBody = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget") };
         var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(requestBody, JsonOptions);
         var gzippedBytes = CompressGzip(jsonBytes);
         using var content = new ByteArrayContent(gzippedBytes);
         content.Headers.ContentType = new(FileTypeInfo.Json.MimeType);
         content.Headers.ContentEncoding.Add("gzip");
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/Query");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/QueryConcrete");
         request.Content = content;
         using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();

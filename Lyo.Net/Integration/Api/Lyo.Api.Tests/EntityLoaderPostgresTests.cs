@@ -1,3 +1,4 @@
+using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Job.Postgres.Database;
@@ -73,5 +74,27 @@ public class EntityLoaderPostgresTests
         var types = loader.GetReferencedTypes<JobContext, JobRun>(context, ["JobDefinition.JobParameters"]);
         Assert.Contains(typeof(JobDefinition), types);
         Assert.Contains(typeof(JobParameter), types);
+    }
+
+    [Fact]
+    public void CollectIncludePathErrors_InvalidPath_ReturnsError()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
+        using var context = factory.CreateDbContext();
+        var errors = loader.CollectIncludePathErrors<JobContext, JobDefinition>(context, ["NotANavigation"]);
+        Assert.NotEmpty(errors);
+        Assert.Contains(errors, e => e.Code == Lyo.Api.Models.Constants.ApiErrorCodes.InvalidInclude);
+    }
+
+    [Fact]
+    public void ValidateIncludePaths_InvalidPath_ThrowsApiErrorException()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
+        using var context = factory.CreateDbContext();
+        Assert.Throws<ApiErrorException>(() => loader.ValidateIncludePaths<JobContext, JobDefinition>(context, ["NotANavigation"]));
     }
 }

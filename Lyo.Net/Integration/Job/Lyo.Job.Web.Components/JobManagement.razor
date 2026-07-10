@@ -115,12 +115,12 @@
 
     private async Task OpenDefinitionAsync(Guid id)
     {
-        var req = new QueryReq {
+        var req = new QueryConcreteReq {
             Keys = [[id]],
             Amount = 1,
             Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]
         };
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/Query", req);
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def is null) {
             Snackbar.Add($"Job definition {id:D} not found.", Severity.Warning);
@@ -140,12 +140,12 @@
 
     private async Task OpenRunAsync(Guid id)
     {
-        var req = new QueryReq {
+        var req = new QueryConcreteReq {
             Keys = [[id]],
             Amount = 1,
             Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"]
         };
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>($"{RunRoute}/Query", req);
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>($"{RunRoute}/QueryConcrete", req);
         var run = res?.Items?.FirstOrDefault();
         if (run is null) {
             Snackbar.Add($"Job run {id:D} not found.", Severity.Warning);

@@ -11,34 +11,40 @@ shared JSON editor, filter widgets, and client storage.
 
 - `QueryBuilderWorkbench.razor` (`QueryBuilderWorkbench.razor.cs`) — the
   full-screen workbench that pairs a query editor with a runner panel. Holds the
-  current `QueryReq` (for `/Query`) and `ProjectionQueryReq` (for `/QueryProject`)
-  plus the shared bookkeeping (`Include`, `Select`, `Keys`). Auto-persists state to
-  the browser via `ClientStore.GetQueryWorkbenchStateAsync` /
-  `SetQueryWorkbenchStateAsync` with a 450 ms debounce; final state is also flushed
-  on dispose.
+  current `QueryConcreteReq` (`/QueryConcrete`), `ProjectionQueryReq` (`/QueryProject`),
+  and `QueryReq` (root `/Query` From/Joins), plus shared bookkeeping (`Include`,
+  `Select`, `Keys`). Auto-persists state to the browser via
+  `ClientStore.GetQueryWorkbenchStateAsync` / `SetQueryWorkbenchStateAsync` with a
+  450 ms debounce; final state is also flushed on dispose.
 - `QueryBuilderSettings.razor` (`QueryBuilderSettings.razor.cs`) — host /
   endpoint / run-mode selector embedded in the workbench.
 - `QueryRunPanel.razor` (`QueryRunPanel.razor.cs`) — issues HTTP requests for the
   current query, renders the response in a JSON editor, and surfaces latency / size
   metrics. Loads its splitter behavior from
   `_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js`.
+  Endpoint segments: `QueryConcrete`, `QueryProject`, or `Query` (root).
 
 `QueryBuilderWorkbench` exposes a `Title` parameter and an optional `Routes`
-(`Dictionary<string, List<string>>`) seed for host → route templates when no
-persisted state is found.
+(`Dictionary<string, List<string>>`) seed for host → **entity** route templates
+when no persisted state is found. In `/QueryConcrete` / `/QueryProject` modes the
+runner posts to `{host}/{entityRoute}/QueryConcrete|QueryProject`. In root
+`/Query` mode the runner strips the entity segment and posts to
+`{host}/{dynamicBase}/Query` (entity type comes from `From.EntityType` in the
+body); the route dropdown shows dynamic bases, not entity paths.
 
 ## State types
 
-- `QueryWorkbenchPersistedState` — `EntityQuery` (`QueryReq?`),
-  `QueryRequest` (`ProjectionQueryReq`), `IncludeAll`, `SelectAll`, `KeysAll`, and
-  `Run` (`QueryWorkbenchRunConfiguration`).
+- `QueryWorkbenchPersistedState` — `EntityQuery` (`QueryConcreteReq?`),
+  `QueryRequest` (`ProjectionQueryReq`), `RootQuery` (`QueryReq?`), `IncludeAll`,
+  `SelectAll`, `KeysAll`, and `Run` (`QueryWorkbenchRunConfiguration`).
 - `QueryWorkbenchRunConfiguration` — `HostEndpoints` (host → list of route
-  templates), `SelectedHost`, `Route`, `RunMode` (`QueryWorkbenchRunMode.Query`
-  or `QueryProject`), `LeftPanePercent`, `RequestEditorViewMode`
+  templates), `SelectedHost`, `Route`, `RunMode` (`QueryWorkbenchRunMode`),
+  `LeftPanePercent`, `RequestEditorViewMode`
   (`Lyo.Web.Components.JsonEditor.JsonEditorViewMode`), plus
   `CloneHostEndpoints(...)`.
-- `QueryWorkbenchRunMode` — enum (`Query`, `QueryProject`) serialized with the
-  bundled `QueryWorkbenchRunModeJsonConverter`.
+- `QueryWorkbenchRunMode` — enum (`Query` → `/QueryConcrete`, `QueryProject`,
+  `RootQuery` → `/Query`) serialized with the bundled
+  `QueryWorkbenchRunModeJsonConverter`.
 - `QueryWorkbenchHostNormalization` — static normalization helpers used at
   load/persist time.
 

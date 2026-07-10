@@ -55,7 +55,7 @@ contributes to host health endpoints that resolve **`IEnumerable<IHealth>`**.
 
 ### Query cache tag granularity (`QueryCacheTagGranularity`)
 
-Used by **`Lyo.Api`** when tagging **`POST …/Query`**, **`POST …/QueryProject`**, and **`GET`** cache entries for Fusion **`RemoveByTagAsync`** invalidation.
+Used by **`Lyo.Api`** when tagging **`POST …/QueryConcrete`**, **`POST …/QueryProject`**, and **`GET`** cache entries for Fusion **`RemoveByTagAsync`** invalidation.
 
 | Value                 | Meaning                                                                                                                                                                                   |
 |-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -79,6 +79,6 @@ Binding examples: **`CacheOptions:Payload:AutoCompress`**, **`CacheOptions:Paylo
 ## API hosts (Lyo.Api)
 
 **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to use the host’s **`JsonOptions`** (falling back to shared defaults). That keeps cached query payloads aligned
-with REST JSON for **`QueryReq`** / **`ProjectionQueryReq`** shapes.
+with REST JSON for **`QueryConcreteReq`** / **`ProjectionQueryReq`** shapes.
 
-See the Lyo.Api README *Query result caching* section for **`QueryOptions:CacheQueryResultsAsUtf8Payload`** and how **`POST …/Query`** and **`POST …/QueryProject`** both honor it.
+See the Lyo.Api README *Query result caching* section for **`QueryOptions:CacheQueryResultsAsUtf8Payload`** and how **`POST …/QueryConcrete`** and **`POST …/QueryProject`** both honor it.

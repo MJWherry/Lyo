@@ -11,6 +11,7 @@ using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Read.Query.Root;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
 using Lyo.Common;
@@ -46,7 +47,7 @@ public static class DynamicCrudEndpointBuilder
         return MapDynamicCrudEndpointsCore(webApp, builder.Build());
     }
 
-    /// <summary>Maps dynamic CRUD endpoints: /{baseRoute}/{entityType}/Query, /{entityType}/Get/{id}, etc. Simpler overload using DynamicEndpointOptions.</summary>
+    /// <summary>Maps dynamic CRUD endpoints: /{baseRoute}/{entityType}/QueryConcrete, /{entityType}/Get/{id}, etc. Simpler overload using DynamicEndpointOptions.</summary>
     public static WebApplication MapDynamicCrudEndpoints<TContext>(this WebApplication webApp, Action<DynamicEndpointOptions<TContext>>? configure = null)
         where TContext : DbContext
     {
@@ -54,6 +55,39 @@ public static class DynamicCrudEndpointBuilder
         configure?.Invoke(options);
         var config = ConvertDynamicOptionsToConfig(options);
         return MapDynamicCrudEndpointsCore(webApp, config);
+    }
+
+    /// <summary>
+    /// Maps root From/Joins <c>POST {baseRoute}/Query</c> for a DbContext without requiring full dynamic CRUD.
+    /// Use when typed <c>CreateBuilder</c> already owns entity routes (e.g. Person) but you still want Option A root Query.
+    /// Pass <paramref name="baseRoute"/> empty for <c>POST /Query</c>.
+    /// </summary>
+    public static WebApplication MapRootQueryEndpoints<TContext>(
+        this WebApplication webApp,
+        string baseRoute = "",
+        IEnumerable<Type>? allowlistedEntityTypes = null)
+        where TContext : DbContext
+    {
+        using var scope = webApp.Services.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TContext>>();
+        using var context = factory.CreateDbContext();
+        var types = allowlistedEntityTypes?.ToList() ?? DynamicEndpointMapper.GetEntityTypesFromDbContext<TContext>().ToList();
+        var rootQueryRegistry = RootQueryEntityRegistry.FromDbContext(context, types);
+        var routePrefix = string.IsNullOrEmpty(baseRoute) ? "" : baseRoute.TrimEnd('/') + "/";
+        webApp.MapPost(
+                $"{routePrefix}Query",
+                async (
+                    [FromBody] QueryReq queryRequest,
+                    [FromServices] IRootQueryService<TContext> rootQueryService,
+                    CancellationToken ct) => {
+                    var result = await rootQueryService.QueryAsync(queryRequest, rootQueryRegistry, ct).ConfigureAwait(false);
+                    return Results.Json(result, statusCode: result.IsSuccess ? StatusCodes.Status200OK : result.Error?.Status ?? StatusCodes.Status400BadRequest);
+                })
+            .WithTags("Dynamic")
+            .WithName($"RootQuery{typeof(TContext).Name}{(string.IsNullOrEmpty(baseRoute) ? "" : "_" + baseRoute.Replace('/', '_'))}")
+            .Produces<ProjectedQueryRes<object?>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+        return webApp;
     }
 
     private static DynamicEndpointConfig<TContext> ConvertDynamicOptionsToConfig<TContext>(DynamicEndpointOptions<TContext> options)
@@ -115,10 +149,10 @@ public static class DynamicCrudEndpointBuilder
 
         if (defaults.Features.Contains(ApiFeature.Query)) {
             webApp.MapPost(
-                    $"{entityRoute}/Query",
+                    $"{entityRoute}/QueryConcrete",
                     async (
                         [FromRoute] string entityType,
-                        [FromBody] QueryReq queryRequest,
+                        [FromBody] QueryConcreteReq queryRequest,
                         [FromServices] IQueryService<TContext> queryService,
                         HttpContext httpContext,
                         CancellationToken ct) => await HandleQuery(registry, entityType, queryRequest, queryService, httpContext, SortDirection.Desc, ct))
@@ -150,6 +184,9 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<ProjectedQueryRes<object?>>()
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
+
+            // Option A: root /Query at the dynamic base (not under {entityType})
+            webApp.MapRootQueryEndpoints<TContext>(baseRoute, registry.Values.Select(m => m.EntityType));
         }
 
         if (defaults.Features.Contains(ApiFeature.Get)) {
@@ -598,7 +635,7 @@ public static class DynamicCrudEndpointBuilder
     private static async Task<IResult> HandleQuery<TContext>(
         IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         IQueryService<TContext> queryService,
         HttpContext httpContext,
         SortDirection defaultSortDirection,

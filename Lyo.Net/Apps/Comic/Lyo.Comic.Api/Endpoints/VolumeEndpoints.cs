@@ -17,7 +17,7 @@ public static class VolumeEndpoints
     {
         var group = app.MapGroup("/volumes").WithTags("Volumes");
 
-        // Enriched reads — builder handles Query (POST /Query) and plain CRUD
+        // Enriched reads — builder handles Query (POST /QueryConcrete) and plain CRUD
         group.MapGet("/{id:guid}", GetVolumeById);
 
         // Chapters in volume

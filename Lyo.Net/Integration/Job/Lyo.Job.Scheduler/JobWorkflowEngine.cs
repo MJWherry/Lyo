@@ -129,8 +129,8 @@ public sealed class JobWorkflowEngine : BackgroundService
     private async Task<JobWorkflowRunStepRes?> FindWorkflowRunStepAsync(Guid jobRunId)
     {
         var where = WhereClauseBuilder.Condition("JobRunId", ComparisonOperatorEnum.Equals, jobRunId.ToString());
-        var result = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobWorkflowRunStepRes>>(
-            BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/Query"), new QueryReqBuilder().AddWhere(where).First().Build()).ConfigureAwait(false);
+        var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRunStepRes>>(
+            BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/QueryConcrete"), new QueryConcreteReqBuilder().AddWhere(where).First().Build()).ConfigureAwait(false);
 
         return result.Items?.FirstOrDefault();
     }

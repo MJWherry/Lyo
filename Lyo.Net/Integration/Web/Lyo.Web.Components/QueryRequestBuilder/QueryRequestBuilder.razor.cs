@@ -44,7 +44,7 @@ public partial class QueryRequestBuilder
     [Parameter]
     public bool AutoSelectNewFilterNode { get; set; } = true;
 
-    /// <summary>When true, shows a /Query vs /QueryProject toggle on the query score row (Query Builder workbench).</summary>
+    /// <summary>When true, shows a /QueryConcrete vs /QueryProject toggle on the query score row (Query Builder workbench).</summary>
     [Parameter]
     public bool ShowEndpointToggle { get; set; }
 

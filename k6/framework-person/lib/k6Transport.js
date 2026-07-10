@@ -34,13 +34,15 @@ function replacePath(pathWithQuery, fromPath, toPath) {
   return pathWithQuery;
 }
 
-function remapUrl(url, queryPath, queryProjectPath) {
+function remapUrl(url, queryPath, queryProjectPath, rootQueryPath) {
   const { base, pathWithQuery } = splitBaseAndPath(url);
   const normalizedQueryPath = normalizePath(queryPath);
   const normalizedQueryProjectPath = normalizePath(queryProjectPath);
+  const normalizedRootQueryPath = normalizePath(rootQueryPath);
 
-  let mapped = replacePath(pathWithQuery, "/person/query", normalizedQueryPath);
+  let mapped = replacePath(pathWithQuery, "/person/QueryConcrete", normalizedQueryPath);
   mapped = replacePath(mapped, "/person/QueryProject", normalizedQueryProjectPath);
+  mapped = replacePath(mapped, "/Query", normalizedRootQueryPath);
   return `${base}${mapped}`;
 }
 
@@ -65,9 +67,9 @@ function normalizeHeaders(headers = {}) {
   return mapped;
 }
 
-export function createK6Transport({ queryPath, queryProjectPath, tags = {} }) {
+export function createK6Transport({ queryPath, queryProjectPath, rootQueryPath = "/Query", tags = {} }) {
   return function transport(request) {
-    const targetUrl = remapUrl(request.url, queryPath, queryProjectPath);
+    const targetUrl = remapUrl(request.url, queryPath, queryProjectPath, rootQueryPath);
     const response = http.request(request.method, targetUrl, request.body, {
       headers: request.headers,
       tags,

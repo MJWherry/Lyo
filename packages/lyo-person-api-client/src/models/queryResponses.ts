@@ -1,4 +1,4 @@
-import type {ProjectionQueryReq, QueryReq} from "./queryRequests.js";
+import type {ProjectionQueryReq, QueryConcreteReq, QueryReq} from "./queryRequests.js";
 
 export interface LyoProblemDetails {
     title?: string;
@@ -13,7 +13,7 @@ export interface LyoProblemDetails {
 }
 
 export interface QueryRes<TItem> {
-    queryRequest: QueryReq;
+    queryRequest: QueryConcreteReq;
     isSuccess: boolean;
     items?: TItem[] | null;
     start?: number | null;
@@ -25,7 +25,7 @@ export interface QueryRes<TItem> {
 }
 
 export interface ProjectedQueryRes<TRow = Record<string, unknown>> {
-    queryRequest: ProjectionQueryReq;
+    queryRequest: ProjectionQueryReq | QueryReq;
     isSuccess: boolean;
     items?: TRow[] | null;
     start?: number | null;
@@ -34,4 +34,5 @@ export interface ProjectedQueryRes<TRow = Record<string, unknown>> {
     hasMore?: boolean | null;
     queryScore: number;
     error?: LyoProblemDetails | null;
+    entityTypes?: string[] | null;
 }

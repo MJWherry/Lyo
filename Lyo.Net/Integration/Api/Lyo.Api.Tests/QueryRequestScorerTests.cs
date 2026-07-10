@@ -12,8 +12,8 @@ public class QueryRequestScorerTests
     [Fact]
     public void Score_NullRequest_ReturnsZero()
     {
-        var score = QueryRequestScorer.Score((QueryReq?)null);
-        var detailed = QueryRequestScorer.ScoreDetailed((QueryReq?)null);
+        var score = QueryRequestScorer.Score((QueryConcreteReq?)null);
+        var detailed = QueryRequestScorer.ScoreDetailed((QueryConcreteReq?)null);
         Assert.Equal(0, score);
         Assert.Equal(0, detailed.TotalScore);
         Assert.Equal(0, detailed.WhereClauseCount);
@@ -22,7 +22,7 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_TracksPagingSortAndKeys()
     {
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 200,
             Amount = 300,
             Keys = [[1], [2], [3]],
@@ -43,8 +43,8 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_DeeperIncludes_IncreaseIncludeScore()
     {
-        var shallow = new QueryReq { Amount = 100, Include = ["addresses"] };
-        var deep = new QueryReq { Amount = 100, Include = ["contactaddresses.address", "contactphonenumbers.phonenumber", "contactemailaddresses.emailaddress"] };
+        var shallow = new QueryConcreteReq { Amount = 100, Include = ["addresses"] };
+        var deep = new QueryConcreteReq { Amount = 100, Include = ["contactaddresses.address", "contactphonenumbers.phonenumber", "contactemailaddresses.emailaddress"] };
         var shallowScore = QueryRequestScorer.ScoreDetailed(shallow);
         var deepScore = QueryRequestScorer.ScoreDetailed(deep);
         Assert.True(deepScore.IncludeScore > shallowScore.IncludeScore);
@@ -71,8 +71,8 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_ComparisonComplexity_RegexAndInIncreaseScore()
     {
-        var simple = new QueryReq { WhereClause = WhereClauseBuilder.Condition("FirstName", ComparisonOperatorEnum.Equals, "Matt") };
-        var complex = new QueryReq {
+        var simple = new QueryConcreteReq { WhereClause = WhereClauseBuilder.Condition("FirstName", ComparisonOperatorEnum.Equals, "Matt") };
+        var complex = new QueryConcreteReq {
             WhereClause = WhereClauseBuilder.And(b => {
                 b.AddCondition("FirstName", ComparisonOperatorEnum.Regex, "^(?i)m[a-z]+$");
                 b.AddCondition("Source", ComparisonOperatorEnum.In, "A,B,C,D,E,F,G,H,I,J");
@@ -88,13 +88,13 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_WhereClauseAndSubQueryDepthIncreaseNodeScore()
     {
-        var noSubQuery = new QueryReq {
+        var noSubQuery = new QueryConcreteReq {
             WhereClause = new GroupClause(
                 GroupOperatorEnum.And,
                 [new ConditionClause("FirstName", ComparisonOperatorEnum.NotEquals, null), new ConditionClause("LastName", ComparisonOperatorEnum.NotEquals, null)])
         };
 
-        var withSubQuery = new QueryReq {
+        var withSubQuery = new QueryConcreteReq {
             WhereClause = new GroupClause(
                 GroupOperatorEnum.And,
                 [
@@ -135,9 +135,9 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_TotalCountModeExactCostsMoreThanNone()
     {
-        var none = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.None } };
-        var hasMore = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.HasMore } };
-        var exact = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.Exact } };
+        var none = new QueryConcreteReq { Options = new() { TotalCountMode = QueryTotalCountMode.None } };
+        var hasMore = new QueryConcreteReq { Options = new() { TotalCountMode = QueryTotalCountMode.HasMore } };
+        var exact = new QueryConcreteReq { Options = new() { TotalCountMode = QueryTotalCountMode.Exact } };
         var noneScore = QueryRequestScorer.ScoreDetailed(none);
         var hasMoreScore = QueryRequestScorer.ScoreDetailed(hasMore);
         var exactScore = QueryRequestScorer.ScoreDetailed(exact);

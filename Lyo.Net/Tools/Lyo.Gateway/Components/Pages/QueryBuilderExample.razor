@@ -12,6 +12,10 @@
 
     protected override string PageName { get; set; } = "Query Builder Example";
 
-    public readonly Dictionary<string, List<string>> Routes = new() { ["http://localhost:5251"] = ["Person"], ["http://localhost:5074"] = ["Docket", "Docket/Charge"] };
+    // Entity routes for /QueryConcrete|/QueryProject; empty "" seeds root /Query (dynamic base) for PeopleDbContext.
+    public readonly Dictionary<string, List<string>> Routes = new() {
+        ["http://localhost:5251"] = ["Person", ""],
+        ["http://localhost:5074"] = ["Docket", "Docket/Charge"]
+    };
 
 }

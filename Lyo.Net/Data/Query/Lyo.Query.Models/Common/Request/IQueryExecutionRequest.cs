@@ -1,11 +1,10 @@
 namespace Lyo.Query.Models.Common.Request;
 
-/// <summary>Shared execution shape for filtered, paged entity loads (<see cref="QueryReq" /> and projection fallback).</summary>
+/// <summary>Shared execution shape for filtered, paged loads (<see cref="QueryConcreteReq" />, <see cref="ProjectionQueryReq" />, <see cref="QueryReq" />).</summary>
 public interface IQueryExecutionRequest
 {
     /// <summary>
-    /// Options that control total count, include filtering, and projection-specific behavior (concrete type depends on <see cref="QueryReq" /> vs
-    /// <see cref="ProjectionQueryReq" />).
+    /// Options that control total count, include filtering, and projection-specific behavior (concrete type depends on the request DTO).
     /// </summary>
     QueryRequestOptions Options { get; }
 

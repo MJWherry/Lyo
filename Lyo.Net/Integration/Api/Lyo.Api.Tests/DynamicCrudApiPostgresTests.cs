@@ -49,8 +49,8 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task Query_Endpoint_ReturnsJobDefinitions()
     {
         await _fixture.SeedJobDefinitionAsync("DynamicQueryTest");
-        var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, JsonOptions, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10 };
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryConcrete", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -64,8 +64,8 @@ public class DynamicCrudApiPostgresTests : IDisposable
     {
         await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterA");
         await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterB");
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "DynamicQueryFilterA") };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, JsonOptions, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "DynamicQueryFilterA") };
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryConcrete", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -448,8 +448,8 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task UnknownEntityType_Returns404()
     {
-        var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/Query", request, JsonOptions, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10 };
+        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/QueryConcrete", request, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

@@ -19,7 +19,7 @@ Concrete result records emitted by `Lyo.Api` endpoints (see [`Common/Response/Re
 
 | Envelope                                          | Returned by                 | Notable fields                                                                                                 |
 |---------------------------------------------------|-----------------------------|----------------------------------------------------------------------------------------------------------------|
-| **`QueryRes<T>`**                                 | `POST {route}/Query`        | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).    |
+| **`QueryRes<T>`**                                 | `POST {route}/QueryConcrete`        | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).    |
 | **`ProjectedQueryRes<T>`**                        | `POST {route}/QueryProject` | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`.   |
 | **`CreateResult<T>`** / **`CreateBulkResult<T>`** | Create + Bulk create        | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`.                             |
 | **`UpdateResult<T>`** / **`UpdateBulkResult<T>`** | Update + Bulk update        | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`.         |

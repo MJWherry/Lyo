@@ -212,7 +212,7 @@ public sealed class ExportServiceTests
         where TContext : DbContext where T : class
     {
         public Task<QueryRes<TResult>> Query<TDbModel, TResult>(
-            QueryReq queryRequest,
+            QueryConcreteReq queryRequest,
             Expression<Func<TDbModel, object?>> defaultOrder,
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
@@ -220,7 +220,7 @@ public sealed class ExportServiceTests
             => Task.FromResult(ResultFactory.QuerySuccess(queryRequest, items.Cast<TResult>().ToList(), 0, items.Count, items.Count));
 
         public Task<QueryRes<TDbModel>> Query<TDbModel>(
-            QueryReq queryRequest,
+            QueryConcreteReq queryRequest,
             Expression<Func<TDbModel, object?>> defaultOrder,
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
@@ -282,7 +282,7 @@ public sealed class ExportServiceTests
         where TContext : DbContext
     {
         public Task<QueryRes<TResult>> Query<TDbModel, TResult>(
-            QueryReq queryRequest,
+            QueryConcreteReq queryRequest,
             Expression<Func<TDbModel, object?>> defaultOrder,
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
@@ -291,7 +291,7 @@ public sealed class ExportServiceTests
                 ResultFactory.QueryFailure<TResult>(queryRequest, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
 
         public Task<QueryRes<TDbModel>> Query<TDbModel>(
-            QueryReq queryRequest,
+            QueryConcreteReq queryRequest,
             Expression<Func<TDbModel, object?>> defaultOrder,
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)

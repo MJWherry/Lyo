@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Lyo.Query.Web.Components;
 
-/// <summary>Accepts legacy <c>QuerySelect</c> string/ordinal from persisted workbench JSON after the route was renamed to <see cref="QueryWorkbenchRunMode.QueryProject" />.</summary>
+/// <summary>Serializes <see cref="QueryWorkbenchRunMode" />; accepts legacy <c>QuerySelect</c> and numeric ordinals.</summary>
 public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWorkbenchRunMode>
 {
     public override QueryWorkbenchRunMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -14,18 +14,24 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
                 if (string.IsNullOrEmpty(s))
                     return QueryWorkbenchRunMode.Query;
 
-                if (s.Equals("Query", StringComparison.OrdinalIgnoreCase))
+                if (s.Equals("Query", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryConcrete", StringComparison.OrdinalIgnoreCase))
                     return QueryWorkbenchRunMode.Query;
 
-                // Legacy persisted name before /QueryProject
                 if (s.Equals("QuerySelect", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryProject", StringComparison.OrdinalIgnoreCase))
                     return QueryWorkbenchRunMode.QueryProject;
+
+                if (s.Equals("RootQuery", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryRoot", StringComparison.OrdinalIgnoreCase))
+                    return QueryWorkbenchRunMode.RootQuery;
 
                 break;
             }
             case JsonTokenType.Number: {
                 var n = reader.GetInt32();
-                return n == 1 ? QueryWorkbenchRunMode.QueryProject : QueryWorkbenchRunMode.Query;
+                return n switch {
+                    1 => QueryWorkbenchRunMode.QueryProject,
+                    2 => QueryWorkbenchRunMode.RootQuery,
+                    _ => QueryWorkbenchRunMode.Query
+                };
             }
         }
 
@@ -35,9 +41,9 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
     public override void Write(Utf8JsonWriter writer, QueryWorkbenchRunMode value, JsonSerializerOptions options)
     {
         var name = value switch {
-            QueryWorkbenchRunMode.Query => nameof(QueryWorkbenchRunMode.Query),
             QueryWorkbenchRunMode.QueryProject => nameof(QueryWorkbenchRunMode.QueryProject),
-            var _ => nameof(QueryWorkbenchRunMode.Query)
+            QueryWorkbenchRunMode.RootQuery => nameof(QueryWorkbenchRunMode.RootQuery),
+            _ => nameof(QueryWorkbenchRunMode.Query)
         };
 
         writer.WriteStringValue(name);

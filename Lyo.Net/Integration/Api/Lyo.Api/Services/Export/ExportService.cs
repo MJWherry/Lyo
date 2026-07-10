@@ -108,7 +108,7 @@ public class ExportService<TContext>(
                 return output;
             }
 
-            var result = await queryService.Query<TDbEntity, TResponse>(ToQueryReq(query), defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
+            var result = await queryService.Query<TDbEntity, TResponse>(ToQueryConcreteReq(query), defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
             if (!result.IsSuccess) {
                 _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
                 var err = result.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");
@@ -283,7 +283,7 @@ public class ExportService<TContext>(
         throw new NotSupportedException($"Export format '{format}' is not supported. Call {addonHint} on the service collection.");
     }
 
-    private static QueryReq ToQueryReq(ProjectionQueryReq source)
+    private static QueryConcreteReq ToQueryConcreteReq(ProjectionQueryReq source)
         => new() {
             Start = source.Start,
             Amount = source.Amount,

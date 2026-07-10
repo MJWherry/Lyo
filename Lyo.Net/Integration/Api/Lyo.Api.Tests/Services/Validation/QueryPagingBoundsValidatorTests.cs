@@ -12,7 +12,7 @@ public sealed class QueryPagingBoundsValidatorTests
     [Fact]
     public void Validate_QueryRequest_StartBelowMin_ReturnsInvalidPaging()
     {
-        var req = new QueryReq { Start = DefaultOptions.MinPagingStart - 1, Amount = 10 };
+        var req = new QueryConcreteReq { Start = DefaultOptions.MinPagingStart - 1, Amount = 10 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
@@ -22,7 +22,7 @@ public sealed class QueryPagingBoundsValidatorTests
     [Fact]
     public void Validate_QueryRequest_StartAboveMax_ReturnsInvalidPaging()
     {
-        var req = new QueryReq { Start = DefaultOptions.MaxPagingStart + 1 };
+        var req = new QueryConcreteReq { Start = DefaultOptions.MaxPagingStart + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
@@ -31,7 +31,7 @@ public sealed class QueryPagingBoundsValidatorTests
     [Fact]
     public void Validate_QueryRequest_AmountBelowMin_ReturnsInvalidPaging()
     {
-        var req = new QueryReq { Amount = DefaultOptions.MinPagingAmount - 1 };
+        var req = new QueryConcreteReq { Amount = DefaultOptions.MinPagingAmount - 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
@@ -41,7 +41,7 @@ public sealed class QueryPagingBoundsValidatorTests
     [Fact]
     public void Validate_QueryRequest_AmountAboveMaxPageSize_ReturnsInvalidPaging()
     {
-        var req = new QueryReq { Amount = DefaultOptions.MaxPageSize + 1 };
+        var req = new QueryConcreteReq { Amount = DefaultOptions.MaxPageSize + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
@@ -51,7 +51,7 @@ public sealed class QueryPagingBoundsValidatorTests
     public void Validate_QueryRequest_CustomMaxAmount_UsesThatCap()
     {
         const int cap = 50;
-        var req = new QueryReq { Amount = cap + 1 };
+        var req = new QueryConcreteReq { Amount = cap + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, cap);
         Assert.Single(errors);
         Assert.Contains($"{cap}", errors[0].Description, StringComparison.Ordinal);
@@ -60,7 +60,7 @@ public sealed class QueryPagingBoundsValidatorTests
     [Fact]
     public void Validate_QueryRequest_ValidPaging_ReturnsEmpty()
     {
-        var req = new QueryReq { Start = DefaultOptions.MinPagingStart, Amount = DefaultOptions.MinPagingAmount };
+        var req = new QueryConcreteReq { Start = DefaultOptions.MinPagingStart, Amount = DefaultOptions.MinPagingAmount };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
         Assert.Empty(errors);
     }

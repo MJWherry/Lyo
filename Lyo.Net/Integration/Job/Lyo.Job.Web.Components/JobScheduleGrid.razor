@@ -137,9 +137,9 @@
     {
         _loading = true;
         try {
-            var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(
-                $"{_definitionRoute}/Query",
-                new QueryReq {
+            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(
+                $"{_definitionRoute}/QueryConcrete",
+                new QueryConcreteReq {
                     Amount = DefinitionQueryAmount,
                     Include = ["JobSchedules"]
                 });
@@ -204,13 +204,13 @@
 
     private async Task ViewDefinitionAsync(Guid definitionId)
     {
-        var req = new QueryReq {
+        var req = new QueryConcreteReq {
             Keys = [[definitionId]],
             Amount = 1,
             Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]
         };
 
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", req);
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def == null)
             return;

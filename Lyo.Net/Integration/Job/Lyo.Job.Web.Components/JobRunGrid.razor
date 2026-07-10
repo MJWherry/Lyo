@@ -92,7 +92,7 @@
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", new() { Amount = 200, Include = ["JobParameters"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
         var options = new DialogOptions {
             MaxWidth = MaxWidth.ExtraLarge,
             FullWidth = true,
@@ -116,7 +116,7 @@
         if (id == null)
             return;
 
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>($"{_runRoute}/Query", new() { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>($"{_runRoute}/QueryConcrete", new() { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
         var run = res?.Items?.FirstOrDefault();
         if (run == null)
             return;

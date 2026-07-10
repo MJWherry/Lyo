@@ -93,7 +93,7 @@ app.MapDynamicCrudEndpoints<JobContext>(c => c.WithDefaults(d => {
                 jd.Id = Guid.NewGuid();
         };
     })
-    .IncludeOnly<JobDefinition>());
+    .IncludeOnly<JobDefinition, JobRun>());
 
 app.Run();
 

@@ -18,7 +18,8 @@ A standard `WebApplication` with the following pipeline:
 - **Messaging** — `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).
 - **Postgres stores** — A single `ConnectionStrings:Postgres` is shared by `Job`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `FileMetadataStore`. Every
   `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on first run.
-- **CRUD/Query** — `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`;
+- **CRUD/QueryConcrete** — `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`;
+  Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` (includes `POST /Twilio/Query`);
   `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.
 - **File storage** — `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, "AwsKeyStore")` +
   `AddPostgresFileMetadataStoreKeyed("gateway-filestorage-metadata")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) +
@@ -121,7 +122,7 @@ Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table
 ## FileMetadata Query/QueryProject
 
 `BuildFileStorageWorkbenchFileMetadataQuery` registers a read-only Lyo.Api builder over `FileMetadataStoreDbContext` / `FileMetadataEntity` at
-`Constants.FileStorageWorkbench.FileMetadata` (`Workbench/FileStorage/FileMetadata`). The standard `/Query` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`,
+`Constants.FileStorageWorkbench.FileMetadata` (`Workbench/FileStorage/FileMetadata`). The standard `/QueryConcrete` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`,
 allowing anonymous access — the Gateway's `Lyo.Query.Web.Components` grids POST against this route directly.
 
 ## Configuration sections

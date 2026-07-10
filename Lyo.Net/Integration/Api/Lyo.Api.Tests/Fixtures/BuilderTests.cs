@@ -123,9 +123,9 @@ public class BuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_ForT_AddsIncludeAndSort()
+    public void QueryConcreteReqBuilder_ForT_AddsIncludeAndSort()
     {
-        var qb = QueryReqBuilder.New().For<Person>().Include(p => p.Name).AddSort(p => p.Name, SortDirection.Asc).Done().Build();
+        var qb = QueryConcreteReqBuilder.New().For<Person>().Include(p => p.Name).AddSort(p => p.Name, SortDirection.Asc).Done().Build();
         Assert.Contains("Name", qb.Include);
         Assert.True(qb.SortBy.Any());
     }
@@ -222,9 +222,9 @@ public class BuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_AddIncludes_Multiple()
+    public void QueryConcreteReqBuilder_AddIncludes_Multiple()
     {
-        var q = QueryReqBuilder.New().AddIncludes("a", "b", "c").Build();
+        var q = QueryConcreteReqBuilder.New().AddIncludes("a", "b", "c").Build();
         Assert.True(q.Include.Count >= 3);
     }
 

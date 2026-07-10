@@ -4,6 +4,7 @@ using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Read.Query.Root;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
 using Lyo.Api.Services.TypeConversion;
@@ -57,6 +58,7 @@ public static partial class ServiceCollectionExtensions
             services.TryAddSingleton(_ => new CacheOptions());
             IServiceCollection.AddQueryOptions(services);
             services.AddScoped<IQueryService<TContext>, QueryService<TContext>>();
+            services.AddScoped<IRootQueryService<TContext>, RootQueryService<TContext>>();
             services.AddScoped<ICreateService<TContext>, CreateService<TContext>>();
             services.AddScoped<IPatchService<TContext>, PatchService<TContext>>();
             services.AddScoped<IDeleteService<TContext>, DeleteService<TContext>>();

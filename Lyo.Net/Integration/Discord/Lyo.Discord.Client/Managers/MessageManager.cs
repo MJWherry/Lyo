@@ -10,8 +10,8 @@ namespace Lyo.Discord.Client.Managers;
 /// <summary>Discord message endpoints on the Lyo API.</summary>
 public sealed class MessageManager(LyoDiscordClient client)
 {
-    public Task<QueryRes<DiscordMessageRes>> QueryAsync(QueryReq request, CancellationToken ct = default)
-        => client.PostAsAsync<QueryReq, QueryRes<DiscordMessageRes>>($"{Constants.Rest.Discord.Messages}/Query", request, ct: ct);
+    public Task<QueryRes<DiscordMessageRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordMessageRes>>($"{Constants.Rest.Discord.Messages}/QueryConcrete", request, ct: ct);
 
     /// <summary>POST <c>{entity}/Bulk/Upsert</c> (same contract as API <c>WithUpsertBulk</c> / <c>ApiFeatureFlag.UpsertBulk</c>).</summary>
     public Task<UpsertBulkResult<DiscordMessageRes>> UpsertBulkAsync(IReadOnlyList<UpsertRequest<DiscordMessageReq>> requests, CancellationToken ct = default)

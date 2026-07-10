@@ -17,8 +17,8 @@ tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s
 
 | Builder                     | Route style                                                                                                                                                                                             | Use case                                                                                                                                                                                              |
 |-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **CreateBuilder**           | Structured REST under `baseRoute`: `{baseRoute}/Query`, `{baseRoute}/QueryProject`, `{baseRoute}` + `GetDefaultEndpoint<TKey>()` for GET/DELETE by key (e.g. `{baseRoute}/{id:guid}`), etc.             | Typed `TRequest` / `TResponse`, one registration per entity, **`ILyoMapper`** for DTO mapping, full CRUD control                                                                                      |
-| **MapDynamicCrudEndpoints** | Dynamic segment `{entityType}` (entity CLR **name**): `{baseRoute}/{entityType}/Query`, `{baseRoute}/{entityType}/{id}`, …; also `GET {baseRoute}/Metadata` and `GET {baseRoute}/{entityType}/Metadata` | All (or filtered) EF model types on a single `DbContext`; JSON bodies deserialize to entities; no DTO layer                                                                                           |
+| **CreateBuilder**           | Structured REST under `baseRoute`: `{baseRoute}/QueryConcrete`, `{baseRoute}/QueryProject`, `{baseRoute}` + `GetDefaultEndpoint<TKey>()` for GET/DELETE by key (e.g. `{baseRoute}/{id:guid}`), etc.             | Typed `TRequest` / `TResponse`, one registration per entity, **`ILyoMapper`** for DTO mapping, full CRUD control                                                                                      |
+| **MapDynamicCrudEndpoints** | Dynamic segment `{entityType}`: `{baseRoute}/{entityType}/QueryConcrete`, `…/QueryProject`, …; also **`POST {baseRoute}/Query`** (root From/Joins); `GET {baseRoute}/Metadata` | All (or filtered) EF model types on a single `DbContext`; JSON bodies deserialize to entities; no DTO layer                                                                                           |
 | **CreateReadOnlyBuilder**   | Same URL shape as **CreateBuilder**                                                                                                                                                                     | `TRequest` is fixed to `object`; use `.WithReadOnlyEndpoints()` or `WithCrud(ApiFeatureSet.ReadOnly, …)` so only **Query**, **QueryProject**, and **Get** are emitted (`ReadOnly` = `Query` \| `Get`) |
 
 **Entry points:** `WebApplication` extension methods in [`ApiEndpointBuilderExtensions`](ApiEndpoint/ApiEndpointBuilderExtensions.cs) (`CreateBuilder`, `CreateReadOnlyBuilder`)
@@ -31,7 +31,7 @@ Full route list for the typed builder: [Endpoints](#endpoints) below.
 
 ### Query Engine
 
-- **WhereClause** – Filter tree for `QueryReq` / `ProjectionQueryReq`, serialized as **`whereClause`**. JSON type discriminators are **`condition`** (leaf: field + comparison +
+- **WhereClause** – Filter tree for `QueryConcreteReq` / `ProjectionQueryReq`, serialized as **`whereClause`**. JSON type discriminators are **`condition`** (leaf: field + comparison +
   value) and **`group`** (branch: AND/OR + children). Nested groups are unlimited depth. See [`Lyo.Query.Models` README](../../../Data/Query/Lyo.Query.Models/README.md) for the DTO
   shape.
 - **SubQuery / two-phase** – Optional **`subClause`** on a node (or **`WhereClauseBuilder`** helpers such as **`AddSubClause`**) runs the root filter in the database and the nested
@@ -47,7 +47,7 @@ Full route list for the typed builder: [Endpoints](#endpoints) below.
 
 ### Projection (QueryProject) & SQL-Level Query Generation
 
-`POST …/Query` returns **`QueryRes<T>`** (full entities or include-shaped graphs).  
+`POST …/QueryConcrete` returns **`QueryRes<T>`** (full entities or include-shaped graphs).  
 `POST …/QueryProject` returns **`ProjectedQueryRes<T>`** (sparse rows: dictionaries, scalars, or zipped collection shapes). Only **`ProjectedQueryRes<T>`** carries projection
 metadata—see **`entityTypes`** below.
 
@@ -57,7 +57,7 @@ metadata—see **`entityTypes`** below.
 - **Collection scalar projection** – `JobRuns.CreatedBy` → array of scalar arrays per row
 - **MatchedOnly** – When filtering on nested fields, include only matched items in collections
 - **SQL-level projection** – When possible, projects in the database (no full entity load); falls back to load-then-project for wildcards/subqueries. Both paths participate
-  in [query result caching](#query-result-caching) the same way as **`POST …/Query`**.
+  in [query result caching](#query-result-caching) the same way as **`POST …/QueryConcrete`**.
 - **Derived includes** – Select paths auto-include required navigation properties
 - **Computed fields** – Optional **`ComputedFields`** on the request: SmartFormat templates add named columns from other projected values (requires **`IFormatterService`** and *
   *`ApiFeature.ProjectionComputedFields`** on the endpoint). Placeholders use dotted paths that must be loadable from **`Select`**; the server may append missing paths for
@@ -242,8 +242,9 @@ turned on).
 
 | Method | Route                                        | Description                                                                                                                     |
 |--------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| POST   | `{baseRoute}/Query`                          | Query with filters, includes, sort, pagination                                                                                  |
+| POST   | `{baseRoute}/QueryConcrete`                          | Entity-graph query with filters, includes, sort, pagination (typed CreateBuilder)                                              |
 | POST   | `{baseRoute}/QueryProject`                   | Projected query (`Select`); SQL-level projection when possible; optional computed fields when `ProjectionComputedFields` is set |
+| POST   | `{dynamicBase}/Query`                        | **Root** From/Joins + Select (dynamic CRUD only); any allowlisted entity on that context; returns `ProjectedQueryRes`           |
 | POST   | `{baseRoute}/Export`                         | Export to CSV / XLSX / JSON (`IExportService` required)                                                                         |
 | GET    | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Get single entity (`?include=…`); route suffix is `/{id:guid}`, `/{id:int}`, `/{id}`, … depending on `TKey`                     |
 | POST   | `{baseRoute}`                                | Create                                                                                                                          |
@@ -265,7 +266,7 @@ Features are extensible records in a set (`features.Contains(ApiFeature.Query)`)
 
 | Feature / preset                      | Endpoints                                                                                                                                |
 |---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `ApiFeature.Query`                    | Query, QueryProject                                                                                                                      |
+| `ApiFeature.Query`                    | QueryConcrete, QueryProject, and (on dynamic CRUD) root `/Query`                                                                         |
 | `ApiFeature.Get`                      | Get                                                                                                                                      |
 | `ApiFeature.Create`                   | Create                                                                                                                                   |
 | `ApiFeature.CreateBulk`               | Bulk create                                                                                                                              |
@@ -292,7 +293,7 @@ Features are extensible records in a set (`features.Contains(ApiFeature.Query)`)
 
 ## Dynamic Endpoint Builder (MapDynamicCrudEndpoints)
 
-Register CRUD endpoints for all entities in a DbContext with **dynamic routes** `{baseRoute}/{entityType}/…` (e.g. `POST /api/Job/Person/Query`, `GET /api/Job/Person/{id}` when
+Register CRUD endpoints for all entities in a DbContext with **dynamic routes** `{baseRoute}/{entityType}/…` (e.g. `POST /api/Job/Person/QueryConcrete`, `GET /api/Job/Person/{id}` when
 `BaseRoute = "api/Job"`). `entityType` is the entity type’s CLR **name**. Uses entity-as-request-response (no DTOs) and infers primary key and default order from the EF model.
 
 For **per-entity routes with custom DTOs**, use `CreateBuilder` (see Quick Start).
@@ -315,7 +316,7 @@ app.MapDynamicCrudEndpoints<JobContext>(c => c
 ### DynamicEndpointOptions (simple overload)
 
 ```csharp
-// All entities – single set of routes: /{entityType}/Query, /{entityType}/{id}, etc.
+// All entities – single set of routes: /{entityType}/QueryConcrete, /{entityType}/{id}, etc.
 app.MapDynamicCrudEndpoints<PeopleDbContext>();
 
 // With options: exclude xref tables
@@ -359,7 +360,7 @@ app.MapDynamicCrudEndpoints<PeopleDbContext>(o => o.BaseRoute = "/api");
 | `ForUpsert`     | Configure Upsert hooks                |
 | `ForExport`     | Configure Export (auth, etc.)         |
 
-Routes: `{baseRoute}/{entityType}/Query`, `{baseRoute}/{entityType}/QueryProject`, `{baseRoute}/{entityType}/{id}`, etc. Entity type name is the route segment (e.g.
+Routes: `{baseRoute}/{entityType}/QueryConcrete`, `{baseRoute}/{entityType}/QueryProject`, `{baseRoute}/{entityType}/{id}`, etc. Entity type name is the route segment (e.g.
 `JobDefinition`). Unknown `{entityType}` returns 404. Entities with composite keys are skipped.
 
 ### Metadata endpoint
@@ -552,13 +553,13 @@ When `EndpointAuth` is null for an endpoint, builder-level auth is used.
 
 ## Query & Request Builders
 
-### QueryReqBuilder
+### QueryConcreteReqBuilder
 
 ```csharp
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Enums;
 
-var query = QueryReqBuilder.New()
+var query = QueryConcreteReqBuilder.New()
     .AddIncludes("Addresses", "PhoneNumbers")
     .AddWhere(b => b
         .Equals("Status", "Active")
@@ -570,7 +571,7 @@ var query = QueryReqBuilder.New()
     .Build();
 
 // Typed via For<T>()
-var typed = QueryReqBuilder.New()
+var typed = QueryConcreteReqBuilder.New()
     .For<Person>()
     .Include(p => p.Addresses)
     .AddWhere(q => q.AddEquals(p => p.Status, "Active"))
@@ -589,10 +590,31 @@ Use **`ProjectionQueryReqBuilder`** when building **`ProjectionQueryReq`** (incl
 
 ### Projection (QueryProject)
 
-`POST {baseRoute}/QueryProject` accepts a **`ProjectionQueryReq`** body and returns a **`ProjectedQueryRes<T>`** envelope (not the same shape as **`QueryRes<T>`** from **`/Query`
-**). The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field dependencies may have been merged server-side). On success, *
-*`entityTypes`** lists CLR entity class names involved in the projection (root + navigations + template paths);
+`POST {baseRoute}/QueryProject` accepts a **`ProjectionQueryReq`** body and returns a **`ProjectedQueryRes<T>`** envelope (not the same shape as **`QueryRes<T>`** from **`/QueryConcrete`**).
+Navigation-based Select only — no From/Joins. The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field dependencies may have been merged server-side). On success,
+**`entityTypes`** lists CLR entity class names involved in the projection (root + navigations + template paths);
 see [Projection (QueryProject) & SQL-Level Query Generation](#projection-queryproject--sql-level-query-generation) above.
+
+### Root Query (From / Joins)
+
+`POST {dynamicBase}/Query` (registered by **`MapDynamicCrudEndpoints`**, at the context base — **not** under `{entityType}`) accepts a **`QueryReq`** with required **`From`**, optional **`Joins`**, and required **`Select`**. Returns **`ProjectedQueryRes`** (generic JSON rows).
+
+- Sources are mapped EF entity types (`entityType` = CLR type name, same as dynamic routes) plus optional nested **`query`** (Where/Keys scope on that `DbSet` before join).
+- Outer `whereClause` / `sortBy` may only reference the **From** alias in v1; filter join sides via nested `Join.Query`.
+- Join `as` (e.g. `recipient`) nests joined fields under that key in multi-field rows.
+- Cross-schema related types still need to be mapped on the context (e.g. `AddCrossSchemaNavigations`); typed QueryProject continues to use EF navigations without joins.
+
+```csharp
+var query = QueryReqBuilder.New()
+    .From("o", "OrderEntity")
+    .Join("p", "PersonEntity", JoinType.Left, on => {
+        on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" });
+    }, asName: "recipient")
+    .AddSelects("o.Id", "p.FirstName", "p.LastName")
+    .SetPagination(0, 50)
+    .Build();
+// POST /api/Job/Query
+```
 
 Use **`Select`** to specify which fields to return. Supports dotted paths and wildcards.
 
@@ -698,7 +720,7 @@ Response: `[{ "Id": "...", "Name": "...", "CreatedAt": "..." }, ...]` (no `*` ke
 }
 ```
 
-For **`/Query`**, you can add an `"include"` array alongside `"whereClause"` as usual.
+For **`/QueryConcrete`**, you can add an `"include"` array alongside `"whereClause"` as usual.
 
 Returns only emails matching `@gmail.com` or `@yahoo.com`; excludes `@charter.net` etc.
 
@@ -800,7 +822,7 @@ When `IFormatterService` is registered, values with `{` are SmartFormat template
 
 ## Query result caching
 
-**`POST …/Query`** and **`POST …/QueryProject`** both use the same **`IQueryService`** pipeline and the same **`QueryOptions`** singleton. Cached entries are keyed from the
+**`POST …/QueryConcrete`** and **`POST …/QueryProject`** both use the same **`IQueryService`** pipeline and the same **`QueryOptions`** singleton. Cached entries are keyed from the
 request (filters, paging, includes/sort for Query; plus projection **`Select`**, computed fields, and projected row-shape flags for QueryProject — see **`QueryCacheKeyBuilder`**).
 Tags for invalidation are built with **`QueryCacheTagBuilder`** (scope tags such as **`queries`** / **`queryproject`**, **`entities`**, type-wide **`entity:{type}`**, per-row *
 *`entity:{type}:{pk}`**, and SQL-projected **`projshape:{sha1}`** fingerprints — see below).
@@ -835,7 +857,7 @@ projected pages without relying on tag scans alone.
 Used after successful **Patch**, **Update**, **Delete**, and many **Upsert** paths when the affected rows are known. For each distinct primary key (up to *
 *`CacheOptions.MaxBulkQueryInvalidationByIdCount`**; above that it falls back to the broad type tag only):
 
-- **`InvalidateCacheItemByTag`** with **`entity:{lowercased type name}:{pkSegment}`** — removes every cached entry carrying that **instance tag** (list **`/Query`** / *
+- **`InvalidateCacheItemByTag`** with **`entity:{lowercased type name}:{pkSegment}`** — removes every cached entry carrying that **instance tag** (list **`/QueryConcrete`** / *
   *`/QueryProject`** pages that tagged those rows, **`GET`** results that included that entity in the graph, etc.).
 - **`InvalidateCacheItem`** for the **canonical single-entity GET keys** built by **`QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey`**: the base key **matches the instance tag
   string** (EF key order, same as **`QueryCacheTagBuilder.EntityInstanceTag`**), with optional **`:include=…`** and **`:raw`** suffixes on **`GET`**. Invalidation explicitly
@@ -855,11 +877,11 @@ How tags attach to cached reads (see **`QueryService.QueryCore`**, **`Get`** ove
 
 - **`GET …/{id}`** (mapped and raw overloads): cache **key** is **`BuildSingleEntityGetCacheKey`**; tags include **`entity:{type}`** and **`entity:{type}:{pk}`** (plus cascade tags
   when **`includes`** are used). **Patch** / **Update** **`cache.Set`** for the written DTO uses the **same key shape** and **instance tag** so post-write caches stay aligned.
-- **`POST …/Query`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type
+- **`POST …/QueryConcrete`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type
   from **`loaderService.GetReferencedTypes`**, and **instance tags** for entities in the result. **`InvalidateQueryCacheAsync<AddressEntity>()`** (broad) or **per-key**
   invalidation for Address rows clears cached parent reads (e.g. Person) that carried **`entity:address:…`** tags.
 - **`POST …/QueryProject`**: the **SQL projection** path adds **`projshape:…`**, **`queryproject`**, **`GetReferencedTypes`** type tags, **instance tags** from projected rows (root
-  and include cascade where applicable), plus the same scope tags as **`/Query`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type still
+  and include cascade where applicable), plus the same scope tags as **`/QueryConcrete`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type still
   invalidates matching **`QueryProject`** entries via shared **`entity:{child}:…`** instance tags.
 
 | Concern                                           | Behavior                                                                                                                                                                                                                                     |

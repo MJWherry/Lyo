@@ -15,10 +15,10 @@ public partial class QueryReqForm
     public string? ElementId { get; set; }
 
     [Parameter]
-    public QueryReq Request { get; set; } = new();
+    public QueryConcreteReq Request { get; set; } = new();
 
     [Parameter]
-    public EventCallback<QueryReq> RequestChanged { get; set; }
+    public EventCallback<QueryConcreteReq> RequestChanged { get; set; }
 
     [Parameter]
     public IEnumerable<FilterPropertyDefinition> PropertyDefinitions { get; set; } = [];
@@ -44,7 +44,7 @@ public partial class QueryReqForm
     [Parameter]
     public bool AutoSelectNewFilterNode { get; set; } = true;
 
-    /// <summary>When true, shows a /Query vs /QueryProject toggle on the query score row (Query Builder workbench).</summary>
+    /// <summary>When true, shows a /QueryConcrete vs /QueryProject toggle on the query score row (Query Builder workbench).</summary>
     [Parameter]
     public bool ShowEndpointToggle { get; set; }
 

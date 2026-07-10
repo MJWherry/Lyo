@@ -71,12 +71,12 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     [EditorRequired]
     public required string GridKey { get; init; }
 
-    /// <summary>Base route (e.g. "Person"). Query uses Route/Query, Export uses Route/Export, Delete uses Route (Bulk uses Route/Bulk).</summary>
+    /// <summary>Base route (e.g. "Person"). Query uses Route/QueryConcrete, Export uses Route/Export, Delete uses Route (Bulk uses Route/Bulk).</summary>
     [Parameter]
     [EditorRequired]
     public required string Route { get; init; }
 
-    private string QueryRoute => Route.TrimEnd('/') + "/Query";
+    private string QueryRoute => Route.TrimEnd('/') + "/QueryConcrete";
 
     [Parameter]
     public string? QueryProjectRoute { get; init; }
@@ -504,7 +504,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         }
     }
 
-    private string GetDataRoute() => !QueryProjectRoute.IsNullOrEmpty() ? QueryProjectRoute : QueryRoute.Replace("/Query", "/QueryProject", StringComparison.OrdinalIgnoreCase);
+    private string GetDataRoute() => !QueryProjectRoute.IsNullOrEmpty() ? QueryProjectRoute : QueryRoute.Replace("/QueryConcrete", "/QueryProject", StringComparison.OrdinalIgnoreCase);
 
     private LyoProjectionQueryReqBuilder GetQuery(int offset, int pageSize)
     {

@@ -36,7 +36,7 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.AddIncludes(System.Enum)" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddIncludes(System.Enum)" path="/summary" />
     public ProjectionQueryReqBuilder AddIncludes(Enum include)
     {
         foreach (var i in include.ToString().Split([','], StringSplitOptions.RemoveEmptyEntries))
@@ -84,14 +84,14 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.AddWhere(WhereClause)" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddWhere(WhereClause)" path="/summary" />
     public ProjectionQueryReqBuilder AddWhere(WhereClause whereClause)
     {
         _query.WhereClause = whereClause;
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.AddWhere(System.Action{WhereClauseBuilder})" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddWhere(System.Action{WhereClauseBuilder})" path="/summary" />
     public ProjectionQueryReqBuilder AddWhere(Action<WhereClauseBuilder> configure)
     {
         var qb = WhereClauseBuilder.And();
@@ -103,18 +103,18 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     /// <summary>Starts a typed builder for expression-based selects, includes, where, and sort (see <see cref="ProjectionQueryReqForBuilder{T}" />).</summary>
     public ProjectionQueryReqForBuilder<T> For<T>() => new(this);
 
-    /// <inheritdoc cref="QueryReqBuilder.AddSort(SortBy)" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddSort(SortBy)" path="/summary" />
     public ProjectionQueryReqBuilder AddSort(SortBy sortBy)
     {
         _query.SortBy.Add(sortBy);
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.AddSort(string, SortDirection, int?)" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddSort(string, SortDirection, int?)" path="/summary" />
     public ProjectionQueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
         => AddSort(new(propertyName, direction, priority));
 
-    /// <inheritdoc cref="QueryReqBuilder.SetPagination" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.SetPagination" path="/summary" />
     public ProjectionQueryReqBuilder SetPagination(int start, int amount)
     {
         _query.Start = start;
@@ -122,17 +122,17 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.First" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.First" path="/summary" />
     public ProjectionQueryReqBuilder First() => SetPagination(0, 1);
 
-    /// <inheritdoc cref="QueryReqBuilder.SetTotalCountMode" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.SetTotalCountMode" path="/summary" />
     public ProjectionQueryReqBuilder SetTotalCountMode(QueryTotalCountMode totalCountMode)
     {
         _query.Options.TotalCountMode = totalCountMode;
         return this;
     }
 
-    /// <inheritdoc cref="QueryReqBuilder.SetIncludeFilterMode" path="/summary" />
+    /// <inheritdoc cref="QueryConcreteReqBuilder.SetIncludeFilterMode" path="/summary" />
     public ProjectionQueryReqBuilder SetIncludeFilterMode(QueryIncludeFilterMode includeFilterMode)
     {
         _query.Options.IncludeFilterMode = includeFilterMode;

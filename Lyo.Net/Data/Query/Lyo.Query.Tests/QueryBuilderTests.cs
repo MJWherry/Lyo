@@ -1,6 +1,7 @@
 using Lyo.Query.Models.Attributes;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
+using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Tests;
@@ -18,18 +19,27 @@ public class QueryBuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_AddWhere_BuildsNode()
+    public void QueryReqBuilder_FromJoinSelect_BuildsRequest()
     {
-        var node = WhereClauseBuilder.And(b => b.Equals("Name", "Joe"));
-        var qr = QueryReqBuilder.New().AddWhere(node).Build();
-        Assert.NotNull(qr.WhereClause);
-        Assert.Contains("Name", qr.WhereClause!.ToString());
+        var qr = QueryReqBuilder.New()
+            .From("o", "OrderEntity")
+            .Join("p", "PersonEntity", JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .AddSelects("o.Id", "p.FirstName")
+            .SetPagination(0, 10)
+            .Build();
+
+        Assert.Equal("o", qr.From.Alias);
+        Assert.Equal("OrderEntity", qr.From.EntityType);
+        Assert.Single(qr.Joins);
+        Assert.Equal("recipient", qr.Joins[0].As);
+        Assert.Equal(2, qr.Select.Count);
     }
 
+
     [Fact]
-    public void QueryReqBuilder_AddWhere_WithBuilderFunc()
+    public void QueryConcreteReqBuilder_AddWhere_WithBuilderFunc()
     {
-        var qr = QueryReqBuilder.New().AddWhere(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active"))).Build();
+        var qr = QueryConcreteReqBuilder.New().AddWhere(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active"))).Build();
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("Name", qr.WhereClause!.ToString());
         Assert.Contains("Status", qr.WhereClause.ToString());
@@ -71,9 +81,9 @@ public class QueryBuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_ForT_AddWhere_UsesQueryPropertyNameAttribute()
+    public void QueryConcreteReqBuilder_ForT_AddWhere_UsesQueryPropertyNameAttribute()
     {
-        var builder = QueryReqBuilder.New().For<TestEntityWithQueryProp>();
+        var builder = QueryConcreteReqBuilder.New().For<TestEntityWithQueryProp>();
         builder.AddWhere(q => q.AddEquals(e => e.Charges, "x"));
         var qr = builder.Done().Build();
         Assert.NotNull(qr.WhereClause);
@@ -81,9 +91,9 @@ public class QueryBuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_ForT_AddWhere_BuildsNode()
+    public void QueryConcreteReqBuilder_ForT_AddWhere_BuildsNode()
     {
-        var builder = QueryReqBuilder.New().For<Person>();
+        var builder = QueryConcreteReqBuilder.New().For<Person>();
         builder.AddWhere(q => q.AddEquals(p => p.Name, "Zoe"));
         var qr = builder.Done().Build();
         Assert.NotNull(qr.WhereClause);

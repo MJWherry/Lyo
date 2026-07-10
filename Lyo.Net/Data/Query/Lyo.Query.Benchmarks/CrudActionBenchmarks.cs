@@ -108,8 +108,20 @@ public class CrudActionBenchmarks
     [BenchmarkDescription("Paged Query of Amount JobDefinitions ordered by Name (full read pipeline incl. mapping).")]
     public async Task<int> Query()
     {
-        var req = new QueryReq { Amount = Amount };
+        var req = new QueryConcreteReq { Amount = Amount };
         var result = await _query.Query<JobDefinition, JobDefinitionRes>(req, d => d.Name, SortDirection.Asc);
+        return result.Items?.Count ?? 0;
+    }
+
+    [Benchmark]
+    [BenchmarkDescription("Paged QueryProject of Amount JobDefinitions selecting Id+Name (SQL projection path).")]
+    public async Task<int> QueryProject()
+    {
+        var req = new ProjectionQueryReq {
+            Amount = Amount,
+            Select = ["Id", "Name"]
+        };
+        var result = await _query.QueryProjected<JobDefinition>(req, d => d.Name, SortDirection.Asc);
         return result.Items?.Count ?? 0;
     }
 

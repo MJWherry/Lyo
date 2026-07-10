@@ -31,7 +31,7 @@ export function apiUrl(relativePath) {
 }
 
 export function endpointUrl() {
-  return apiUrl(env("ENDPOINT_PATH", "/person/query"));
+  return apiUrl(env("ENDPOINT_PATH", "/person/QueryConcrete"));
 }
 
 /** POST body for projected query (QueryProject). Prefer QUERY_PROJECT_PATH; QUERY_SELECT_PATH is a legacy fallback. */

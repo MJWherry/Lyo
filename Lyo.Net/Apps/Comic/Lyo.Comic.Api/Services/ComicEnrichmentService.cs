@@ -18,7 +18,7 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Comic.Api.Services;
 
 /// <summary>
-/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryReqBuilder" /> per bounded schema so
+/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryConcreteReqBuilder" /> per bounded schema so
 /// results participate in Lyo.Api query caching; favorite totals use store aggregation (GROUP BY) to avoid loading every favorite row.
 /// </summary>
 public sealed class ComicEnrichmentService
@@ -200,7 +200,7 @@ public sealed class ComicEnrichmentService
     private Task<List<TagEntity>> QueryTagEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "tags", distinctIds, chunk => {
-                var req = QueryReqBuilder.New()
+                var req = QueryConcreteReqBuilder.New()
                     .For<TagEntity>()
                     .AddWhere(w => {
                         w.AddEquals(t => t.SubjectEntityType, SeriesEntityType);
@@ -218,7 +218,7 @@ public sealed class ComicEnrichmentService
     private Task<List<RatingEntity>> QueryRatingEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "ratings", distinctIds, chunk => {
-                var req = QueryReqBuilder.New()
+                var req = QueryConcreteReqBuilder.New()
                     .For<RatingEntity>()
                     .AddWhere(w => {
                         w.AddEquals(r => r.SubjectEntityType, SeriesEntityType);
@@ -235,7 +235,7 @@ public sealed class ComicEnrichmentService
     private Task<List<CommentEntity>> QueryTopLevelCommentEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "comments", distinctIds, chunk => {
-                var req = QueryReqBuilder.New()
+                var req = QueryConcreteReqBuilder.New()
                     .For<CommentEntity>()
                     .AddWhere(w => {
                         w.AddEquals(c => c.SubjectEntityType, SeriesEntityType);
@@ -256,7 +256,7 @@ public sealed class ComicEnrichmentService
         var appliedId = EntityRefPersistedGuid.PersistedEntityId(caller);
         foreach (var chunk in distinctIds.Chunk(IdInClauseChunkSize)) {
             var chunkArr = chunk.ToArray();
-            var req = QueryReqBuilder.New()
+            var req = QueryConcreteReqBuilder.New()
                 .For<FavoriteEntity>()
                 .AddWhere(w => {
                     w.AddEquals(f => f.SubjectEntityType, SeriesEntityType);

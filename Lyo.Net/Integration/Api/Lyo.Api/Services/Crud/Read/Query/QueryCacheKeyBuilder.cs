@@ -53,8 +53,8 @@ public static class QueryCacheKeyBuilder
         return key;
     }
 
-    /// <summary>Cache key for <c>/Query</c> (full entities). Does not include projection dimensions.</summary>
-    public static string Build<TDb, TResponse>(QueryReq queryRequest)
+    /// <summary>Cache key for <c>/QueryConcrete</c> (full entities). Does not include projection dimensions.</summary>
+    public static string Build<TDb, TResponse>(QueryConcreteReq queryRequest)
         where TDb : class
     {
         var options = queryRequest.Options;
@@ -83,11 +83,11 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryReq)" /> plus optional
+    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryConcreteReq)" /> plus optional
     /// projection dimensions.
     /// </summary>
     public static string BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         IReadOnlyList<string> selectForCacheKey,
         IReadOnlyList<ComputedField> computedForCacheKey)
         where TDb : class
@@ -106,12 +106,46 @@ public static class QueryCacheKeyBuilder
     public static string Build<TDb, TResponse>(ProjectionQueryReq queryRequest)
         where TDb : class
     {
-        var baseReq = ToQueryReq(queryRequest);
+        var baseReq = ToQueryConcreteReq(queryRequest);
         return BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(baseReq, queryRequest.Select, queryRequest.ComputedFields);
     }
 
     /// <summary>Appends QueryProject shape flags so cache entries differ when row columns differ (zip vs parallel sibling collection columns).</summary>
     public static string AppendProjectedShapeSuffix(string cacheKey, bool zipSiblingCollectionSelections) => $"{cacheKey}:zipSibling={zipSiblingCollectionSelections}";
+
+    /// <summary>Cache key for root <c>/Query</c> (From/Joins + Select).</summary>
+    public static string BuildRootQuery(QueryReq queryRequest, string contextName)
+    {
+        var keyBuilder = new StringBuilder(256);
+        keyBuilder.Append($"rootquery:{NormalizePathValue(contextName)}");
+        keyBuilder.Append($":from={NormalizePathValue(queryRequest.From.EntityType)}:{NormalizePathValue(queryRequest.From.Alias)}");
+        if (queryRequest.From.Query?.WhereClause != null)
+            keyBuilder.Append($":fromTree={WhereClauseUtils.GetWhereClauseTreeHash(queryRequest.From.Query.WhereClause)}");
+
+        if (queryRequest.Joins.Count != 0) {
+            var joinParts = queryRequest.Joins.Select(j => {
+                var on = string.Join("&", j.On.Select(o => $"{NormalizePathValue(o.From)}={NormalizePathValue(o.To)}"));
+                var nested = j.Query?.WhereClause != null ? $":jt={WhereClauseUtils.GetWhereClauseTreeHash(j.Query.WhereClause)}" : "";
+                return $"{j.Type}:{NormalizePathValue(j.EntityType)}:{NormalizePathValue(j.Alias)}:as={NormalizePathValue(j.As ?? j.Alias)}:on={on}{nested}";
+            });
+            keyBuilder.Append($":joins={CompactCacheSegment(string.Join("|", joinParts))}");
+        }
+
+        keyBuilder.Append($":start={queryRequest.Start ?? 0}");
+        keyBuilder.Append($":amount={queryRequest.Amount}");
+        keyBuilder.Append($":countMode={queryRequest.Options.TotalCountMode}");
+        if (queryRequest.SortBy.Count != 0)
+            keyBuilder.Append($":sortBy={BuildSortKey(queryRequest.SortBy)}");
+
+        if (queryRequest.WhereClause != null)
+            keyBuilder.Append($":tree={WhereClauseUtils.GetWhereClauseTreeHash(queryRequest.WhereClause)}");
+
+        if (queryRequest.Select.Count != 0)
+            keyBuilder.Append($":select={CompactCacheSegment(string.Join("|", NormalizePathValues(queryRequest.Select)))}");
+
+        AppendComputedFieldsKey(keyBuilder, queryRequest.ComputedFields);
+        return keyBuilder.ToString();
+    }
 
     public static string BuildTree<TDbModel, TResult>(
         WhereClause? queryTree,
@@ -179,7 +213,7 @@ public static class QueryCacheKeyBuilder
         return $"sha256:{HashingService.Shared.ToHex(hash, TextLetterCase.Lower)}";
     }
 
-    private static QueryReq ToQueryReq(ProjectionQueryReq p)
+    private static QueryConcreteReq ToQueryConcreteReq(ProjectionQueryReq p)
         => new() {
             Start = p.Start,
             Amount = p.Amount,

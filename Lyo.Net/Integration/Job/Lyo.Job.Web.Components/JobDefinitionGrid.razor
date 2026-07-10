@@ -83,17 +83,17 @@
         if (!ProjectedValueHelper.TryGetGuid(id, out var guid))
             return null;
 
-        var req = new QueryReq { Keys = [[guid]], Amount = 1 };
+        var req = new QueryConcreteReq { Keys = [[guid]], Amount = 1 };
         if (includes != null)
             req.Include.AddRange(includes);
 
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", req);
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", req);
         return res?.Items?.FirstOrDefault();
     }
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", new() { Amount = 200, Include = ["JobParameters"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
         var options = new DialogOptions {
             MaxWidth = MaxWidth.ExtraLarge,
             FullWidth = true,

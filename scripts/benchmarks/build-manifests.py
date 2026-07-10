@@ -48,18 +48,22 @@ K6_SUITE_NAMES = [
     "queryproject_stress",
     "queryproject_spike",
     "queryproject_soak",
+    "queryroot_load",
+    "queryroot_stress",
+    "queryroot_spike",
+    "queryroot_soak",
 ]
 K6_REPORT_NAME = "query-api"
 K6_REPORT_TITLE = "Query API (k6)"
 
 # Suite-level methodology so the latencies are interpretable on their own.
 K6_DESCRIPTION = (
-    "k6 load/stress/spike/soak against the Lyo person API. The /person/query endpoint returns full "
-    "Person entities; /person/QueryProject returns field-projected rows. Every iteration pages "
-    "100-300 persons (varied by VU/iteration to bypass caches). Randomized multi-key sorting over "
-    "unindexed columns is disabled by default (only filter_sort carries a fixed sort); other cases use "
-    "the server default (PK) order. The 'cases' below describe the request shape behind each scenario; "
-    "hotspots reference these case ids."
+    "k6 load/stress/spike/soak against the Lyo person API. /person/QueryConcrete returns full "
+    "Person entities; /person/QueryProject returns field-projected rows; POST /Query is root "
+    "From/Joins sparse projection. Every iteration pages 100-300 persons (varied by VU/iteration to "
+    "bypass caches). Randomized multi-key sorting over unindexed columns is disabled by default "
+    "(only filter_sort carries a fixed sort); other cases use the server default (PK) order. The "
+    "'cases' below describe the request shape behind each scenario; hotspots reference these case ids."
 )
 
 # Per-case query structure. Source of truth: k6/framework-person/lib/cases.js + queryFactory.js +
@@ -140,6 +144,30 @@ K6_CASE_META: dict[str, dict[str, Any]] = {
     "computed_scalar": {
         "endpoint": "queryproject",
         "description": "Scalar-row computed field 'fullName' ({FirstName} {LastName}); no collection-parallel path.",
+        "selectionFieldCount": 4,
+        "includes": [],
+    },
+    "root_flat": {
+        "endpoint": "queryroot",
+        "description": "POST /Query From Person with no joins; Select FirstName/LastName (From-side paging).",
+        "selectionFieldCount": 2,
+        "includes": [],
+    },
+    "root_left_join": {
+        "endpoint": "queryroot",
+        "description": "POST /Query Person left join ContactAddress; fan-out collapsed to nested bags per person.",
+        "selectionFieldCount": 3,
+        "includes": [],
+    },
+    "root_chained_join": {
+        "endpoint": "queryroot",
+        "description": "POST /Query Person→ContactAddress→Address chained left joins with sparse Select.",
+        "selectionFieldCount": 4,
+        "includes": [],
+    },
+    "root_chained_exact_count": {
+        "endpoint": "queryroot",
+        "description": "Same chained joins as root_chained_join with TotalCountMode=Exact (From-side count).",
         "selectionFieldCount": 4,
         "includes": [],
     },
@@ -993,6 +1021,34 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         qp_rationale = "Incomplete QueryProject suite coverage"
     grades.append(letter("QueryProject path", qp_grade, qp_rationale))
 
+    qr_load = p95(suite("queryroot_load"))
+    qr_stress = p95(suite("queryroot_stress"))
+    qr_spike = p95(suite("queryroot_spike"))
+    qr_soak = p95(suite("queryroot_soak"))
+    qr_checks = min(
+        suite("queryroot_load").get("checksPass") or 0,
+        suite("queryroot_stress").get("checksPass") or 100,
+        suite("queryroot_spike").get("checksPass") or 100,
+        suite("queryroot_soak").get("checksPass") or 100,
+    )
+    if all(v is not None for v in (qr_load, qr_stress, qr_spike, qr_soak)):
+        if max(qr_load, qr_spike, qr_soak) <= 400 and qr_stress <= 1000 and qr_checks >= 99.5:
+            qr_grade = "A"
+        elif max(qr_load, qr_spike, qr_soak) <= 700 and qr_stress <= 2000:
+            qr_grade = "A-"
+        elif qr_stress <= 3000:
+            qr_grade = "B"
+        else:
+            qr_grade = "C"
+        qr_rationale = (
+            f"load/spike/soak p95 {qr_load:.0f}/{qr_spike:.0f}/{qr_soak:.0f} ms; "
+            f"stress p95 {qr_stress:.0f} ms; {qr_checks:.2f}% checks"
+        )
+    else:
+        qr_grade = "C"
+        qr_rationale = "Incomplete QueryRoot suite coverage"
+    grades.append(letter("QueryRoot path", qr_grade, qr_rationale))
+
     return grades
 
 
@@ -1031,6 +1087,16 @@ def slo_assessment(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
     q_soak = lat("query_soak")
     if q_soak is not None:
         add("Query soak", "500-1,000 ms", f"{q_soak:.0f} ms", "Exceeds target" if q_soak <= 500 else "Meets" if q_soak <= 1000 else "Miss")
+
+    qr_load, qr_spike, qr_soak = lat("queryroot_load"), lat("queryroot_spike"), lat("queryroot_soak")
+    if all(v is not None for v in (qr_load, qr_spike, qr_soak)):
+        latest = f"{min(qr_load, qr_spike, qr_soak):.0f}-{max(qr_load, qr_spike, qr_soak):.0f} ms"
+        worst = max(qr_load, qr_spike, qr_soak)
+        add("QueryRoot load/spike/soak", "100-500 ms", latest, "Exceeds target" if worst <= 300 else "Meets" if worst <= 700 else "Miss")
+
+    qr_stress = lat("queryroot_stress")
+    if qr_stress is not None:
+        add("QueryRoot stress", "300-1,000 ms", f"{qr_stress:.0f} ms", "Meets" if qr_stress <= 1000 else "Slightly above" if qr_stress <= 2000 else "Miss")
 
     status_shape = all((s.get("statusPass") or 0) >= 100 and (s.get("shapePass") or 0) >= 100 for s in scenarios)
     add("Status + response-shape correctness", "99.9-100%", "100%", "Meets" if status_shape else "Miss")
@@ -1089,7 +1155,11 @@ def build_k6(run_dir: Path | None) -> bool:
         ],
         "cases": build_cases(scenarios),
         "scenarios": scenarios,
-        "rollups": [endpoint_rollup(scenarios, "query"), endpoint_rollup(scenarios, "queryproject")],
+        "rollups": [
+            endpoint_rollup(scenarios, "query"),
+            endpoint_rollup(scenarios, "queryproject"),
+            endpoint_rollup(scenarios, "queryroot"),
+        ],
         "slo": slo_assessment(scenarios),
         "grades": grade_k6(scenarios),
     }

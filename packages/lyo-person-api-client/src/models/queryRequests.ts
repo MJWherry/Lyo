@@ -54,7 +54,7 @@ export interface QueryRequestBase {
     SortBy?: SortBy[];
 }
 
-export interface QueryReq extends QueryRequestBase {
+export interface QueryConcreteReq extends QueryRequestBase {
     Options: QueryRequestOptions;
 }
 
@@ -65,6 +65,39 @@ export interface ComputedField {
 
 export interface ProjectionQueryReq extends QueryRequestBase {
     Options: QueryRequestOptions;
+    Select: string[];
+    ComputedFields?: ComputedField[];
+}
+
+export type JoinType = "Inner" | "Left";
+
+export interface JoinOn {
+    From: string;
+    To: string;
+}
+
+export interface SourceQueryScope {
+    whereClause?: WhereClause | null;
+    Keys?: unknown[][];
+}
+
+export interface FromClause {
+    Alias: string;
+    EntityType: string;
+    Query?: SourceQueryScope | null;
+}
+
+export interface JoinClause extends FromClause {
+    Type: JoinType;
+    On: JoinOn[];
+    As?: string | null;
+}
+
+/** Root POST {dynamicBase}/Query — From/Joins + Select (projected rows). */
+export interface QueryReq extends QueryRequestBase {
+    Options: QueryRequestOptions;
+    From: FromClause;
+    Joins?: JoinClause[];
     Select: string[];
     ComputedFields?: ComputedField[];
 }

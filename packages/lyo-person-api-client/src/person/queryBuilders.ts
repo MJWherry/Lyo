@@ -1,4 +1,4 @@
-import type {ProjectionQueryReq, QueryReq, QueryRequestOptions,} from "../models/queryRequests.js";
+import type {ProjectionQueryReq, QueryConcreteReq, QueryRequestOptions,} from "../models/queryRequests.js";
 import {DEFAULT_SOURCE_FILTER_VALUES} from "./sourceEntityTypes.js";
 
 export const DEFAULT_PERSON_INCLUDES = [
@@ -33,7 +33,7 @@ export function baselineQuery({
                               }: {
     start?: number;
     amount?: number;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,
@@ -51,7 +51,7 @@ export function filterSortQuery({
     start?: number;
     amount?: number;
     sourceFilterValues?: string;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,
@@ -92,7 +92,7 @@ export function complexWhereClause({
     include?: string[];
     start?: number;
     amount?: number;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,
@@ -143,7 +143,7 @@ export function twoPhaseSubQuery({
     include?: string[];
     start?: number;
     amount?: number;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,
@@ -197,7 +197,7 @@ export function heavyIncludeQuery({
     include?: string[];
     start?: number;
     amount?: number;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,
@@ -213,7 +213,7 @@ export function realisticIncludeQuery({
                                       }: {
     start?: number;
     amount?: number;
-} = {}): QueryReq {
+} = {}): QueryConcreteReq {
     return {
         Options: buildOptions(),
         Start: start,

@@ -46,7 +46,7 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Query_returns_empty_list()
     {
         using var client = _factory.CreateClient();
-        var response = await client.PostAsync("/api/Job/Definition/Query", JsonContent.Create(new { Start = 0, Amount = 10 }));
+        var response = await client.PostAsync("/api/Job/Definition/QueryConcrete", JsonContent.Create(new { Start = 0, Amount = 10 }));
         response.EnsureSuccessStatusCode();
     }
 }

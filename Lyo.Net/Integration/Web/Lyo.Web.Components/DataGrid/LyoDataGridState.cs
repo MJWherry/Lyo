@@ -15,8 +15,8 @@ public class FilterState
 /// <typeparam name="T">The type of items in the grid</typeparam>
 public class LyoDataGridState<T>
 {
-    /// <summary>The current query for <c>/Query</c> (full entities).</summary>
-    public QueryReq? CurrentQuery { get; set; }
+    /// <summary>The current query for <c>/QueryConcrete</c> (full entities).</summary>
+    public QueryConcreteReq? CurrentQuery { get; set; }
 
     /// <summary>The current query for <c>/QueryProject</c> (projected grids).</summary>
     public ProjectionQueryReq? CurrentProjectedQuery { get; set; }

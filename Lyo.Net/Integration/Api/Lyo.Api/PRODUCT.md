@@ -111,8 +111,9 @@ payloads** by design.
 
 | Operation              | Method | Endpoint        |
 |------------------------|--------|-----------------|
-| Query                  | POST   | `/Query`        |
+| Query (entity graph)   | POST   | `/QueryConcrete` (typed or `{entityType}/QueryConcrete`) |
 | Projected query        | POST   | `/QueryProject` |
+| Root join query        | POST   | `{dynamicBase}/Query` (From/Joins + Select → projected rows) |
 | Get by ID              | GET    | `/{id}`         |
 | Create                 | POST   | `/`             |
 | Create Bulk            | POST   | `/Bulk`         |
@@ -249,7 +250,7 @@ Built-in support for local caching or distributed caching via FusionCache:
   *`projshape:…`** (useful for frontend grids keyed by projection shape).
 - **Per–root-entity isolation across unrelated types** — invalidation for **Person** does not clear **Order** caches; unrelated aggregates use different **`entity:`** tags and
   keys.
-- **Includes and related entity types** — **`GET`**, **`/Query`**, and **`/QueryProject`** attach tags for **`GetReferencedTypes`** and per-entity instance tags. Updating a **child
+- **Includes and related entity types** — **`GET`**, **`/QueryConcrete`**, and **`/QueryProject`** attach tags for **`GetReferencedTypes`** and per-entity instance tags. Updating a **child
   ** row invalidates **parent** cached reads that carried that child’s **`entity:{child}:{pk}`** tag (granular path) or the child type’s broad tag when using *
   *`InvalidateQueryCacheAsync<Child>()`**.
 

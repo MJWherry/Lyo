@@ -1,8 +1,13 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace Lyo.Query.Models.Common.Request;
 
-/// <summary>Common fields for <see cref="QueryReq" /> and <see cref="ProjectionQueryReq" />.</summary>
+/// <summary>Common fields for <see cref="QueryConcreteReq" />, <see cref="ProjectionQueryReq" />, and root <see cref="QueryReq" />.</summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(QueryConcreteReq), "concrete")]
+[JsonDerivedType(typeof(ProjectionQueryReq), "project")]
+[JsonDerivedType(typeof(QueryReq), "root")]
 [DebuggerDisplay("{ToString(),nq}")]
 public abstract class QueryRequestBase
 {

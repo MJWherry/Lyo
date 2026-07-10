@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
-/// <summary>Query and get operations: filtered/sorted/paged <see cref="QueryReq" />, projected <see cref="ProjectionQueryReq" />, and single-entity loads with optional includes.</summary>
+/// <summary>Query and get operations: filtered/sorted/paged <see cref="QueryConcreteReq" />, projected <see cref="ProjectionQueryReq" />, and single-entity loads with optional includes.</summary>
 public interface IQueryService<TContext>
     where TContext : DbContext
 {
     /// <summary>Runs a query, maps each row to <typeparamref name="TResult" /> via <see cref="ILyoMapper" />.</summary>
     Task<QueryRes<TResult>> Query<TDbModel, TResult>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection = SortDirection.Desc,
         CancellationToken ct = default)
@@ -22,7 +22,7 @@ public interface IQueryService<TContext>
 
     /// <summary>Returns raw entities without mapping. Entities are always untracked by the context.</summary>
     Task<QueryRes<TDbModel>> Query<TDbModel>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection = SortDirection.Desc,
         CancellationToken ct = default)

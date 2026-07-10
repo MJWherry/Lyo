@@ -31,14 +31,14 @@ public static class Constants
         {
             public const string Route = "Job";
             public const string Definitions = $"{Route}/Definition";
-            public const string DefinitionsQuery = $"{Definitions}/Query";
+            public const string DefinitionsQuery = $"{Definitions}/QueryConcrete";
             public const string DefinitionParameters = $"{Definitions}/Parameter";
             public const string Schedules = $"{Route}/Schedule";
             public const string ScheduleParameters = $"{Route}/ScheduleParameters";
             public const string Triggers = $"{Route}/Triggers";
             public const string TriggerParameters = $"{Route}/TriggerParameters";
             public const string Runs = $"{Route}/Run";
-            public const string RunsQuery = $"{Runs}/Query";
+            public const string RunsQuery = $"{Runs}/QueryConcrete";
             public const string RunLogs = $"{Runs}/Log";
             public const string RunParameters = $"{Runs}/Parameter";
             public const string RunResults = $"{Runs}/Result";

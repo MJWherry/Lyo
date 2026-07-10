@@ -23,9 +23,17 @@ import {
 const TOKEN = env("TOKEN", "");
 
 function inferResponseGuard(targetUrl) {
-  return targetUrl.toLowerCase().includes("/queryproject")
-    ? isProjectedQueryRes
-    : isQueryRes;
+  const lower = targetUrl.toLowerCase();
+  if (lower.includes("/queryproject") || lower.endsWith("/query") || lower.includes("/query?"))
+    return isProjectedQueryRes;
+  return isQueryRes;
+}
+
+function inferEndpointKind(targetUrl) {
+  const lower = targetUrl.toLowerCase();
+  if (lower.includes("/queryproject")) return "queryproject";
+  if (lower.endsWith("/query") || lower.includes("/query?")) return "queryroot";
+  return "query";
 }
 
 function parseBodyAsJson(body) {
@@ -51,7 +59,7 @@ export function postQuery({
 }) {
   const targetUrl = url ?? endpointUrl();
   const payload = JSON.stringify(body);
-  const endpointKind = targetUrl.toLowerCase().includes("/queryproject") ? "queryproject" : "query";
+  const endpointKind = inferEndpointKind(targetUrl);
   const headers = {
     "Content-Type": "application/json",
     "Accept-Encoding": "br, gzip, deflate",
@@ -92,6 +100,7 @@ export function createMatrixCaseRunner(config) {
   const transport = createK6Transport({
     queryPath: config.queryPath,
     queryProjectPath: config.queryProjectPath,
+    rootQueryPath: config.rootQueryPath,
   });
   const apiClient = createApiClient({
     baseUrl: config.baseUrl,
@@ -109,7 +118,9 @@ export function createMatrixCaseRunner(config) {
       const response =
         caseDef.endpointKind === "query"
           ? personClient.queryPerson(body)
-          : personClient.queryPersonProjected(body);
+          : caseDef.endpointKind === "queryroot"
+            ? personClient.queryRoot(body)
+            : personClient.queryPersonProjected(body);
 
       const metricTags = {
         query_case: caseDef.caseId,

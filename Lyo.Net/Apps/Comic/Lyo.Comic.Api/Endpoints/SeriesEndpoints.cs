@@ -17,7 +17,7 @@ public static class SeriesEndpoints
     {
         var group = app.MapGroup("/series").WithTags("Series");
 
-        // Enriched reads — builder handles Query (POST /Query) and plain CRUD
+        // Enriched reads — builder handles Query (POST /QueryConcrete) and plain CRUD
         group.MapGet("/{id:guid}", GetSeriesById);
         group.MapGet("/slug/{slug}", GetSeriesBySlug);
 

@@ -79,7 +79,7 @@ concrete `ComicApiClient` resolves paths relative to the configured `BaseAddress
 
 ### Inherited from `IApiClient`
 
-CRUD, `POST /Query`, bulk, upsert, history, and export helpers from `Lyo.Api.Client.ApiClient` are available on the same instance — see
+CRUD, `POST /QueryConcrete`, bulk, upsert, history, and export helpers from `Lyo.Api.Client.ApiClient` are available on the same instance — see
 [`Lyo.Api.Client`](../../../Integration/Api/Lyo.Api.Client/README.md). They are the canonical way to call the `BuildComicApiEndpoints` routes for series / volumes / chapters /
 pages / characters (ratings / comments / favorites do **not** yet have dedicated members on `IComicApiClient`).
 

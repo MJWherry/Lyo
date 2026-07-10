@@ -19,7 +19,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Extensions;
 using SortDirection = MudBlazor.SortDirection;
-using LyoQueryReqBuilder = Lyo.Query.Models.Builders.QueryReqBuilder;
+using LyoQueryConcreteReqBuilder = Lyo.Query.Models.Builders.QueryConcreteReqBuilder;
 
 namespace Lyo.Web.Components.DataGrid;
 
@@ -50,15 +50,15 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     [EditorRequired]
     public required string GridKey { get; init; } = typeof(T).Name;
 
-    /// <summary>Base route (e.g. "Person"). Query uses Route/Query, Export uses Route/Export, Delete uses Route (Bulk uses Route/Bulk).</summary>
+    /// <summary>Base route (e.g. "Person"). Query uses Route/QueryConcrete, Export uses Route/Export, Delete uses Route (Bulk uses Route/Bulk).</summary>
     [Parameter]
     [EditorRequired]
     public required string Route { get; init; }
 
-    private string QueryRoute => Route.TrimEnd('/') + "/Query";
+    private string QueryRoute => Route.TrimEnd('/') + "/QueryConcrete";
 
     [Parameter]
-    public Action<LyoQueryReqBuilder>? BeforeQuery { get; init; }
+    public Action<LyoQueryConcreteReqBuilder>? BeforeQuery { get; init; }
 
     [Parameter]
     [EditorRequired]
@@ -170,7 +170,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     // Public state
     public LyoProblemDetails? QueryError { get; private set; }
 
-    public QueryReq? CurrentQuery { get; private set; }
+    public QueryConcreteReq? CurrentQuery { get; private set; }
 
     public QueryRes<T>? CurrentResults;
 
@@ -416,7 +416,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             var queryBuilder = GetQuery(offset, pageSize);
             CurrentQuery = queryBuilder.Build();
             var s = Stopwatch.StartNew();
-            CurrentResults = await ApiClient.PostAsAsync<QueryReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
+            CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
             s.Stop();
             QueryError = CurrentResults.Error;
             var gridData = new GridData<T> { Items = CurrentResults.Items ?? [], TotalItems = CurrentResults.Total ?? 0 };
@@ -461,9 +461,9 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         }
     }
 
-    private LyoQueryReqBuilder GetQuery(int offset, int pageSize)
+    private LyoQueryConcreteReqBuilder GetQuery(int offset, int pageSize)
     {
-        var queryBuilder = LyoQueryReqBuilder.New().SetPagination(offset, pageSize);
+        var queryBuilder = LyoQueryConcreteReqBuilder.New().SetPagination(offset, pageSize);
 
         // Add search and filters
         var activeConditions = _filterStates.Where(f => f.IsEnabled).Select(f => f.Condition).ToList();
@@ -497,7 +497,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         return queryBuilder;
     }
 
-    private void AddSortToQuery(LyoQueryReqBuilder queryBuilder, SortDefinition<T> sort, int index)
+    private void AddSortToQuery(LyoQueryConcreteReqBuilder queryBuilder, SortDefinition<T> sort, int index)
     {
         if (sort.SortBy.Contains('.')) {
             // Navigational property sorting
@@ -781,7 +781,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         return EffectiveSelectedCount > 0 ? $"({EffectiveSelectedCount:N0} items)" : $"({CurrentResults?.Total:N0} items)";
     }
 
-    private static ProjectionQueryReq ToProjectionQueryReq(QueryReq q)
+    private static ProjectionQueryReq ToProjectionQueryReq(QueryConcreteReq q)
         => new() {
             Start = q.Start,
             Amount = q.Amount,

@@ -19,6 +19,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
     private JsonEditorJsInterop? _jsInterop;
     private string? _lastSyncedRawText;
     private string? _parseError;
+    private bool _rawDirty;
     private long _rawInputVersion;
     private ElementReference _rawReadonlyRef;
     private int _rawSearchIndex = -1;
@@ -97,16 +98,18 @@ public partial class JsonEditor<T> : IAsyncDisposable
         try {
             var options = JsonOptions ?? DefaultOptions;
             var nextRawText = Value != null ? JsonSerializer.Serialize(Value, options) : Placeholder;
-            // Skip if already synced; skip Raw updates only after the initial population
             if (string.Equals(nextRawText, _lastSyncedRawText, StringComparison.Ordinal))
                 return;
 
-            if (_viewMode == ViewMode.Raw && _lastSyncedRawText != null)
+            // Don't clobber in-progress Raw edits; still accept external Value updates when Raw is clean
+            // (e.g. form Start/Amount changed while the request editor is open).
+            if (_viewMode == ViewMode.Raw && _rawDirty)
                 return;
 
             SetParseError(null);
             _rawText = nextRawText;
             _lastSyncedRawText = nextRawText;
+            _rawDirty = false;
             _rootNode = Value != null ? JsonNode.Parse(nextRawText) : null;
             UpdateRawSearchState(true);
         }
@@ -118,6 +121,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
     private void OnRawTextInput(ChangeEventArgs e)
     {
         _rawText = e.Value?.ToString() ?? "";
+        _rawDirty = true;
         var version = Interlocked.Increment(ref _rawInputVersion);
         _lastSyncedRawText = null;
         UpdateRawSearchState(true);
@@ -136,6 +140,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
             var canonical = JsonSerializer.Serialize(parsed, options);
             Value = parsed;
             _lastSyncedRawText = canonical;
+            _rawDirty = false;
             _rootNode = JsonNode.Parse(canonical);
             await ValueChanged.InvokeAsync(parsed);
         }
@@ -170,6 +175,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
                 var nextRawText = Value != null ? JsonSerializer.Serialize(Value, options) : Placeholder;
                 _rawText = nextRawText;
                 _lastSyncedRawText = nextRawText;
+                _rawDirty = false;
             }
             catch { }
 
@@ -259,6 +265,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
             var parsed = JsonNode.Parse(_rawText);
             _rawText = parsed.ToJsonString(JsonOptions ?? DefaultOptions);
             _lastSyncedRawText = _rawText;
+            _rawDirty = false;
             SetParseError(null);
             var deserialized = JsonSerializer.Deserialize<T>(_rawText, JsonOptions ?? DefaultOptions);
             Value = deserialized;
@@ -280,6 +287,7 @@ public partial class JsonEditor<T> : IAsyncDisposable
             var canonical = JsonSerializer.Serialize(parsed, options);
             _rawText = canonical;
             _lastSyncedRawText = canonical;
+            _rawDirty = false;
             UpdateRawSearchState(true);
             Value = parsed;
             await ValueChanged.InvokeAsync(parsed);

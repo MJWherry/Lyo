@@ -10,8 +10,8 @@ namespace Lyo.Discord.Client.Managers;
 /// <summary>Guild and guild-scoped config endpoints on the Lyo Discord API.</summary>
 public sealed class GuildManager(LyoDiscordClient client)
 {
-    public Task<QueryRes<DiscordGuildRes>> QueryAsync(QueryReq request, CancellationToken ct = default)
-        => client.PostAsAsync<QueryReq, QueryRes<DiscordGuildRes>>($"{Constants.Rest.Discord.Guilds}/Query", request, ct: ct);
+    public Task<QueryRes<DiscordGuildRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordGuildRes>>($"{Constants.Rest.Discord.Guilds}/QueryConcrete", request, ct: ct);
 
     public Task<DiscordGuildRes?> GetAsync(long id, CancellationToken ct = default) => client.GetAsAsync<DiscordGuildRes>($"{Constants.Rest.Discord.Guilds}/{id}", ct: ct);
 

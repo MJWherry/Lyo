@@ -18,16 +18,17 @@
                 }
             </MudSelect>
             <MudSelect T="string"
-                       Value="@Run.Route"
+                       Value="@(Run.RunMode == QueryWorkbenchRunMode.RootQuery ? NormalizeDynamicBase(Run.Route) : Run.Route)"
                        ValueChanged="@OnRouteChanged"
-                       Label="Route"
+                       Label="@(Run.RunMode == QueryWorkbenchRunMode.RootQuery ? "API base" : "Route")"
                        Variant="Variant.Outlined"
                        Dense="true"
                        Margin="Margin.Dense"
                        Class="run-toolbar-select"
-                       Style="min-width: 140px;">
+                       Style="min-width: 140px;"
+                       HelperText="@(Run.RunMode == QueryWorkbenchRunMode.RootQuery ? "No entity segment — From.EntityType is in the body" : null)">
                 @foreach (var r in RoutesForSelectedHost()) {
-                    <MudSelectItem Value="@r">@r</MudSelectItem>
+                    <MudSelectItem Value="@r">@(string.IsNullOrEmpty(r) ? "(root /Query)" : r)</MudSelectItem>
                 }
             </MudSelect>
             <MudButtonGroup OverrideStyles="false"
@@ -36,11 +37,15 @@
                             Class="run-endpoint-toggle">
                 <MudButton OnClick="@(() => OnQueryRunModeChanged(QueryWorkbenchRunMode.Query))"
                            Variant="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Variant.Filled : Variant.Outlined)"
-                           Color="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Color.Primary : Color.Default)">/Query
+                           Color="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Color.Primary : Color.Default)">/QueryConcrete
                 </MudButton>
                 <MudButton OnClick="@(() => OnQueryRunModeChanged(QueryWorkbenchRunMode.QueryProject))"
                            Variant="@(Run.RunMode == QueryWorkbenchRunMode.QueryProject ? Variant.Filled : Variant.Outlined)"
                            Color="@(Run.RunMode == QueryWorkbenchRunMode.QueryProject ? Color.Primary : Color.Default)">/QueryProject
+                </MudButton>
+                <MudButton OnClick="@(() => OnQueryRunModeChanged(QueryWorkbenchRunMode.RootQuery))"
+                           Variant="@(Run.RunMode == QueryWorkbenchRunMode.RootQuery ? Variant.Filled : Variant.Outlined)"
+                           Color="@(Run.RunMode == QueryWorkbenchRunMode.RootQuery ? Color.Primary : Color.Default)">/Query
                 </MudButton>
             </MudButtonGroup>
             <MudButton Variant="Variant.Filled"
@@ -150,7 +155,7 @@
                     </MudText>
                     @if (Run.RunMode == QueryWorkbenchRunMode.Query) {
                         <JsonEditor @key="@($"{_requestEditorRenderKey}-q")"
-                                    T="QueryReq"
+                                    T="QueryConcreteReq"
                                     Value="@EntityRequest"
                                     ValueChanged="@OnEntityJsonChanged"
                                     JsonOptions="@JsonOptions"
@@ -160,11 +165,23 @@
                                     ParseErrorChanged="@OnRequestEditorParseErrorChanged"
                                     SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
                     }
-                    else {
+                    else if (Run.RunMode == QueryWorkbenchRunMode.QueryProject) {
                         <JsonEditor @key="@($"{_requestEditorRenderKey}-p")"
                                     T="ProjectionQueryReq"
                                     Value="@ProjectionRequest"
                                     ValueChanged="@OnProjectionJsonChanged"
+                                    JsonOptions="@JsonOptions"
+                                    AllowTreeEditing="true"
+                                    DefaultViewMode="@Run.RequestEditorViewMode"
+                                    ViewModeChanged="@OnRequestEditorViewModeChanged"
+                                    ParseErrorChanged="@OnRequestEditorParseErrorChanged"
+                                    SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
+                    }
+                    else {
+                        <JsonEditor @key="@($"{_requestEditorRenderKey}-r")"
+                                    T="QueryReq"
+                                    Value="@RootRequest"
+                                    ValueChanged="@OnRootJsonChanged"
                                     JsonOptions="@JsonOptions"
                                     AllowTreeEditing="true"
                                     DefaultViewMode="@Run.RequestEditorViewMode"

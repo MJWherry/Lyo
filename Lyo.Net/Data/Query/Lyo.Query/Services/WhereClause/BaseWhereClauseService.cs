@@ -1348,7 +1348,7 @@ public class BaseWhereClauseService : IWhereClauseService
         return GetOrCreateWhereClauseMatcher<TEntity>(queryNode)(entity);
     }
 
-    /// <summary>Whether <paramref name="entity" /> matches the optional <see cref="QueryReq.WhereClause" /> on <paramref name="queryRequest" />.</summary>
+    /// <summary>Whether <paramref name="entity" /> matches the optional <see cref="QueryConcreteReq.WhereClause" /> on <paramref name="queryRequest" />.</summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
     /// <param name="entity">The entity instance.</param>
     /// <param name="queryRequest">The API query request, or <c>null</c> (treated as no filter).</param>
@@ -1356,7 +1356,7 @@ public class BaseWhereClauseService : IWhereClauseService
     /// <c>false</c> if <paramref name="entity" /> is null; <c>true</c> if the request is null or has no where clause; otherwise the result of
     /// <see cref="Match{TEntity}(TEntity, Lyo.Query.Models.Common.WhereClause?)" />.
     /// </returns>
-    public virtual bool Match<TEntity>(TEntity entity, QueryReq? queryRequest)
+    public virtual bool Match<TEntity>(TEntity entity, QueryConcreteReq? queryRequest)
     {
         if (entity == null)
             return false;

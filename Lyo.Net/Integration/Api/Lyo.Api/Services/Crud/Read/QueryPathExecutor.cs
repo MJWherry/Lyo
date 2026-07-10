@@ -19,7 +19,7 @@ public interface IQueryPathExecutor
 {
     Task<QueryExecutionState<TDbModel>> ExecuteKeyConstrainedPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         CancellationToken ct = default)
@@ -27,7 +27,7 @@ public interface IQueryPathExecutor
 
     Task<QueryExecutionState<TDbModel>> ExecuteNonKeyPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         CancellationToken ct = default)
@@ -44,7 +44,7 @@ public sealed class QueryPathExecutor(
 {
     public async Task<QueryExecutionState<TDbModel>> ExecuteKeyConstrainedPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         CancellationToken ct = default)
@@ -121,7 +121,7 @@ public sealed class QueryPathExecutor(
 
     public async Task<QueryExecutionState<TDbModel>> ExecuteNonKeyPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         CancellationToken ct = default)
@@ -138,7 +138,7 @@ public sealed class QueryPathExecutor(
 
     private async Task<QueryExecutionState<TDbModel>> ExecuteSubQueryPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         bool computeExactTotal,
@@ -181,7 +181,7 @@ public sealed class QueryPathExecutor(
 
     private async Task<QueryExecutionState<TDbModel>> ExecuteStandardFilterPathAsync<TContext, TDbModel>(
         TContext context,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         bool computeExactTotal,
         CancellationToken ct)
         where TContext : DbContext where TDbModel : class

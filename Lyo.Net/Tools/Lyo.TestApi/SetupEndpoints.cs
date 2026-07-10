@@ -64,6 +64,9 @@ public static class SetupEndpoints
                 .WithProjectionComputedFields()
                 .Build();
 
+            // Typed Person CRUD owns /Person/*; root From/Joins Query is Option A at POST /Query.
+            app.MapRootQueryEndpoints<PeopleDbContext>();
+
             app.MapGet(
                     "info/{schema}/{table}/{column}/GetUniqueCounts", async (
                         string schema,

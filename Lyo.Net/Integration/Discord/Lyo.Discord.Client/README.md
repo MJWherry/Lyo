@@ -56,4 +56,4 @@ services.AddDiscordClient(o => {
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md) — `QueryRes<T>`, `UpsertResult<T>` envelopes returned by managers.
 - [`Lyo.Discord.Models`](../Lyo.Discord.Models/README.md) — request/response DTOs and shared route constants.
 - [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) — the API host that exposes the `Discord/*` routes.
-- [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) — `QueryReq` filter shape.
+- [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) — `QueryConcreteReq` filter shape.

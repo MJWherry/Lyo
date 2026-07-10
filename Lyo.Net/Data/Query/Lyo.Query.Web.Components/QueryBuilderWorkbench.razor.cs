@@ -16,10 +16,11 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         new("IsActive", "Active", FilterPropertyType.Bool), new("Type", "Type")
     ];
 
-    private QueryReq _entityQuery = new() { Start = 0, Amount = 20 };
+    private QueryConcreteReq _entityQuery = new() { Start = 0, Amount = 20 };
     private List<string> _includeAll = [];
     private List<string> _keysAll = [];
     private ProjectionQueryReq _projectionQuery = new() { Start = 0, Amount = 20 };
+    private QueryReq _rootQuery = CreateDefaultRootQuery();
     private QueryWorkbenchRunConfiguration _runConfig = new();
     private int _runRestoreKey;
 
@@ -67,6 +68,8 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
                     loadedAny = true;
                     _projectionQuery = loaded.QueryRequest;
                     _entityQuery = loaded.EntityQuery ?? FromProjectionSharedFields(_projectionQuery);
+                    _rootQuery = loaded.RootQuery ?? CreateDefaultRootQuery();
+                    EnsureRootQueryShape(_rootQuery);
                     _includeAll = loaded.IncludeAll;
                     _selectAll = loaded.SelectAll;
                     _keysAll = loaded.KeysAll;
@@ -116,6 +119,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         var state = new QueryWorkbenchPersistedState {
             EntityQuery = _entityQuery,
             QueryRequest = _projectionQuery,
+            RootQuery = _rootQuery,
             IncludeAll = _includeAll,
             SelectAll = _selectAll,
             KeysAll = _keysAll,
@@ -126,7 +130,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         await ClientStore.SetQueryWorkbenchStateAsync(json).ConfigureAwait(false);
     }
 
-    private void OnEntityFormRequestChanged(QueryReq request)
+    private void OnEntityFormRequestChanged(QueryConcreteReq request)
     {
         _entityQuery = request;
         _includeAll = request.Include.ToList();
@@ -140,7 +144,15 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         SchedulePersist();
     }
 
-    private void OnRunPanelEntityRequestChanged(QueryReq request)
+    private void OnRootFormRequestChanged(QueryReq request)
+    {
+        _rootQuery = request;
+        EnsureRootQueryShape(_rootQuery);
+        _selectAll = request.Select.ToList();
+        SchedulePersist();
+    }
+
+    private void OnRunPanelEntityRequestChanged(QueryConcreteReq request)
     {
         _entityQuery = request;
         _includeAll = request.Include.ToList();
@@ -153,6 +165,14 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         _projectionQuery = request;
         _selectAll = request.Select.ToList();
         _keysAll = request.Keys.Select(FormatKeySet).ToList();
+        SchedulePersist();
+    }
+
+    private void OnRunPanelRootRequestChanged(QueryReq request)
+    {
+        _rootQuery = request;
+        EnsureRootQueryShape(_rootQuery);
+        _selectAll = request.Select.ToList();
         SchedulePersist();
     }
 
@@ -174,14 +194,43 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         SchedulePersist();
     }
 
+    private Task OnWorkbenchModeChanged(QueryWorkbenchRunMode mode)
+    {
+        if (_runConfig.RunMode == mode)
+            return Task.CompletedTask;
+
+        var route = _runConfig.Route;
+        if (mode == QueryWorkbenchRunMode.RootQuery && _runConfig.RunMode != QueryWorkbenchRunMode.RootQuery)
+            route = QueryRunPanel.EntityRouteToDynamicBase(route);
+        else if (mode != QueryWorkbenchRunMode.RootQuery && _runConfig.RunMode == QueryWorkbenchRunMode.RootQuery) {
+            var entityRoutes = EntityRoutesForSelectedHost().ToList();
+            if (entityRoutes.Count > 0 && !entityRoutes.Contains(route, StringComparer.OrdinalIgnoreCase))
+                route = entityRoutes[0];
+        }
+
+        return OnRunConfigurationChanged(_runConfig with { RunMode = mode, Route = route });
+    }
+
+    private IEnumerable<string> EntityRoutesForSelectedHost()
+    {
+        if (_runConfig.HostEndpoints.Count == 0 || string.IsNullOrWhiteSpace(_runConfig.SelectedHost))
+            return [];
+
+        foreach (var kvp in _runConfig.HostEndpoints) {
+            if (string.Equals(
+                QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key),
+                QueryWorkbenchHostNormalization.NormalizeBaseUrl(_runConfig.SelectedHost!),
+                StringComparison.OrdinalIgnoreCase))
+                return kvp.Value is { Count: > 0 } ? kvp.Value : [];
+        }
+
+        return [];
+    }
+
     private Task OnRunConfigurationChanged(QueryWorkbenchRunConfiguration run)
     {
-        if (_trackedRunMode.HasValue && _trackedRunMode.Value != run.RunMode) {
-            if (run.RunMode == QueryWorkbenchRunMode.QueryProject)
-                CopySharedFields(_entityQuery, _projectionQuery);
-            else
-                CopySharedFields(_projectionQuery, _entityQuery);
-        }
+        if (_trackedRunMode.HasValue && _trackedRunMode.Value != run.RunMode)
+            SyncSharedFieldsOnModeChange(_trackedRunMode.Value, run.RunMode);
 
         _trackedRunMode = run.RunMode;
         _runConfig = run;
@@ -189,23 +238,31 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         return Task.CompletedTask;
     }
 
-    private Task OnWorkbenchEndpointToggleChanged(bool useProject)
+    private void SyncSharedFieldsOnModeChange(QueryWorkbenchRunMode from, QueryWorkbenchRunMode to)
     {
-        var mode = useProject ? QueryWorkbenchRunMode.QueryProject : QueryWorkbenchRunMode.Query;
-        if (_runConfig.RunMode == mode)
-            return Task.CompletedTask;
-
-        return OnRunConfigurationChanged(_runConfig with { RunMode = mode });
+        // Concrete ↔ Project share paging/where/sort/keys; Root keeps its own From/Joins shape.
+        if (from == QueryWorkbenchRunMode.Query && to == QueryWorkbenchRunMode.QueryProject)
+            CopySharedFields(_entityQuery, _projectionQuery);
+        else if (from == QueryWorkbenchRunMode.QueryProject && to == QueryWorkbenchRunMode.Query)
+            CopySharedFields(_projectionQuery, _entityQuery);
+        else if (to == QueryWorkbenchRunMode.RootQuery && from is QueryWorkbenchRunMode.Query or QueryWorkbenchRunMode.QueryProject) {
+            var source = from == QueryWorkbenchRunMode.Query ? (QueryRequestBase)_entityQuery : _projectionQuery;
+            CopyPagingWhereSortToRoot(source, _rootQuery);
+        }
+        else if (from == QueryWorkbenchRunMode.RootQuery && to == QueryWorkbenchRunMode.Query)
+            CopyPagingWhereSortFromRoot(_rootQuery, _entityQuery);
+        else if (from == QueryWorkbenchRunMode.RootQuery && to == QueryWorkbenchRunMode.QueryProject)
+            CopyPagingWhereSortFromRoot(_rootQuery, _projectionQuery);
     }
 
-    private static QueryReq FromProjectionSharedFields(ProjectionQueryReq projection)
+    private static QueryConcreteReq FromProjectionSharedFields(ProjectionQueryReq projection)
     {
-        var entity = new QueryReq { Start = projection.Start, Amount = projection.Amount };
+        var entity = new QueryConcreteReq { Start = projection.Start, Amount = projection.Amount };
         CopySharedFields(projection, entity);
         return entity;
     }
 
-    private static void CopySharedFields(ProjectionQueryReq source, QueryReq target)
+    private static void CopySharedFields(ProjectionQueryReq source, QueryConcreteReq target)
     {
         target.Start = source.Start;
         target.Amount = source.Amount;
@@ -217,7 +274,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
     }
 
-    private static void CopySharedFields(QueryReq source, ProjectionQueryReq target)
+    private static void CopySharedFields(QueryConcreteReq source, ProjectionQueryReq target)
     {
         target.Start = source.Start;
         target.Amount = source.Amount;
@@ -227,6 +284,50 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.SortBy = source.SortBy.ToList();
         target.Options.TotalCountMode = source.Options.TotalCountMode;
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
+    }
+
+    private static void CopyPagingWhereSortToRoot(QueryRequestBase source, QueryReq target)
+    {
+        target.Start = source.Start;
+        target.Amount = source.Amount;
+        target.WhereClause = source.WhereClause;
+        target.SortBy = source.SortBy.ToList();
+        target.Options.TotalCountMode = source switch {
+            ProjectionQueryReq p => p.Options.TotalCountMode,
+            QueryConcreteReq c => c.Options.TotalCountMode,
+            _ => target.Options.TotalCountMode
+        };
+    }
+
+    private static void CopyPagingWhereSortFromRoot(QueryReq source, QueryRequestBase target)
+    {
+        target.Start = source.Start;
+        target.Amount = source.Amount;
+        target.WhereClause = source.WhereClause;
+        target.SortBy = source.SortBy.ToList();
+        if (target is ProjectionQueryReq p)
+            p.Options.TotalCountMode = source.Options.TotalCountMode;
+        else if (target is QueryConcreteReq c)
+            c.Options.TotalCountMode = source.Options.TotalCountMode;
+    }
+
+    private static QueryReq CreateDefaultRootQuery()
+        => new() {
+            Start = 0,
+            Amount = 20,
+            From = new FromClause { Alias = "o", EntityType = "" },
+            Joins = [],
+            Select = []
+        };
+
+    private static void EnsureRootQueryShape(QueryReq q)
+    {
+        q.Options ??= new();
+        q.From ??= new FromClause();
+        q.Joins ??= [];
+        q.Select ??= [];
+        if (string.IsNullOrWhiteSpace(q.From.Alias))
+            q.From.Alias = "o";
     }
 
     private static List<object[]> CloneKeyRows(List<object[]>? keys)

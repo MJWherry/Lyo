@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq.Expressions;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common;
@@ -8,51 +7,105 @@ using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Builders;
 
-/// <summary>Fluent builder for <see cref="QueryReq" /> (<c>/Query</c> — full entities, no sparse projection).</summary>
+/// <summary>Fluent builder for root <see cref="QueryReq" /> (<c>/Query</c> — From/Joins + sparse Select).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class QueryReqBuilder(QueryReq? baseQuery = null)
 {
     private readonly QueryReq _query = baseQuery ?? new QueryReq();
 
-    /// <summary>Adds one or more include paths (database navigation names).</summary>
-    public QueryReqBuilder AddIncludes(string include, params string[] rest)
+    public QueryReqBuilder From(string alias, string entityType, Action<SourceQueryScope>? configureQuery = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(include);
-        _query.Include.Add(include.Trim());
-        foreach (var i in rest)
-            _query.Include.Add(i.Trim());
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(alias);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(entityType);
+        _query.From = new FromClause { Alias = alias.Trim(), EntityType = entityType.Trim() };
+        if (configureQuery != null) {
+            var scope = new SourceQueryScope();
+            configureQuery(scope);
+            _query.From.Query = scope;
+        }
 
         return this;
     }
 
-    /// <summary>Adds include paths from an array.</summary>
-    public QueryReqBuilder AddIncludes(string[] includes)
+    public QueryReqBuilder From(FromClause from)
     {
-        ArgumentHelpers.ThrowIfNull(includes);
-        ArgumentHelpers.ThrowIf(includes.Length == 0, "At least one include is required");
-        foreach (var i in includes)
-            _query.Include.Add(i.Trim());
+        ArgumentHelpers.ThrowIfNull(from);
+        _query.From = from;
+        return this;
+    }
+
+    public QueryReqBuilder Join(
+        string alias,
+        string entityType,
+        JoinType type,
+        Action<List<JoinOn>> configureOn,
+        string? asName = null,
+        Action<SourceQueryScope>? configureQuery = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(alias);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(entityType);
+        ArgumentHelpers.ThrowIfNull(configureOn);
+        var on = new List<JoinOn>();
+        configureOn(on);
+        ArgumentHelpers.ThrowIf(on.Count == 0, "Join requires at least one ON clause");
+        var join = new JoinClause {
+            Alias = alias.Trim(),
+            EntityType = entityType.Trim(),
+            Type = type,
+            On = on,
+            As = asName
+        };
+        if (configureQuery != null) {
+            var scope = new SourceQueryScope();
+            configureQuery(scope);
+            join.Query = scope;
+        }
+
+        _query.Joins.Add(join);
+        return this;
+    }
+
+    public QueryReqBuilder Join(JoinClause join)
+    {
+        ArgumentHelpers.ThrowIfNull(join);
+        _query.Joins.Add(join);
+        return this;
+    }
+
+    public QueryReqBuilder AddSelects(string field, params string[] rest)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(field);
+        _query.Select.Add(field.Trim());
+        foreach (var f in rest)
+            _query.Select.Add(f.Trim());
 
         return this;
     }
 
-    /// <summary>Adds include paths by splitting the enum member name on commas (flags-style).</summary>
-    public QueryReqBuilder AddIncludes(Enum include)
+    public QueryReqBuilder AddSelects(string[] fields)
     {
-        foreach (var i in include.ToString().Split([','], StringSplitOptions.RemoveEmptyEntries))
-            _query.Include.Add(i.Trim());
+        ArgumentHelpers.ThrowIfNull(fields);
+        ArgumentHelpers.ThrowIf(fields.Length == 0, "At least one select field is required", nameof(fields));
+        foreach (var f in fields)
+            _query.Select.Add(f.Trim());
 
         return this;
     }
 
-    /// <summary>Sets the root <see cref="QueryRequestBase.WhereClause" />.</summary>
+    public QueryReqBuilder AddComputedField(string name, string template)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
+        _query.ComputedFields.Add(new(name, template));
+        return this;
+    }
+
     public QueryReqBuilder AddWhere(WhereClause whereClause)
     {
         _query.WhereClause = whereClause;
         return this;
     }
 
-    /// <summary>Builds a where clause using <see cref="WhereClauseBuilder.And()" /> and assigns it to the request.</summary>
     public QueryReqBuilder AddWhere(Action<WhereClauseBuilder> configure)
     {
         var qb = WhereClauseBuilder.And();
@@ -61,20 +114,15 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
         return this;
     }
 
-    /// <summary>Starts a typed builder that resolves includes/sorts/where from lambda expressions.</summary>
-    public QueryReqForBuilder<T> For<T>() => new(this);
-
-    /// <summary>Appends a <see cref="SortBy" /> entry.</summary>
     public QueryReqBuilder AddSort(SortBy sortBy)
     {
         _query.SortBy.Add(sortBy);
         return this;
     }
 
-    /// <summary>Appends a sort by property name, direction, and optional priority.</summary>
-    public QueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null) => AddSort(new(propertyName, direction, priority));
+    public QueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
+        => AddSort(new(propertyName, direction, priority));
 
-    /// <summary>Sets <see cref="QueryRequestBase.Start" /> and <see cref="QueryRequestBase.Amount" />.</summary>
     public QueryReqBuilder SetPagination(int start, int amount)
     {
         _query.Start = start;
@@ -82,73 +130,23 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
         return this;
     }
 
-    /// <summary>Requests the first row only (<c>Start=0</c>, <c>Amount=1</c>).</summary>
     public QueryReqBuilder First() => SetPagination(0, 1);
 
-    /// <summary>Sets <see cref="QueryRequestOptions.TotalCountMode" />.</summary>
     public QueryReqBuilder SetTotalCountMode(QueryTotalCountMode totalCountMode)
     {
         _query.Options.TotalCountMode = totalCountMode;
         return this;
     }
 
-    /// <summary>Sets <see cref="QueryRequestOptions.IncludeFilterMode" />.</summary>
-    public QueryReqBuilder SetIncludeFilterMode(QueryIncludeFilterMode includeFilterMode)
+    public QueryReqBuilder SetZipSiblingCollectionSelections(bool zipSiblingCollectionSelections)
     {
-        _query.Options.IncludeFilterMode = includeFilterMode;
+        _query.Options.ZipSiblingCollectionSelections = zipSiblingCollectionSelections;
         return this;
     }
 
-    /// <summary>Returns the configured <see cref="QueryReq" />.</summary>
     public QueryReq Build() => _query;
 
-    /// <summary>Creates a new empty builder.</summary>
     public static QueryReqBuilder New() => new();
 
     public override string ToString() => _query.ToString();
-
-    /// <summary>Typed façade over <see cref="QueryReqBuilder" /> using expression-based paths.</summary>
-    public class QueryReqForBuilder<T>(QueryReqBuilder parent)
-    {
-        /// <summary>Adds an include derived from a member-access lambda (honors <see cref="QueryPropertyNameAttribute" />).</summary>
-        public QueryReqForBuilder<T> Include(Expression<Func<T, object?>> selector)
-        {
-            var path = QueryBuilderExpressionPathHelper.GetPropertyPath(selector);
-            if (!string.IsNullOrEmpty(path))
-                parent.AddIncludes(path);
-
-            return this;
-        }
-
-        /// <summary>Builds a typed where clause and assigns it to the request.</summary>
-        public QueryReqForBuilder<T> AddWhere(Action<WhereClauseBuilder.WhereClauseBuilderFor<T>> configure)
-        {
-            var qb = WhereClauseBuilder.And();
-            var typed = qb.For<T>();
-            configure(typed);
-            var node = qb.Build();
-            parent.AddWhere(node);
-            return this;
-        }
-
-        /// <inheritdoc cref="QueryReqBuilder.AddSort(SortBy)" path="/summary" />
-        public QueryReqForBuilder<T> AddSort(SortBy sortBy)
-        {
-            parent.AddSort(sortBy);
-            return this;
-        }
-
-        /// <summary>Appends a sort keyed by a property path from <paramref name="selector" />.</summary>
-        public QueryReqForBuilder<T> AddSort(Expression<Func<T, object?>> selector, SortDirection direction = SortDirection.Desc, int? priority = null)
-        {
-            var path = QueryBuilderExpressionPathHelper.GetPropertyPath(selector);
-            if (!string.IsNullOrEmpty(path))
-                parent.AddSort(path, direction, priority);
-
-            return this;
-        }
-
-        /// <summary>Returns the parent builder to continue configuration.</summary>
-        public QueryReqBuilder Done() => parent;
-    }
 }

@@ -44,7 +44,7 @@ public class QueryService<TContext>(
     where TContext : DbContext
 {
     public async Task<QueryRes<TResult>> Query<TDbModel, TResult>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection = SortDirection.Desc,
         CancellationToken ct = default)
@@ -53,7 +53,7 @@ public class QueryService<TContext>(
         const string operation = "query_map";
         ArgumentHelpers.ThrowIfNull(queryRequest);
         ArgumentHelpers.ThrowIfNull(defaultOrder);
-        using var scope = BeginActionScope("QUERY", typeof(QueryReq), typeof(TDbModel), typeof(TResult));
+        using var scope = BeginActionScope("QUERY", typeof(QueryConcreteReq), typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
@@ -80,7 +80,7 @@ public class QueryService<TContext>(
     }
 
     public async Task<QueryRes<TDbModel>> Query<TDbModel>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection = SortDirection.Desc,
         CancellationToken ct = default)
@@ -89,7 +89,7 @@ public class QueryService<TContext>(
         const string operation = "query";
         ArgumentHelpers.ThrowIfNull(queryRequest);
         ArgumentHelpers.ThrowIfNull(defaultOrder);
-        using var scope = BeginActionScope("QUERY", typeof(QueryReq), typeof(TDbModel), typeof(TDbModel));
+        using var scope = BeginActionScope("QUERY", typeof(QueryConcreteReq), typeof(TDbModel), typeof(TDbModel));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
@@ -291,7 +291,7 @@ public class QueryService<TContext>(
     }
 
     private async Task<QueryRes<TDbModel>> QueryCore<TDbModel>(
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         Expression<Func<TDbModel, object?>> defaultOrder,
         SortDirection defaultSortDirection,
         CancellationToken ct,
@@ -466,7 +466,7 @@ public class QueryService<TContext>(
 
         var aggregatedErrors = new List<ApiError>();
         aggregatedErrors.AddRange(QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize));
-        aggregatedErrors.AddRange(ValidateCommonQueryGuardrails(ToQueryReq(queryRequest)));
+        aggregatedErrors.AddRange(ValidateCommonQueryGuardrails(ToQueryConcreteReq(queryRequest)));
         aggregatedErrors.AddRange(ValidateProjectedQueryGuardrails(queryRequest));
         if (queryRequest.Select.Count == 0)
             aggregatedErrors.Add(new(ApiErrorCodes.InvalidQuery, "Projected query requires at least one selected field."));
@@ -612,7 +612,7 @@ public class QueryService<TContext>(
                 workingProjection.Select.Add(spec.NormalizedPath);
 
             workingProjection.Include = effectiveIncludes;
-            var entityLoadRequest = ToQueryReq(workingProjection);
+            var entityLoadRequest = ToQueryConcreteReq(workingProjection);
             var cacheAug = new QueryCoreCacheAugmentation(workingProjection.Select, workingProjection.ComputedFields);
             var fallbackLoadStart = Stopwatch.GetTimestamp();
             var raw = await QueryCore(entityLoadRequest, defaultOrder, defaultSortDirection, ct, cacheAug).ConfigureAwait(false);
@@ -767,7 +767,7 @@ public class QueryService<TContext>(
     private async Task ApplyPostLoadIncludesAsync<TDbModel>(
         TContext context,
         TDbModel[] queryResults,
-        QueryReq queryRequest,
+        QueryConcreteReq queryRequest,
         bool keysProvided,
         bool isInMemoryResults,
         CancellationToken ct)
@@ -777,7 +777,7 @@ public class QueryService<TContext>(
             _ = await pagingHelper.BatchHydrateIncludesAsync(context, queryResults.ToList(), queryRequest.Include, ct).ConfigureAwait(false);
     }
 
-    private void ApplyMatchedOnlyFilterIfNeeded<TDbModel>(QueryReq queryRequest, TDbModel[] queryResults)
+    private void ApplyMatchedOnlyFilterIfNeeded<TDbModel>(QueryConcreteReq queryRequest, TDbModel[] queryResults)
         where TDbModel : class
     {
         if (queryRequest.Options.IncludeFilterMode != QueryIncludeFilterMode.MatchedOnly || queryRequest.Include.Count == 0 || queryResults.Length == 0)
@@ -808,7 +808,7 @@ public class QueryService<TContext>(
         };
     }
 
-    private static QueryReq ToQueryReq(ProjectionQueryReq source)
+    private static QueryConcreteReq ToQueryConcreteReq(ProjectionQueryReq source)
         => new() {
             Start = source.Start,
             Amount = source.Amount,
@@ -819,7 +819,7 @@ public class QueryService<TContext>(
             SortBy = [..source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
         };
 
-    private List<ApiError> ValidateCommonQueryGuardrails(QueryReq queryRequest)
+    private List<ApiError> ValidateCommonQueryGuardrails(QueryConcreteReq queryRequest)
     {
         var errors = new List<ApiError>();
         if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount) {

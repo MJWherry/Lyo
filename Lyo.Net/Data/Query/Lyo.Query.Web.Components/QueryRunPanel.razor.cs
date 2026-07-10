@@ -46,16 +46,22 @@ public partial class QueryRunPanel : IAsyncDisposable
     private JsonSerializerOptions JsonOptions { get; set; } = null!;
 
     [Parameter]
-    public QueryReq EntityRequest { get; set; } = new();
+    public QueryConcreteReq EntityRequest { get; set; } = new();
 
     [Parameter]
-    public EventCallback<QueryReq> EntityRequestChanged { get; set; }
+    public EventCallback<QueryConcreteReq> EntityRequestChanged { get; set; }
 
     [Parameter]
     public ProjectionQueryReq ProjectionRequest { get; set; } = new();
 
     [Parameter]
     public EventCallback<ProjectionQueryReq> ProjectionRequestChanged { get; set; }
+
+    [Parameter]
+    public QueryReq RootRequest { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<QueryReq> RootRequestChanged { get; set; }
 
     [Parameter]
     public QueryWorkbenchRunConfiguration Run { get; set; } = new();
@@ -109,8 +115,17 @@ public partial class QueryRunPanel : IAsyncDisposable
     private string GetRequestUri()
     {
         var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-        var route = Run.Route.Trim();
-        if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(route))
+        if (string.IsNullOrEmpty(baseUrl))
+            return "(not configured)";
+
+        if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
+            // Root /Query is on the dynamic CRUD base — entity type is only in From.EntityType.
+            var dynamicBase = NormalizeDynamicBase(Run.Route);
+            return string.IsNullOrEmpty(dynamicBase) ? $"{baseUrl}/Query" : $"{baseUrl}/{dynamicBase}/Query";
+        }
+
+        var route = Run.Route.Trim().Trim('/');
+        if (string.IsNullOrEmpty(route))
             return "(not configured)";
 
         return $"{baseUrl}/{route}/{GetEndpointSegment()}";
@@ -127,19 +142,30 @@ public partial class QueryRunPanel : IAsyncDisposable
         try {
             var stopwatch = Stopwatch.StartNew();
             var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-            var route = Run.Route.Trim();
-            if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(route)) {
-                _error = "Add an API host and route (expand “API targets” below, or configure the gateway workbench defaults).";
+            if (string.IsNullOrEmpty(baseUrl)) {
+                _error = "Add an API host (expand “API targets” below, or configure the gateway workbench defaults).";
                 _loading = false;
                 return;
             }
 
-            var pathRoute = route + "/" + GetEndpointSegment();
-            var uri = $"{baseUrl}/{pathRoute}";
+            string uri;
+            if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
+                var dynamicBase = NormalizeDynamicBase(Run.Route);
+                uri = string.IsNullOrEmpty(dynamicBase) ? $"{baseUrl}/Query" : $"{baseUrl}/{dynamicBase}/Query";
+            }
+            else {
+                var route = Run.Route.Trim().Trim('/');
+                if (string.IsNullOrEmpty(route)) {
+                    _error = "Pick an entity route (expand “API targets” below, or configure the gateway workbench defaults).";
+                    _loading = false;
+                    return;
+                }
+
+                uri = $"{baseUrl}/{route}/{GetEndpointSegment()}";
+            }
+
             var httpClient = HttpClientFactory.CreateClient();
-            var json =  JsonSerializer.Serialize(
-                Run.RunMode == QueryWorkbenchRunMode.Query ? (object)EntityRequest : ProjectionRequest,
-                JsonOptions);
+            var json = JsonSerializer.Serialize(GetActiveRequestBody(), JsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await httpClient.PostAsync(uri, content);
             var responseJson = await response.Content.ReadAsStringAsync();
@@ -195,7 +221,16 @@ public partial class QueryRunPanel : IAsyncDisposable
         if (Run.RunMode == mode)
             return;
 
-        await NotifyRunChangedAsync(Run with { RunMode = mode });
+        var route = Run.Route;
+        if (mode == QueryWorkbenchRunMode.RootQuery && Run.RunMode != QueryWorkbenchRunMode.RootQuery)
+            route = EntityRouteToDynamicBase(route);
+        else if (mode != QueryWorkbenchRunMode.RootQuery && Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
+            var entityRoutes = RoutesForSelectedHostCore().ToList();
+            if (entityRoutes.Count > 0 && !entityRoutes.Contains(route, StringComparer.OrdinalIgnoreCase))
+                route = entityRoutes[0];
+        }
+
+        await NotifyRunChangedAsync(Run with { RunMode = mode, Route = route });
     }
 
     private void ClearResponse()
@@ -208,7 +243,7 @@ public partial class QueryRunPanel : IAsyncDisposable
         _responseEditorSearchText = string.Empty;
     }
 
-    private async Task OnEntityJsonChanged(QueryReq? request)
+    private async Task OnEntityJsonChanged(QueryConcreteReq? request)
     {
         if (request != null)
             await EntityRequestChanged.InvokeAsync(request);
@@ -221,6 +256,12 @@ public partial class QueryRunPanel : IAsyncDisposable
             if ((request.Select?.Count ?? 0) > 0 && Run.RunMode == QueryWorkbenchRunMode.Query)
                 await NotifyRunChangedAsync(Run with { RunMode = QueryWorkbenchRunMode.QueryProject });
         }
+    }
+
+    private async Task OnRootJsonChanged(QueryReq? request)
+    {
+        if (request != null)
+            await RootRequestChanged.InvokeAsync(request);
     }
 
     private Task OnRequestEditorViewModeChanged(JsonEditorViewMode mode)
@@ -302,11 +343,17 @@ public partial class QueryRunPanel : IAsyncDisposable
         await NotifyRunChangedAsync(Run with { LeftPanePercent = clamped });
     }
 
+    private object GetActiveRequestBody()
+        => Run.RunMode switch {
+            QueryWorkbenchRunMode.QueryProject => ProjectionRequest,
+            QueryWorkbenchRunMode.RootQuery => RootRequest,
+            _ => EntityRequest
+        };
+
     private int GetRequestSizeBytes()
     {
         try {
-            var payload = Run.RunMode == QueryWorkbenchRunMode.Query ? (object)EntityRequest : ProjectionRequest;
-            return Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(payload, JsonOptions));
+            return Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(GetActiveRequestBody(), JsonOptions));
         }
         catch {
             return 0;
@@ -327,14 +374,23 @@ public partial class QueryRunPanel : IAsyncDisposable
     private QueryRequestScoreBreakdown GetCurrentScoreBreakdown()
     {
         try {
-            return Run.RunMode == QueryWorkbenchRunMode.Query ? QueryRequestScorer.ScoreDetailed(EntityRequest) : QueryRequestScorer.ScoreDetailed(ProjectionRequest);
+            return Run.RunMode switch {
+                QueryWorkbenchRunMode.QueryProject => QueryRequestScorer.ScoreDetailed(ProjectionRequest),
+                QueryWorkbenchRunMode.RootQuery => QueryRequestScorer.ScoreDetailed(RootRequest),
+                _ => QueryRequestScorer.ScoreDetailed(EntityRequest)
+            };
         }
         catch {
             return QueryRequestScoreBreakdown.Empty();
         }
     }
 
-    private string GetEndpointSegment() => Run.RunMode == QueryWorkbenchRunMode.QueryProject ? "QueryProject" : "Query";
+    private string GetEndpointSegment()
+        => Run.RunMode switch {
+            QueryWorkbenchRunMode.QueryProject => "QueryProject",
+            QueryWorkbenchRunMode.RootQuery => "Query",
+            _ => "QueryConcrete"
+        };
 
     private async Task OnSelectedHostChanged(string? host)
     {
@@ -352,7 +408,15 @@ public partial class QueryRunPanel : IAsyncDisposable
 
         var routes = Run.HostEndpoints[match];
         var route = Run.Route;
-        if (routes is not { Count: > 0 } || !routes.Contains(route, StringComparer.OrdinalIgnoreCase))
+        if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
+            var bases = routes.Select(EntityRouteToDynamicBase).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var currentBase = NormalizeDynamicBase(route);
+            if (bases.Count > 0 && !bases.Contains(currentBase, StringComparer.OrdinalIgnoreCase))
+                route = bases[0];
+            else
+                route = currentBase;
+        }
+        else if (routes is not { Count: > 0 } || !routes.Contains(route, StringComparer.OrdinalIgnoreCase))
             route = routes[0];
 
         await NotifyRunChangedAsync(Run with { SelectedHost = match, Route = route });
@@ -361,6 +425,23 @@ public partial class QueryRunPanel : IAsyncDisposable
     private Task OnRouteChanged(string route) => NotifyRunChangedAsync(Run with { Route = route.Trim() });
 
     private IEnumerable<string> RoutesForSelectedHost()
+    {
+        var entityRoutes = RoutesForSelectedHostCore().ToList();
+        if (Run.RunMode != QueryWorkbenchRunMode.RootQuery)
+            return entityRoutes;
+
+        // Root /Query: dropdown is dynamic CRUD bases (entity type lives in From.EntityType).
+        var bases = entityRoutes
+            .Select(EntityRouteToDynamicBase)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static b => b, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (bases.Count == 0)
+            bases.Add("");
+        return bases;
+    }
+
+    private IEnumerable<string> RoutesForSelectedHostCore()
     {
         if (Run.HostEndpoints.Count == 0 || string.IsNullOrWhiteSpace(Run.SelectedHost))
             return [];
@@ -373,6 +454,19 @@ public partial class QueryRunPanel : IAsyncDisposable
 
         return [];
     }
+
+    /// <summary>Strips the last path segment (entity type) from a configured entity route.</summary>
+    internal static string EntityRouteToDynamicBase(string? entityRoute)
+    {
+        var trimmed = (entityRoute ?? "").Trim().Trim('/');
+        if (string.IsNullOrEmpty(trimmed))
+            return "";
+
+        var lastSlash = trimmed.LastIndexOf('/');
+        return lastSlash < 0 ? "" : trimmed[..lastSlash];
+    }
+
+    internal static string NormalizeDynamicBase(string? route) => (route ?? "").Trim().Trim('/');
 
     private async Task AddHostRow()
     {
@@ -403,7 +497,15 @@ public partial class QueryRunPanel : IAsyncDisposable
         if (newSelected != null && dict.Count > 0) {
             var hostEntry = dict.First(kvp => string.Equals(QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key), newSelected, StringComparison.OrdinalIgnoreCase));
             var routes = hostEntry.Value;
-            if (routes is { Count: > 0 } && !routes.Contains(route, StringComparer.OrdinalIgnoreCase))
+            if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
+                var bases = routes.Select(EntityRouteToDynamicBase).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var currentBase = NormalizeDynamicBase(route);
+                if (bases.Count > 0 && !bases.Contains(currentBase, StringComparer.OrdinalIgnoreCase))
+                    route = bases[0];
+                else
+                    route = currentBase;
+            }
+            else if (routes is { Count: > 0 } && !routes.Contains(route, StringComparer.OrdinalIgnoreCase))
                 route = routes[0];
         }
 

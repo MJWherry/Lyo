@@ -4,6 +4,7 @@ using Lyo.Common.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
+using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
@@ -22,7 +23,7 @@ public class QueryServicePostgresTests
         var defId = await _fixture.SeedJobDefinitionAsync("QueryTest1");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Start = 0, Amount = 500 };
+        var request = new QueryConcreteReq { Start = 0, Amount = 500 };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -40,7 +41,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("FilterTestB");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "FilterTestA") };
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "FilterTestA") };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -89,7 +90,7 @@ public class QueryServicePostgresTests
         var defId = await _fixture.SeedJobDefinitionAsync("TooManyIncludes");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Keys = [[defId]],
@@ -108,7 +109,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("IncludePageSizeGuardrail");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Start = 0, Amount = 301, Include = ["JobRuns"] };
+        var request = new QueryConcreteReq { Start = 0, Amount = 301, Include = ["JobRuns"] };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
@@ -133,6 +134,93 @@ public class QueryServicePostgresTests
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("template length", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Query_WithTooManyKeys_ReturnsFailure()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new QueryConcreteReq {
+            Start = 0,
+            Amount = 10,
+            Keys = Enumerable.Range(0, 257).Select(_ => new object[] { Guid.NewGuid() }).ToList()
+        };
+
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Key set count", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task QueryProjected_WithTooManySelectFields_ReturnsFailure()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = Enumerable.Range(0, 257).Select(i => $"Field{i}").ToList()
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Select field count", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task QueryProjected_WithTooManyComputedFields_ReturnsFailure()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Name"],
+            ComputedFields = Enumerable.Range(0, 33).Select(i => new ComputedField($"C{i}", "{Name}")).ToList()
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Computed field count", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Query_WithInvalidWhereField_ReturnsFailure()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new QueryConcreteReq {
+            Start = 0,
+            Amount = 10,
+            WhereClause = WhereClauseBuilder.Condition("NotARealField", ComparisonOperatorEnum.Equals, "x")
+        };
+
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+    }
+
+    [Fact]
+    public async Task Query_WithInvalidSortField_ReturnsFailure()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, SortBy = [new SortBy("NotARealField", SortDirection.Asc)] };
+
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+    }
+
+    [Fact]
+    public async Task Get_WithInvalidInclude_ThrowsApiErrorException()
+    {
+        var defId = await _fixture.SeedJobDefinitionAsync("GetInvalidInclude");
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        await Assert.ThrowsAsync<Lyo.Api.Models.Error.ApiErrorException>(() =>
+            queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -419,8 +507,9 @@ public class QueryServicePostgresTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
-        Assert.Single(result.QueryRequest.Select);
-        Assert.Equal("Name", result.QueryRequest.Select[0]);
+        var echoed = Assert.IsType<ProjectionQueryReq>(result.QueryRequest);
+        Assert.Single(echoed.Select);
+        Assert.Equal("Name", echoed.Select[0]);
         var row = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items[0]);
         Assert.Equal(name, row["Name"]?.ToString());
         Assert.Equal($"Test, {name}", row["Label"]?.ToString());
@@ -574,7 +663,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobRunAsync(defId, $"drop-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Include = ["JobRuns"],
@@ -601,7 +690,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobRunAsync(defId, $"user-{suffix}@charter.net");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Include = ["JobRuns"],
@@ -624,7 +713,7 @@ public class QueryServicePostgresTests
         var defId = await _fixture.SeedJobDefinitionAsync("KeysTest");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Keys = [[defId]], Start = 0, Amount = 10 };
+        var request = new QueryConcreteReq { Keys = [[defId]], Start = 0, Amount = 10 };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -640,7 +729,7 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.Equals("Name", "KeysNodeMatch"));
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Keys = [[defId]],
             Start = 0,
             Amount = 10,
@@ -662,7 +751,7 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.Equals("Name", "DifferentName"));
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Keys = [[defId]],
             Start = 0,
             Amount = 10,
@@ -684,11 +773,11 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.NotEquals("Name", null));
-        var broadRequest = new QueryReq { Start = 0, Amount = 500, WhereClause = queryNode };
+        var broadRequest = new QueryConcreteReq { Start = 0, Amount = 500, WhereClause = queryNode };
         var broadResult = await queryService.Query<JobDefinition, JobDefinitionRes>(broadRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(broadResult.IsSuccess);
         Assert.True(broadResult.Items!.Count >= 2);
-        var keyedRequest = new QueryReq {
+        var keyedRequest = new QueryConcreteReq {
             Keys = [[defId]],
             Start = 0,
             Amount = 10,
@@ -710,11 +799,11 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobRunAsync(otherDefId);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var unkeyedRequest = new QueryReq { Start = 0, Amount = 300, Include = ["JobDefinition"] };
+        var unkeyedRequest = new QueryConcreteReq { Start = 0, Amount = 300, Include = ["JobDefinition"] };
         var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
         Assert.True(unkeyedResult.IsSuccess);
         Assert.True(unkeyedResult.Items!.Count >= 2);
-        var keyedRequest = new QueryReq {
+        var keyedRequest = new QueryConcreteReq {
             Keys = [[runId]],
             Start = 0,
             Amount = 10,
@@ -735,7 +824,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("Page3");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Start = 1, Amount = 1, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, "Page") };
+        var request = new QueryConcreteReq { Start = 1, Amount = 1, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, "Page") };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -751,7 +840,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync($"{prefix}_B");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 1,
             Options = new() { TotalCountMode = QueryTotalCountMode.None },
@@ -774,7 +863,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync($"{prefix}_B");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var firstPageRequest = new QueryReq {
+        var firstPageRequest = new QueryConcreteReq {
             Start = 0,
             Amount = 1,
             Options = new() { TotalCountMode = QueryTotalCountMode.HasMore },
@@ -788,7 +877,7 @@ public class QueryServicePostgresTests
         Assert.Single(firstPage.Items!);
         Assert.Null(firstPage.Total);
         Assert.True(firstPage.HasMore);
-        var secondPageRequest = new QueryReq {
+        var secondPageRequest = new QueryConcreteReq {
             Start = 1,
             Amount = 1,
             Options = new() { TotalCountMode = QueryTotalCountMode.HasMore },
@@ -811,7 +900,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("SortA");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, "Sort"),
@@ -869,7 +958,7 @@ public class QueryServicePostgresTests
         var runId = await _fixture.SeedJobRunAsync(defId);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             Keys = [[runId]],
@@ -892,7 +981,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("MultiGroupC");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.Or(b => {
@@ -916,7 +1005,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("MultiFilterNoMatch", "other");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -941,7 +1030,7 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.Equals("Name", "NodeMatch").AddAnd(c => c.Equals("Type", "Test")));
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = queryNode };
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = queryNode };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -958,7 +1047,7 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.Or(b => b.Equals("Name", "OrFirst").AddOr(c => c.Equals("Name", "OrSecond")));
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = queryNode };
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = queryNode };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -974,7 +1063,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("NoMatch");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Contains, "Middle") };
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Contains, "Middle") };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -989,7 +1078,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("NotEqB");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1014,7 +1103,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("InExcluded");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.In, "InFirst,InSecond"),
@@ -1036,7 +1125,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("NC_HasXyzInName");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1060,7 +1149,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("EW_OtherName");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1083,7 +1172,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("Nsw_NotPrefixA");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1107,7 +1196,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("New_EndsWithB");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1132,7 +1221,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("Ni_Excluded");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1156,7 +1245,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("Rx_NoMatch");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1179,7 +1268,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("Nrx_KeepMe");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1205,7 +1294,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("GtTs_Late", createdTimestamp: ts2);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1231,7 +1320,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("GteTs_Late", createdTimestamp: ts2);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1257,7 +1346,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("LtTs_Late", createdTimestamp: ts2);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1283,7 +1372,7 @@ public class QueryServicePostgresTests
         await _fixture.SeedJobDefinitionAsync("LteTs_Late", createdTimestamp: ts2);
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
             WhereClause = WhereClauseBuilder.And(b => {
@@ -1321,7 +1410,7 @@ public class QueryServicePostgresTests
         });
 
         var withSubQuery = WhereClauseBuilder.ConditionWithSubClause("Enabled", ComparisonOperatorEnum.Equals, true, nestedSubQuery);
-        var reqWithSub = new QueryReq {
+        var reqWithSub = new QueryConcreteReq {
             Start = 0,
             Amount = 100,
             WhereClause = withSubQuery,
@@ -1350,7 +1439,7 @@ public class QueryServicePostgresTests
         var queryNode = WhereClauseBuilder.ConditionWithSubClause(
             "Enabled", ComparisonOperatorEnum.Equals, true, WhereClauseBuilder.And(b => b.Equals("JobRuns.CreatedBy", $"created-by-{suffix}")));
 
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 0,
             Amount = 50,
             WhereClause = queryNode,
@@ -1380,7 +1469,7 @@ public class QueryServicePostgresTests
         var queryNode = WhereClauseBuilder.ConditionWithSubClause(
             "Enabled", ComparisonOperatorEnum.Equals, true, WhereClauseBuilder.And(b => b.Equals("JobRuns.CreatedBy", $"order-{suffix}")));
 
-        var request = new QueryReq {
+        var request = new QueryConcreteReq {
             Start = 1,
             Amount = 1,
             WhereClause = queryNode,
