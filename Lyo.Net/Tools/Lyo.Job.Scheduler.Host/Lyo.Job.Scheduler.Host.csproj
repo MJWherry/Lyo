@@ -16,7 +16,7 @@
         <ProjectReference Include="..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
-        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Client\Lyo.Job.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
     </ItemGroup>
 

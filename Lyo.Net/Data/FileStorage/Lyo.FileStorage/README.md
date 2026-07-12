@@ -28,6 +28,8 @@ For multipart session stores and Postgres metadata, follow references from your 
 | **Presigned GET**                                                                                 | Only when **`DiskFileStorageOptions.AllowFileUriPresignedUrls`** (returns **`file://`**, dev-only); no response-header overrides | Yes (incl. **`PreSignedReadUrlOptions`**)   | Yes (SAS + optional response headers)      |
 | **Direct PUT upload** (**`BeginDirectUpload` / `CompleteDirectUpload`**)                          | Yes when **`DirectUploadReceiveBaseUri`** is set (PUT URL hits Test API / host receiver); otherwise **`NotSupportedException`**  | Yes                                         | Yes                                        |
 | **Server-sideCopy** (**`CopyFileAsync`**)                                                         | Yes (filesystem copy + metadata)                                                                                                 | Yes (`CopyObject`)                          | Yes (same API)                             |
+| **Move** (**`MoveFileAsync`**)                                                                    | Yes (`File.Move` + metadata; same file id)                                                                                       | Yes (`CopyObject` then delete source)       | Yes (`SyncCopyFromUri` then delete source) |
+| **Rename** (**`RenameFileAsync`**)                                                                | Yes (metadata `OriginalFileName` only)                                                                                           | Yes (same)                                  | Yes (same)                                 |
 | **Diagnostics listing** (**`IFileStorageDiagnosticsService`**)                                    | Yes (relative paths under **`RootDirectoryPath`**)                                                                               | Yes (combined **`KeyPrefix`**)              | Yes                                        |
 | **Multipart** (**`AddLocalMultipartUploadService` / …S3/Blob**)                                   | Yes (server-staged parts)                                                                                                        | Yes                                         | Yes                                        |
 | **Staged upload** (**`IStagedFileUploadService` / `AddLocalStagedFileUploadService` / …S3/Blob**) | Yes when **`DirectUploadReceiveBaseUri`** is set (API PUT to `.stage/`); otherwise **`NotSupportedException`**                   | Yes (presigned PUT to `.stage/{id}/object`) | Yes (SAS PUT; not with SSE-C customer key) |
@@ -59,9 +61,10 @@ Grouped by concern (see xmldoc for parameters and exceptions):
 - **Temporary links** — **`GetPreSignedReadUrlAsync`** (with optional **`PreSignedReadUrlOptions`** overrides; both overloads accept **`CancellationToken`** with a default of
   `default`)
 - **Direct single PUT** — **`BeginDirectUploadAsync`**, **`CompleteDirectUploadAsync`** (S3/Blob populate **`RequiredPutHeaders`** for SSE + signed `Content-Type` parity)
-- **Copy** — **`CopyFileAsync`**
+- **Copy** — **`CopyFileAsync`** (new file id)
+- **Move / rename** — **`MoveFileAsync`** (same file id, relocate by **`PathPrefix`**); **`RenameFileAsync`** (metadata **`OriginalFileName`** only)
 - **Key ops** — **`MigrateDeksAsync`**, **`RotateDeksAsync`** (results split **`Skipped`** vs **`Failed`**; missing blobs and short encryption headers fail-fast)
-- **Events** — **`FileSaved`**, **`FileRetrieved`**, **`FileDeleted`**, **`FileMetadataRetrieved`**, **`FileAuditOccurred`**. Payloads carry a redacted **`FileStoreSnapshot`** (
+- **Events** — **`FileSaved`**, **`FileRetrieved`**, **`FileDeleted`**, **`FileMoved`**, **`FileRenamed`**, **`FileMetadataRetrieved`**, **`FileAuditOccurred`**. Payloads carry a redacted **`FileStoreSnapshot`** (
   wrapped DEK and KEK salt omitted)
 - **Health** — **`CheckHealthAsync`** via **`IHealth`** (lightweight vs full via **`HealthCheckMode`**)
 
@@ -208,6 +211,8 @@ For cloud backends, use the package-specific keyed entry points: **`AddS3FileSto
 | **`DirectUploadCompleteRequest`** | Expected length / rename on finalize                                                |
 | **`PreSignedReadUrlOptions`**     | **`ContentDisposition`**, **`ContentType`** for cloud GET overrides                 |
 | **`CopyFileRequest`**             | Optional **`PathPrefix`** override for **`CopyFileAsync`**                          |
+| **`MoveFileRequest`**             | Target **`PathPrefix`** for **`MoveFileAsync`** (same file id)                      |
+| **`RenameFileRequest`**           | New **`OriginalFileName`** for **`RenameFileAsync`** (metadata only)                |
 
 Dependency injection for disk is usually **`Extensions.AddFileStorageServiceKeyed`** overloads keyed with your tenant/service key alongside **`IFileMetadataStore`** registration.
 

@@ -12,8 +12,15 @@ public sealed class LyoAuthClientOptions
     /// </summary>
     public const string SchemeName = "LyoAuthCookie";
 
-    /// <summary>Absolute base URL of the Lyo API that hosts the OIDC endpoints (e.g. <c>http://localhost:5251</c>). Required.</summary>
+    /// <summary>Absolute base URL of the Lyo API that hosts the OIDC endpoints (e.g. <c>http://localhost:5251</c>). Required. Used for server-side HTTP (handoff redeem, refresh).</summary>
     public string AuthBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Browser-facing absolute base URL of the API's OIDC endpoints (e.g. <c>https://app.example.com/api</c>).
+    /// Used when 302ing the user to <c>/auth/login/{provider}</c>. When empty, falls back to <see cref="AuthBaseUrl" /> (fine for local single-host).
+    /// In Docker/compose, keep <see cref="AuthBaseUrl" /> as the internal service URL and set this to the public reverse-proxy URL.
+    /// </summary>
+    public string? PublicAuthBaseUrl { get; set; }
 
     /// <summary>Path on this consumer that processes the <c>?lyo_handoff=...</c> redirect from the API. Default <c>/auth/handoff</c>.</summary>
     public string HandoffCallbackPath { get; set; } = "/auth/handoff";

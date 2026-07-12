@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using Amazon;
-using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Lyo.Common.Records;
@@ -216,6 +215,75 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
                     new(
                         FileAuditEventType.Copy, DateTime.UtcNow, destId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
                         meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), sourceFileId), ct)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        ValidatePathPrefix(request.PathPrefix);
+        var destPrefix = NormalizePathPrefix(request.PathPrefix);
+
+        var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId}; it is awaiting direct-upload finalize.");
+
+        var previousPrefix = meta.PathPrefix;
+        if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
+            return meta;
+
+        var srcKey = await FindObjectKeyAsync(fileId, previousPrefix, ct).ConfigureAwait(false);
+        if (srcKey == null)
+            throw new FileNotFoundException($"Source object not found for id {fileId}.");
+
+        var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
+        var destKey = GetObjectKey(fileId, suffix, destPrefix);
+        var copyCompleted = false;
+        var metadataSaved = false;
+        try {
+            var copy = new CopyObjectRequest {
+                SourceBucket = _options.BucketName,
+                SourceKey = srcKey,
+                DestinationBucket = _options.BucketName,
+                DestinationKey = destKey
+            };
+
+            S3UploadServerSideEncryption.ApplyToCopyDestination(copy, _options);
+            await _s3Client.CopyObjectAsync(copy, ct).ConfigureAwait(false);
+            copyCompleted = true;
+
+            var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
+            metadataSaved = true;
+
+            try {
+                await _s3Client.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = srcKey }, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception delEx) {
+                Logger.LogWarning(delEx, "Failed to delete source object {Src} after move to {Dest}; metadata already points at destination", srcKey, destKey);
+            }
+
+            RaiseFileMoved(fileId, FileStoreSnapshot.From(movedMeta), previousPrefix);
+            return movedMeta;
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "S3 move failed {Source}->{Dest}", srcKey, destKey);
+            if (copyCompleted && !metadataSaved) {
+                try {
+                    await _s3Client.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = destKey }, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception delEx) {
+                    Logger.LogWarning(delEx, "Failed to clean up orphan destination {Dest} after move metadata failure", destKey);
+                }
+            }
+
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Move, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -659,10 +727,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             config.ForcePathStyle = true; // Required for S3-compatible services
         }
 
-        if (!string.IsNullOrWhiteSpace(_options.AccessKeyId) && !string.IsNullOrWhiteSpace(_options.SecretAccessKey)) {
-            var credentials = new BasicAWSCredentials(_options.AccessKeyId, _options.SecretAccessKey);
+        if (S3AwsCredentialHelpers.TryGetExplicitCredentials(_options.AccessKeyId, _options.SecretAccessKey, out var credentials))
             return new AmazonS3Client(credentials, config);
-        }
 
         return new AmazonS3Client(config);
     }

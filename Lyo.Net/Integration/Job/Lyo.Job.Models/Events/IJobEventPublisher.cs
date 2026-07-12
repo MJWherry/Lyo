@@ -4,7 +4,8 @@ namespace Lyo.Job.Models.Events;
 
 /// <summary>
 /// Transport-agnostic abstraction for job lifecycle event publishing and subscription. Implement this interface to use any message broker (RabbitMQ, Azure Service Bus, AWS
-/// SQS, etc.) and register the implementation in the DI container. The default <c>MqJobEventPublisher</c> (in <c>Lyo.Job.Postgres</c>) wraps <c>IMqService</c>.
+/// SQS, etc.) and register the implementation in the DI container. API hosts with a job database use <c>MqJobEventPublisher</c> in <c>Lyo.Job.Postgres</c>; scheduler/worker hosts
+/// use <c>Lyo.Job.Client.MqJobEventPublisher</c> (<c>IMqService</c> + Job API client, no EF).
 /// </summary>
 public interface IJobEventPublisher
 {

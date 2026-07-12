@@ -34,12 +34,13 @@ namespace Lyo.Job.Scheduler;
 public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 {
     private static readonly string[] JobRunIncludes = [
-        "JobRunParameters", "JobRunLogs", "JobRunResults", "JobSchedule", "JobTrigger", "JobTriggerTriggersJobDefinitions", "JobDefinition", "JobDefinition.JobParameters",
+        "JobRunParameters", "JobRunLogs", "JobRunResults", "JobSchedule", "JobTrigger", "JobTrigger.JobTriggerParameters", "JobDefinition", "JobDefinition.JobParameters",
         "JobDefinition.JobTriggerJobDefinitions.JobTriggerParameters"
     ];
 
     private static readonly string[] JobDefinitionIncludes = [
-        "JobParameters", "JobSchedules", "JobTriggerJobDefinitions", "JobTriggerJobDefinitions.JobTriggerParameters", "JobParallelRestrictions"
+        "JobParameters", "JobSchedules", "JobTriggerJobDefinitions", "JobTriggerJobDefinitions.JobTriggerParameters", "JobParallelRestrictionBaseJobDefinitions",
+        "JobParallelRestrictionBaseJobDefinitions.OtherJobDefinition"
     ];
 
     private static readonly Regex TemplatePlaceholderRegex = new(@"\{\{(.*?)\}\}", RegexOptions.Compiled);
@@ -137,8 +138,18 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         await _eventPublisher.SetupAsync(stoppingToken).ConfigureAwait(false);
         await _eventPublisher.SubscribeToDefinitionUpdatesAsync(Constants.Mq.JobDefinitionChangeKey, OnDefinitionUpdatedAsync, stoppingToken).ConfigureAwait(false);
         await _eventPublisher.SubscribeToRunCompletionsAsync(OnJobRunCompleteAsync, stoppingToken).ConfigureAwait(false);
-        await RefreshDefinitionsInternalAsync(stoppingToken).ConfigureAwait(false);
-        await CheckSchedulesInternalAsync(stoppingToken).ConfigureAwait(false);
+        try {
+            await RefreshDefinitionsInternalAsync(stoppingToken).ConfigureAwait(false);
+            await CheckSchedulesInternalAsync(stoppingToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
+            return;
+        }
+        catch (Exception ex) {
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RefreshError);
+            _logger.LogError(ex, "Initial definition refresh failed; will retry on the refresh loop");
+        }
+
         var definitionRefreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(_options.DefinitionRefreshIntervalSeconds));
         var scheduleCheckTimer = new PeriodicTimer(TimeSpan.FromSeconds(_options.ScheduleCheckIntervalSeconds));
         try {
@@ -930,12 +941,22 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task<JobRunRes?> GetJobRunAsync(Guid id)
     {
         var include = string.Join("&include=", JobRunIncludes);
-        return await _apiClient.GetAsAsync<JobRunRes>($"{BuildUri(Constants.Rest.Job.Runs)}/{id}?include={include}").ConfigureAwait(false);
+        try {
+            return await _apiClient.GetAsAsync<JobRunRes>($"{BuildUri(Constants.Rest.Job.Runs)}/{id}?include={include}").ConfigureAwait(false);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404) {
+            return null;
+        }
     }
 
     private async Task<JobDefinitionRes?> GetJobDefinitionAsync(Guid id)
     {
         var include = string.Join("&include=", JobDefinitionIncludes);
-        return await _apiClient.GetAsAsync<JobDefinitionRes>($"{BuildUri(Constants.Rest.Job.Definitions)}/{id}?include={include}").ConfigureAwait(false);
+        try {
+            return await _apiClient.GetAsAsync<JobDefinitionRes>($"{BuildUri(Constants.Rest.Job.Definitions)}/{id}?include={include}").ConfigureAwait(false);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404) {
+            return null;
+        }
     }
 }

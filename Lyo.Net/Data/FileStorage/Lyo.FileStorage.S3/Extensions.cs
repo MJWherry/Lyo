@@ -1,5 +1,4 @@
 using Amazon;
-using Amazon.Runtime;
 using Amazon.S3;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Audit;
@@ -125,14 +124,13 @@ public static class Extensions
                         config.ForcePathStyle = true; // Required for S3-compatible services
                     }
 
-                    if (!string.IsNullOrWhiteSpace(options.AccessKeyId) && !string.IsNullOrWhiteSpace(options.SecretAccessKey)) {
-                        var credentials = new BasicAWSCredentials(options.AccessKeyId, options.SecretAccessKey);
+                    if (S3AwsCredentialHelpers.TryGetExplicitCredentials(options.AccessKeyId, options.SecretAccessKey, out var credentials)) {
                         // Explicitly create client with credentials to avoid default credential chain
                         var client = new AmazonS3Client(credentials, config);
                         return client;
                     }
 
-                    // If no credentials provided, use default credential chain
+                    // If no credentials provided (null/empty/whitespace), use default credential chain
                     return new AmazonS3Client(config);
                 });
             }

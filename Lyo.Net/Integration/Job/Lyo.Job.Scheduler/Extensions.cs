@@ -17,7 +17,7 @@ public static class Extensions
     {
         /// <summary>
         /// Adds <see cref="JobScheduler" /> as a hosted service and registers <see cref="IJobScheduler" />. Requires <c>IApiClient</c>, <c>IFormatterService</c>, and
-        /// <c>IJobEventPublisher</c> to be registered (e.g. via <c>services.AddMqJobEventPublisher()</c>).
+        /// <c>IJobEventPublisher</c> (register via <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> on scheduler/worker hosts).
         /// </summary>
         public IServiceCollection AddJobScheduler(JobSchedulerOptions options)
         {
@@ -31,16 +31,16 @@ public static class Extensions
 
         /// <summary>
         /// Adds <see cref="JobScheduler" /> as a hosted service, binding options from the <see cref="JobSchedulerOptions.SectionName" /> configuration section and validating
-        /// them on host start. Requires <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> to be registered (e.g. via
-        /// <c>services.AddMqJobEventPublisher()</c>).
+        /// them on host start. Requires <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> (register via
+        /// <c>Lyo.Job.Client.AddMqJobEventPublisher*</c>).
         /// </summary>
         public IServiceCollection AddJobScheduler(string configSectionName = JobSchedulerOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddSingleton<IValidateOptions<JobSchedulerOptions>, JobSchedulerOptionsValidator>();
             services.AddOptions<JobSchedulerOptions>()
                 .BindConfiguration(configSectionName)
-                .Validate(o => o.GetValidationErrors().Count == 0, $"Invalid {nameof(JobSchedulerOptions)} — see {nameof(JobSchedulerOptions.GetValidationErrors)}.")
                 .ValidateOnStart();
 
             services.AddSingleton(p => p.GetRequiredService<IOptions<JobSchedulerOptions>>().Value);

@@ -18,6 +18,12 @@ public interface IFileStorageService : IHealth
     /// <summary>Occurs when a file has been deleted successfully.</summary>
     event EventHandler<FileDeletedResult>? FileDeleted;
 
+    /// <summary>Occurs when a file has been moved to a new path prefix (same file id).</summary>
+    event EventHandler<FileMovedResult>? FileMoved;
+
+    /// <summary>Occurs when a file's display name (<c>OriginalFileName</c>) has been updated (metadata only).</summary>
+    event EventHandler<FileRenamedResult>? FileRenamed;
+
     /// <summary>Occurs when file metadata is fetched (without payload). <c>File</c> is a redacted snapshot — sensitive fields such as the wrapped DEK and KEK salt are omitted.</summary>
     event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
 
@@ -112,6 +118,18 @@ public interface IFileStorageService : IHealth
     /// <summary>Server-local or server-side copy to a new file id (backing bytes reproduced; metadata duplicated with new identifiers).</summary>
     /// <remarks>Remote copies may incur long-lived SDK calls — treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.</remarks>
     Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Relocates backing bytes under a new path prefix while keeping the same file id. <see cref="FileStoreResult.SourceFileName" /> is unchanged; only
+    /// <see cref="FileStoreResult.PathPrefix" /> is updated.
+    /// </summary>
+    /// <remarks>Cloud backends typically copy-then-delete; treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.</remarks>
+    Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Updates <see cref="FileStoreResult.OriginalFileName" /> in metadata only. Backing object keys and <see cref="FileStoreResult.SourceFileName" /> are unchanged.
+    /// </summary>
+    Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default);
 
     /// <summary>Gets a file from storage.</summary>
     /// <param name="fileId">The unique identifier of the file to retrieve</param>

@@ -116,7 +116,8 @@ public static class LyoAuthClientEndpointsMapper
                         var callbackOrigin = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
                         var callbackUrl = callbackOrigin + opts.HandoffCallbackPath + (safeReturn == "/" ? string.Empty : "?return=" + Uri.EscapeDataString(safeReturn));
                         var encodedReturn = Uri.EscapeDataString(callbackUrl);
-                        var target = $"{opts.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
+                        var authBase = string.IsNullOrWhiteSpace(opts.PublicAuthBaseUrl) ? opts.AuthBaseUrl : opts.PublicAuthBaseUrl;
+                        var target = $"{authBase.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
                         return Results.Redirect(target);
                     })
                 .WithName("LyoAuthClientSignIn")

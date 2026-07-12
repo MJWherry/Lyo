@@ -742,8 +742,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers <see cref="MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> implementation. Requires <see cref="IMqService" /> to already be registered (e.g.
-        /// via <c>AddRabbitMq</c>).
+        /// Registers <see cref="Events.MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> for API hosts with a job database.
+        /// Scheduler/worker hosts must use <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> instead. Requires <see cref="IMqService" />.
         /// </summary>
         public IServiceCollection AddMqJobEventPublisher()
         {
@@ -756,7 +756,7 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers <see cref="MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> (worker types for queue provisioning at startup) from configuration.
+        /// Registers the Postgres <see cref="Events.MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> from configuration (API hosts only).
         /// </summary>
         public IServiceCollection AddMqJobEventPublisherFromConfiguration(IConfiguration configuration, string configSectionName = JobMqOptions.SectionName)
         {

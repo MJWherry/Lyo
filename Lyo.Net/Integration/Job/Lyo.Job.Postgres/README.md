@@ -4,7 +4,7 @@ PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem
 
 ## Drop-and-play registration
 
-`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, and a default no-op `IJobEventPublisher` (`NullJobEventPublisher`). Replace the publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available.
+`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, and a default no-op `IJobEventPublisher` (`NullJobEventPublisher`). Replace the publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available (API hosts with a job database only). **Scheduler and worker hosts must not use this package's publisher** — use `Lyo.Job.Client.AddMqJobEventPublisher*` (`IMqService` + Job.Client) instead.
 
 ```csharp
 services.AddLyoQueryServices();
@@ -165,7 +165,7 @@ Lifecycle routes (`RunStarted`, `RunFinished`, `RunHeartbeat`, `RunLog`, …) ar
 ## Event publishers (`Events/`)
 
 - **`NullJobEventPublisher`** — default; `IsConnected() == false`.
-- **`MqJobEventPublisher`** — creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`.
+- **`MqJobEventPublisher`** — creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead.
 
 ## Design-time migrations
 

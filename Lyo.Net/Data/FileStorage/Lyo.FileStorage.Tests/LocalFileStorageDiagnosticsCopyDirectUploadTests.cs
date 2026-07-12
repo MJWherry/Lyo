@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.FileStorage.Tests;
 
-/// <summary>Local disk-only features: <see cref="IFileStorageDiagnosticsService" />, <see cref="LocalFileStorageService.CopyFileAsync" />, direct-upload begin/receive/complete.</summary>
+/// <summary>Local disk-only features: <see cref="IFileStorageDiagnosticsService" />, <see cref="LocalFileStorageService.CopyFileAsync" />, <see cref="LocalFileStorageService.MoveFileAsync" />, rename, direct-upload begin/receive/complete.</summary>
+/// <summary>Local disk-only features: <see cref="IFileStorageDiagnosticsService" />, copy, move, rename, direct-upload begin/receive/complete.</summary>
 public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposable
 {
     private readonly ILoggerFactory _loggerFactory;
@@ -76,6 +77,89 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
 
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<FileNotAvailableException>(() => service.CopyFileAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task MoveFileAsync_RelocatesBackingBytes_SameIdUpdatesPathPrefix()
+    {
+        using var service = CreateService();
+        var plain = "move-me-bytes"u8.ToArray();
+        var saved = await service.SaveFileAsync(plain, "doc.txt", pathPrefix: "incoming", ct: TestContext.Current.CancellationToken);
+
+        var moved = await service.MoveFileAsync(saved.Id, new() { PathPrefix = "archive" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(saved.Id, moved.Id);
+        Assert.Equal("archive", moved.PathPrefix);
+        Assert.Equal(saved.SourceFileName, moved.SourceFileName);
+        Assert.Equal(plain, await service.GetFileAsync(moved.Id, ct: TestContext.Current.CancellationToken));
+
+        var keys = await AsDiagnostics(service).ListStorageKeysAsync(null, 1000, TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(keys, k => k.Contains("incoming", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(keys, k => k.Contains("archive", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task MoveFileAsync_SamePathPrefix_IsNoOp()
+    {
+        using var service = CreateService();
+        var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.bin", pathPrefix: "incoming", ct: TestContext.Current.CancellationToken);
+        var moved = await service.MoveFileAsync(saved.Id, new() { PathPrefix = "incoming" }, TestContext.Current.CancellationToken);
+        Assert.Equal(saved.Id, moved.Id);
+        Assert.Equal("incoming", moved.PathPrefix);
+        Assert.Equal(saved.Timestamp, moved.Timestamp);
+    }
+
+    [Fact]
+    public async Task MoveFileAsync_PendingDirectUpload_ThrowsFileNotAvailable()
+    {
+        using var service = CreateService(o => {
+            o.DirectUploadReceiveBaseUri = "https://tests.invalid";
+            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+        });
+
+        var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAsync<FileNotAvailableException>(() =>
+            service.MoveFileAsync(begin.FileId, new() { PathPrefix = "elsewhere" }, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task RenameFileAsync_UpdatesOriginalFileName_PhysicalBytesUnchanged()
+    {
+        using var service = CreateService();
+        var plain = "rename-me"u8.ToArray();
+        var saved = await service.SaveFileAsync(plain, "old-name.txt", pathPrefix: "docs", ct: TestContext.Current.CancellationToken);
+        var keysBefore = await AsDiagnostics(service).ListStorageKeysAsync(null, 1000, TestContext.Current.CancellationToken);
+
+        var renamed = await service.RenameFileAsync(saved.Id, new() { OriginalFileName = "new-name.txt" }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(saved.Id, renamed.Id);
+        Assert.Equal("new-name.txt", renamed.OriginalFileName);
+        Assert.Equal(saved.PathPrefix, renamed.PathPrefix);
+        Assert.Equal(saved.SourceFileName, renamed.SourceFileName);
+        Assert.Equal(plain, await service.GetFileAsync(renamed.Id, ct: TestContext.Current.CancellationToken));
+
+        var keysAfter = await AsDiagnostics(service).ListStorageKeysAsync(null, 1000, TestContext.Current.CancellationToken);
+        Assert.Equal(keysBefore.OrderBy(k => k, StringComparer.Ordinal), keysAfter.OrderBy(k => k, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task RenameFileAsync_SameName_IsNoOp()
+    {
+        using var service = CreateService();
+        var saved = await service.SaveFileAsync("x"u8.ToArray(), "same.txt", ct: TestContext.Current.CancellationToken);
+        var renamed = await service.RenameFileAsync(saved.Id, new() { OriginalFileName = "same.txt" }, TestContext.Current.CancellationToken);
+        Assert.Equal(saved.Timestamp, renamed.Timestamp);
+        Assert.Equal("same.txt", renamed.OriginalFileName);
+    }
+
+    [Fact]
+    public async Task RenameFileAsync_NullOrWhitespaceName_Throws()
+    {
+        using var service = CreateService();
+        var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.txt", ct: TestContext.Current.CancellationToken);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.RenameFileAsync(saved.Id, null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.RenameFileAsync(saved.Id, new() { OriginalFileName = "   " }, TestContext.Current.CancellationToken));
     }
 
     [Fact]

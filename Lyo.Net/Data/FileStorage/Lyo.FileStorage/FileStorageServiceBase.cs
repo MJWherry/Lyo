@@ -149,6 +149,10 @@ public abstract class FileStorageServiceBase
 
     public event EventHandler<FileDeletedResult>? FileDeleted;
 
+    public event EventHandler<FileMovedResult>? FileMoved;
+
+    public event EventHandler<FileRenamedResult>? FileRenamed;
+
     public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
 
     public event EventHandler<FileAuditEventArgs>? FileAuditOccurred;
@@ -162,6 +166,14 @@ public abstract class FileStorageServiceBase
     /// reads.
     /// </summary>
     protected void RaiseFileMetadataRetrieved(Guid fileId, FileStoreSnapshot snapshot) => FileMetadataRetrieved?.Invoke(this, new(fileId, snapshot));
+
+    /// <summary>Raises <see cref="FileMoved" /> after a successful path-prefix relocate.</summary>
+    protected void RaiseFileMoved(Guid fileId, FileStoreSnapshot snapshot, string? previousPathPrefix)
+        => FileMoved?.Invoke(this, new(fileId, snapshot, previousPathPrefix));
+
+    /// <summary>Raises <see cref="FileRenamed" /> after a successful display-name update.</summary>
+    protected void RaiseFileRenamed(Guid fileId, FileStoreSnapshot snapshot, string? previousOriginalFileName)
+        => FileRenamed?.Invoke(this, new(fileId, snapshot, previousOriginalFileName));
 
     public virtual Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
         => GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, null, ct);
@@ -178,6 +190,37 @@ public abstract class FileStorageServiceBase
 
     public virtual Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
         => Task.FromException<FileStoreResult>(new NotSupportedException("Server-side copies are not supported by this backend."));
+
+    public virtual Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+        => Task.FromException<FileStoreResult>(new NotSupportedException("Server-side moves are not supported by this backend."));
+
+    /// <inheritdoc />
+    public virtual async Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        OperationHelpers.ThrowIfNullOrWhiteSpace(request.OriginalFileName, "OriginalFileName is required for rename.");
+
+        var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot rename file {fileId}; it is awaiting direct-upload finalize.");
+
+        if (string.Equals(meta.OriginalFileName, request.OriginalFileName, StringComparison.Ordinal))
+            return meta;
+
+        try {
+            var renamed = await RecordRenameMetadataAsync(meta, request.OriginalFileName, ct).ConfigureAwait(false);
+            RaiseFileRenamed(fileId, FileStoreSnapshot.From(renamed), meta.OriginalFileName);
+            return renamed;
+        }
+        catch (Exception ex) {
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Rename, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
+                .ConfigureAwait(false);
+            throw;
+        }
+    }
 
     /// <summary>Async-disposes a stream using <see cref="Stream.DisposeAsync" /> when available, otherwise synchronously disposes.</summary>
     internal static Task DisposeStreamAsync(Stream? stream) => FileStorageStreamingPipelines.DisposeStreamAsync(stream);
@@ -1352,6 +1395,14 @@ public abstract class FileStorageServiceBase
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordCopyMetadataAsync" />
     protected Task<FileStoreResult> RecordCopyMetadataAsync(Guid sourceFileId, FileStoreResult sourceMeta, Guid destId, CopyFileRequest? request, CancellationToken ct)
         => _plainDirectUpload.RecordCopyMetadataAsync(sourceFileId, sourceMeta, destId, request, ct);
+
+    /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordMoveMetadataAsync" />
+    protected Task<FileStoreResult> RecordMoveMetadataAsync(FileStoreResult sourceMeta, string? destPathPrefix, CancellationToken ct)
+        => _plainDirectUpload.RecordMoveMetadataAsync(sourceMeta, destPathPrefix, ct);
+
+    /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordRenameMetadataAsync" />
+    protected Task<FileStoreResult> RecordRenameMetadataAsync(FileStoreResult sourceMeta, string originalFileName, CancellationToken ct)
+        => _plainDirectUpload.RecordRenameMetadataAsync(sourceMeta, originalFileName, ct);
 
 #endregion
 }

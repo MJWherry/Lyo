@@ -32,8 +32,8 @@ Architecture, duplicate handling, and threat-model context for storage live in *
 
 ## **`BlobFileStorageService`**
 
-Concrete implementation registered as **`IFileStorageService`** (scoped). Mirrors **`S3FileStorageService`** for cloud-specific paths (presigned URLs, **`CopyBlobAsync`**-style
-behaviour, multipart block uploads).
+Concrete implementation registered as **`IFileStorageService`** (scoped). Mirrors **`S3FileStorageService`** for cloud-specific paths (presigned URLs, **`CopyFileAsync`** /
+**`MoveFileAsync`** via sync copy then delete source, multipart block uploads). **`RenameFileAsync`** is metadata-only (shared base implementation).
 
 ## Options — **`BlobFileStorageOptions`** extends **`FileStorageServiceBaseOptions`**
 

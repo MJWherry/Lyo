@@ -19,7 +19,7 @@ Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICom
 |-------------------------------------------------------------------|------------------------------------------------------------------------------------------|
 | **`SectionName`**                                                 | Default appsettings subsection (`S3FileStorageOptions`)                                  |
 | **`BucketName`**, **`Region`**                                    | Target bucket / signing region                                                           |
-| **`AccessKeyId`**, **`SecretAccessKey`**                          | Static keys (optional when using IAM/instance profile)                                   |
+| **`AccessKeyId`**, **`SecretAccessKey`**                          | Static keys (optional). Omit or leave empty/whitespace to use the machine default credential chain (env / shared credentials / IAM) |
 | **`ServiceUrl`**                                                  | S3-compatible API base URL                                                               |
 | **`ProviderAccountId`**                                           | Compatibility helpers (e.g. Cloudflare R2 account id)                                    |
 | **`KeyPrefix`**                                                   | Prepended logical folder for every object                                                |
@@ -46,8 +46,9 @@ Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICom
 - ✅ **IAM Role Support** - Works with IAM roles for authentication
 - ✅ **Diagnostics** — bucket key listing via `IFileStorageDiagnosticsService` (prefix-aware, combines `KeyPrefix`, normalized + traversal-guarded by
   `Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`)
-- ✅ **Server-side copy & direct PUT** — `CopyFileAsync` (`CopyObject`), `BeginDirectUploadAsync` / `CompleteDirectUploadAsync` (presigned PUT + finalize). `RequiredPutHeaders` is
-  populated when SSE or a signed `Content-Type` applies, courtesy of `S3UploadServerSideEncryption.BuildRequiredPutHeaders`
+- ✅ **Server-side copy, move & direct PUT** — `CopyFileAsync` (`CopyObject`), `MoveFileAsync` (`CopyObject` then delete source, same file id), `BeginDirectUploadAsync` /
+  `CompleteDirectUploadAsync` (presigned PUT + finalize). `RequiredPutHeaders` is populated when SSE or a signed `Content-Type` applies, courtesy of
+  `S3UploadServerSideEncryption.BuildRequiredPutHeaders`. `RenameFileAsync` updates display metadata only.
 - ✅ **Presigned GET options** — optional `ContentDisposition` / `ContentType` via `PreSignedReadUrlOptions` (S3 response header overrides). When the caller omits `pathPrefix`, the
   metadata-stored prefix is used as fallback.
 
@@ -152,7 +153,7 @@ services
 
 | Extension                                                                                                              | Purpose                                                                                                                                                                                  |
 |------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)`           | Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey`, `Region`, `ServiceUrl` (forces path-style addressing when set). |
+| `services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)`           | Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey` when both are non-whitespace; otherwise uses the default credential chain. Also honours `Region`, `ServiceUrl` (forces path-style addressing when set). |
 | `services.AddKeyedS3MultipartUploadService(string serviceKey)`                                                         | Registers the keyed multipart service alone (e.g. when replacing the default registration created by `Build`).                                                                           |
 | `services.AddKeyedS3StagedFileUploadService(string serviceKey)`                                                        | Registers keyed `S3StagedFileUploadService` + `IStagedFileUploadService` (also invoked automatically by `Build`).                                                                        |
 | `services.AddKeyedAwsMultipartUploadService(string serviceKey)`                                                        | Alias for `AddKeyedS3MultipartUploadService`, named for callers thinking in terms of the AWS SDK.                                                                                        |

@@ -3,6 +3,9 @@ namespace Lyo.Job.Client;
 /// <summary>Typed HTTP client for the Lyo Job API.</summary>
 public interface IJobClient
 {
+    /// <summary>Job definition query endpoints.</summary>
+    JobDefinitionClient Definitions { get; }
+
     /// <summary>Run lifecycle, logs, and progress endpoints.</summary>
     JobRunClient Runs { get; }
 

@@ -196,6 +196,63 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     }
 
     /// <inheritdoc />
+    public override async Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        ValidatePathPrefix(request.PathPrefix);
+        var destPrefix = NormalizePathPrefix(request.PathPrefix);
+
+        var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId} pending direct upload.");
+
+        var previousPrefix = meta.PathPrefix;
+        if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
+            return meta;
+
+        var srcPath = FindFilePath(fileId, previousPrefix);
+        if (srcPath == null || !File.Exists(srcPath))
+            throw new FileNotFoundException($"Source file path not found for id {fileId}");
+
+        var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
+        var destPath = GetFilePath(fileId, suffix, destPrefix);
+        var moved = false;
+        try {
+            var destDir = Path.GetDirectoryName(destPath);
+            if (!string.IsNullOrEmpty(destDir))
+                Directory.CreateDirectory(destDir);
+
+            MoveFileReplace(srcPath, destPath);
+            moved = true;
+            var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
+            RaiseFileMoved(fileId, FileStoreSnapshot.From(movedMeta), previousPrefix);
+            return movedMeta;
+        }
+        catch (Exception ex) {
+            if (moved && File.Exists(destPath) && !File.Exists(srcPath)) {
+                try {
+                    var srcDir = Path.GetDirectoryName(srcPath);
+                    if (!string.IsNullOrEmpty(srcDir))
+                        Directory.CreateDirectory(srcDir);
+
+                    MoveFileReplace(destPath, srcPath);
+                }
+                catch (Exception rollbackEx) {
+                    Logger.LogWarning(rollbackEx, "Failed to roll back local move {Dest}->{Src} after metadata failure", destPath, srcPath);
+                }
+            }
+
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Move, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
     public override async Task<DekMigrationResult> MigrateDeksAsync(
         string sourceKeyId,
         string? sourceKeyVersion = null,
@@ -407,6 +464,17 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             disposableMetadataService.Dispose();
 
         base.Dispose();
+    }
+
+    /// <summary>
+    /// Moves a file, replacing an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).
+    /// </summary>
+    private static void MoveFileReplace(string sourcePath, string destinationPath)
+    {
+        if (File.Exists(destinationPath))
+            File.Delete(destinationPath);
+
+        File.Move(sourcePath, destinationPath);
     }
 
     private string GetFilePath(Guid fileId, string extension = "", string? pathPrefix = null)

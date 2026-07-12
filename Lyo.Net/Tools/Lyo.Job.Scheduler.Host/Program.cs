@@ -1,6 +1,6 @@
 using Lyo.Api.Client;
 using Lyo.Formatter;
-using Lyo.Job.Postgres;
+using Lyo.Job.Client;
 using Lyo.Job.Scheduler;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
@@ -20,10 +20,11 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddLyoMetrics();
         services.AddFormatterService();
         services.SetupRabbitMqServiceFromConfiguration(context.Configuration, []);
-        services.AddMqJobEventPublisherFromConfiguration(context.Configuration);
 
         services.Configure<ApiClientOptions>(context.Configuration.GetSection(ApiClientOptions.SectionName));
         services.AddLyoApiClient();
+        services.AddJobClient(sp => sp.GetRequiredService<IApiClient>());
+        services.AddMqJobEventPublisherFromConfiguration(context.Configuration);
 
         services.AddJobScheduler();
         // BindConfiguration cannot convert string → TimeZoneInfo; resolve IANA/Windows ids from config.

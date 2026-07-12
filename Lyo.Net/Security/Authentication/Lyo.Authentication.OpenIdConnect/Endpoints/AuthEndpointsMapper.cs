@@ -83,13 +83,14 @@ public static class AuthEndpointsMapper
             }
 
             var redirect = await coordinator.BuildLoginRedirectAsync(provider, safeReturn, mode ?? "browser", ctx.RequestAborted).ConfigureAwait(false);
+            var cookiePath = CookiePath(ctx, paths.StateCookiePath);
             ctx.Response.Cookies.Append(
                 StateCookieName, redirect.SealedState, new() {
                     HttpOnly = true,
-                    Secure = ctx.Request.IsHttps,
+                    Secure = IsSecureRequest(ctx),
                     SameSite = SameSiteMode.Lax,
                     IsEssential = true,
-                    Path = paths.StateCookiePath,
+                    Path = cookiePath,
                     MaxAge = TimeSpan.FromMinutes(15)
                 });
 
@@ -120,7 +121,7 @@ public static class AuthEndpointsMapper
         if (!ctx.Request.Cookies.TryGetValue(StateCookieName, out var sealedState) || sealedState.IsNullOrWhitespace())
             return Results.BadRequest(new { error = "missing_state_cookie" });
 
-        ctx.Response.Cookies.Delete(StateCookieName, new() { Path = paths.StateCookiePath, Secure = ctx.Request.IsHttps });
+        ctx.Response.Cookies.Delete(StateCookieName, new() { Path = CookiePath(ctx, paths.StateCookiePath), Secure = IsSecureRequest(ctx) });
         try {
             var result = await coordinator.HandleCallbackAsync(provider, code, sealedState, state ?? string.Empty, ctx.RequestAborted).ConfigureAwait(false);
             var issued = result.Issued;
@@ -249,6 +250,23 @@ public static class AuthEndpointsMapper
     }
 
     private static AuthCookiePathOptions ResolvePaths(HttpContext ctx) => ctx.GetEndpoint()?.Metadata.GetMetadata<AuthCookiePathOptions>() ?? DefaultPaths;
+
+    /// <summary>
+    /// Cookie <c>Path</c> must match the browser-visible URL prefix. Behind a path-prefix reverse proxy
+    /// (<c>/api</c>), include <see cref="HttpRequest.PathBase"/> or <c>X-Forwarded-Prefix</c> so the
+    /// cookie is sent on <c>/api/auth/callback/...</c>.
+    /// </summary>
+    private static string CookiePath(HttpContext ctx, string stateCookiePath)
+    {
+        var prefix = ctx.Request.PathBase.HasValue
+            ? ctx.Request.PathBase.Value!.TrimEnd('/')
+            : ctx.Request.Headers["X-Forwarded-Prefix"].ToString().Trim().TrimEnd('/');
+        return prefix.Length == 0 ? stateCookiePath : prefix + stateCookiePath;
+    }
+
+    private static bool IsSecureRequest(HttpContext ctx)
+        => ctx.Request.IsHttps
+           || string.Equals(ctx.Request.Headers["X-Forwarded-Proto"].ToString(), "https", StringComparison.OrdinalIgnoreCase);
 
     private static async Task<IResult> MeAsync(HttpContext ctx, IUserStore users, IExternalIdentityStore identities)
     {

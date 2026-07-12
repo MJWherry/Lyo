@@ -3,19 +3,23 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <RootNamespace>Lyo.Job.Client</RootNamespace>
-        <Description>HTTP client for the Lyo Job API (runs, worker instances, lifecycle).</Description>
-        <PackageTags>jobs client api</PackageTags>
+        <Description>HTTP client for the Lyo Job API and IMqService-backed job event publisher for scheduler/worker hosts.</Description>
+        <PackageTags>jobs client api message-queue</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[10,)"/>
     </ItemGroup>
 
     <ItemGroup>

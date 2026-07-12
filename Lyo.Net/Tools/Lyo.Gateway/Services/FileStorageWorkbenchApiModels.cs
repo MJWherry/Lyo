@@ -5,6 +5,10 @@ namespace Lyo.Gateway.Services;
 
 public sealed record FileStorageCopyWorkbenchRequest(Guid SourceFileId, CopyFileRequest? Request);
 
+public sealed record FileStorageMoveWorkbenchRequest(Guid FileId, MoveFileRequest Request);
+
+public sealed record FileStorageRenameWorkbenchRequest(Guid FileId, RenameFileRequest Request);
+
 public sealed record FileStorageSaveRequest(
     byte[] Data,
     string? OriginalFileName = null,

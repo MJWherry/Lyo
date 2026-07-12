@@ -9,6 +9,11 @@ Designed for multi-instance deployment: run creation uses the `(JobScheduleId, S
 ## Registration
 
 ```csharp
+// IMqService (RabbitMQ) + Job.Client publisher — not Lyo.Job.Postgres
+services.AddJobClient(sp => sp.GetRequiredService<IApiClient>());
+services.AddMqJobEventPublisherFromConfiguration(configuration);
+// or: services.AddMqJobEventPublisher();
+
 services.AddJobScheduler(new JobSchedulerOptions {
     ApiBaseUrl = "https://api.example.com",
     TimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"),
@@ -30,7 +35,7 @@ services.AddJobWorkflowEngine(new JobWorkflowEngineOptions {
 // services.AddJobWorkflowEngine();
 ```
 
-Requires `IApiClient`, `IFormatterService`, and `IJobEventPublisher` (typically `AddMqJobEventPublisher()`). `IMetrics` and `IMqService` are optional.
+Requires `IApiClient`, `IFormatterService`, and `IJobEventPublisher`. For scheduler/worker hosts register the non-EF publisher via `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + optional `IJobClient`). Do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` — that path pulls EF. `IMetrics` and `IMqService` are optional for the scheduler itself (MQ is required for the publisher).
 
 ## Configuration
 

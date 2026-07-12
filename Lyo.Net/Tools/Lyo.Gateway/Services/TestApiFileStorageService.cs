@@ -1,6 +1,7 @@
 using System.Globalization;
 using Lyo.Api.Client;
 using Lyo.Compression.Models;
+using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
@@ -29,6 +30,10 @@ public sealed class TestApiFileStorageService : IFileStorageService
     public event EventHandler<FileRetrievedResult>? FileRetrieved;
 
     public event EventHandler<FileDeletedResult>? FileDeleted;
+
+    public event EventHandler<FileMovedResult>? FileMoved;
+
+    public event EventHandler<FileRenamedResult>? FileRenamed;
 
     public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
 
@@ -193,6 +198,22 @@ public sealed class TestApiFileStorageService : IFileStorageService
 
     public async Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
         => await _apiClient.PostAsAsync<FileStorageCopyWorkbenchRequest, FileStoreResult>(BuildUri("files/copy"), new(sourceFileId, request), ct: ct).ConfigureAwait(false);
+
+    public async Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        var result = await _apiClient.PostAsAsync<FileStorageMoveWorkbenchRequest, FileStoreResult>(BuildUri("files/move"), new(fileId, request), ct: ct).ConfigureAwait(false);
+        FileMoved?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result), null));
+        return result;
+    }
+
+    public async Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        var result = await _apiClient.PostAsAsync<FileStorageRenameWorkbenchRequest, FileStoreResult>(BuildUri("files/rename"), new(fileId, request), ct: ct).ConfigureAwait(false);
+        FileRenamed?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result), null));
+        return result;
+    }
 
     private static void AppendPresignedReadQueryParams(List<string> parts, PreSignedReadUrlOptions? opts)
     {

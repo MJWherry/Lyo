@@ -12,8 +12,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Encapsulates the metadata side of plain-object direct uploads plus server-side copy bookkeeping so storage drivers delegate policy, auditing, and hash finalization
-/// uniformly.
+/// Encapsulates the metadata side of plain-object direct uploads plus server-side copy / move / rename bookkeeping so storage drivers delegate policy, auditing, and hash
+/// finalization uniformly.
 /// </summary>
 internal sealed class PlainDirectUploadCoordinator
 {
@@ -306,5 +306,56 @@ internal sealed class PlainDirectUploadCoordinator
             .ConfigureAwait(false);
 
         return copyMeta;
+    }
+
+    /// <summary>
+    /// Updates <see cref="FileStoreResult.PathPrefix" /> for an existing file id after backing bytes have been relocated, refreshes <see cref="FileStoreResult.Timestamp" />,
+    /// and emits a successful move audit.
+    /// </summary>
+    internal async Task<FileStoreResult> RecordMoveMetadataAsync(FileStoreResult sourceMeta, string? destPathPrefix, CancellationToken ct)
+    {
+        var normalizedDest = _metadataNormalization.NormalizePathPrefix(destPathPrefix);
+        var now = DateTime.UtcNow;
+        var moveMeta = sourceMeta with {
+            Timestamp = now,
+            PathPrefix = normalizedDest,
+            OriginalFileHash = sourceMeta.OriginalFileHash,
+            CompressedFileHash = sourceMeta.CompressedFileHash,
+            EncryptedFileHash = sourceMeta.EncryptedFileHash
+        };
+
+        await _metadataService.SaveMetadataAsync(sourceMeta.Id, moveMeta, ct).ConfigureAwait(false);
+        await _auditPublisher.PublishAuditAsync(
+                new(
+                    FileAuditEventType.Move, DateTime.UtcNow, sourceMeta.Id, moveMeta.TenantId, _operationContextAccessor.Current?.ActorId, sourceMeta.DataEncryptionKeyId,
+                    sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
+            .ConfigureAwait(false);
+
+        return moveMeta;
+    }
+
+    /// <summary>
+    /// Updates <see cref="FileStoreResult.OriginalFileName" /> for an existing file id (metadata only), refreshes <see cref="FileStoreResult.Timestamp" />, and emits a
+    /// successful rename audit.
+    /// </summary>
+    internal async Task<FileStoreResult> RecordRenameMetadataAsync(FileStoreResult sourceMeta, string originalFileName, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var renameMeta = sourceMeta with {
+            Timestamp = now,
+            OriginalFileName = originalFileName,
+            OriginalFileHash = sourceMeta.OriginalFileHash,
+            CompressedFileHash = sourceMeta.CompressedFileHash,
+            EncryptedFileHash = sourceMeta.EncryptedFileHash
+        };
+
+        await _metadataService.SaveMetadataAsync(sourceMeta.Id, renameMeta, ct).ConfigureAwait(false);
+        await _auditPublisher.PublishAuditAsync(
+                new(
+                    FileAuditEventType.Rename, DateTime.UtcNow, sourceMeta.Id, renameMeta.TenantId, _operationContextAccessor.Current?.ActorId,
+                    sourceMeta.DataEncryptionKeyId, sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
+            .ConfigureAwait(false);
+
+        return renameMeta;
     }
 }

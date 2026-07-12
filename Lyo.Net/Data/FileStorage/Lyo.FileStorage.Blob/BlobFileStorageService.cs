@@ -137,6 +137,69 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
     }
 
     /// <inheritdoc />
+    public override async Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        ValidatePathPrefix(request.PathPrefix);
+        var destPrefix = NormalizePathPrefix(request.PathPrefix);
+
+        var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId}; it is awaiting direct-upload finalize.");
+
+        var previousPrefix = meta.PathPrefix;
+        if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
+            return meta;
+
+        var srcBlobName = await FindBlobNameAsync(fileId, previousPrefix, ct).ConfigureAwait(false);
+        if (srcBlobName == null)
+            throw new FileNotFoundException($"Source blob missing for id {fileId}.");
+
+        var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
+        var destBlobName = GetBlobName(fileId, suffix, destPrefix);
+        var copyCompleted = false;
+        var metadataSaved = false;
+        try {
+            var src = _containerClient.GetBlobClient(srcBlobName);
+            var dst = _containerClient.GetBlobClient(destBlobName);
+            await dst.SyncCopyFromUriAsync(src.Uri, cancellationToken: ct).ConfigureAwait(false);
+            copyCompleted = true;
+
+            var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
+            metadataSaved = true;
+
+            try {
+                await _containerClient.GetBlobClient(srcBlobName).DeleteIfExistsAsync(cancellationToken: CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception delEx) {
+                Logger.LogWarning(delEx, "Failed to delete source blob {Src} after move to {Dest}; metadata already points at destination", srcBlobName, destBlobName);
+            }
+
+            RaiseFileMoved(fileId, FileStoreSnapshot.From(movedMeta), previousPrefix);
+            return movedMeta;
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Blob move failed {Source}->{Dest}", srcBlobName, destBlobName);
+            if (copyCompleted && !metadataSaved) {
+                try {
+                    await _containerClient.GetBlobClient(destBlobName).DeleteIfExistsAsync(cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception delEx) {
+                    Logger.LogWarning(delEx, "Failed to clean up orphan destination {Dest} after move metadata failure", destBlobName);
+                }
+            }
+
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Move, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
     public override async Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);

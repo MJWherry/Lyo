@@ -262,6 +262,22 @@ public static class SetupFileStorageWorkbenchEndpoints
                     return Results.Ok(result);
                 });
 
+            group.MapPost(
+                "files/move", async ([FromBody] MoveFileWorkbenchRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    var result = await fileStorage.MoveFileAsync(request.FileId, request.Request, ct);
+                    await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
+                    return Results.Ok(result);
+                });
+
+            group.MapPost(
+                "files/rename", async ([FromBody] RenameFileWorkbenchRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    var result = await fileStorage.RenameFileAsync(request.FileId, request.Request, ct);
+                    await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
+                    return Results.Ok(result);
+                });
+
             group.MapGet(
                 "diagnostics/keys", async (string? prefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
@@ -682,3 +698,7 @@ public sealed record SetCurrentVersionRequest(string KeyId, string Version);
 public sealed record KeySearchResult(string KeyId, string Version, bool IsCurrent, KeyMetadata? Metadata, int FileCount);
 
 public sealed record CopyFileWorkbenchRequest(Guid SourceFileId, CopyFileRequest? Request);
+
+public sealed record MoveFileWorkbenchRequest(Guid FileId, MoveFileRequest Request);
+
+public sealed record RenameFileWorkbenchRequest(Guid FileId, RenameFileRequest Request);

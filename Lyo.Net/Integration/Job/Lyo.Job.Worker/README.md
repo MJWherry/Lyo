@@ -7,6 +7,9 @@ Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a sing
 ## Registration
 
 ```csharp
+// IMqService (RabbitMQ) + Job.Client publisher — not Lyo.Job.Postgres
+services.AddMqJobEventPublisher(); // Lyo.Job.Client — IMqService + Job.Client, not Postgres/Scheduler
+
 services.AddJobWorker<MyImportWorker>(
     workerType: "csharp",
     apiBaseUrl: "https://api.example.com",
@@ -18,7 +21,7 @@ services.AddJobWorkerFromConfiguration<MyImportWorker>(
     configuration, workerType: "csharp", apiBaseUrl: "https://api.example.com");
 ```
 
-Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher` (typically `AddMqJobEventPublisher()`). Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`.
+Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client) — do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`.
 
 When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`.
 

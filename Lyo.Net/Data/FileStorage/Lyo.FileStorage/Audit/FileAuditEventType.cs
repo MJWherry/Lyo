@@ -21,5 +21,7 @@ public enum FileAuditEventType
     StagedUploadComplete = 16,
     StagedUploadFailed = 17,
     StagedUploadCommit = 18,
-    StagedUploadAbort = 19
+    StagedUploadAbort = 19,
+    Move = 20,
+    Rename = 21
 }
