@@ -16,10 +16,10 @@
              FilterPropertyDefinitions="@_propertyDefinitions"
              RowMenuControls="@GetRowMenuControls()">
     <BulkExportControls>
-        <LyoDataGridExportMenu>
-            <ExportCsvMenuItem/>
-            <ExportJsonMenuItem/>
-            <ExportXlsxMenuItem/>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>

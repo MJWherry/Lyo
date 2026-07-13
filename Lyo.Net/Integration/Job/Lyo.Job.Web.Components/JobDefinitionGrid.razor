@@ -13,10 +13,10 @@
                       BeforeQuery="@(q => q.AddIncludes("JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"))"
                       Features="@LyoDataGridFeatureFlags.All">
     <BulkExportControls>
-        <LyoDataGridExportMenu>
-            <ExportCsvMenuItem/>
-            <ExportJsonMenuItem/>
-            <ExportXlsxMenuItem/>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <LeftControls>

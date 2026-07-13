@@ -83,7 +83,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     public RenderFragment? BulkMenuItems { get; init; }
 
     [Parameter]
-    public RenderFragment? BulkExportControls { get; init; }
+    public RenderFragment<IDataGridExportHost>? BulkExportControls { get; init; }
 
     [Parameter]
     public string? PatchRoute { get; init; }
@@ -362,6 +362,14 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         }
 
         return Task.CompletedTask;
+    }
+
+    private async Task ClearSelectionAsync()
+    {
+        SelectedItems = [];
+        _savedSelectedKeys = [];
+        await SaveClientState();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SaveClientState()
@@ -751,13 +759,18 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     public async Task ExportViaApiAsync(ExportFormat format, List<ExportColumnMapping>? columnList, CancellationToken cancellationToken = default)
     {
-        var queryBuilder = GetQuery(0, MaxBulkSize);
+        // Amount must match the export set — MaxBulkSize with derived includes fails the API include page-size guardrail.
+        var exportAmount = EffectiveSelectedCount > 0 ? EffectiveSelectedCount : MaxBulkSize;
+        var queryBuilder = GetQuery(0, exportAmount);
         var query = queryBuilder.Build();
         if (IsSelectable && KeySelector != null) {
             if (_savedSelectedKeys is { Count: > 0 })
                 query.Keys = _savedSelectedKeys.ToList();
             else if (SelectedItems.Count > 0)
                 query.Keys = SelectedItems.Select(KeySelector).ToList();
+
+            if (query.Keys.Count > 0)
+                query.Amount = query.Keys.Count;
         }
 
         var exportRequest = new ExportRequest { Query = ToProjectionQueryReq(query), Format = format, ColumnList = columnList };
@@ -770,15 +783,33 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     }
 
     public bool CanExport()
-        => !_loading && ((IsSelectable && EffectiveSelectedCount > 0 && EffectiveSelectedCount <= MaxBulkSize) || ((!IsSelectable || EffectiveSelectedCount == 0) &&
-            (CurrentResults?.Total ?? 0) > 0 && (CurrentResults?.Total ?? 5001) <= MaxBulkSize));
+    {
+        if (_loading)
+            return false;
+
+        // Selection over the export cap is the only hard block — ExportViaApiAsync already pages at MaxBulkSize.
+        if (EffectiveSelectedCount > 0)
+            return EffectiveSelectedCount <= MaxBulkSize;
+
+        var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
+        return total > 0;
+    }
 
     private string GetBulkLabel()
     {
-        if (!CanExport())
-            return "(too many items)";
+        if (_loading)
+            return string.Empty;
 
-        return EffectiveSelectedCount > 0 ? $"({EffectiveSelectedCount:N0} items)" : $"({CurrentResults?.Total:N0} items)";
+        if (EffectiveSelectedCount > 0)
+            return EffectiveSelectedCount <= MaxBulkSize
+                ? $"({EffectiveSelectedCount:N0} items)"
+                : "(too many items)";
+
+        var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
+        if (total <= 0)
+            return "(no items)";
+
+        return total <= MaxBulkSize ? $"({total:N0} items)" : $"(first {MaxBulkSize:N0} of {total:N0})";
     }
 
     private static ProjectionQueryReq ToProjectionQueryReq(QueryConcreteReq q)

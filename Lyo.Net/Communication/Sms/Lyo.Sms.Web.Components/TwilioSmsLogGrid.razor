@@ -1,0 +1,69 @@
+@using Lyo.Api.Client
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Models
+
+<LyoDataGridProjected ApiClient="ApiClient"
+                      GridKey="TwilioSmsLogGrid"
+                      Route="@_logRoute"
+                      KeySelector="@GetKey"
+                      FilterPropertyDefinitions="@_propertyDefinitions">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="SID"/>
+        <LyoProjectedColumn Field="To" Title="To" QuickSearchPropertyName="To"/>
+        <LyoProjectedColumn Field="From" Title="From" QuickSearchPropertyName="From"/>
+        <LyoProjectedColumn Field="Body" Title="Body" QuickSearchPropertyName="Body"/>
+        <LyoProjectedColumn Field="Status" Title="Status" QuickSearchPropertyName="Status"/>
+        <LyoProjectedColumn Field="Direction" Title="Direction"/>
+        <LyoProjectedColumn Field="IsSuccess" Title="Success"/>
+        <LyoProjectedColumn Field="DateSent" Title="Sent"/>
+        <LyoProjectedColumn Field="DateCreated" Title="Created" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Logged"/>
+        <LyoProjectedColumn Field="ErrorMessage" Title="Error" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="ErrorCode" Title="Error Code" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="NumSegments" Title="Segments" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="Price" Title="Price" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="PriceUnit" Title="Price Unit" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="AccountSid" Title="Account SID" HiddenByDefault="true"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    /// <summary>Dynamic CRUD base route for the Twilio SMS DbContext (default: <c>Twilio</c>).</summary>
+    [Parameter]
+    public string BaseRoute { get; set; } = "Twilio";
+
+    private string _logRoute => $"{BaseRoute.TrimEnd('/')}/TwilioSmsLogEntity";
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
+    [
+        new("To"),
+        new("From"),
+        new("Status"),
+        new("Direction"),
+        new("IsSuccess", "Success"),
+        new("Body")
+    ];
+
+    private static object[] GetKey(object? item)
+    {
+        if (item == null)
+            return [];
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return id != null ? [id] : [];
+    }
+}

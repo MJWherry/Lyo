@@ -24,6 +24,8 @@ using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Discord.Postgres;
 using Lyo.Discord.Postgres.Database;
+using Lyo.Endato.Postgres;
+using Lyo.Endato.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
@@ -109,6 +111,7 @@ builder.Services.AddHttpContextAccessor();
 // Uncomment to run the built-in cron/interval scheduler in this process:
 // builder.Services.AddJobScheduler();
 builder.Services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+builder.Services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddTwilioSmsDbContextFactory(new PostgresTwilioSmsOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresDiscord(new PostgresDiscordOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresConfigStore(new PostgresConfigOptions { ConnectionString = connStr, EnableAutoMigrations = true });
@@ -116,7 +119,9 @@ builder.Services.AddPostgresComicStore(new PostgresComicOptions { ConnectionStri
 builder.Services.AddDiscordGuildSettingsInfrastructure();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddLyoCrudServices<PeopleDbContext>();
+builder.Services.AddLyoCrudServices<EndatoDbContext>();
 builder.Services.AddLyoApiExport<PeopleDbContext>();
+builder.Services.AddLyoApiExport<EndatoDbContext>();
 builder.Services.AddLyoApiExport<DiscordDbContext>();
 builder.Services.AddLyoApiExport<JobContext>();
 builder.Services.AddCsvExport();

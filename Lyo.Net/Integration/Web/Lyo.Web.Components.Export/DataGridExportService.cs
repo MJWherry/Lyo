@@ -1,3 +1,4 @@
+using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Enums;
 using Lyo.Web.Components.DataGrid;
@@ -6,7 +7,7 @@ using MudBlazor;
 
 namespace Lyo.Web.Components.Export;
 
-public sealed class DataGridExportService(IDialogService dialogService, ILogger<DataGridExportService> logger)
+public sealed class DataGridExportService(IDialogService dialogService, ISnackbar snackbar, ILogger<DataGridExportService> logger)
 {
     public async Task ExportAsync(IDataGridExportHost host, ExportFormat format, bool showColumnSelector, CancellationToken cancellationToken = default)
     {
@@ -20,7 +21,27 @@ public sealed class DataGridExportService(IDialogService dialogService, ILogger<
                 return;
         }
 
-        await host.ExportViaApiAsync(format, columnList, cancellationToken);
+        try {
+            await host.ExportViaApiAsync(format, columnList, cancellationToken);
+        }
+        catch (ApiException ex) {
+            var detail = FormatApiError(ex);
+            logger.LogWarning(ex, "Export failed: {Detail}", detail);
+            snackbar.Add(detail, Severity.Error);
+        }
+        catch (Exception ex) {
+            logger.LogError(ex, "Export failed");
+            snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private static string FormatApiError(ApiException ex)
+    {
+        var errors = ex.ProblemDetails?.Errors;
+        if (errors is { Count: > 0 })
+            return string.Join("; ", errors.Select(e => e.Description).Where(d => !string.IsNullOrWhiteSpace(d)));
+
+        return string.IsNullOrWhiteSpace(ex.Detail) ? ex.Message : ex.Detail;
     }
 
     private async Task<List<ExportColumnMapping>?> ShowColumnSelectorAsync(IDataGridExportHost host, CancellationToken cancellationToken)

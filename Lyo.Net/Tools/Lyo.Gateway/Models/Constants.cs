@@ -10,6 +10,24 @@ public static class Constants
         public const string Email = "PersonEmail";
     }
 
+    public static class EndatoPs
+    {
+        public const string Route = "EndatoPs";
+        public const string Person = "EndatoPs/EndatoPsPersonEntity";
+        public const string Address = "EndatoPs/EndatoPsAddressEntity";
+        public const string PhoneNumber = "EndatoPs/EndatoPsPhoneNumberEntity";
+        public const string Email = "EndatoPs/EndatoPsEmailAddressEntity";
+    }
+
+    public static class EndatoCe
+    {
+        public const string Route = "EndatoCe";
+        public const string Person = "EndatoCe/EndatoCePersonEntity";
+        public const string Address = "EndatoCe/EndatoCeAddressEntity";
+        public const string PhoneNumber = "EndatoCe/EndatoCePhoneNumberEntity";
+        public const string Email = "EndatoCe/EndatoCeEmailAddressEntity";
+    }
+
     public static class FileStorageWorkbench
     {
         /// <summary>REST prefix for file workbench endpoints on the Test API (save, access links, metadata search, etc.).</summary>

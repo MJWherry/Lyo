@@ -64,9 +64,18 @@ public class ExportService<TContext>(
         using var timer = _metrics.StartTimer("api.export.duration", ExportTags);
         try {
             var requestOptions = request.Query.Options;
+            var amount = Math.Min(request.Query.Amount ?? queryOptions.MaxExportSize, queryOptions.MaxExportSize);
+            // Keyed export should page exactly to the key set — oversized Amount trips include page-size validation.
+            if (request.Query.Keys.Count > 0)
+                amount = Math.Min(Math.Max(request.Query.Keys.Count, queryOptions.MinPagingAmount), queryOptions.MaxExportSize);
+            // Projected selects with navigations derive includes; keep under MaxIncludePageSize when not key-scoped.
+            else if (queryOptions.MaxIncludePageSize > 0
+                     && (request.Query.Include.Count > 0 || request.Query.Select.Any(static s => s.Contains('.', StringComparison.Ordinal))))
+                amount = Math.Min(amount, queryOptions.MaxIncludePageSize);
+
             var query = new ProjectionQueryReq {
                 Start = request.Query.Start ?? 0,
-                Amount = Math.Min(request.Query.Amount ?? queryOptions.MaxExportSize, queryOptions.MaxExportSize),
+                Amount = amount,
                 Keys = request.Query.Keys,
                 WhereClause = request.Query.WhereClause,
                 Include = request.Query.Include,

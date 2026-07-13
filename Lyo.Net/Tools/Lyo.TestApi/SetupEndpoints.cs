@@ -4,6 +4,7 @@ using Lyo.Api.Export;
 using Lyo.Api.Services.Crud;
 using Lyo.Common.Identifiers;
 using Lyo.Discord.Postgres;
+using Lyo.Endato.Postgres.Database;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Job.Postgres;
@@ -25,8 +26,8 @@ public static class SetupEndpoints
             app = app.BuildJobGroup()
                 //.BuildClientGroup()
                 //.BuildDocketGroup()
-                //.BuildEndatoCeGroup()
-                //.BuildEndatoPsGroup()
+                .BuildEndatoCeGroup()
+                .BuildEndatoPsGroup()
                 .BuildPersonGroup()
                 .BuildDiscordGroup()
                 //.BuildRecipientGroup()
@@ -64,6 +65,17 @@ public static class SetupEndpoints
                 .WithProjectionComputedFields()
                 .Build();
 
+            var contactReadFeatures = ApiFeatureSet.ReadOnly + ExportApiFeature.Instance;
+            app.CreateReadOnlyBuilder<PeopleDbContext, AddressEntity, AddressEntity>(Constants.Person.Address, "Person")
+                .WithCrud(contactReadFeatures, new())
+                .Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, PhoneNumberEntity, PhoneNumberEntity>(Constants.Person.PhoneNumber, "Person")
+                .WithCrud(contactReadFeatures, new())
+                .Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, EmailAddressEntity, EmailAddressEntity>(Constants.Person.Email, "Person")
+                .WithCrud(contactReadFeatures, new())
+                .Build();
+
             // Typed Person CRUD owns /Person/*; root From/Joins Query is Option A at POST /Query.
             app.MapRootQueryEndpoints<PeopleDbContext>();
 
@@ -90,6 +102,30 @@ public static class SetupEndpoints
                         return Results.Ok(results);
                     })
                 .WithTags("Info");
+
+            return app;
+        }
+
+        private WebApplication BuildEndatoPsGroup()
+        {
+            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c
+                .WithDefaults(d => {
+                    d.BaseRoute = Constants.EndatoPs.Route;
+                    d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
+                })
+                .IncludeOnly<EndatoPsPersonEntity, EndatoPsAddressEntity, EndatoPsPhoneNumberEntity, EndatoPsEmailAddressEntity>());
+
+            return app;
+        }
+
+        private WebApplication BuildEndatoCeGroup()
+        {
+            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c
+                .WithDefaults(d => {
+                    d.BaseRoute = Constants.EndatoCe.Route;
+                    d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
+                })
+                .IncludeOnly<EndatoCePersonEntity, EndatoCeAddressEntity, EndatoCePhoneNumberEntity, EndatoCeEmailAddressEntity>());
 
             return app;
         }

@@ -2,6 +2,7 @@
 @using Lyo.Web.Components.DataGrid
 @namespace Lyo.Web.Components.Export
 
+@* Host must be a Parameter — MudMenu popovers do not reliably receive cascading values *@
 <MudMenuItem Icon="@Icons.Material.Filled.DataObject"
              Disabled="@(ExportHost is null || !ExportHost.CanExport)"
              OnClick="@ExportJsonAsync">
@@ -13,8 +14,14 @@
     [Inject]
     private DataGridExportService ExportService { get; set; } = null!;
 
+    /// <summary>Preferred. Cascading values are unreliable inside MudMenu popovers.</summary>
+    [Parameter]
+    public IDataGridExportHost? Host { get; set; }
+
     [CascadingParameter(Name = "LyoDataGridExportHost")]
-    private IDataGridExportHost? ExportHost { get; set; }
+    private IDataGridExportHost? CascadedHost { get; set; }
+
+    private IDataGridExportHost? ExportHost => Host ?? CascadedHost;
 
     private async Task ExportJsonAsync()
     {

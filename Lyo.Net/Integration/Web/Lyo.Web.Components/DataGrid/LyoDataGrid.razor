@@ -4,7 +4,7 @@
 @implements IDisposable
 
 @* display:contents keeps toolbar + grid as siblings in the parent layout (avoids breaking flex/dense table CSS) *@
-<CascadingValue Name="LyoDataGridExportHost" Value="this" IsFixed="true">
+<CascadingValue Name="LyoDataGridExportHost" Value="@((IDataGridExportHost)this)" IsFixed="true">
     <LyoElementRoot ElementId="@ElementId" DefaultId="@GridRootElementId.DataGrid(GridKey)" style="display: contents;">
         @* Toolbar *@
         <MudStack Spacing="2" Style="width: 100%; padding: 8px 16px;">
@@ -23,24 +23,35 @@
                             </MudButton>
                         </ActivatorContent>
                         <ChildContent>
-                            <MudMenuItem>
-                                @if (BulkExportControls is not null) {
-                                    @BulkExportControls
-                                }
-                                @if (KeySelector is not null) {
-                                    @if (BulkMenuItems is not null) {
-                                        @BulkMenuItems
-                                    }
+                            @if (IsSelectable && EffectiveSelectedCount > 0) {
+                                <MudMenuItem Icon="@Icons.Material.Filled.Deselect"
+                                             Disabled="@_loading"
+                                             OnClick="@ClearSelectionAsync">
+                                    Deselect (@(EffectiveSelectedCount.ToString("N0")))
+                                </MudMenuItem>
+                            }
 
-                                    @if (HasFeature(LyoDataGridFeatureFlags.BulkPatch) && !string.IsNullOrEmpty(PatchRoute)) {
-                                        <MudMenuItem OnClick="@(_ => BulkPatch())" Label="Patch"/>
-                                    }
+                            @if (BulkExportControls is not null) {
+                                <MudMenuItem>
+                                    <div @key="CanExport()">
+                                        @BulkExportControls((IDataGridExportHost)this)
+                                    </div>
+                                </MudMenuItem>
+                            }
 
-                                    @if (HasFeature(LyoDataGridFeatureFlags.BulkDelete) && !string.IsNullOrEmpty(Route)) {
-                                        <MudMenuItem OnClick="@(_ => BulkDelete())" Label="Delete"/>
-                                    }
+                            @if (KeySelector is not null) {
+                                @if (BulkMenuItems is not null) {
+                                    @BulkMenuItems
                                 }
-                            </MudMenuItem>
+
+                                @if (HasFeature(LyoDataGridFeatureFlags.BulkPatch) && !string.IsNullOrEmpty(PatchRoute)) {
+                                    <MudMenuItem OnClick="@(_ => BulkPatch())" Label="Patch"/>
+                                }
+
+                                @if (HasFeature(LyoDataGridFeatureFlags.BulkDelete) && !string.IsNullOrEmpty(Route)) {
+                                    <MudMenuItem OnClick="@(_ => BulkDelete())" Label="Delete"/>
+                                }
+                            }
                         </ChildContent>
                     </MudMenu>
                 }

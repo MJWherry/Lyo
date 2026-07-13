@@ -207,6 +207,7 @@ var logger = sp.GetRequiredService<ILogger<Program>>();
 var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
 
 var twilio = sp.GetRequiredService<ISmsService>() as TwilioSmsService;
+
 var results = await twilio.GetMessagesAsync(TwilioMessageQueryBuilder.
     New()
     .Inbound()

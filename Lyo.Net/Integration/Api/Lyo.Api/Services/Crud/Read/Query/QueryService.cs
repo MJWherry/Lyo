@@ -493,9 +493,13 @@ public class QueryService<TContext>(
 
         OperationHelpers.ThrowIfNull(projectedFieldSpecs, "Projected field specs must be resolved when Select is non-empty.");
         var effectiveIncludes = BuildQueryProjectEffectiveIncludes<TDbModel>(projectedFieldSpecs, queryRequest.WhereClause);
-        var includePageGuardrailErrors = ValidateIncludePageSizeGuardrail(queryRequest.Amount, effectiveIncludes.Count);
-        if (includePageGuardrailErrors.Count > 0)
-            aggregatedErrors.AddRange(includePageGuardrailErrors);
+        var keysProvided = queryRequest.Keys.Count > 0;
+        // Key-scoped fetches load at most Keys.Count roots — include page-size cap is for open-ended paging.
+        if (!keysProvided) {
+            var includePageGuardrailErrors = ValidateIncludePageSizeGuardrail(queryRequest.Amount, effectiveIncludes.Count);
+            if (includePageGuardrailErrors.Count > 0)
+                aggregatedErrors.AddRange(includePageGuardrailErrors);
+        }
 
         // One DbContext for include validation + SQL path when derived includes are non-empty (avoids doubling context startup cost).
         TContext? sharedIncludeValidationAndSqlContext = null;
@@ -514,7 +518,6 @@ public class QueryService<TContext>(
 
             var cacheKeyProjection = CloneProjectionQueryReq(queryRequest);
             cacheKeyProjection.Include = effectiveIncludes;
-            var keysProvided = queryRequest.Keys.Count > 0;
             var hasSubQuery = WhereClauseUtils.HasAnySubClause(queryRequest.WhereClause);
             var includeFilterMode = queryRequest.Options.IncludeFilterMode;
             var useMatchedOnly = includeFilterMode == QueryIncludeFilterMode.MatchedOnly;

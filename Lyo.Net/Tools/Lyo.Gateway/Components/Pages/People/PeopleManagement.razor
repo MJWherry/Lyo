@@ -3,11 +3,53 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
     <MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-4" KeepPanelsAlive="true">
-        <MudTabPanel Text="Internal People">
-            <PersonGrid/>
+        <MudTabPanel Text="People">
+            <MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2" KeepPanelsAlive="true">
+                <MudTabPanel Text="People">
+                    <PersonGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Addresses">
+                    <PersonAddressGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Phone Numbers">
+                    <PersonPhoneNumberGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Emails">
+                    <PersonEmailAddressGrid/>
+                </MudTabPanel>
+            </MudTabs>
         </MudTabPanel>
-        <MudTabPanel Text="Internal People2">
-            <PersonGrid2/>
+        <MudTabPanel Text="Endato PS">
+            <MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2" KeepPanelsAlive="true">
+                <MudTabPanel Text="People">
+                    <EndatoPsPersonGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Addresses">
+                    <EndatoPsAddressGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Phone Numbers">
+                    <EndatoPsPhoneNumberGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Emails">
+                    <EndatoPsEmailAddressGrid/>
+                </MudTabPanel>
+            </MudTabs>
+        </MudTabPanel>
+        <MudTabPanel Text="Endato CE">
+            <MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2" KeepPanelsAlive="true">
+                <MudTabPanel Text="People">
+                    <EndatoCePersonGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Addresses">
+                    <EndatoCeAddressGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Phone Numbers">
+                    <EndatoCePhoneNumberGrid/>
+                </MudTabPanel>
+                <MudTabPanel Text="Emails">
+                    <EndatoCeEmailAddressGrid/>
+                </MudTabPanel>
+            </MudTabs>
         </MudTabPanel>
     </MudTabs>
 </MudContainer>
