@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0"/>
-        <PackageReference Include="Testcontainers.RabbitMq" Version="4.10.0"/>
-        <PackageReference Include="xunit.v3.extensibility.core" Version="3.2.2"/>
+        <PackageReference Include="Testcontainers.PostgreSql"/>
+        <PackageReference Include="Testcontainers.RabbitMq"/>
+        <PackageReference Include="xunit.v3.extensibility.core"/>
     </ItemGroup>
 
 </Project>

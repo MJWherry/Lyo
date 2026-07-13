@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="EasyCompressor.LZMA" Version="[2.1,)"/>
+        <PackageReference Include="EasyCompressor.LZMA"/>
     </ItemGroup>
 
     <ItemGroup>

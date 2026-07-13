@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="EasyCompressor.ZstdSharp" Version="[2.1,)"/>
+        <PackageReference Include="EasyCompressor.ZstdSharp"/>
     </ItemGroup>
 
     <ItemGroup>

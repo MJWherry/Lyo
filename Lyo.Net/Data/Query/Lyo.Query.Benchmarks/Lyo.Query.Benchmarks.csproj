@@ -19,9 +19,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.15.8"/>
-        <PackageReference Include="Mapster" Version="[10,)"/>
-        <PackageReference Include="Mapster.DependencyInjection" Version="1.*"/>
+        <PackageReference Include="BenchmarkDotNet"/>
+        <PackageReference Include="Mapster"/>
+        <PackageReference Include="Mapster.DependencyInjection"/>
     </ItemGroup>
 
 </Project>

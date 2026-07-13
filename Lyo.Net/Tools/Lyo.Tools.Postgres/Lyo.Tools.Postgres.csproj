@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bogus" Version="[35,)"/>
-        <PackageReference Include="Spectre.Console" Version="0.55.2"/>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Spectre.Console"/>
     </ItemGroup>
 
     <ItemGroup>

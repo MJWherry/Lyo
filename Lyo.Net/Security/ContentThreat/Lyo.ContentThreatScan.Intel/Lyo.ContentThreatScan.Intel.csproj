@@ -9,13 +9,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
-        <PackageReference Include="System.Text.Json" Version="10.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1"/>
+        <PackageReference Include="System.Text.Json"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces"/>
     </ItemGroup>
 
     <ItemGroup>

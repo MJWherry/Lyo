@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Joveler.Compression.XZ" Version="5.0.2"/>
+        <PackageReference Include="Joveler.Compression.XZ"/>
     </ItemGroup>
 
     <ItemGroup>

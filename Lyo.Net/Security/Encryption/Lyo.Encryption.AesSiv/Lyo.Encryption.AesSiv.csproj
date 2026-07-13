@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dorssel.Security.Cryptography.AesExtra" Version="2.0.0"/>
+        <PackageReference Include="Dorssel.Security.Cryptography.AesExtra"/>
     </ItemGroup>
 
     <ItemGroup>

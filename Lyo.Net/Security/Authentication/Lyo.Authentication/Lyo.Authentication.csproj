@@ -8,15 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
+        <PackageReference Include="BouncyCastle.Cryptography"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="System.Text.Json" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0"/>
+        <PackageReference Include="System.Text.Json"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces"/>
     </ItemGroup>
 
     <ItemGroup>

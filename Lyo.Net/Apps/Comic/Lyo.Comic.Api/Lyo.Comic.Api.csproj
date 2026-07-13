@@ -8,9 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Lyo.Encryption" Version="1.1.28"/>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="[10,)"/>
-        <PackageReference Include="Scalar.AspNetCore" Version="2.13.1"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Scalar.AspNetCore"/>
     </ItemGroup>
 
     <ItemGroup>

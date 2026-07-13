@@ -18,7 +18,7 @@
 
     <!-- Only include System.Speech package on Windows -->
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-        <PackageReference Include="System.Speech" Version="10.0.2"/>
+        <PackageReference Include="System.Speech"/>
     </ItemGroup>
 
     <ItemGroup>

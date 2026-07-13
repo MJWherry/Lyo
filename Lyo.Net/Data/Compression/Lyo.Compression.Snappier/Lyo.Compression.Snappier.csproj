@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="EasyCompressor.Snappier" Version="[2.1,)"/>
+        <PackageReference Include="EasyCompressor.Snappier"/>
     </ItemGroup>
 
     <ItemGroup>

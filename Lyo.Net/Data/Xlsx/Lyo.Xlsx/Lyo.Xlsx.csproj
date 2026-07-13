@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClosedXML" Version="[0.100,)"/>
-        <PackageReference Include="DocumentFormat.OpenXml" Version="[2.16,)"/>
-        <PackageReference Include="ExcelDataReader" Version="[3.8,)"/>
-        <PackageReference Include="ExcelDataReader.DataSet" Version="[3.8,)"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="ClosedXML"/>
+        <PackageReference Include="DocumentFormat.OpenXml"/>
+        <PackageReference Include="ExcelDataReader"/>
+        <PackageReference Include="ExcelDataReader.DataSet"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     </ItemGroup>
 
     <ItemGroup>

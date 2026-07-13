@@ -19,6 +19,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="FSharp.Core"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Lyo.Scientific\Lyo.Scientific.csproj"/>
         <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
     </ItemGroup>

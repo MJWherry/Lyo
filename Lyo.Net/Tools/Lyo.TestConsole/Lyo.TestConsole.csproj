@@ -6,9 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bogus" Version="[35,)"/>
-        <PackageReference Include="Mapster" Version="[10,)"/>
-        <PackageReference Include="Mapster.DependencyInjection" Version="[10,)"/>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Mapster"/>
+        <PackageReference Include="Mapster.DependencyInjection"/>
     </ItemGroup>
 
     <ItemGroup>

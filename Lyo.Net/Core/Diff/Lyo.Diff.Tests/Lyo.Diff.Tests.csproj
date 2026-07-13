@@ -13,8 +13,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Diff\Lyo.Diff.csproj"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10,)"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[18,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     </ItemGroup>
 
 </Project>

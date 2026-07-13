@@ -20,12 +20,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="[10,)"/>
-        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.*"/>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="[10,)"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="[10,)"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="[10,)"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authorization"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
     </ItemGroup>
 
 
