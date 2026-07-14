@@ -52,7 +52,7 @@ Also emits inherited `queue.worker.*` metrics from the message-queue worker base
 | Feature | Implementation |
 |---------|----------------|
 | **Priority queues** | Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`. |
-| **Worker registry** | `POST Job/WorkerInstance` on start; periodic PATCH with `InFlightCount`; `Stopped` on shutdown. |
+| **Worker registry** | `POST Job/WorkerInstance` on start (soft-fail if the Job API is down); periodic PATCH with `InFlightCount`; re-register on missing id / heartbeat `404`; `Stopped` on shutdown. |
 | **Progress** | Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`. |
 | **Batch jobs** | `ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`. |
 | **Encryption** | Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered. |
@@ -84,7 +84,7 @@ sequenceDiagram
 4. **`ExecuteAsync(ctx)`** — subclass work; use `ctx.ReportProgressAsync`, `ctx.CreateChildRunsAsync`, `ctx.CancellationToken`.
 5. **Finish** — `POST Job/Run/{id}/Finished` with `JobWorkerResultBuilder` results.
 
-`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`.
+`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed `POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every `HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration.
 
 ## Example worker
 

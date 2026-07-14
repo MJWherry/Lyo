@@ -249,8 +249,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     {
         using var timer = new PeriodicTimer(HeartbeatInterval);
         while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false)) {
-            if (!_workerInstanceId.HasValue || _workerInstanceId.Value == Guid.Empty)
+            if (!_workerInstanceId.HasValue || _workerInstanceId.Value == Guid.Empty) {
+                await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
                 continue;
+            }
 
             try {
                 await _jobClient.WorkerInstances.HeartbeatAsync(_workerInstanceId.Value, InFlightCount, ct).ConfigureAwait(false);
