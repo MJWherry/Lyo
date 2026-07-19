@@ -1,15 +1,14 @@
 # Lyo.Job.Postgres
 
-PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, Mapster, optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can drop in a complete job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.
+PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can drop in a complete job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.
 
 ## Drop-and-play registration
 
-`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, and a default no-op `IJobEventPublisher` (`NullJobEventPublisher`). Replace the publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available (API hosts with a job database only). **Scheduler and worker hosts must not use this package's publisher** — use `Lyo.Job.Client.AddMqJobEventPublisher*` (`IMqService` + Job.Client) instead.
+`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, `JobLyoMapper` as `ILyoMapper`, and a default no-op `IJobEventPublisher` (`NullJobEventPublisher`). Hosts that also use Mapster for non-job types should replace `ILyoMapper` with `CompositeLyoMapper(job, mapsterFallback)`. Replace the publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available (API hosts with a job database only). **Scheduler and worker hosts must not use this package's publisher** — use `Lyo.Job.Client.AddMqJobEventPublisher*` (`IMqService` + Job.Client) instead.
 
 ```csharp
 services.AddLyoQueryServices();
 services.AddFusionCache(...);            // or AddLocalCache(...)
-services.AddMapster(cfg => cfg.Apply(Extensions.ConfigureJobMappings));
 
 services.AddPostgresJobManagement(o => {
     o.ConnectionString = connectionString;

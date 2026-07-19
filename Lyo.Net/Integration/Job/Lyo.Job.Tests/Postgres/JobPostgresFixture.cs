@@ -8,9 +8,8 @@ using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
+using Lyo.Job.Postgres.Mapping;
 using Lyo.Testing.Containers;
-using Mapster;
-using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,9 +31,6 @@ public sealed class JobPostgresFixture : PostgresContainerFixtureBase
     protected override async ValueTask OnContainerStartedAsync(string connectionString, CancellationToken cancellationToken)
     {
         FakePublisher = new();
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
         var services = new ServiceCollection();
         services.AddLogging(b => {
             b.AddConsole();
@@ -44,9 +40,6 @@ public sealed class JobPostgresFixture : PostgresContainerFixtureBase
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         services.AddSingleton<IJobEventPublisher>(_ => FakePublisher);
         services.AddScoped<JobService>();
         ServiceProvider = services.BuildServiceProvider();
@@ -63,6 +56,8 @@ public sealed class JobPostgresFixture : PostgresContainerFixtureBase
 
         using (var scope = ServiceProvider.CreateScope())
             JobService = scope.ServiceProvider.GetRequiredService<JobService>();
+
+        Assert.IsType<JobLyoMapper>(ServiceProvider.GetRequiredService<ILyoMapper>());
     }
 
     private async Task CreateJobDefinitionAsync(CancellationToken cancellationToken)

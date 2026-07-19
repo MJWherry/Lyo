@@ -9,8 +9,8 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 public partial class QueryNodeEditorItem
 {
     private bool? _boolValue;
-    private string? _csvValue;
     private DateTime? _dateValue;
+    private List<string> _multiValues = [];
     private decimal? _numberValue;
 
     private FilterPropertyDefinition? _selectedProperty;
@@ -47,8 +47,8 @@ public partial class QueryNodeEditorItem
 
         _selectedProperty = PropertyDefinitions.FirstOrDefault(property => property.PropertyName == conditionNode.Field);
         if (conditionNode.Value != null) {
-            if (conditionNode.Comparison.IsMultiValueComparisonOperator() && conditionNode.Value is IEnumerable<string> multiValues)
-                _csvValue = string.Join(", ", multiValues);
+            if (conditionNode.Comparison.IsMultiValueComparisonOperator())
+                _multiValues = Extensions.ToMultiValueStrings(conditionNode.Value);
             else if (conditionNode.Value is bool boolValue)
                 _boolValue = boolValue;
             else if (conditionNode.Value is decimal || conditionNode.Value is int || conditionNode.Value is long)
@@ -60,7 +60,7 @@ public partial class QueryNodeEditorItem
         }
         else {
             _stringValue = null;
-            _csvValue = null;
+            _multiValues = [];
             _boolValue = null;
             _numberValue = null;
             _dateValue = null;
@@ -173,13 +173,13 @@ public partial class QueryNodeEditorItem
         OnNodeChanged.InvokeAsync(Node);
     }
 
-    private void OnCsvValueChanged(string? value)
+    private void OnMultiValuesChanged(IEnumerable<string> values)
     {
         if (Node is not ConditionClause conditionNode)
             return;
 
-        _csvValue = value;
-        conditionNode.Value = string.IsNullOrWhiteSpace(value) ? new() : value.Split(',').Select(item => item.Trim()).Where(item => !string.IsNullOrEmpty(item)).ToList();
+        _multiValues = values.Where(static v => !string.IsNullOrWhiteSpace(v)).Select(static v => v.Trim()).ToList();
+        conditionNode.Value = _multiValues.Count > 0 ? _multiValues : null;
         OnNodeChanged.InvokeAsync(Node);
     }
 

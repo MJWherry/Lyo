@@ -56,7 +56,7 @@ public sealed class QueryOptions
     public int IncludePageSizeCapMinIncludeCount { get; init; } = 1;
 
     /// <summary>Maximum key-set count allowed in query request bodies.</summary>
-    public int MaxKeySetCount { get; init; } = 256;
+    public int MaxKeySetCount { get; init; } = 300;
 
     /// <summary>Maximum select-field count allowed in QueryProject requests.</summary>
     public int MaxSelectFieldCount { get; init; } = 256;

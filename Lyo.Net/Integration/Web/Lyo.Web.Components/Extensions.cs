@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Text.Json;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
@@ -65,4 +67,56 @@ internal static class Extensions
         };
 
     public static bool IsMultiValueComparisonOperator(this ComparisonOperatorEnum comparison) => comparison is ComparisonOperatorEnum.In or ComparisonOperatorEnum.NotIn;
+
+    /// <summary>
+    /// Normalizes a condition <c>In</c>/<c>NotIn</c> value for chip/CSV editors.
+    /// Handles JSON-deserialized <see cref="JsonElement"/> arrays and non-string enumerables, not only <see cref="IEnumerable{String}"/>.
+    /// </summary>
+    public static List<string> ToMultiValueStrings(object? value)
+    {
+        if (value is null)
+            return [];
+
+        if (value is string s)
+            return SplitCsv(s);
+
+        if (value is JsonElement je)
+            return je.ValueKind switch {
+                JsonValueKind.Array => je.EnumerateArray().Select(FormatJsonElementItem).Where(static x => x.Length > 0).ToList(),
+                JsonValueKind.String => SplitCsv(je.GetString()),
+                JsonValueKind.Null or JsonValueKind.Undefined => [],
+                var _ => [je.ToString()]
+            };
+
+        if (value is IEnumerable enumerable and not string and not byte[]) {
+            var list = new List<string>();
+            foreach (var item in enumerable) {
+                var text = item switch {
+                    null => null,
+                    string str => str,
+                    JsonElement el => FormatJsonElementItem(el),
+                    var o => o.ToString()
+                };
+                if (!string.IsNullOrWhiteSpace(text))
+                    list.Add(text.Trim());
+            }
+
+            return list;
+        }
+
+        var fallback = value.ToString();
+        return string.IsNullOrWhiteSpace(fallback) ? [] : [fallback.Trim()];
+    }
+
+    private static List<string> SplitCsv(string? value)
+        => string.IsNullOrWhiteSpace(value)
+            ? []
+            : value.Split(',').Select(static part => part.Trim()).Where(static part => part.Length > 0).ToList();
+
+    private static string FormatJsonElementItem(JsonElement el)
+        => el.ValueKind switch {
+            JsonValueKind.String => el.GetString() ?? "",
+            JsonValueKind.Null or JsonValueKind.Undefined => "",
+            var _ => el.ToString()
+        };
 }

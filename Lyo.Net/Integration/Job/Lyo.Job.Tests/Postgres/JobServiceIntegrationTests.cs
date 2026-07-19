@@ -1,5 +1,4 @@
 using Lyo.Api;
-using Lyo.Api.Mapping;
 using Lyo.Cache;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -7,8 +6,6 @@ using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Mapster;
-using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Constants = Lyo.Job.Models.Constants;
@@ -72,12 +69,6 @@ public class JobServiceIntegrationTests
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = _fixture.ConnectionString });
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         services.AddSingleton<IJobEventPublisher>(_ => disconnectedPublisher);
         services.AddScoped<JobService>();
         var sp = services.BuildServiceProvider();

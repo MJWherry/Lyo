@@ -11,8 +11,11 @@ public sealed class ApiException : Exception
     /// <summary>Gets the problem details when the response body was successfully parsed; otherwise null.</summary>
     public LyoProblemDetails? ProblemDetails { get; }
 
-    /// <summary>Gets the detail message from ProblemDetails, or the exception message if ProblemDetails is null.</summary>
-    public string Detail => ProblemDetails?.Detail ?? Message;
+    /// <summary>
+    /// Gets the full problem message (root detail plus structured <see cref="LyoProblemDetails.Errors"/> when present),
+    /// or the exception message if ProblemDetails is null.
+    /// </summary>
+    public string Detail => ProblemDetails?.GetFullMessage() ?? Message;
 
     /// <summary>Initializes a new instance of the <see cref="ApiException" /> class.</summary>
     public ApiException(int statusCode, string message, LyoProblemDetails? problemDetails = null, Exception? innerException = null)

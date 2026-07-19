@@ -38,6 +38,8 @@ public static class Constants
             public const string Triggers = $"{Route}/Triggers";
             public const string TriggerParameters = $"{Route}/TriggerParameters";
             public const string Runs = $"{Route}/Run";
+            /// <summary>POST endpoint that creates a run via <c>JobService.CreateJobRun</c> (not the generic CRUD create).</summary>
+            public const string RunsCreate = $"{Runs}/Create";
             public const string RunsQuery = $"{Runs}/QueryConcrete";
             public const string RunLogs = $"{Runs}/Log";
             public const string RunParameters = $"{Runs}/Parameter";

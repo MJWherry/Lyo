@@ -34,7 +34,7 @@ else {
                         <LyoFormInput TModel="PersonRes"
                                       TValue="string?"
                                       Model="CurrentPerson"
-                                      PropertyExpression="@(c => c.Source)"
+                                      PropertyExpression="@(c => c.SourceEntityType)"
                                       Label="Source"
                                       AllowEditing="true"/>
                     </MudItem>
@@ -42,7 +42,7 @@ else {
                         <LyoFormInput TModel="PersonRes"
                                       TValue="string?"
                                       Model="CurrentPerson"
-                                      PropertyExpression="@(c => c.Prefix)"
+                                      PropertyExpression="@(c => c.NamePrefix)"
                                       Label="Prefix"
                                       AllowEditing="true"/>
                     </MudItem>
@@ -74,7 +74,7 @@ else {
                         <LyoFormInput TModel="PersonRes"
                                       TValue="string?"
                                       Model="CurrentPerson"
-                                      PropertyExpression="@(c => c.Suffix)"
+                                      PropertyExpression="@(c => c.NameSuffix)"
                                       Label="Suffix"
                                       AllowEditing="true"/>
                     </MudItem>
@@ -93,7 +93,10 @@ else {
 
     private LyoForm<PersonRes>? _formRef;
 
-    private static readonly HashSet<string> AllowedPersonPatchProperties = [nameof(PersonRes.EndatoPersonId), nameof(PersonRes.Prefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName), nameof(PersonRes.Suffix), nameof(PersonRes.Source)];
+    private static readonly HashSet<string> AllowedPersonPatchProperties = [
+        nameof(PersonRes.EndatoPersonId), nameof(PersonRes.NamePrefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName),
+        nameof(PersonRes.NameSuffix), nameof(PersonRes.SourceEntityType)
+    ];
 
     protected override void OnParametersSet()
     {

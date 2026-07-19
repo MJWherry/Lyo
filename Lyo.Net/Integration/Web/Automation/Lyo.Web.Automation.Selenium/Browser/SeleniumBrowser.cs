@@ -82,11 +82,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        Driver?.Quit();
+        var driver = Driver;
+        Driver = null;
+        TryKillDriver(driver);
         _nativeTabs?.ClearDisplayNames();
         _nativeTabs = null;
         _automationTabs = null;
@@ -94,9 +92,11 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         _frames = null;
         _keyboard = null;
         _cookieJar = null;
-        Driver?.Dispose();
-        Driver = null;
-        ExecutionContext?.Dispose();
+        if (!_disposed) {
+            _disposed = true;
+            ExecutionContext?.Dispose();
+        }
+
         GC.SuppressFinalize(this);
     }
 
@@ -230,6 +230,8 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <param name="ct">Cancellation token.</param>
     public async Task StartBrowserAsync(CancellationToken ct = default)
     {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SeleniumBrowser));
         if (Driver != null) {
             Logger.LogDebug("Browser already started");
             return;
@@ -239,12 +241,34 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         await Task.Run(
                 () => {
                     ct.ThrowIfCancellationRequested();
-                    Driver = WebDriverFactory.CreateDriver(Options, ExecutionContext);
-                    ApplyWindowSize(Driver);
-                    Driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(Options.PageLoadTimeoutSeconds);
-                    Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Options.ImplicitWaitSeconds);
-                    Driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(Options.ScriptTimeoutSeconds);
-                    Logger.LogInformation("Browser started ({BrowserKind})", Options.BrowserKind);
+                    if (_disposed)
+                        throw new ObjectDisposedException(nameof(SeleniumBrowser));
+                    var driver = WebDriverFactory.CreateDriver(Options, ExecutionContext);
+                    if (_disposed) {
+                        // Session was disposed while the driver process was starting — kill it immediately.
+                        TryKillDriver(driver);
+                        throw new ObjectDisposedException(nameof(SeleniumBrowser));
+                    }
+
+                    Driver = driver;
+                    try {
+                        ApplyWindowSize(Driver);
+                        Driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(Options.PageLoadTimeoutSeconds);
+                        Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Options.ImplicitWaitSeconds);
+                        Driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(Options.ScriptTimeoutSeconds);
+                        try {
+                            Logger.LogInformation("Browser started ({BrowserKind})", Options.BrowserKind);
+                        }
+                        catch (Exception ex) {
+                            // Logging must never strand a live browser process.
+                            Logger.LogDebug(ex, "Browser started but session logger failed");
+                        }
+                    }
+                    catch {
+                        TryKillDriver(Driver);
+                        Driver = null;
+                        throw;
+                    }
                 }, ct)
             .ConfigureAwait(false);
     }
@@ -261,10 +285,15 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.StopBrowserDuration)], SeleniumMetricTags.ForOperation(this, "stop_browser"));
         await Task.Run(
                 () => {
-                    ct.ThrowIfCancellationRequested();
+                    // Do not honor cancellation here — stopping must always attempt to kill the driver.
                     try {
                         Driver!.Quit();
-                        Logger.LogInformation("Browser stopped");
+                        try {
+                            Logger.LogInformation("Browser stopped");
+                        }
+                        catch {
+                            // Session logger may already be disposed.
+                        }
                     }
                     finally {
                         _nativeTabs?.ClearDisplayNames();
@@ -273,11 +302,31 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                         _alerts = null;
                         _frames = null;
                         _keyboard = null;
-                        Driver.Dispose();
+                        TryKillDriver(Driver);
                         Driver = null;
                     }
-                }, ct)
+                }, CancellationToken.None)
             .ConfigureAwait(false);
+    }
+
+    private static void TryKillDriver(IWebDriver? driver)
+    {
+        if (driver == null)
+            return;
+
+        try {
+            driver.Quit();
+        }
+        catch {
+            // ignored
+        }
+
+        try {
+            driver.Dispose();
+        }
+        catch {
+            // ignored
+        }
     }
 
     /// <summary>Gets the current page URL.</summary>

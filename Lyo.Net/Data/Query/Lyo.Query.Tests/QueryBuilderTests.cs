@@ -35,6 +35,57 @@ public class QueryBuilderTests
         Assert.Equal(2, qr.Select.Count);
     }
 
+    [Fact]
+    public void QueryConcreteReqBuilder_AddKey_AddKeys_AppendsRows()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        var id3 = Guid.NewGuid();
+        var qr = QueryConcreteReqBuilder.New()
+            .AddKey(id1)
+            .AddKey("tenant-a", 1)
+            .AddKeys([id2], [id3])
+            .AddKeys((IEnumerable<object[]>)[[42]])
+            .Build();
+
+        Assert.Equal(5, qr.Keys.Count);
+        Assert.Equal(new object[] { id1 }, qr.Keys[0]);
+        Assert.Equal(new object[] { "tenant-a", 1 }, qr.Keys[1]);
+        Assert.Equal(new object[] { id2 }, qr.Keys[2]);
+        Assert.Equal(new object[] { id3 }, qr.Keys[3]);
+        Assert.Equal(new object[] { 42 }, qr.Keys[4]);
+    }
+
+    [Fact]
+    public void ProjectionQueryReqBuilder_AddKey_AddKeys_AppendsRows()
+    {
+        var qr = ProjectionQueryReqBuilder.New()
+            .AddSelects("Id")
+            .AddKey(7)
+            .AddKeys(["tenant-b", 2], [8])
+            .Build();
+
+        Assert.Equal(3, qr.Keys.Count);
+        Assert.Equal(new object[] { 7 }, qr.Keys[0]);
+        Assert.Equal(new object[] { "tenant-b", 2 }, qr.Keys[1]);
+        Assert.Equal(new object[] { 8 }, qr.Keys[2]);
+    }
+
+    [Fact]
+    public void QueryReqBuilder_AddKey_AddKeys_AppendsRows()
+    {
+        var qr = QueryReqBuilder.New()
+            .From("o", "OrderEntity")
+            .AddSelects("o.Id")
+            .AddKey(9)
+            .AddKeys([10], [11])
+            .Build();
+
+        Assert.Equal(3, qr.Keys.Count);
+        Assert.Equal(new object[] { 9 }, qr.Keys[0]);
+        Assert.Equal(new object[] { 10 }, qr.Keys[1]);
+        Assert.Equal(new object[] { 11 }, qr.Keys[2]);
+    }
 
     [Fact]
     public void QueryConcreteReqBuilder_AddWhere_WithBuilderFunc()

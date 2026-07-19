@@ -398,8 +398,11 @@ public class ApiClient : IApiClient
         try {
             var json = await ReadDecodedResponseStringAsync(response, ct).ConfigureAwait(false);
             problemDetails = JsonSerializer.Deserialize<LyoProblemDetails>(json, SerializerOptions);
-            if (problemDetails != null && !string.IsNullOrEmpty(problemDetails.Detail))
-                message = problemDetails.Detail;
+            if (problemDetails != null) {
+                var full = problemDetails.GetFullMessage();
+                if (!string.IsNullOrEmpty(full))
+                    message = full;
+            }
         }
         catch {
             // Fall back to generic message if body cannot be parsed

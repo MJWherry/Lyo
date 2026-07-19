@@ -30,9 +30,17 @@ internal sealed class SessionFileLogger(string category, StreamWriter writer, ob
         };
 
         lock (gate) {
-            writer.WriteLine($"{DateTime.UtcNow:O} [{levelShort}] {category}: {message}");
-            if (exception != null)
-                writer.WriteLine($"  Exception: {exception}");
+            try {
+                writer.WriteLine($"{DateTime.UtcNow:O} [{levelShort}] {category}: {message}");
+                if (exception != null)
+                    writer.WriteLine($"  Exception: {exception}");
+            }
+            catch (ObjectDisposedException) {
+                // Session context disposed while a start/stop was still logging — never fail the browser op.
+            }
+            catch (IOException) {
+                // ignored
+            }
         }
     }
 

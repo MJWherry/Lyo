@@ -1,6 +1,7 @@
 using Lyo.Common.Identifiers;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Postgres.Database;
+using Lyo.Job.Postgres.Mapping;
 
 namespace Lyo.Job.Postgres;
 
@@ -8,8 +9,10 @@ namespace Lyo.Job.Postgres;
 internal static class JobBlackoutCalendarEntityHelper
 {
     /// <summary>
-    /// After Mapster maps a <see cref="JobDefinitionReq" />, ensures schedules inheriting the definition default share one
+    /// After mapping a <see cref="JobDefinitionReq" />, ensures schedules inheriting the definition default share one
     /// <see cref="JobBlackoutCalendar" /> entity and schedules with explicit overrides keep their own.
+    /// Maps definition-level <see cref="JobDefinitionReq.CreateBlackoutCalendar" /> when it was not cascaded onto schedules.
+    /// Treats schedule calendars as inherited when they structurally match the definition calendar (JSON round-trip).
     /// </summary>
     public static void ApplyDefinitionBlackoutDefaults(JobDefinitionReq src, JobDefinition dest)
     {
@@ -35,9 +38,12 @@ internal static class JobBlackoutCalendarEntityHelper
             if (src.CreateBlackoutCalendar == null)
                 continue;
 
-            sharedCalendar ??= destSchedule.JobBlackoutCalendar;
-            if (sharedCalendar != null)
-                destSchedule.JobBlackoutCalendar = sharedCalendar;
+            // Prefer a calendar already built from a cascaded/structurally-matching schedule CreateBlackoutCalendar;
+            // otherwise map the definition-level calendar once (definition-only API payloads).
+            sharedCalendar ??= destSchedule.JobBlackoutCalendar
+                ?? destSchedules.Select(s => s.JobBlackoutCalendar).FirstOrDefault(c => c != null)
+                ?? JobLyoMapper.ReqToNew(src.CreateBlackoutCalendar);
+            destSchedule.JobBlackoutCalendar = sharedCalendar;
         }
     }
 
@@ -90,6 +96,46 @@ internal static class JobBlackoutCalendarEntityHelper
     }
 
     private static bool HasScheduleBlackoutOverride(JobDefinitionReq definition, JobScheduleReq schedule)
-        => schedule.JobBlackoutCalendarId.HasValue
-            || schedule.CreateBlackoutCalendar != null && !ReferenceEquals(schedule.CreateBlackoutCalendar, definition.CreateBlackoutCalendar);
+    {
+        if (schedule.JobBlackoutCalendarId.HasValue)
+            return true;
+
+        if (schedule.CreateBlackoutCalendar is null)
+            return false;
+
+        if (ReferenceEquals(schedule.CreateBlackoutCalendar, definition.CreateBlackoutCalendar))
+            return false;
+
+        // After JSON deserialize, shared calendars become distinct instances with identical content.
+        if (definition.CreateBlackoutCalendar is not null
+            && StructurallyEquals(schedule.CreateBlackoutCalendar, definition.CreateBlackoutCalendar))
+            return false;
+
+        return true;
+    }
+
+    internal static bool StructurallyEquals(JobBlackoutCalendarReq a, JobBlackoutCalendarReq b)
+    {
+        if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal)
+            || !string.Equals(a.Description, b.Description, StringComparison.Ordinal)
+            || a.Enabled != b.Enabled
+            || a.CreateBlackoutWindows.Count != b.CreateBlackoutWindows.Count)
+            return false;
+
+        for (var i = 0; i < a.CreateBlackoutWindows.Count; i++) {
+            var wa = a.CreateBlackoutWindows[i];
+            var wb = b.CreateBlackoutWindows[i];
+            if (!string.Equals(wa.Name, wb.Name, StringComparison.Ordinal)
+                || wa.DayFlags != wb.DayFlags
+                || wa.StartTime != wb.StartTime
+                || wa.EndTime != wb.EndTime
+                || wa.Policy != wb.Policy
+                || wa.Enabled != wb.Enabled
+                || wa.StartDateUtc != wb.StartDateUtc
+                || wa.EndDateUtc != wb.EndDateUtc)
+                return false;
+        }
+
+        return true;
+    }
 }

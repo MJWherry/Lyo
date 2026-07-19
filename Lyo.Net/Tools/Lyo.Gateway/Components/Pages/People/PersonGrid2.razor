@@ -27,10 +27,11 @@
         <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.FirstName" Title="Firstname" QuickSearchPropertyName="FirstName"/>
         <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.MiddleName" Title="Middlename"/>
         <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.LastName" Title="Lastname" QuickSearchPropertyName="LastName"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="DateOnly?" Property="x => x.DateOfBirth" Title="DoB"/>
         <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.Addresses == null ? 0 : x.Addresses.Count" Title="Addresses"/>
         <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.PhoneNumbers == null ? 0 : x.PhoneNumbers.Count" Title="Phone Numbers"/>
         <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.EmailAddresses == null ? 0 : x.EmailAddresses.Count" Title="Emails"/>
-        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.Source" Title="Source"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.SourceEntityType" Title="Source"/>
     </Columns>
 </LyoDataGrid>
 

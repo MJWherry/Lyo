@@ -144,7 +144,7 @@ public class QueryServicePostgresTests
         var request = new QueryConcreteReq {
             Start = 0,
             Amount = 10,
-            Keys = Enumerable.Range(0, 257).Select(_ => new object[] { Guid.NewGuid() }).ToList()
+            Keys = Enumerable.Range(0, 301).Select(_ => new object[] { Guid.NewGuid() }).ToList()
         };
 
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
@@ -160,7 +160,7 @@ public class QueryServicePostgresTests
         var request = new ProjectionQueryReq {
             Start = 0,
             Amount = 10,
-            Select = Enumerable.Range(0, 257).Select(i => $"Field{i}").ToList()
+            Select = Enumerable.Range(0, 301).Select(i => $"Field{i}").ToList()
         };
 
         var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);

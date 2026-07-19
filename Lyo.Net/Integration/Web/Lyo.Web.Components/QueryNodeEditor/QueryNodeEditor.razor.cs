@@ -45,21 +45,7 @@ public partial class QueryNodeEditor
         return _fieldValidationRef?.IsValid ?? true;
     }
 
-    private string GetStringValue(ConditionClause node)
-    {
-        if (node.Value is IEnumerable<string> multiValues)
-            return string.Join(", ", multiValues);
-
-        return node.Value?.ToString() ?? "";
-    }
-
-    private string GetCsvValue(ConditionClause node)
-    {
-        if (node.Value is IEnumerable<string> multiValues)
-            return string.Join(", ", multiValues);
-
-        return "";
-    }
+    private static List<string> GetMultiValues(ConditionClause node) => Extensions.ToMultiValueStrings(node.Value);
 
     private string GetNodeDisplayText(WhereClause node)
         => node switch {
@@ -142,18 +128,13 @@ public partial class QueryNodeEditor
         }
     }
 
-    private async Task OnCsvValueChanged(string? value)
+    private async Task OnMultiValuesChanged(IEnumerable<string> values)
     {
         if (Node is not ConditionClause conditionNode)
             return;
 
-        if (string.IsNullOrWhiteSpace(value))
-            conditionNode.Value = null;
-        else {
-            var values = value.Split(',').Select(item => item.Trim()).Where(item => !string.IsNullOrEmpty(item)).ToList();
-            conditionNode.Value = values.Any() ? values : null;
-        }
-
+        var list = values.Where(static v => !string.IsNullOrWhiteSpace(v)).Select(static v => v.Trim()).ToList();
+        conditionNode.Value = list.Count > 0 ? list : null;
         await OnNodeChanged.InvokeAsync(Node);
     }
 

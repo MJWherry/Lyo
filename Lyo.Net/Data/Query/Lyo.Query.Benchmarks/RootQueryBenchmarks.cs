@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Api.Mapping;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query.Root;
@@ -14,8 +13,6 @@ using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Testing.Containers;
-using Mapster;
-using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -49,17 +46,11 @@ public class RootQueryBenchmarks
     {
         _postgres = new();
         _postgres.StartAsync().GetAwaiter().GetResult();
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = _postgres.ConnectionString, EnableAutoMigrations = true });
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         services.AddSingleton(new QueryOptions { DefaultPageSize = 100, MaxPageSize = 2000 });
         _provider = services.BuildServiceProvider();
         using (var migrateScope = _provider.CreateScope()) {

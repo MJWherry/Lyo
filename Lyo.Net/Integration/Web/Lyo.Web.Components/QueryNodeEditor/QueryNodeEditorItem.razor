@@ -1,6 +1,7 @@
 @using Lyo.Common.Extensions
 @using Lyo.Query.Models.Common
 @using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.ChipInput
 @using Lyo.Web.Components.Form
 @using Lyo.Web.Components.Models
 @using Extensions = Extensions
@@ -108,13 +109,10 @@
                     <div style="min-width: 150px;">
                         @if (_selectedProperty != null) {
                             @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
-                                <MudTextField T="string"
-                                              Value="@_csvValue"
-                                              ValueChanged="@OnCsvValueChanged"
-                                              Label="Values (comma separated)"
-                                              Variant="Variant.Outlined"
-                                              Dense
-                                              HelperText="Enter values separated by commas"/>
+                                <LyoChipInput Values="@_multiValues"
+                                              ValuesChanged="@OnMultiValuesChanged"
+                                              Placeholder="Type a value and press Enter"
+                                              ShowClearButton="true"/>
                             }
                             else {
                                 @switch (_selectedProperty.Type) {
@@ -183,13 +181,10 @@
                         else {
                             @* Fallback for custom/nested fields not in PropertyDefinitions *@
                             @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
-                                <MudTextField T="string"
-                                              Value="@_csvValue"
-                                              ValueChanged="@OnCsvValueChanged"
-                                              Label="Values (comma separated)"
-                                              Variant="Variant.Outlined"
-                                              Dense
-                                              HelperText="Enter values separated by commas"/>
+                                <LyoChipInput Values="@_multiValues"
+                                              ValuesChanged="@OnMultiValuesChanged"
+                                              Placeholder="Type a value and press Enter"
+                                              ShowClearButton="true"/>
                             }
                             else {
                                 <LyoNullableTextField Value="@_stringValue"

@@ -34,21 +34,32 @@ public sealed class SeleniumBrowserSession : ISeleniumBrowserSession
     /// <inheritdoc />
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
-
-        Browser.Dispose();
-        _onDisposed();
+        // Always attempt to kill the driver — StartBrowser may assign Driver after a concurrent dispose began.
+        try {
+            Browser.Dispose();
+        }
+        finally {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                _onDisposed();
+        }
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
+        try {
+            await Browser.StopBrowserAsync().ConfigureAwait(false);
+        }
+        catch {
+            // ignored — Dispose below still force-kills
+        }
 
-        await Browser.StopBrowserAsync().ConfigureAwait(false);
-        Browser.Dispose();
-        _onDisposed();
+        try {
+            Browser.Dispose();
+        }
+        finally {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                _onDisposed();
+        }
     }
 }

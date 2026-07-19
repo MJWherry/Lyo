@@ -74,6 +74,43 @@ public class QueryConcreteReqBuilder(QueryConcreteReq? baseQuery = null)
     /// <summary>Appends a sort by property name, direction, and optional priority.</summary>
     public QueryConcreteReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null) => AddSort(new(propertyName, direction, priority));
 
+    /// <summary>Appends one primary-key row (single or composite parts).</summary>
+    public QueryConcreteReqBuilder AddKey(params object[] keyParts)
+    {
+        ArgumentHelpers.ThrowIfNull(keyParts);
+        ArgumentHelpers.ThrowIf(keyParts.Length == 0, "At least one key part is required", nameof(keyParts));
+        _query.Keys.Add(keyParts);
+        return this;
+    }
+
+    /// <summary>Appends one or more primary-key rows.</summary>
+    public QueryConcreteReqBuilder AddKeys(object[] key, params object[][] rest)
+    {
+        ArgumentHelpers.ThrowIfNull(key);
+        ArgumentHelpers.ThrowIf(key.Length == 0, "At least one key part is required", nameof(key));
+        _query.Keys.Add(key);
+        foreach (var row in rest) {
+            ArgumentHelpers.ThrowIfNull(row);
+            ArgumentHelpers.ThrowIf(row.Length == 0, "At least one key part is required", nameof(rest));
+            _query.Keys.Add(row);
+        }
+
+        return this;
+    }
+
+    /// <summary>Appends primary-key rows from a sequence.</summary>
+    public QueryConcreteReqBuilder AddKeys(IEnumerable<object[]> keys)
+    {
+        ArgumentHelpers.ThrowIfNull(keys);
+        foreach (var key in keys) {
+            ArgumentHelpers.ThrowIfNull(key);
+            ArgumentHelpers.ThrowIf(key.Length == 0, "At least one key part is required", nameof(keys));
+            _query.Keys.Add(key);
+        }
+
+        return this;
+    }
+
     /// <summary>Sets <see cref="QueryRequestBase.Start" /> and <see cref="QueryRequestBase.Amount" />.</summary>
     public QueryConcreteReqBuilder SetPagination(int start, int amount)
     {

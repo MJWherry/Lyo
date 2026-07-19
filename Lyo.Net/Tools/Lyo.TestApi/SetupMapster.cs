@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Api.Mapping;
+using Lyo.Job.Postgres.Mapping;
 using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.DateAndTime;
@@ -15,6 +16,7 @@ using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
 using Mapster;
 using MapsterMapper;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.TestApi;
 
@@ -41,6 +43,71 @@ public static class SetupMapster
     private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
 
     private static DateTime? ToDateTime(DateOnly? value) => value.HasValue ? value.Value.ToDateTime(TimeOnly.MinValue) : null;
+
+    private static List<PersonAddressRes> MapPersonAddresses(PersonEntity src)
+        => src.ContactAddresses
+            .Where(ca => ca.Address != null)
+            .Select(ca => {
+                var a = ca.Address!;
+                return new PersonAddressRes {
+                    Id = a.Id,
+                    PersonId = ca.PersonId,
+                    HouseNumber = a.HouseNumber,
+                    StreetPreDirection = a.StreetPreDirection,
+                    StreetName = a.StreetName,
+                    StreetPostDirection = a.StreetPostDirection,
+                    StreetType = a.StreetType,
+                    Unit = a.Unit,
+                    UnitType = a.UnitType,
+                    StreetAddress = a.StreetAddress,
+                    StreetAddressLine2 = a.StreetAddressLine2,
+                    City = a.City,
+                    State = a.State,
+                    County = a.County,
+                    Zipcode = a.Zipcode,
+                    Zipcode4 = a.Zipcode4,
+                    PostalCode = a.PostalCode,
+                    CountryCode = a.CountryCode,
+                    FullAddress = a.FullAddress,
+                    Coordinates = a.Coordinates,
+                    SourceEntityType = a.SourceEntityType,
+                    SourceEntityId = a.SourceEntityId,
+                    ImportedAt = a.ImportedAt,
+                    CreatedTimestamp = a.CreatedTimestamp,
+                    UpdatedTimestamp = a.UpdatedTimestamp
+                };
+            })
+            .ToList();
+
+    private static List<PersonEmailAddressRes> MapPersonEmailAddresses(PersonEntity src)
+        => src.ContactEmailAddresses
+            .Where(ce => ce.EmailAddress != null)
+            .Select(ce => new PersonEmailAddressRes(ce.EmailAddress!.Id, ce.PersonId, ce.EmailAddress.Email))
+            .ToList();
+
+    private static List<PersonPhoneNumberRes> MapPersonPhoneNumbers(PersonEntity src)
+        => src.ContactPhoneNumbers
+            .Where(cp => cp.PhoneNumber != null)
+            .Select(cp => {
+                var p = cp.PhoneNumber!;
+                return new PersonPhoneNumberRes {
+                    Id = p.Id,
+                    PersonId = cp.PersonId,
+                    Number = p.Number,
+                    CountryCode = p.CountryCode,
+                    CountryCodeString = p.CountryCodeString,
+                    TechnologyType = p.TechnologyType,
+                    VerifiedAt = p.VerifiedAt,
+                    Label = p.Label,
+                    Type = cp.Type,
+                    SourceEntityType = p.SourceEntityType,
+                    SourceEntityId = p.SourceEntityId,
+                    ImportedAt = p.ImportedAt,
+                    CreatedTimestamp = p.CreatedTimestamp,
+                    UpdatedTimestamp = p.UpdatedTimestamp
+                };
+            })
+            .ToList();
 
     private static SpUniqueValueCount MapSpUniqueValueCount(Dictionary<string, object?> src)
     {
@@ -76,11 +143,13 @@ public static class SetupMapster
         // This prevents Mapster from trying to instantiate the abstract type during Compile().
         config.NewConfig<WhereClause, WhereClause>().ConstructUsing(src => src);
         config.NewConfig<FileMetadataEntity, FileMetadataEntity>();
-        config.ConfigureJobMappings();
         config.ConfigureDateTimeMappings().ConfigurePersonMappings().ConfigureTwilioMappings().ConfigureDiscordMappings().Compile();
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
-        services.AddScoped<ILyoMapper, MapsterLyoMapper>();
+        services.AddSingleton<JobLyoMapper>();
+        services.AddScoped<ILyoMapper>(sp => new CompositeLyoMapper(
+            sp.GetRequiredService<JobLyoMapper>(),
+            new MapsterLyoMapper(sp.GetRequiredService<IMapper>())));
         return services;
     }
 
@@ -119,27 +188,12 @@ public static class SetupMapster
             config.NewConfig<PersonAddressReq, AddressEntity>().IgnoreNonMapped(true);
             config.NewConfig<PersonEmailAddressReq, EmailAddressEntity>().Map(dest => dest.Email, src => src.Address).IgnoreNonMapped(true);
             config.NewConfig<PersonPhoneNumberReq, PhoneNumberEntity>().IgnoreNonMapped(true);
+
             config.NewConfig<PersonEntity, PersonRes>()
-                .MapWith(src => new(
-                    src.Id, null, src.NamePrefix, src.FirstName, src.MiddleName, src.LastName, src.NameSuffix,
-                    string.IsNullOrWhiteSpace(src.SourceEntityType) ? PeopleSourceTypes.Manual : src.SourceEntityType,
-                    src.ContactAddresses.Where(ca => ca.Address != null)
-                        .Select(ca => new PersonAddressRes(
-                            ca.Address!.Id, ca.PersonId, ca.Address.HouseNumber, ca.Address.StreetPreDirection, ca.Address.StreetName, ca.Address.StreetPostDirection,
-                            ca.Address.StreetType, ca.Address.Unit, ca.Address.UnitType, ca.Address.City, ca.Address.State, ca.Address.County, ca.Address.Zipcode,
-                            ca.Address.Zipcode4, DateOnly.FromDateTime(ca.Address.CreatedTimestamp),
-                            ca.Address.UpdatedTimestamp.HasValue ? DateOnly.FromDateTime(ca.Address.UpdatedTimestamp.Value) : DateOnly.FromDateTime(ca.Address.CreatedTimestamp)))
-                        .ToList(),
-                    src.ContactEmailAddresses.Where(ce => ce.EmailAddress != null)
-                        .Select(ce => new PersonEmailAddressRes(ce.EmailAddress!.Id, ce.PersonId, ce.EmailAddress.Email))
-                        .ToList(),
-                    src.ContactPhoneNumbers.Where(cp => cp.PhoneNumber != null)
-                        .Select(cp => new PersonPhoneNumberRes(
-                            cp.PhoneNumber!.Id, cp.PersonId, cp.PhoneNumber.Number, cp.Type, DateOnly.FromDateTime(cp.PhoneNumber.CreatedTimestamp),
-                            cp.PhoneNumber.UpdatedTimestamp.HasValue
-                                ? DateOnly.FromDateTime(cp.PhoneNumber.UpdatedTimestamp.Value)
-                                : DateOnly.FromDateTime(cp.PhoneNumber.CreatedTimestamp)))
-                        .ToList()));
+                .Ignore(dest => dest.EndatoPersonId)
+                .Map(dest => dest.Addresses, src => MapPersonAddresses(src))
+                .Map(dest => dest.EmailAddresses, src => MapPersonEmailAddresses(src))
+                .Map(dest => dest.PhoneNumbers, src => MapPersonPhoneNumbers(src));
 
             return config;
         }

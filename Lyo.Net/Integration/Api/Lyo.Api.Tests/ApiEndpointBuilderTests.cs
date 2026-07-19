@@ -2,7 +2,6 @@ using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;
-using Lyo.Api.Mapping;
 using Lyo.Cache;
 using Lyo.Csv;
 using Lyo.Formatter;
@@ -11,8 +10,6 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Xlsx;
-using Mapster;
-using MapsterMapper;
 using Microsoft.AspNetCore.Builder;
 
 namespace Lyo.Api.Tests;
@@ -28,12 +25,6 @@ public class ApiEndpointBuilderTests
         builder.Services.AddPostgresJobManagement(
             new PostgresJobOptions { ConnectionString = "Host=localhost;Database=test;Username=test;Password=test", EnableAutoMigrations = false });
 
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        builder.Services.AddSingleton(config);
-        builder.Services.AddScoped<IMapper, ServiceMapper>();
-        builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         var app = builder.Build();
         var exception = Record.Exception(() => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
             .AllowAnonymous()
@@ -69,12 +60,6 @@ public class ApiEndpointBuilderTests
         builder.Services.AddLyoApiExport<JobContext>();
         builder.Services.AddCsvExport();
         builder.Services.AddXlsxExport();
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        builder.Services.AddSingleton(config);
-        builder.Services.AddScoped<IMapper, ServiceMapper>();
-        builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
@@ -100,12 +85,6 @@ public class ApiEndpointBuilderTests
         builder.Services.AddLyoApiExport<JobContext>();
         builder.Services.AddCsvExport();
         builder.Services.AddXlsxExport();
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        builder.Services.AddSingleton(config);
-        builder.Services.AddScoped<IMapper, ServiceMapper>();
-        builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
@@ -125,12 +104,6 @@ public class ApiEndpointBuilderTests
         builder.Services.AddPostgresJobManagement(
             new PostgresJobOptions { ConnectionString = "Host=localhost;Database=test;Username=test;Password=test", EnableAutoMigrations = false });
 
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        builder.Services.AddSingleton(config);
-        builder.Services.AddScoped<IMapper, ServiceMapper>();
-        builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateReadOnlyBuilder<JobContext, JobDefinition, JobDefinitionRes>("/api/Job/Definition", "Job").AllowAnonymous().WithReadOnlyEndpoints().Build());
@@ -147,12 +120,6 @@ public class ApiEndpointBuilderTests
         builder.Services.AddPostgresJobManagement(
             new PostgresJobOptions { ConnectionString = "Host=localhost;Database=test;Username=test;Password=test", EnableAutoMigrations = false });
 
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
-        builder.Services.AddSingleton(config);
-        builder.Services.AddScoped<IMapper, ServiceMapper>();
-        builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")

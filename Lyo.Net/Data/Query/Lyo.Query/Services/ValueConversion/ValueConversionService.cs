@@ -86,7 +86,12 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
     }
 
     private static object ConvertJsonElementToType(JsonElement element, Type targetType, TypeConversionMetadata metadata)
-        => Type.GetTypeCode(metadata.UnderlyingType) switch {
+    {
+        // Enums report TypeCode.Int32; do not call GetInt32() on string tokens — accept name or numeric value.
+        if (metadata.IsEnum)
+            return ConvertJsonElementToEnum(element, metadata.EnumType!);
+
+        return Type.GetTypeCode(metadata.UnderlyingType) switch {
             TypeCode.Boolean => element.GetBoolean(),
             TypeCode.Byte => element.GetByte(),
             TypeCode.SByte => element.GetSByte(),
@@ -104,6 +109,25 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
             var _ when metadata.UnderlyingType == typeof(DateTimeOffset) => element.GetDateTimeOffset(),
             var _ => element.Deserialize(targetType) ?? throw new InvalidOperationException($"Cannot convert JSON element to type {targetType.Name}")
         };
+    }
+
+    private static object ConvertJsonElementToEnum(JsonElement element, Type enumType)
+    {
+        switch (element.ValueKind) {
+            case JsonValueKind.String:
+                return ConvertToEnum(element.GetString()!, enumType);
+            case JsonValueKind.Number:
+                // Prefer integer forms; fall back to double for non-integral JSON numbers.
+                if (element.TryGetInt64(out var int64))
+                    return Enum.ToObject(enumType, int64);
+                if (element.TryGetDouble(out var dbl))
+                    return Enum.ToObject(enumType, Convert.ChangeType(dbl, Enum.GetUnderlyingType(enumType)));
+                break;
+        }
+
+        throw new InvalidOperationException(
+            $"Cannot convert JSON {element.ValueKind} to enum type {enumType.Name}; expected a string name or number.");
+    }
 
     private static object ConvertStringToType(string str, Type underlyingType)
     {
@@ -127,16 +151,29 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
         };
     }
 
+    /// <summary>
+    /// Converts a filter literal to <paramref name="enumType" />.
+    /// Accepts enum names (case-insensitive), numeric strings, and integral/numeric CLR values.
+    /// Uses <see cref="Enum.Parse(Type, string, bool)" /> so this stays compatible with netstandard2.0.
+    /// </summary>
     private static object ConvertToEnum(object value, Type enumType)
     {
         if (value is string stringValue) {
-            return Enum.TryParse(enumType, stringValue, true, out var enumResult)
-                ? enumResult
-                : throw new InvalidOperationException($"Cannot convert string '{stringValue}' to enum type {enumType.Name}");
+            try {
+                // Enum.Parse accepts both names ("Success") and numeric strings ("1").
+                return Enum.Parse(enumType, stringValue, ignoreCase: true);
+            }
+            catch (Exception ex) {
+                throw new InvalidOperationException($"Cannot convert string '{stringValue}' to enum type {enumType.Name}", ex);
+            }
         }
 
         try {
-            return Enum.ToObject(enumType, value);
+            var underlying = Enum.GetUnderlyingType(enumType);
+            var numeric = value is IConvertible
+                ? Convert.ChangeType(value, underlying)
+                : value;
+            return Enum.ToObject(enumType, numeric);
         }
         catch (Exception ex) {
             throw new InvalidOperationException($"Cannot convert value '{value}' to enum type {enumType.Name}", ex);

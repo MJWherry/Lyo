@@ -1,24 +1,21 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
+using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
-using Lyo.Common.Enums;
 using Lyo.Common.Identifiers;
 using Lyo.Encryption;
 using Lyo.Exceptions;
 using Lyo.Health;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Events;
+using Lyo.Job.Postgres.Mapping;
 using Lyo.MessageQueue;
 using Lyo.Postgres;
-using Lyo.Query.Models.Enums;
-using Lyo.Schedule.Models;
-using Mapster;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +39,41 @@ public static class Extensions
                 ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var parameter in ctx.Entity.JobParameters) {
+                            if (parameter.Id == default)
+                                parameter.Id = LyoGuid.CreateCombPostgres();
+                            parameter.JobDefinitionId = ctx.Entity.Id;
+                            EncryptJobParameterEntity(ctx.Services, parameter);
+                        }
+
+                        foreach (var schedule in ctx.Entity.JobSchedules) {
+                            if (schedule.Id == default)
+                                schedule.Id = LyoGuid.CreateCombPostgres();
+                            schedule.JobDefinitionId = ctx.Entity.Id;
+                            foreach (var scheduleParameter in schedule.JobScheduleParameters) {
+                                if (scheduleParameter.Id == default)
+                                    scheduleParameter.Id = LyoGuid.CreateCombPostgres();
+                                scheduleParameter.JobScheduleId = schedule.Id;
+                            }
+                        }
+
+                        foreach (var trigger in ctx.Entity.JobTriggerJobDefinitions) {
+                            if (trigger.Id == default)
+                                trigger.Id = LyoGuid.CreateCombPostgres();
+                            trigger.JobDefinitionId = ctx.Entity.Id;
+                            foreach (var triggerParameter in trigger.JobTriggerParameters) {
+                                if (triggerParameter.Id == default)
+                                    triggerParameter.Id = LyoGuid.CreateCombPostgres();
+                                triggerParameter.JobTriggerId = trigger.Id;
+                            }
+                        }
+
+                        foreach (var restriction in ctx.Entity.JobParallelRestrictionBaseJobDefinitions) {
+                            if (restriction.Id == default)
+                                restriction.Id = LyoGuid.CreateCombPostgres();
+                            restriction.BaseJobDefinitionId = ctx.Entity.Id;
+                        }
+
                         JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
                     },
                     AfterCreate = ctx => JobAuditHelper.RecordCreated(ctx.Services, nameof(JobDefinition), ctx.Entity.Id),
@@ -53,25 +85,10 @@ public static class Extensions
                         JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobDefinition), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
                     },
-                    BeforeDelete = ctx => {
-                        var i = ctx.Entity;
-                        var db = ctx.DbContext;
-                        foreach (var jobRun in i.JobRuns) {
-                            foreach (var x in jobRun.InverseReRanFromJobRun)
-                                x.ReRanFromJobRunId = null;
-
-                            db.JobRunLogs.RemoveRange(jobRun.JobRunLogs);
-                            db.JobRunParameters.RemoveRange(jobRun.JobRunParameters);
-                            db.JobRunResults.RemoveRange(jobRun.JobRunResults);
-                        }
-
-                        db.JobRuns.RemoveRange(i.JobRuns);
-                        foreach (var schedule in i.JobSchedules)
-                            db.JobScheduleParameters.RemoveRange(schedule.JobScheduleParameters);
-
-                        db.JobSchedules.RemoveRange(i.JobSchedules);
-                        db.JobParameters.RemoveRange(i.JobParameters);
-                    }
+                    // Query dependents by FK — do not rely on DeleteIncludes; unloaded navigations left job_parameter rows behind (23503).
+                    BeforeDelete = ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id),
+                    AfterDelete = ctx => app.Services.GetRequiredService<IJobEventPublisher>()
+                        .PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult()
                 })
             .Build();
 
@@ -87,7 +104,10 @@ public static class Extensions
                         JobAuditHelper.RecordCreated(ctx.Services, nameof(JobParameter), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
                     },
-                    BeforeUpdate = ctx => EncryptJobParameterEntity(ctx.Services, ctx.Entity),
+                    BeforeUpdate = ctx => {
+                        EncryptJobParameterEntity(ctx.Services, ctx.Entity);
+                        ctx.Entity.UpdatedTimestamp = DateTime.UtcNow;
+                    },
                     AfterUpdate = ctx => {
                         JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobParameter), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
@@ -100,35 +120,52 @@ public static class Extensions
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var scheduleParameter in ctx.Entity.JobScheduleParameters) {
+                            if (scheduleParameter.Id == default)
+                                scheduleParameter.Id = LyoGuid.CreateCombPostgres();
+                            scheduleParameter.JobScheduleId = ctx.Entity.Id;
+                        }
+
                         JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
                     },
                     AfterCreate = ctx => {
                         JobAuditHelper.RecordCreated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
                     },
+                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
                     AfterUpdate = ctx => {
                         JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
-                    }
+                    },
+                    BeforeDelete = ctx => RemoveScheduleDependents(ctx.DbContext, ctx.Entity)
                 })
             .Build();
 
         app.CreateBuilder<JobContext, JobTrigger, JobTriggerReq, JobTriggerRes, Guid>($"{Constants.Rest.Job.Triggers}", "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var triggerParameter in ctx.Entity.JobTriggerParameters) {
+                            if (triggerParameter.Id == default)
+                                triggerParameter.Id = LyoGuid.CreateCombPostgres();
+                            triggerParameter.JobTriggerId = ctx.Entity.Id;
+                        }
+                    },
                     AfterCreate = ctx => {
                         JobAuditHelper.RecordCreated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
                         var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
                     },
+                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
                     AfterUpdate = ctx => {
                         JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
                         var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
                         publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
-                    }
+                    },
+                    BeforeDelete = ctx => RemoveTriggerDependents(ctx.DbContext, ctx.Entity)
                 })
             .Build();
 
@@ -136,24 +173,11 @@ public static class Extensions
             .WithQuery()
             .WithGet()
             .WithDelete(
-                ctx => {
-                    var jobRun = ctx.Entity;
-                    var db = ctx.DbContext;
-                    foreach (var i in jobRun.InverseReRanFromJobRun)
-                        i.ReRanFromJobRunId = null;
-
-                    db.JobRunLogs.RemoveRange(jobRun.JobRunLogs);
-                    db.JobRunParameters.RemoveRange(jobRun.JobRunParameters);
-                    db.JobRunResults.RemoveRange(jobRun.JobRunResults);
-                }, null, ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun"])
+                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity), null,
+                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
             .WithDeleteBulk(
-                ctx => {
-                    var jobRun = ctx.Entity;
-                    var db = ctx.DbContext;
-                    db.JobRunLogs.RemoveRange(jobRun.JobRunLogs);
-                    db.JobRunParameters.RemoveRange(jobRun.JobRunParameters);
-                    db.JobRunResults.RemoveRange(jobRun.JobRunResults);
-                }, null, ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun"])
+                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity), null,
+                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
             .WithExport()
             .Build();
 
@@ -189,20 +213,45 @@ public static class Extensions
         app.CreateBuilder<JobContext, JobBlackoutCalendar, JobBlackoutCalendarReq, JobBlackoutCalendarRes, Guid>(Constants.Rest.Job.BlackoutCalendars, "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
-                    BeforeDelete = ctx => ctx.DbContext.JobBlackoutWindows.RemoveRange(ctx.Entity.JobBlackoutWindows),
-                    DeleteIncludes = ["JobBlackoutWindows"]
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var window in ctx.Entity.JobBlackoutWindows) {
+                            if (window.Id == default)
+                                window.Id = LyoGuid.CreateCombPostgres();
+                            window.JobBlackoutCalendarId = ctx.Entity.Id;
+                        }
+                    },
+                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
+                    BeforeDelete = ctx => {
+                        if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
+                            throw new InvalidOperationException(
+                                $"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
+
+                        ctx.DbContext.JobBlackoutWindows.RemoveRange(
+                            ctx.DbContext.JobBlackoutWindows.Where(w => w.JobBlackoutCalendarId == ctx.Entity.Id).ToList());
+                    }
                 })
             .Build();
 
         app.CreateBuilder<JobContext, JobBlackoutWindow, JobBlackoutWindowReq, JobBlackoutWindowRes, Guid>(Constants.Rest.Job.BlackoutWindows, "Job")
-            .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres() })
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+                })
             .Build();
 
         app.CreateBuilder<JobContext, JobWorkflow, JobWorkflowReq, JobWorkflowRes, Guid>(Constants.Rest.Job.Workflows, "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var step in ctx.Entity.JobWorkflowSteps) {
+                            if (step.Id == default)
+                                step.Id = LyoGuid.CreateCombPostgres();
+                            step.JobWorkflowId = ctx.Entity.Id;
+                        }
+                    },
                     BeforeDelete = ctx => {
                         var workflow = ctx.Entity;
                         var db = ctx.DbContext;
@@ -228,7 +277,14 @@ public static class Extensions
         app.CreateBuilder<JobContext, JobWorkflowRun, JobWorkflowRunReq, JobWorkflowRunRes, Guid>(Constants.Rest.Job.WorkflowRuns, "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    BeforeCreate = ctx => {
+                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        foreach (var step in ctx.Entity.JobWorkflowRunSteps) {
+                            if (step.Id == default)
+                                step.Id = LyoGuid.CreateCombPostgres();
+                            step.JobWorkflowRunId = ctx.Entity.Id;
+                        }
+                    },
                     BeforeDelete = ctx => ctx.DbContext.JobWorkflowRunSteps.RemoveRange(ctx.Entity.JobWorkflowRunSteps),
                     DeleteIncludes = ["JobWorkflowRunSteps"]
                 })
@@ -273,9 +329,12 @@ public static class Extensions
     private static void MapLifecycleEndpoints(WebApplication app)
     {
         app.MapPost(
-                $"/{Constants.Rest.Job.Runs}/Create", async (JobRunReq req, JobService jobService, CancellationToken ct) => {
+                $"/{Constants.Rest.Job.RunsCreate}", async (JobRunReq req, JobService jobService, CancellationToken ct) => {
                     var result = await jobService.CreateJobRun(req, ct).ConfigureAwait(false);
-                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result.Data) : Results.BadRequest(result.Error);
+                    // Return CreateResult so ApiClient deserializers (scheduler/worker/client) get IsSuccess/Data.
+                    return result.IsSuccess
+                        ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result)
+                        : Results.BadRequest(result.Error);
                 })
             .WithTags("Job")
             .WithName("CreateJobRun");
@@ -342,219 +401,6 @@ public static class Extensions
             .WithName("CreateChildJobRuns");
     }
 
-    /// <summary>Configures Mapster job entity mappings. Call when configuring Mapster (e.g. config.Apply(ConfigureJobMappings)).</summary>
-    /// <remarks>
-    /// All entity→Res mappings for positional record types use <c>MapWith()</c> to bypass <c>RecordTypeAdapter.CreateBlockExpression</c>, which throws "Collection was modified"
-    /// during eager <c>Compile()</c> when sub-mapping compilation adds entries to Mapster's internal list while that list is being enumerated (a Mapster bug). Req→entity mappings are
-    /// unaffected and use the normal fluent API since they target mutable class types.
-    /// </remarks>
-    public static TypeAdapterConfig ConfigureJobMappings(this TypeAdapterConfig config)
-    {
-        config.NewConfig<JobBlackoutCalendarReq, JobBlackoutCalendar>().Map(to => to.JobBlackoutWindows, from => from.CreateBlackoutWindows);
-
-        config.NewConfig<JobBlackoutWindowReq, JobBlackoutWindow>()
-            .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
-            .Map(dest => dest.StartTime, src => src.StartTime.ToString())
-            .Map(dest => dest.EndTime, src => src.EndTime.ToString())
-            .Map(dest => dest.Policy, src => src.Policy.ToString());
-
-        config.NewConfig<JobWorkflowReq, JobWorkflow>().Map(to => to.JobWorkflowSteps, from => from.CreateSteps);
-
-        config.NewConfig<JobWorkflowStepReq, JobWorkflowStep>()
-            .Map(dest => dest.FailurePolicy, src => src.FailurePolicy.ToString());
-
-        config.NewConfig<JobWorkflowRunReq, JobWorkflowRun>().Map(to => to.JobWorkflowRunSteps, from => from.CreateRunSteps);
-
-        config.NewConfig<JobDefinitionReq, JobDefinition>()
-            .Map(to => to.JobParameters, from => from.CreateParameters)
-            .Map(to => to.JobSchedules, from => from.CreateSchedules)
-            .Map(to => to.JobTriggerJobDefinitions, from => from.CreateTriggers)
-            .Map(to => to.RetryBackoffType, from => from.RetryBackoffType.ToString())
-            .AfterMapping((src, dest) => JobBlackoutCalendarEntityHelper.ApplyDefinitionBlackoutDefaults(src, dest));
-
-        config.NewConfig<JobScheduleReq, JobSchedule>()
-            .Map(dest => dest.Times, src => (src.Times ?? Enumerable.Empty<TimeOnly>()).Select(i => i.ToString()).ToList())
-            .Map(dest => dest.Type, src => src.Type.ToString())
-            .Map(dest => dest.DayFlags, src => src.DayFlags.ToString())
-            .Map(dest => dest.MonthFlags, src => src.MonthFlags.ToString())
-            .Map(dest => dest.MisfirePolicy, src => src.MisfirePolicy.ToString())
-            .Map(to => to.JobBlackoutCalendar, from => from.CreateBlackoutCalendar)
-            .Map(to => to.JobBlackoutCalendarId, from => from.JobBlackoutCalendarId);
-
-        config.NewConfig<JobTriggerReq, JobTrigger>()
-            .Map(dest => dest.TriggerComparator, from => from.Comparison)
-            .Map(dest => dest.TriggerJobResultKey, from => from.JobResultKey)
-            .Map(dest => dest.TriggerJobResultValue, from => from.JobResultValue)
-            .Map(dest => dest.JobTriggerParameters, from => from.CreateTriggerParameters);
-
-        config.NewConfig<JobTriggerParameter, JobTriggerParameterRes>()
-            .MapWith(src => new(src.Id, src.JobTriggerId, src.Key, Enum.Parse<JobParameterType>(src.Type), src.Value, src.Description, null, src.Enabled));
-
-        config.NewConfig<JobTrigger, JobTriggerRes>()
-            .MapWith(src => new(
-                src.Id, src.TriggersJobDefinitionId, src.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(src.TriggerComparator), src.TriggerJobResultValue, src.Description,
-                src.Enabled, null, // JobDefinition — omitted to break circular ref
-                src.JobTriggerParameters.Select(p => new JobTriggerParameterRes(
-                        p.Id, p.JobTriggerId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                    .ToList(), null)); // TriggersJobDefinition — omitted to break circular ref
-
-        config.NewConfig<JobScheduleParameter, JobScheduleParameterRes>()
-            .MapWith(src => new(src.Id, src.JobScheduleId, src.Key, Enum.Parse<JobParameterType>(src.Type), src.Value, src.Description, null, src.Enabled));
-
-        config.NewConfig<JobSchedule, JobScheduleRes>()
-            .MapWith(src => new(
-                src.Id, src.JobDefinitionId, Enum.Parse<MonthFlags>(src.MonthFlags), Enum.Parse<DayFlags>(src.DayFlags), Enum.Parse<ScheduleType>(src.Type),
-                (src.Times ?? new List<string>()).Select(TimeOnly.Parse).ToList(), src.StartTime != null ? TimeOnly.Parse(src.StartTime) : null,
-                src.EndTime != null ? TimeOnly.Parse(src.EndTime) : null, src.IntervalMinutes, src.Description, src.Enabled,
-                src.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
-                        p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                    .ToList(), src.CronExpression, Enum.Parse<JobMisfirePolicy>(src.MisfirePolicy), src.StartDateUtc, src.EndDateUtc, src.TimeZoneId, src.JobBlackoutCalendarId,
-                src.JobBlackoutCalendar == null
-                    ? null
-                    : new JobBlackoutCalendarRes(
-                        src.JobBlackoutCalendar.Id, src.JobBlackoutCalendar.Name, src.JobBlackoutCalendar.Description, src.JobBlackoutCalendar.Enabled,
-                        src.JobBlackoutCalendar.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
-                                w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
-                                Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled, w.StartDateUtc, w.EndDateUtc))
-                            .ToList())));
-
-        config.NewConfig<JobBlackoutCalendar, JobBlackoutCalendarRes>()
-            .MapWith(src => new(
-                src.Id, src.Name, src.Description, src.Enabled,
-                src.JobBlackoutWindows.Select(w => new JobBlackoutWindowRes(
-                        w.Id, w.JobBlackoutCalendarId, w.Name, Enum.Parse<DayFlags>(w.DayFlags), TimeOnly.Parse(w.StartTime), TimeOnly.Parse(w.EndTime),
-                        Enum.Parse<JobBlackoutPolicy>(w.Policy), w.Enabled, w.StartDateUtc, w.EndDateUtc))
-                    .ToList()));
-
-        config.NewConfig<JobBlackoutWindow, JobBlackoutWindowRes>()
-            .MapWith(src => new(
-                src.Id, src.JobBlackoutCalendarId, src.Name, Enum.Parse<DayFlags>(src.DayFlags), TimeOnly.Parse(src.StartTime), TimeOnly.Parse(src.EndTime),
-                Enum.Parse<JobBlackoutPolicy>(src.Policy), src.Enabled, src.StartDateUtc, src.EndDateUtc));
-
-        config.NewConfig<JobWorkflow, JobWorkflowRes>()
-            .MapWith(src => new(
-                src.Id, src.Name, src.Description, src.Enabled,
-                src.JobWorkflowSteps.Select(s => new JobWorkflowStepRes(
-                        s.Id, s.JobWorkflowId, s.JobDefinitionId, s.StepName, s.StepOrder, s.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(s.FailurePolicy),
-                        s.ParametersJson, s.Enabled, null))
-                    .ToList()));
-
-        config.NewConfig<JobWorkflowStep, JobWorkflowStepRes>()
-            .MapWith(src => new(
-                src.Id, src.JobWorkflowId, src.JobDefinitionId, src.StepName, src.StepOrder, src.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(src.FailurePolicy),
-                src.ParametersJson, src.Enabled, null));
-
-        config.NewConfig<JobWorkflowRun, JobWorkflowRunRes>()
-            .MapWith(src => new(
-                src.Id, src.JobWorkflowId, src.State, src.StartedTimestamp, src.FinishedTimestamp, src.CreatedTimestamp,
-                src.JobWorkflowRunSteps.Select(s => new JobWorkflowRunStepRes(s.Id, s.JobWorkflowRunId, s.JobWorkflowStepId, s.JobRunId, s.State, null, null)).ToList(),
-                null));
-
-        config.NewConfig<JobWorkflowRunStep, JobWorkflowRunStepRes>()
-            .MapWith(src => new(src.Id, src.JobWorkflowRunId, src.JobWorkflowStepId, src.JobRunId, src.State, null, null));
-
-        config.NewConfig<JobParameter, JobParameterRes>()
-            .MapWith(src => new(
-                src.Id, src.JobDefinitionId, src.Key, src.Description, Enum.Parse<JobParameterType>(src.Type), MaskParameterValue(src.Value, src.EncryptedValue),
-                MaskParameterEncryptedValue(src.EncryptedValue), src.AllowMultiple, true, src.Required,
-                src.ValidationRegex, src.MinLength, src.MaxLength, src.AllowedValues));
-
-        config.NewConfig<JobParallelRestriction, JobParallelRestrictionRes>()
-            .MapWith(src => new(
-                src.Id, src.BaseJobDefinitionId, src.OtherJobDefinitionId, src.Description, src.Enabled, null)); // OtherJobDefinition — omitted to break circular ref
-
-        config.NewConfig<JobDefinition, JobDefinitionRes>()
-            .MapWith(src => new(
-                src.Id, src.Name, src.Description, src.Type, src.WorkerType, src.Enabled,
-                src.JobParameters.Select(p => new JobParameterRes(
-                        p.Id, p.JobDefinitionId, p.Key, p.Description, Enum.Parse<JobParameterType>(p.Type), MaskParameterValue(p.Value, p.EncryptedValue),
-                        MaskParameterEncryptedValue(p.EncryptedValue), p.AllowMultiple, true, p.Required,
-                        p.ValidationRegex, p.MinLength, p.MaxLength, p.AllowedValues))
-                    .ToList(),
-                src.JobSchedules.Select(s => new JobScheduleRes(
-                        s.Id, s.JobDefinitionId, Enum.Parse<MonthFlags>(s.MonthFlags), Enum.Parse<DayFlags>(s.DayFlags), Enum.Parse<ScheduleType>(s.Type),
-                        (s.Times ?? new List<string>()).Select(TimeOnly.Parse).ToList(), s.StartTime != null ? TimeOnly.Parse(s.StartTime) : null,
-                        s.EndTime != null ? TimeOnly.Parse(s.EndTime) : null, s.IntervalMinutes, s.Description, s.Enabled,
-                        s.JobScheduleParameters.Select(p => new JobScheduleParameterRes(
-                                p.Id, p.JobScheduleId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                            .ToList(), s.CronExpression, Enum.Parse<JobMisfirePolicy>(s.MisfirePolicy), s.StartDateUtc, s.EndDateUtc, s.TimeZoneId, s.JobBlackoutCalendarId, null))
-                    .ToList(),
-                src.JobTriggerJobDefinitions.Select(t => new JobTriggerRes(
-                        t.Id, t.TriggersJobDefinitionId, t.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(t.TriggerComparator), t.TriggerJobResultValue, t.Description,
-                        t.Enabled, null,
-                        t.JobTriggerParameters.Select(p => new JobTriggerParameterRes(
-                                p.Id, p.JobTriggerId, p.Key, Enum.Parse<JobParameterType>(p.Type), p.Value, p.Description, null, p.Enabled))
-                            .ToList(), null))
-                    .ToList(),
-                src.JobParallelRestrictionBaseJobDefinitions
-                    .Select(r => new JobParallelRestrictionRes(r.Id, r.BaseJobDefinitionId, r.OtherJobDefinitionId, r.Description, r.Enabled, null))
-                    .ToList(), src.MaxRetryCount, src.RetryBackoffSeconds, src.TimeoutMinutes, src.MaxConcurrentRuns, src.CircuitBreakerThreshold, src.CircuitBreakerResetMinutes,
-                src.CircuitBreakerTrippedAt, Enum.Parse<JobRetryBackoffType>(src.RetryBackoffType), src.Priority, src.RetentionDays, src.MaxRunsPerHour, src.ExpectedDurationMinutes,
-                src.MustStartByMinutes, src.AlertOnFailure, src.AlertAfterConsecutiveFailures, src.AlertWebhookUrl, src.DefinitionVersion));
-
-        config.NewConfig<JobRun, JobRunRes>()
-            .MapWith(src => new() {
-                Id = src.Id,
-                State = src.State,
-                Result = src.Result,
-                CreatedTimestamp = src.CreatedTimestamp,
-                StartedTimestamp = src.StartedTimestamp,
-                FinishedTimestamp = src.FinishedTimestamp,
-                AllowTriggers = src.AllowTriggers,
-                JobDefinitionId = src.JobDefinitionId,
-                // Map when the navigation is loaded; JobDefinitionRes has no JobRuns collection so there is no circular reference.
-                JobDefinition = src.JobDefinition == null ? null : src.JobDefinition.Adapt<JobDefinitionRes>(config),
-                JobScheduleId = src.JobScheduleId,
-                JobSchedule = null, // break circular ref (JobSchedule.JobRuns → JobRun → JobSchedule)
-                JobTriggerId = src.JobTriggerId,
-                JobTrigger = null, // break circular ref
-                ReRanFromJobRun = null, // self-referential — break
-                ScheduledSlotUtc = src.ScheduledSlotUtc,
-                RetryAttempt = src.RetryAttempt,
-                LastHeartbeatUtc = src.LastHeartbeatUtc,
-                Priority = src.Priority,
-                ProgressPercent = src.ProgressPercent,
-                ProgressMessage = src.ProgressMessage,
-                IdempotencyKey = src.IdempotencyKey,
-                DryRun = src.DryRun,
-                SlaBreached = src.SlaBreached,
-                TraceId = src.TraceId,
-                ParentJobRunId = src.ParentJobRunId,
-                BatchIndex = src.BatchIndex,
-                BatchTotal = src.BatchTotal,
-                DefinitionAuditVersion = src.DefinitionAuditVersion,
-                JobRunParameters =
-                    src.JobRunParameters.Select(p => new JobRunParameterRes(
-                            p.Id, p.JobRunId, p.Key, Enum.Parse<JobParameterType>(p.Type), MaskParameterValue(p.Value, p.EncryptedValue), p.Description,
-                            MaskParameterEncryptedValue(p.EncryptedValue), false))
-                        .ToList(),
-                JobRunResults = src.JobRunResults.Select(r => new JobRunResultRes(r.Id, r.JobRunId, r.Key, Enum.Parse<JobParameterType>(r.Type), r.Value)).ToList(),
-                JobRunLogs = src.JobRunLogs.Select(l => new JobRunLogRes(l.Id, l.JobRunId, Enum.Parse<JobLogLevel>(l.Level), l.Message, l.Context, l.StackTrace, l.Timestamp))
-                    .ToList()
-            });
-
-        config.NewConfig<JobRunParameter, JobRunParameterRes>()
-            .MapWith(src => new(
-                src.Id, src.JobRunId, src.Key, Enum.Parse<JobParameterType>(src.Type), MaskParameterValue(src.Value, src.EncryptedValue), src.Description,
-                MaskParameterEncryptedValue(src.EncryptedValue), false));
-
-        config.NewConfig<JobRunResult, JobRunResultRes>().MapWith(src => new(src.Id, src.JobRunId, src.Key, Enum.Parse<JobParameterType>(src.Type), src.Value));
-        config.NewConfig<JobRunLog, JobRunLogRes>()
-            .MapWith(src => new(src.Id, src.JobRunId, Enum.Parse<JobLogLevel>(src.Level), src.Message, src.Context, src.StackTrace, src.Timestamp));
-
-        config.NewConfig<JobRunReq, JobRun>().Map(dest => dest.Priority, src => src.Priority ?? 0);
-        config.NewConfig<JobWorkerInstanceReq, JobWorkerInstance>()
-            .Map(dest => dest.State, src => src.State.ToString())
-            .Map(dest => dest.StartedTimestamp, src => ToUtcDateTime(src.StartedTimestamp))
-            .Map(dest => dest.LastHeartbeatUtc, src => ToUtcDateTime(src.LastHeartbeatUtc));
-        config.NewConfig<JobWorkerInstance, JobWorkerInstanceRes>()
-            .MapWith(src => new(
-                src.Id, src.WorkerType, src.MachineName, src.ProcessId, Enum.Parse<JobWorkerInstanceState>(src.State), src.InFlightCount, src.StartedTimestamp,
-                src.LastHeartbeatUtc));
-
-        return config;
-    }
-
     private static void EncryptJobParameterEntity(IServiceProvider services, JobParameter entity)
     {
         var encryption = services.GetService<IJobParameterEncryptionService>();
@@ -568,9 +414,51 @@ public static class Extensions
         entity.EncryptedValue = encrypted ?? entity.EncryptedValue;
     }
 
-    private static string? MaskParameterValue(string? value, byte[]? encryptedValue) => encryptedValue is not null ? "***" : value;
+    private static void RemoveScheduleDependents(JobContext db, JobSchedule schedule)
+    {
+        db.JobScheduleParameters.RemoveRange(db.JobScheduleParameters.Where(p => p.JobScheduleId == schedule.Id).ToList());
 
-    private static byte[]? MaskParameterEncryptedValue(byte[]? encryptedValue) => encryptedValue is not null ? null : encryptedValue;
+        foreach (var run in db.JobRuns.Where(r => r.JobScheduleId == schedule.Id).ToList())
+            run.JobScheduleId = null;
+
+        if (!schedule.JobBlackoutCalendarId.HasValue)
+            return;
+
+        var calendarId = schedule.JobBlackoutCalendarId.Value;
+        // Leave shared calendars; delete only when no other schedule still references this calendar.
+        if (db.JobSchedules.Any(s => s.Id != schedule.Id && s.JobBlackoutCalendarId == calendarId))
+            return;
+
+        db.JobBlackoutWindows.RemoveRange(db.JobBlackoutWindows.Where(w => w.JobBlackoutCalendarId == calendarId).ToList());
+        var calendar = db.JobBlackoutCalendars.Find(calendarId);
+        if (calendar is not null)
+            db.JobBlackoutCalendars.Remove(calendar);
+    }
+
+    private static void RemoveTriggerDependents(JobContext db, JobTrigger trigger)
+    {
+        db.JobTriggerParameters.RemoveRange(db.JobTriggerParameters.Where(p => p.JobTriggerId == trigger.Id).ToList());
+        foreach (var run in db.JobRuns.Where(r => r.JobTriggerId == trigger.Id).ToList())
+            run.JobTriggerId = null;
+    }
+
+    private static void RemoveJobRunDependents(JobContext db, JobRun jobRun)
+    {
+        db.JobWorkflowRunSteps.RemoveRange(db.JobWorkflowRunSteps.Where(s => s.JobRunId == jobRun.Id).ToList());
+
+        foreach (var i in jobRun.InverseReRanFromJobRun)
+            i.ReRanFromJobRunId = null;
+
+        foreach (var i in jobRun.InverseTriggeredByJobRun)
+            i.TriggeredByJobRunId = null;
+
+        foreach (var i in jobRun.InverseParentJobRun)
+            i.ParentJobRunId = null;
+
+        db.JobRunLogs.RemoveRange(jobRun.JobRunLogs);
+        db.JobRunParameters.RemoveRange(jobRun.JobRunParameters);
+        db.JobRunResults.RemoveRange(jobRun.JobRunResults);
+    }
 
     private static DateTime ToUtcDateTime(DateTime value) => value.Kind switch {
         DateTimeKind.Utc => value,
@@ -660,8 +548,9 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
-        /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and
+        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices,
+        /// AddFusionCache or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(Action<PostgresJobOptions> configure)
         {
@@ -685,14 +574,17 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
-        /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and
+        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices,
+        /// AddFusionCache or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(PostgresJobOptions options)
         {
             services.AddJobDbContextFactory(options);
             services.AddLyoCrudServices<JobContext>();
             services.AddScoped<JobService>();
+            services.TryAddSingleton<JobLyoMapper>();
+            services.TryAddSingleton<ILyoMapper>(sp => sp.GetRequiredService<JobLyoMapper>());
             // Register a no-op publisher so JobService can be resolved without a message-queue transport.
             // Call AddMqJobEventPublisher() afterwards to replace this with a real implementation.
             services.TryAddSingleton<IJobEventPublisher, NullJobEventPublisher>();

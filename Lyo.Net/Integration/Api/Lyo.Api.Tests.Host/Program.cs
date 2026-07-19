@@ -6,7 +6,6 @@ using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;
-using Lyo.Api.Mapping;
 using Lyo.Api.Tests.Host;
 using Lyo.Cache;
 using Lyo.Common;
@@ -17,17 +16,12 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Xlsx;
-using Mapster;
-using MapsterMapper;
 using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddFormatterService();
-var config = new TypeAdapterConfig();
-config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-config.ConfigureJobMappings();
 builder.Services.AddResponseCompression(options => {
     options.EnableForHttps = true;
     options.Providers.Add<BrotliCompressionProvider>();
@@ -50,9 +44,6 @@ builder.Services.AddPostgresJobManagementFromConfiguration(builder.Configuration
 builder.Services.AddLyoApiExport<JobContext>();
 builder.Services.AddCsvExport();
 builder.Services.AddXlsxExport();
-builder.Services.AddSingleton(config);
-builder.Services.AddScoped<IMapper, ServiceMapper>();
-builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => {
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();

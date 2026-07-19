@@ -215,7 +215,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             var definition = await GetJobDefinitionAsync(definitionId.Value).ConfigureAwait(false);
             if (definition == null) {
                 _logger.LogWarning("Definition {DefinitionId} not found", definitionId);
-                return true;
+                return false; // ack — retrying won't help if the definition is gone
             }
 
             if (!definition.Enabled) {
@@ -223,14 +223,19 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 updated.Remove(definitionId.Value);
                 _jobs = updated;
                 _logger.LogDebug("Removed disabled definition {DefinitionId}", definitionId);
-                return true;
+                return false; // ack — handled
             }
 
             var jobInfo = await LoadJobInfoAsync(definition).ConfigureAwait(false);
             var updatedJobs = new Dictionary<Guid, JobInfo>(_jobs) { [definitionId.Value] = jobInfo };
             _jobs = updatedJobs;
             _logger.LogInformation("Refreshed definition {DefinitionId} ({Name})", definitionId, definition.Name);
-            return true;
+            return false; // ack — handled (true = requeue)
+        }
+        catch (Exception ex) {
+            // Do not throw: RequeueOnException would loop poison messages forever (e.g. API enum query bugs).
+            _logger.LogError(ex, "Failed to refresh definition {DefinitionId}; acknowledging to avoid requeue storm", definitionId);
+            return false;
         }
         finally {
             _definitionLock.Release();
@@ -260,7 +265,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task RefreshDefinitionsInternalAsync(CancellationToken ct = default)
     {
         _lastDefinitionsRefreshUtc = DateTime.UtcNow;
-        _logger.LogInformation("Updating job definitions");
+        _logger.LogTrace("Updating job definitions");
         using var timer = _metrics.StartTimer(Constants.Metrics.Scheduler.RefreshDuration);
         var query = new QueryConcreteReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
         var results = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
@@ -352,8 +357,15 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             return null;
 
         var definition = schedule.ToScheduleDefinition() with { TimeZone = _options.TimeZone };
-        var lastRunTime = jobInfo.LastSuccessfulRun?.StartedTimestamp;
-        var nextDue = ScheduleCalculator.GetNextRun(definition, lastRunTime ?? DateTime.UtcNow.AddYears(-10));
+        var reference = JobScheduleReference.Resolve(
+            jobInfo.LastSuccessfulRun?.StartedTimestamp,
+            jobInfo.LastRun?.ScheduledSlotUtc,
+            jobInfo.LastRun?.StartedTimestamp,
+            jobInfo.LastRun?.CreatedTimestamp,
+            schedule.StartDateUtc,
+            now,
+            _options.MisfireLookbackMinutes);
+        var nextDue = ScheduleCalculator.GetNextRun(definition, reference);
         if (!nextDue.HasValue || nextDue.Value > now)
             return null;
 
@@ -565,30 +577,65 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         runReq.JobScheduleId = schedule.Id;
         runReq.ScheduledSlotUtc = scheduledSlot;
         _logger.LogDebug("Creating job run: {Request}", runReq);
-        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq, null, ct).ConfigureAwait(false);
-        if (created.IsSuccess && created.Data != null) {
-            _logger.LogInformation("Created job run {JobRunId}", created.Data.Id);
-            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
-            _jobs = new(_jobs) { [definition.Id] = jobInfo with { LastRun = created.Data } };
-            return true;
-        }
+        try {
+            var created = await _apiClient
+                .PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), runReq, null, ct)
+                .ConfigureAwait(false);
+            if (created.IsSuccess && created.Data != null) {
+                _logger.LogInformation("Created job run {JobRunId}", created.Data.Id);
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
+                _jobs = new(_jobs) { [definition.Id] = jobInfo with { LastRun = created.Data } };
+                return true;
+            }
 
-        if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true) {
-            _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
-            _logger.LogDebug("Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
+            if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true) {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
+                _logger.LogDebug("Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
+                MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
+                return false;
+            }
+
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
+            _logger.LogWarning("Failed to create job run: {Error}", created?.Error);
+            MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
             return false;
         }
+        catch (ApiException ex) {
+            // Do not let a single create failure abort the whole schedule-check loop (past-due spam).
+            if (ex.StatusCode is 409) {
+                _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
+                _logger.LogDebug(ex, "Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
+                MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
+                return false;
+            }
 
-        _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
-        _logger.LogWarning("Failed to create job run: {Error}", created?.Error);
-        return false;
+            _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
+            _logger.LogWarning(ex, "Failed to create job run for slot {Slot:u}", scheduledSlot);
+            MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
+            return false;
+        }
     }
 
+    /// <summary>
+    /// Advances in-memory schedule progress past <paramref name="scheduledSlot" /> when create fails,
+    /// so the next check does not retry the same past-due slot forever.
+    /// </summary>
+    private void MarkSlotAttempted(Guid definitionId, JobInfo jobInfo, DateTime scheduledSlot)
+    {
+        var placeholder = (jobInfo.LastRun ?? new JobRunRes { JobDefinitionId = definitionId, State = JobState.Finished }) with {
+            ScheduledSlotUtc = scheduledSlot,
+            State = JobState.Finished,
+            Result = JobRunResult.Failure
+        };
+        _jobs = new(_jobs) { [definitionId] = jobInfo with { LastRun = placeholder } };
+    }
+
+    /// <returns>false to ack the MQ message; true to requeue. Missing cache entries are acked so they do not loop forever.</returns>
     private async Task<bool> ProcessCompletedJobRunAsync(JobRunRes run)
     {
         if (!_jobs.TryGetValue(run.JobDefinitionId, out var jobInfo)) {
             _logger.LogWarning("No job info for definition {DefinitionId}", run.JobDefinitionId);
-            return true;
+            return false; // ack — requeue would spam this forever; definition may be unscheduled/disabled
         }
 
         var updatedInfo = jobInfo with { LastRun = run };
@@ -641,10 +688,10 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             await ProcessChildRunCompletionAsync(run).ConfigureAwait(false);
 
         if (!run.AllowTriggers || jobInfo.Definition.JobTriggers?.Count == 0)
-            return true;
+            return false; // ack — handled
 
         await ProcessTriggersAsync(updatedInfo, run).ConfigureAwait(false);
-        return true;
+        return false; // ack — handled (true = requeue)
     }
 
     private async Task ScheduleRetryAsync(JobInfo jobInfo, JobRunRes failedRun)
@@ -665,7 +712,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         if (backoffSeconds > 0 && !useDelayedMq)
             retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
 
-        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), retryReq).ConfigureAwait(false);
+        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), retryReq).ConfigureAwait(false);
         if (created.IsSuccess && created.Data != null) {
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.RetriesScheduled);
             _logger.LogInformation("Created retry job run {JobRunId} (attempt {Attempt})", created.Data.Id, nextAttempt);
@@ -807,7 +854,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             }
 
             var runReq = BuildRunRequest(triggeringDef.Id, null, trigger, triggeredByRun);
-            var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq).ConfigureAwait(false);
+            var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), runReq).ConfigureAwait(false);
             if (created.IsSuccess && created.Data != null) {
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.TriggersFired);
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);

@@ -18,7 +18,26 @@ public sealed record LyoProblemDetails(
     string? Stacktrace = null,
     Dictionary<string, object?>? Extensions = null) : ILyoProblemDetails
 {
-    public string GetFullMessage() => Errors.Count > 0 ? string.Join(" -> ", Errors.Select(e => e.Description)) : Detail;
+    /// <summary>
+    /// Root <see cref="Detail"/> plus structured <see cref="Errors"/> descriptions when present.
+    /// Prefer this for exception/UI surfaces so callers see validation entries, not only the summary.
+    /// </summary>
+    public string GetFullMessage()
+    {
+        if (Errors.Count == 0)
+            return Detail;
+
+        var errorText = string.Join("; ", Errors.Select(e => e.Description).Where(d => !string.IsNullOrWhiteSpace(d)));
+        if (string.IsNullOrWhiteSpace(errorText))
+            return Detail;
+
+        // FromCode / single-error cases often duplicate Detail onto Errors[0].
+        if (string.IsNullOrWhiteSpace(Detail)
+            || Errors.Any(e => string.Equals(e.Description, Detail, StringComparison.Ordinal)))
+            return errorText;
+
+        return $"{Detail} {errorText}";
+    }
 
     public int GetErrorDepth() => Math.Max(1, Errors.Count);
 

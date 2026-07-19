@@ -1,6 +1,7 @@
 @using Lyo.Common.Extensions
 @using Lyo.Query.Models.Common
 @using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.ChipInput
 @using Lyo.Web.Components.Form
 @using Lyo.Web.Components.Validation
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-query-node-editor" class="lyo-query-node-editor">
@@ -160,14 +161,11 @@
             <MudText Typo="Typo.subtitle2">Value</MudText>
 
             @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
-                <MudTextField T="string"
-                              Value="@GetCsvValue(conditionNode)"
-                              ValueChanged="@OnCsvValueChanged"
-                              Label="Values (comma separated)"
-                              Variant="Variant.Outlined"
-                              Dense
-                              Margin="Margin.Dense"
-                              HelperText="Enter values separated by commas"/>
+                <LyoChipInput Values="@GetMultiValues(conditionNode)"
+                              ValuesChanged="@OnMultiValuesChanged"
+                              Placeholder="Type a value and press Enter, or paste comma-separated values"
+                              ShowClearButton="true"/>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Enter values as chips (Enter, comma, or paste)</MudText>
             }
             else {
                 @* Show appropriate input based on value type *@

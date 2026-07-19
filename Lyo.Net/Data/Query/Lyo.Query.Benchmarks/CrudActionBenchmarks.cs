@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Api.Mapping;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
@@ -14,8 +13,6 @@ using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Testing.Containers;
-using Mapster;
-using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -50,17 +47,11 @@ public class CrudActionBenchmarks
     {
         _postgres = new();
         _postgres.StartAsync().GetAwaiter().GetResult();
-        var config = new TypeAdapterConfig();
-        config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
-        config.ConfigureJobMappings();
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = _postgres.ConnectionString, EnableAutoMigrations = true });
-        services.AddSingleton(config);
-        services.AddScoped<IMapper, ServiceMapper>();
-        services.AddScoped<ILyoMapper, MapsterLyoMapper>();
         _provider = services.BuildServiceProvider();
         using (var migrateScope = _provider.CreateScope()) {
             var factory = migrateScope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();

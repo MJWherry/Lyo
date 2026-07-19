@@ -19,7 +19,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<PdfServiceOptions>(_ => new());
-            services.AddScoped<PdfService>(provider => {
+            services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
                 var httpClientFactory = provider.GetService<IHttpClientFactory>();
@@ -27,7 +27,7 @@ public static class Extensions
                 return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
             });
 
-            services.AddScoped<IPdfService>(provider => provider.GetRequiredService<PdfService>());
+            services.AddSingleton<IPdfService>(provider => provider.GetRequiredService<PdfService>());
             return services;
         }
 
@@ -44,7 +44,7 @@ public static class Extensions
                 return options;
             });
 
-            services.AddScoped<PdfService>(provider => {
+            services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
                 var httpClientFactory = provider.GetService<IHttpClientFactory>();
@@ -52,7 +52,7 @@ public static class Extensions
                 return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
             });
 
-            services.AddScoped<IPdfService>(provider => provider.GetRequiredService<PdfService>());
+            services.AddSingleton<IPdfService>(provider => provider.GetRequiredService<PdfService>());
             return services;
         }
 
@@ -74,7 +74,7 @@ public static class Extensions
                 return options;
             });
 
-            services.AddScoped<PdfService>(provider => {
+            services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
                 var httpClientFactory = provider.GetService<IHttpClientFactory>();
@@ -82,7 +82,7 @@ public static class Extensions
                 return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
             });
 
-            services.AddScoped<IPdfService>(provider => provider.GetRequiredService<PdfService>());
+            services.AddSingleton<IPdfService>(provider => provider.GetRequiredService<PdfService>());
             return services;
         }
 
@@ -94,14 +94,14 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(httpClientFactory);
             services.AddSingleton<PdfServiceOptions>(_ => new());
-            services.AddScoped<PdfService>(provider => {
+            services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
                 var httpClient = httpClientFactory(provider);
                 return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
             });
 
-            services.AddScoped<IPdfService>(provider => provider.GetRequiredService<PdfService>());
+            services.AddSingleton<IPdfService>(provider => provider.GetRequiredService<PdfService>());
             return services;
         }
 
@@ -114,7 +114,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(httpClientName);
             services.AddHttpClient(httpClientName);
             services.AddSingleton<PdfServiceOptions>(_ => new());
-            services.AddScoped<PdfService>(provider => {
+            services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
                 var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
@@ -122,7 +122,7 @@ public static class Extensions
                 return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
             });
 
-            services.AddScoped<IPdfService>(provider => provider.GetRequiredService<PdfService>());
+            services.AddSingleton<IPdfService>(provider => provider.GetRequiredService<PdfService>());
             return services;
         }
 
@@ -145,7 +145,7 @@ public static class Extensions
                     return options;
                 });
 
-            services.AddKeyedScoped<PdfService>(
+            services.AddKeyedSingleton<PdfService>(
                 keyedServiceName, (provider, _) => {
                     var metrics = provider.GetService<IMetrics>();
                     var options = provider.GetRequiredKeyedService<PdfServiceOptions>(keyedServiceName);
@@ -156,7 +156,7 @@ public static class Extensions
                     return new(provider.GetRequiredService<ILoggerFactory>(), metrics, httpClient, options);
                 });
 
-            services.AddKeyedScoped<IPdfService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<PdfService>(keyedServiceName));
+            services.AddKeyedSingleton<IPdfService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<PdfService>(keyedServiceName));
             return services;
         }
     }

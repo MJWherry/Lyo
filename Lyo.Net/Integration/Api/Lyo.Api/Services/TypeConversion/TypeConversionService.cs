@@ -181,7 +181,12 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
     }
 
     private static object ConvertJsonElementToType(JsonElement element, Type targetType, TypeConversionMetadata metadata)
-        => Type.GetTypeCode(metadata.UnderlyingType) switch {
+    {
+        // Enums report TypeCode.Int32; do not call GetInt32() on string tokens — accept name or numeric value.
+        if (metadata.IsEnum)
+            return ConvertJsonElementToEnum(element, metadata.EnumType!);
+
+        return Type.GetTypeCode(metadata.UnderlyingType) switch {
             TypeCode.Boolean => element.GetBoolean(),
             TypeCode.Byte => element.GetByte(),
             TypeCode.SByte => element.GetSByte(),
@@ -199,6 +204,24 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
             var _ when metadata.UnderlyingType == typeof(DateTimeOffset) => element.GetDateTimeOffset(),
             var _ => element.Deserialize(targetType) ?? throw new InvalidOperationException($"Cannot convert JSON element to type {targetType.Name}")
         };
+    }
+
+    private static object ConvertJsonElementToEnum(JsonElement element, Type enumType)
+    {
+        switch (element.ValueKind) {
+            case JsonValueKind.String:
+                return ConvertToEnum(element.GetString()!, enumType);
+            case JsonValueKind.Number:
+                if (element.TryGetInt64(out var int64))
+                    return Enum.ToObject(enumType, int64);
+                if (element.TryGetDouble(out var dbl))
+                    return Enum.ToObject(enumType, Convert.ChangeType(dbl, Enum.GetUnderlyingType(enumType)));
+                break;
+        }
+
+        throw new InvalidOperationException(
+            $"Cannot convert JSON {element.ValueKind} to enum type {enumType.Name}; expected a string name or number.");
+    }
 
     private static object ConvertStringToType(string str, Type underlyingType)
     {

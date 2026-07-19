@@ -52,6 +52,15 @@ public class JobRunClientTests
     }
 
     [Fact]
+    public async Task CreateAsync_PostsToRunsCreateNotRunsRoot()
+    {
+        await _relativeClient.CreateAsync(new JobRunReq(Guid.NewGuid(), "tester", false));
+
+        Assert.Equal("Job/Run/Create", _api.LastUri);
+        Assert.IsType<JobRunReq>(_api.LastBody);
+    }
+
+    [Fact]
     public async Task PatchProgressAsync_PatchesRunEntity()
     {
         var runId = Guid.NewGuid();

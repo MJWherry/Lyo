@@ -790,26 +790,7 @@ public class QueryService<TContext>(
         projectionService.ApplyMatchedOnlyIncludes(queryResults, queryRequest.Include, includeFilterConditions);
     }
 
-    private static ProjectionQueryReq CloneProjectionQueryReq(ProjectionQueryReq source)
-    {
-        var sourceOptions = source.Options;
-        return new() {
-            Start = source.Start,
-            Amount = source.Amount,
-            Options =
-                new() {
-                    TotalCountMode = sourceOptions.TotalCountMode,
-                    IncludeFilterMode = sourceOptions.IncludeFilterMode,
-                    ZipSiblingCollectionSelections = sourceOptions.ZipSiblingCollectionSelections
-                },
-            WhereClause = source.WhereClause,
-            Include = [..source.Include],
-            Select = [..source.Select],
-            ComputedFields = [..source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
-            Keys = [..source.Keys.Select(i => i.ToArray())],
-            SortBy = [..source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
-        };
-    }
+    private static ProjectionQueryReq CloneProjectionQueryReq(ProjectionQueryReq source) => QueryRequestClone.Clone(source);
 
     private static QueryConcreteReq ToQueryConcreteReq(ProjectionQueryReq source)
         => new() {

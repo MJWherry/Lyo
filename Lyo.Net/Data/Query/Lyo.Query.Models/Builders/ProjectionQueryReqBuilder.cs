@@ -114,6 +114,43 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     public ProjectionQueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
         => AddSort(new(propertyName, direction, priority));
 
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddKey" path="/summary" />
+    public ProjectionQueryReqBuilder AddKey(params object[] keyParts)
+    {
+        ArgumentHelpers.ThrowIfNull(keyParts);
+        ArgumentHelpers.ThrowIf(keyParts.Length == 0, "At least one key part is required", nameof(keyParts));
+        _query.Keys.Add(keyParts);
+        return this;
+    }
+
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddKeys(object[], object[][])" path="/summary" />
+    public ProjectionQueryReqBuilder AddKeys(object[] key, params object[][] rest)
+    {
+        ArgumentHelpers.ThrowIfNull(key);
+        ArgumentHelpers.ThrowIf(key.Length == 0, "At least one key part is required", nameof(key));
+        _query.Keys.Add(key);
+        foreach (var row in rest) {
+            ArgumentHelpers.ThrowIfNull(row);
+            ArgumentHelpers.ThrowIf(row.Length == 0, "At least one key part is required", nameof(rest));
+            _query.Keys.Add(row);
+        }
+
+        return this;
+    }
+
+    /// <inheritdoc cref="QueryConcreteReqBuilder.AddKeys(System.Collections.Generic.IEnumerable{object[]})" path="/summary" />
+    public ProjectionQueryReqBuilder AddKeys(IEnumerable<object[]> keys)
+    {
+        ArgumentHelpers.ThrowIfNull(keys);
+        foreach (var key in keys) {
+            ArgumentHelpers.ThrowIfNull(key);
+            ArgumentHelpers.ThrowIf(key.Length == 0, "At least one key part is required", nameof(keys));
+            _query.Keys.Add(key);
+        }
+
+        return this;
+    }
+
     /// <inheritdoc cref="QueryConcreteReqBuilder.SetPagination" path="/summary" />
     public ProjectionQueryReqBuilder SetPagination(int start, int amount)
     {

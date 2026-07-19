@@ -233,7 +233,7 @@ public sealed class JobWorkflowEngine : BackgroundService
             AllowTriggers = false
         };
 
-        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri($"{Constants.Rest.Job.Runs}/Create"), req).ConfigureAwait(false);
+        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), req).ConfigureAwait(false);
         if (!created.IsSuccess || created.Data is null) {
             _logger.LogWarning("Failed to create workflow step run for step {StepName}", step.StepName);
             return null;

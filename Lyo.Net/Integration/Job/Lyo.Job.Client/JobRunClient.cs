@@ -16,7 +16,7 @@ public sealed class JobRunClient(IApiClient client, string? routePrefix = null)
         => client.GetAsAsync<JobRunRes>(JobRouteBuilder.WithIncludes(JobRouteBuilder.Build(routePrefix, $"{JobRoutes.Runs}/{runId}"), includes), ct: ct);
 
     public Task<CreateResult<JobRunRes>> CreateAsync(JobRunReq request, CancellationToken ct = default)
-        => client.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(JobRouteBuilder.Build(routePrefix, JobRoutes.Runs), request, ct: ct);
+        => client.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunsCreate), request, ct: ct);
 
     public Task<QueryRes<JobRunRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
         => client.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunsQuery), request, ct: ct);
