@@ -1,5 +1,6 @@
 @using Lyo.Web.Components.DataGrid
 @inject ISnackbar Snackbar
+@inject IJsInterop Js
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -9,14 +10,25 @@
                       FilterPropertyDefinitions="@_propertyDefinitions"
                       Features="@LyoDataGridFeatureFlags.All">
     <Columns>
-        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var idText = ProjectedValueHelper.GetDisplayValue(item, "Id");
+                }
+                <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@(idText.Length > 8 ? idText[..8] : idText)</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID"
+                                   OnClick="@(() => CopyToClipboard(idText))"/>
+                </MudStack>
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="WorkerType" Title="Worker Type"/>
         <LyoProjectedColumn Field="MachineName" Title="Machine"/>
-        <LyoProjectedColumn Field="ProcessId" Title="PID"/>
-        <LyoProjectedColumn Field="State" Title="State"/>
-        <LyoProjectedColumn Field="InFlightCount" Title="In Flight"/>
-        <LyoProjectedColumn Field="StartedTimestamp" Title="Started"/>
-        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat"/>
+        <LyoProjectedColumn Field="ProcessId" Title="PID" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 100px;"/>
+        <LyoProjectedColumn Field="InFlightCount" Title="In Flight" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat" CellStyle="white-space: nowrap;"/>
     </Columns>
 </LyoDataGridProjected>
 
@@ -44,6 +56,12 @@
     {
         var id = ProjectedValueHelper.GetValue(item, "Id");
         return id != null ? [id] : [];
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await Js.SendToClipboard(text);
+        Snackbar.Add("Copied to clipboard", Severity.Info);
     }
 
 }

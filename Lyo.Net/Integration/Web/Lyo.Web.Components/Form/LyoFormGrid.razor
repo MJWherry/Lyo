@@ -1,0 +1,20 @@
+<CascadingValue Name="LyoFormGrid" Value="this" IsFixed="true">
+    <MudGrid Spacing="@Spacing">
+        @ChildContent
+    </MudGrid>
+</CascadingValue>
+
+@code {
+
+    /// <summary>MudGrid spacing between fields. Defaults to a compact 2.</summary>
+    [Parameter]
+    public int Spacing { get; set; } = 2;
+
+    /// <summary>
+    /// Form fields. <see cref="LyoFormInput{TModel,TValue}" /> children detect this grid via a cascading value and wrap themselves in a
+    /// <c>MudItem</c> sized from their <c>FieldSize</c> (or derived from the property type), so callers only declare fields.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+}

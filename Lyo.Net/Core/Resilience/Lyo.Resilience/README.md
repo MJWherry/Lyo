@@ -85,8 +85,9 @@ services.AddLyoResiliencePipelines(builder.Configuration);  // default: Lyo:Resi
 - `BackoffType` ("Constant" | "Linear" | "Exponential")
 - `UseJitter` (bool)
 
-If `ShouldHandle` is not configurable, the library applies a default that handles `SocketException`, `TimeoutException`, `HttpRequestException`, `IOException`, and
-`RetryableResultException` (for result-based retry).
+If `ShouldHandle` is not configurable, the library applies a default that handles `SocketException`, `TimeoutException`, `HttpRequestException`, `IOException`,
+`RetryableResultException` (for result-based retry), and any `Lyo.Exceptions.Models.HttpException` whose `IsTransient` is `true` (429/503/504 exception types, plus
+`Lyo.Api.Client.ApiException` for transient response status codes). Non-transient HTTP exceptions (404, 409, …) are never retried.
 
 **Timeout** – binds to `Polly.Timeout.TimeoutStrategyOptions`:
 

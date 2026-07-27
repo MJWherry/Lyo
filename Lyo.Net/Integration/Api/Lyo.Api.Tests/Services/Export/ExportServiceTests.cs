@@ -158,7 +158,7 @@ public sealed class ExportServiceTests
     public async Task ExportAsync_Csv_WithCsvHandler_Succeeds()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<ICsvService>(_csvService);
+        services.AddSingleton(_csvService);
         services.AddCsvExport();
         var handlers = services.BuildServiceProvider().GetServices<IExportFormatHandler>().ToList();
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };

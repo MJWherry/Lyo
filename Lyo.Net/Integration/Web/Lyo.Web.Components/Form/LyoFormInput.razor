@@ -1,8 +1,20 @@
 @typeparam TModel
 @typeparam TValue
 
-<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form-input">
-    @if (PropertyExpression != null) {
-        @RenderInput()
-    }
-</LyoElementRoot>
+@if (FormGrid != null) {
+    var (xs, sm, md) = GetSizeColumns();
+    <MudItem xs="@xs" sm="@sm" md="@md">
+        <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form-input">
+            @if (PropertyExpression != null) {
+                @RenderInput()
+            }
+        </LyoElementRoot>
+    </MudItem>
+}
+else {
+    <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form-input">
+        @if (PropertyExpression != null) {
+            @RenderInput()
+        }
+    </LyoElementRoot>
+}

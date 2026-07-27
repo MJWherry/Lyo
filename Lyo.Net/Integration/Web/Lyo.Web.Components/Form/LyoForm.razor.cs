@@ -1,3 +1,5 @@
+using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Common.Request;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.Form;
@@ -26,6 +28,13 @@ public partial class LyoForm<TModel>
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// When false, renders only the fields (no MudCard, no Save/Reset buttons). Use inside dialogs where the dialog owns the action bar and calls
+    /// <see cref="BuildPatchRequest" /> / <see cref="GetChanges" /> directly. Defaults to true (standalone card with actions).
+    /// </summary>
+    [Parameter]
+    public bool ShowActions { get; set; } = true;
 
     [Parameter]
     public EventCallback<SubmitContext> OnSubmit { get; set; }
@@ -101,6 +110,23 @@ public partial class LyoForm<TModel>
     }
 
     public Dictionary<string, PropertyChange> GetChanges() => _changes.Where(entry => entry.Value.HasChanged).ToDictionary(entry => entry.Key, entry => entry.Value);
+
+    /// <summary>
+    /// Builds a <see cref="PatchRequest" /> for the entity identified by <paramref name="key" /> containing only the properties the user actually
+    /// changed in this form. Returns null when nothing changed, so callers can skip the API call entirely.
+    /// </summary>
+    public PatchRequest? BuildPatchRequest(object key)
+    {
+        var changes = GetChanges();
+        if (changes.Count == 0)
+            return null;
+
+        var builder = new PatchRequestBuilder().WithKey(key);
+        foreach (var change in changes.Values)
+            builder.SetProperty(change.PropertyName, change.CurrentValue);
+
+        return builder.Build();
+    }
 
     public string AddOperation(ChangeType changeType, string description, Func<TModel?, Task> operation)
     {

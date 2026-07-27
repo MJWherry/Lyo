@@ -995,7 +995,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         if (queryConfig.MaxComputedTemplateLength is int maxTemplateLength) {
             foreach (var computed in queryRequest.ComputedFields) {
-                if (computed.Template?.Length > maxTemplateLength)
+                if (computed.Template.Length > maxTemplateLength)
                     errors.Add(
                         new(
                             Constants.ApiErrorCodes.InvalidQuery,

@@ -48,10 +48,34 @@ public sealed record LyoProblemDetails(
         => code switch {
             Constants.ApiErrorCodes.NotFound => 404,
             Constants.ApiErrorCodes.Forbidden => 403,
+            Constants.ApiErrorCodes.Unauthorized => 401,
+            Constants.ApiErrorCodes.Conflict => 409,
+            Constants.ApiErrorCodes.Gone => 410,
+            Constants.ApiErrorCodes.UnprocessableEntity => 422,
+            Constants.ApiErrorCodes.TooManyRequests => 429,
             Constants.ApiErrorCodes.Cancelled => 499,
             Constants.ApiErrorCodes.SqlException => 500,
             Constants.ApiErrorCodes.MessageQueueConnectionIssue => 503,
+            Constants.ApiErrorCodes.ServiceUnavailable => 503,
+            Constants.ApiErrorCodes.GatewayTimeout => 504,
             var _ => 400
+        };
+
+    /// <summary>Default <see cref="Constants.ApiErrorCodes" /> value for an HTTP status code, used when an exception carries no explicit error code.</summary>
+    public static string MapHttpStatusToErrorCode(int statusCode)
+        => statusCode switch {
+            400 => Constants.ApiErrorCodes.InvalidRequest,
+            401 => Constants.ApiErrorCodes.Unauthorized,
+            403 => Constants.ApiErrorCodes.Forbidden,
+            404 => Constants.ApiErrorCodes.NotFound,
+            409 => Constants.ApiErrorCodes.Conflict,
+            410 => Constants.ApiErrorCodes.Gone,
+            422 => Constants.ApiErrorCodes.UnprocessableEntity,
+            429 => Constants.ApiErrorCodes.TooManyRequests,
+            499 => Constants.ApiErrorCodes.Cancelled,
+            503 => Constants.ApiErrorCodes.ServiceUnavailable,
+            504 => Constants.ApiErrorCodes.GatewayTimeout,
+            var _ => Constants.ApiErrorCodes.Unknown
         };
 
     /// <summary>Single-code problem with optional trace, instance, and extensions (replaces target-typed <c>new(..., DateTime.UtcNow)</c>).</summary>

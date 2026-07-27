@@ -1,0 +1,137 @@
+<MudStack Spacing="2">
+    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add" OnClick="AddRow">
+            Add Parameter
+        </MudButton>
+    </MudStack>
+
+    @if (Items.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No parameters defined</MudText>
+        return;
+    }
+
+    <MudSimpleTable Dense Hover Elevation="0" Style="table-layout: fixed; width: 100%;">
+        <thead>
+        <tr>
+            <th style="width: 18%;">Key</th>
+            <th style="width: 110px;">Type</th>
+            <th>Value</th>
+            <th style="width: 20%;">Description</th>
+            @if (ShowRequired) {
+                <th style="width: 70px; text-align: center;">Req.</th>
+            }
+            @if (ShowAllowMultiple) {
+                <th style="width: 70px; text-align: center;">Multi</th>
+            }
+            @if (ShowEnabled) {
+                <th style="width: 80px; text-align: center;">Enabled</th>
+            }
+            <th style="width: 60px;"></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Items) {
+            <tr>
+                <td>
+                    <MudTextField T="string" Value="@row.Key" ValueChanged="@(v => Set(() => row.Key = v))"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </td>
+                <td>
+                    <MudSelect T="JobParameterType" Value="@row.Type" ValueChanged="@(v => Set(() => row.Type = v))"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        @foreach (var t in Enum.GetValues<JobParameterType>()) {
+                            <MudSelectItem Value="t">@t</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+                <td>
+                    @if (row.IsEncrypted) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Encrypted</MudChip>
+                    }
+                    else {
+                        <JobParameterValueInput Type="@row.Type" Value="@row.Value" ValueChanged="@(v => Set(() => row.Value = v))"/>
+                    }
+                </td>
+                <td>
+                    <MudTextField T="string" Value="@row.Description" ValueChanged="@(v => Set(() => row.Description = v))"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </td>
+                @if (ShowRequired) {
+                    <td style="text-align: center;">
+                        <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))" Dense="true" Class="ma-0"/>
+                    </td>
+                }
+                @if (ShowAllowMultiple) {
+                    <td style="text-align: center;">
+                        <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))" Dense="true" Class="ma-0"/>
+                    </td>
+                }
+                @if (ShowEnabled) {
+                    <td style="text-align: center;">
+                        <MudCheckBox T="bool" Value="@row.Enabled" ValueChanged="@(v => Set(() => row.Enabled = v))" Dense="true" Class="ma-0"/>
+                    </td>
+                }
+                <td style="text-align: right; white-space: nowrap;">
+                    @if (row.IsNew) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip>
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete parameter"
+                                   OnClick="@(() => DeleteRow(row))"/>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </MudSimpleTable>
+</MudStack>
+
+@code {
+
+    /// <summary>Heading shown above the table (e.g. "Job Parameters", "Schedule Parameters").</summary>
+    [Parameter]
+    public string Title { get; set; } = "Parameters";
+
+    /// <summary>Rows edited in place; the parent owns the list and persists it with its own Save action.</summary>
+    [Parameter]
+    [EditorRequired]
+    public List<JobParameterEditRow> Items { get; set; } = [];
+
+    /// <summary>Show the Required flag column (definition parameters).</summary>
+    [Parameter]
+    public bool ShowRequired { get; set; }
+
+    /// <summary>Show the Allow Multiple flag column (definition parameters).</summary>
+    [Parameter]
+    public bool ShowAllowMultiple { get; set; }
+
+    /// <summary>Show the Enabled flag column (schedule parameters).</summary>
+    [Parameter]
+    public bool ShowEnabled { get; set; }
+
+    /// <summary>Raised after any edit, add, or delete so the parent can mark itself dirty.</summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private async Task Set(Action apply)
+    {
+        apply();
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+    private async Task AddRow()
+    {
+        Items.Add(new() { IsNew = true, Key = $"Param{Items.Count + 1}", Type = JobParameterType.String });
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+    private async Task DeleteRow(JobParameterEditRow row)
+    {
+        Items.Remove(row);
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+}

@@ -2,6 +2,7 @@ using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Enums;
 using Lyo.Web.Components.DataGrid;
+using Lyo.Web.Components.Dialog;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 
@@ -46,7 +47,7 @@ public sealed class DataGridExportService(IDialogService dialogService, ISnackba
 
     private async Task<List<ExportColumnMapping>?> ShowColumnSelectorAsync(IDataGridExportHost host, CancellationToken cancellationToken)
     {
-        var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialogOptions = LyoDialogPresets.Medium;
         var parameters = new DialogParameters<ExportColumnSelectorDialog> {
             { x => x.DataType, host.ExportDataType },
             { x => x.AvailableFields, host.ExportAvailableFields },

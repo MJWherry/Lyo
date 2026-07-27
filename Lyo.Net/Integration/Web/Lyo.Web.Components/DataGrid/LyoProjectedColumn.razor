@@ -7,6 +7,10 @@
                 Resizable="@Resizable"
                 Align="@Align"
                 Tag="@GetApiSortKey()"
+                HeaderStyle="@HeaderStyle"
+                HeaderClass="@HeaderClass"
+                CellStyle="@CellStyle"
+                CellClass="@CellClass"
                 Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
                 HiddenChanged="@OnHiddenChanged">
     <CellTemplate Context="cell">
@@ -74,6 +78,22 @@
 
     [Parameter]
     public Align Align { get; set; } = Align.Inherit;
+
+    /// <summary>Inline style for the header cell. Use with a width (e.g. <c>width: 90px;</c>) to keep narrow columns (bools, counts, ids) compact.</summary>
+    [Parameter]
+    public string? HeaderStyle { get; set; }
+
+    /// <summary>CSS class for the header cell.</summary>
+    [Parameter]
+    public string? HeaderClass { get; set; }
+
+    /// <summary>Inline style for body cells (e.g. <c>white-space: nowrap;</c> for timestamps).</summary>
+    [Parameter]
+    public string? CellStyle { get; set; }
+
+    /// <summary>CSS class for body cells.</summary>
+    [Parameter]
+    public string? CellClass { get; set; }
 
     /// <summary>When true, the column starts hidden (and stays out of the query select) until the user shows it, unless visibility was restored from the client store.</summary>
     [Parameter]

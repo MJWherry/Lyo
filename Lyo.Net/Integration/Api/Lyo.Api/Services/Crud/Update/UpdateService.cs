@@ -11,6 +11,7 @@ using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
@@ -105,7 +106,7 @@ public class UpdateService<TContext>(
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk update size validation failed: {Code} {Message}", err.Code, err.Message);
-            throw new LFException(err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
         }
 
         var bulkResult = await TryBulkUpdateAll<TRequest, TDbModel, TResult>(requestList, before, after, ct);
@@ -180,7 +181,7 @@ public class UpdateService<TContext>(
                     // Store old data in dictionary BEFORE mapping
                     oldDataMap[entity] = (oldData, [entityKeys]);
                     requestMap[entity] = request;
-                    Mapper.Map(request.Data, entity);
+                    MapOrCopy(Mapper, context, request.Data, entity);
                     var ctx = new UpdateContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
                     before?.Invoke(ctx);
                 }
@@ -301,7 +302,7 @@ public class UpdateService<TContext>(
                     foreach (var entity in entities) {
                         var oldData = MapOrCast<TDbModel, TResult>(Mapper, entity);
                         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
-                        Mapper.Map(request.Data, entity);
+                        MapOrCopy(Mapper, context, request.Data, entity);
                         var ctx = new UpdateContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
                         before?.Invoke(ctx);
                         updatedEntities.Add((entity, oldData, entityKeys)!);
@@ -437,7 +438,7 @@ public class UpdateService<TContext>(
         var keys = typeConversion.GetPrimaryKeyValues(entity, context);
         try {
             var oldData = MapOrCast<TDbModel, TResult>(Mapper, entity);
-            Mapper.Map(request.Data, entity);
+            MapOrCopy(Mapper, context, request.Data, entity);
             var ctx = new UpdateContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
             before?.Invoke(ctx);
             await context.SaveChangesAsync(ct);

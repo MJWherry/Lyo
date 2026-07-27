@@ -183,14 +183,24 @@ and structured logging for ASP.NET Core hosts. Pass an optional `Action<Diagnost
 
 ### `LoggingMiddleware` ([`Middleware/LoggingMiddleware.cs`](Middleware/LoggingMiddleware.cs))
 
-Request/response middleware with three jobs:
+Request/response middleware with four jobs:
 
 - **Per-request scope** that captures `Trace`, `RequestHost`, `RequestUserAgent`, `UserEmail` (from `ClaimTypes.Name`), method, path, and a sanitized query string (
   `Utilities.SanitizeUri`).
 - **Debug-level request and response lines** (method, path, response status, content type).
 - **Exception → ProblemDetails:** unhandled exceptions are converted via `LyoProblemDetailsBuilder.FromException` (with `Activity.Current` trace/span ids and the request path)
-  and serialized as JSON with status `500`. [`LFException`](../Lyo.Api.Models/Error/LFException.cs) (`Lyo.Api.Models.Error`) is logged as a warning; everything else is logged as an
-  error.
+  and serialized as `application/problem+json`. The `Lyo.Exceptions` HTTP hierarchy drives the response status:
+
+  | Thrown exception | Status | Notes |
+  |---|---|---|
+  | `HttpException` (e.g. `NotFoundException`, `ConflictException`, `BadRequestException`) | `HttpException.StatusCode` | `ErrorCode` becomes `errors[].code` when set; 4xx logs Warning, 5xx logs Error |
+  | `RateLimitExceededException` / `ServiceUnavailableException` with `RetryAfter` | 429 / 503 | `Retry-After` header is emitted (seconds) |
+  | `UnprocessableEntityException` with field errors | 422 | one `errors[]` entry per field message |
+  | `ValidationException` | 400 | code `ValidationFailed`, one `errors[]` entry per field message |
+  | anything else | 500 | logged as Error |
+
+- **Empty-body fallback:** 4xx/5xx responses that complete without a body (e.g. bare `Results.NotFound()`) receive a `LyoProblemDetails` body derived from the status code, so
+  every error response is RFC 7807 shaped.
 
 Wire it like any other middleware (e.g. `app.UseMiddleware<LoggingMiddleware>()`); typically place it **after** request decompression and **before** the endpoint pipeline.
 

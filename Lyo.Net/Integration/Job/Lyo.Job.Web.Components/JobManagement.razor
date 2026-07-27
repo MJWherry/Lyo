@@ -7,13 +7,16 @@
         <JobStats ApiClient="ApiClient" StatisticsRoute="@StatisticsRoute"/>
     </MudTabPanel>
     <MudTabPanel Text="Definitions">
-        <JobDefinitionGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+        <JobDefinitionGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" OnViewRuns="@HandleViewRuns"/>
     </MudTabPanel>
     <MudTabPanel Text="Schedules">
         <JobScheduleGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
     </MudTabPanel>
     <MudTabPanel Text="Runs">
-        <JobRunGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+        <JobRunGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"
+                    DefinitionId="@_runsDefinitionId"
+                    DefinitionIdChanged="@(id => _runsDefinitionId = id)"
+                    DefinitionName="@_runsDefinitionName"/>
     </MudTabPanel>
     <MudTabPanel Text="Workers">
         <JobWorkerInstanceGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
@@ -53,6 +56,8 @@
     private int _tabIndex;
     private bool _tabInitialized;
     private bool _deepLinkHandled;
+    private Guid? _runsDefinitionId;
+    private string? _runsDefinitionName;
 
     private string DefinitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
     private string RunRoute => $"{BaseRoute.TrimEnd('/')}/Run";
@@ -113,6 +118,14 @@
         };
     }
 
+    private void HandleViewRuns((Guid Id, string? Name) definition)
+    {
+        _runsDefinitionId = definition.Id;
+        _runsDefinitionName = definition.Name;
+        _tabIndex = 3;
+        StateHasChanged();
+    }
+
     private async Task OpenDefinitionAsync(Guid id)
     {
         var req = new QueryConcreteReq {
@@ -127,14 +140,13 @@
             return;
         }
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
         var parameters = new DialogParameters<JobDefinitionView> {
             { d => d.JobDefinition, def },
             { d => d.DefinitionRoute, DefinitionRoute },
             { d => d.ScheduleRoute, ScheduleRoute },
             { d => d.TriggerRoute, TriggerRoute }
         };
-        var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, options);
+        var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
         await dialog.Result;
     }
 
@@ -152,12 +164,11 @@
             return;
         }
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
         var parameters = new DialogParameters<JobRunDetailView> {
             { d => d.JobRun, run },
             { d => d.RunRoute, RunRoute }
         };
-        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, options);
+        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Large);
         await dialog.Result;
     }
 }

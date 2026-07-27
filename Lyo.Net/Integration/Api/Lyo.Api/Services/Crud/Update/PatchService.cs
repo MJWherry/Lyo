@@ -13,6 +13,7 @@ using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Common.Conversion;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
@@ -96,7 +97,7 @@ public class PatchService<TContext>(
             RecordCrudSuccess(operation, typeof(TDbModel));
             return result;
         }
-        catch (LFException ex) {
+        catch (BadRequestException ex) {
             Logger.LogWarning(ex, "Business logic error during patch operation for {EntityType}: {ErrorCode}", entityTypeName, ex.ErrorCode);
             RecordCrudFailure(operation, typeof(TDbModel));
             return ResultFactory.PatchFailure<TResult>(LogAndReturnApiError(ex, "Patch Error", Constants.ApiErrorCodes.InvalidPatchRequest));
@@ -128,7 +129,7 @@ public class PatchService<TContext>(
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk patch size validation failed for {EntityType}: {Code} {Message}", entityTypeName, err.Code, err.Message);
-            throw new LFException(err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
         }
 
         var bulkResult = await TryBulkPatchAll<TDbModel, TResult>(requestList, before, after, ct).ConfigureAwait(false);

@@ -15,4 +15,8 @@
         <ProjectReference Include="..\Lyo.Resilience\Lyo.Resilience.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration"/>
+    </ItemGroup>
+
 </Project>

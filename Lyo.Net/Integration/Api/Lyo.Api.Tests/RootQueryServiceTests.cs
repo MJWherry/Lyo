@@ -8,7 +8,6 @@ using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Api.Tests;
@@ -181,7 +180,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             Assert.Null(GetValue(contactBag, "oo"));
             var address = GetNestedBag(contactBag, "a");
             Assert.NotNull(address);
-            var oo = GetString(address!, "oo");
+            var oo = GetString(address, "oo");
             Assert.NotNull(oo);
             Assert.StartsWith("Multi", oo, StringComparison.Ordinal);
             Assert.True(
@@ -198,11 +197,9 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .Build();
 
         var res = await _service.QueryAsync(req, _registry, Ct);
-
         Assert.True(res.IsSuccess, res.Error?.Detail);
         Assert.Equal(3, res.Items!.Count);
-
-        var multi = FindByFirstName(res.Items, "Multi")!;
+        var multi = FindByFirstName(res.Items, "Multi");
         var contacts = GetJoinList(multi, "c");
         Assert.Equal(2, contacts.Count);
 
@@ -237,11 +234,11 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
     public async Task Paging_StartSkipsFromRows()
     {
         var page0 = await _service.QueryAsync(
-            BasePersonContactAddressQuery(JoinType.Left).SetPagination(0, 1).AddSort("p.FirstName", Lyo.Common.Enums.SortDirection.Asc).Build(),
+            BasePersonContactAddressQuery(JoinType.Left).SetPagination(0, 1).AddSort("p.FirstName", Common.Enums.SortDirection.Asc).Build(),
             _registry,
             Ct);
         var page1 = await _service.QueryAsync(
-            BasePersonContactAddressQuery(JoinType.Left).SetPagination(1, 1).AddSort("p.FirstName", Lyo.Common.Enums.SortDirection.Asc).Build(),
+            BasePersonContactAddressQuery(JoinType.Left).SetPagination(1, 1).AddSort("p.FirstName", Common.Enums.SortDirection.Asc).Build(),
             _registry,
             Ct);
 
@@ -259,7 +256,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .Build();
 
         var res = await _service.QueryAsync(req, _registry, Ct);
-        var single = FindByFirstName(res.Items!, "Single")!;
+        var single = FindByFirstName(res.Items!, "Single");
         var contacts = GetJoinList(single, "c");
         Assert.Single(contacts);
 
@@ -457,7 +454,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
     {
         Assert.NotNull(item);
         Assert.IsAssignableFrom<IDictionary>(item);
-        return (IDictionary)item!;
+        return (IDictionary)item;
     }
 
     private static object? GetValue(IDictionary dict, string key)

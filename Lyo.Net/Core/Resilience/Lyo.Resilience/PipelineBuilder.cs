@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,8 @@ internal static class PipelineBuilder
                 .Handle<TimeoutException>()
                 .Handle<HttpRequestException>()
                 .Handle<IOException>()
-                .Handle<RetryableResultException>();
+                .Handle<RetryableResultException>()
+                .Handle<HttpException>(ex => ex.IsTransient);
 
             ConfigureRetry(retryOptions, logger, GetMetrics(serviceProvider), pipelineName);
             builder.AddRetry(retryOptions);
@@ -120,6 +122,7 @@ internal static class PipelineBuilder
                 .Handle<HttpRequestException>()
                 .Handle<IOException>()
                 .Handle<RetryableResultException>()
+                .Handle<HttpException>(ex => ex.IsTransient)
         };
 
         var loggerFactory = serviceProvider.GetService(typeof(ILoggerFactory)) as ILoggerFactory;

@@ -1,6 +1,7 @@
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
+using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 
@@ -318,8 +319,7 @@ public partial class QueryNodeEditorPanel
             return;
 
         var parameters = new DialogParameters<WhereClauseViewDialog> { { i => i.WhereClause, _rootNode } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync<WhereClauseViewDialog>("Where Clause", parameters, options);
+        await DialogService.ShowAsync<WhereClauseViewDialog>("Where Clause", parameters, LyoDialogPresets.Medium);
     }
 
     private bool ValidateSelectedNode()

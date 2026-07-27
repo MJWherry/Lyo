@@ -1,3 +1,4 @@
+using Lyo.Api.Models.Builders;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Storage;
 using Lyo.FileStorage.Abstractions;
@@ -38,7 +39,7 @@ public static class FilesEndpoints
         CancellationToken ct = default)
     {
         if (req.Ids is not { Count: > 0 })
-            return Results.BadRequest("At least one file ID is required.");
+            return BadRequestProblem("At least one file ID is required.");
 
         var entries = new List<FileBatchEntry>(req.Ids.Count);
         foreach (var id in req.Ids) {
@@ -89,12 +90,12 @@ public static class FilesEndpoints
                 return (null, Results.NotFound());
 
             if (HasScope(seriesId) && chapter.SeriesId != seriesId!.Value)
-                return (null, Results.BadRequest("seriesId does not match the chapter's series."));
+                return (null, BadRequestProblem("seriesId does not match the chapter's series."));
 
             if (HasScope(volumeId)) {
                 var expectedVolume = chapter.VolumeId ?? Guid.Empty;
                 if (expectedVolume != volumeId!.Value)
-                    return (null, Results.BadRequest("volumeId does not match the chapter's volume."));
+                    return (null, BadRequestProblem("volumeId does not match the chapter's volume."));
             }
 
             return (ComicFileStoragePath.BuildPathPrefix(chapter), null);
@@ -106,7 +107,7 @@ public static class FilesEndpoints
                 return (null, Results.NotFound());
 
             if (HasScope(seriesId) && volume.SeriesId != seriesId!.Value)
-                return (null, Results.BadRequest("seriesId does not match the volume's series."));
+                return (null, BadRequestProblem("seriesId does not match the volume's series."));
 
             return (ComicFileStoragePath.BuildVolumePrefix(volume.SeriesId, volume.Id), null);
         }
@@ -119,8 +120,13 @@ public static class FilesEndpoints
             return (ComicFileStoragePath.BuildSeriesPrefix(series.Id), null);
         }
 
-        return (null, Results.BadRequest("Invalid upload scope query parameters."));
+        return (null, BadRequestProblem("Invalid upload scope query parameters."));
     }
+
+    /// <summary>400 with a <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> body so error responses stay RFC 7807 shaped.</summary>
+    private static IResult BadRequestProblem(string message)
+        => Results.BadRequest(
+            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidRequest).WithMessage(message).Build());
 
     private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {

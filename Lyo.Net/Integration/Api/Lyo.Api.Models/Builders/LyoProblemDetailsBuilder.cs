@@ -1,6 +1,7 @@
 using Lyo.Api.Models.Error;
 using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Api.Models.Builders;
 
@@ -38,8 +39,39 @@ public sealed class LyoProblemDetailsBuilder
 
     public static LyoProblemDetailsBuilder FromException(Exception ex, string? errorCode = null)
     {
-        var code = errorCode ?? (ex is LFException lf ? lf.ErrorCode : null) ?? Constants.ApiErrorCodes.Unknown;
+        var code = errorCode
+            ?? (ex as HttpException)?.ErrorCode
+            ?? ex switch {
+                HttpException http => LyoProblemDetails.MapHttpStatusToErrorCode(http.StatusCode),
+                ValidationException => Constants.ApiErrorCodes.ValidationFailed,
+                var _ => Constants.ApiErrorCodes.Unknown
+            };
+
         var b = CreateWithActivity().WithErrorCode(code);
+        switch (ex) {
+            case HttpException http:
+                b.WithStatus(http.StatusCode);
+                break;
+            case ValidationException:
+                b.WithStatus(400);
+                break;
+        }
+
+        var fieldErrors = ex switch {
+            UnprocessableEntityException u => u.Errors,
+            ValidationException v => v.Errors,
+            var _ => null
+        };
+
+        if (fieldErrors is { Count: > 0 }) {
+            foreach (var fieldError in fieldErrors)
+            foreach (var message in fieldError.Value)
+                b.AddApiError(code, $"{fieldError.Key}: {message}");
+
+            // Detail falls back to DefaultValidationDetailSummary in Build(); the exception Message duplicates the field errors.
+            return b;
+        }
+
         for (var e = ex; e != null; e = e.InnerException)
             b.AddApiError(code, e.Message, e.StackTrace);
 

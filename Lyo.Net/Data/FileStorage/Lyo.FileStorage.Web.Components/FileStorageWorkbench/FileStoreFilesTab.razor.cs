@@ -1,6 +1,7 @@
 using Lyo.FileMetadataStore.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Web.Components.DataGrid;
+using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
@@ -233,8 +234,7 @@ public partial class FileStoreFilesTab : ComponentBase
         }
 
         var parameters = new DialogParameters<FileStoreAccessLinkDialog> { { d => d.Workbench, Workbench }, { d => d.FileId, fileId } };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-        await Workbench.DialogService.ShowAsync<FileStoreAccessLinkDialog>("Create access link", parameters, options);
+        await Workbench.DialogService.ShowAsync<FileStoreAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
     }
 
     private async Task ViewFileMetadataFromRowAsync(object? row)
@@ -476,7 +476,6 @@ public partial class FileStoreFilesTab : ComponentBase
     private async Task ShowFileMetadataDialogAsync(FileStoreResult metadata)
     {
         var parameters = new DialogParameters<FileStoreMetadataDialog> { { d => d.Metadata, metadata } };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-        await Workbench.DialogService.ShowAsync<FileStoreMetadataDialog>("File metadata", parameters, options);
+        await Workbench.DialogService.ShowAsync<FileStoreMetadataDialog>("File metadata", parameters, LyoDialogPresets.Medium);
     }
 }

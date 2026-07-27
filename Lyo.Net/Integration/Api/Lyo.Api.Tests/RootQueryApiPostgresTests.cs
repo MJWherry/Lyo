@@ -12,20 +12,13 @@ namespace Lyo.Api.Tests;
 
 /// <summary>HTTP coverage for dynamic root <c>POST /api/Job/Query</c> (From/Joins).</summary>
 [Collection(ApiPostgresCollection.Name)]
-public sealed class RootQueryApiPostgresTests : IDisposable
+public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDisposable
 {
     private const string RootQueryRoute = "/api/Job/Query";
 
     private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
 
-    private readonly HttpClient _client;
-    private readonly ApiPostgresFixture _fixture;
-
-    public RootQueryApiPostgresTests(ApiPostgresFixture fixture)
-    {
-        _fixture = fixture;
-        _client = fixture.CreateClient();
-    }
+    private readonly HttpClient _client = fixture.CreateClient();
 
     public void Dispose() => _client.Dispose();
 
@@ -33,8 +26,8 @@ public sealed class RootQueryApiPostgresTests : IDisposable
     public async Task RootQuery_LeftJoin_ReturnsPeopleAndNestedRuns()
     {
         var name = $"RootJoin_{Guid.NewGuid():N}"[..20];
-        var defId = await _fixture.SeedJobDefinitionAsync(name);
-        await _fixture.SeedJobRunAsync(defId, "root-join-user");
+        var defId = await fixture.SeedJobDefinitionAsync(name);
+        await fixture.SeedJobRunAsync(defId, "root-join-user");
 
         var request = QueryReqBuilder.New()
             .From("d", "JobDefinition")
@@ -70,7 +63,7 @@ public sealed class RootQueryApiPostgresTests : IDisposable
     public async Task RootQuery_NoJoin_ReturnsFlatProjection()
     {
         var name = $"RootFlat_{Guid.NewGuid():N}"[..20];
-        var defId = await _fixture.SeedJobDefinitionAsync(name);
+        var defId = await fixture.SeedJobDefinitionAsync(name);
 
         var request = QueryReqBuilder.New()
             .From("d", "JobDefinition")
@@ -123,9 +116,9 @@ public sealed class RootQueryApiPostgresTests : IDisposable
     public async Task RootQuery_Paging_IsFromSide()
     {
         var prefix = $"RootPage_{Guid.NewGuid():N}"[..12];
-        await _fixture.SeedJobDefinitionAsync($"{prefix}_a");
-        await _fixture.SeedJobDefinitionAsync($"{prefix}_b");
-        await _fixture.SeedJobDefinitionAsync($"{prefix}_c");
+        await fixture.SeedJobDefinitionAsync($"{prefix}_a");
+        await fixture.SeedJobDefinitionAsync($"{prefix}_b");
+        await fixture.SeedJobDefinitionAsync($"{prefix}_c");
 
         var request = QueryReqBuilder.New()
             .From("d", "JobDefinition")
@@ -135,7 +128,7 @@ public sealed class RootQueryApiPostgresTests : IDisposable
                 }, "r")
             .AddSelects("d.Name", "r.CreatedBy")
             .AddWhere(w => w.StartsWith("d.Name", prefix!))
-            .AddSort("d.Name", Lyo.Common.Enums.SortDirection.Asc)
+            .AddSort("d.Name", Common.Enums.SortDirection.Asc)
             .SetPagination(0, 2)
             .SetTotalCountMode(QueryTotalCountMode.Exact)
             .Build();

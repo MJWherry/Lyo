@@ -70,8 +70,7 @@ else {
 
         await Task.Yield();
         var parameters = new DialogParameters<JsonViewDialog<EnrichmentResponse>> { { i => i.Data, Response } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync(typeof(JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, options);
+        await DialogService.ShowAsync(typeof(JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, LyoDialogPresets.Medium);
     }
 
 }

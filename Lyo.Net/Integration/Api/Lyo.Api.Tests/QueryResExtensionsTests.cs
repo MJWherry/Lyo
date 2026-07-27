@@ -3,7 +3,6 @@ using Lyo.Common.Enums;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Query.Models.Enums;
 
 namespace Lyo.Api.Tests;
 

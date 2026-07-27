@@ -1,93 +1,66 @@
 @using Lyo.Common.Extensions
 @inject ISnackbar Snackbar
 
-<MudDialog>
-    <DialogContent>
-        <MudContainer Style="max-height: 600px; overflow-y: auto;">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudSelect T="JobDefinitionRes"
-                               Value="_selectedDef"
-                               ValueChanged="OnDefinitionChanged"
-                               Label="Job Definition"
-                               Variant="Variant.Outlined"
-                               ToStringFunc="@(d => d?.Name ?? "")"
-                               Required>
-                        @foreach (var def in (JobDefinitions ?? []).Where(d => d.Enabled)) {
-                            <MudSelectItem T="JobDefinitionRes" Value="def">
-                                <MudText Typo="Typo.body1">@def.Name</MudText>
-                                @if (!string.IsNullOrEmpty(def.Description)) {
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
-                                }
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Required MaxLength="50"/>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary"/>
-                </MudItem>
-
-                @if (_paramModels.Any()) {
-                    <MudItem xs="12">
-                        <MudDivider/>
-                        <MudText Typo="Typo.h6" Class="mt-2 mb-2">Parameters</MudText>
-                    </MudItem>
-
-                    @foreach (var p in _paramModels) {
-                        <MudItem xs="12">
-                            <MudPaper Class="pa-4" Elevation="1">
-                                <MudStack Spacing="2">
-                                    <MudText Typo="Typo.subtitle1">
-                                        @p.Param.Key
-                                        @if (p.Param.Required) {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ml-2">Required</MudChip>
-                                        }
-                                    </MudText>
-                                    @if (!string.IsNullOrEmpty(p.Param.Description)) {
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@p.Param.Description</MudText>
-                                    }
-                                    @if (p.Param.Type == JobParameterType.Bool) {
-                                        <MudSwitch T="bool" @bind-Value="p.BoolValue" Label="@p.Param.Key" Color="Color.Primary"/>
-                                    }
-                                    else if (p.Param.Type == JobParameterType.Int) {
-                                        <MudNumericField T="int?" @bind-Value="p.IntValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
-                                    }
-                                    else if (p.Param.Type == JobParameterType.Long) {
-                                        <MudNumericField T="long?" @bind-Value="p.LongValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
-                                    }
-                                    else if (p.Param.Type == JobParameterType.DateTime) {
-                                        <MudDatePicker @bind-Date="p.DateTimeValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
-                                    }
-                                    else if (p.Param.Type == JobParameterType.Json) {
-                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
-                                                      Lines="4" HelperText="JSON" Required="@p.Param.Required"
-                                                      InputType="@(p.Encrypted ? InputType.Password : InputType.Text)"/>
-                                    }
-                                    else {
-                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
-                                                      Required="@p.Param.Required"
-                                                      InputType="@(p.Encrypted ? InputType.Password : InputType.Text)"/>
-                                    }
-                                    <MudSwitch T="bool" @bind-Value="p.Encrypted" Label="Encrypt" Color="Color.Warning" Size="Size.Small"/>
-                                </MudStack>
-                            </MudPaper>
-                        </MudItem>
+<LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel">
+    <MudStack Spacing="2">
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudSelect T="JobDefinitionRes"
+                           Value="_selectedDef"
+                           ValueChanged="OnDefinitionChanged"
+                           Label="Job Definition"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           ToStringFunc="@(d => d?.Name ?? "")"
+                           Required>
+                    @foreach (var def in (JobDefinitions ?? []).Where(d => d.Enabled)) {
+                        <MudSelectItem T="JobDefinitionRes" Value="def">
+                            <MudText Typo="Typo.body1">@def.Name</MudText>
+                            @if (!string.IsNullOrEmpty(def.Description)) {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
+                            }
+                        </MudSelectItem>
                     }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Margin="Margin.Dense" Required MaxLength="50"/>
+            </MudItem>
+            <MudItem xs="12" md="6" Class="d-flex align-center">
+                <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary" Size="Size.Small"/>
+            </MudItem>
+        </MudGrid>
+
+        @if (_paramModels.Any()) {
+            <MudDivider/>
+            <MudText Typo="Typo.subtitle1">Parameters</MudText>
+            <MudGrid Spacing="2">
+                @foreach (var p in _paramModels) {
+                    <MudItem xs="12" md="@(p.Param.Type is JobParameterType.Json or JobParameterType.Xml ? 12 : 6)">
+                        <MudStack Spacing="0">
+                            @if (p.Encrypted) {
+                                <MudTextField T="string" @bind-Value="p.Value" Label="@ParamLabel(p)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                              InputType="InputType.Password" Required="@p.Param.Required"/>
+                            }
+                            else {
+                                <JobParameterValueInput Type="@p.Param.Type" @bind-Value="p.Value" Label="@ParamLabel(p)"/>
+                            }
+                            <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                @if (!string.IsNullOrEmpty(p.Param.Description)) {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@p.Param.Description</MudText>
+                                }
+                                else {
+                                    <span/>
+                                }
+                                <MudSwitch T="bool" @bind-Value="p.Encrypted" Label="Encrypt" Color="Color.Warning" Size="Size.Small"/>
+                            </MudStack>
+                        </MudStack>
+                    </MudItem>
                 }
             </MudGrid>
-        </MudContainer>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit"
-                   Disabled="@(!IsValid())" StartIcon="@Icons.Material.Filled.PlayArrow">
-            Create Job Run
-        </MudButton>
-    </DialogActions>
-</MudDialog>
+        }
+    </MudStack>
+</LyoDialog>
 
 @code {
 
@@ -111,42 +84,21 @@
     private JobDefinitionRes? _selectedDef;
     private string _createdBy = "gateway";
     private bool _allowTriggers = true;
+    private bool _submitting;
     private List<ParamModel> _paramModels = [];
 
     private class ParamModel
     {
         public JobParameterRes Param { get; init; } = null!;
 
-        public string StringValue { get; set; } = "";
-
-        public bool BoolValue { get; set; }
-
-        public int? IntValue { get; set; }
-
-        public long? LongValue { get; set; }
-
-        public DateTime? DateTimeValue { get; set; }
+        public string? Value { get; set; }
 
         public bool Encrypted { get; set; }
 
-        public bool IsEmpty()
-            => Param.Type switch {
-                JobParameterType.Bool => false,
-                JobParameterType.Int => !IntValue.HasValue,
-                JobParameterType.Long => !LongValue.HasValue,
-                JobParameterType.DateTime => !DateTimeValue.HasValue,
-                var _ => string.IsNullOrWhiteSpace(StringValue)
-            };
-
-        public string? ValueAsString()
-            => Param.Type switch {
-                JobParameterType.Bool => BoolValue.ToString().ToLower(),
-                JobParameterType.Int => IntValue?.ToString(),
-                JobParameterType.Long => LongValue?.ToString(),
-                JobParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
-                var _ => StringValue
-            };
+        public bool IsEmpty() => Param.Type != JobParameterType.Bool && string.IsNullOrWhiteSpace(Value);
     }
+
+    private static string ParamLabel(ParamModel p) => p.Param.Required ? $"{p.Param.Key} *" : p.Param.Key;
 
     protected override void OnInitialized()
     {
@@ -157,7 +109,11 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, StringValue = p.Value ?? "" }).ToList();
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
+                Param = p,
+                Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null
+            })
+            .ToList();
     }
 
     private bool IsValid()
@@ -173,6 +129,7 @@
         if (_selectedDef == null)
             return;
 
+        _submitting = true;
         try {
             var req = new JobRunReq {
                 JobDefinitionId = _selectedDef.Id,
@@ -181,7 +138,7 @@
                 JobRunParameters = _paramModels.Select(p => new JobRunParameterReq {
                         Key = p.Param.Key,
                         Type = p.Param.Type,
-                        Value = p.ValueAsString(),
+                        Value = p.Value,
                         Description = p.Param.Description
                     })
                     .ToList()
@@ -193,6 +150,9 @@
         }
         catch (Exception ex) {
             Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _submitting = false;
         }
     }
 

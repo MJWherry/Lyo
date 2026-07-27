@@ -1,0 +1,90 @@
+@using System.Globalization
+
+@switch (Type) {
+    case JobParameterType.Bool:
+        <MudSwitch T="bool" Value="@BoolValue" ValueChanged="@(v => SetValue(v ? "true" : "false"))" Color="Color.Primary" Label="@Label" Class="ma-0"/>
+        break;
+    case JobParameterType.Int:
+    case JobParameterType.Long:
+        <MudNumericField T="long?" Value="@LongValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
+                         Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+    case JobParameterType.Decimal:
+        <MudNumericField T="decimal?" Value="@DecimalValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
+                         Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+    case JobParameterType.DateTime:
+        <MudStack Row Spacing="1">
+            <MudDatePicker Date="@DateTimeValue" DateChanged="@(d => SetDateTime(d, DateTimeValue?.TimeOfDay))"
+                           Label="@Label" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            <MudTimePicker Time="@DateTimeValue?.TimeOfDay" TimeChanged="@(t => SetDateTime(DateTimeValue ?? DateTime.Today, t))"
+                           Label="Time" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        </MudStack>
+        break;
+    case JobParameterType.DateOnly:
+        <MudDatePicker Date="@DateOnlyValue" DateChanged="@(d => SetValue(d?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)))"
+                       Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+    case JobParameterType.TimeOnly:
+        <MudTimePicker Time="@TimeOnlyValue" TimeChanged="@(t => SetValue(t?.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture)))"
+                       Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+    case JobParameterType.Json:
+    case JobParameterType.Xml:
+        <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
+                      Lines="3" MaxLines="8" AutoGrow Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+    default:
+        <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
+                      Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        break;
+}
+
+@code {
+
+    /// <summary>Parameter type controlling which Mud input is rendered (switch for bool, numeric for int/long/decimal, pickers for date/time, multiline for json/xml).</summary>
+    [Parameter]
+    [EditorRequired]
+    public JobParameterType Type { get; set; }
+
+    /// <summary>String-backed value as stored on the parameter row; parsed/formatted with invariant culture per <see cref="Type" />.</summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; }
+
+    private bool BoolValue => bool.TryParse(Value, out var b) && b;
+
+    private long? LongValue => long.TryParse(Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l) ? l : null;
+
+    private decimal? DecimalValue => decimal.TryParse(Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) ? d : null;
+
+    private DateTime? DateTimeValue => DateTime.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : null;
+
+    private DateTime? DateOnlyValue => DateOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d.ToDateTime(TimeOnly.MinValue) : null;
+
+    private TimeSpan? TimeOnlyValue => TimeOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t) ? t.ToTimeSpan() : null;
+
+    private async Task SetValue(string? value)
+    {
+        Value = value;
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(value);
+    }
+
+    private async Task SetDateTime(DateTime? date, TimeSpan? time)
+    {
+        if (date == null) {
+            await SetValue(null);
+            return;
+        }
+
+        var combined = date.Value.Date.Add(time ?? TimeSpan.Zero);
+        await SetValue(combined.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+    }
+
+}

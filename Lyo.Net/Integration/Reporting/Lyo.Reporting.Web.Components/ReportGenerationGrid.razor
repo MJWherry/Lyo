@@ -94,13 +94,12 @@
             return;
         }
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
         var parameters = new DialogParameters<ReportGenerationView> {
             { d => d.Generation, gen },
             { d => d.DownloadFileAsync, DownloadFileAsync },
             { d => d.ViewFileUrlAsync, ViewFileUrlAsync }
         };
-        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, options);
+        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Large);
     }
 
     private async Task ViewOutput(object? item)

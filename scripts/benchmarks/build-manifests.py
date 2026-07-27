@@ -19,9 +19,11 @@ from __future__ import annotations
 
 import argparse
 import copy
+import functools
 import json
 import re
 import shutil
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -30,6 +32,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "docs" / "benchmarks" / "data"
 HISTORY_DIR = REPO_ROOT / "docs" / "benchmarks" / "history"
 SCHEMA = "lyo.bench/v1"
+
+# Central Package Management: csproj PackageReference entries are version-less; the single
+# source of truth for dependency versions is this props file.
+CENTRAL_PACKAGES_PROPS = REPO_ROOT / "Lyo.Net" / "Directory.Packages.props"
+
+# Benchmark executables target net10.0 only; ItemGroups conditioned on other TFMs don't apply.
+BENCHMARK_TFM = "net10.0"
 
 # BenchmarkDotNet defaults to cwd/BenchmarkDotNet.Artifacts when --artifacts is omitted.
 FALLBACK_ARTIFACT_ROOTS = (
@@ -659,6 +668,110 @@ def write_registry() -> None:
 
 
 # --------------------------------------------------------------------------------------
+# Dependency versions — resolve each benchmark project's PackageReference graph against the
+# centralized Directory.Packages.props (Central Package Management).
+# --------------------------------------------------------------------------------------
+def normalize_nuget_version(version: str) -> str:
+    """Reduce a NuGet range to its declared minimum ('[1.2.3,)' / '[1.2.3,2.0.0)' -> '1.2.3').
+
+    Exact pins ('5.0.0') and floating versions ('2.*') pass through unchanged.
+    """
+    v = version.strip()
+    if v.startswith(("[", "(")):
+        lower = v[1:].split(",", 1)[0].strip().rstrip("])")
+        return lower or v
+    return v
+
+
+@functools.lru_cache(maxsize=1)
+def central_package_versions() -> dict[str, str]:
+    """Package -> declared minimum version from the centralized package file."""
+    if not CENTRAL_PACKAGES_PROPS.is_file():
+        print(f"warning: {CENTRAL_PACKAGES_PROPS.relative_to(REPO_ROOT)} not found; dependency versions unavailable.")
+        return {}
+    try:
+        root = ET.parse(CENTRAL_PACKAGES_PROPS).getroot()
+    except ET.ParseError as exc:
+        print(f"warning: could not parse {CENTRAL_PACKAGES_PROPS.relative_to(REPO_ROOT)}: {exc}")
+        return {}
+    versions: dict[str, str] = {}
+    for node in root.iter("PackageVersion"):
+        name = node.get("Include")
+        version = node.get("Version")
+        if name and version:
+            versions[name] = normalize_nuget_version(version)
+    return versions
+
+
+def _project_csproj(project_dir: Path) -> Path | None:
+    preferred = project_dir / f"{project_dir.name}.csproj"
+    if preferred.is_file():
+        return preferred
+    matches = sorted(project_dir.glob("*.csproj"))
+    return matches[0] if matches else None
+
+
+def _item_group_applies(condition: str | None) -> bool:
+    """Skip ItemGroups conditioned on a target framework the benchmarks don't run on."""
+    if not condition:
+        return True
+    if "TargetFramework" in condition:
+        return BENCHMARK_TFM in condition
+    return True
+
+
+def collect_project_packages(csproj: Path, visited: set[Path] | None = None) -> set[str]:
+    """Direct plus transitive (via ProjectReference) PackageReference names for a project."""
+    if visited is None:
+        visited = set()
+    resolved = csproj.resolve()
+    if resolved in visited or not csproj.is_file():
+        return set()
+    visited.add(resolved)
+    try:
+        root = ET.parse(csproj).getroot()
+    except ET.ParseError as exc:
+        print(f"warning: could not parse {csproj.relative_to(REPO_ROOT)}: {exc}")
+        return set()
+    packages: set[str] = set()
+    for group in root.iter("ItemGroup"):
+        if not _item_group_applies(group.get("Condition")):
+            continue
+        for ref in group.findall("PackageReference"):
+            name = ref.get("Include")
+            if name:
+                packages.add(name)
+        for ref in group.findall("ProjectReference"):
+            include = ref.get("Include")
+            if include:
+                child = (csproj.parent / include.replace("\\", "/")).resolve()
+                packages |= collect_project_packages(child, visited)
+    return packages
+
+
+def project_dependency_versions(name: str, project_dir: Path) -> dict[str, str] | None:
+    """Package -> version map for a benchmark project, resolved from the centralized package file."""
+    csproj = _project_csproj(project_dir)
+    if csproj is None:
+        print(f"{name}: no csproj found in {project_dir.relative_to(REPO_ROOT)}; skipping dependency versions.")
+        return None
+    packages = collect_project_packages(csproj)
+    if not packages:
+        return None
+    central = central_package_versions()
+    dependencies: dict[str, str] = {}
+    missing: list[str] = []
+    for package in sorted(packages, key=str.lower):
+        version = central.get(package)
+        if version is None:
+            missing.append(package)
+        dependencies[package] = version or "unknown"
+    if missing:
+        print(f"{name}: no central version for: {', '.join(missing)}")
+    return dependencies
+
+
+# --------------------------------------------------------------------------------------
 # Micro (BenchmarkDotNet) — copy the exporter's report and derive feature grades from its SLAs.
 # --------------------------------------------------------------------------------------
 def _micro_letter(exceeds: int, meets: int, miss: int, total: int) -> str:
@@ -775,6 +888,11 @@ def build_micro_category(category: dict[str, Any]) -> bool:
         return False
     report.setdefault("schema", SCHEMA)
     report.setdefault("type", "micro")
+    dependencies = project_dependency_versions(name, category["dir"].parent)
+    if dependencies:
+        environment = report.setdefault("environment", {})
+        if isinstance(environment, dict):
+            environment["dependencies"] = dependencies
     grades = grade_micro(report)
     if grades:
         report["grades"] = grades

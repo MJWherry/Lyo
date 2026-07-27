@@ -74,4 +74,31 @@ public abstract class BaseService<TContext>(IDbContextFactory<TContext> contextF
         ArgumentNullException.ThrowIfNull(source);
         return mapper.Map<TResult>(source);
     }
+
+    /// <summary>
+    /// Maps source onto an existing destination entity, or copies mapped non-key property values directly when TSource and TDest are the
+    /// same type (skips mapping). The dynamic CRUD endpoints deserialize request bodies into the entity type itself, so update/upsert
+    /// would otherwise ask the mapper for an entity-to-entity mapping that domain mappers don't configure.
+    /// </summary>
+    protected static void MapOrCopy<TSource, TDest>(ILyoMapper mapper, DbContext context, TSource source, TDest destination)
+        where TDest : class
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        if (typeof(TSource) != typeof(TDest)) {
+            mapper.Map(source, destination);
+            return;
+        }
+
+        var typedSource = (TDest)(object)source;
+        if (ReferenceEquals(typedSource, destination))
+            return;
+
+        foreach (var property in context.Entry(destination).Properties) {
+            var clrProperty = property.Metadata.PropertyInfo;
+            if (clrProperty is null || property.Metadata.IsPrimaryKey())
+                continue;
+
+            property.CurrentValue = clrProperty.GetValue(typedSource);
+        }
+    }
 }

@@ -6,6 +6,7 @@ using Lyo.Api.Services.Crud.Validation;
 using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -69,7 +70,7 @@ public class CreateService<TContext>(
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk create size validation failed: {Code} {Message}", err.Code, err.Message);
-            throw new LFException(err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
         }
 
         var bulkResult = await TryBulkCreateAll<TRequest, TDbModel, TResult>(requestList, before, after, afterAsync, ct);

@@ -32,7 +32,10 @@ Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—re
 
 Each method accepts optional **`Action<HttpRequestMessage>`** to append auth headers (`Authorization: Bearer …`), correlation ids, `Accept` overrides, or tracing headers.
 
-Throws **`ApiException`** wrapping non-success status codes with contextual payload extraction (see class for available properties).
+Throws **`ApiException`** wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from
+`Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed
+`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504 — which lets `Lyo.Resilience` retry pipelines pick it up
+automatically.
 
 ## Options ([`ApiClientOptions`](ApiClientOptions.cs))
 

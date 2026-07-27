@@ -3,6 +3,7 @@ using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Error;
 using Lyo.Common.Identifiers;
 using Lyo.Encryption;
 using Lyo.Exceptions;
@@ -331,7 +332,9 @@ public static class Extensions
                 $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/Stats", async (Guid id, int days, JobService jobService, CancellationToken ct) => {
                     days = days > 0 ? days : 30;
                     var stats = await jobService.GetDefinitionStats(id, days, ct).ConfigureAwait(false);
-                    return stats is null ? Results.NotFound() : Results.Ok(stats);
+                    return stats is null
+                        ? Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build())
+                        : Results.Ok(stats);
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
@@ -369,7 +372,7 @@ public static class Extensions
                     // Return CreateResult so ApiClient deserializers (scheduler/worker/client) get IsSuccess/Data.
                     return result.IsSuccess
                         ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result)
-                        : Results.BadRequest(result.Error);
+                        : ProblemResult(result.Error);
                 })
             .WithTags("Job")
             .WithName("CreateJobRun");
@@ -377,7 +380,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started", async (Guid id, JobService jobService) => {
                     var (run, error) = await jobService.StartedJobRun(id).ConfigureAwait(false);
-                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                    return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")
             .WithName("StartedJobRun");
@@ -385,7 +388,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Finished", async (Guid id, IReadOnlyList<JobRunResultReq> results, JobService jobService) => {
                     var (run, error) = await jobService.FinishedJobRun(id, results).ConfigureAwait(false);
-                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                    return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")
             .WithName("FinishedJobRun");
@@ -393,7 +396,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Cancel", async (Guid id, JobService jobService) => {
                     var (run, error) = await jobService.CancelJobRun(id).ConfigureAwait(false);
-                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                    return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")
             .WithName("CancelJobRun");
@@ -401,7 +404,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Requeue", async (Guid id, JobService jobService) => {
                     var (run, error) = await jobService.RequeueJobRun(id).ConfigureAwait(false);
-                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                    return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")
             .WithName("RequeueJobRun");
@@ -409,7 +412,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Rerun", async (Guid id, JobService jobService) => {
                     var result = await jobService.RerunJob(id).ConfigureAwait(false);
-                    return result is { IsSuccess: true } ? Results.Ok(result.Data) : Results.BadRequest(result?.Error);
+                    return result is { IsSuccess: true } ? Results.Ok(result.Data) : ProblemResult(result?.Error);
                 })
             .WithTags("Job")
             .WithName("RerunJob");
@@ -417,7 +420,7 @@ public static class Extensions
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Log", async (Guid id, JobRunLogReq req, JobService jobService) => {
                     var result = await jobService.Log(id, req).ConfigureAwait(false);
-                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.RunLogs}/{result.Data!.Id}", result.Data) : Results.BadRequest(result.Error);
+                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.RunLogs}/{result.Data!.Id}", result.Data) : ProblemResult(result.Error);
                 })
             .WithTags("Job")
             .WithName("LogJobRun");
@@ -425,7 +428,7 @@ public static class Extensions
         app.MapPatch(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Heartbeat", async (Guid id, JobRunHeartbeatReq? req, JobService jobService, CancellationToken ct) => {
                     var (run, error) = await jobService.HeartbeatJobRun(id, req, ct).ConfigureAwait(false);
-                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                    return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")
             .WithName("HeartbeatJobRun");
@@ -445,6 +448,17 @@ public static class Extensions
                 })
             .WithTags("Job")
             .WithName("CreateChildJobRuns");
+    }
+
+    /// <summary>Problem response whose HTTP status matches <see cref="LyoProblemDetails.Status" />. Falls back to a generic 400 when no problem was produced.</summary>
+    private static IResult ProblemResult(LyoProblemDetails? error)
+    {
+        error ??= LyoProblemDetailsBuilder.CreateWithActivity()
+            .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidRequest)
+            .WithMessage("The request could not be processed.")
+            .Build();
+
+        return Results.Json(error, statusCode: error.Status);
     }
 
     private static void EncryptJobParameterEntity(IServiceProvider services, JobParameter entity)

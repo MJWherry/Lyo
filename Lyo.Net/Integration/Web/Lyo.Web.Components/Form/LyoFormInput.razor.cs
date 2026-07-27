@@ -26,6 +26,9 @@ public partial class LyoFormInput<TModel, TValue>
     [CascadingParameter(Name = "ChangeTrackingForm")]
     public dynamic? ParentForm { get; set; }
 
+    [CascadingParameter(Name = "LyoFormGrid")]
+    public object? FormGrid { get; set; }
+
     [Parameter]
     [EditorRequired]
     public TModel? Model { get; set; }
@@ -57,6 +60,13 @@ public partial class LyoFormInput<TModel, TValue>
 
     [Parameter]
     public bool UseRichTextEditor { get; set; }
+
+    /// <summary>
+    /// Column width hint when hosted inside a <c>LyoFormGrid</c>. Defaults to <see cref="LyoFieldSize.Auto" />, which derives the width from the
+    /// property type (bools/numerics/times narrow, enums/dates medium, strings wide, multiline full row). Ignored outside a <c>LyoFormGrid</c>.
+    /// </summary>
+    [Parameter]
+    public LyoFieldSize FieldSize { get; set; } = LyoFieldSize.Auto;
 
     public bool HasChanged {
         get {
@@ -265,13 +275,13 @@ public partial class LyoFormInput<TModel, TValue>
     {
         builder.OpenComponent<MudSwitch<bool>>(0);
         builder.AddAttribute(1, "Label", label);
-        builder.AddAttribute(2, "Checked", _currentValue != null && (bool)(object)_currentValue);
+        builder.AddAttribute(2, "Value", _currentValue != null && (bool)(object)_currentValue);
         builder.AddAttribute(3, "ReadOnly", isReadOnly);
         builder.AddAttribute(4, "Disabled", isReadOnly);
         builder.AddAttribute(5, "Color", Color.Primary);
         if (!isReadOnly) {
             builder.AddAttribute(
-                6, "CheckedChanged", EventCallback.Factory.Create<bool>(
+                6, "ValueChanged", EventCallback.Factory.Create<bool>(
                     this, async newValue => {
                         await HandleValueChanged((TValue)(object)newValue);
                     }));
@@ -431,10 +441,9 @@ public partial class LyoFormInput<TModel, TValue>
                                 itemBuilder.AddAttribute(1, "class", "d-flex align-center");
                                 itemBuilder.AddAttribute(2, "style", "min-width: 200px;");
                                 itemBuilder.OpenComponent<MudCheckBox<bool>>(3);
-                                itemBuilder.AddAttribute(4, "Checked", isChecked);
+                                itemBuilder.AddAttribute(4, "Value", isChecked);
                                 itemBuilder.AddAttribute(5, "Dense", true);
-                                itemBuilder.AddAttribute(6, "ReadOnly", false); // Changed from true
-                                // Remove the pointer-events: none style
+                                itemBuilder.AddAttribute(6, "ReadOnly", false);
                                 itemBuilder.CloseComponent();
                                 itemBuilder.OpenElement(8, "span");
                                 itemBuilder.AddAttribute(9, "class", "ml-2");
@@ -453,6 +462,31 @@ public partial class LyoFormInput<TModel, TValue>
 
     private void RenderNumericInput(RenderTreeBuilder builder, string label, bool isReadOnly)
     {
+        if (IsIntegralType(_underlyingType)) {
+            builder.OpenComponent<MudNumericField<long?>>(0);
+            builder.AddAttribute(1, "Label", label);
+            builder.AddAttribute(2, "Value", _currentValue != null ? Convert.ToInt64(_currentValue) : null);
+            builder.AddAttribute(3, "ReadOnly", isReadOnly);
+            builder.AddAttribute(4, "Disabled", isReadOnly);
+            builder.AddAttribute(5, "Variant", Variant);
+            builder.AddAttribute(6, "Margin", Margin);
+            if (!isReadOnly) {
+                builder.AddAttribute(
+                    7, "ValueChanged", EventCallback.Factory.Create<long?>(
+                        this, async newValue => {
+                            if (newValue.HasValue) {
+                                var convertedValue = (TValue)Convert.ChangeType(newValue.Value, _underlyingType);
+                                await HandleValueChanged(convertedValue);
+                            }
+                            else
+                                await HandleValueChanged(default);
+                        }));
+            }
+
+            builder.CloseComponent();
+            return;
+        }
+
         builder.OpenComponent<MudNumericField<double?>>(0);
         builder.AddAttribute(1, "Label", label);
         builder.AddAttribute(2, "Value", _currentValue != null ? Convert.ToDouble(_currentValue) : null);
@@ -703,6 +737,32 @@ public partial class LyoFormInput<TModel, TValue>
     private bool IsNumericType(Type type)
         => type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte) || type == typeof(uint) || type == typeof(ulong) ||
             type == typeof(ushort) || type == typeof(sbyte) || type == typeof(float) || type == typeof(double) || type == typeof(decimal);
+
+    private static bool IsIntegralType(Type type)
+        => type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte) || type == typeof(uint) || type == typeof(ulong) ||
+            type == typeof(ushort) || type == typeof(sbyte);
+
+    private (int Xs, int Sm, int Md) GetSizeColumns()
+        => (FieldSize == LyoFieldSize.Auto ? DeriveAutoSize() : FieldSize) switch {
+            LyoFieldSize.Small => (6, 4, 3),
+            LyoFieldSize.Medium => (12, 6, 4),
+            LyoFieldSize.Large => (12, 12, 6),
+            var _ => (12, 12, 12)
+        };
+
+    private LyoFieldSize DeriveAutoSize()
+    {
+        if (AllowMultiline || UseRichTextEditor)
+            return LyoFieldSize.Full;
+
+        if (_underlyingType == typeof(bool) || IsNumericType(_underlyingType) || _underlyingType == typeof(TimeOnly) || _underlyingType == typeof(DateOnly))
+            return LyoFieldSize.Small;
+
+        if (_underlyingType.IsEnum || _underlyingType == typeof(DateTime) || _underlyingType == typeof(Guid))
+            return LyoFieldSize.Medium;
+
+        return LyoFieldSize.Large;
+    }
 
     public class ValueChangeInfo<T>
     {

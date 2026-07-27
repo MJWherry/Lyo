@@ -67,8 +67,7 @@
             return;
 
         var dialogParameters = new DialogParameters<PersonForm> { { i => i.Person, personRes } };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<PersonForm>($"Edit {personRes.FullName}", dialogParameters, options);
+        var dialog = await DialogService.ShowAsync<PersonForm>($"Edit {personRes.FullName}", dialogParameters, LyoDialogPresets.Large);
         var result = await dialog.Result;
         if (!result.Canceled && _dataGrid is not null)
             await _dataGrid.RefreshData();

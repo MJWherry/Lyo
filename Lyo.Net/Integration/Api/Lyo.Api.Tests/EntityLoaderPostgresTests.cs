@@ -85,7 +85,7 @@ public class EntityLoaderPostgresTests
         using var context = factory.CreateDbContext();
         var errors = loader.CollectIncludePathErrors<JobContext, JobDefinition>(context, ["NotANavigation"]);
         Assert.NotEmpty(errors);
-        Assert.Contains(errors, e => e.Code == Lyo.Api.Models.Constants.ApiErrorCodes.InvalidInclude);
+        Assert.Contains(errors, e => e.Code == Models.Constants.ApiErrorCodes.InvalidInclude);
     }
 
     [Fact]

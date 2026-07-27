@@ -14,6 +14,7 @@ using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -844,8 +845,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         await Task.Yield();
         await Task.Delay(10);
         var parameters = new DialogParameters<JsonViewDialog<TModel>> { { i => i.Data, data } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
-        await DialogService.ShowAsync(typeof(JsonViewDialog<TModel>), title, parameters, options);
+        await DialogService.ShowAsync(typeof(JsonViewDialog<TModel>), title, parameters, LyoDialogPresets.Medium);
     }
 
 #endregion

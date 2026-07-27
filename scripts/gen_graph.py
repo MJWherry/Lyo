@@ -21,6 +21,10 @@ SLNX = REPO_ROOT / "Lyo.Net" / "Lyo.slnx"
 OUT_HTML = REPO_ROOT / "docs" / "Lyo.ProjectGraph.html"
 NS_RE = re.compile(r"\sxmlns=\"[^\"]+\"")
 
+# Central Package Management: csproj PackageReference entries are version-less; versions live
+# in this props file as ranges (e.g. `[1.2.3,)`) and are resolved from here.
+CENTRAL_PACKAGES_PROPS = REPO_ROOT / "Lyo.Net" / "Directory.Packages.props"
+
 # Match `'$(TargetFramework)' == 'netstandard2.0'` and friends.
 # The closing `'` after `)` is optional to stay tolerant of variants.
 _TFM_EQ_RE = re.compile(
@@ -29,6 +33,37 @@ _TFM_EQ_RE = re.compile(
 _TFM_NEQ_RE = re.compile(
     r"\$\(\s*TargetFramework\s*\)\s*'?\s*!=\s*'?([\w.+-]+)'?"
 )
+
+
+def normalize_nuget_version(version: str) -> str:
+    """Reduce a NuGet range to its declared minimum ('[1.2.3,)' / '[1.2.3,2.0.0)' -> '1.2.3').
+
+    Exact pins ('5.0.0') and floating versions ('2.*') pass through unchanged.
+    """
+    v = version.strip()
+    if v.startswith(("[", "(")):
+        lower = v[1:].split(",", 1)[0].strip().rstrip("])")
+        return lower or v
+    return v
+
+
+def load_central_package_versions() -> dict[str, str]:
+    """Package -> declared minimum version from Directory.Packages.props."""
+    if not CENTRAL_PACKAGES_PROPS.is_file():
+        print(f"warning: {CENTRAL_PACKAGES_PROPS} not found; package versions will be blank.")
+        return {}
+    try:
+        root = ET.fromstring(NS_RE.sub("", CENTRAL_PACKAGES_PROPS.read_text(encoding="utf-8"), count=1))
+    except ET.ParseError as exc:
+        print(f"warning: could not parse {CENTRAL_PACKAGES_PROPS}: {exc}")
+        return {}
+    versions: dict[str, str] = {}
+    for node in root.iter("PackageVersion"):
+        name = node.attrib.get("Include")
+        version = node.attrib.get("Version")
+        if name and version:
+            versions[name] = normalize_nuget_version(version)
+    return versions
 
 
 def framework_label(condition: str) -> str:
@@ -82,7 +117,7 @@ def load_slnx_projects() -> list[Project]:
     return projects
 
 
-def parse_refs(p: Project) -> None:
+def parse_refs(p: Project, central_versions: dict[str, str]) -> None:
     if not p.abs_path.exists():
         return
     text = NS_RE.sub("", p.abs_path.read_text(encoding="utf-8"), count=1)
@@ -104,8 +139,8 @@ def parse_refs(p: Project) -> None:
     # NuGet / external packages. We iterate ItemGroups (not just the inner
     # PackageReference nodes) so we can capture an enclosing
     # `Condition="'$(TargetFramework)' == 'netstandard2.0'"` and bucket packages
-    # per target framework. Version may be missing under Central Package
-    # Management; store empty string in that case.
+    # per target framework. Under Central Package Management the csproj carries no
+    # Version, so fall back to the version declared in Directory.Packages.props.
     pkg_seen: set[tuple[str, str, str]] = set()
     for ig in root.iter("ItemGroup"):
         ig_cond = ig.attrib.get("Condition", "") or ""
@@ -118,6 +153,10 @@ def parse_refs(p: Project) -> None:
                 v_el = pkg.find("Version")
                 if v_el is not None and v_el.text:
                     version = v_el.text.strip()
+            if version:
+                version = normalize_nuget_version(version)
+            else:
+                version = central_versions.get(include, "")
             pkg_cond = pkg.attrib.get("Condition", "") or ""
             combined = " ".join(c for c in (ig_cond, pkg_cond) if c)
             fw = framework_label(combined)
@@ -2029,8 +2068,9 @@ def main() -> None:
     args = parser.parse_args()
 
     projects = load_slnx_projects()
+    central_versions = load_central_package_versions()
     for p in projects:
-        parse_refs(p)
+        parse_refs(p, central_versions)
 
     if not args.include_tests:
         kept = {p.name for p in projects if not is_test_like(p.name)}

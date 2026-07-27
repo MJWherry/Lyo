@@ -12,16 +12,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Api.Tests.Services.Validation;
 
 [Collection(ApiPostgresCollection.Name)]
-public sealed class ProjectedQueryModelValidatorTests
+public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture)
 {
-    private readonly ApiPostgresFixture _fixture;
-
-    public ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture) => _fixture = fixture;
-
     [Fact]
     public async Task Validate_ValidWhereAndSort_Succeeds()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -44,7 +40,7 @@ public sealed class ProjectedQueryModelValidatorTests
     [Fact]
     public async Task Validate_InvalidWhereField_Fails()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -68,7 +64,7 @@ public sealed class ProjectedQueryModelValidatorTests
     [Fact]
     public async Task Validate_InvalidSortField_Fails()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -92,7 +88,7 @@ public sealed class ProjectedQueryModelValidatorTests
     [Fact]
     public async Task Validate_InvalidInclude_Fails()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -110,13 +106,13 @@ public sealed class ProjectedQueryModelValidatorTests
             });
 
         Assert.False(result.IsSuccess);
-        Assert.Contains(result.Errors!, e => e.Code == Lyo.Api.Models.Constants.ApiErrorCodes.InvalidInclude);
+        Assert.Contains(result.Errors!, e => e.Code == Models.Constants.ApiErrorCodes.InvalidInclude);
     }
 
     [Fact]
     public void Validate_IncludeWithoutDb_Fails()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
 
@@ -138,7 +134,7 @@ public sealed class ProjectedQueryModelValidatorTests
     [Fact]
     public async Task Validate_ValidInclude_Succeeds()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -161,7 +157,7 @@ public sealed class ProjectedQueryModelValidatorTests
     [Fact]
     public async Task PathCache_ReusesFilterValidation()
     {
-        using var scope = _fixture.CreateScope();
+        using var scope = fixture.CreateScope();
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var cache = new QueryPathValidationCache();
 

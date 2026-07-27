@@ -29,5 +29,12 @@ public static class Constants
         public const string ExceedMaxBulkSize = "ExceedMaxBulkSize";
         public const string MessageQueueConnectionIssue = "MessageQueueConnectionIssue";
         public const string Conflict = "Conflict";
+        public const string Unauthorized = "Unauthorized";
+        public const string Gone = "Gone";
+        public const string UnprocessableEntity = "UnprocessableEntity";
+        public const string TooManyRequests = "TooManyRequests";
+        public const string ServiceUnavailable = "ServiceUnavailable";
+        public const string GatewayTimeout = "GatewayTimeout";
+        public const string ValidationFailed = "ValidationFailed";
     }
 }

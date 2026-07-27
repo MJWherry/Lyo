@@ -231,7 +231,7 @@ public static class Extensions
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var generation = await db.ReportGenerations.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
                         if (generation is null)
-                            return Results.NotFound();
+                            return Results.Problem($"Report generation '{id}' was not found.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
 
                         if (generation.Status != nameof(ReportGenerationStatus.Succeeded) || generation.OutputFileId is not Guid outputFileId) {
                             return Results.Problem(
@@ -253,7 +253,7 @@ public static class Extensions
                             .ConfigureAwait(false);
 
                         if (stream is null)
-                            return Results.NotFound();
+                            return Results.Problem($"Report generation '{id}' output could not be located.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
 
                         return Results.Stream(stream, generation.ContentType ?? "application/octet-stream", generation.OriginalFileName);
                     })

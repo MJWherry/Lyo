@@ -119,7 +119,7 @@ internal static class ConfigEndpoints
                     IOptions<ConfigApiHostingOptions> hostOptions,
                     CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.BadRequest(errMsg);
+                        return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                     return await FinishResolve(http, refs, HttpMethods.IsHead(http.Request.Method), store, hostOptions.Value, ct).ConfigureAwait(false);
                 });
@@ -133,7 +133,7 @@ internal static class ConfigEndpoints
                     IOptions<ConfigApiHostingOptions> hostOptions,
                     CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.BadRequest(errMsg);
+                        return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                     return await FinishResolve(http, refs, false, store, hostOptions.Value, ct).ConfigureAwait(false);
                 });
@@ -224,32 +224,32 @@ internal static class ConfigEndpoints
 
             manage.MapGet(
                 "/apps/{appKind}/{appId}/bindings",
-                async Task<Results<Ok<IReadOnlyList<ConfigBindingRecord>>, BadRequest<string>>> (string appKind, string appId, IConfigStore store, CancellationToken ct) => {
+                async Task<Results<Ok<IReadOnlyList<ConfigBindingRecord>>, ProblemHttpResult>> (string appKind, string appId, IConfigStore store, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                        return TypedResults.BadRequest(msg);
+                        return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                     var list = await store.GetBindingsAsync(refs, null, ct).ConfigureAwait(false);
                     return TypedResults.Ok(list);
                 });
 
             manage.MapGet(
-                "/apps/{appKind}/{appId}/bindings/{key}/revisions", async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, BadRequest<string>>> (
+                "/apps/{appKind}/{appId}/bindings/{key}/revisions", async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, ProblemHttpResult>> (
                     string appKind,
                     string appId,
                     string key,
                     IConfigStore store,
                     CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                        return TypedResults.BadRequest(msg);
+                        return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                     if (string.IsNullOrWhiteSpace(key))
-                        return TypedResults.BadRequest("Key segment is required.");
+                        return TypedResults.Problem("Key segment is required.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                     return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), null, ct).ConfigureAwait(false));
                 });
 
             manage.MapPost(
-                    "/apps/{appKind}/{appId}/bindings/{key}/revert", async Task<Results<NoContent, BadRequest<string>, ProblemHttpResult>> (
+                    "/apps/{appKind}/{appId}/bindings/{key}/revert", async Task<Results<NoContent, ProblemHttpResult>> (
                         string appKind,
                         string appId,
                         string key,
@@ -257,10 +257,10 @@ internal static class ConfigEndpoints
                         IConfigStore store,
                         CancellationToken ct) => {
                         if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                            return TypedResults.BadRequest(msg);
+                            return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                         if (string.IsNullOrWhiteSpace(key))
-                            return TypedResults.BadRequest("Key segment is required.");
+                            return TypedResults.Problem("Key segment is required.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
                         try {
                             await store.RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, null, ct).ConfigureAwait(false);

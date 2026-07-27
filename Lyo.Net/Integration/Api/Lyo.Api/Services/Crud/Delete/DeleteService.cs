@@ -10,6 +10,7 @@ using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
@@ -154,7 +155,7 @@ public class DeleteService<TContext>(
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk delete size validation failed: {Code} {Message}", err.Code, err.Message);
-            throw new LFException(err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
         }
 
         var bulkResult = await TryBulkDeleteAll<TDbModel, TResult>(requestList, before, beforeAsync, after, includeList, ct);

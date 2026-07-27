@@ -12,6 +12,7 @@ using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Query.Services.PropertyComparison;
 using Lyo.Query.Services.WhereClause;
@@ -116,7 +117,7 @@ public class UpsertService<TContext>(
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk upsert size validation failed: {Code} {Message}", err.Code, err.Message);
-            throw new LFException(err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
         }
 
         var bulkResult = await TryBulkUpsertAll<TRequest, TDbModel, TResult>(requestList, before, after, beforeCreate, afterCreate, beforeUpdate, afterUpdate, ct);
@@ -199,7 +200,7 @@ public class UpsertService<TContext>(
                         results.Add(ResultFactory.UpsertNoChange<TResult>());
                     else {
                         var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
-                        Mapper.Map(request.NewData, entity);
+                        MapOrCopy(Mapper, context, request.NewData, entity);
                         var ctx = new UpsertContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
                         before?.Invoke(ctx);
                         beforeUpdate?.Invoke(ctx);
@@ -371,7 +372,7 @@ public class UpsertService<TContext>(
                             successes.Add(ResultFactory.UpsertNoChange<TResult>());
                         else {
                             var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
-                            Mapper.Map(request.NewData, entity);
+                            MapOrCopy(Mapper, context, request.NewData, entity);
                             var ctx = new UpsertContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
                             before?.Invoke(ctx);
                             beforeUpdate?.Invoke(ctx);
@@ -517,7 +518,7 @@ public class UpsertService<TContext>(
 
         try {
             var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
-            Mapper.Map(request.NewData, entity);
+            MapOrCopy(Mapper, context, request.NewData, entity);
             var ctx = new UpsertContext<TRequest, TDbModel, TContext>(request, entity, context, serviceProvider);
             before?.Invoke(ctx);
             beforeUpdate?.Invoke(ctx);

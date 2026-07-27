@@ -58,15 +58,17 @@
                         </td>
                         <td>
                             <MudTooltip Text="@(row.Schedule.Enabled ? "Disable schedule" : "Enable schedule")">
-                                <MudIconButton Icon="@(row.Schedule.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
-                                               Color="@(row.Schedule.Enabled ? Color.Success : Color.Default)"
-                                               Size="Size.Small"
-                                               OnClick="@(() => ToggleScheduleAsync(row))"/>
+                                <MudSwitch T="bool"
+                                           Value="@row.Schedule.Enabled"
+                                           ValueChanged="@(_ => ToggleScheduleAsync(row))"
+                                           Color="Color.Success"
+                                           Size="Size.Small"
+                                           Class="ma-0"/>
                             </MudTooltip>
                         </td>
                         <td>
-                            <MudTooltip Text="View job definition">
-                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                            <MudTooltip Text="Edit job definition">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                                OnClick="@(() => ViewDefinitionAsync(row.DefinitionId))"/>
                             </MudTooltip>
                         </td>
@@ -215,7 +217,6 @@
         if (def == null)
             return;
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
         var parameters = new DialogParameters<JobDefinitionView> {
             { d => d.JobDefinition, def },
             { d => d.DefinitionRoute, _definitionRoute },
@@ -223,7 +224,7 @@
             { d => d.TriggerRoute, _triggerRoute }
         };
 
-        await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, options);
+        await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
     }
 
     private sealed record ScheduleRow(string DefinitionName, Guid DefinitionId, JobScheduleRes Schedule, DateTime? NextRunUtc);

@@ -3,6 +3,10 @@
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form">
     <EditForm Model="@Model" OnValidSubmit="@HandleSubmit">
         <CascadingValue Value="this" Name="ChangeTrackingForm" IsFixed="true">
+            @if (!ShowActions) {
+                @ChildContent
+            }
+            else {
             <MudCard>
                 <MudCardContent>
                     @ChildContent
@@ -52,6 +56,7 @@
                     }
                 </MudCardActions>
             </MudCard>
+            }
         </CascadingValue>
     </EditForm>
 </LyoElementRoot>

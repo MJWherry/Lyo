@@ -97,7 +97,9 @@ public static class AuthEndpointsMapper
             return Results.Redirect(redirect.AuthorizeUrl);
         }
         catch (NotFoundException) {
-            return Results.NotFound(new { error = "unknown_provider" });
+            return Results.Problem(
+                $"Authentication provider '{provider}' is not registered.", statusCode: StatusCodes.Status404NotFound, title: "Not Found",
+                extensions: new Dictionary<string, object?> { ["error"] = "unknown_provider" });
         }
     }
 
@@ -115,11 +117,17 @@ public static class AuthEndpointsMapper
     {
         var paths = ResolvePaths(ctx);
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
-        if (code.IsNullOrWhitespace())
-            return Results.BadRequest(new { error = "missing_code" });
+        if (code.IsNullOrWhitespace()) {
+            return Results.Problem(
+                "The authorization code query parameter is missing.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
+                extensions: new Dictionary<string, object?> { ["error"] = "missing_code" });
+        }
 
-        if (!ctx.Request.Cookies.TryGetValue(StateCookieName, out var sealedState) || sealedState.IsNullOrWhitespace())
-            return Results.BadRequest(new { error = "missing_state_cookie" });
+        if (!ctx.Request.Cookies.TryGetValue(StateCookieName, out var sealedState) || sealedState.IsNullOrWhitespace()) {
+            return Results.Problem(
+                "The login state cookie is missing or empty.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
+                extensions: new Dictionary<string, object?> { ["error"] = "missing_state_cookie" });
+        }
 
         ctx.Response.Cookies.Delete(StateCookieName, new() { Path = CookiePath(ctx, paths.StateCookiePath), Secure = IsSecureRequest(ctx) });
         try {
@@ -276,7 +284,7 @@ public static class AuthEndpointsMapper
 
         var user = await users.GetByIdAsync(userId, null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
-            return Results.NotFound();
+            return Results.Problem("The authenticated user no longer exists.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
 
         var links = await identities.ListForUserAsync(userId, null, ctx.RequestAborted).ConfigureAwait(false);
         var scopes = ctx.User.FindAll("scope").SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)).Distinct().ToArray();
@@ -287,7 +295,7 @@ public static class AuthEndpointsMapper
     {
         var user = await users.GetByIdAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
-            return Results.NotFound();
+            return Results.Problem($"User '{id}' was not found.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
 
         var links = await identities.ListForUserAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.Json(new MeResponse(user, user.Scopes.ToArray(), links.ToArray()));

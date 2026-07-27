@@ -408,7 +408,7 @@ public class ApiClient : IApiClient
             // Fall back to generic message if body cannot be parsed
         }
 
-        throw new ApiException((int)response.StatusCode, message, problemDetails);
+        throw new ApiException((int)response.StatusCode, message, problemDetails) { ErrorCode = problemDetails?.Errors.FirstOrDefault()?.Code };
     }
 
     private static HttpClient CreateHttpClient(ApiClientOptions options)
