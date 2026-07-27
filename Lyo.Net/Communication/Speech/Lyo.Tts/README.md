@@ -83,5 +83,5 @@ Providers typically remap these to a namespaced prefix (`tts.awspolly.*`, `tts.t
 
 - [`Lyo.Tts.Models`](../Lyo.Tts.Models/README.md) — requests, results, options, events
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

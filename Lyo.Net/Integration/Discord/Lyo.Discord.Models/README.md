@@ -48,4 +48,4 @@ before save.
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md) — generic envelopes (`QueryRes<T>`, `UpsertResult<T>`, `LyoProblemDetails`) wrapping these DTOs.
 - [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) — typed managers that consume these DTOs.
 - [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) — persistence + API host.
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

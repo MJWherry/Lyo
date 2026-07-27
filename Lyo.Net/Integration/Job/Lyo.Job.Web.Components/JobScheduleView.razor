@@ -1,4 +1,5 @@
 @inject ISnackbar Snackbar
+@using Lyo.Common.Enums
 
 <MudGrid Class="pa-4">
     <MudItem xs="12" md="4">
@@ -10,7 +11,7 @@
                 <MudList T="JobScheduleRes" Dense>
                     @if (JobSchedules?.Any() == true) {
                         @foreach (var s in JobSchedules) {
-                            <MudListItem T="JobScheduleRes" OnClick="@(() => _selected = s)"
+                            <MudListItem T="JobScheduleRes" OnClick="@(() => SelectSchedule(s))"
                                          Class="@(_selected?.Id == s.Id ? "mud-primary" : "")" Style="cursor:pointer;">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
                                     <MudChip T="string" Size="Size.Small"
@@ -32,71 +33,149 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12" md="8">
-        @if (_selected != null) {
-            <MudPaper Elevation="1" Class="pa-4">
+        @if (_selected != null && _edit != null) {
+            <MudPaper Elevation="1" Class="pa-4" Style="height: 600px; overflow-y: auto;">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Schedule Details</MudText>
-                    <MudGrid>
-                        <MudItem xs="6">
-                            <MudText Typo="Typo.body2"><b>Type:</b> @_selected.Type</MudText>
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Schedule Details</MudText>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Save" OnClick="SaveSchedule">
+                            Save Schedule
+                        </MudButton>
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="ScheduleType" Label="Type" @bind-Value="_edit.Type" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                @foreach (var t in Enum.GetValues<ScheduleType>()) {
+                                    <MudSelectItem Value="t">@t</MudSelectItem>
+                                }
+                            </MudSelect>
                         </MudItem>
-                        <MudItem xs="6">
-                            <MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" Label="Description" @bind-Value="_edit.Description" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                         </MudItem>
-                        <MudItem xs="6">
-                            <MudText Typo="Typo.body2"><b>Days:</b> @_selected.DayFlags</MudText>
+                        <MudItem xs="12" md="2">
+                            <MudSwitch T="bool" Label="Enabled" @bind-Value="_edit.Enabled" Color="Color.Success"/>
                         </MudItem>
-                        <MudItem xs="6">
-                            <MudText Typo="Typo.body2"><b>Months:</b> @_selected.MonthFlags</MudText>
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="DayFlags" Label="Days" MultiSelection="true" @bind-SelectedValues="_edit.Days"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense">
+                                @foreach (var d in Enum.GetValues<DayFlags>().Where(d => d != DayFlags.None)) {
+                                    <MudSelectItem Value="d">@d</MudSelectItem>
+                                }
+                            </MudSelect>
                         </MudItem>
-                        @if (_selected.CronExpression != null) {
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="MonthFlags" Label="Months" MultiSelection="true" @bind-SelectedValues="_edit.Months"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense">
+                                @foreach (var m in Enum.GetValues<MonthFlags>().Where(m => m != MonthFlags.None)) {
+                                    <MudSelectItem Value="m">@m</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        @if (_edit.Type == ScheduleType.Cron) {
                             <MudItem xs="12">
-                                <MudText Typo="Typo.body2"><b>Cron:</b> @_selected.CronExpression</MudText>
+                                <MudTextField T="string" Label="Cron Expression" @bind-Value="_edit.CronExpression"
+                                              HelperText="Standard 5- or 6-field cron expression"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
                         }
-                        @if (_selected.StartTime != null || _selected.EndTime != null) {
-                            <MudItem xs="6">
-                                <MudText Typo="Typo.body2"><b>Start:</b> @(_selected.StartTime?.ToString("HH:mm") ?? "-")</MudText>
+                        @if (_edit.Type == ScheduleType.Interval) {
+                            <MudItem xs="12" md="4">
+                                <MudTimePicker Label="Start Time" @bind-Time="_edit.StartTime" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
-
-                            <MudItem xs="6">
-                                <MudText Typo="Typo.body2"><b>End:</b> @(_selected.EndTime?.ToString("HH:mm") ?? "-")</MudText>
+                            <MudItem xs="12" md="4">
+                                <MudTimePicker Label="End Time" @bind-Time="_edit.EndTime" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
-                        }
-                        @if (_selected.IntervalMinutes != null) {
-                            <MudItem xs="6">
-                                <MudText Typo="Typo.body2"><b>Interval (min):</b> @_selected.IntervalMinutes</MudText>
+                            <MudItem xs="12" md="4">
+                                <MudNumericField T="int?" Label="Interval (min)" @bind-Value="_edit.IntervalMinutes" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
                         }
-                        @if (_selected.Times?.Any() == true) {
+                        @if (_edit.Type is ScheduleType.SetTimes or ScheduleType.OneShot) {
                             <MudItem xs="12">
-                                <MudText Typo="Typo.body2"><b>Times:</b></MudText>
-                                <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
-                                    @foreach (var t in _selected.Times) {
-                                        <MudChip T="string" Size="Size.Small">@t.ToString("HH:mm")</MudChip>
-                                    }
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2"><b>Times</b></MudText>
+                                    <MudStack Row Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                                        @foreach (var t in _edit.Times) {
+                                            <MudChip T="string" Size="Size.Small" OnClose="@(() => RemoveTime(t))">@t.ToString(@"hh\:mm")</MudChip>
+                                        }
+                                        <div style="width: 140px;">
+                                            <MudTimePicker Label="Add time" @bind-Time="_newTime" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" OnClick="AddTime"/>
+                                    </MudStack>
                                 </MudStack>
                             </MudItem>
                         }
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="JobMisfirePolicy" Label="Misfire Policy" @bind-Value="_edit.MisfirePolicy" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                @foreach (var p in Enum.GetValues<JobMisfirePolicy>()) {
+                                    <MudSelectItem Value="p">@p</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="_edit.StartDateUtc" Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudDatePicker Label="End Date (UTC)" @bind-Date="_edit.EndDateUtc" Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" Label="Time Zone Id" @bind-Value="_edit.TimeZoneId"
+                                          HelperText="IANA/Windows time zone id; empty = scheduler default"
+                                          Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
                     </MudGrid>
-                    @if (_selected.Parameters?.Any() == true) {
-                        <MudDivider/>
 
+                    <MudDivider/>
+
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h6">Schedule Parameters</MudText>
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="AddParameter">
+                            Add Parameter
+                        </MudButton>
+                    </MudStack>
 
+                    @if (_displayParams.Any()) {
                         <MudGrid>
-                            @foreach (var p in _selected.Parameters) {
+                            @foreach (var p in _displayParams) {
                                 <MudItem xs="12" md="6">
                                     <MudPaper Elevation="1" Class="pa-3">
-                                        <MudText Typo="Typo.subtitle2">@p.Key</MudText>
-                                        <MudText Typo="Typo.body2">Type: @p.Type</MudText>
-                                        @if (p.Value != null) {
-                                            <MudText Typo="Typo.body2">Value: @p.Value</MudText>
-                                        }
+                                        <MudStack Spacing="2">
+                                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                                @if (p.IsNew) {
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip>
+                                                }
+                                                else {
+                                                    <span/>
+                                                }
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                               Color="Color.Error" OnClick="@(() => DeleteParameter(p))"/>
+                                            </MudStack>
+                                            <MudTextField T="string" Label="Key" @bind-Value="p.Key" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSelect T="JobParameterType" Label="Type" @bind-Value="p.Type" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                                @foreach (var t in Enum.GetValues<JobParameterType>()) {
+                                                    <MudSelectItem Value="t">@t</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                            <MudTextField T="string" Label="Description" @bind-Value="p.Description" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Value" @bind-Value="p.Value" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSwitch T="bool" Label="Enabled" @bind-Value="p.Enabled" Color="Color.Success"/>
+                                        </MudStack>
                                     </MudPaper>
                                 </MudItem>
                             }
                         </MudGrid>
+                    }
+                    else {
+                        <MudText Typo="Typo.body1" Class="mud-text-secondary">No schedule parameters defined</MudText>
+                    }
+
+                    @if (_paramsDirty || _displayParams.Any()) {
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveParameters" StartIcon="@Icons.Material.Filled.Save">
+                            Save Parameters
+                        </MudButton>
                     }
                 </MudStack>
             </MudPaper>
@@ -125,19 +204,223 @@
     [EditorRequired]
     public string ScheduleRoute { get; set; } = "";
 
+    /// <summary>Standalone schedule-parameter CRUD route. Defaults to <c>{ScheduleRoute}Parameters</c> (e.g. <c>Job/ScheduleParameters</c>).</summary>
+    [Parameter]
+    public string? ScheduleParameterRoute { get; set; }
+
+    private string ParameterRoute => ScheduleParameterRoute ?? $"{ScheduleRoute.TrimEnd('/')}Parameters";
+
+    private class ScheduleEditModel
+    {
+        public ScheduleType Type { get; set; }
+
+        public string? Description { get; set; }
+
+        public bool Enabled { get; set; }
+
+        public IReadOnlyCollection<DayFlags> Days { get; set; } = [];
+
+        public IReadOnlyCollection<MonthFlags> Months { get; set; } = [];
+
+        public string? CronExpression { get; set; }
+
+        public TimeSpan? StartTime { get; set; }
+
+        public TimeSpan? EndTime { get; set; }
+
+        public int? IntervalMinutes { get; set; }
+
+        public List<TimeSpan> Times { get; set; } = [];
+
+        public JobMisfirePolicy MisfirePolicy { get; set; }
+
+        public DateTime? StartDateUtc { get; set; }
+
+        public DateTime? EndDateUtc { get; set; }
+
+        public string? TimeZoneId { get; set; }
+
+        public Guid? JobBlackoutCalendarId { get; set; }
+    }
+
+    private class ParamModel
+    {
+        public Guid? Id { get; set; }
+
+        public string Key { get; set; } = "";
+
+        public JobParameterType Type { get; set; }
+
+        public string? Value { get; set; }
+
+        public string? Description { get; set; }
+
+        public bool Enabled { get; set; } = true;
+
+        public bool IsNew { get; set; }
+    }
+
     private JobScheduleRes? _selected;
+    private ScheduleEditModel? _edit;
+    private TimeSpan? _newTime;
+    private List<ParamModel> _displayParams = [];
+    private bool _paramsDirty;
 
     protected override void OnParametersSet()
     {
         if (_selected == null || JobSchedules?.All(s => s.Id != _selected.Id) == true)
-            _selected = JobSchedules?.FirstOrDefault();
+            SelectSchedule(JobSchedules?.FirstOrDefault());
     }
+
+    private void SelectSchedule(JobScheduleRes? schedule)
+    {
+        _selected = schedule;
+        _newTime = null;
+        if (schedule == null) {
+            _edit = null;
+            _displayParams = [];
+            _paramsDirty = false;
+            return;
+        }
+
+        _edit = new() {
+            Type = schedule.Type,
+            Description = schedule.Description,
+            Enabled = schedule.Enabled,
+            Days = Enum.GetValues<DayFlags>().Where(d => d != DayFlags.None && schedule.DayFlags.HasFlag(d)).ToList(),
+            Months = Enum.GetValues<MonthFlags>().Where(m => m != MonthFlags.None && schedule.MonthFlags.HasFlag(m)).ToList(),
+            CronExpression = schedule.CronExpression,
+            StartTime = schedule.StartTime?.ToTimeSpan(),
+            EndTime = schedule.EndTime?.ToTimeSpan(),
+            IntervalMinutes = schedule.IntervalMinutes,
+            Times = (schedule.Times ?? []).Select(t => t.ToTimeSpan()).ToList(),
+            MisfirePolicy = schedule.MisfirePolicy,
+            StartDateUtc = schedule.StartDateUtc,
+            EndDateUtc = schedule.EndDateUtc,
+            TimeZoneId = schedule.TimeZoneId,
+            JobBlackoutCalendarId = schedule.JobBlackoutCalendarId
+        };
+
+        _displayParams = (schedule.Parameters ?? []).Select(p => new ParamModel {
+                Id = p.Id,
+                Key = p.Key,
+                Type = p.Type,
+                Value = p.Value,
+                Description = p.Description,
+                Enabled = p.Enabled
+            })
+            .ToList();
+
+        _paramsDirty = false;
+    }
+
+    private void AddTime()
+    {
+        if (_edit == null || _newTime == null)
+            return;
+
+        if (!_edit.Times.Contains(_newTime.Value))
+            _edit.Times.Add(_newTime.Value);
+
+        _edit.Times.Sort();
+        _newTime = null;
+    }
+
+    private void RemoveTime(TimeSpan t) => _edit?.Times.Remove(t);
 
     private async Task ToggleSchedule(JobScheduleRes schedule)
     {
         var patch = new PatchRequestBuilder().WithKey(schedule.Id).SetProperty("Enabled", !schedule.Enabled).Build();
         await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(ScheduleRoute, patch);
         Snackbar.Add($"Schedule {(!schedule.Enabled ? "enabled" : "disabled")}", Severity.Success);
+    }
+
+    private async Task SaveSchedule()
+    {
+        if (_selected == null || _edit == null)
+            return;
+
+        try {
+            var req = new JobScheduleReq {
+                JobDefinitionId = _selected.JobDefinitionId != default ? _selected.JobDefinitionId : JobDefinitionId,
+                Type = _edit.Type,
+                Description = string.IsNullOrWhiteSpace(_edit.Description) ? null : _edit.Description,
+                Enabled = _edit.Enabled,
+                DayFlags = _edit.Days.Aggregate(DayFlags.None, (acc, d) => acc | d),
+                MonthFlags = _edit.Months.Aggregate(MonthFlags.None, (acc, m) => acc | m),
+                CronExpression = string.IsNullOrWhiteSpace(_edit.CronExpression) ? null : _edit.CronExpression,
+                StartTime = _edit.StartTime is { } st ? TimeOnly.FromTimeSpan(st) : null,
+                EndTime = _edit.EndTime is { } et ? TimeOnly.FromTimeSpan(et) : null,
+                IntervalMinutes = _edit.IntervalMinutes,
+                Times = _edit.Times.Select(TimeOnly.FromTimeSpan).ToList(),
+                MisfirePolicy = _edit.MisfirePolicy,
+                StartDateUtc = _edit.StartDateUtc is { } sd ? DateTime.SpecifyKind(sd, DateTimeKind.Utc) : null,
+                EndDateUtc = _edit.EndDateUtc is { } ed ? DateTime.SpecifyKind(ed, DateTimeKind.Utc) : null,
+                TimeZoneId = string.IsNullOrWhiteSpace(_edit.TimeZoneId) ? null : _edit.TimeZoneId,
+                JobBlackoutCalendarId = _edit.JobBlackoutCalendarId
+            };
+
+            await ApiClient.PutAsAsync<JobScheduleReq, object>($"{ScheduleRoute.TrimEnd('/')}/{_selected.Id}", req);
+            Snackbar.Add("Schedule saved", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void AddParameter()
+    {
+        _displayParams.Add(new() { IsNew = true, Key = $"Param{_displayParams.Count + 1}", Type = JobParameterType.String });
+        _paramsDirty = true;
+    }
+
+    private void DeleteParameter(ParamModel p)
+    {
+        _displayParams.Remove(p);
+        _paramsDirty = true;
+    }
+
+    private async Task SaveParameters()
+    {
+        if (_selected == null)
+            return;
+
+        try {
+            var existing = (_selected.Parameters ?? []).ToDictionary(p => p.Id);
+
+            foreach (var removed in existing.Values.Where(e => _displayParams.All(d => d.Id != e.Id)))
+                await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
+
+            foreach (var newP in _displayParams.Where(d => d.IsNew)) {
+                await ApiClient.PostAsAsync<JobScheduleParameterReq, JobScheduleParameterRes>(
+                    ParameterRoute, new() {
+                        JobScheduleId = _selected.Id,
+                        Key = newP.Key,
+                        Type = newP.Type,
+                        Value = newP.Value,
+                        Description = newP.Description,
+                        Enabled = newP.Enabled
+                    });
+            }
+
+            foreach (var existingP in _displayParams.Where(d => !d.IsNew && d.Id.HasValue)) {
+                await ApiClient.PutAsAsync<JobScheduleParameterReq, object>(
+                    $"{ParameterRoute}/{existingP.Id}", new() {
+                        JobScheduleId = _selected.Id,
+                        Key = existingP.Key,
+                        Type = existingP.Type,
+                        Value = existingP.Value,
+                        Description = existingP.Description,
+                        Enabled = existingP.Enabled
+                    });
+            }
+
+            Snackbar.Add("Schedule parameters saved", Severity.Success);
+            _paramsDirty = false;
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
     }
 
 }

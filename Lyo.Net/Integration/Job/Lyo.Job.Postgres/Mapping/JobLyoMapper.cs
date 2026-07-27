@@ -518,10 +518,12 @@ public sealed class JobLyoMapper : ILyoMapper
             CreatedBy = "Unknown",
             AllowTriggers = r.AllowTriggers,
             Result = r.Result,
-            ScheduledSlotUtc = r.ScheduledSlotUtc,
+            // IdempotencyKey and ScheduledSlotUtc are unique per run (both are backed by unique indexes) and must never be copied when
+            // cloning a run for rerun/child creation — a copied key silently resolves to the original run instead of creating a new one.
+            ScheduledSlotUtc = null,
             RetryAttempt = r.RetryAttempt,
             Priority = r.Priority,
-            IdempotencyKey = r.IdempotencyKey,
+            IdempotencyKey = null,
             DryRun = r.DryRun,
             TraceId = r.TraceId,
             ParentJobRunId = r.ParentJobRunId,

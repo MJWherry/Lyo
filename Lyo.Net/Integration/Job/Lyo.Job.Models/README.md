@@ -30,6 +30,8 @@ Definitions, schedules, and runs carry the knobs that power priority dispatch, r
 | Progress | `JobRunRes.ProgressPercent`, `ProgressMessage` |
 | Parallel restrictions | `JobParallelRestrictionReq` — blocks schedule when related definitions are Queued/Running |
 | Dry run | `JobRunReq.DryRun`, `JobRunBuilder.AsDryRun()` — validate without persisting or publishing |
+| Dispatch suppression | `JobRunReq.SuppressDispatch` — persist the run as `Queued` without the immediate MQ publish (caller owns dispatch: scheduler delayed retries, workflow step ordering); a future `ScheduledSlotUtc` suppresses implicitly |
+| Delayed dispatch | `JobRunReq.ScheduledSlotUtc` — slot idempotency for scheduled runs, and the due time for delayed retries picked up by maintenance redispatch |
 | Parameter validation | `JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues` — enforced in `JobService` |
 
 ### `JobDefinitionReq` defaults
@@ -88,7 +90,11 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 
 `JobInfo` bundles a `JobDefinitionRes` with its last / last successful / last failed runs for dashboards.
 
-`JobRunRes` exposes `GetParameterValueAs<T>`, `GetResultValueAs<T>`, `GetParameterDictionary`, and `GetResultDictionary` for typed access to parameter and result bags.
+`JobRunRes` exposes `GetParameterValueAs<T>`, `GetResultValueAs<T>`, `GetParameterDictionary`, and `GetResultDictionary` for typed access to parameter and result bags. These, and
+the list-level accessors in `JobRunParameterExtensions` (`GetInt`, `GetLong`, `GetDecimal`, `GetBool`, `GetGuid`, `GetDateTime`, `GetEnum<T>`, `GetRegex`, `GetAs<T>`), delegate to
+`Lyo.Common.Conversion.TypeConversion`: key lookups are case-insensitive, booleans parse leniently (`1/0`, `y/n`, `yes/no`, `t/f`, `on/off`), and `GetAs<T>` deserializes
+JSON-typed parameter values into complex types. `GetDateTime` keeps round-trip (`"O"`) parsing so UTC timestamps preserve their kind, and passing a `format` to `GetAs<T>` uses the
+format-aware `ToScalar<T>` path.
 
 ## Builders (`Builders/`)
 
@@ -153,7 +159,7 @@ Transport-agnostic abstraction for job lifecycle messaging. Key members:
 - `PublishRunCreatedAsync(runId, workerType, priority = 0)` — priority honored when the broker queue supports `x-max-priority`.
 - `PublishRunStartedAsync`, `PublishRunFinishedAsync`, `PublishRunCancelledAsync`, `PublishDefinitionUpdatedAsync`.
 - **`PublishAlertAsync(definitionId, runId, alertType, message)`** — routes to `job.notifications.alert`.
-- Subscribers: definition updates, run completions, per-worker-type cancellations.
+- Subscribers: definition updates, run completions, run cancellations. `SubscribeToRunCancellationsAsync` must broadcast to **every** subscribed instance (implementations use per-instance exclusive queues, `job.run.{workerType}.cancel.{instanceId}`) — a shared competing-consumer queue would silently lose cancellations for scaled-out worker types.
 
 ## Metrics (`Constants.Metrics`)
 
@@ -183,7 +189,10 @@ Recorded via `IMetrics` when registered in hosting packages:
 |--------|-------------|
 | `job.service.run.created` | Runs inserted |
 | `job.service.run.create.rejected` | Rejected (concurrency, rate limit, validation) |
+| `job.service.run.dispatch.deferred` | Runs created with suppressed/deferred dispatch |
 | `job.service.run.started` | Transitions to Running |
+| `job.service.run.start.rejected` | Started CAS guard rejections (duplicate delivery, cancelled) |
+| `job.service.run.requeued` | Running → Queued shutdown hand-backs |
 | `job.service.run.finished` | Transitions to Finished |
 | `job.service.run.cancelled` | Cancellation requested |
 | `job.service.run.rerun` | Manual reruns |
@@ -199,6 +208,9 @@ Recorded via `IMetrics` when registered in hosting packages:
 | `job.worker.heartbeat.sent` / `heartbeat.failed` | Run heartbeat PATCHes |
 | `job.worker.cancellation.honored` | Runs cancelled mid-flight |
 | `job.worker.progress.reported` | Progress PATCHes |
+| `job.worker.start.rejected` | Started rejected by CAS guard (message dropped) |
+| `job.worker.shutdown.requeued` | Runs handed back on graceful shutdown |
+| `job.worker.late_finish.dropped` | Finish reports rejected as terminal |
 
 Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
 
@@ -211,6 +223,7 @@ Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
 | `job.maintenance.dead_jobs.failed` | Dead runs timed out |
 | `job.maintenance.circuit_breakers.reset` | Auto re-enabled definitions |
 | `job.maintenance.runs.purged` | Retention purge count |
+| `job.maintenance.runs.redispatched` | Stuck queued runs re-published |
 | `job.maintenance.worker_instances.pruned` | Stale registry rows removed |
 
 ### `job.sla.*`
@@ -223,11 +236,11 @@ Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
 
 `Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`).
 
-`Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunHeartbeat`, `RunChildren`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
+`Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
 
 ## Parameter encryption (`Security/IJobParameterEncryptionService`)
 
-Interface implemented by `Lyo.Job.Postgres.JobParameterEncryptionService`. Workers receive decrypted values when the service is registered; API responses mask encrypted parameters.
+Interface implemented by `Lyo.Job.Postgres.JobParameterEncryptionService`. API responses mask encrypted parameters (`***`); the worker-trusted `Started` endpoint decrypts values server-side so executing workers receive real values (workers with the service registered can also decrypt any remaining `EncryptedValue` locally).
 
 ## Extensions
 
@@ -237,7 +250,7 @@ Interface implemented by `Lyo.Job.Postgres.JobParameterEncryptionService`. Worke
 ## Related projects
 
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Schedule.Models`](../../../Core/Schedule/Lyo.Schedule.Models/README.md)
 
 ## Dependencies
@@ -256,4 +269,4 @@ Interface implemented by `Lyo.Job.Postgres.JobParameterEncryptionService`. Worke
 
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
 - [`Lyo.Schedule.Models`](../../../Core/Schedule/Lyo.Schedule.Models/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

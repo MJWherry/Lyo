@@ -92,6 +92,6 @@ public sealed class S3UploadStreamTests
         var client = FakeAmazonS3.Create(out var _);
         var stream = new S3UploadStream(client, "test-bucket", "k.bin", Options(), CancellationToken.None);
         stream.Write(new byte[8], 0, 8);
-        Assert.Throws<InvalidOperationException>(stream.Dispose);
+        Assert.Throws<NotSupportedException>(stream.Dispose);
     }
 }

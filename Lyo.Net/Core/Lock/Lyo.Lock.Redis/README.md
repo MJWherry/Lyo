@@ -56,7 +56,7 @@ Custom Redis section name:
 services.AddRedisLockFromConfiguration(configuration, redisSectionName: "RedisCluster");
 ```
 
-Throws `InvalidOperationException` if no connection string can be resolved.
+Throws `ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved.
 
 Example `appsettings.json`:
 

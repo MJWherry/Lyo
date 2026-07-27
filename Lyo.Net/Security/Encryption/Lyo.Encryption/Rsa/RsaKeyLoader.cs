@@ -1,5 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Lyo.Exceptions.Models;
+using Lyo.Keystore.Exceptions;
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -16,10 +18,10 @@ public static class RsaKeyLoader
     {
 #if NET10_0_OR_GREATER
         var cert = X509CertificateLoader.LoadPkcs12FromFile(pfxPath, password, X509KeyStorageFlags.Exportable);
-        return cert.GetRSAPrivateKey() ?? throw new InvalidOperationException("PFX file does not contain a private RSA key.");
+        return cert.GetRSAPrivateKey() ?? throw new InvalidKeyException("PFX file does not contain a private RSA key.");
 #else
         var cert = new X509Certificate2(pfxPath, password, X509KeyStorageFlags.Exportable);
-        return cert.GetRSAPrivateKey() ?? throw new InvalidOperationException("PFX file does not contain a private RSA key.");
+        return cert.GetRSAPrivateKey() ?? throw new InvalidKeyException("PFX file does not contain a private RSA key.");
 #endif
     }
 
@@ -84,10 +86,10 @@ public static class RsaKeyLoader
     private static void ImportPublicPem(RSA rsa, string pem)
     {
         var reader = new PemReader(new StringReader(pem));
-        var obj = reader.ReadObject() ?? throw new InvalidOperationException("Invalid PEM public key.");
+        var obj = reader.ReadObject() ?? throw new InvalidFormatException("Invalid PEM public key.");
         var rsaParams = obj switch {
             RsaKeyParameters rp => ToPublicParameters(rp),
-            var _ => throw new NotSupportedException("PEM does not contain an RSA public key.")
+            var _ => throw new InvalidFormatException("PEM does not contain an RSA public key.")
         };
 
         rsa.ImportParameters(rsaParams);
@@ -96,11 +98,11 @@ public static class RsaKeyLoader
     private static void ImportPrivatePem(RSA rsa, string pem)
     {
         var reader = new PemReader(new StringReader(pem));
-        var obj = reader.ReadObject() ?? throw new InvalidOperationException("Invalid PEM private key.");
+        var obj = reader.ReadObject() ?? throw new InvalidFormatException("Invalid PEM private key.");
         var rsaParams = obj switch {
             RsaPrivateCrtKeyParameters crt => ToPrivateParameters(crt),
             AsymmetricCipherKeyPair pair when pair.Private is RsaPrivateCrtKeyParameters crt => ToPrivateParameters(crt),
-            var _ => throw new NotSupportedException("PEM does not contain an RSA private key.")
+            var _ => throw new InvalidFormatException("PEM does not contain an RSA private key.")
         };
 
         rsa.ImportParameters(rsaParams);

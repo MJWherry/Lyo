@@ -1,3 +1,5 @@
+using Lyo.Exceptions.Models;
+
 namespace Lyo.Job.Scheduler;
 
 /// <summary>Options for <see cref="JobWorkflowEngine" />.</summary>
@@ -22,6 +24,6 @@ public sealed class JobWorkflowEngineOptions
     {
         var errors = GetValidationErrors();
         if (errors.Count > 0)
-            throw new ArgumentException($"Invalid {nameof(JobWorkflowEngineOptions)}: {string.Join(" ", errors)}");
+            throw new ValidationException($"Invalid {nameof(JobWorkflowEngineOptions)}: {string.Join(" ", errors)}");
     }
 }

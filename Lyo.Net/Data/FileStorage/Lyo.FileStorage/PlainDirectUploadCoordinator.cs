@@ -1,5 +1,6 @@
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -95,7 +96,7 @@ internal sealed class PlainDirectUploadCoordinator
         var resolvedTenant = _metadataNormalization.ResolveTenantId(request.TenantId);
         var ctResolved = _metadataNormalization.ResolveStoredContentType(request.ContentType, request.OriginalFileName);
         if (_options.MaxUploadSizeBytes.HasValue && request.DeclaredMaxSizeBytes > _options.MaxUploadSizeBytes.Value)
-            throw new InvalidOperationException($"DeclaredMaxSizeBytes {request.DeclaredMaxSizeBytes} exceeds configured MaxUploadSizeBytes.");
+            throw new FilePolicyRejectedException($"DeclaredMaxSizeBytes {request.DeclaredMaxSizeBytes} exceeds configured MaxUploadSizeBytes.");
 
         await _contentPolicy.ValidateAsync(
                 new() {
@@ -127,12 +128,10 @@ internal sealed class PlainDirectUploadCoordinator
     /// <param name="completeRequest">Optional client overrides for filenames and asserted byte counts.</param>
     /// <param name="ct">Cancellation token propagated through hashing and scanning routines.</param>
     /// <returns>Updated metadata describing the persisted object plus availability outcome.</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when metadata is not awaiting finalize, encryption unexpectedly enabled, payload empty, policy rejects size, or length mismatch
-    /// occurs.
-    /// </exception>
+    /// <exception cref="InvalidOperationException">Thrown when metadata is not awaiting finalize, encryption unexpectedly enabled, payload empty, or length mismatch occurs.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the backing blob is absent.</exception>
-    /// <exception cref="FilePolicyRejectedException">Thrown when scanning flags a definite threat.</exception>
+    /// <exception cref="FilePolicyRejectedException">Thrown when the payload exceeds the size policy or scanning flags a definite threat.</exception>
+    /// <exception cref="Lyo.Exceptions.Models.ConfigurationException">Thrown when scanning is required before availability but no malware scanner is configured.</exception>
     internal async Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
     {
         FileStoreResult? metaForAudit = null;
@@ -255,9 +254,9 @@ internal sealed class PlainDirectUploadCoordinator
     private void EnsureScanRequirementSatisfied()
     {
         if (_options.RequireScanBeforeAvailable && _malwareScanner is NullFileMalwareScanner) {
-            throw new InvalidOperationException(
+            throw new ConfigurationException(
                 "RequireScanBeforeAvailable is set but no IFileMalwareScanner is configured. " +
-                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.");
+                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.", "RequireScanBeforeAvailable");
         }
     }
 

@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Translation\Lyo.Translation.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

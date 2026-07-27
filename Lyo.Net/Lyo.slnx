@@ -24,9 +24,12 @@
         <Project Path="Core/Result/Lyo.Result.Tests/Lyo.Result.Tests.csproj" />
     </Folder>
     <Folder Name="/Core/">
-        <Project Path="Core/Lyo.Exceptions/Lyo.Exceptions.csproj" />
         <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj" />
         <Project Path="Core/Lyo.Testing.Containers/Lyo.Testing.Containers.csproj" />
+    </Folder>
+    <Folder Name="/Core/Exceptions/">
+        <Project Path="Core/Exceptions/Lyo.Exceptions/Lyo.Exceptions.csproj" />
+        <Project Path="Core/Exceptions/Lyo.Exceptions.Tests/Lyo.Exceptions.Tests.csproj" />
     </Folder>
     <Folder Name="/Core/Benchmark/">
         <Project Path="Core/Benchmark/Lyo.Benchmark.Models/Lyo.Benchmark.Models.csproj" />
@@ -305,17 +308,6 @@
         <Project Path="Data/Formatter/Lyo.Formatter.Tests/Lyo.Formatter.Tests.csproj" />
         <Project Path="Data/Formatter/Lyo.Formatter/Lyo.Formatter.csproj" />
     </Folder>
-    <Folder Name="/.docs/">
-        <File Path="..\docs\architecture.md" />
-        <File Path="..\docs\configuration.md" />
-        <File Path="..\docs\deployment.md" />
-        <File Path="..\docs\getting-started.md" />
-        <File Path="..\docs\glossary.md" />
-        <File Path="..\docs\Lyo.ProjectGraph.html" />
-        <File Path="..\docs\publishing.md" />
-        <File Path="..\docs\README.md" />
-        <File Path="..\docs\testing.md" />
-    </Folder>
     <Folder Name="/.SolutionItems/">
         <File Path="..\.gitignore" />
         <File Path="..\CONTRIBUTING.md" />
@@ -361,9 +353,13 @@
     <Folder Name="/Integration/Web/Renderer/">
         <Project Path="Integration/Web/Renderer/Lyo.Web.WebRenderer/Lyo.Web.WebRenderer.csproj" />
     </Folder>
-    <Folder Name="/Integration/Web/Reporting/">
-        <Project Path="Integration/Web/Reporting/Lyo.Web.Reporting.Postgres/Lyo.Web.Reporting.Postgres.csproj" />
-        <Project Path="Integration/Web/Reporting/Lyo.Web.Reporting/Lyo.Web.Reporting.csproj" />
+    <Folder Name="/Integration/Reporting/">
+        <Project Path="Integration/Reporting/Lyo.Reporting.Models/Lyo.Reporting.Models.csproj" />
+        <Project Path="Integration/Reporting/Lyo.Reporting.Postgres/Lyo.Reporting.Postgres.csproj" />
+        <Project Path="Integration/Reporting/Lyo.Reporting.Web/Lyo.Reporting.Web.csproj" />
+        <Project Path="Integration/Reporting/Lyo.Reporting.Web.Components/Lyo.Reporting.Web.Components.csproj" />
+        <Project Path="Integration/Reporting/Lyo.Reporting.Client/Lyo.Reporting.Client.csproj" />
+        <Project Path="Integration/Reporting/Lyo.Reporting.Tests/Lyo.Reporting.Tests.csproj" />
     </Folder>
     <Folder Name="/Security/" />
     <Folder Name="/Security/Hashing/">
@@ -430,6 +426,7 @@
         <Project Path="Integration/Api/Lyo.Api.Export/Lyo.Api.Export.csproj" />
         <Project Path="Integration/Api/Lyo.Api.Export.Csv/Lyo.Api.Export.Csv.csproj" />
         <Project Path="Integration/Api/Lyo.Api.Export.Xlsx/Lyo.Api.Export.Xlsx.csproj" />
+        <Project Path="Integration/Api/Lyo.Api.Reporting/Lyo.Api.Reporting.csproj" />
         <Project Path="Integration/Api/Lyo.Api.Client/Lyo.Api.Client.csproj" />
         <Project Path="Integration/Api/Lyo.Api.Models/Lyo.Api.Models.csproj" />
         <Project Path="Integration/Api/Lyo.Api.Tests.Host/Lyo.Api.Tests.Host.csproj" />

@@ -635,6 +635,16 @@ catch (InvalidDataException ex)
     // Invalid encrypted data format, unsupported format version, or corrupted data
     Console.WriteLine($"Invalid data format: {ex.Message}");
 }
+catch (KeyNotFoundException ex)
+{
+    // Key Encryption Key missing from the KeyStore (TwoKey envelope decryption)
+    Console.WriteLine($"Key not found: {ex.Message}");
+}
+catch (ConfigurationException ex)
+{
+    // No RSA key configuration provided (neither PEM paths nor PFX)
+    Console.WriteLine($"Configuration error: {ex.Message}");
+}
 catch (InvalidOperationException ex)
 {
     // Missing keyId or key parameter, or keyId not found in KeyStore
@@ -673,6 +683,10 @@ catch (OperationCanceledException ex)
 - `DecryptionFailedException` - Thrown when decryption fails due to wrong key, corrupted data, authentication failure, or tampered data
 - `InvalidDataException` - Thrown when encrypted data format is invalid, unsupported format version, or corrupted
 - `InvalidOperationException` - Thrown when no encryption/decryption key is available (neither keyId nor key provided, or keyId not found in KeyStore)
+- `KeyNotFoundException` (`Lyo.Keystore`) - Thrown by TwoKey envelope decryption when the Key Encryption Key is missing from the KeyStore
+- `ConfigurationException` (`Lyo.Exceptions`) - Thrown by `RsaEncryptor`/`RsaDecryptor`/`AesGcmRsaEncryptionService` when no RSA key configuration is provided
+- `InvalidKeyException` (`Lyo.Keystore`) - Thrown when key material is unusable (e.g. PFX without a private key, wrong Ed25519 seed length)
+- `InvalidFormatException` (`Lyo.Exceptions`) - Thrown by `RsaKeyLoader` for malformed or non-RSA PEM content
 - `FileNotFoundException` - Thrown when a required file does not exist
 - `EndOfStreamException` - Thrown when a stream ends unexpectedly while reading encrypted data
 - `NotSupportedException` - Thrown when stream format version is not supported
@@ -1177,7 +1191,7 @@ Built with security best practices in mind, following:
 ### Project references
 
 - [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Streams`](../../Core/Streams/Lyo.Streams/README.md)
 - [`Lyo.Hashing`](../Hashing/Lyo.Hashing/README.md)

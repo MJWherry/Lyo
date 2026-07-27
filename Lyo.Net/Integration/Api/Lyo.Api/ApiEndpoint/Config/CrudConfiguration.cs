@@ -32,10 +32,19 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
 
     public Action<DeleteContext<TDbEntity, TDbContext>>? BeforeDelete { get; init; }
 
+    /// <summary>Async pre-delete hook (e.g. external blob cleanup); runs after the synchronous <see cref="BeforeDelete" /> when both are set. Receives the request cancellation token.</summary>
+    public Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? BeforeDeleteAsync { get; init; }
+
     public Action<DeleteContext<TDbEntity, TDbContext>>? AfterDelete { get; init; }
 
     // Configuration options
     public string[]? DeleteIncludes { get; init; }
+
+    /// <summary>
+    /// Property names (or dotted paths) that projected queries and exports may never select or reference in templates.
+    /// Applied to the QueryProject and Export endpoints (QueryConcrete/Get map through the response type and are unaffected).
+    /// </summary>
+    public IReadOnlyCollection<string>? DeniedSelectFields { get; init; }
 
     public MetadataConfiguration<TDbContext, TDbEntity> Metadata { get; init; } = new();
 

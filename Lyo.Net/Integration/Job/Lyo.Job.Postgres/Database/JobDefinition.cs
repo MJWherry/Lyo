@@ -18,7 +18,7 @@ public class JobDefinition
     public string Type { get; set; } = null!;
 
     [Required]
-    [MaxLength(7)]
+    [MaxLength(50)]
     public string WorkerType { get; set; } = null!;
 
     public bool Enabled { get; set; }

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Lyo.Common.Conversion;
 
 namespace Lyo.Web.Components.DataGrid;
 
@@ -30,15 +31,10 @@ public static class ProjectedValueHelper
             return string.Empty;
 
         if (v is JsonElement jv) {
-            return jv.ValueKind switch {
-                JsonValueKind.String => jv.GetString() ?? string.Empty,
-                JsonValueKind.Number => jv.GetRawText(),
-                JsonValueKind.True => "True",
-                JsonValueKind.False => "False",
-                JsonValueKind.Null => string.Empty,
-                JsonValueKind.Undefined => string.Empty,
-                var _ => jv.ToString()
-            };
+            // Numbers/objects/arrays keep their raw JSON text for display; scalars go through the shared extractor.
+            return jv.ValueKind is JsonValueKind.Number or JsonValueKind.Object or JsonValueKind.Array
+                ? jv.GetRawText()
+                : TypeConversion.FromJsonElement(jv)?.ToString() ?? string.Empty;
         }
 
         return v.ToString() ?? string.Empty;
@@ -48,21 +44,11 @@ public static class ProjectedValueHelper
     public static bool TryGetGuid(object? value, out Guid guid)
     {
         guid = default;
-        if (value is null)
+        if (value is null || !TypeConversion.TryConvertTo<Guid>(value, out var converted))
             return false;
 
-        if (value is Guid g) {
-            guid = g;
-            return true;
-        }
-
-        if (value is string s && Guid.TryParse(s, out guid))
-            return true;
-
-        if (value is JsonElement je && je.ValueKind == JsonValueKind.String && Guid.TryParse(je.GetString(), out guid))
-            return true;
-
-        return false;
+        guid = converted;
+        return true;
     }
 
     /// <summary>Best-effort conversion for projected values (JSON numbers often arrive as strings; <see cref="JsonElement" /> is handled).</summary>
@@ -144,35 +130,12 @@ public static class ProjectedValueHelper
         if (raw is null)
             return default!;
 
+        // Long keeps its dedicated path: invariant-culture strings and ulong range casting.
         if (typeof(T) == typeof(long))
             return (T)(object)GetInt64(raw);
 
-        if (raw is JsonElement je) {
-            raw = JsonElementToDotNet(je);
-            if (raw is T t2)
-                return t2;
-
-            if (raw is null)
-                return default!;
-        }
-
-        try {
-            return (T)Convert.ChangeType(raw, typeof(T), CultureInfo.InvariantCulture)!;
-        }
-        catch {
-            return default!;
-        }
+        return TypeConversion.TryConvertTo<T>(raw, out var converted) ? converted! : default!;
     }
-
-    private static object? JsonElementToDotNet(JsonElement je)
-        => je.ValueKind switch {
-            JsonValueKind.String => je.GetString(),
-            JsonValueKind.Number => je.TryGetInt64(out var l) ? l : je.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null or JsonValueKind.Undefined => null,
-            var _ => je
-        };
 
     private static object? GetFromJsonElement(JsonElement je, string fieldName)
     {

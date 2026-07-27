@@ -70,7 +70,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         OperationHelpers.ThrowIf(request.PartSizeBytes < s3MinimumPartSize, $"S3 multipart PartSizeBytes must be at least {s3MinimumPartSize} (5 MiB).");
         OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
         if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
-            throw new InvalidOperationException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+            throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
 
         FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
         var sessionId = Guid.NewGuid();

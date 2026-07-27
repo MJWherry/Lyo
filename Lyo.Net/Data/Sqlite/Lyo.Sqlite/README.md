@@ -39,4 +39,4 @@ services.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, FileStoreSqliteOp
 - `Microsoft.EntityFrameworkCore.Sqlite`
 - `Microsoft.Extensions.Hosting.Abstractions`
 - `Microsoft.Extensions.Options`
-- [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../Core/Exceptions/Lyo.Exceptions/README.md)

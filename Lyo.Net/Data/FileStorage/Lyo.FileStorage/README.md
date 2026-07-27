@@ -26,13 +26,13 @@ For multipart session stores and Postgres metadata, follow references from your 
 | Capability                                                                                        | Local disk (**`LocalFileStorageService`**)                                                                                       | S3 (**`S3FileStorageService`**)             | Blob (**`BlobFileStorageService`**)        |
 |---------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|--------------------------------------------|
 | **Presigned GET**                                                                                 | Only when **`DiskFileStorageOptions.AllowFileUriPresignedUrls`** (returns **`file://`**, dev-only); no response-header overrides | Yes (incl. **`PreSignedReadUrlOptions`**)   | Yes (SAS + optional response headers)      |
-| **Direct PUT upload** (**`BeginDirectUpload` / `CompleteDirectUpload`**)                          | Yes when **`DirectUploadReceiveBaseUri`** is set (PUT URL hits Test API / host receiver); otherwise **`NotSupportedException`**  | Yes                                         | Yes                                        |
+| **Direct PUT upload** (**`BeginDirectUpload` / `CompleteDirectUpload`**)                          | Yes when **`DirectUploadReceiveBaseUri`** is set (PUT URL hits Test API / host receiver); otherwise **`ConfigurationException`** | Yes                                         | Yes                                        |
 | **Server-sideCopy** (**`CopyFileAsync`**)                                                         | Yes (filesystem copy + metadata)                                                                                                 | Yes (`CopyObject`)                          | Yes (same API)                             |
 | **Move** (**`MoveFileAsync`**)                                                                    | Yes (`File.Move` + metadata; same file id)                                                                                       | Yes (`CopyObject` then delete source)       | Yes (`SyncCopyFromUri` then delete source) |
 | **Rename** (**`RenameFileAsync`**)                                                                | Yes (metadata `OriginalFileName` only)                                                                                           | Yes (same)                                  | Yes (same)                                 |
 | **Diagnostics listing** (**`IFileStorageDiagnosticsService`**)                                    | Yes (relative paths under **`RootDirectoryPath`**)                                                                               | Yes (combined **`KeyPrefix`**)              | Yes                                        |
 | **Multipart** (**`AddLocalMultipartUploadService` / …S3/Blob**)                                   | Yes (server-staged parts)                                                                                                        | Yes                                         | Yes                                        |
-| **Staged upload** (**`IStagedFileUploadService` / `AddLocalStagedFileUploadService` / …S3/Blob**) | Yes when **`DirectUploadReceiveBaseUri`** is set (API PUT to `.stage/`); otherwise **`NotSupportedException`**                   | Yes (presigned PUT to `.stage/{id}/object`) | Yes (SAS PUT; not with SSE-C customer key) |
+| **Staged upload** (**`IStagedFileUploadService` / `AddLocalStagedFileUploadService` / …S3/Blob**) | Yes when **`DirectUploadReceiveBaseUri`** is set (API PUT to `.stage/`); otherwise **`ConfigurationException`**                  | Yes (presigned PUT to `.stage/{id}/object`) | Yes (SAS PUT; not with SSE-C customer key) |
 
 Plaintext direct uploads (**`BeginDirectUpload`**) deliberately **exclude** encryption/compression on the edge PUT; finalized metadata runs through normal
 policy/malware/availability flags.
@@ -337,7 +337,7 @@ Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; dee
 - [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
 - [`Lyo.ContentThreatScan`](../../../Security/ContentThreat/Lyo.ContentThreatScan/README.md)
 - [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
 - [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)

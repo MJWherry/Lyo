@@ -19,7 +19,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Barcode\Lyo.Barcode.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
     </ItemGroup>
 

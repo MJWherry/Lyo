@@ -47,6 +47,8 @@ public static class Constants
 
         public const string Jobs = "jobs";
 
+        public const string Reports = "reports";
+
         public const string Schedule = "schedule";
 
         public const string Diagnostics = "diagnostics";

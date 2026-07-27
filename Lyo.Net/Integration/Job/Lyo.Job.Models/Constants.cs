@@ -6,7 +6,10 @@ public static class Constants
     /// <summary>Message queue constants (Mq).</summary>
     public static class Mq
     {
-        //Only 1 scheduler, so 1 queue to process finished jobs
+        /// <summary>
+        /// Queue for finished-run notifications, consumed by scheduler instances. With multiple schedulers this is a competing-consumer queue: each completion is processed by
+        /// exactly one instance. Retry and trigger creation are deduplicated across instances via idempotency keys on the resulting run requests.
+        /// </summary>
         public const string QueueJobRunFinish = "job.run.complete";
 
         //Exchange for job events below
@@ -21,7 +24,14 @@ public static class Constants
         //Multiple worker types, build queue based on worker type to simplify
         public static string QueueGetJobRunCreated(string workerType) => $"job.run.{workerType}";
 
+        /// <summary>Base name for cancellation queues of a worker type. Kept for backwards compatibility and as the prefix for per-instance queues.</summary>
         public static string QueueGetJobRunCancel(string workerType) => $"job.run.{workerType}.cancel";
+
+        /// <summary>
+        /// Per-instance cancellation queue name (exclusive, auto-delete). Cancellations are broadcast through <see cref="JobEventExchange" />; each worker instance binds its own
+        /// queue so every instance of a scaled-out worker type sees every cancel message (a single shared queue would deliver each cancel to only one competing consumer).
+        /// </summary>
+        public static string QueueGetJobRunCancelInstance(string workerType, string instanceId) => $"job.run.{workerType}.cancel.{instanceId}";
     }
 
     /// <summary>REST API route constants.</summary>
@@ -32,6 +42,9 @@ public static class Constants
             public const string Route = "Job";
             public const string Definitions = $"{Route}/Definition";
             public const string DefinitionsQuery = $"{Definitions}/QueryConcrete";
+
+            /// <summary>POST endpoint returning the latest run / latest successful run / latest failed run per definition id (batch, used by the scheduler refresh).</summary>
+            public const string DefinitionsLatestRuns = $"{Definitions}/LatestRuns";
             public const string DefinitionParameters = $"{Definitions}/Parameter";
             public const string Schedules = $"{Route}/Schedule";
             public const string ScheduleParameters = $"{Route}/ScheduleParameters";
@@ -58,6 +71,9 @@ public static class Constants
 
             /// <summary>POST endpoint to transition a run to <c>Finished</c> state.</summary>
             public static string RunFinished(Guid runId) => $"{Runs}/{runId}/Finished";
+
+            /// <summary>POST endpoint to transition a run from <c>Running</c> back to <c>Queued</c> (worker host shutdown hand-back).</summary>
+            public static string RunRequeue(Guid runId) => $"{Runs}/{runId}/Requeue";
 
             /// <summary>POST endpoint to add a log entry to a run.</summary>
             public static string RunLog(Guid runId) => $"{Runs}/{runId}/Log";
@@ -99,7 +115,10 @@ public static class Constants
         {
             public const string RunCreated = "job.service.run.created";
             public const string RunCreateRejected = "job.service.run.create.rejected";
+            public const string RunDispatchDeferred = "job.service.run.dispatch.deferred";
+            public const string RunRequeued = "job.service.run.requeued";
             public const string RunStarted = "job.service.run.started";
+            public const string RunStartRejected = "job.service.run.start.rejected";
             public const string RunFinished = "job.service.run.finished";
             public const string RunCancelled = "job.service.run.cancelled";
             public const string RunRerun = "job.service.run.rerun";
@@ -116,6 +135,9 @@ public static class Constants
             public const string HeartbeatFailed = "job.worker.heartbeat.failed";
             public const string CancellationHonored = "job.worker.cancellation.honored";
             public const string ProgressReported = "job.worker.progress.reported";
+            public const string StartRejected = "job.worker.start.rejected";
+            public const string ShutdownRequeued = "job.worker.shutdown.requeued";
+            public const string LateFinishDropped = "job.worker.late_finish.dropped";
         }
 
         /// <summary>Metrics emitted by <c>Lyo.Job.Postgres.JobMaintenanceService</c>.</summary>
@@ -126,6 +148,7 @@ public static class Constants
             public const string DeadJobsFailed = "job.maintenance.dead_jobs.failed";
             public const string CircuitBreakersReset = "job.maintenance.circuit_breakers.reset";
             public const string RunsPurged = "job.maintenance.runs.purged";
+            public const string RunsRedispatched = "job.maintenance.runs.redispatched";
             public const string WorkerInstancesPruned = "job.maintenance.worker_instances.pruned";
         }
 

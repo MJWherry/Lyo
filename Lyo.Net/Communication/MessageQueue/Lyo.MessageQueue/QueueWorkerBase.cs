@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common.Conversion;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Health;
@@ -112,12 +113,13 @@ internal static class QueueWorkerHelpers
         => root.TryGetProperty(pascalName, out value) || root.TryGetProperty(char.ToLowerInvariant(pascalName[0]) + pascalName[1..], out value);
 
     private static int? GetInt(JsonElement root, string pascalName)
-        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var i) ? i : null;
+        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && TypeConversion.TryFromJsonElement<int>(el, out var i) ? i : null;
 
-    private static string? GetString(JsonElement root, string pascalName) => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.String ? el.GetString() : null;
+    private static string? GetString(JsonElement root, string pascalName)
+        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && TypeConversion.TryFromJsonElement<string>(el, out var s) ? s : null;
 
     private static DateTime? GetDateTime(JsonElement root, string pascalName)
-        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && el.ValueKind == JsonValueKind.String && el.TryGetDateTime(out var dt) ? dt : null;
+        => TryGetPropertyIgnoreCase(root, pascalName, out var el) && TypeConversion.TryFromJsonElement<DateTime>(el, out var dt) ? dt : null;
 }
 
 /// <summary>Abstract base class for queue workers. Implements <see cref="IHostedService" /> for automatic start/stop via the DI host.</summary>

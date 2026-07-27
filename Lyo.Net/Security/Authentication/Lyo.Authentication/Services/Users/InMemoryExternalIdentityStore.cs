@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lyo.Authentication.Models.Records;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Services.Users;
 
@@ -42,7 +43,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
 
         if (existing is not null) {
             if (existing.UserId != userId)
-                throw new InvalidOperationException($"({provider}, {subject}) is already linked to a different Lyo user.");
+                throw new ConflictException($"({provider}, {subject}) is already linked to a different Lyo user.");
 
             var updated = existing with {
                 EmailAtLink = emailAtLink ?? existing.EmailAtLink,
@@ -72,7 +73,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
     public Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         _byId.AddOrUpdate(
-            linkedIdentityId, _ => throw new InvalidOperationException($"Linked identity '{linkedIdentityId}' not found."),
+            linkedIdentityId, _ => throw new NotFoundException($"Linked identity '{linkedIdentityId}' not found."),
             (_, existing) => existing with { UnlinkedAt = utcNow, UpdatedAt = utcNow });
 
         return Task.CompletedTask;

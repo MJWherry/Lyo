@@ -88,13 +88,13 @@ public class RsaEncryptorDecryptorTests : IDisposable, IAsyncDisposable
 
     [Fact]
     public void Encryptor_Constructor_NoKeys_Throws()
-        => Assert.Throws<InvalidOperationException>(() => {
+        => Assert.Throws<ConfigurationException>(() => {
             _ = new RsaEncryptor();
         });
 
     [Fact]
     public void Decryptor_Constructor_NoKeys_Throws()
-        => Assert.Throws<InvalidOperationException>(() => {
+        => Assert.Throws<ConfigurationException>(() => {
             _ = new RsaDecryptor();
         });
 

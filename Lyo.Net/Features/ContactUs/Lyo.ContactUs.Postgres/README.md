@@ -51,5 +51,5 @@ Migrations history is tracked in `__EFMigrationsHistory` under the `contact` sch
 ### Project references
 
 - [`Lyo.ContactUs`](../Lyo.ContactUs/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

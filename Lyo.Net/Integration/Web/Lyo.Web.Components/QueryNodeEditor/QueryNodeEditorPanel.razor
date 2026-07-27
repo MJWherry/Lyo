@@ -6,7 +6,14 @@
             <MudItem xs="12" md="4" Class="query-node-editor-column">
                 <MudPaper Elevation="1" Class="pa-2 query-node-editor-panel">
                     <div class="query-structure-layout">
-                        <MudText Typo="Typo.subtitle1" Class="mb-2">Query Structure</MudText>
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudText Typo="Typo.subtitle1" Style="flex: 1;">Query Structure</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Size="Size.Small"
+                                           Disabled="@(_rootNode == null)"
+                                           OnClick="@ShowWhereClauseDialog"
+                                           Title="View readable where clause"/>
+                        </MudStack>
                         <style>
                             .drag-over-group-clause {
                                 background-color: rgba(25, 118, 210, 0.1) !important;

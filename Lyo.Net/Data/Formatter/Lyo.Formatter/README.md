@@ -93,7 +93,7 @@ culture-aware data in context instead).
 ## Related projects
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) (computed fields)
 - [`Lyo.Web.Automation`](../../../Integration/Web/Automation/Lyo.Web.Automation/README.md) (template validation)
 
@@ -115,4 +115,4 @@ culture-aware data in context instead).
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

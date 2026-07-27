@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -66,7 +67,7 @@ public static class RedisLockServiceExtensions
         /// <param name="configureOptions">Applied after binding lock options from configuration.</param>
         /// <param name="redisSectionName">Section containing Redis connection settings.</param>
         /// <returns>The service collection for chaining.</returns>
-        /// <exception cref="InvalidOperationException">No Redis connection string resolved from configuration.</exception>
+        /// <exception cref="ConfigurationException">No Redis connection string resolved from configuration.</exception>
         public IServiceCollection AddRedisLockFromConfiguration(IConfiguration configuration, Action<RedisLockOptions>? configureOptions = null, string redisSectionName = "Redis")
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -96,8 +97,9 @@ public static class RedisLockServiceExtensions
                     });
             }
 
-            throw new InvalidOperationException(
-                $"Redis connection string not found in configuration section '{redisSectionName}'. Add RedisLock with a connection string or ensure Redis is configured.");
+            throw new ConfigurationException(
+                $"Redis connection string not found in configuration section '{redisSectionName}'. Add RedisLock with a connection string or ensure Redis is configured.",
+                redisSectionName);
         }
     }
 }

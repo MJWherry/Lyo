@@ -33,6 +33,7 @@
         <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode.Web.Components\Lyo.QRCode.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Features\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Web.Components\Lyo.Job.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Web.Components\Lyo.Reporting.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Schedule\Lyo.Schedule.Web.Components\Lyo.Schedule.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Diagnostic\Lyo.Diagnostic.Web.Components\Lyo.Diagnostic.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Privacy\Lyo.Privacy.Web.Components\Lyo.Privacy.Web.Components.csproj"/>

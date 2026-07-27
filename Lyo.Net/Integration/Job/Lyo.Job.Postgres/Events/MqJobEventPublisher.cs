@@ -115,12 +115,19 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         => _mqService.SubscribeToQueue(Constants.Mq.QueueJobRunFinish, handler, ct);
 
     /// <inheritdoc />
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
+    public async Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
     {
-        var queueName = Constants.Mq.QueueGetJobRunCancel(workerType);
+        // Cancellations are broadcast through the exchange to a per-instance exclusive queue. A shared per-worker-type queue would be a
+        // competing-consumer queue: with scaled-out workers only one instance would receive each cancel, and if it is not the instance
+        // executing the run the cancellation is silently lost.
+        var queueName = Constants.Mq.QueueGetJobRunCancelInstance(workerType, Guid.NewGuid().ToString("N"));
+        if (!await _mqService.CreateQueue(queueName, false, true, true, null, ct).ConfigureAwait(false))
+            throw new InvalidOperationException($"Failed to declare per-instance cancellation queue '{queueName}'.");
+
+        await EnsureBoundAsync(queueName, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
 
         // Typed subscribe handles both enveloped and legacy raw-Guid messages, and acks unparseable messages instead of redelivering them forever.
-        return _mqService.SubscribeToQueueAsync<Guid>(
+        await _mqService.SubscribeToQueueAsync<Guid>(
                 queueName, async (runId, _) => {
                     try {
                         await handler(runId).ConfigureAwait(false);
@@ -130,7 +137,8 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
                         _logger.LogError(ex, "Error processing cancellation message for run {RunId}", runId);
                         return true;
                     }
-                }, ct: ct);
+                }, ct: ct)
+            .ConfigureAwait(false);
     }
 
     private async Task SetupWorkerQueuesAsync(IReadOnlyList<string> workerTypes, CancellationToken ct)
@@ -141,14 +149,12 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
             return;
         }
 
+        // Cancellation queues are not provisioned here: each worker instance declares its own exclusive queue in
+        // SubscribeToRunCancellationsAsync (shared cancel queues would drop cancels for scaled-out workers).
         _logger.LogInformation("Provisioning job run queues for {Count} worker type(s)", workerTypes.Count);
         foreach (var workerType in workerTypes) {
             var runQueue = Constants.Mq.QueueGetJobRunCreated(workerType);
             await EnsureQueueCreatedAsync(runQueue, null, ct).ConfigureAwait(false);
-
-            var cancelQueue = Constants.Mq.QueueGetJobRunCancel(workerType);
-            await EnsureQueueCreatedAsync(cancelQueue, null, ct).ConfigureAwait(false);
-            await EnsureBoundAsync(cancelQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
         }
     }
 

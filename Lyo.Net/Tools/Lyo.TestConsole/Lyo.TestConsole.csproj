@@ -49,8 +49,9 @@
         <ProjectReference Include="..\..\Integration\Web\Automation\Lyo.Web.Automation.Playwright\Lyo.Web.Automation.Playwright.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Automation\Lyo.Web.Automation.Selenium\Lyo.Web.Automation.Selenium.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
-        <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting\Lyo.Web.Reporting.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Web\Lyo.Reporting.Web.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
         <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher\Lyo.FileSystemWatcher.csproj"/>

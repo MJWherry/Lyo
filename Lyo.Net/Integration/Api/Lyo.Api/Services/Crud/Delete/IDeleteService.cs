@@ -12,6 +12,7 @@ public interface IDeleteService<TContext>
     Task<DeleteResult<TResult>> DeleteAsync<TDbModel, TResult>(
         object[] keys,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)
@@ -20,6 +21,7 @@ public interface IDeleteService<TContext>
     Task<DeleteResult<TResult>> DeleteAsync<TDbModel, TResult>(
         DeleteRequest request,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)
@@ -28,6 +30,7 @@ public interface IDeleteService<TContext>
     Task<DeleteBulkResult<TResult>> DeleteBulkAsync<TDbModel, TResult>(
         IEnumerable<DeleteRequest> requests,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)

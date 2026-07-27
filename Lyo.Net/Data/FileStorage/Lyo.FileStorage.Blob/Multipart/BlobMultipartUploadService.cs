@@ -62,7 +62,7 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
         OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
         OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
         if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
-            throw new InvalidOperationException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+            throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
 
         FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
         var sessionId = Guid.NewGuid();

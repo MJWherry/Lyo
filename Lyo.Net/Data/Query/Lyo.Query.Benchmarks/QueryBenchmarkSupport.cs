@@ -58,7 +58,7 @@ internal static class QueryBenchmarkSupport
     {
         var cacheOptions = new CacheOptions { Enabled = true };
         var cache = new LocalCacheService(new MemoryCache(new MemoryCacheOptions()), new NullLogger<LocalCacheService>(), cacheOptions);
-        IValueConversionService valueConversion = new ValueConversionService(cache, cacheOptions);
+        IValueConversionService valueConversion = new ValueConversionService();
         return new(cache, cacheOptions, valueConversion);
     }
 

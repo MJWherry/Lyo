@@ -19,7 +19,7 @@ using Lyo.ShortUrl.Postgres.Database;
 using Lyo.Sms.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.Tag.Postgres.Database;
-using Lyo.Web.Reporting.Postgres.Database;
+using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -79,7 +79,7 @@ public sealed class MigrationRunner
 
     public Task RunRatingAsync(CancellationToken ct = default) => MigrateLatestAsync<RatingDbContext>("rating", ct);
 
-    public Task RunReportingAsync(CancellationToken ct = default) => MigrateLatestAsync<ReportingDbContext>("report", ct);
+    public Task RunReportingAsync(CancellationToken ct = default) => MigrateLatestAsync<ReportingContext>("reporting", ct);
 
     public Task RunShortUrlAsync(CancellationToken ct = default) => MigrateLatestAsync<ShortUrlDbContext>("url", ct);
 

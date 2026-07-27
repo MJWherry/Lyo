@@ -47,7 +47,7 @@ Errors are caught per menu choice and printed via `WriteError`, then the menu lo
 | Note              | `NoteDbContext`              | `note`           |
 | People            | `PeopleDbContext`            | `people`         |
 | Rating            | `RatingDbContext`            | `rating`         |
-| Reporting         | `ReportingDbContext`         | `report`         |
+| Reporting         | `ReportingContext`           | `reporting`      |
 | ShortUrl          | `ShortUrlDbContext`          | `url`            |
 | Sms               | `SmsDbContext`               | `sms`            |
 | SmsTwilio         | `TwilioSmsDbContext`         | `sms`            |
@@ -102,4 +102,4 @@ or the interactive **Change Connection String** menu.
 - [`Lyo.Sms.Postgres`](../../Communication/Sms/Lyo.Sms.Postgres/README.md)
 - [`Lyo.Sms.Twilio.Postgres`](../../Communication/Sms/Lyo.Sms.Twilio.Postgres/README.md)
 - [`Lyo.Tag.Postgres`](../../Features/Tag/Lyo.Tag.Postgres/README.md)
-- [`Lyo.Web.Reporting.Postgres`](../../Integration/Web/Reporting/Lyo.Web.Reporting.Postgres/README.md)
+- [`Lyo.Reporting.Postgres`](../../Integration/Reporting/Lyo.Reporting.Postgres/README.md)

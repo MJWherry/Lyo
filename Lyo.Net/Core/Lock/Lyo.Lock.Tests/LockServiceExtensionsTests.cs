@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
 using Microsoft.Extensions.Configuration;
@@ -131,7 +132,7 @@ public class LockServiceExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { { "LockOptions:DefaultAcquireTimeout", "00:00:10" } }).Build();
-        Assert.Throws<InvalidOperationException>(() => services.AddRedisLockFromConfiguration(configuration));
+        Assert.Throws<ConfigurationException>(() => services.AddRedisLockFromConfiguration(configuration));
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Web.WebRenderer.Models;
 using Microsoft.AspNetCore.Components;
@@ -157,7 +158,7 @@ public class WebRendererService(
         using var timer = _metrics.StartTimer(Constants.Metrics.ConvertHtmlToPdfDuration);
         try {
             if (options is null || string.IsNullOrEmpty(options.BrowserExePath))
-                throw new NotImplementedException("No Browser path set");
+                throw new ConfigurationException("No Browser path set.", nameof(options.BrowserExePath));
 
             var inputSizeBytes = Encoding.UTF8.GetByteCount(htmlContent);
             _metrics.RecordGauge(Constants.Metrics.ConvertHtmlToPdfInputSizeBytes, inputSizeBytes);

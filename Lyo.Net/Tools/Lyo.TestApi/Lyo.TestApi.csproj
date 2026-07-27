@@ -42,10 +42,14 @@
         <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Reporting\Lyo.Api.Reporting.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
         <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
+        <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock.Redis\Lyo.Lock.Redis.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>

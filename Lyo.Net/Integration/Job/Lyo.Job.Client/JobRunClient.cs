@@ -30,6 +30,10 @@ public sealed class JobRunClient(IApiClient client, string? routePrefix = null)
     public Task<JobRunRes> CancelAsync(Guid runId, CancellationToken ct = default)
         => client.PostAsAsync<JobRunRes>(JobRouteBuilder.Build(routePrefix, $"{JobRoutes.Runs}/{runId}/Cancel"), ct: ct);
 
+    /// <summary>Hands a <c>Running</c> run back to <c>Queued</c> (graceful worker shutdown). Fails when the run is not <c>Running</c> (e.g. <c>Cancelling</c>).</summary>
+    public Task<JobRunRes> RequeueAsync(Guid runId, CancellationToken ct = default)
+        => client.PostAsAsync<JobRunRes>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunRequeue(runId)), ct: ct);
+
     public Task<CreateResult<JobRunRes>> RerunAsync(Guid runId, CancellationToken ct = default)
         => client.PostAsAsync<CreateResult<JobRunRes>>(JobRouteBuilder.Build(routePrefix, $"{JobRoutes.Runs}/{runId}/Rerun"), ct: ct);
 

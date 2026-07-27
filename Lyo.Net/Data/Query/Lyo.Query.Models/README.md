@@ -116,4 +116,4 @@ detail for failed `Or` groups.
 - [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) — production query
   endpoints and projection.
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md),
-  [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md).
+  [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md).

@@ -16,7 +16,7 @@
         <ProjectReference Include="..\..\Images\Lyo.Images.Ocr\Lyo.Images.Ocr.csproj"/>
         <ProjectReference Include="..\Lyo.Pdf.Models\Lyo.Pdf.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Pdf.Rendering\Lyo.Pdf.Rendering.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

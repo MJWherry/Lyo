@@ -2,6 +2,7 @@ using System.Text.Json;
 using Lyo.Api.Mapping;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.Common;
+using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
 using Lyo.DateAndTime;
 using Lyo.Discord.Postgres;
@@ -24,21 +25,21 @@ public static class SetupMapster
 {
     private static readonly JsonSerializerOptions WhereClauseJsonOptions = LyoJsonSerializerOptions.Create();
 
-    private static NamePrefix? ParseNamePrefix(string? value) => Enum.TryParse<NamePrefix>(value, true, out var parsed) ? parsed : null;
+    private static NamePrefix? ParseNamePrefix(string? value) => TypeConversion.EnumOrNull<NamePrefix>(value);
 
-    private static NameSuffix? ParseNameSuffix(string? value) => Enum.TryParse<NameSuffix>(value, true, out var parsed) ? parsed : null;
+    private static NameSuffix? ParseNameSuffix(string? value) => TypeConversion.EnumOrNull<NameSuffix>(value);
 
-    private static ContactAddressType ParseContactAddressType(string? value) => Enum.TryParse<ContactAddressType>(value, true, out var parsed) ? parsed : ContactAddressType.Other;
+    private static ContactAddressType ParseContactAddressType(string? value) => TypeConversion.EnumOrDefault(value, ContactAddressType.Other);
 
-    private static ContactEmailType ParseContactEmailType(string? value) => Enum.TryParse<ContactEmailType>(value, true, out var parsed) ? parsed : ContactEmailType.Other;
+    private static ContactEmailType ParseContactEmailType(string? value) => TypeConversion.EnumOrDefault(value, ContactEmailType.Other);
 
-    private static ContactPhoneType ParseContactPhoneType(string? value) => Enum.TryParse<ContactPhoneType>(value, true, out var parsed) ? parsed : ContactPhoneType.Other;
+    private static ContactPhoneType ParseContactPhoneType(string? value) => TypeConversion.EnumOrDefault(value, ContactPhoneType.Other);
 
-    private static CountryCode ParseCountryCodeOrUs(string? value) => Enum.TryParse<CountryCode>(value, true, out var parsed) ? parsed : CountryCode.US;
+    private static CountryCode ParseCountryCodeOrUs(string? value) => TypeConversion.EnumOrDefault(value, CountryCode.US);
 
-    private static CountryCode? ParseNullableCountryCode(string? value) => Enum.TryParse<CountryCode>(value, true, out var parsed) ? parsed : null;
+    private static CountryCode? ParseNullableCountryCode(string? value) => TypeConversion.EnumOrNull<CountryCode>(value);
 
-    private static PhoneType? ParseNullablePhoneType(string? value) => Enum.TryParse<PhoneType>(value, true, out var parsed) ? parsed : null;
+    private static PhoneType? ParseNullablePhoneType(string? value) => TypeConversion.EnumOrNull<PhoneType>(value);
 
     private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
 

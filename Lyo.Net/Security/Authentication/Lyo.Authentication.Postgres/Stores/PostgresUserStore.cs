@@ -95,7 +95,7 @@ public sealed class PostgresUserStore : IUserStore
             .ConfigureAwait(false);
 
         if (rows == 0)
-            throw new InvalidOperationException($"User id '{id}' not found.");
+            throw new NotFoundException($"User id '{id}' not found.");
     }
 
     /// <inheritdoc />
@@ -110,7 +110,7 @@ public sealed class PostgresUserStore : IUserStore
             .ConfigureAwait(false);
 
         if (rows == 0)
-            throw new InvalidOperationException($"User id '{id}' not found.");
+            throw new NotFoundException($"User id '{id}' not found.");
     }
 
     private static UserEntity ToEntity(LyoUser user)

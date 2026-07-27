@@ -10,7 +10,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Tts\Lyo.Tts.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Typecast\Lyo.Typecast.Client\Lyo.Typecast.Client.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -6,6 +6,7 @@ using Lyo.Compression;
 using Lyo.Encryption;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -130,7 +131,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         ArgumentHelpers.ThrowIfNull(body);
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         if (meta.Availability != FileAvailability.PendingDirectUpload)
-            throw new InvalidOperationException($"File {fileId} is not pending direct upload (availability={meta.Availability}).");
+            throw new ConflictException($"File {fileId} is not pending direct upload (availability={meta.Availability}).");
 
         var output = await CreateOutputStreamAsync(fileId, "", meta.PathPrefix, ct).ConfigureAwait(false);
         try {
@@ -148,7 +149,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
                 while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
                     total += read;
                     if (total > max.Value)
-                        throw new InvalidOperationException($"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
+                        throw new FilePolicyRejectedException($"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
 
                     await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
                 }

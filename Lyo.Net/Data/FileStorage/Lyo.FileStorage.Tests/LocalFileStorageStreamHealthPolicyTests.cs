@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Policy;
@@ -122,7 +123,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => scope.Storage.SaveFileAsync("must-scan"u8.ToArray(), "f.bin", ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<ConfigurationException>(() => scope.Storage.SaveFileAsync("must-scan"u8.ToArray(), "f.bin", ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -15,6 +15,7 @@ using Lyo.Api.Services.Crud.Read.Query.Root;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
 using Lyo.Common;
+using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Common.Request;
 using Microsoft.AspNetCore.Builder;
@@ -537,22 +538,7 @@ public static class DynamicCrudEndpointBuilder
         return false;
     }
 
-    private static object ParseKey(string id, Type keyType)
-    {
-        if (keyType == typeof(Guid))
-            return Guid.Parse(id);
-
-        if (keyType == typeof(int))
-            return int.Parse(id);
-
-        if (keyType == typeof(long))
-            return long.Parse(id);
-
-        if (keyType == typeof(string))
-            return id;
-
-        return Convert.ChangeType(id, keyType);
-    }
+    private static object ParseKey(string id, Type keyType) => TypeConversion.ConvertTo(id, keyType)!;
 
     /// <summary>Sets the key on UpdateRequest.Data from Keys so Mapster does not overwrite with default (Guid.Empty) and trigger EF key-modification error.</summary>
     private static void EnsureKeyOnUpdateData(object request, EntityEndpointMetadata meta)
@@ -1053,7 +1039,7 @@ public static class DynamicCrudEndpointBuilder
         if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        var task = (Task)meta.Cache.DeleteByRequestAsync.Invoke(deleteService, [deleteRequest, null, null, null, ct])!;
+        var task = (Task)meta.Cache.DeleteByRequestAsync.Invoke(deleteService, [deleteRequest, null, null, null, null, ct])!;
         await task.ConfigureAwait(false);
         var result = meta.Cache.DeleteTaskResultProperty.GetValue(task);
         return Results.Ok(result);
@@ -1081,7 +1067,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        var task = (Task)meta.Cache.DeleteAsync.Invoke(deleteService, [new[] { key }, null, null, null, ct])!;
+        var task = (Task)meta.Cache.DeleteAsync.Invoke(deleteService, [new[] { key }, null, null, null, null, ct])!;
         await task.ConfigureAwait(false);
         var result = meta.Cache.DeleteTaskResultProperty.GetValue(task);
         var error = result?.GetType().GetProperty("Error")?.GetValue(result);
@@ -1109,7 +1095,7 @@ public static class DynamicCrudEndpointBuilder
                     httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "At least one delete request is required", DateTime.UtcNow)), statusCode: 400);
         }
 
-        var task = (Task)meta.Cache.DeleteBulkAsync.Invoke(deleteService, [requests, null, null, null, ct])!;
+        var task = (Task)meta.Cache.DeleteBulkAsync.Invoke(deleteService, [requests, null, null, null, null, ct])!;
         await task.ConfigureAwait(false);
         var result = meta.Cache.DeleteBulkTaskResultProperty.GetValue(task);
         return Results.Ok(result);

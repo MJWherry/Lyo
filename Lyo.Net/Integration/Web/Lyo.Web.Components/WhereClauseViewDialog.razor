@@ -1,0 +1,80 @@
+@inject IJsInterop Js
+@using System.Text.Json
+@using Lyo.Query.Models.Common
+
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-where-clause-view-dialog">
+    <MudDialog>
+        <DialogContent>
+            @if (WhereClause == null) {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No where clause to display</MudText>
+            }
+            else {
+                <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" ApplyEffectsToContainer="true" PanelClass="pt-3">
+                    <MudTabPanel Text="Readable">
+                        <pre class="where-clause-view-pre">@_readableText</pre>
+                    </MudTabPanel>
+                    <MudTabPanel Text="JSON">
+                        <pre class="where-clause-view-pre">@_jsonText</pre>
+                    </MudTabPanel>
+                </MudTabs>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" Disabled="@(WhereClause == null)">
+                @(_activeTab == 1 ? "Copy JSON" : "Copy")
+            </MudButton>
+            <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
+        </DialogActions>
+    </MudDialog>
+</LyoElementRoot>
+
+<style>
+    .where-clause-view-pre {
+        margin: 0;
+        padding: 12px;
+        max-height: 60vh;
+        overflow: auto;
+        font-family: var(--mud-typography-default-family, monospace);
+        font-size: 0.85rem;
+        white-space: pre;
+        background-color: var(--mud-palette-background-gray);
+        border-radius: 4px;
+    }
+</style>
+
+@code {
+
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    private int _activeTab;
+
+    private string _readableText = string.Empty;
+
+    private string _jsonText = string.Empty;
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
+    public WhereClause? WhereClause { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (WhereClause == null) {
+            _readableText = string.Empty;
+            _jsonText = string.Empty;
+            return;
+        }
+
+        _readableText = WhereClause.Print();
+        _jsonText = JsonSerializer.Serialize(WhereClause, JsonOptions);
+    }
+
+    private async Task CopyToClipboard() => await Js.SendToClipboard(_activeTab == 1 ? _jsonText : _readableText);
+
+    private void Close() => MudDialog.Close();
+
+}

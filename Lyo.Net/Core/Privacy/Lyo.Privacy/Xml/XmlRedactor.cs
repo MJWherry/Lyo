@@ -3,6 +3,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
@@ -59,7 +60,7 @@ public sealed class XmlRedactor
             }
             catch (XmlException ex) {
                 if (_text is null)
-                    throw new InvalidOperationException("Invalid XML and no ITextRedactor for fallback.", ex);
+                    throw new InvalidFormatException("Invalid XML and no ITextRedactor for fallback.", ex);
 
                 _metrics.IncrementCounter(PrivacyMetricNames.XmlFallbackToText, 1, PrivacyObservation.TagsForPolicy(_options.PolicyName));
                 var r = _text.Redact(xml);

@@ -59,7 +59,7 @@ using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
-using Lyo.Web.Reporting.Postgres;
+using Lyo.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
 using Mapster;

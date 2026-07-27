@@ -29,7 +29,7 @@ public sealed record EndpointAuth
     public AuthorizationPolicy? AuthorizationPolicy { get; init; }
 
     /// <summary>Validates that the auth configuration is not conflicting. Throws if AllowAnonymous is combined with any authorization requirement.</summary>
-    internal static void Validate(EndpointAuth auth)
+    public static void Validate(EndpointAuth auth)
     {
         if (!auth.AllowAnonymous)
             return;

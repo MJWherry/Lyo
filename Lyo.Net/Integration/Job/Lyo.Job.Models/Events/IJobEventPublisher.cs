@@ -62,9 +62,13 @@ public interface IJobEventPublisher
     /// <param name="ct">Cancellation token.</param>
     Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default);
 
-    /// <summary>Subscribe to run-cancellation notifications for a specific worker type. Workers call this on startup to receive cancellation signals for runs they are processing.</summary>
-    /// <param name="workerType">The worker type — used to create a per-worker-type subscription.</param>
-    /// <param name="handler">Called with the <see cref="Guid" /> of the run that should be cancelled.</param>
+    /// <summary>
+    /// Subscribe to run-cancellation notifications for a specific worker type. Workers call this on startup to receive cancellation signals for runs they are processing.
+    /// Implementations must deliver each cancellation to <b>every</b> subscribed instance (broadcast/fanout, e.g. a per-instance exclusive queue bound to the cancel routing
+    /// key) — a shared competing-consumer queue would deliver each cancel to only one instance of a scaled-out worker type and silently lose cancellations.
+    /// </summary>
+    /// <param name="workerType">The worker type — used to derive the subscription name.</param>
+    /// <param name="handler">Called with the <see cref="Guid" /> of the run that should be cancelled. Instances not executing that run simply ignore it.</param>
     /// <param name="ct">Cancellation token.</param>
     Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default);
 }

@@ -1,4 +1,5 @@
 using Lyo.FileStorage.Audit;
+using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.Tests.Support;
 
@@ -98,7 +99,7 @@ public class MultipartAndAuditTests
         // 32 bytes > 8 byte upload cap
         var oversized = new byte[32];
         await using var ms = new MemoryStream(oversized);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(async ()
+        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(async ()
             => await scope.Storage.ReceiveWorkbenchDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
     }
 

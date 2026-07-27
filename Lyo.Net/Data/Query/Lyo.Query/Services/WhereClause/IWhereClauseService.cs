@@ -60,11 +60,11 @@ public interface IWhereClauseService
     /// <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> chains).
     /// </summary>
     /// <remarks>
-    /// Default implementation throws <see cref="NotImplementedException" />: in-memory evaluation against a loaded entity is supported by <see cref="BaseWhereClauseService" />;
+    /// Default implementation throws <see cref="NotSupportedException" />: in-memory evaluation against a loaded entity is supported by <see cref="BaseWhereClauseService" />;
     /// where clauses translated to SQL (e.g. PostgreSQL) are not explained in-process.
     /// </remarks>
     WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? whereClause)
-        => throw new NotImplementedException(
+        => throw new NotSupportedException(
             "ExplainMatch is only supported for in-memory evaluation against entity instances. " + "Where clauses executed as SQL (e.g. PostgreSQL) do not implement explanation.");
 
     /// <summary>

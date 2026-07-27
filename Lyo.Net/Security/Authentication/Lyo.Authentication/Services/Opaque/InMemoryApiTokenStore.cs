@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lyo.Authentication.Models.Records;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Services.Opaque;
 
@@ -15,7 +16,7 @@ public sealed class InMemoryApiTokenStore : IApiTokenStore
     {
         ArgumentHelpers.ThrowIfNull(record);
         if (!_records.TryAdd(record.Id, record))
-            throw new InvalidOperationException($"Token id '{record.Id}' already exists.");
+            throw new ConflictException($"Token id '{record.Id}' already exists.");
 
         return Task.CompletedTask;
     }
@@ -32,7 +33,7 @@ public sealed class InMemoryApiTokenStore : IApiTokenStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
         _records.AddOrUpdate(
-            id, _ => throw new InvalidOperationException($"Token id '{id}' not found."), (_, existing) => existing with { LastUsedAt = utcNow, UpdatedAt = utcNow });
+            id, _ => throw new NotFoundException($"Token id '{id}' not found."), (_, existing) => existing with { LastUsedAt = utcNow, UpdatedAt = utcNow });
 
         return Task.CompletedTask;
     }
@@ -42,7 +43,7 @@ public sealed class InMemoryApiTokenStore : IApiTokenStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
         _records.AddOrUpdate(
-            id, _ => throw new InvalidOperationException($"Token id '{id}' not found."),
+            id, _ => throw new NotFoundException($"Token id '{id}' not found."),
             (_, existing) => existing with { RevokedAt = revokedAt, RevokedReason = reason, UpdatedAt = revokedAt });
 
         return Task.CompletedTask;

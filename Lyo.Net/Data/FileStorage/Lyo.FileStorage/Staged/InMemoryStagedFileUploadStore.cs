@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.FileStorage.Staged;
 
@@ -13,7 +14,7 @@ public sealed class InMemoryStagedFileUploadStore : IStagedFileUploadStore
     {
         ArgumentHelpers.ThrowIfNull(record);
         if (!_records.TryAdd(record.StageId, record))
-            throw new InvalidOperationException($"Staged file upload {record.StageId} already exists.");
+            throw new ConflictException($"Staged file upload {record.StageId} already exists.");
 
         return Task.CompletedTask;
     }
@@ -30,7 +31,7 @@ public sealed class InMemoryStagedFileUploadStore : IStagedFileUploadStore
     {
         ArgumentHelpers.ThrowIfNull(record);
         if (!_records.ContainsKey(record.StageId))
-            throw new InvalidOperationException($"Staged file upload {record.StageId} was not found.");
+            throw new NotFoundException($"Staged file upload {record.StageId} was not found.");
 
         _records[record.StageId] = record;
         return Task.CompletedTask;

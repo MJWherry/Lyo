@@ -94,7 +94,7 @@ their own `Add*FromConfiguration` extensions that also wire up native SDK client
 ## Related projects
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md) — [`LanguageCodeInfo`](../../../Core/Common/Lyo.Common/Records/LanguageCodeInfo.cs)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - Provider implementations: [`Lyo.Translation.Google`](../Lyo.Translation.Google/README.md), [`Lyo.Translation.Aws`](../Lyo.Translation.Aws/README.md)

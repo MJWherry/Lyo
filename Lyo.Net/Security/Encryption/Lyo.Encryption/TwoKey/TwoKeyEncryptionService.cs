@@ -9,6 +9,7 @@ using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 using Lyo.Streams;
+using KeyNotFoundException = Lyo.Keystore.Exceptions.KeyNotFoundException;
 
 namespace Lyo.Encryption.TwoKey;
 
@@ -203,7 +204,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             var versionInfo = !string.IsNullOrWhiteSpace(keyVersion) ? $"version {keyVersion}" : "current version";
             var keyInfo = keyId != null ? $"key ID '{keyId}' " : "";
             var saltInfo = salt != null ? " Salt is available but cannot be used to derive KEK without the original password." : "";
-            throw new InvalidOperationException(
+            throw new KeyNotFoundException(
                 $"No Key Encryption Key available for {keyInfo}{versionInfo} in KeyStore.{saltInfo} Ensure the keystore is properly initialized with the required key.");
         }
 
@@ -334,7 +335,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         if (kekBytes == null) {
             var versionInfo = !string.IsNullOrWhiteSpace(result.KeyVersion) ? $"version {result.KeyVersion}" : "current version";
             var saltInfo = result.KeyEncryptionKeySalt != null ? " Salt is available but cannot be used to derive KEK without the original password." : "";
-            throw new InvalidOperationException(
+            throw new KeyNotFoundException(
                 $"No Key Encryption Key available for ID {actualKeyId} {versionInfo} in KeyStore.{saltInfo} Ensure the keystore is properly initialized with the required key.");
         }
 
@@ -542,7 +543,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             var keyInfo = actualKeyId != null ? $"key ID '{actualKeyId}' " : "";
             var versionInfo = !string.IsNullOrWhiteSpace(keyVersion) ? $"version {keyVersion}" : "current version";
             var saltInfo = " Check keystore metadata for salt (though salt alone cannot derive KEK without the original password).";
-            throw new InvalidOperationException(
+            throw new KeyNotFoundException(
                 $"No Key Encryption Key available for {keyInfo}{versionInfo} in KeyStore.{saltInfo} Ensure the keystore is properly initialized with the required key.");
         }
 

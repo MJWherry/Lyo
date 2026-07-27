@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
@@ -230,7 +231,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         });
 
         var saved = await service.SaveFileAsync("done"u8.ToArray(), "x.txt", ct: TestContext.Current.CancellationToken);
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => {
+        await Assert.ThrowsAsync<ConflictException>(async () => {
             await using var ms = new MemoryStream([1]);
             await service.ReceiveWorkbenchDirectPutAsync(saved.Id, ms, TestContext.Current.CancellationToken);
         });

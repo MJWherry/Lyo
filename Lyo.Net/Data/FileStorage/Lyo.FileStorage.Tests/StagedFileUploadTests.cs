@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.Staged;
@@ -94,10 +95,10 @@ public sealed class StagedFileUploadTests
     }
 
     [Fact]
-    public async Task LocalStaged_BeginWithoutReceiveUri_ThrowsNotSupported()
+    public async Task LocalStaged_BeginWithoutReceiveUri_ThrowsConfiguration()
     {
         using var scope = LocalFileStorageTestScope.Create();
         var staged = CreateStagedService(scope);
-        await Assert.ThrowsAsync<NotSupportedException>(() => staged.BeginAsync(new() { DeclaredMaxSizeBytes = 10 }, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ConfigurationException>(() => staged.BeginAsync(new() { DeclaredMaxSizeBytes = 10 }, TestContext.Current.CancellationToken));
     }
 }

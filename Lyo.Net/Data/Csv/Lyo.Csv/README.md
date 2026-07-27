@@ -228,7 +228,7 @@ fields, normalizes header matching, disables constructor-parameter mapping, and 
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 
 ## Public API (generated)

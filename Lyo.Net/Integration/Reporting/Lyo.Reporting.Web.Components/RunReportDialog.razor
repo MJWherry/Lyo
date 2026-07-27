@@ -1,0 +1,208 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 600px; overflow-y: auto;">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudSelect T="ReportDefinitionRes"
+                               Value="_selected"
+                               ValueChanged="OnDefinitionChanged"
+                               Label="Report Definition"
+                               Variant="Variant.Outlined"
+                               ToStringFunc="@(d => d?.Name ?? "")"
+                               Required>
+                        @foreach (var def in (Definitions ?? []).Where(d => d.IsActive)) {
+                            <MudSelectItem T="ReportDefinitionRes" Value="def">
+                                <MudText Typo="Typo.body1">@def.Name</MudText>
+                                @if (!string.IsNullOrEmpty(def.Description)) {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
+                                }
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="ReportFormat?"
+                               @bind-Value="_formatOverride"
+                               Label="Format override"
+                               Variant="Variant.Outlined"
+                               Clearable="true">
+                        @foreach (ReportFormat f in Enum.GetValues<ReportFormat>()) {
+                            <MudSelectItem T="ReportFormat?" Value="@f">@f</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_fileName" Label="File name (optional)" Variant="Variant.Outlined"/>
+                </MudItem>
+
+                @if (_paramModels.Any()) {
+                    <MudItem xs="12">
+                        <MudDivider/>
+                        <MudText Typo="Typo.h6" Class="mt-2 mb-2">Parameters</MudText>
+                    </MudItem>
+
+                    @foreach (var p in _paramModels) {
+                        <MudItem xs="12">
+                            <MudPaper Class="pa-4" Elevation="1">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        @p.Param.Key
+                                        @if (p.Param.Required) {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ml-2">Required</MudChip>
+                                        }
+                                    </MudText>
+                                    @if (!string.IsNullOrEmpty(p.Param.Description)) {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@p.Param.Description</MudText>
+                                    }
+                                    @if (p.Param.Type == ReportParameterType.Bool) {
+                                        <MudSwitch T="bool" @bind-Value="p.BoolValue" Label="@p.Param.Key" Color="Color.Primary"/>
+                                    }
+                                    else if (p.Param.Type == ReportParameterType.Int) {
+                                        <MudNumericField T="int?" @bind-Value="p.IntValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == ReportParameterType.Long) {
+                                        <MudNumericField T="long?" @bind-Value="p.LongValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == ReportParameterType.DateTime) {
+                                        <MudDatePicker @bind-Date="p.DateTimeValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == ReportParameterType.Json) {
+                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
+                                                      Lines="4" HelperText="JSON" Required="@p.Param.Required"/>
+                                    }
+                                    else {
+                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
+                                                      Required="@p.Param.Required"/>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Disabled="@(_selected is null || _busy || !IsValid())"
+                   StartIcon="@Icons.Material.Filled.PlayArrow">
+            Generate
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public IEnumerable<ReportDefinitionRes>? Definitions { get; set; }
+
+    [Parameter]
+    public ReportDefinitionRes? SelectedDefinition { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public string GenerateRoute { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    private ReportDefinitionRes? _selected;
+    private ReportFormat? _formatOverride;
+    private string? _fileName;
+    private bool _busy;
+    private List<ParamModel> _paramModels = [];
+
+    private class ParamModel
+    {
+        public ReportDefinitionParameterRes Param { get; init; } = null!;
+
+        public string StringValue { get; set; } = "";
+
+        public bool BoolValue { get; set; }
+
+        public int? IntValue { get; set; }
+
+        public long? LongValue { get; set; }
+
+        public DateTime? DateTimeValue { get; set; }
+
+        public bool IsEmpty()
+            => Param.Type switch {
+                ReportParameterType.Bool => false,
+                ReportParameterType.Int => !IntValue.HasValue,
+                ReportParameterType.Long => !LongValue.HasValue,
+                ReportParameterType.DateTime => !DateTimeValue.HasValue,
+                _ => string.IsNullOrWhiteSpace(StringValue)
+            };
+
+        public string? ValueAsString()
+            => Param.Type switch {
+                ReportParameterType.Bool => BoolValue.ToString().ToLowerInvariant(),
+                ReportParameterType.Int => IntValue?.ToString(),
+                ReportParameterType.Long => LongValue?.ToString(),
+                ReportParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
+                _ => StringValue
+            };
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_selected is null && (SelectedDefinition is not null || Definitions is not null))
+            OnDefinitionChanged(SelectedDefinition ?? Definitions?.FirstOrDefault(d => d.IsActive));
+    }
+
+    private void OnDefinitionChanged(ReportDefinitionRes? def)
+    {
+        _selected = def;
+        _paramModels = (def?.Parameters ?? []).Select(p => new ParamModel {
+            Param = p,
+            StringValue = p.Value ?? ""
+        }).ToList();
+    }
+
+    private bool IsValid()
+        => _selected is not null && _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
+
+    private async Task Submit()
+    {
+        if (_selected is null)
+            return;
+
+        _busy = true;
+        try {
+            var req = new GenerateReportReq {
+                ReportDefinitionId = _selected.Id,
+                Format = _formatOverride,
+                FileName = string.IsNullOrWhiteSpace(_fileName) ? null : _fileName,
+                Parameters = _paramModels.Select(p => new ReportGenerationParameterReq {
+                    Key = p.Param.Key,
+                    Type = p.Param.Type,
+                    Value = p.ValueAsString(),
+                    Description = p.Param.Description
+                }).ToList()
+            };
+            var result = await ApiClient.PostAsAsync<GenerateReportReq, ReportGenerationRes>(GenerateRoute, req);
+            if (result.Status == ReportGenerationStatus.Succeeded)
+                Snackbar.Add($"Report generated ({result.Format}).", Severity.Success);
+            else
+                Snackbar.Add($"Generation finished with status {result.Status}.", Severity.Warning);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Generate failed: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+}

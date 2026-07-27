@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Exceptions.Models;
 using Lyo.Privacy.Configuration;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Json;
@@ -61,7 +62,7 @@ public sealed class JsonRedactorTests
     public void RedactJson_invalid_json_throws_without_fallback_text_redactor()
     {
         var r = new JsonRedactor(new());
-        var ex = Assert.Throws<InvalidOperationException>(() => r.RedactJson("{not json"));
+        var ex = Assert.Throws<InvalidFormatException>(() => r.RedactJson("{not json"));
         Assert.IsAssignableFrom<JsonException>(ex.InnerException);
     }
 

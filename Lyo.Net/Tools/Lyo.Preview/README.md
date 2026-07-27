@@ -99,5 +99,5 @@ Empty buffers log a warning and return `null` without contacting the listener.
 
 - [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Csv.Models`](../../Data/Csv/Lyo.Csv.Models/README.md)
-- [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Xlsx.Models`](../../Data/Xlsx/Lyo.Xlsx.Models/README.md)

@@ -1,4 +1,6 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 
@@ -16,14 +18,14 @@ public sealed class OpenIdConnectProviderRegistryTests
     public void Get_ThrowsForUnknown()
     {
         var registry = new OpenIdConnectProviderRegistry([]);
-        Assert.Throws<InvalidOperationException>(() => registry.Get("nope"));
+        Assert.Throws<NotFoundException>(() => registry.Get("nope"));
     }
 
     [Fact]
     public void Register_RejectsDuplicates()
     {
         var registry = new OpenIdConnectProviderRegistry([new TestProvider("google")]);
-        Assert.Throws<InvalidOperationException>(() => registry.Register(new TestProvider("google")));
+        Assert.Throws<ConflictException>(() => registry.Register(new TestProvider("google")));
     }
 
     [Fact]

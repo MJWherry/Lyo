@@ -63,7 +63,10 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <see cref="JobWorkflowEngine" /> as a hosted service that advances workflow runs on job completion.</summary>
+        /// <summary>
+        /// Adds <see cref="JobWorkflowEngine" /> as a hosted service that advances workflow runs on job completion. When an <c>IJobEventPublisher</c> is registered, the engine
+        /// creates step runs with dispatch suppressed and publishes only after linking the run to its workflow step (closing the fast-worker completion race).
+        /// </summary>
         public IServiceCollection AddJobWorkflowEngine(JobWorkflowEngineOptions options)
         {
             ArgumentHelpers.ThrowIfNull(services);

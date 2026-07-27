@@ -149,6 +149,6 @@ Path-prefix traversal coverage lives in `Lyo.FileStorage.Tests` against the shar
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
 - [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
 - [`Lyo.FileStorage`](../Lyo.FileStorage/README.md)

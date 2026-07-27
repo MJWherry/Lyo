@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.OpenIdConnect.Provider;
 
@@ -21,20 +22,22 @@ public sealed class OpenIdConnectProviderRegistry
     }
 
     /// <summary>Registers a provider. Throws when the name collides with an existing entry.</summary>
+    /// <exception cref="ConflictException">Thrown when a provider with the same name is already registered.</exception>
     public void Register(IOpenIdConnectProvider provider)
     {
         ArgumentHelpers.ThrowIfNull(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider.Name);
         if (!_providers.TryAdd(provider.Name, provider))
-            throw new InvalidOperationException($"OIDC provider '{provider.Name}' is already registered.");
+            throw new ConflictException($"OIDC provider '{provider.Name}' is already registered.");
     }
 
     /// <summary>Returns the provider with the given name. Throws when unknown.</summary>
+    /// <exception cref="NotFoundException">Thrown when no provider with the given name is registered.</exception>
     public IOpenIdConnectProvider Get(string name)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         if (!_providers.TryGetValue(name, out var provider))
-            throw new InvalidOperationException($"OIDC provider '{name}' is not registered.");
+            throw new NotFoundException($"OIDC provider '{name}' is not registered.");
 
         return provider;
     }

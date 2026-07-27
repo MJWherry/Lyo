@@ -140,7 +140,7 @@ Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).
 
 - [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
 - [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Favorite`](../Lyo.Favorite/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

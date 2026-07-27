@@ -71,6 +71,56 @@ var options = LyoJsonSerializerOptions.Default;
 `LyoJsonSerializerOptions` is the shared default `JsonSerializerOptions`. The converters under `JsonConverters/` (e.g. enum-as-string fallbacks, raw JSON pass-through) are
 pre-registered so other Lyo packages can reuse them without duplicating wiring.
 
+## Conversion
+
+`Lyo.Common.Conversion.TypeConversion` is the central type-conversion engine used across the Lyo suite (API patch binding, query filters, web-component grids, message-queue
+envelopes). It converts CLR objects, strings, character spans, and `JsonElement` values to target types — nullable unwrapping, enums (name or numeric), `Guid`/date/time parsing,
+and collection materialization (`T[]`, `List<T>`, `HashSet<T>`, `IReadOnlyList<T>`, `ISet<T>`, any concrete collection with an `IEnumerable<T>` constructor).
+
+```csharp
+using Lyo.Common.Conversion;
+
+// Throwing conversions (TypeConversionException on failure)
+int      i    = TypeConversion.ConvertTo<int>("42");
+Guid     id   = TypeConversion.ConvertTo<Guid>("0d64a685-2fa2-4c48-b06c-b9b0ac9f6a2e");
+object?  any  = TypeConversion.ConvertTo(value, targetType);
+int[]    ints = (int[])TypeConversion.ConvertToWithCollections(jsonArray, typeof(int[]))!;
+
+// Non-throwing variants
+if (TypeConversion.TryConvertTo<DateTime>(value, out var when)) { /* ... */ }
+int port = TypeConversion.ConvertToOrDefault("8080", defaultValue: 80);
+
+// Strings that look like JSON ({ or [) deserialize into complex targets as a last resort
+var payload = TypeConversion.ConvertTo<MyDto>("""{"Name":"abc","Count":3}""");
+
+// Spans (span-native parsing on net10, ToString fallback on netstandard2.0)
+long ticks = TypeConversion.ConvertTo<long>("637500000000000000".AsSpan());
+
+// Booleans — lenient tokens: true/t/1/y/yes/on and false/f/0/n/no/off (case-insensitive)
+bool on = TypeConversion.ToBoolean("yes");
+bool ok = TypeConversion.TryToBoolean("enabled", out var b, trueValues: ["enabled"], falseValues: ["disabled"]);
+
+// JsonElement (strict typed accessors; ConvertTo handles lenient token coercion)
+object? loose = TypeConversion.FromJsonElement(element);            // string/long/double/bool/null/list
+bool got = TypeConversion.TryFromJsonElement<int>(element, out var n);
+
+// Enums / sequences
+var status  = TypeConversion.EnumOrDefault("Active", StatusEnum.Unknown);
+var maybe   = TypeConversion.EnumOrNull<StatusEnum>(raw);
+var values  = TypeConversion.ToEnumerable(scalarOrArrayOrJson);     // always a sequence
+int[] bulk  = TypeConversion.ConvertToArray<int>(values)!;
+```
+
+Failures throw `TypeConversionException` (derives `InvalidOperationException`) carrying `Value`, `SourceType`, and `TargetType`. Hook up logging by assigning the static logger —
+Debug on success, Warning on `Try*` misses, Error before throws (all zero-allocation via `LoggerMessage.Define` and disabled by default with `NullLogger`):
+
+```csharp
+TypeConversion.Logger = loggerFactory.CreateLogger("TypeConversion");
+```
+
+`TypeConversionExtensions` adds the reflection helpers the engine uses: `IsNumericType()`, `IsNullable()`, `IsCollectionType()`, `GetCollectionElementType()`,
+`GetFriendlyTypeName()`, `IsObjectEnumerable()`, and `TryGetAsEnumerable<T>()`.
+
 ## Dependencies
 
 *(Synchronized from `Lyo.Common.csproj`.)*
@@ -79,9 +129,11 @@ pre-registered so other Lyo packages can reuse them without duplicating wiring.
 
 ### NuGet packages
 
-| Package            | Version | Notes                 |
-|--------------------|---------|-----------------------|
-| `System.Text.Json` | `[10,)` | *netstandard2.0 only* |
+| Package                                     | Version    | Notes                          |
+|---------------------------------------------|------------|--------------------------------|
+| `System.Text.Json`                          | `[10.0.5,)` | *netstandard2.0 only*          |
+| `System.Memory`                             | `4.6.3`    | *netstandard2.0 only*          |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.5,)` | Static `TypeConversion.Logger` |
 
 ### Project references
 

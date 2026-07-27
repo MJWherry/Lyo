@@ -80,7 +80,7 @@ top-level area.
 - [Lyo.Health](Lyo.Net/Core/Health/Lyo.Health/README.md): `IHealth` and `HealthResult` for service health checks.
 - [Lyo.Lock](Lyo.Net/Core/Lock/Lyo.Lock/README.md): in-process locks and keyed semaphores.
 - [Lyo.Lock.Redis](Lyo.Net/Core/Lock/Lyo.Lock.Redis/README.md): Redis distributed locks for `Lyo.Lock`.
-- [Lyo.Exceptions](Lyo.Net/Core/Lyo.Exceptions/README.md): shared exception types and argument validation helpers.
+- [Lyo.Exceptions](Lyo.Net/Core/Exceptions/Lyo.Exceptions/README.md): shared exception types and argument validation helpers.
 - [Lyo.Mathematics.Functions](Lyo.Net/Core/Mathematics/Lyo.Mathematics.Functions/README.md): F# math implementations (algebra, stats, numerics).
 - [Lyo.Mathematics](Lyo.Net/Core/Mathematics/Lyo.Mathematics/README.md): C# math contracts, units, vectors, matrices, registries.
 - [Lyo.Metrics.OpenTelemetry](Lyo.Net/Core/Metrics/Lyo.Metrics.OpenTelemetry/README.md): OpenTelemetry backend for `IMetrics`.
@@ -138,8 +138,12 @@ top-level area.
 - [Lyo.Discord.Bot](Lyo.Net/Integration/Discord/Lyo.Discord.Bot/README.md): DSharpPlus bot syncing guilds to your Lyo API.
 - [Lyo.Job.Postgres](Lyo.Net/Integration/Job/Lyo.Job.Postgres/README.md): EF Core job schema and migrations for job management.
 - [Lyo.Job.Scheduler](Lyo.Net/Integration/Job/Lyo.Job.Scheduler/README.md): polls job API, evaluates schedules, RabbitMQ triggers.
-- [Lyo.Web.Reporting.Postgres](Lyo.Net/Integration/Web/Reporting/Lyo.Web.Reporting.Postgres/README.md): store and load prebuilt reports in PostgreSQL.
-- [Lyo.Web.Reporting](Lyo.Net/Integration/Web/Reporting/Lyo.Web.Reporting/README.md): fluent Blazor report builder and rendering.
+- [Lyo.Reporting.Models](Lyo.Net/Integration/Reporting/Lyo.Reporting.Models/README.md): report composition models, builders, and API contracts.
+- [Lyo.Reporting.Postgres](Lyo.Net/Integration/Reporting/Lyo.Reporting.Postgres/README.md): PostgreSQL definitions/generations and generate pipeline.
+- [Lyo.Api.Reporting](Lyo.Net/Integration/Api/Lyo.Api.Reporting/README.md): authenticated Reporting HTTP endpoints.
+- [Lyo.Reporting.Web](Lyo.Net/Integration/Reporting/Lyo.Reporting.Web/README.md): Blazor report viewer and HTML/PDF rendering.
+- [Lyo.Reporting.Web.Components](Lyo.Net/Integration/Reporting/Lyo.Reporting.Web.Components/README.md): MudBlazor UI to run/view/download reports.
+- [Lyo.Reporting.Client](Lyo.Net/Integration/Reporting/Lyo.Reporting.Client/README.md): typed HTTP client for the Reporting API.
 
 ### Apps
 

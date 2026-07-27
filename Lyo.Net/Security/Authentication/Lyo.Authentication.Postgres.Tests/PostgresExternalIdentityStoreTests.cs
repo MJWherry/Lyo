@@ -1,4 +1,5 @@
 using Lyo.Authentication.Models.Records;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -36,7 +37,7 @@ public sealed class PostgresExternalIdentityStoreTests
         var a = await CreateUserAsync();
         var b = await CreateUserAsync();
         await _fixture.IdentityStore.LinkAsync(a.Id, "google", sub, null, [], null, null, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAsync<InvalidOperationException>(()
+        await Assert.ThrowsAsync<ConflictException>(()
             => _fixture.IdentityStore.LinkAsync(b.Id, "google", sub, null, [], null, null, TestContext.Current.CancellationToken));
     }
 

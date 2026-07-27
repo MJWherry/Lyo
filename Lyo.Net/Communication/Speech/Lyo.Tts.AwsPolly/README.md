@@ -87,5 +87,5 @@ Example `appsettings.json` snippets appear in XML documentation on `AddAwsPollyT
 
 ### Project references
 
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Tts`](../Lyo.Tts/README.md)

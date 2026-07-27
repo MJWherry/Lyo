@@ -19,6 +19,7 @@ public class MyApiClient : ApiClient
 await myClient.Jobs.Runs.StartAsync(runId);
 await myClient.Jobs.Runs.LogAsync(runId, new JobRunLogReq(...));
 await myClient.Jobs.Runs.FinishAsync(runId, results);
+await myClient.Jobs.Runs.RequeueAsync(runId); // Running -> Queued hand-back (graceful worker shutdown)
 ```
 
 ## DI

@@ -1,0 +1,75 @@
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Definitions">
+        <ReportDefinitionGrid ApiClient="ApiClient"
+                              BaseRoute="@BaseRoute"
+                              DownloadFileAsync="DownloadFileAsync"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Generations">
+        <ReportGenerationGrid ApiClient="ApiClient"
+                              BaseRoute="@BaseRoute"
+                              DownloadFileAsync="DownloadFileAsync"
+                              ViewFileUrlAsync="ViewFileUrlAsync"/>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+
+    /// <summary>Base route for reporting endpoints (e.g. "Reporting").</summary>
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Reporting";
+
+    /// <summary>
+    /// Host callback to download a persisted output by opaque file id (typically FileStorage).
+    /// When null, download actions show a snackbar that no download handler is configured.
+    /// </summary>
+    [Parameter]
+    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+
+    /// <summary>
+    /// Host callback returning a browser URL to view HTML/PDF output. When null, View is disabled.
+    /// </summary>
+    [Parameter]
+    public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
+
+    /// <summary>Initial tab: definitions or generations.</summary>
+    [Parameter]
+    public string? InitialTab { get; set; }
+
+    [Parameter]
+    public Guid? DefinitionId { get; set; }
+
+    [Parameter]
+    public Guid? GenerationId { get; set; }
+
+    private int _tabIndex;
+    private bool _tabInitialized;
+
+    protected override void OnParametersSet()
+    {
+        if (_tabInitialized)
+            return;
+        if (DefinitionId is null && GenerationId is null && string.IsNullOrWhiteSpace(InitialTab))
+            return;
+
+        _tabIndex = ResolveTabIndex();
+        _tabInitialized = true;
+    }
+
+    private int ResolveTabIndex()
+    {
+        if (GenerationId.HasValue)
+            return 1;
+        if (DefinitionId.HasValue)
+            return 0;
+
+        return InitialTab?.Trim().ToLowerInvariant() switch {
+            "generations" or "generation" => 1,
+            _ => 0
+        };
+    }
+}

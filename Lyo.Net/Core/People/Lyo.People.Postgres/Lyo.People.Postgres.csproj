@@ -20,7 +20,7 @@
         <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.People.Models\Lyo.People.Models.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
 

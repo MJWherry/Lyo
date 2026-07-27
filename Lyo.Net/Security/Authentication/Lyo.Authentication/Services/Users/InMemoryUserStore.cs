@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lyo.Authentication.Models.Records;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Services.Users;
 
@@ -26,11 +27,11 @@ public sealed class InMemoryUserStore : IUserStore
     {
         ArgumentHelpers.ThrowIfNull(user);
         if (!_byEmail.TryAdd(user.Email, user.Id))
-            throw new InvalidOperationException($"Email '{user.Email}' is already registered.");
+            throw new ConflictException($"Email '{user.Email}' is already registered.");
 
         if (!_byId.TryAdd(user.Id, user)) {
             _byEmail.TryRemove(user.Email, out var _);
-            throw new InvalidOperationException($"User id '{user.Id}' already exists.");
+            throw new ConflictException($"User id '{user.Id}' already exists.");
         }
 
         return Task.FromResult(user);
@@ -39,7 +40,7 @@ public sealed class InMemoryUserStore : IUserStore
     /// <inheritdoc />
     public Task UpdateLastLoginAsync(Guid id, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
-        _byId.AddOrUpdate(id, _ => throw new InvalidOperationException($"User id '{id}' not found."), (_, existing) => existing with { LastLoginAt = utcNow, UpdatedAt = utcNow });
+        _byId.AddOrUpdate(id, _ => throw new NotFoundException($"User id '{id}' not found."), (_, existing) => existing with { LastLoginAt = utcNow, UpdatedAt = utcNow });
         return Task.CompletedTask;
     }
 
@@ -49,7 +50,7 @@ public sealed class InMemoryUserStore : IUserStore
         ArgumentHelpers.ThrowIfNull(scopes);
         var snap = scopes.ToArray();
         _byId.AddOrUpdate(
-            id, _ => throw new InvalidOperationException($"User id '{id}' not found."), (_, existing) => existing with { Scopes = snap, UpdatedAt = DateTime.UtcNow });
+            id, _ => throw new NotFoundException($"User id '{id}' not found."), (_, existing) => existing with { Scopes = snap, UpdatedAt = DateTime.UtcNow });
 
         return Task.CompletedTask;
     }
@@ -58,7 +59,7 @@ public sealed class InMemoryUserStore : IUserStore
     public Task SetDisabledAsync(Guid id, DateTime? disabledAt, string? reason, Guid? tenantId, CancellationToken ct = default)
     {
         _byId.AddOrUpdate(
-            id, _ => throw new InvalidOperationException($"User id '{id}' not found."),
+            id, _ => throw new NotFoundException($"User id '{id}' not found."),
             (_, existing) => existing with { DisabledAt = disabledAt, DisabledReason = reason, UpdatedAt = DateTime.UtcNow });
 
         return Task.CompletedTask;

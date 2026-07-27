@@ -228,7 +228,7 @@ services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Streams`](../../../Core/Streams/Lyo.Streams/README.md)
 - [`Lyo.Hashing`](../../Hashing/Lyo.Hashing/README.md)

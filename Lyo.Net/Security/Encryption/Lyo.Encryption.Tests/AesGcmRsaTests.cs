@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Rsa;
+using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
 
 namespace Lyo.Encryption.Tests;
@@ -84,7 +85,7 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
 
     [Fact]
     public void Constructor_NoKeys_Throws()
-        => Assert.Throws<InvalidOperationException>(() => {
+        => Assert.Throws<ConfigurationException>(() => {
             var _ = new AesGcmRsaEncryptionService();
         });
 

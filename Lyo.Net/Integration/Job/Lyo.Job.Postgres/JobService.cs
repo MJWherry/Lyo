@@ -7,7 +7,10 @@ using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
+using Lyo.Cache;
+using Lyo.Common.Conversion;
 using Lyo.Common.Identifiers;
+using Lyo.Exceptions;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -39,10 +42,21 @@ public class JobService(
     IDbContextFactory<JobContext> dbFactory,
     IHttpContextAccessor? httpContextAccessor = null,
     IMetrics? metrics = null,
-    IJobParameterEncryptionService? parameterEncryption = null)
+    IJobParameterEncryptionService? parameterEncryption = null,
+    ICacheService? cache = null,
+    CacheOptions? cacheOptions = null)
 {
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
     private readonly IJobParameterEncryptionService? _parameterEncryption = parameterEncryption;
+
+    /// <summary>
+    /// The CAS transitions below use <c>ExecuteUpdateAsync</c>, which bypasses the CRUD services (and therefore their query-cache invalidation), so any cached
+    /// <see cref="JobRun" /> GET entries must be busted manually before re-reading through <c>queryService</c>.
+    /// </summary>
+    private Task InvalidateRunCacheAsync(Guid jobRunId)
+        => cache is null
+            ? Task.CompletedTask
+            : QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions ?? new CacheOptions(), typeof(JobRun), [new object?[] { jobRunId }]);
 
     public async Task<CreateResult<JobRunLogRes>> Log(Guid jobRunId, JobRunLogReq request)
         => await createService.CreateAsync<JobRunLogReq, JobRunLog, JobRunLogRes>(
@@ -64,7 +78,10 @@ public class JobService(
         if (request.DryRun)
             return ResultFactory.CreateSuccess(await BuildDryRunResponseAsync(request, ct).ConfigureAwait(false));
 
-        if (!eventPublisher.IsConnected()) {
+        // Dispatch is suppressed when the caller asked for it explicitly, or when the run targets a future slot (delayed retry). The caller
+        // (scheduler delayed-MQ envelope, workflow engine) or the maintenance service's stuck-queued recovery performs the eventual dispatch.
+        var suppressDispatch = request.SuppressDispatch || (request.ScheduledSlotUtc.HasValue && request.ScheduledSlotUtc.Value > DateTime.UtcNow);
+        if (!suppressDispatch && !eventPublisher.IsConnected()) {
             _metrics.IncrementCounter(Constants.Metrics.Service.RunCreateRejected, tags: [("reason", "mq_disconnected")]);
             return ResultFactory.CreateFailure<JobRunRes>(LogAndReturnApiError("Could not connect to Message Queue Service", ApiErrCodes.MessageQueueConnectionIssue));
         }
@@ -151,11 +168,10 @@ public class JobService(
             }
 
             if (pgEx.ConstraintName == "ix_job_run_idempotency_key_unique" && !string.IsNullOrWhiteSpace(request.IdempotencyKey)) {
+                // No commit here — the finally block commits the guard transaction exactly once.
                 var existing = await FindRunByIdempotencyKeyAsync(guardDb, request.JobDefinitionId, request.IdempotencyKey, ct).ConfigureAwait(false);
-                if (existing is not null) {
-                    await guardTx.CommitAsync(CancellationToken.None).ConfigureAwait(false);
+                if (existing is not null)
                     return ResultFactory.CreateSuccess(existing);
-                }
             }
 
             throw;
@@ -170,30 +186,38 @@ public class JobService(
 
         activity?.SetTag("job.run.id", result.Data!.Id);
         _metrics.IncrementCounter(Constants.Metrics.Service.RunCreated, tags: [("definition", result.Data!.JobDefinition?.Name ?? "unknown")]);
+        if (suppressDispatch) {
+            logger.LogDebug("Dispatch suppressed for run {RunId} (SuppressDispatch={Suppress}, ScheduledSlotUtc={Slot:u})",
+                result.Data!.Id, request.SuppressDispatch, request.ScheduledSlotUtc);
+
+            return ResultFactory.CreateSuccess(MaskRunResponse(result.Data!));
+        }
+
         var notified = await TryPublishAsync(
                 () => eventPublisher.PublishRunCreatedAsync(result.Data!.Id, result.Data!.JobDefinition!.WorkerType, result.Data!.Priority, ct),
                 "Failed to publish run {RunId} created", result.Data!.Id)
             .ConfigureAwait(false);
 
-        return !notified
-            ? ResultFactory.CreateFailure<JobRunRes>(LogAndReturnApiError("Could not connect to Message Queue Service", ApiErrCodes.MessageQueueConnectionIssue))
-            : ResultFactory.CreateSuccess(MaskRunResponse(result.Data!));
+        if (!notified) {
+            // The run is already persisted as Queued; the maintenance service's stuck-queued recovery will redispatch it, so the create still succeeds.
+            _metrics.IncrementCounter(Constants.Metrics.Service.RunDispatchDeferred);
+            logger.LogWarning("Run {RunId} was created but the dispatch publish failed; maintenance will redispatch it", result.Data!.Id);
+        }
+
+        return ResultFactory.CreateSuccess(MaskRunResponse(result.Data!));
     }
 
     /// <summary>Creates child runs for a parent batch, stamping batch metadata on each request.</summary>
     public async Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(Guid parentRunId, JobCreateChildRunsReq request, CancellationToken ct = default)
     {
-        var parent = await queryService.Get<JobRun, JobRunRes>([parentRunId], ["JobRunParameters", "JobDefinition"], ct: ct).ConfigureAwait(false);
-        if (parent is null)
-            throw new InvalidOperationException($"Parent job run {parentRunId} was not found.");
+        // Build the template from the entity (not the masked API response) so encrypted parameter values survive, and so the parent's
+        // IdempotencyKey/ScheduledSlotUtc are not copied onto children (a copied key would silently return the parent as every "child").
+        var template = await BuildRunRequestFromEntityAsync(parentRunId, ct).ConfigureAwait(false);
+        if (template is null)
+            throw new NotFoundException($"Parent job run {parentRunId} was not found.");
 
         var children = request.Children.Select(child => {
-            var req = mapper.Map<JobRunReq>(parent);
-            req.Result = null;
-            req.JobScheduleId = null;
-            req.JobTriggerId = null;
-            req.TriggeredByJobRunId = null;
-            req.ReRanFromJobRunId = null;
+            var req = CloneRunRequest(template);
             req.AllowTriggers = false;
             req.BatchIndex = child.BatchIndex;
             if (child.Parameters.Count > 0) {
@@ -212,7 +236,7 @@ public class JobService(
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (!await db.JobRuns.AnyAsync(r => r.Id == parentRunId, ct).ConfigureAwait(false))
-            throw new InvalidOperationException($"Parent job run {parentRunId} was not found.");
+            throw new NotFoundException($"Parent job run {parentRunId} was not found.");
 
         var batchTotal = children.Count;
         var results = new List<JobRunRes>(batchTotal);
@@ -287,6 +311,11 @@ public class JobService(
             : (result.NewData, null);
     }
 
+    /// <summary>
+    /// Transitions a run from <c>Queued</c> to <c>Running</c> using an atomic compare-and-swap. Any other state (already <c>Running</c> from a duplicate delivery,
+    /// <c>Cancelling</c> from a queued-run cancel, or <c>Finished</c>) is rejected so redelivered dispatch messages never execute a run twice. This is a worker-trusted
+    /// endpoint: the returned run has encrypted parameter values decrypted so workers can execute with real values (all other read endpoints stay masked).
+    /// </summary>
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> StartedJobRun(Guid jobRunId)
     {
         using var activity = JobTracing.StartRun(jobRunId);
@@ -299,16 +328,24 @@ public class JobService(
 
         var startedAt = DateTime.UtcNow;
         var slaBreached = CheckStartSla(existing, startedAt);
-        var patchRequest = PatchRequestBuilder.ForId(jobRunId)
-            .SetProperty("State", JobState.Running)
-            .SetProperty("StartedTimestamp", startedAt);
 
-        if (slaBreached)
-            patchRequest.SetProperty("SlaBreached", true);
+        // Compare-and-swap: only a Queued run may start. The WHERE clause makes the transition atomic, so a redelivered dispatch message
+        // (or a second worker instance) loses the race instead of double-executing, and a Cancelling queued run is never resurrected.
+        await using var db = await dbFactory.CreateDbContextAsync().ConfigureAwait(false);
+        var updatedRows = await db.JobRuns
+            .Where(r => r.Id == jobRunId && r.State == JobState.Queued)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.State, JobState.Running)
+                .SetProperty(r => r.StartedTimestamp, startedAt)
+                .SetProperty(r => r.UpdatedTimestamp, startedAt)
+                .SetProperty(r => r.SlaBreached, r => r.SlaBreached || slaBreached))
+            .ConfigureAwait(false);
 
-        var result = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest.Build()).ConfigureAwait(false);
-        if (!result.IsSuccess)
-            return (null, LogAndReturnApiError("Failed to patch start job", ApiErrCodes.InvalidPatchRequest));
+        if (updatedRows == 0) {
+            _metrics.IncrementCounter(Constants.Metrics.Service.RunStartRejected);
+            return (null, LogAndReturnApiError(
+                $"Job run cannot start: it is not in the Queued state (current state may be Running, Cancelling, or Finished). Run {jobRunId}.", ApiErrCodes.InvalidRequest));
+        }
 
         if (slaBreached)
             await PublishSlaAlertAsync(existing.JobDefinitionId, jobRunId, existing.JobDefinition?.Name, "Run exceeded MustStartBy SLA").ConfigureAwait(false);
@@ -319,13 +356,15 @@ public class JobService(
         if (!notified)
             return (null, LogAndReturnApiError("Could not notify to start job", ApiErrCodes.MessageQueueConnectionIssue));
 
-        // Re-fetch with includes so workers get a fully-loaded run (patch returns bare entity with unloaded navigations).
+        // Re-fetch with includes so workers get a fully-loaded run (the CAS update does not return the entity).
+        await InvalidateRunCacheAsync(jobRunId).ConfigureAwait(false);
         var savedResult = await queryService.Get<JobRun, JobRunRes>(
                 [jobRunId],
                 ["JobRunParameters", "JobRunResults", "JobDefinition", "JobDefinition.JobParameters"])
             .ConfigureAwait(false);
 
-        return (MaskRunResponse(savedResult!), null);
+        // Worker-trusted path: decrypt parameter values (the mapper masks them for every other endpoint).
+        return (await DecryptRunParametersAsync(savedResult!).ConfigureAwait(false), null);
     }
 
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> CancelJobRun(Guid jobRunId)
@@ -340,6 +379,31 @@ public class JobService(
         if (existing.State is not (JobState.Running or JobState.Queued))
             return (null, LogAndReturnApiError("Job is not in a cancellable state (must be Running or Queued)", ApiErrCodes.InvalidRequest));
 
+        if (existing.State == JobState.Queued) {
+            // A queued run has no worker to confirm the cancel (and StartedJobRun's CAS guard will reject its dispatch message), so finalize
+            // it directly. The CAS keeps this race-safe: if a worker started the run in the meantime the update misses and we fall through
+            // to the Cancelling path below.
+            var now = DateTime.UtcNow;
+            await using var db = await dbFactory.CreateDbContextAsync().ConfigureAwait(false);
+            var cancelledRows = await db.JobRuns
+                .Where(r => r.Id == jobRunId && r.State == JobState.Queued)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.State, JobState.Finished)
+                    .SetProperty(r => r.Result, Models.Enums.JobRunResult.Cancelled)
+                    .SetProperty(r => r.FinishedTimestamp, now)
+                    .SetProperty(r => r.UpdatedTimestamp, now))
+                .ConfigureAwait(false);
+
+            if (cancelledRows > 0) {
+                _metrics.IncrementCounter(Constants.Metrics.Service.RunCancelled);
+                await TryPublishAsync(() => eventPublisher.PublishRunCancelledAsync(jobRunId), "Failed to publish run {RunId} cancelled", jobRunId).ConfigureAwait(false);
+                await TryPublishAsync(() => eventPublisher.PublishRunFinishedAsync(jobRunId), "Failed to publish run {RunId} finished", jobRunId).ConfigureAwait(false);
+                await InvalidateRunCacheAsync(jobRunId).ConfigureAwait(false);
+                var cancelled = await queryService.Get<JobRun, JobRunRes>([jobRunId], ["JobRunParameters"]).ConfigureAwait(false);
+                return (MaskRunResponse(cancelled!), null);
+            }
+        }
+
         // Transition to Cancelling so callers can poll the state until the worker confirms.
         var patchRequest = PatchRequestBuilder.ForId(jobRunId).SetProperty("State", JobState.Cancelling).Build();
         var patched = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest).ConfigureAwait(false);
@@ -352,6 +416,37 @@ public class JobService(
             return (null, LogAndReturnApiError("Could not notify to cancel job", ApiErrCodes.MessageQueueConnectionIssue));
 
         return (patched.NewData, null);
+    }
+
+    /// <summary>
+    /// Transitions a run from <c>Running</c> back to <c>Queued</c> using an atomic compare-and-swap. Used by workers during graceful host shutdown to hand the run back for
+    /// redelivery instead of terminally cancelling it. <c>Cancelling</c> runs are intentionally rejected — a pending user cancellation must not be forgotten by a restart.
+    /// </summary>
+    public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> RequeueJobRun(Guid jobRunId)
+    {
+        var existing = await queryService.Get<JobRun, JobRunRes>([jobRunId], null).ConfigureAwait(false);
+        if (existing is null)
+            return (null, LogAndReturnApiError("Job run not found", ApiErrCodes.NotFound));
+
+        var now = DateTime.UtcNow;
+        await using var db = await dbFactory.CreateDbContextAsync().ConfigureAwait(false);
+        var updatedRows = await db.JobRuns
+            .Where(r => r.Id == jobRunId && r.State == JobState.Running)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.State, JobState.Queued)
+                .SetProperty(r => r.StartedTimestamp, (DateTime?)null)
+                .SetProperty(r => r.LastHeartbeatUtc, (DateTime?)null)
+                .SetProperty(r => r.UpdatedTimestamp, now))
+            .ConfigureAwait(false);
+
+        if (updatedRows == 0)
+            return (null, LogAndReturnApiError($"Job run cannot be requeued: it is not in the Running state. Run {jobRunId}.", ApiErrCodes.InvalidRequest));
+
+        _metrics.IncrementCounter(Constants.Metrics.Service.RunRequeued);
+        logger.LogInformation("Run {RunId} requeued (worker shutdown hand-back)", jobRunId);
+        await InvalidateRunCacheAsync(jobRunId).ConfigureAwait(false);
+        var saved = await queryService.Get<JobRun, JobRunRes>([jobRunId], null).ConfigureAwait(false);
+        return (MaskRunResponse(saved!), null);
     }
 
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> FinishedJobRun(Guid jobRunId, IReadOnlyList<JobRunResultReq> results)
@@ -368,7 +463,7 @@ public class JobService(
             return (null, LogAndReturnApiError("Job is not in a finishable state (must be Running or Cancelling)", ApiErrCodes.InvalidRequest));
 
         var resultStr = results.FirstOrDefault(i => i.Key == Constants.Data.JobRunResultKey.Result)?.Value ?? nameof(JobRunResult.Unknown);
-        var resultEnum = Enum.TryParse<JobRunResult>(resultStr, true, out var parsedResult) ? parsedResult : JobRunResult.Unknown;
+        var resultEnum = TypeConversion.EnumOrDefault(resultStr, JobRunResult.Unknown);
         var finishedAt = DateTime.UtcNow;
         var durationSlaBreached = CheckDurationSla(existing, finishedAt);
         var request = PatchRequestBuilder.ForId(jobRunId)
@@ -422,42 +517,160 @@ public class JobService(
 
     public async Task<CreateResult<JobRunRes>?> RerunJob(Guid jobRunId)
     {
-        if (!eventPublisher.IsConnected())
-            return ResultFactory.CreateFailure<JobRunRes>(LogAndReturnApiError("Could not connect to Message Queue Service", ApiErrCodes.MessageQueueConnectionIssue));
-
-        var existing = await queryService.Get<JobRun, JobRunRes>([jobRunId], ["JobRunParameters"]).ConfigureAwait(false);
-        if (existing is null)
+        // Build the request from the entity (not the masked API response) so encrypted parameter values survive, and the original run's
+        // IdempotencyKey/ScheduledSlotUtc are not copied (a copied key would violate the unique index and fail the rerun).
+        var request = await BuildRunRequestFromEntityAsync(jobRunId).ConfigureAwait(false);
+        if (request is null)
             return ResultFactory.CreateFailure<JobRunRes>(LogAndReturnApiError("Existing job not found", ApiErrCodes.NotFound));
 
-        var request = mapper.Map<JobRunReq>(existing);
         request.CreatedBy = httpContextAccessor?.HttpContext?.User.Identity?.Name ?? "Unknown";
-        request.Result = null;
-        request.JobScheduleId = null;
-        request.JobTriggerId = null;
-        request.TriggeredByJobRunId = null;
         request.ReRanFromJobRunId = jobRunId;
-        var result = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-                request, ctx => {
-                    ctx.Entity.Id = LyoGuid.CreateCombPostgres();
-                    ctx.Entity.State = JobState.Queued;
-                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-                    foreach (var j in ctx.Entity.JobRunParameters)
-                        j.Id = LyoGuid.CreateCombPostgres();
-                }, ctx => {
-                    ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load();
-                })
+
+        // Route through CreateJobRun so reruns get parameter validation, rate/concurrency limits, encryption, and the advisory lock.
+        var result = await CreateJobRun(request).ConfigureAwait(false);
+        if (result.IsSuccess)
+            _metrics.IncrementCounter(Constants.Metrics.Service.RunRerun);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Returns the latest run, latest successful run, and latest failed run per definition in a single call. Used by the scheduler's definition refresh so it does not need
+    /// three HTTP queries per definition.
+    /// </summary>
+    public async Task<IReadOnlyList<JobDefinitionLatestRunsRes>> GetLatestRuns(IReadOnlyList<Guid> definitionIds, CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var results = new List<JobDefinitionLatestRunsRes>(definitionIds.Count);
+        foreach (var definitionId in definitionIds.Distinct()) {
+            var lastRun = await QueryLatestRunAsync(db, definitionId, null, ct).ConfigureAwait(false);
+            var lastSuccess = await QueryLatestRunAsync(db, definitionId, [JobRunResult.Success, JobRunResult.SuccessWithWarnings], ct).ConfigureAwait(false);
+            var lastFailed = await QueryLatestRunAsync(db, definitionId, [JobRunResult.Failure], ct).ConfigureAwait(false);
+            results.Add(new() {
+                JobDefinitionId = definitionId,
+                LastRun = lastRun,
+                LastSuccessfulRun = lastSuccess,
+                LastFailedRun = lastFailed
+            });
+        }
+
+        return results;
+    }
+
+    private async Task<JobRunRes?> QueryLatestRunAsync(JobContext db, Guid definitionId, JobRunResult?[]? resultFilter, CancellationToken ct)
+    {
+        var query = db.JobRuns.AsNoTracking().Where(r => r.JobDefinitionId == definitionId);
+        // The filter array is nullable-typed because EF cannot translate Contains over a non-nullable array against the nullable Result column.
+        if (resultFilter is not null)
+            query = query.Where(r => r.Result != null && resultFilter.Contains(r.Result));
+
+        var entity = await query
+            .OrderByDescending(r => r.CreatedTimestamp)
+            .Include(r => r.JobRunParameters)
+            .Include(r => r.JobRunResults)
+            .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
 
-        if (!result.IsSuccess)
-            return result;
+        return entity is null ? null : mapper.Map<JobRunRes>(entity);
+    }
 
-        _metrics.IncrementCounter(Constants.Metrics.Service.RunRerun);
-        var notified = await TryPublishAsync(
-                () => eventPublisher.PublishRunCreatedAsync(result.Data!.Id, result.Data!.JobDefinition!.WorkerType, result.Data!.Priority),
-                "Failed to publish run {RunId} created (rerun)", result.Data!.Id)
+    /// <summary>
+    /// Builds a <see cref="JobRunReq" /> from the stored run entity for rerun/child-run cloning. Reads raw parameter values (including ciphertext) instead of the masked API
+    /// response, and deliberately does not copy <c>IdempotencyKey</c>, <c>ScheduledSlotUtc</c>, or lineage fields — those must be unique per run.
+    /// </summary>
+    private async Task<JobRunReq?> BuildRunRequestFromEntityAsync(Guid runId, CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var run = await db.JobRuns.AsNoTracking()
+            .Include(r => r.JobRunParameters)
+            .FirstOrDefaultAsync(r => r.Id == runId, ct)
             .ConfigureAwait(false);
 
-        return !notified ? ResultFactory.CreateFailure<JobRunRes>(LogAndReturnApiError("Could not notify to create job", ApiErrCodes.MessageQueueConnectionIssue)) : result;
+        if (run is null)
+            return null;
+
+        var request = new JobRunReq {
+            JobDefinitionId = run.JobDefinitionId,
+            CreatedBy = run.CreatedBy,
+            AllowTriggers = run.AllowTriggers,
+            Priority = run.Priority,
+            TraceId = null
+        };
+
+        foreach (var parameter in run.JobRunParameters)
+            request.JobRunParameters.Add(BuildParameterRequest(parameter));
+
+        return request;
+    }
+
+    private JobRunParameterReq BuildParameterRequest(JobRunParameter parameter)
+    {
+        var request = new JobRunParameterReq {
+            Key = parameter.Key,
+            Description = parameter.Description,
+            Type = TypeConversion.EnumOrDefault(parameter.Type, JobParameterType.String),
+            Value = parameter.Value,
+            EncryptedValue = parameter.EncryptedValue,
+            Enabled = true
+        };
+
+        if (_parameterEncryption?.UsesEncryptedStorage(parameter.EncryptedValue) != true)
+            return request;
+
+        // Stored value is ciphertext. Decrypt to plaintext and flag for re-encryption (empty marker) so CreateJobRun's encryption step
+        // produces fresh valid ciphertext instead of double-encrypting the stored bytes. If decryption is unavailable, pass the
+        // ciphertext through untouched — without an encryption service it is stored verbatim and stays decryptable later.
+        var plaintext = _parameterEncryption.DecryptValue(parameter.EncryptedValue);
+        if (plaintext is not null) {
+            request.Value = plaintext;
+            request.EncryptedValue = [];
+        }
+
+        return request;
+    }
+
+    private static JobRunReq CloneRunRequest(JobRunReq template)
+    {
+        var clone = new JobRunReq {
+            JobDefinitionId = template.JobDefinitionId,
+            CreatedBy = template.CreatedBy,
+            AllowTriggers = template.AllowTriggers,
+            Priority = template.Priority,
+            TraceId = template.TraceId
+        };
+
+        foreach (var parameter in template.JobRunParameters) {
+            clone.JobRunParameters.Add(new() {
+                Key = parameter.Key,
+                Description = parameter.Description,
+                Type = parameter.Type,
+                Value = parameter.Value,
+                EncryptedValue = parameter.EncryptedValue,
+                Enabled = parameter.Enabled
+            });
+        }
+
+        return clone;
+    }
+
+    /// <summary>Replaces masked parameter values with decrypted plaintext for the worker-trusted Started response.</summary>
+    private async Task<JobRunRes> DecryptRunParametersAsync(JobRunRes run, CancellationToken ct = default)
+    {
+        if (_parameterEncryption is null || run.JobRunParameters is null || run.JobRunParameters.Count == 0)
+            return MaskRunResponse(run);
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await db.JobRunParameters.AsNoTracking().Where(p => p.JobRunId == run.Id).ToListAsync(ct).ConfigureAwait(false);
+        var entitiesById = entities.ToDictionary(e => e.Id);
+        var parameters = run.JobRunParameters.Select(p => {
+            if (!entitiesById.TryGetValue(p.Id, out var entity) || !_parameterEncryption.UsesEncryptedStorage(entity.EncryptedValue))
+                return p;
+
+            var plaintext = _parameterEncryption.DecryptValue(entity.EncryptedValue);
+            return plaintext is null ? p : p with { Value = plaintext, EncryptedValue = null };
+        }).ToList();
+
+        return run with { JobRunParameters = parameters };
     }
 
     /// <summary>Aggregates run statistics for a job definition over the last <paramref name="days" /> days. Returns null when the definition is not found.</summary>
@@ -532,7 +745,7 @@ public class JobService(
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var def = await db.JobDefinitions.AsNoTracking().FirstOrDefaultAsync(d => d.Id == request.JobDefinitionId, ct).ConfigureAwait(false);
         if (def is null)
-            throw new InvalidOperationException($"Job definition {request.JobDefinitionId} was not found.");
+            throw new NotFoundException($"Job definition {request.JobDefinitionId} was not found.");
 
         var now = DateTime.UtcNow;
         return new() {

@@ -73,7 +73,7 @@ internal sealed class S3UploadStream : Stream
         _disposed = true;
         if (disposing) {
             if (!_uploaded && _innerStream.Length > 0) {
-                throw new InvalidOperationException(
+                throw new NotSupportedException(
                     $"{nameof(S3UploadStream)} requires async disposal to upload pending content. Call DisposeAsync (or use 'await using') instead of sync Dispose.");
             }
 

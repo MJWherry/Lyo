@@ -1,0 +1,38 @@
+---
+description: Project files, central package management, multi-targeting, and slnx registration
+globs: **/*.csproj,**/Directory.Packages.props,**/*.slnx
+alwaysApply: false
+---
+
+# Packaging & Project Files
+
+## Central Package Management (CPM)
+
+- `PackageReference` entries in csproj files must have NO `Version` attribute. Versions live only in `Lyo.Net/Directory.Packages.props` as minimum ranges, e.g. `<PackageVersion Include="Foo" Version="[1.2.3,)"/>`.
+- When adding a dependency: add the `PackageVersion` to `Directory.Packages.props` (alphabetical order), then reference it version-less in the csproj.
+
+## Minimal csproj shape
+
+`Lyo.Net/Directory.Build.props` already sets `LangVersion=latest`, `Nullable=enable`, `ImplicitUsings=enable`, packaging metadata, and doc generation — never repeat these per project. A library csproj declares only:
+
+```xml
+<PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <Description>...</Description>
+    <PackageTags>...</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+</PropertyGroup>
+```
+
+plus references, `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals are tested, and `<None Include="README.md" Pack="true" PackagePath="\"/>`.
+
+## Multi-targeting
+
+- Reusable libraries multi-target `netstandard2.0;net10.0`. PolySharp (wired in `Directory.Build.targets`) polyfills modern *language* features on netstandard2.0, so modern syntax is fine everywhere.
+- net10-only BCL APIs need `#if` guards or conditional `ItemGroup`s (see `Lyo.Net/Core/Common/Lyo.Common/Lyo.Common.csproj` for the conditional `System.Text.Json`/`System.Memory` pattern).
+- App hosts, Blazor components, tests, and benchmarks target `net10.0` only.
+
+## Solution registration
+
+- Every new project needs a `<Project Path="..."/>` entry inside the matching `<Folder>` element of `Lyo.Net/Lyo.slnx`. Solution folders mirror disk paths; create a new `<Folder Name="/Area/Group/">` if none exists.
+- Every package ships a `README.md` (packed into the NuGet package via `PackageReadmeFile`).

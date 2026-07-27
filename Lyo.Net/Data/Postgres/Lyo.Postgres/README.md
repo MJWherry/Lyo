@@ -67,7 +67,7 @@ The host must be started — typically `Host.CreateDefaultBuilder()` (worker / c
 
 ### Project references
 
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 
 ## Consumers
 

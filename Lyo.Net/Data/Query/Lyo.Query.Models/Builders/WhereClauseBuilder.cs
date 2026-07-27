@@ -151,7 +151,7 @@ public class WhereClauseBuilder
 
     public WhereClauseBuilder In<T>(string field, params T[] values)
     {
-        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.In, values));
+        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.In, NormalizeMultiValue(values)));
         return this;
     }
 
@@ -163,8 +163,21 @@ public class WhereClauseBuilder
 
     public WhereClauseBuilder NotIn<T>(string field, params T[] values)
     {
-        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.NotIn, values));
+        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.NotIn, NormalizeMultiValue(values)));
         return this;
+    }
+
+    /// <summary>
+    /// When a caller passes a collection (e.g. <c>In(field, myList)</c>), C# overload resolution prefers the
+    /// <c>params T[]</c> overload with <c>T</c> inferred as the collection type, wrapping the collection in a
+    /// single-element array. Unwrap it so the condition value is the flat collection.
+    /// </summary>
+    private static object NormalizeMultiValue<T>(T[] values)
+    {
+        if (values.Length == 1 && values[0] is IEnumerable enumerable && values[0] is not string)
+            return enumerable;
+
+        return values;
     }
 
     public WhereClauseBuilder Regex(string field, params string[] patterns)

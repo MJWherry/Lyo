@@ -38,6 +38,13 @@ public sealed class JobRunReq
     /// <summary>Caller-supplied key for idempotent run creation within a definition.</summary>
     public string? IdempotencyKey { get; set; }
 
+    /// <summary>
+    /// When true, the run is persisted as <c>Queued</c> but the immediate worker-queue publish is skipped. The caller becomes responsible for dispatch (e.g. the scheduler's
+    /// delayed-MQ retry envelope, or the workflow engine publishing after linking the run to its step). The maintenance service's stuck-queued-run recovery acts as the safety
+    /// net. Dispatch is also suppressed automatically when <see cref="ScheduledSlotUtc" /> is in the future (delayed retries).
+    /// </summary>
+    public bool SuppressDispatch { get; set; }
+
     /// <summary>When true, the worker executes validation only and does not commit side effects.</summary>
     public bool DryRun { get; set; }
 

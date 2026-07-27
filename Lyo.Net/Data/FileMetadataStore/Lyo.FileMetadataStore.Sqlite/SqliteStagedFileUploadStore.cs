@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Staged;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ public sealed class SqliteStagedFileUploadStore : IStagedFileUploadStore
         await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var e = await db.StagedFileUploads.FirstOrDefaultAsync(x => x.StageId == record.StageId, ct).ConfigureAwait(false);
         if (e == null)
-            throw new InvalidOperationException($"Staged file upload {record.StageId} was not found.");
+            throw new NotFoundException($"Staged file upload {record.StageId} was not found.");
 
         var mapped = StagedFileUploadEntityMapping.ToEntity(record);
         e.TenantId = mapped.TenantId;

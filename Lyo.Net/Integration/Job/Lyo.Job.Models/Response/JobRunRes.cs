@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Lyo.Common.Extensions;
 using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Extensions;
 
 namespace Lyo.Job.Models.Response;
 
@@ -87,17 +88,11 @@ public sealed record JobRunRes
     /// <summary>Snapshot of the definition version at run creation for audit correlation.</summary>
     public int? DefinitionAuditVersion { get; init; }
 
-    public T? GetResultValueAs<T>(string key, string? format = null)
-    {
-        var strValue = JobRunResults?.FirstOrDefault(i => i.Key.Equals(key))?.Value;
-        return strValue.ToScalar<T>(format);
-    }
+    /// <summary>Returns the typed value of the result with the given key (case-insensitive) via <see cref="JobRunParameterExtensions" />, or default when absent / not convertible.</summary>
+    public T? GetResultValueAs<T>(string key, string? format = null) => JobRunResults.GetAs<T>(key, format);
 
-    public T? GetParameterValueAs<T>(string key, string? format = null)
-    {
-        var strValue = JobRunParameters?.FirstOrDefault(i => i.Key.Equals(key))?.Value;
-        return strValue.ToScalar<T>(format);
-    }
+    /// <summary>Returns the typed value of the parameter with the given key (case-insensitive) via <see cref="JobRunParameterExtensions" />, or default when absent / not convertible.</summary>
+    public T? GetParameterValueAs<T>(string key, string? format = null) => JobRunParameters.GetAs<T>(key, format);
 
     public Dictionary<string, string?> GetParameterDictionary() => JobRunParameters?.ToDictionary(i => i.Key.ToString(), i => i.Value) ?? new Dictionary<string, string?>();
 

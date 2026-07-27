@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

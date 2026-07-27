@@ -20,7 +20,7 @@ using Lyo.Sms.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.Tag.Postgres.Database;
 using Lyo.Tools.Postgres.Seeds;
-using Lyo.Web.Reporting.Postgres.Database;
+using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
@@ -209,7 +209,7 @@ internal static class Menu
             "Note" => ContextMenuAsync<NoteDbContext>(runner, "note", label, ct),
             "People" => ContextMenuAsync<PeopleDbContext>(runner, "people", label, ct),
             "Rating" => ContextMenuAsync<RatingDbContext>(runner, "rating", label, ct),
-            "Reporting" => ContextMenuAsync<ReportingDbContext>(runner, "report", label, ct),
+            "Reporting" => ContextMenuAsync<ReportingContext>(runner, "reporting", label, ct),
             "ShortUrl" => ContextMenuAsync<ShortUrlDbContext>(runner, "url", label, ct),
             "Sms" => ContextMenuAsync<SmsDbContext>(runner, "sms", label, ct),
             "SmsTwilio" => ContextMenuAsync<TwilioSmsDbContext>(runner, "sms", label, ct),

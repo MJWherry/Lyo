@@ -47,4 +47,4 @@ Persist rows from **`TwilioSmsService`** pipelines (decorate/wrap **`MessageSent
 - [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md) — generic **`SmsLogEntity`**
 - [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

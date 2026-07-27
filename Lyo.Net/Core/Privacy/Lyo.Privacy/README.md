@@ -155,7 +155,7 @@ rules** contribute a **hash code** of the pattern and options, not the pattern t
 ## `JsonRedactor` contracts
 
 - If **`ApplyTextRulesToAllStringValues`** is true, an **`ITextRedactor`** must be passed to the constructor (otherwise `ArgumentException`).
-- If JSON **parse fails** and no **`ITextRedactor`** was supplied for fallback, **`InvalidOperationException`** is thrown (inner exception is a `JsonException`). With a text
+- If JSON **parse fails** and no **`ITextRedactor`** was supplied for fallback, **`InvalidFormatException`** (from `Lyo.Exceptions`) is thrown (inner exception is a `JsonException`). With a text
   redactor, invalid JSON is redacted as raw text.
 - **`RedactJsonUtf8(ReadOnlyMemory<byte>)`** and **`RedactJsonStream(Stream, Stream)`** use the same rewrite pipeline as **`RedactJson`** (stream helper buffers the entire input
   first).

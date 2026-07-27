@@ -1,4 +1,5 @@
 using Lyo.EntityReference.Models;
+using Lyo.Exceptions.Models;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.EntityReference.Postgres.Tests;
@@ -17,7 +18,7 @@ public class EntityRefPostgresStoreBaseTests
     [Fact]
     public void Ctor_RequiresNonNullTenant_RejectsSystemOnlyFromFeature()
     {
-        var ex = Assert.Throws<InvalidOperationException>(() => new RequiredTenantStore(Options.Create(new EntityRefOptions()), new() { Mode = TenancyMode.SystemOnly }));
+        var ex = Assert.Throws<ConfigurationException>(() => new RequiredTenantStore(Options.Create(new EntityRefOptions()), new() { Mode = TenancyMode.SystemOnly }));
         Assert.Contains(nameof(RequiredTenantStore), ex.Message, StringComparison.Ordinal);
         Assert.Contains("SystemOnly", ex.Message, StringComparison.Ordinal);
     }
@@ -25,7 +26,7 @@ public class EntityRefPostgresStoreBaseTests
     [Fact]
     public void Ctor_RequiresNonNullTenant_RejectsSystemOnlyFromGlobal()
     {
-        var ex = Assert.Throws<InvalidOperationException>(() => new RequiredTenantStore(Options.Create(new EntityRefOptions { Mode = TenancyMode.SystemOnly }), new()));
+        var ex = Assert.Throws<ConfigurationException>(() => new RequiredTenantStore(Options.Create(new EntityRefOptions { Mode = TenancyMode.SystemOnly }), new()));
         Assert.Contains(nameof(RequiredTenantStore), ex.Message, StringComparison.Ordinal);
     }
 

@@ -174,6 +174,8 @@ public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
 {
     public Action<DeleteContext<TEntity, TDbContext>>? BeforeAction { get; private set; }
 
+    public Func<DeleteContext<TEntity, TDbContext>, CancellationToken, Task>? BeforeAsyncAction { get; private set; }
+
     public Action<DeleteContext<TEntity, TDbContext>>? AfterAction { get; private set; }
 
     public string[]? IncludeGraph { get; private set; }
@@ -183,6 +185,12 @@ public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
     public DeleteEndpointConfigBuilder<TEntity, TDbContext> Before(Action<DeleteContext<TEntity, TDbContext>> before)
     {
         BeforeAction = before;
+        return this;
+    }
+
+    public DeleteEndpointConfigBuilder<TEntity, TDbContext> BeforeAsync(Func<DeleteContext<TEntity, TDbContext>, CancellationToken, Task> beforeAsync)
+    {
+        BeforeAsyncAction = beforeAsync;
         return this;
     }
 
@@ -207,6 +215,7 @@ public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
     public DeleteConfig<TEntity, TDbContext> Build()
         => new() {
             Before = BeforeAction,
+            BeforeAsync = BeforeAsyncAction,
             After = AfterAction,
             Includes = IncludeGraph,
             Auth = AuthPolicy

@@ -85,4 +85,4 @@ app.Run();
 - [`Lyo.Config`](../../../Features/Config/Lyo.Config/README.md) — guild-settings store backing `DiscordGuildSettings`.
 - [`Lyo.Discord.Models`](../Lyo.Discord.Models/README.md) — DTOs and route constants.
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) — migrations infrastructure.
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

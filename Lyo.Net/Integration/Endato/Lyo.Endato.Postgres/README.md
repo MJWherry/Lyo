@@ -46,4 +46,4 @@ services.AddEndatoDbContextFactory(o => {
 
 - [`Lyo.Endato.Client`](../Lyo.Endato.Client/README.md) — HTTP client whose responses are cached here.
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) — migrations infrastructure.
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

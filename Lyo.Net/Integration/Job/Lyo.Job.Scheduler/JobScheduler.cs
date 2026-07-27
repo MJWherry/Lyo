@@ -39,8 +39,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     ];
 
     private static readonly string[] JobDefinitionIncludes = [
-        "JobParameters", "JobSchedules", "JobTriggerJobDefinitions", "JobTriggerJobDefinitions.JobTriggerParameters", "JobParallelRestrictionBaseJobDefinitions",
-        "JobParallelRestrictionBaseJobDefinitions.OtherJobDefinition"
+        "JobParameters", "JobSchedules", "JobSchedules.JobScheduleParameters", "JobTriggerJobDefinitions", "JobTriggerJobDefinitions.JobTriggerParameters",
+        "JobParallelRestrictionBaseJobDefinitions", "JobParallelRestrictionBaseJobDefinitions.OtherJobDefinition"
     ];
 
     private static readonly Regex TemplatePlaceholderRegex = new(@"\{\{(.*?)\}\}", RegexOptions.Compiled);
@@ -214,7 +214,16 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         try {
             var definition = await GetJobDefinitionAsync(definitionId.Value).ConfigureAwait(false);
             if (definition == null) {
-                _logger.LogWarning("Definition {DefinitionId} not found", definitionId);
+                // Deleted definition: evict it from the cache, otherwise the scheduler keeps creating doomed runs for it.
+                if (_jobs.ContainsKey(definitionId.Value)) {
+                    var remaining = new Dictionary<Guid, JobInfo>(_jobs);
+                    remaining.Remove(definitionId.Value);
+                    _jobs = remaining;
+                    _logger.LogInformation("Removed deleted definition {DefinitionId} from the scheduler cache", definitionId);
+                }
+                else
+                    _logger.LogWarning("Definition {DefinitionId} not found", definitionId);
+
                 return false; // ack — retrying won't help if the definition is gone
             }
 
@@ -275,21 +284,47 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             return;
         }
 
-        var updated = new Dictionary<Guid, JobInfo>();
-        foreach (var def in results.Items) {
-            if (!def.Enabled) {
-                _logger.LogDebug("Skipping disabled definition {Name}", def.Name);
-                continue;
-            }
+        var enabledDefinitions = results.Items.Where(d => d.Enabled).ToList();
+        foreach (var def in results.Items.Where(d => !d.Enabled))
+            _logger.LogDebug("Skipping disabled definition {Name}", def.Name);
 
-            var jobInfo = await LoadJobInfoAsync(def, ct).ConfigureAwait(false);
-            updated[def.Id] = jobInfo;
+        // Batch endpoint: one round trip for all definitions instead of three run queries per definition.
+        var latestRuns = await LoadLatestRunsBatchAsync(enabledDefinitions, ct).ConfigureAwait(false);
+
+        var updated = new Dictionary<Guid, JobInfo>();
+        foreach (var def in enabledDefinitions) {
+            if (latestRuns is not null && latestRuns.TryGetValue(def.Id, out var latest))
+                updated[def.Id] = new(def, latest.LastRun, latest.LastSuccessfulRun, latest.LastFailedRun);
+            else if (latestRuns is not null)
+                updated[def.Id] = new(def, null, null, null);
+            else
+                updated[def.Id] = await LoadJobInfoAsync(def, ct).ConfigureAwait(false);
         }
 
         _jobs = updated;
         _metrics.RecordGauge(Constants.Metrics.Scheduler.DefinitionsLoaded, updated.Count);
         await RefreshBlackoutCalendarsAsync(ct).ConfigureAwait(false);
         await ProcessMisfiresAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Loads the latest/latest-successful/latest-failed run for all definitions in one call. Returns null when the batch endpoint is unavailable (fallback to per-definition queries).</summary>
+    private async Task<Dictionary<Guid, JobDefinitionLatestRunsRes>?> LoadLatestRunsBatchAsync(IReadOnlyList<JobDefinitionRes> definitions, CancellationToken ct)
+    {
+        if (definitions.Count == 0)
+            return new();
+
+        try {
+            var ids = definitions.Select(d => d.Id).ToList();
+            var latest = await _apiClient
+                .PostAsAsync<List<Guid>, List<JobDefinitionLatestRunsRes>>(BuildUri(Constants.Rest.Job.DefinitionsLatestRuns), ids, null, ct)
+                .ConfigureAwait(false);
+
+            return latest?.ToDictionary(l => l.JobDefinitionId);
+        }
+        catch (ApiException ex) {
+            _logger.LogWarning(ex, "Batch latest-runs endpoint unavailable; falling back to per-definition queries");
+            return null;
+        }
     }
 
     private async Task RefreshBlackoutCalendarsAsync(CancellationToken ct)
@@ -633,6 +668,19 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     /// <returns>false to ack the MQ message; true to requeue. Missing cache entries are acked so they do not loop forever.</returns>
     private async Task<bool> ProcessCompletedJobRunAsync(JobRunRes run)
     {
+        // Serialize with definition refresh/schedule checks: completion handling mutates _jobs and _consecutiveFailures, and a concurrent
+        // refresh could otherwise overwrite (or race with) the LastRun/LastFailedRun updates made here.
+        await _definitionLock.WaitAsync().ConfigureAwait(false);
+        try {
+            return await ProcessCompletedJobRunLockedAsync(run).ConfigureAwait(false);
+        }
+        finally {
+            _definitionLock.Release();
+        }
+    }
+
+    private async Task<bool> ProcessCompletedJobRunLockedAsync(JobRunRes run)
+    {
         if (!_jobs.TryGetValue(run.JobDefinitionId, out var jobInfo)) {
             _logger.LogWarning("No job info for definition {DefinitionId}", run.JobDefinitionId);
             return false; // ack — requeue would spam this forever; definition may be unscheduled/disabled
@@ -647,10 +695,10 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
         _jobs = new(_jobs) { [run.JobDefinitionId] = updatedInfo };
 
-        // Update circuit breaker counter.
+        // Update circuit breaker counter. Timeouts (dead-job detection) count as failures so hung jobs also trip the breaker and retry.
         if (run.Result is JobRunResult.Success or JobRunResult.SuccessWithWarnings or JobRunResult.PartialSuccess)
             _consecutiveFailures.Remove(run.JobDefinitionId);
-        else if (run.Result == JobRunResult.Failure) {
+        else if (IsFailureOutcome(run.Result)) {
             _consecutiveFailures.TryGetValue(run.JobDefinitionId, out var prev);
             var next = prev + 1;
             _consecutiveFailures[run.JobDefinitionId] = next;
@@ -679,8 +727,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             }
         }
 
-        // Schedule a retry if the run failed and the definition allows it.
-        if (run.Result == JobRunResult.Failure && jobInfo.Definition.MaxRetryCount > 0 && run.RetryAttempt < jobInfo.Definition.MaxRetryCount)
+        // Schedule a retry if the run failed (or timed out) and the definition allows it.
+        if (IsFailureOutcome(run.Result) && jobInfo.Definition.MaxRetryCount > 0 && run.RetryAttempt < jobInfo.Definition.MaxRetryCount)
             await ScheduleRetryAsync(jobInfo, run).ConfigureAwait(false);
 
         // Batch fan-in: when a child run completes, update parent progress and finalize when all siblings finish.
@@ -709,8 +757,20 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         retryReq.RetryAttempt = nextAttempt;
         retryReq.ReRanFromJobRunId = failedRun.Id;
 
-        if (backoffSeconds > 0 && !useDelayedMq)
-            retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
+        // Deduplicate retry creation across scheduler instances / redelivered completion messages: the same failed run + attempt
+        // always maps to the same idempotency key, so a duplicate create returns the existing retry run instead of a second one.
+        retryReq.IdempotencyKey = $"retry:{failedRun.Id:N}:{nextAttempt}";
+
+        // Exactly one dispatch path per retry:
+        // - delayed MQ available: suppress the API's immediate publish; the delayed envelope below is the sole dispatch.
+        // - no delayed MQ: a future ScheduledSlotUtc suppresses the immediate publish and the maintenance service dispatches when due.
+        // - no backoff: the API's immediate publish dispatches as usual.
+        if (backoffSeconds > 0) {
+            if (useDelayedMq)
+                retryReq.SuppressDispatch = true;
+            else
+                retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
+        }
 
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), retryReq).ConfigureAwait(false);
         if (created.IsSuccess && created.Data != null) {
@@ -731,6 +791,9 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             _logger.LogWarning("Failed to create retry job run for definition {Name}: {Error}", jobInfo.Definition.Name, created.Error);
         }
     }
+
+    /// <summary>Whether a run outcome counts as a failure for retry, circuit breaker, and alerting purposes (Failure and Timeout; not Cancelled).</summary>
+    private static bool IsFailureOutcome(JobRunResult? result) => result is JobRunResult.Failure or JobRunResult.Timeout;
 
     private async Task TripCircuitBreakerAsync(Guid definitionId)
     {
@@ -854,6 +917,10 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             }
 
             var runReq = BuildRunRequest(triggeringDef.Id, null, trigger, triggeredByRun);
+
+            // Deduplicate trigger firing across scheduler instances / redelivered completion messages: one triggered run per
+            // (trigger, completed run) pair — a duplicate create resolves to the existing run.
+            runReq.IdempotencyKey = $"trigger:{trigger.Id:N}:{triggeredByRun.Id:N}";
             var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), runReq).ConfigureAwait(false);
             if (created.IsSuccess && created.Data != null) {
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.TriggersFired);
@@ -886,6 +953,18 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         foreach (var p in jobInfo.Definition.JobParameters ?? [])
             req.JobRunParameters.Add(CreateRunParameterFromDefinition(p, templateData));
 
+        // Schedule parameters override definition defaults by key (e.g. a required parameter with a null definition
+        // default whose value is supplied per schedule). Replace rather than append so the API does not see a
+        // duplicate key carrying the empty definition default alongside the schedule value.
+        foreach (var sp in schedule?.Parameters ?? []) {
+            if (!sp.Enabled)
+                continue;
+
+            var runParam = CreateRunParameterFromSchedule(sp, templateData);
+            req.JobRunParameters.RemoveAll(existing => string.Equals(existing.Key, runParam.Key, StringComparison.OrdinalIgnoreCase));
+            req.JobRunParameters.Add(runParam);
+        }
+
         foreach (var tp in trigger?.TriggerParameters ?? [])
             req.JobRunParameters.Add(CreateRunParameterFromTrigger(tp, templateData));
 
@@ -908,6 +987,11 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         AddRunTemplateData(data, "LastSuccessfulRun", jobInfo.LastSuccessfulRun);
         AddRunTemplateData(data, "LastFailedRun", jobInfo.LastFailedRun);
         AddRunTemplateData(data, "TriggeredByRun", triggeredBy);
+        foreach (var sp in schedule?.Parameters ?? []) {
+            if (sp.Enabled)
+                data[$"Schedule_Parameter_{sp.Key}"] = sp.Value;
+        }
+
         if (trigger?.TriggerParameters == null)
             return data;
 
@@ -939,6 +1023,22 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             case JobParameterType.Json:
                 req.Value = FormatTemplateValue(p.Value ?? "", templateData);
                 req.Type = p.Type == JobParameterType.Json ? JobParameterType.Json : JobParameterType.String;
+                break;
+            default:
+                req.Value = p.Value;
+                break;
+        }
+
+        return req;
+    }
+
+    private JobRunParameterReq CreateRunParameterFromSchedule(JobScheduleParameterRes p, Dictionary<string, object?> templateData)
+    {
+        var req = new JobRunParameterReq { Key = p.Key, Description = p.Description, Type = p.Type, EncryptedValue = p.EncryptedValue };
+        switch (p.Type) {
+            case JobParameterType.String:
+            case JobParameterType.Json:
+                req.Value = FormatTemplateValue(p.Value ?? "", templateData);
                 break;
             default:
                 req.Value = p.Value;

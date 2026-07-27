@@ -22,7 +22,7 @@
         <ProjectReference Include="..\..\Health\Lyo.Health\Lyo.Health.csproj"/>
         <ProjectReference Include="..\Lyo.Geolocation\Lyo.Geolocation.csproj"/>
         <ProjectReference Include="..\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
     </ItemGroup>
 

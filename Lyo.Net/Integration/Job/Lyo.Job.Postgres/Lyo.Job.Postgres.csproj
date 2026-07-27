@@ -29,7 +29,7 @@
         <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
         <ProjectReference Include="..\..\..\Core\Audit\Lyo.Audit\Lyo.Audit.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
     </ItemGroup>

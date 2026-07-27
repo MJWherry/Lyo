@@ -1,0 +1,19 @@
+---
+description: EF Core / PostgreSQL persistence package conventions
+globs: **/*.Postgres/**,**/*.Postgres.Tests/**
+alwaysApply: false
+---
+
+# Postgres Package Conventions
+
+Exemplar: `Lyo.Net/Integration/Reporting/Lyo.Reporting.Postgres/`.
+
+- Register contexts with `AddDbContextFactory<TContext>` (not `AddDbContext`); services resolve `IDbContextFactory<TContext>`.
+- Each domain owns a dedicated PostgreSQL schema (a `Schema` constant on the options class). Migrations use a per-schema history table:
+  `npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", TOptions.Schema)`.
+- Wire migrations via `services.AddPostgresMigrations<TContext, TOptions>()` from `Lyo.Postgres`.
+- Options class: strongly typed, `SectionName` constant, `Schema` constant, `Validate()` method; expose `Add{Feature}` (Action + instance overloads) and `Add{Feature}FromConfiguration(IConfiguration, sectionName)`.
+- Read-only queries use `AsNoTracking()`.
+- EF migrations are generated (`dotnet ef migrations add`), committed alongside an updated `*ContextModelSnapshot.cs`, and never hand-edited except for documented data-motion tweaks.
+- A `Mapping/{Domain}LyoMapper.cs` maps entities to `.Models` request/response types; register it as singleton and forward `ILyoMapper` to it.
+- Integration tests live in the sibling `*.Postgres.Tests`/`*.Tests` project and use Testcontainers (requires Docker).

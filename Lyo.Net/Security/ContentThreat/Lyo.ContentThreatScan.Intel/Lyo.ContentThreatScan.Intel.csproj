@@ -11,7 +11,7 @@
         <ProjectReference Include="..\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
         <PackageReference Include="System.Text.Json"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

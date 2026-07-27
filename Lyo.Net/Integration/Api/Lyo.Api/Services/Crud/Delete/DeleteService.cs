@@ -37,6 +37,7 @@ public class DeleteService<TContext>(
     public async Task<DeleteResult<TResult>> DeleteAsync<TDbModel, TResult>(
         object[] keys,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)
@@ -63,7 +64,7 @@ public class DeleteService<TContext>(
 
         await loaderService.LoadIncludes(context, entity, includeList, ct);
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
-        var result = await DeleteInternal<TDbModel, TResult>(keys, null, entity, context, before, after, ct);
+        var result = await DeleteInternal<TDbModel, TResult>(keys, null, entity, context, before, beforeAsync, after, ct);
         if (result.IsSuccess)
             await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
 
@@ -78,6 +79,7 @@ public class DeleteService<TContext>(
     public async Task<DeleteResult<TResult>> DeleteAsync<TDbModel, TResult>(
         DeleteRequest request,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)
@@ -120,7 +122,7 @@ public class DeleteService<TContext>(
         await loaderService.LoadIncludes(context, entity, includeList, ct);
         var keys = request.Keys?.FirstOrDefault() ?? [];
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
-        var result = await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
+        var result = await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, beforeAsync, after, ct);
         if (result.IsSuccess)
             await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
 
@@ -135,6 +137,7 @@ public class DeleteService<TContext>(
     public async Task<DeleteBulkResult<TResult>> DeleteBulkAsync<TDbModel, TResult>(
         IEnumerable<DeleteRequest> requests,
         Action<DeleteContext<TDbModel, TContext>>? before = null,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync = null,
         Action<DeleteContext<TDbModel, TContext>>? after = null,
         IEnumerable<string>? includes = null,
         CancellationToken ct = default)
@@ -154,7 +157,7 @@ public class DeleteService<TContext>(
             throw new LFException(err.Code, err.Message);
         }
 
-        var bulkResult = await TryBulkDeleteAll<TDbModel, TResult>(requestList, before, after, includeList, ct);
+        var bulkResult = await TryBulkDeleteAll<TDbModel, TResult>(requestList, before, beforeAsync, after, includeList, ct);
         if (bulkResult != null) {
             Logger.LogInformation("Bulk delete completed successfully for {Count} requests", requestList.Count);
             if (bulkResult.DeletedCount > 0)
@@ -168,7 +171,7 @@ public class DeleteService<TContext>(
         }
 
         Logger.LogWarning("Bulk delete failed, falling back to partial retry strategy for {Count} requests", requestList.Count);
-        var retryResult = await DeleteWithPartialRetry<TDbModel, TResult>(requestList, before, after, includeList, ct);
+        var retryResult = await DeleteWithPartialRetry<TDbModel, TResult>(requestList, before, beforeAsync, after, includeList, ct);
         if (retryResult.DeletedCount > 0)
             RecordCrudSuccess(operation, typeof(TDbModel), true);
 
@@ -182,6 +185,7 @@ public class DeleteService<TContext>(
     private async Task<DeleteBulkResult<TResult>?> TryBulkDeleteAll<TDbModel, TResult>(
         IReadOnlyList<DeleteRequest> requests,
         Action<DeleteContext<TDbModel, TContext>>? before,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync,
         Action<DeleteContext<TDbModel, TContext>>? after,
         IReadOnlyList<string> includeList,
         CancellationToken ct = default)
@@ -220,6 +224,9 @@ public class DeleteService<TContext>(
                     deletedKeySets.Add(typeConversion.GetPrimaryKeyValues(entity, context));
                     var ctx = new DeleteContext<TDbModel, TContext>(keys, request, entity, context, serviceProvider);
                     before?.Invoke(ctx);
+                    if (beforeAsync is not null)
+                        await beforeAsync(ctx, ct);
+
                     var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
                     context.Set<TDbModel>().Remove(entity);
                     results.Add(ResultFactory.DeleteSuccess(old));
@@ -248,6 +255,7 @@ public class DeleteService<TContext>(
     private async Task<DeleteBulkResult<TResult>> DeleteWithPartialRetry<TDbModel, TResult>(
         IReadOnlyList<DeleteRequest> requests,
         Action<DeleteContext<TDbModel, TContext>>? before,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync,
         Action<DeleteContext<TDbModel, TContext>>? after,
         IReadOnlyList<string> includeList,
         CancellationToken ct = default)
@@ -256,7 +264,7 @@ public class DeleteService<TContext>(
         var results = new List<DeleteResult<TResult>>();
         var failed = new List<(int Index, DeleteRequest Request)>();
         int successCount = 0, failureCount = 0;
-        var (successResults, failedRequests) = await TryBulkDeleteWithTracking<TDbModel, TResult>(requests, before, after, includeList, ct);
+        var (successResults, failedRequests) = await TryBulkDeleteWithTracking<TDbModel, TResult>(requests, before, beforeAsync, after, includeList, ct);
         results.AddRange(successResults);
         successCount += successResults.Count;
         failed.AddRange(failedRequests);
@@ -264,7 +272,7 @@ public class DeleteService<TContext>(
         if (failed.Count > 0) {
             Logger.LogWarning("Retrying {FailedCount} failed items individually", failed.Count);
             foreach (var (index, request) in failed) {
-                var individualResult = await DeleteIndividual<TDbModel, TResult>(request, before, after, includeList, ct);
+                var individualResult = await DeleteIndividual<TDbModel, TResult>(request, before, beforeAsync, after, includeList, ct);
                 if (index < results.Count)
                     results.Insert(index, individualResult);
                 else
@@ -286,6 +294,7 @@ public class DeleteService<TContext>(
     private async Task<(List<DeleteResult<TResult>> Successes, List<(int Index, DeleteRequest Request)> Failures)> TryBulkDeleteWithTracking<TDbModel, TResult>(
         IReadOnlyList<DeleteRequest> requests,
         Action<DeleteContext<TDbModel, TContext>>? before,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync,
         Action<DeleteContext<TDbModel, TContext>>? after,
         IReadOnlyList<string> includeList,
         CancellationToken ct = default)
@@ -329,6 +338,9 @@ public class DeleteService<TContext>(
                         var keys = request.Keys?.FirstOrDefault() ?? [];
                         var ctx = new DeleteContext<TDbModel, TContext>(keys, request, entity, context, serviceProvider);
                         before?.Invoke(ctx);
+                        if (beforeAsync is not null)
+                            await beforeAsync(ctx, ct);
+
                         context.Set<TDbModel>().Remove(entity);
                         deletedEntities.Add((entity, request, keys));
                     }
@@ -373,6 +385,7 @@ public class DeleteService<TContext>(
     private async Task<DeleteResult<TResult>> DeleteIndividual<TDbModel, TResult>(
         DeleteRequest request,
         Action<DeleteContext<TDbModel, TContext>>? before,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync,
         Action<DeleteContext<TDbModel, TContext>>? after,
         IReadOnlyList<string> includeList,
         CancellationToken ct = default)
@@ -401,7 +414,7 @@ public class DeleteService<TContext>(
             var entity = entities[0];
             await loaderService.LoadIncludes(context, entity, includeList, ct);
             var keys = request.Keys?.FirstOrDefault() ?? [];
-            return await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
+            return await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, beforeAsync, after, ct);
         }
         catch (Exception ex) {
             return ResultFactory.DeleteFailure<TResult>(LogAndReturnApiError(ex, "Individual Delete Error", Constants.ApiErrorCodes.SqlException));
@@ -468,6 +481,7 @@ public class DeleteService<TContext>(
         TDbModel entity,
         TContext context,
         Action<DeleteContext<TDbModel, TContext>>? before,
+        Func<DeleteContext<TDbModel, TContext>, CancellationToken, Task>? beforeAsync,
         Action<DeleteContext<TDbModel, TContext>>? after,
         CancellationToken ct = default)
         where TDbModel : class
@@ -476,6 +490,9 @@ public class DeleteService<TContext>(
             var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
             var ctx = new DeleteContext<TDbModel, TContext>(keys, request, entity, context, serviceProvider);
             before?.Invoke(ctx);
+            if (beforeAsync is not null)
+                await beforeAsync(ctx, ct);
+
             context.Set<TDbModel>().Remove(entity);
             await context.SaveChangesAsync(ct);
             after?.Invoke(ctx);

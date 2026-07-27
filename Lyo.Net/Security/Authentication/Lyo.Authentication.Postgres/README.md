@@ -80,6 +80,6 @@ See [`Lyo.EntityReference.Postgres` — Tenancy](../../../Core/EntityReference/L
 - [`Lyo.Authentication`](../Lyo.Authentication/README.md)
 - [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
 - [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

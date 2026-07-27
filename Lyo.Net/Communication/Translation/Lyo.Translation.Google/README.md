@@ -55,5 +55,5 @@ Configuration section name: `GoogleTranslationOptions.SectionName = "GoogleTrans
 ## Related projects
 
 - [`Lyo.Translation`](../Lyo.Translation/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Translation.Aws`](../Lyo.Translation.Aws/README.md)

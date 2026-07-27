@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Tests.Postgres;
 
 [Trait("Category", "Integration")]
+[Collection(JobMaintenanceCollection.Name)]
 public class JobMaintenanceSlaTests
 {
     private readonly JobPostgresFixture _fixture;

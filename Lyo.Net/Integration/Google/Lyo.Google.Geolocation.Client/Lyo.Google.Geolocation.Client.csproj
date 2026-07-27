@@ -11,7 +11,7 @@
         <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\..\Core\Geolocation\Lyo.Geolocation\Lyo.Geolocation.csproj"/>
         <ProjectReference Include="..\..\..\Core\Geolocation\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

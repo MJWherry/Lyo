@@ -42,7 +42,7 @@
         <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

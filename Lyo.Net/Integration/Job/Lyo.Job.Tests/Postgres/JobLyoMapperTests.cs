@@ -87,6 +87,32 @@ public class JobLyoMapperTests
     }
 
     [Fact]
+    public void RunResToReq_DoesNotCopyIdempotencyKeyOrScheduledSlot()
+    {
+        var res = new JobRunRes {
+            Id = Guid.NewGuid(),
+            JobDefinitionId = Guid.NewGuid(),
+            State = JobState.Finished,
+            Result = Models.Enums.JobRunResult.Success,
+            RetryAttempt = 1,
+            Priority = 3,
+            AllowTriggers = true,
+            IdempotencyKey = "retry:abc:1",
+            ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(-5)
+        };
+
+        var req = _mapper.Map<JobRunReq>(res);
+
+        // Both fields are backed by unique indexes; copying them onto a rerun/child clone silently resolves to the original run
+        // (idempotency lookup) or fails the insert (slot constraint).
+        Assert.Null(req.IdempotencyKey);
+        Assert.Null(req.ScheduledSlotUtc);
+        Assert.Equal(res.JobDefinitionId, req.JobDefinitionId);
+        Assert.Equal(res.RetryAttempt, req.RetryAttempt);
+        Assert.Equal(res.Priority, req.Priority);
+    }
+
+    [Fact]
     public void Schedule_StartEndTime_UsesInvariantFormatting()
     {
         var entity = _mapper.Map<JobSchedule>(new JobScheduleReq {

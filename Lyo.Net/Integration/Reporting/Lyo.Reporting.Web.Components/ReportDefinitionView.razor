@@ -1,0 +1,74 @@
+@inject IApiClient ApiClient
+
+<MudDialog>
+    <DialogContent>
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-2">
+            <MudTabPanel Text="Basic Info">
+                <MudGrid Class="pa-2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="ID" Value="@Definition.Id.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Name" Value="@Definition.Name" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="Description" Value="@Definition.Description" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Default Format" Value="@(Definition.DefaultFormat?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Profile Key" Value="@Definition.GenerationProfileKey" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Active" Value="@(Definition.IsActive ? "Yes" : "No")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Created By" Value="@Definition.CreatedBy" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Default File Name" Value="@Definition.DefaultFileName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Default Path Prefix" Value="@Definition.DefaultPathPrefix" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudExpansionPanels>
+                            <MudExpansionPanel Text="ReportDataJson" TextTypo="Typo.subtitle2">
+                                <MudTextField T="string"
+                                              Value="@Definition.ReportDataJson"
+                                              ReadOnly
+                                              Variant="Variant.Outlined"
+                                              Lines="12"
+                                              Class="mud-width-full"/>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="Parameters">
+                <ReportParameterView Parameters="Definition.Parameters"
+                                     ReportDefinitionId="Definition.Id"
+                                     ApiClient="ApiClient"
+                                     DefinitionRoute="@DefinitionRoute"/>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public ReportDefinitionRes Definition { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public string DefinitionRoute { get; set; } = "Reporting/Definition";
+}

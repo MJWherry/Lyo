@@ -40,7 +40,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="password">Password for the PFX certificate</param>
     /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
     /// <param name="aesGcmKeySize">AES-GCM key size for the data encryption key (default 256-bit).</param>
-    /// <exception cref="InvalidOperationException">Thrown when no key configuration is provided.</exception>
+    /// <exception cref="ConfigurationException">Thrown when no key configuration is provided.</exception>
     /// <remarks>Creates default options: CurrentFormatVersion=null, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".agr"</remarks>
     public AesGcmRsaEncryptionService(
         string? publicPemPath = null,
@@ -63,7 +63,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            OperationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either (publicPemPath, privatePemPath) or (pfxPath, password).");
+            ConfigurationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either (publicPemPath, privatePemPath) or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(

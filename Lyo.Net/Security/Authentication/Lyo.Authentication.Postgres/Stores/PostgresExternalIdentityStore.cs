@@ -6,6 +6,7 @@ using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -66,7 +67,7 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         var rawClaimsJson = JsonHelper.SerializeMetadata(rawClaims);
         if (existing is not null) {
             if (existing.UserId != userId)
-                throw new InvalidOperationException($"({provider}, {subject}) is already linked to a different Lyo user.");
+                throw new ConflictException($"({provider}, {subject}) is already linked to a different Lyo user.");
 
             existing.EmailAtLink = emailAtLink ?? existing.EmailAtLink;
             existing.ScopesJson = scopesJson;
@@ -121,7 +122,7 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
             .ConfigureAwait(false);
 
         if (rows == 0)
-            throw new InvalidOperationException($"Linked identity '{linkedIdentityId}' not found.");
+            throw new NotFoundException($"Linked identity '{linkedIdentityId}' not found.");
     }
 
     private static LinkedIdentity ToRecord(LinkedIdentityEntity entity)

@@ -34,6 +34,9 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 {
     private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
 
+    /// <summary>Result metadata that tells <see cref="QueueWorkerBase{TRequest,TResult}" /> not to requeue the message even though the result is a failure.</summary>
+    private static readonly IReadOnlyDictionary<string, object> NoRequeueMetadata = new Dictionary<string, object> { ["requeue"] = false };
+
     private readonly IJobClient _jobClient;
     private readonly IJobEventPublisher _eventPublisher;
     private readonly IJobParameterEncryptionService? _parameterEncryption;
@@ -145,8 +148,16 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         try {
             startedRun = await _jobClient.Runs.StartAsync(runId, RunIncludes, ct).ConfigureAwait(false);
         }
+        catch (ApiException ex) when (ex.StatusCode == 400) {
+            // The Started CAS rejected the transition: the run is not Queued (duplicate delivery already running/finished it, or it was
+            // cancelled while queued). Ack without requeue — redelivery would be rejected the same way every time.
+            Logger.LogInformation(ex, "Run {RunId} is not startable (already started, cancelled, or finished) — dropping duplicate dispatch", runId);
+            Metrics.IncrementCounter(Constants.Metrics.Worker.StartRejected);
+            return ResultVoid.Failure("Run not in a startable state", "StartRejected", metadata: NoRequeueMetadata);
+        }
         catch (Exception ex) {
-            Logger.LogWarning(ex, "Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
+            // Transient failure (API/network): the run is still Queued, so the counted requeue can retry it.
+            Logger.LogWarning(ex, "Failed to mark run {RunId} as started — retrying via requeue", runId);
             return ResultVoid.Failure("Failed to start run", "StartFailed");
         }
 
@@ -164,6 +175,14 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             Logger.LogInformation("Executing job run {RunId}", runId);
             await ExecuteAsync(ctx).ConfigureAwait(false);
             Logger.LogInformation("Job run {RunId} completed with outcome {Outcome}", runId, results.CurrentOutcome);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+            // Host shutdown, not a user cancellation: hand the run back to Queued and rethrow so the base returns the message to the
+            // broker. Redelivery (after restart or on another instance) re-runs the job instead of terminally cancelling it.
+            Logger.LogInformation("Job run {RunId} interrupted by worker shutdown — requeueing for redelivery", runId);
+            Metrics.IncrementCounter(Constants.Metrics.Worker.ShutdownRequeued);
+            await TryRequeueRunForShutdownAsync(runId).ConfigureAwait(false);
+            throw;
         }
         catch (OperationCanceledException) {
             Logger.LogInformation("Job run {RunId} was cancelled", runId);
@@ -192,10 +211,27 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             Metrics.IncrementCounter(Constants.Metrics.Worker.CancellationHonored);
 
         var reported = await ReportFinishedAsync(runId, results.Build(), ct).ConfigureAwait(false);
-        if (!reported)
-            return ResultVoid.Failure("Failed to report run finish", "FinishReportFailed");
+        if (!reported) {
+            // Do not requeue: the run already executed, and a redelivered message would be rejected by the Started CAS guard anyway.
+            // If the finish never landed, the run stays Running until dead-job detection times it out and feeds retries/triggers.
+            return ResultVoid.Failure("Failed to report run finish", "FinishReportFailed", metadata: NoRequeueMetadata);
+        }
 
         return ResultVoid.Success();
+    }
+
+    /// <summary>
+    /// Best-effort <c>Running -&gt; Queued</c> hand-back during host shutdown. When the run is not <c>Running</c> anymore (e.g. a user cancellation moved it to
+    /// <c>Cancelling</c>), the requeue is rejected and the run is finalized by dead-job detection instead.
+    /// </summary>
+    private async Task TryRequeueRunForShutdownAsync(Guid runId)
+    {
+        try {
+            await _jobClient.Runs.RequeueAsync(runId, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Failed to requeue run {RunId} during shutdown; dead-job detection will finalize it", runId);
+        }
     }
 
     /// <summary>Implement this to perform the actual work. Use <paramref name="ctx" /> to read parameters, add results, check the cancellation token, and log messages.</summary>
@@ -307,17 +343,40 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         }
     }
 
-    /// <summary>Reports the run's results to the Job API. Returns false when the finish POST failed (the run row was not transitioned to Finished).</summary>
+    /// <summary>
+    /// Reports the run's results to the Job API. Transient failures are retried in-process a few times; a 400 rejection (the run is no longer finishable — e.g. dead-job
+    /// detection already timed it out while this worker was still executing) is terminal and never retried. Returns false when the run row was not transitioned to Finished.
+    /// </summary>
     private async Task<bool> ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
     {
-        try {
-            await _jobClient.Runs.FinishAsync(runId, results, ct).ConfigureAwait(false);
-            return true;
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                await _jobClient.Runs.FinishAsync(runId, results, ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400) {
+                // Late finish: the run was already finalized (typically Timeout via dead-job detection). Drop cleanly — retrying can never succeed.
+                Logger.LogWarning(ex, "Run {RunId} is no longer finishable (already finalized, likely timed out) — dropping late finish report", runId);
+                Metrics.IncrementCounter(Constants.Metrics.Worker.LateFinishDropped);
+                return false;
+            }
+            catch (Exception ex) when (attempt < maxAttempts) {
+                Logger.LogWarning(ex, "Failed to report finish for run {RunId} (attempt {Attempt}/{Max}) — retrying", runId, attempt, maxAttempts);
+                try {
+                    await Task.Delay(TimeSpan.FromSeconds(attempt), ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    return false;
+                }
+            }
+            catch (Exception ex) {
+                Logger.LogError(ex, "Failed to report finish for run {RunId} after {Max} attempt(s)", runId, maxAttempts);
+                return false;
+            }
         }
-        catch (Exception ex) {
-            Logger.LogError(ex, "Failed to report finish for run {RunId}", runId);
-            return false;
-        }
+
+        return false;
     }
 
     private Task OnCancelAsync(Guid runId)

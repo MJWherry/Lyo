@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Query.Models.Enums;
+using Lyo.Query.Models.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Read.Query.Root;
@@ -25,9 +26,9 @@ internal static class RootQueryJoinExecutor
             throw new ArgumentException("scopedJoinSets count must match plan.Joins.");
         // +1 slot for From PK used to collapse join fan-out (ValueTuple max 7 without Rest nesting).
         if (plan.SelectSpecs.Count is < 1 or > 6)
-            throw new NotSupportedException("Root /Query Select must have 1–6 fields in v1.");
+            throw new InvalidQueryException("Root /Query Select must have 1–6 fields in v1.");
         if (plan.Joins.Count > 7)
-            throw new NotSupportedException("Root /Query supports at most 7 joins in v1.");
+            throw new InvalidQueryException("Root /Query supports at most 7 joins in v1.");
 
         var method = typeof(RootQueryJoinExecutor).GetMethod(nameof(ExecuteCore), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(fromClr);
@@ -56,7 +57,7 @@ internal static class RootQueryJoinExecutor
             var joinSet = scopedJoinSets[ji];
 
             if (!aliasAccess.TryGetValue(on.LeftAlias, out var leftEntityAccess))
-                throw new InvalidOperationException($"Join ON left alias '{on.LeftAlias}' is unknown.");
+                throw new InvalidQueryException($"Join ON left alias '{on.LeftAlias}' is unknown.");
 
             var pairType = typeof(RootJoinPair<,>).MakeGenericType(carrierType, joinClr);
             var outerP = Expression.Parameter(carrierType, "outer");
@@ -73,7 +74,7 @@ internal static class RootQueryJoinExecutor
                 else if (Nullable.GetUnderlyingType(rightKey.Type) == leftKey.Type)
                     leftKey = Expression.Convert(leftKey, rightKey.Type);
                 else
-                    throw new InvalidOperationException($"Join ON key type mismatch: {leftKey.Type} vs {rightKey.Type}.");
+                    throw new InvalidQueryException($"Join ON key type mismatch: {leftKey.Type} vs {rightKey.Type}.");
             }
 
             Expression onEqual = Expression.Equal(leftKey, rightKey);
@@ -151,7 +152,7 @@ internal static class RootQueryJoinExecutor
         for (var s = 0; s < plan.SelectSpecs.Count; s++) {
             var spec = plan.SelectSpecs[s];
             if (!aliasAccess.TryGetValue(spec.Alias, out var entityAccess))
-                throw new InvalidOperationException($"Select alias '{spec.Alias}' unknown.");
+                throw new InvalidQueryException($"Select alias '{spec.Alias}' unknown.");
 
             var entity = entityAccess(rowP);
             Expression value = Expression.Property(entity, spec.Property);
@@ -224,7 +225,7 @@ internal static class RootQueryJoinExecutor
             6 => typeof(ValueTuple<,,,,,>).MakeGenericType(args),
             7 => typeof(ValueTuple<,,,,,,>).MakeGenericType(args),
             8 => typeof(ValueTuple<,,,,,,,>).MakeGenericType(args),
-            _ => throw new NotSupportedException("Unsupported select arity.")
+            _ => throw new InvalidQueryException("Unsupported select arity.")
         };
 
     private static Expression AlignType(Expression expr, Type targetType)

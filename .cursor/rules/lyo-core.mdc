@@ -1,0 +1,35 @@
+---
+description: Lyo monorepo core conventions — taxonomy, dependency law, C# style, DI pattern
+alwaysApply: true
+---
+
+# Lyo Monorepo Core Rules
+
+## Layout & architecture (taxonomy-first)
+
+- Solution is `Lyo.Net/Lyo.slnx` (XML). Projects live under top-level areas: `Core`, `Data`, `Security`, `Communication`, `Integration`, `Features`, `Apps`, `Tools`. Solution folders mirror disk paths.
+- Every package is classified by archetype. Before adding or moving a package, read `Lyo.Net/docs/package-layout.md` and follow its classification checklist:
+  - A = canonical Lyo domain → `Core/{Domain}/` (e.g. `Lyo.People.Models`)
+  - B = capability + vendor provider → `Communication|Security/{Capability}/` (e.g. `Lyo.Translation.Google`)
+  - C = thin vendor client → `Integration/{Vendor}/`, named `Lyo.{Vendor}.{X}.Client`
+  - D = vendor product vertical → `Integration/{Vendor}/` (e.g. `Lyo.Discord.*`)
+  - E = platform → `Integration/Api|Web|Job`, `Data/*`, `Features/*`, `Tools/*`
+- Dependency law (hard rule): `Core` must NEVER reference `Integration`, vendor SDKs, or vendor clients. `Communication`/`Security` may reference `Core` and `Integration` vendor clients. Hosts wire vendor client → mapper → Core store.
+- Suffix conventions: `.Models` (contracts/DTOs), `.Postgres` (EF Core persistence), `.Client` (HTTP/SDK wrapper), `.Web.Components` (Blazor), `.Tests` (xUnit), `.Benchmarks` (BenchmarkDotNet).
+
+## C# style
+
+- File-scoped namespaces, primary constructors, collection expressions, pattern matching, target-typed `new`. Use C# 14 `extension(IServiceCollection services)` blocks for extension members.
+- Null-guard public entry points with `ArgumentHelpers.ThrowIfNull(...)` from `Lyo.Exceptions` (netstandard2.0-safe) — not `ArgumentNullException.ThrowIfNull`.
+- XML doc comments on all public API. Docs explain usage and prerequisites, not just what the member does.
+- Exceptions are one-liners: `public sealed class FooException(string message) : Exception(message);`
+- Async methods accept and propagate `CancellationToken`.
+- Follow `.editorconfig`: prefer `var`, braces only when multiline, expression bodies for simple members, max line length 180.
+
+## DI & configuration pattern
+
+Copy the pattern in `Lyo.Net/Integration/Reporting/Lyo.Reporting.Postgres/Extensions.cs`:
+
+- Each package exposes an `Extensions.cs` with fluent `Add{Feature}` members returning `IServiceCollection`, in three shapes: `Action<TOptions>` overload, options-instance overload, and `Add{Feature}FromConfiguration(IConfiguration, string sectionName = TOptions.SectionName)`.
+- Options classes are strongly typed with a `SectionName` constant and a `Validate()` method, registered via `Options.Create(options)`.
+- Use `TryAddEnumerable(ServiceDescriptor.Singleton<IFace, Impl>())` for multi-implementation interfaces and `TryAdd*` for defaults the host may override.

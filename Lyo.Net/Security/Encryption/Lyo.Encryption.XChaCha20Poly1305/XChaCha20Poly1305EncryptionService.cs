@@ -38,7 +38,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[], byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
+        ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
             ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
 
@@ -135,7 +135,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 50;
-        ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize);
+        ArgumentHelpers.ThrowIfNotInRange((long)count, minEncryptedSize, Options.MaxInputSize, nameof(count));
         using var ms = new MemoryStream(buffer, offset, count, false);
         return DecryptFromStream(ms, keyId, key, associatedData);
     }

@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Multipart;
@@ -80,7 +81,7 @@ public sealed class PostgresStagedFileUploadStoreTests
     public async Task UpdateAsync_WhenMissing_Throws()
     {
         var store = CreateStore();
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => store.UpdateAsync(SampleRecord(), TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() => store.UpdateAsync(SampleRecord(), TestContext.Current.CancellationToken));
         Assert.Contains("was not found", ex.Message);
     }
 

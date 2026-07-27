@@ -9,7 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
         <ProjectReference Include="..\..\Common\Lyo.Common\Lyo.Common.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
 </Project>

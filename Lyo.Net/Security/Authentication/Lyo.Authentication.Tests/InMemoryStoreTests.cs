@@ -3,6 +3,7 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Tests;
 
@@ -38,7 +39,7 @@ public class InMemoryStoreTests
         var store = new InMemoryApiTokenStore();
         var record = NewTokenRecord();
         await store.InsertAsync(record, null, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<ConflictException>(() => store.InsertAsync(record, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -76,7 +77,7 @@ public class InMemoryStoreTests
         var a = NewUser();
         var b = NewUser() with { Email = a.Email };
         await store.CreateAsync(a, null, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<ConflictException>(() => store.CreateAsync(b, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]

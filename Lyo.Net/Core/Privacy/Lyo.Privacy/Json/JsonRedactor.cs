@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
@@ -90,7 +91,7 @@ public sealed class JsonRedactor : IStructuredRedactor
             var json = Encoding.UTF8.GetString(utf8Json.Span);
 #endif
             if (_textRedactor is null)
-                throw new InvalidOperationException("Cannot redact invalid JSON without an ITextRedactor for fallback.", ex);
+                throw new InvalidFormatException("Cannot redact invalid JSON without an ITextRedactor for fallback.", ex);
 
             var r = _textRedactor.Redact(json);
             return r with { InputUtf16Length = inputUtf16LengthHint ?? json.Length, PolicyName = _options.PolicyName ?? r.PolicyName };

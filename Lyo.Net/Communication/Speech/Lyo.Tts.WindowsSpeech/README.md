@@ -106,6 +106,6 @@ register both interfaces because they ship an `*TtsAppService` adapter.
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Tts`](../Lyo.Tts/README.md)
 - [`Lyo.Tts.Models`](../Lyo.Tts.Models/README.md)

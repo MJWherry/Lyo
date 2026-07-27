@@ -61,6 +61,6 @@ services.AddSingleton<IShortUrlService, MyEfBackedShortUrlService>();
 
 ### Project references
 
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
 - [`Lyo.ShortUrl`](../Lyo.ShortUrl/README.md)

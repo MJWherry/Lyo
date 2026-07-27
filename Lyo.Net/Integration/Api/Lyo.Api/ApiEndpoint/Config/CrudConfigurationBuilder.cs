@@ -17,6 +17,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     private Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? _afterUpsert;
     private Action<CreateContext<TRequest, TDbEntity, TDbContext>>? _beforeCreate;
     private Action<DeleteContext<TDbEntity, TDbContext>>? _beforeDelete;
+    private Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? _beforeDeleteAsync;
     private Action<GetContext<TDbEntity, TDbContext>>? _beforeGet;
     private Action<PatchContext<TDbEntity, TDbContext>>? _beforePatch;
     private Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? _beforeUpdate;
@@ -120,6 +121,12 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> BeforeDelete(Action<DeleteContext<TDbEntity, TDbContext>> before)
     {
         _beforeDelete = before;
+        return this;
+    }
+
+    public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> BeforeDeleteAsync(Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task> beforeAsync)
+    {
+        _beforeDeleteAsync = beforeAsync;
         return this;
     }
 
@@ -255,6 +262,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
             AfterUpsert = _afterUpsert,
             BeforeCreate = _beforeCreate,
             BeforeDelete = _beforeDelete,
+            BeforeDeleteAsync = _beforeDeleteAsync,
             BeforeGet = _beforeGet,
             BeforePatch = _beforePatch,
             BeforeUpdate = _beforeUpdate,

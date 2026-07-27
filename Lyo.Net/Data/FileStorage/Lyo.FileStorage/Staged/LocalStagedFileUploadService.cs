@@ -1,6 +1,7 @@
 using System.Buffers;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
@@ -61,7 +62,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
     public async Task<StagedUploadBeginResult> BeginAsync(StagedUploadBeginRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_options.DirectUploadReceiveBaseUri))
-            throw new NotSupportedException("Local staged upload requires DiskFileStorageOptions.DirectUploadReceiveBaseUri.");
+            throw new ConfigurationException("Local staged upload requires DiskFileStorageOptions.DirectUploadReceiveBaseUri.", nameof(DiskFileStorageOptions.DirectUploadReceiveBaseUri));
 
         var (result, _) = await _coordinator.BeginCoreAsync(request, ct).ConfigureAwait(false);
         return result;
@@ -92,7 +93,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
             throw new FileNotFoundException($"Staged upload {stageId} was not found.");
 
         if (record.Status != StagedUploadStatus.PendingUpload)
-            throw new InvalidOperationException($"Stage {stageId} is not pending upload (status={record.Status}).");
+            throw new ConflictException($"Stage {stageId} is not pending upload (status={record.Status}).");
 
         var path = _physicalIo.GetAbsolutePath(record);
         var dir = Path.GetDirectoryName(path);
@@ -115,7 +116,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
                 while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
                     total += read;
                     if (total > max.Value)
-                        throw new InvalidOperationException($"PUT body for stage {stageId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
+                        throw new FilePolicyRejectedException($"PUT body for stage {stageId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
 
                     await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
                 }
@@ -140,7 +141,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
             while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
                 total += read;
                 if (total > max.Value)
-                    throw new InvalidOperationException($"PUT body for stage {stageId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
+                    throw new FilePolicyRejectedException($"PUT body for stage {stageId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
 
                 await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
             }

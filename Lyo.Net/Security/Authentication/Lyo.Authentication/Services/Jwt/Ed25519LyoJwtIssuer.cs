@@ -11,6 +11,7 @@ using Lyo.Common.Extensions;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
 using Lyo.Keystore;
+using Lyo.Keystore.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -70,7 +71,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         var seed = await _keys.GetCurrentKeyAsync(_options.SigningKeyId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(seed, $"No current signing key bytes found for '{_options.SigningKeyId}'.");
         if (seed.Length != Ed25519Constants.PrivateSeedLength) {
-            throw new InvalidOperationException(
+            throw new InvalidKeyException(
                 $"Signing key '{_options.SigningKeyId}' v{version} is {seed.Length} bytes; expected {Ed25519Constants.PrivateSeedLength} for Ed25519.");
         }
 

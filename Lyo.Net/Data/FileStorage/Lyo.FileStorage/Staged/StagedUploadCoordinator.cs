@@ -1,6 +1,7 @@
 using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
@@ -78,7 +79,7 @@ public sealed class StagedUploadCoordinator
         var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
         var contentType = ResolveContentType(request.ContentType, request.OriginalFileName);
         if (_options.MaxUploadSizeBytes.HasValue && request.DeclaredMaxSizeBytes > _options.MaxUploadSizeBytes.Value)
-            throw new InvalidOperationException($"DeclaredMaxSizeBytes {request.DeclaredMaxSizeBytes} exceeds configured MaxUploadSizeBytes.");
+            throw new FilePolicyRejectedException($"DeclaredMaxSizeBytes {request.DeclaredMaxSizeBytes} exceeds configured MaxUploadSizeBytes.");
 
         await _contentPolicy.ValidateAsync(
                 new() {
@@ -234,7 +235,7 @@ public sealed class StagedUploadCoordinator
 
         OperationHelpers.ThrowIf(record.Status == StagedUploadStatus.Committed, $"Stage {stageId} is already committed.");
         if (!await _store.TryTransitionStatusAsync(stageId, StagedUploadStatus.Uploaded, StagedUploadStatus.Committing, ct).ConfigureAwait(false))
-            throw new InvalidOperationException($"Stage {stageId} is not available for commit (status={record.Status}).");
+            throw new ConflictException($"Stage {stageId} is not available for commit (status={record.Status}).");
 
         try {
             record = (await _store.GetAsync(stageId, ct).ConfigureAwait(false))!;
@@ -341,9 +342,9 @@ public sealed class StagedUploadCoordinator
     private void EnsureScanRequirementSatisfied()
     {
         if (_options.RequireScanBeforeAvailable && _malwareScanner is NullFileMalwareScanner) {
-            throw new InvalidOperationException(
+            throw new ConfigurationException(
                 "RequireScanBeforeAvailable is set but no IFileMalwareScanner is configured. " +
-                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.");
+                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.", "RequireScanBeforeAvailable");
         }
     }
 

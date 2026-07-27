@@ -10,7 +10,7 @@
         <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
         <ProjectReference Include="..\..\..\Core\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

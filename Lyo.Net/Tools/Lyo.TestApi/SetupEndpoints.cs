@@ -1,12 +1,14 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Export;
+using Lyo.Api.Reporting;
 using Lyo.Api.Services.Crud;
 using Lyo.Common.Identifiers;
 using Lyo.Discord.Postgres;
 using Lyo.Endato.Postgres.Database;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
+using Lyo.FileStorage.Abstractions;
 using Lyo.Job.Postgres;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
@@ -26,6 +28,14 @@ public static class SetupEndpoints
             app = app.BuildJobGroup()
                 //.BuildClientGroup()
                 //.BuildDocketGroup()
+                // Match Job test host: open for Gateway workbench (auth can be tightened later).
+                // Stream persisted outputs from this host's keyed FileStorage (matches the AfterRender save hook).
+                .BuildReportingGroup(ReportingApiOptions.WithAuth(
+                    EndpointAuth.Anonymous(),
+                    (ctx, ct) => {
+                        var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
+                        return storage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
+                    }))
                 .BuildEndatoCeGroup()
                 .BuildEndatoPsGroup()
                 .BuildPersonGroup()

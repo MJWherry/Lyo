@@ -5,6 +5,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
@@ -23,11 +24,15 @@ public sealed class JobWorkflowEngine : BackgroundService
 {
     private const string FinishedEventsQueue = "job.workflow.run.finished";
 
+    /// <summary>Maximum retries for a failing completion message before it is dropped. Bounded so a poison message cannot requeue forever.</summary>
+    internal const int MaxRequeueCount = 5;
+
     private static readonly string[] WorkflowRunIncludes = [
         "JobWorkflowRunSteps", "JobWorkflowRunSteps.JobWorkflowStep", "JobWorkflow", "JobWorkflow.JobWorkflowSteps"
     ];
 
     private readonly IApiClient _apiClient;
+    private readonly IJobEventPublisher? _eventPublisher;
     private readonly ILogger<JobWorkflowEngine> _logger;
     private readonly IMqService _mqService;
     private readonly JobWorkflowEngineOptions _options;
@@ -36,7 +41,8 @@ public sealed class JobWorkflowEngine : BackgroundService
         JobWorkflowEngineOptions options,
         IApiClient apiClient,
         IMqService mqService,
-        ILogger<JobWorkflowEngine>? logger = null)
+        ILogger<JobWorkflowEngine>? logger = null,
+        IJobEventPublisher? eventPublisher = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(apiClient);
@@ -46,6 +52,7 @@ public sealed class JobWorkflowEngine : BackgroundService
         _apiClient = apiClient;
         _mqService = mqService;
         _logger = logger ?? NullLogger<JobWorkflowEngine>.Instance;
+        _eventPublisher = eventPublisher;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,7 +64,8 @@ public sealed class JobWorkflowEngine : BackgroundService
         await _mqService.BindQueueToExchange(FinishedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunFinishedRoutingKey, stoppingToken)
             .ConfigureAwait(false);
 
-        await _mqService.SubscribeToQueue(FinishedEventsQueue, OnRunFinishedAsync, stoppingToken).ConfigureAwait(false);
+        // Typed subscribe handles both enveloped retries (republished below) and the raw-Guid exchange messages.
+        await _mqService.SubscribeToQueueAsync<Guid>(FinishedEventsQueue, OnRunFinishedAsync, ct: stoppingToken).ConfigureAwait(false);
 
         try {
             await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(false);
@@ -67,27 +75,24 @@ public sealed class JobWorkflowEngine : BackgroundService
         }
     }
 
-    private async Task<bool> OnRunFinishedAsync(byte[] body)
+    private async Task<bool> OnRunFinishedAsync(Guid runId, QueueMessageEnvelope<Guid>? envelope)
     {
-        Guid? runId;
         try {
-            runId = JsonSerializer.Deserialize<Guid>(body);
-        }
-        catch (Exception ex) {
-            _logger.LogError(ex, "Could not parse workflow run-finished message");
-            return false;
-        }
-
-        if (!runId.HasValue)
-            return false;
-
-        try {
-            await ProcessRunCompletionAsync(runId.Value).ConfigureAwait(false);
+            await ProcessRunCompletionAsync(runId).ConfigureAwait(false);
             return false;
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Workflow engine failed processing run {RunId}", runId);
-            return true;
+            // Bounded retry: republish with an incremented count instead of an unbounded broker requeue (which loops poison messages forever).
+            var requeueCount = envelope?.RequeueCount ?? 0;
+            if (requeueCount >= MaxRequeueCount) {
+                _logger.LogError(ex, "Workflow engine giving up on run {RunId} after {Count} requeue(s)", runId, requeueCount);
+                return false;
+            }
+
+            _logger.LogWarning(ex, "Workflow engine failed processing run {RunId}; requeue {Count}/{Max}", runId, requeueCount + 1, MaxRequeueCount);
+            var retry = new QueueMessageEnvelope<Guid>(runId, requeueCount + 1, envelope?.MessageId ?? Guid.NewGuid().ToString("D"), envelope?.EnqueuedAt ?? DateTime.UtcNow);
+            await _mqService.SendToQueue(FinishedEventsQueue, JsonSerializer.SerializeToUtf8Bytes(retry)).ConfigureAwait(false);
+            return false; // ack the original; the republished envelope carries the retry count
         }
     }
 
@@ -202,7 +207,11 @@ public sealed class JobWorkflowEngine : BackgroundService
             if (!DependenciesSatisfied(step, runSteps))
                 continue;
 
-            var created = await CreateStepRunAsync(step).ConfigureAwait(false);
+            // When a publisher is available, create the run with dispatch suppressed, link it to the run step, and only then dispatch.
+            // Otherwise a fast worker could finish the run before the JobRunId patch lands and the completion handler would not find
+            // the step. Without a publisher we fall back to immediate dispatch (bounded requeue above absorbs the race).
+            var suppressDispatch = _eventPublisher is not null;
+            var created = await CreateStepRunAsync(step, suppressDispatch).ConfigureAwait(false);
             if (created is null)
                 continue;
 
@@ -212,6 +221,10 @@ public sealed class JobWorkflowEngine : BackgroundService
                 .Build();
 
             await _apiClient.PatchAsAsync<PatchRequest, object>(BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/{runStep.Id}"), patch).ConfigureAwait(false);
+
+            if (suppressDispatch)
+                await DispatchStepRunAsync(created).ConfigureAwait(false);
+
             started = true;
         }
 
@@ -225,12 +238,13 @@ public sealed class JobWorkflowEngine : BackgroundService
         }
     }
 
-    private async Task<JobRunRes?> CreateStepRunAsync(JobWorkflowStepRes step)
+    private async Task<JobRunRes?> CreateStepRunAsync(JobWorkflowStepRes step, bool suppressDispatch)
     {
         var req = new JobRunReq {
             JobDefinitionId = step.JobDefinitionId,
             CreatedBy = _options.CreatedBy,
-            AllowTriggers = false
+            AllowTriggers = false,
+            SuppressDispatch = suppressDispatch
         };
 
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), req).ConfigureAwait(false);
@@ -240,6 +254,23 @@ public sealed class JobWorkflowEngine : BackgroundService
         }
 
         return created.Data;
+    }
+
+    /// <summary>Dispatches a step run that was created with dispatch suppressed. If publishing fails, the maintenance service's stuck-queued recovery picks the run up.</summary>
+    private async Task DispatchStepRunAsync(JobRunRes run)
+    {
+        var workerType = run.JobDefinition?.WorkerType;
+        if (_eventPublisher is null || workerType is null) {
+            _logger.LogWarning("Cannot dispatch workflow step run {RunId} (no publisher or worker type); maintenance will redispatch it", run.Id);
+            return;
+        }
+
+        try {
+            await _eventPublisher.PublishRunCreatedAsync(run.Id, workerType, run.Priority).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to dispatch workflow step run {RunId}; maintenance will redispatch it", run.Id);
+        }
     }
 
     private static bool DependenciesSatisfied(JobWorkflowStepRes step, IReadOnlyList<JobWorkflowRunStepRes> runSteps)

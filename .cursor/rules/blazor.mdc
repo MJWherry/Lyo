@@ -1,0 +1,16 @@
+---
+description: Blazor component library (*.Web.Components) conventions
+globs: **/*.Web.Components/**,**/*.Web.Components.*/**,**/*.razor,**/*.razor.cs
+alwaysApply: false
+---
+
+# Blazor Component Conventions
+
+- Component packages use `<Project Sdk="Microsoft.NET.Sdk.Razor">`, target `net10.0` only, add `<FrameworkReference Include="Microsoft.AspNetCore.App"/>`, and reference `MudBlazor` (version-less, via CPM).
+- UI is MudBlazor-first (`MudCard`, `MudGrid`, `MudDataGrid`, `MudAlert`, ...). Reuse shared building blocks from `Lyo.Net/Integration/Web/Lyo.Web.Components` (`LyoDataGrid`, `LyoForm`, `LyoFormInput`, `LyoFileUpload`, `JsonEditor`, ...) before writing new primitives; generic reusable components carry the `Lyo` prefix.
+- Each package has an `_Imports.razor` collecting all `@using` directives (alphabetical) and optionally a `GlobalUsings.cs` for C# usings.
+- Small components keep an inline `@code { ... }` block; complex components split logic into a `partial class` code-behind (`Component.razor.cs`) — see `Lyo.Web.Components/DataGrid/LyoDataGrid.razor.cs`.
+- Required inputs use `[Parameter] [EditorRequired]`. Data access flows through an `IApiClient` passed as a parameter (or cascading) rather than injecting concrete services; `@inject` is fine for `ILogger<T>` and UI services (`IDialogService`, `ISnackbar`).
+- Private state fields use `_camelCase`; collection defaults use collection expressions (`= [];`).
+- Razor markup uses same-line braces for `@if`/`@foreach` blocks (matching existing components), and early `return;` inside markup to short-circuit loading/empty states.
+- Export/grid integrations go through `Lyo.Web.Components.Export` (+ `.Csv`/`.Xlsx`) rather than bespoke export code.

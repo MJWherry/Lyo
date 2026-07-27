@@ -19,7 +19,7 @@ namespace Lyo.Job.Postgres.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("job")
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -81,13 +81,13 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("character varying(51)")
                         .HasColumnName("day_flags");
 
-                    b.Property<DateTime?>("EndDateUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_date_utc");
-
                     b.Property<bool>("Enabled")
                         .HasColumnType("boolean")
                         .HasColumnName("enabled");
+
+                    b.Property<DateTime?>("EndDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date_utc");
 
                     b.Property<string>("EndTime")
                         .IsRequired()
@@ -113,15 +113,15 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValue("Skip")
                         .HasColumnName("policy");
 
+                    b.Property<DateTime?>("StartDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date_utc");
+
                     b.Property<string>("StartTime")
                         .IsRequired()
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
                         .HasColumnName("start_time");
-
-                    b.Property<DateTime?>("StartDateUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date_utc");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
@@ -275,8 +275,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("WorkerType")
                         .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("worker_type");
 
                     b.HasKey("Id")
@@ -628,8 +628,6 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasKey("Id")
                         .HasName("pk_job_run");
 
-                    b.HasIndex(new[] { "ParentJobRunId" }, "ix_job_run_parent_job_run_id");
-
                     b.HasIndex("ReRanFromJobRunId");
 
                     b.HasIndex("JobDefinitionId", "IdempotencyKey")
@@ -647,6 +645,8 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasIndex(new[] { "JobScheduleId" }, "ix_job_run_job_schedule_id");
 
                     b.HasIndex(new[] { "JobTriggerId" }, "ix_job_run_job_trigger_id");
+
+                    b.HasIndex(new[] { "ParentJobRunId" }, "ix_job_run_parent_job_run_id");
 
                     b.HasIndex(new[] { "State" }, "ix_job_run_state");
 

@@ -10,7 +10,10 @@
                 Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
                 HiddenChanged="@OnHiddenChanged">
     <CellTemplate Context="cell">
-        @{
+        @if (CellContent != null) {
+            @CellContent(cell.Item)
+        }
+        else {
             string displayText;
             if (FormattedValue != null) {
                 var raw = ProjectedValueHelper.GetValue(cell.Item, Field);
@@ -19,12 +22,13 @@
             else {
                 displayText = ProjectedValueHelper.GetDisplayValue(cell.Item, Field);
             }
-        }
-        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
-            <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
-        }
-        else {
-            @displayText
+
+            @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+                <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+            }
+            else {
+                @displayText
+            }
         }
     </CellTemplate>
 </TemplateColumn>
@@ -81,6 +85,13 @@
     /// </summary>
     [Parameter]
     public Func<object?, object?, string>? FormattedValue { get; set; }
+
+    /// <summary>
+    /// Custom cell markup rendered instead of the default text (and instead of <see cref="FormattedValue" />). Receives the projected row object; read field values with
+    /// <see cref="ProjectedValueHelper.GetValue" /> / <see cref="ProjectedValueHelper.GetDisplayValue" />. Quick-search highlighting is not applied to custom content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<object?>? CellContent { get; set; }
 
     protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault);
 

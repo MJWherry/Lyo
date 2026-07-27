@@ -33,7 +33,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     /// <param name="password">Password for the PFX certificate</param>
     /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
     /// <param name="maxChunkSize">Maximum chunk size for encryption. If null, automatically calculated based on key size and padding.</param>
-    /// <exception cref="InvalidOperationException">Thrown when no key configuration is provided.</exception>
+    /// <exception cref="ConfigurationException">Thrown when no key configuration is provided.</exception>
     public RsaEncryptor(string? publicPemPath = null, string? pfxPath = null, string? password = null, RSAEncryptionPadding? padding = null, int? maxChunkSize = null)
     {
         _padding = padding ?? RSAEncryptionPadding.OaepSHA256;
@@ -48,7 +48,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
         else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            throw new InvalidOperationException("No RSA key configuration provided. Specify either publicPemPath or (pfxPath, password).");
+            throw new ConfigurationException("No RSA key configuration provided. Specify either publicPemPath or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(

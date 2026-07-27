@@ -87,5 +87,5 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 ### Project references
 
 - [`Lyo.Barcode`](../Lyo.Barcode/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)

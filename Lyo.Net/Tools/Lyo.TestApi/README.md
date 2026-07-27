@@ -37,7 +37,7 @@ The pipeline ends with `app.UseResponseCompression()` → `app.UseRequestDecompr
 
 ```text
 BuildJobGroup            ← from Lyo.Job.Postgres (full job/job-run CRUD)
-BuildJobServiceEndpoints ← custom Job/Run/Create, Job/Run/{id}/Cancel, Job/Run/{id}/Rerun
+BuildReportingGroup      ← from Lyo.Api.Reporting (definitions CRUD, generations read-only, Generate/Rerun/Download; anonymous in this host)
 BuildPersonGroup         ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts
 BuildDiscordGroup        ← Discord dynamic CRUD
 BuildTwilioGroup         ← Twilio dynamic CRUD (route prefix "Twilio")
@@ -45,6 +45,9 @@ BuildFileStorageWorkbenchGroup    ← MapGroup("Workbench/FileStorage") (see bel
 BuildDirectFileUploadEndpoint     ← POST upload/file (mirrors files/save-stream)
 BuildFileStorageWorkbenchFileMetadataQuery ← ReadOnly Lyo.Api builder over FileMetadataEntity at "Workbench/FileStorage/FileMetadata"
 ```
+
+Reporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup or definition delete). `ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`. CSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is registered but not scheduled — set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.
+
 
 Custom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel — those need to go through MQ via `JobService`.
 

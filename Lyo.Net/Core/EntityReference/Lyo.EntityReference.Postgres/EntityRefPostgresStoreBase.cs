@@ -1,4 +1,5 @@
 using Lyo.EntityReference.Models;
+using Lyo.Exceptions.Models;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.EntityReference.Postgres;
@@ -30,7 +31,7 @@ public abstract class EntityRefPostgresStoreBase
     /// When <see langword="true" /> (the default) the underlying tenant column is non-null and <see cref="TenancyMode.SystemOnly" /> is rejected at
     /// construction time.
     /// </param>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="ConfigurationException">
     /// The effective <see cref="TenancyMode" /> resolves to <see cref="TenancyMode.SystemOnly" /> but this store requires a non-null tenant
     /// column.
     /// </exception>
@@ -91,9 +92,9 @@ public abstract class EntityRefPostgresStoreBase
 
         var effectiveMode = FeatureTenancy.Mode ?? EntityRefOptions.Mode;
         if (effectiveMode == TenancyMode.SystemOnly) {
-            throw new InvalidOperationException(
+            throw new ConfigurationException(
                 $"Store {GetType().Name} requires a non-null TenantId column and cannot be configured with TenancyMode.SystemOnly. " +
-                "Set Tenancy.Mode to SingleTenantDefault or MultiTenantStrict, or use a store backed by a nullable tenant column.");
+                "Set Tenancy.Mode to SingleTenantDefault or MultiTenantStrict, or use a store backed by a nullable tenant column.", "Tenancy.Mode");
         }
     }
 }

@@ -1289,14 +1289,27 @@ public class BaseWhereClauseService : IWhereClauseService
 
                     break;
                 case JsonElement { ValueKind: JsonValueKind.Array } jsonElement:
-                    foreach (var item in jsonElement.EnumerateArray())
-                        list.Add(ValueConversion.ConvertToTargetType(item, propertyType)!);
+                    foreach (var item in jsonElement.EnumerateArray()) {
+                        // Tolerate an accidentally nested array (e.g. a collection wrapped by a params overload).
+                        if (item.ValueKind == JsonValueKind.Array) {
+                            foreach (var nested in item.EnumerateArray())
+                                list.Add(ValueConversion.ConvertToTargetType(nested, propertyType)!);
+                        }
+                        else
+                            list.Add(ValueConversion.ConvertToTargetType(item, propertyType)!);
+                    }
 
                     break;
                 default:
                     if (ValueConversion.IsObjectEnumerable(value)) {
-                        foreach (var item in (IEnumerable)value)
-                            list.Add(ValueConversion.ConvertToTargetType(item, propertyType)!);
+                        foreach (var item in (IEnumerable)value) {
+                            if (item is not string && item is IEnumerable nestedEnumerable) {
+                                foreach (var nested in nestedEnumerable)
+                                    list.Add(ValueConversion.ConvertToTargetType(nested, propertyType)!);
+                            }
+                            else
+                                list.Add(ValueConversion.ConvertToTargetType(item, propertyType)!);
+                        }
                     }
                     else
                         list.Add(ValueConversion.ConvertToTargetType(value, propertyType)!);

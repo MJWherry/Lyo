@@ -90,7 +90,7 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
             .ConfigureAwait(false);
 
         if (rows == 0)
-            throw new InvalidOperationException($"Token id '{id}' not found.");
+            throw new NotFoundException($"Token id '{id}' not found.");
     }
 
     /// <inheritdoc />

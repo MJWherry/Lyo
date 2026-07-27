@@ -665,9 +665,9 @@ public abstract class FileStorageServiceBase
     protected internal void EnsureScanRequirementSatisfied()
     {
         if (Options.RequireScanBeforeAvailable && MalwareScanner is NullFileMalwareScanner) {
-            throw new InvalidOperationException(
+            throw new ConfigurationException(
                 "RequireScanBeforeAvailable is set but no IFileMalwareScanner is configured. " +
-                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.");
+                "Register a real malware scanner (e.g. via DI) or disable RequireScanBeforeAvailable.", "RequireScanBeforeAvailable");
         }
     }
 

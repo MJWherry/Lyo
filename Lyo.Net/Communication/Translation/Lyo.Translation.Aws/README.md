@@ -63,5 +63,5 @@ Configuration section name: `AwsTranslationOptions.SectionName = "AwsTranslation
 ## Related projects
 
 - [`Lyo.Translation`](../Lyo.Translation/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - NuGet: `AWSSDK.Translate`

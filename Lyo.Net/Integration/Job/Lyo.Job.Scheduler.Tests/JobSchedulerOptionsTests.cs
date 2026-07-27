@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.Job.Scheduler;
 
 namespace Lyo.Job.Scheduler.Tests;
@@ -60,12 +61,12 @@ public class JobSchedulerOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenInvalid_ThrowsArgumentException()
+    public void Validate_WhenInvalid_ThrowsValidationException()
     {
         var options = CreateValidOptions();
         options.ApiBaseUrl = "";
 
-        var ex = Assert.Throws<ArgumentException>(() => options.Validate());
+        var ex = Assert.Throws<ValidationException>(() => options.Validate());
         Assert.Contains(nameof(JobSchedulerOptions), ex.Message, StringComparison.Ordinal);
     }
 

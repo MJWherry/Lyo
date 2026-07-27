@@ -1,3 +1,4 @@
+using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.EntityReference.Postgres;
@@ -66,7 +67,7 @@ internal static class PeopleEntityMapper
         return entity;
     }
 
-    private static NamePrefix? ParseNamePrefix(string? value) => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NamePrefix>(value, true, out var p) ? p : null;
+    private static NamePrefix? ParseNamePrefix(string? value) => TypeConversion.EnumOrNull<NamePrefix>(value);
 
-    private static NameSuffix? ParseNameSuffix(string? value) => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NameSuffix>(value, true, out var s) ? s : null;
+    private static NameSuffix? ParseNameSuffix(string? value) => TypeConversion.EnumOrNull<NameSuffix>(value);
 }

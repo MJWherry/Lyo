@@ -96,7 +96,7 @@ public static class AuthEndpointsMapper
 
             return Results.Redirect(redirect.AuthorizeUrl);
         }
-        catch (InvalidOperationException) {
+        catch (NotFoundException) {
             return Results.NotFound(new { error = "unknown_provider" });
         }
     }

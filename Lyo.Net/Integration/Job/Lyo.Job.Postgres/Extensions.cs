@@ -6,6 +6,7 @@ using Lyo.Api.Models.Builders;
 using Lyo.Common.Identifiers;
 using Lyo.Encryption;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Health;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -141,6 +142,29 @@ public static class Extensions
                 })
             .Build();
 
+        app.CreateBuilder<JobContext, JobScheduleParameter, JobScheduleParameterReq, JobScheduleParameterRes, Guid>(
+                $"{Constants.Rest.Job.ScheduleParameters}", "Job")
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud, new() {
+                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
+                    AfterCreate = ctx => {
+                        JobAuditHelper.RecordCreated(ctx.Services, nameof(JobScheduleParameter), ctx.Entity.Id);
+                        PublishScheduleDefinitionUpdated(app, ctx.DbContext, ctx.Entity.JobScheduleId);
+                    },
+                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
+                    BeforePatch = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
+                    AfterUpdate = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobScheduleParameter), ctx.Entity.Id);
+                        PublishScheduleDefinitionUpdated(app, ctx.DbContext, ctx.Entity.JobScheduleId);
+                    },
+                    AfterPatch = ctx => {
+                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobScheduleParameter), ctx.Entity.Id);
+                        PublishScheduleDefinitionUpdated(app, ctx.DbContext, ctx.Entity.JobScheduleId);
+                    },
+                    AfterDelete = ctx => PublishScheduleDefinitionUpdated(app, ctx.DbContext, ctx.Entity.JobScheduleId)
+                })
+            .Build();
+
         app.CreateBuilder<JobContext, JobTrigger, JobTriggerReq, JobTriggerRes, Guid>($"{Constants.Rest.Job.Triggers}", "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
@@ -224,7 +248,7 @@ public static class Extensions
                     BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
                     BeforeDelete = ctx => {
                         if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
-                            throw new InvalidOperationException(
+                            throw new ConflictException(
                                 $"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
 
                         ctx.DbContext.JobBlackoutWindows.RemoveRange(
@@ -296,6 +320,7 @@ public static class Extensions
 
         MapStatsEndpoint(app);
         MapNextRunsEndpoint(app);
+        MapDefinitionLatestRunsEndpoint(app);
         MapLifecycleEndpoints(app);
         return app;
     }
@@ -321,6 +346,16 @@ public static class Extensions
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionNextRuns");
+
+    /// <summary>Maps the batch <c>POST /Job/Definition/LatestRuns</c> endpoint used by the scheduler's definition refresh. Called by <see cref="BuildJobGroup" />.</summary>
+    private static void MapDefinitionLatestRunsEndpoint(WebApplication app)
+        => app.MapPost(
+                $"/{Constants.Rest.Job.DefinitionsLatestRuns}", async (List<Guid> definitionIds, JobService jobService, CancellationToken ct) => {
+                    var results = await jobService.GetLatestRuns(definitionIds, ct).ConfigureAwait(false);
+                    return Results.Ok(results);
+                })
+            .WithTags("Job")
+            .WithName("GetJobDefinitionLatestRuns");
 
     /// <summary>
     /// Maps the run lifecycle endpoints that delegate to <see cref="JobService" /> (Create, Started, Finished, Cancel, Rerun, Log). These are required by
@@ -364,6 +399,14 @@ public static class Extensions
             .WithName("CancelJobRun");
 
         app.MapPost(
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Requeue", async (Guid id, JobService jobService) => {
+                    var (run, error) = await jobService.RequeueJobRun(id).ConfigureAwait(false);
+                    return error is null ? Results.Ok(run) : Results.BadRequest(error);
+                })
+            .WithTags("Job")
+            .WithName("RequeueJobRun");
+
+        app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Rerun", async (Guid id, JobService jobService) => {
                     var result = await jobService.RerunJob(id).ConfigureAwait(false);
                     return result is { IsSuccess: true } ? Results.Ok(result.Data) : Results.BadRequest(result?.Error);
@@ -393,6 +436,9 @@ public static class Extensions
                         var children = await jobService.CreateChildRunsAsync(id, req, ct).ConfigureAwait(false);
                         return Results.Ok(children);
                     }
+                    catch (NotFoundException ex) {
+                        return Results.NotFound(LyoProblemDetailsBuilder.Create().WithMessage(ex.Message).Build());
+                    }
                     catch (InvalidOperationException ex) {
                         return Results.BadRequest(LyoProblemDetailsBuilder.Create().WithMessage(ex.Message).Build());
                     }
@@ -412,6 +458,14 @@ public static class Extensions
         encryption.EncryptParameterValue(ref value, ref encrypted);
         entity.Value = value;
         entity.EncryptedValue = encrypted ?? entity.EncryptedValue;
+    }
+
+    /// <summary>Notifies scheduler instances that the owning definition changed (schedule parameters affect run-parameter merging).</summary>
+    private static void PublishScheduleDefinitionUpdated(WebApplication app, JobContext db, Guid jobScheduleId)
+    {
+        var definitionId = db.JobSchedules.Where(s => s.Id == jobScheduleId).Select(s => s.JobDefinitionId).FirstOrDefault();
+        if (definitionId != default)
+            app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(definitionId).GetAwaiter().GetResult();
     }
 
     private static void RemoveScheduleDependents(JobContext db, JobSchedule schedule)

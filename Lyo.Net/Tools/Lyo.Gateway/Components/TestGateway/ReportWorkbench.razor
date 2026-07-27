@@ -1,0 +1,27 @@
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@using Lyo.Reporting.Web.Components
+@using FsConstants = Lyo.Gateway.Models.Constants.FileStorageWorkbench
+
+<ReportManagement BaseRoute="@_baseRoute"
+                  DownloadFileAsync="DownloadFileAsync"
+                  ViewFileUrlAsync="ViewFileUrlAsync"/>
+
+@code {
+    private string _baseRoute = "Reporting";
+
+    protected override void OnInitialized()
+    {
+        var baseUrl = (Configuration["JobDashboard:BaseApiUrl"] ?? Configuration["ApiClient:BaseUrl"] ?? "http://localhost:5251").TrimEnd('/');
+        _baseRoute = $"{baseUrl}/Reporting";
+    }
+
+    private Task DownloadFileAsync(Guid fileId, CancellationToken ct)
+    {
+        Navigation.NavigateTo($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}", forceLoad: true);
+        return Task.CompletedTask;
+    }
+
+    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct)
+        => Task.FromResult<string?>(Navigation.ToAbsoluteUri($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}").ToString());
+}

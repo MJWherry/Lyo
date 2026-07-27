@@ -14,6 +14,7 @@ using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
+using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common.Request;
@@ -190,6 +191,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     {
         if (features.Contains(ApiFeature.Query)) {
             WithQuery(config.QueryAuth);
+            if (config.DeniedSelectFields is { Count: > 0 })
+                _queryConfig = _queryConfig! with { DeniedSelectFields = config.DeniedSelectFields };
             if (features.Contains(ApiFeature.ProjectionComputedFields))
                 WithProjectionComputedFields();
         }
@@ -242,10 +245,10 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         }
 
         if (features.Contains(ApiFeature.Delete))
-            WithDelete(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, config.DeleteAuth);
+            WithDelete(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, config.DeleteAuth, config.BeforeDeleteAsync);
 
         if (features.Contains(ApiFeature.DeleteBulk))
-            WithDeleteBulk(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, null, config.DeleteBulkAuth);
+            WithDeleteBulk(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, null, config.DeleteBulkAuth, config.BeforeDeleteAsync);
 
         foreach (var contributor in app.Services.GetServices<IApiEndpointContributor>()) {
             if (features.Contains(contributor.Feature)) {
@@ -253,6 +256,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     new ApiEndpointCrudContributorContext(
                         config.ExportAuth, auth => {
                             _ = WithExport(auth);
+                            if (config.DeniedSelectFields is { Count: > 0 })
+                                _exportConfig = _exportConfig! with { DeniedSelectFields = config.DeniedSelectFields };
                         }));
             }
         }
@@ -532,10 +537,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         Action<DeleteContext<TDbEntity, TDbContext>>? before = null,
         Action<DeleteContext<TDbEntity, TDbContext>>? after = null,
         string[]? includes = null,
-        EndpointAuth? auth = null)
+        EndpointAuth? auth = null,
+        Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? beforeAsync = null)
     {
         _deleteConfig = new() {
             Before = before,
+            BeforeAsync = beforeAsync,
             After = after,
             Includes = includes,
             Auth = auth
@@ -549,10 +556,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         Action<DeleteContext<TDbEntity, TDbContext>>? after = null,
         string[]? includes = null,
         string? endpoint = null,
-        EndpointAuth? auth = null)
+        EndpointAuth? auth = null,
+        Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? beforeAsync = null)
     {
         _deleteBulkConfig = new() {
             Before = before,
+            BeforeAsync = beforeAsync,
             After = after,
             Includes = includes,
             Auth = auth
@@ -994,6 +1003,9 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             }
         }
 
+        if (queryConfig.DeniedSelectFields is { Count: > 0 } denied)
+            errors.AddRange(DeniedSelectFieldPolicy.ValidateProjection(queryRequest.Select, queryRequest.ComputedFields, denied));
+
         return errors;
     }
 
@@ -1015,6 +1027,18 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IExportService<TDbContext> exportService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
+                    var deniedErrors = DeniedSelectFieldPolicy.ValidateExport(request, _exportConfig.DeniedSelectFields);
+                    if (deniedErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid export request.")
+                            .AddErrors(deniedErrors)
+                            .Build();
+
+                        var deniedError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
+                        return Results.Json(deniedError, statusCode: deniedError.Status);
+                    }
+
                     try {
                         var (stream, contentType, fileName) = await exportService.ExportAsync<TDbEntity, TResponse>(request, _exportConfig.DefaultOrder, SortDirection.Desc, ct)
                             .ConfigureAwait(false);
@@ -1302,7 +1326,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IDeleteService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
-                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>([id!], _deleteConfig.Before, _deleteConfig.After, _deleteConfig.Includes, ct)
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>([id!], _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);
 
                     if (result.Error is null)
@@ -1324,7 +1348,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IDeleteService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
-                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(request, _deleteConfig.Before, _deleteConfig.After, _deleteConfig.Includes, ct)
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(request, _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);
 
                     var keys = request.Keys?.Cast<object?>().ToArray();
@@ -1351,7 +1375,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapDelete(
                 $"{baseRoute}/Bulk", async ([FromBody] List<DeleteRequest> requests, [FromServices] IDeleteService<TDbContext> basicService, CancellationToken ct = default) => {
                     var result = await basicService.DeleteBulkAsync<TDbEntity, TResponse>(
-                            requests, _deleteBulkConfig.Before, _deleteBulkConfig.After, _deleteBulkConfig.Includes, ct)
+                            requests, _deleteBulkConfig.Before, _deleteBulkConfig.BeforeAsync, _deleteBulkConfig.After, _deleteBulkConfig.Includes, ct)
                         .ConfigureAwait(false);
 
                     return Results.Ok(result);

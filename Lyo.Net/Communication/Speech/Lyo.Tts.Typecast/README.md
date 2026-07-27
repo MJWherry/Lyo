@@ -61,6 +61,6 @@ bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …
 
 ### Project references
 
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Tts`](../Lyo.Tts/README.md)
 - [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)

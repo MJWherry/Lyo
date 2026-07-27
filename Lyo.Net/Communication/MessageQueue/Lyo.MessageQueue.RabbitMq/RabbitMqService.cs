@@ -875,7 +875,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
             await channel.QueueDeclareAsync(queueName, true, false, false, null, passive: true, cancellationToken: ct).ConfigureAwait(false);
         }
         catch (OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 404) {
-            throw new InvalidOperationException(
+            throw new NotFoundException(
                 $"Queue '{queueName}' does not exist. Declare it at application startup before subscribing — workers must not create queues on register/start.",
                 ex);
         }

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API surface for Lyo Reporting: authenticated definition CRUD, read-only generations, and Generate.</Description>
+        <PackageTags>api reporting aspnetcore auth</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\..\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
+        <ProjectReference Include="..\..\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+</Project>

@@ -53,20 +53,21 @@ public class JobServiceAdvancedTests
     [Fact]
     public async Task CreateJobRun_WhenDryRun_DoesNotPersistRun()
     {
+        // Dedicated definition: counting runs on the shared fixture definition races other tests creating runs in parallel.
+        var definitionId = await CreateDefinitionWithMaxRunsPerHourAsync(0);
         var jobService = _fixture.JobService;
         var factory = GetDbContextFactory();
-        var countBefore = await CountRunsAsync(factory);
 
         var result = await jobService.CreateJobRun(
-            new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { DryRun = true },
+            new JobRunReq(definitionId, "test-user", false) { DryRun = true },
             TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Data!.DryRun);
         Assert.Equal(Guid.Empty, result.Data.Id);
 
-        var countAfter = await CountRunsAsync(factory);
-        Assert.Equal(countBefore, countAfter);
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(0, await db.JobRuns.CountAsync(r => r.JobDefinitionId == definitionId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -144,9 +145,4 @@ public class JobServiceAdvancedTests
         return scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
     }
 
-    private static async Task<int> CountRunsAsync(IDbContextFactory<JobContext> factory)
-    {
-        await using var db = await factory.CreateDbContextAsync();
-        return await db.JobRuns.CountAsync();
-    }
 }

@@ -128,15 +128,55 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
     private async Task RunMaintenanceAsync(CancellationToken ct)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        await FailDeadJobsAsync(db, ct).ConfigureAwait(false);
+        var timedOutRunIds = await FailDeadJobsAsync(db, ct).ConfigureAwait(false);
         await CheckSlaBreachesAsync(db, ct).ConfigureAwait(false);
-        await ResetCircuitBreakersAsync(db, ct).ConfigureAwait(false);
+        var resetDefinitionIds = await ResetCircuitBreakersAsync(db, ct).ConfigureAwait(false);
         await PruneStaleWorkerInstancesAsync(db, ct).ConfigureAwait(false);
+        await RedispatchStuckQueuedRunsAsync(db, ct).ConfigureAwait(false);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        // Publish only after the state changes are committed, so consumers read the final state.
+        await PublishRunsFinishedAsync(timedOutRunIds, ct).ConfigureAwait(false);
+        await PublishDefinitionsUpdatedAsync(resetDefinitionIds, ct).ConfigureAwait(false);
         await PurgeExpiredRunsAsync(ct).ConfigureAwait(false);
     }
 
-    private async Task FailDeadJobsAsync(JobContext db, CancellationToken ct)
+    /// <summary>
+    /// Publishes run-finished events for runs the maintenance pass timed out. Without this, a timeout would be a silent dead end: the scheduler would never see the completion,
+    /// so retries, triggers, and circuit-breaker accounting would not fire.
+    /// </summary>
+    private async Task PublishRunsFinishedAsync(IReadOnlyList<Guid> runIds, CancellationToken ct)
+    {
+        if (runIds.Count == 0 || !_eventPublisher.IsConnected())
+            return;
+
+        foreach (var runId in runIds) {
+            try {
+                await _eventPublisher.PublishRunFinishedAsync(runId, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failed to publish run-finished event for timed-out run {RunId}", runId);
+            }
+        }
+    }
+
+    /// <summary>Notifies schedulers that circuit-breaker definitions were re-enabled so their in-memory caches refresh promptly.</summary>
+    private async Task PublishDefinitionsUpdatedAsync(IReadOnlyList<Guid> definitionIds, CancellationToken ct)
+    {
+        if (definitionIds.Count == 0 || !_eventPublisher.IsConnected())
+            return;
+
+        foreach (var definitionId in definitionIds) {
+            try {
+                await _eventPublisher.PublishDefinitionUpdatedAsync(definitionId, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failed to publish definition-updated event for {DefinitionId}", definitionId);
+            }
+        }
+    }
+
+    private async Task<IReadOnlyList<Guid>> FailDeadJobsAsync(JobContext db, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
 
@@ -148,6 +188,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             .ConfigureAwait(false);
 
         var failed = 0;
+        var timedOutRunIds = new List<Guid>();
         foreach (var run in candidates) {
             var baseline = run.LastHeartbeatUtc ?? run.StartedTimestamp ?? run.CreatedTimestamp;
             var deadline = baseline.AddMinutes(run.JobDefinition.TimeoutMinutes);
@@ -162,6 +203,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             run.Result = JobRunResult.Timeout;
             run.FinishedTimestamp = now;
             failed++;
+            timedOutRunIds.Add(run.Id);
 
             if (_eventPublisher.IsConnected()) {
                 try {
@@ -177,6 +219,8 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
 
         if (failed > 0)
             _metrics.IncrementCounter(Constants.Metrics.Maintenance.DeadJobsFailed, failed);
+
+        return timedOutRunIds;
     }
 
     private async Task CheckSlaBreachesAsync(JobContext db, CancellationToken ct)
@@ -217,11 +261,11 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             _metrics.IncrementCounter(Constants.Metrics.Sla.Breach, breached);
     }
 
-    private async Task ResetCircuitBreakersAsync(JobContext db, CancellationToken ct)
+    private async Task<IReadOnlyList<Guid>> ResetCircuitBreakersAsync(JobContext db, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
         var tripped = await db.JobDefinitions.Where(d => !d.Enabled && d.CircuitBreakerResetMinutes > 0 && d.CircuitBreakerTrippedAt != null).ToListAsync(ct).ConfigureAwait(false);
-        var reset = 0;
+        var resetIds = new List<Guid>();
         foreach (var def in tripped) {
             var resetAt = def.CircuitBreakerTrippedAt!.Value.AddMinutes(def.CircuitBreakerResetMinutes);
             if (now < resetAt)
@@ -230,11 +274,56 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             _logger.LogInformation("Resetting circuit breaker for definition {DefinitionName} ({DefinitionId}) — cooldown elapsed", def.Name, def.Id);
             def.Enabled = true;
             def.CircuitBreakerTrippedAt = null;
-            reset++;
+            resetIds.Add(def.Id);
         }
 
-        if (reset > 0)
-            _metrics.IncrementCounter(Constants.Metrics.Maintenance.CircuitBreakersReset, reset);
+        if (resetIds.Count > 0)
+            _metrics.IncrementCounter(Constants.Metrics.Maintenance.CircuitBreakersReset, resetIds.Count);
+
+        return resetIds;
+    }
+
+    /// <summary>
+    /// Recovery path for <c>Queued</c> runs that were persisted but never dispatched (publish failure after insert, delayed retries whose slot has passed, or suppressed
+    /// dispatches whose owner crashed before publishing). Re-publishes the run-created message; duplicate deliveries are harmless because <c>StartedJobRun</c> only
+    /// transitions <c>Queued -&gt; Running</c> once.
+    /// </summary>
+    private async Task RedispatchStuckQueuedRunsAsync(JobContext db, CancellationToken ct)
+    {
+        if (_options.QueuedRunRedispatchMinutes <= 0 || !_eventPublisher.IsConnected())
+            return;
+
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddMinutes(-_options.QueuedRunRedispatchMinutes);
+
+        // Two triggers: (a) a run with a slot that has come due but was last touched before the slot (delayed retry not yet dispatched);
+        // (b) any due queued run untouched for longer than the threshold (lost dispatch). Redispatching bumps UpdatedTimestamp so a stuck
+        // run is retried once per threshold window, not every tick.
+        var candidates = await db.JobRuns.Include(r => r.JobDefinition)
+            .Where(r => r.State == JobState.Queued && !r.DryRun && (
+                (r.ScheduledSlotUtc != null && r.ScheduledSlotUtc <= now && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < r.ScheduledSlotUtc) ||
+                ((r.ScheduledSlotUtc == null || r.ScheduledSlotUtc <= now) && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < cutoff)))
+            .OrderBy(r => r.CreatedTimestamp)
+            .Take(_options.QueuedRunRedispatchBatchSize)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        var redispatched = 0;
+        foreach (var run in candidates) {
+            try {
+                await _eventPublisher.PublishRunCreatedAsync(run.Id, run.JobDefinition.WorkerType, run.Priority, ct).ConfigureAwait(false);
+                run.UpdatedTimestamp = now;
+                redispatched++;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failed to redispatch stuck queued run {RunId}", run.Id);
+            }
+        }
+
+        if (redispatched > 0) {
+            _metrics.IncrementCounter(Constants.Metrics.Maintenance.RunsRedispatched, redispatched);
+            _logger.LogInformation("Redispatched {Count} stuck queued job run(s)", redispatched);
+        }
     }
 
     private async Task PruneStaleWorkerInstancesAsync(JobContext db, CancellationToken ct)
@@ -293,6 +382,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
                 .Include(r => r.JobRunResults)
                 .Include(r => r.InverseReRanFromJobRun)
                 .Include(r => r.InverseTriggeredByJobRun)
+                .Include(r => r.InverseParentJobRun)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
@@ -307,10 +397,24 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
                 foreach (var child in run.InverseTriggeredByJobRun)
                     child.TriggeredByJobRunId = null;
 
+                foreach (var child in run.InverseParentJobRun)
+                    child.ParentJobRunId = null;
+
                 db.JobRunLogs.RemoveRange(run.JobRunLogs);
                 db.JobRunParameters.RemoveRange(run.JobRunParameters);
                 db.JobRunResults.RemoveRange(run.JobRunResults);
             }
+
+            // Detach workflow run steps that reference purged runs. Unlike the delete endpoint (which removes the steps entirely on an
+            // explicit user delete), retention purge preserves workflow history and only nulls the run reference.
+            var expiredIds = expired.Select(r => r.Id).ToList();
+            var workflowSteps = await db.JobWorkflowRunSteps
+                .Where(s => s.JobRunId != null && expiredIds.Contains(s.JobRunId.Value))
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            foreach (var step in workflowSteps)
+                step.JobRunId = null;
 
             db.JobRuns.RemoveRange(expired);
             budget -= expired.Count;

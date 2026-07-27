@@ -28,6 +28,9 @@ public partial class QueryNodeEditorPanel
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
     [Parameter]
     public WhereClause? WhereClause { get; set; }
 
@@ -308,6 +311,16 @@ public partial class QueryNodeEditorPanel
     }
 
     private void NotifyQueryChanged() => WhereClauseChanged.InvokeAsync(_rootNode);
+
+    private async Task ShowWhereClauseDialog()
+    {
+        if (_rootNode == null)
+            return;
+
+        var parameters = new DialogParameters<WhereClauseViewDialog> { { i => i.WhereClause, _rootNode } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<WhereClauseViewDialog>("Where Clause", parameters, options);
+    }
 
     private bool ValidateSelectedNode()
     {

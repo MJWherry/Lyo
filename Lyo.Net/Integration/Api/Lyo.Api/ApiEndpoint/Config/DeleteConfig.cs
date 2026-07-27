@@ -8,6 +8,9 @@ public sealed record DeleteConfig<TEntity, TDbContext>
 {
     public Action<DeleteContext<TEntity, TDbContext>>? Before { get; init; }
 
+    /// <summary>Async pre-delete hook; runs after the synchronous <see cref="Before" /> when both are set.</summary>
+    public Func<DeleteContext<TEntity, TDbContext>, CancellationToken, Task>? BeforeAsync { get; init; }
+
     public Action<DeleteContext<TEntity, TDbContext>>? After { get; init; }
 
     public string[]? Includes { get; init; }

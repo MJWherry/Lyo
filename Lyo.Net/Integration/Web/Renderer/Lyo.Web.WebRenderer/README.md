@@ -66,5 +66,5 @@ calling the extension if you need to bypass configuration.
 
 ## Related projects
 
-- [`Lyo.Exceptions`](../../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../../Core/Metrics/Lyo.Metrics/README.md)

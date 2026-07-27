@@ -10,6 +10,7 @@ using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Services.Opaque;
 
@@ -58,7 +59,7 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
         if (request.UserId.HasValue) {
             var user = await _users.GetByIdAsync(request.UserId.Value, null, ct).ConfigureAwait(false);
             if (user is null)
-                throw new InvalidOperationException($"Cannot issue token for unknown user '{request.UserId.Value}'.");
+                throw new NotFoundException($"Cannot issue token for unknown user '{request.UserId.Value}'.");
 
             if (user.IsDisabled)
                 throw new LyoUserDisabledException(user.Id, user.DisabledReason);
@@ -95,13 +96,13 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
             }
         }
 
-        throw new InvalidOperationException($"Could not issue a Lyo token after {MaxIdCollisionRetries} attempts (id collisions).", lastException);
+        throw new ConflictException($"Could not issue a Lyo token after {MaxIdCollisionRetries} attempts (id collisions).", lastException);
     }
 
     private static bool IsDuplicateKey(Exception ex)
     {
         var message = ex.Message;
-        return message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) || message.Contains("23505", StringComparison.Ordinal) ||
+        return ex is ConflictException || message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) || message.Contains("23505", StringComparison.Ordinal) ||
             ex.GetType().Name.Contains("Duplicate", StringComparison.OrdinalIgnoreCase) ||
             (ex is InvalidOperationException && message.Contains("already exists", StringComparison.OrdinalIgnoreCase));
     }

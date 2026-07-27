@@ -542,6 +542,6 @@ If validation fails, an `OptionsValidationException` is thrown during applicatio
 
 ### Project references
 
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Sms`](../Lyo.Sms/README.md)

@@ -16,6 +16,7 @@ using Lyo.Metrics.Models;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Lyo.Query.Models.Exceptions;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -167,7 +168,7 @@ public sealed class RootQueryService<TContext>(
         for (var ji = 0; ji < plan.Joins.Count; ji++) {
             var joinPlan = plan.Joins[ji];
             if (!registry.TryGet(joinPlan.EntityTypeName, out var joinEntry))
-                throw new InvalidOperationException($"Join entity '{joinPlan.EntityTypeName}' not in registry.");
+                throw new InvalidQueryException($"Join entity '{joinPlan.EntityTypeName}' not in registry.");
 
             var joinSet = GetDbSetQueryable(context, joinEntry.ClrType);
             var liveScope = ji < request.Joins.Count ? request.Joins[ji].Query : joinPlan.SourceQuery;

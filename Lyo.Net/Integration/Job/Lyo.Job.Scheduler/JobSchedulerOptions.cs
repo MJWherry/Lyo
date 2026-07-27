@@ -1,3 +1,5 @@
+using Lyo.Exceptions.Models;
+
 namespace Lyo.Job.Scheduler;
 
 /// <summary>Options for the Job Scheduler service.</summary>
@@ -52,11 +54,11 @@ public sealed class JobSchedulerOptions
         return errors;
     }
 
-    /// <summary>Validates the options, throwing <see cref="ArgumentException" /> when invalid.</summary>
+    /// <summary>Validates the options, throwing <see cref="ValidationException" /> when invalid.</summary>
     public void Validate()
     {
         var errors = GetValidationErrors();
         if (errors.Count > 0)
-            throw new ArgumentException($"Invalid {nameof(JobSchedulerOptions)}: {string.Join(" ", errors)}");
+            throw new ValidationException($"Invalid {nameof(JobSchedulerOptions)}: {string.Join(" ", errors)}");
     }
 }

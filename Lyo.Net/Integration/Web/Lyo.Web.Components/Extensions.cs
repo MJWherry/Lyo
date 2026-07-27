@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text.Json;
+using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
@@ -114,9 +115,7 @@ internal static class Extensions
             : value.Split(',').Select(static part => part.Trim()).Where(static part => part.Length > 0).ToList();
 
     private static string FormatJsonElementItem(JsonElement el)
-        => el.ValueKind switch {
-            JsonValueKind.String => el.GetString() ?? "",
-            JsonValueKind.Null or JsonValueKind.Undefined => "",
-            var _ => el.ToString()
-        };
+        => el.ValueKind is JsonValueKind.Array or JsonValueKind.Object or JsonValueKind.Number
+            ? el.ToString()
+            : TypeConversion.FromJsonElement(el)?.ToString() ?? "";
 }

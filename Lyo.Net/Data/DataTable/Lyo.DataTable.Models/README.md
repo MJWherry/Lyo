@@ -60,7 +60,7 @@ with `InvariantCulture`; unparseable cells contribute `0`.
 ## Targeting
 
 `netstandard2.0;net10.0`. No NuGet dependencies; references
-[`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md) for argument validation.
+[`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md) for argument validation.
 
 ## Related projects
 
@@ -68,4 +68,4 @@ with `InvariantCulture`; unparseable cells contribute `0`.
 - [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md),
   [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md) — consumers that parse to / export from
   `DataTable`.
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)

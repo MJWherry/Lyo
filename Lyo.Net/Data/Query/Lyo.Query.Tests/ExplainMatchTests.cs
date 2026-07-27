@@ -101,7 +101,7 @@ public class ExplainMatchTests : WhereClauseServiceTests
         IWhereClauseService dbOnly = new DatabaseOnlyWhereClauseStub();
         var person = new PersonBuilder().Build();
         var clause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "A");
-        Assert.Throws<NotImplementedException>(() => dbOnly.ExplainMatch(person, clause));
+        Assert.Throws<NotSupportedException>(() => dbOnly.ExplainMatch(person, clause));
     }
 
     /// <summary>Minimal stub with no ExplainMatch: default interface implementation should throw.</summary>

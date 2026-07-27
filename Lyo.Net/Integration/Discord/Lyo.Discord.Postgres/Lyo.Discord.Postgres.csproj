@@ -24,7 +24,7 @@
         <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\Lyo.Discord.Models\Lyo.Discord.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
 </Project>

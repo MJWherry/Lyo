@@ -47,5 +47,5 @@ services.AddEmailDbContextFactory(opts =>
 
 - [`Lyo.Email`](../Lyo.Email/README.md)
 - [`Lyo.Email.Models`](../Lyo.Email.Models/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

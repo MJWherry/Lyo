@@ -28,7 +28,7 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
     /// <param name="pfxPath">Path to the PFX certificate file (alternative to PEM)</param>
     /// <param name="password">Password for the PFX certificate</param>
     /// <param name="padding">RSA encryption padding. Defaults to OAEP-SHA256.</param>
-    /// <exception cref="InvalidOperationException">Thrown when no key configuration is provided.</exception>
+    /// <exception cref="ConfigurationException">Thrown when no key configuration is provided.</exception>
     public RsaDecryptor(string? privatePemPath = null, string? pfxPath = null, string? password = null, RSAEncryptionPadding? padding = null)
     {
         _padding = padding ?? RSAEncryptionPadding.OaepSHA256;
@@ -43,7 +43,7 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
         else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            throw new InvalidOperationException("No RSA key configuration provided. Specify either privatePemPath or (pfxPath, password).");
+            throw new ConfigurationException("No RSA key configuration provided. Specify either privatePemPath or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(

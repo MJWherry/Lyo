@@ -44,7 +44,12 @@ public partial class JobContext : DbContext
     public virtual DbSet<JobWorkflowStep> JobWorkflowSteps { get; set; }
 
     public JobContext(DbContextOptions<JobContext> options)
-        : base(options) { }
+        : base(options)
+    {
+        // SavingChanges fires for both SaveChanges and SaveChangesAsync — an override of only the sync SaveChanges would miss every
+        // async save (which is what all the services use).
+        SavingChanges += (_, _) => ApplyAuditTimestamps();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -93,7 +98,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
             entity.Property(e => e.Type).HasMaxLength(25).HasColumnName("type");
-            entity.Property(e => e.WorkerType).HasMaxLength(7).HasColumnName("worker_type");
+            entity.Property(e => e.WorkerType).HasMaxLength(50).HasColumnName("worker_type");
             entity.Property(e => e.MaxRetryCount).HasDefaultValue(0).HasColumnName("max_retry_count");
             entity.Property(e => e.RetryBackoffSeconds).HasDefaultValue(0).HasColumnName("retry_backoff_seconds");
             entity.Property(e => e.RetryBackoffType).HasMaxLength(12).HasDefaultValue(nameof(JobRetryBackoffType.Linear)).HasColumnName("retry_backoff_type");
@@ -531,7 +536,7 @@ public partial class JobContext : DbContext
     private static Models.Enums.JobWorkflowStepState ToJobWorkflowStepState(string v)
         => (Models.Enums.JobWorkflowStepState)Enum.Parse(typeof(Models.Enums.JobWorkflowStepState), v, true);
 
-    public override int SaveChanges()
+    private void ApplyAuditTimestamps()
     {
         var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries()) {
@@ -632,8 +637,6 @@ public partial class JobContext : DbContext
                     wfrs.UpdatedTimestamp = now;
             }
         }
-
-        return base.SaveChanges();
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

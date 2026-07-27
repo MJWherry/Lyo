@@ -48,5 +48,5 @@ keyed by Twilio message SID).
 ## Related projects
 
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
 - [`Lyo.Sms`](../Lyo.Sms/README.md)

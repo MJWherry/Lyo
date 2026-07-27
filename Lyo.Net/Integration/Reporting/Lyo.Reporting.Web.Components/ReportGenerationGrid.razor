@@ -1,0 +1,144 @@
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JsRuntime
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="ReportGenerationGrid"
+                      Route="@_generationRoute"
+                      KeySelector="@GetKey"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="ReportDefinitionId" Title="Definition"/>
+        <LyoProjectedColumn Field="Format" Title="Format"/>
+        <LyoProjectedColumn Field="Status" Title="Status"/>
+        <LyoProjectedColumn Field="CreatedBy" Title="Created By"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished"/>
+        <LyoProjectedColumn Field="OriginalFileName" Title="File"/>
+        <LyoProjectedColumn Field="OutputFileId" Title="Output File" HiddenByDefault="true"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewGeneration(item))">Details</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => ViewOutput(item))" Disabled="@(!HasOutput(item))">View</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="@(() => DownloadOutput(item))" Disabled="@(!HasOutput(item))">Download</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Reporting";
+
+    [Parameter]
+    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+
+    [Parameter]
+    public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
+
+    private string _generationRoute => $"{BaseRoute.TrimEnd('/')}/Generation";
+
+    private LyoDataGridProjected? _dataGrid;
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Status"),
+        new("Format"),
+        new("CreatedBy", "Created By")
+    ];
+
+    private static object[] GetKey(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return ProjectedValueHelper.TryGetGuid(id, out var guid) ? [guid] : id != null ? [id] : [];
+    }
+
+    private static bool HasOutput(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "OutputFileId");
+        return ProjectedValueHelper.TryGetGuid(id, out _);
+    }
+
+    private async Task<ReportGenerationRes?> FetchGeneration(object? id)
+    {
+        if (!ProjectedValueHelper.TryGetGuid(id, out var guid))
+            return null;
+        var req = new QueryConcreteReq { Keys = [[guid]], Amount = 1, Include = ["Parameters"] };
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportGenerationRes>>($"{_generationRoute}/QueryConcrete", req);
+        return res?.Items?.FirstOrDefault();
+    }
+
+    private async Task ViewGeneration(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        var gen = await FetchGeneration(id);
+        if (gen is null) {
+            Snackbar.Add("Generation not found.", Severity.Warning);
+            return;
+        }
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ReportGenerationView> {
+            { d => d.Generation, gen },
+            { d => d.DownloadFileAsync, DownloadFileAsync },
+            { d => d.ViewFileUrlAsync, ViewFileUrlAsync }
+        };
+        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, options);
+    }
+
+    private async Task ViewOutput(object? item)
+    {
+        var fileId = ProjectedValueHelper.GetValue(item, "OutputFileId");
+        if (!ProjectedValueHelper.TryGetGuid(fileId, out var guid)) {
+            Snackbar.Add("No output file on this generation.", Severity.Info);
+            return;
+        }
+
+        if (ViewFileUrlAsync is null) {
+            Snackbar.Add("Host ViewFileUrlAsync is not configured.", Severity.Warning);
+            return;
+        }
+
+        var url = await ViewFileUrlAsync(guid, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(url)) {
+            Snackbar.Add("No view URL available.", Severity.Warning);
+            return;
+        }
+
+        await JsRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private async Task DownloadOutput(object? item)
+    {
+        var fileId = ProjectedValueHelper.GetValue(item, "OutputFileId");
+        if (!ProjectedValueHelper.TryGetGuid(fileId, out var guid)) {
+            Snackbar.Add("No output file on this generation.", Severity.Info);
+            return;
+        }
+
+        if (DownloadFileAsync is null) {
+            Snackbar.Add("Host DownloadFileAsync is not configured.", Severity.Warning);
+            return;
+        }
+
+        await DownloadFileAsync(guid, CancellationToken.None);
+        Snackbar.Add("Download started.", Severity.Success);
+    }
+}

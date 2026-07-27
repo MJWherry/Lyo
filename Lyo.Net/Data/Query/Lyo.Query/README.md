@@ -37,7 +37,7 @@ Targets `net10.0`.
 - `ExplainMatch<TEntity>(entity, whereClause)` — returns
   `WhereClauseExplainResult` (per-node pass/fail, blocking path, OR-branch
   outcomes). Default interface implementation throws
-  `NotImplementedException`; `BaseWhereClauseService` implements it for **in-memory**
+  `NotSupportedException`; `BaseWhereClauseService` implements it for **in-memory**
   evaluation only — SQL-backed pipelines do not support explanation in-process.
 - `TryValidatePropertyPath<TEntity>(propertyName, out errorMessage)` — fast pre-flight
   for sort keys and where-clause fields. Invalid paths throw `InvalidQueryException`

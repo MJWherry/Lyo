@@ -1,0 +1,119 @@
+@inject ISnackbar Snackbar
+@inject IJSRuntime JsRuntime
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Class="pa-2">
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="ID" Value="@Generation.Id.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="Definition" Value="@(Generation.ReportDefinitionId?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField T="string" Label="Format" Value="@Generation.Format.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField T="string" Label="Status" Value="@Generation.Status.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField T="string" Label="Created By" Value="@Generation.CreatedBy" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="File Name" Value="@Generation.OriginalFileName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="Output File Id" Value="@(Generation.OutputFileId?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            @if (!string.IsNullOrWhiteSpace(Generation.ErrorMessage)) {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Error">@Generation.ErrorMessage</MudAlert>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Parameters</MudText>
+                @if (Generation.Parameters is { Count: > 0 }) {
+                    <MudSimpleTable Dense="true" Hover="true">
+                        <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var p in Generation.Parameters) {
+                            <tr>
+                                <td>@p.Key</td>
+                                <td>@p.Type</td>
+                                <td>@p.Value</td>
+                                <td>@p.Description</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+                else {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">No parameters</MudText>
+                }
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ViewAsync"
+                   StartIcon="@Icons.Material.Filled.OpenInNew"
+                   Disabled="@(Generation.OutputFileId is null || ViewFileUrlAsync is null)">
+            View
+        </MudButton>
+        <MudButton OnClick="DownloadAsync"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   Disabled="@(Generation.OutputFileId is null || DownloadFileAsync is null)">
+            Download
+        </MudButton>
+        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public ReportGenerationRes Generation { get; set; } = null!;
+
+    [Parameter]
+    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+
+    [Parameter]
+    public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
+
+    private async Task ViewAsync()
+    {
+        if (Generation.OutputFileId is not Guid fileId || ViewFileUrlAsync is null) {
+            Snackbar.Add("View is unavailable for this generation.", Severity.Info);
+            return;
+        }
+
+        var url = await ViewFileUrlAsync(fileId, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(url)) {
+            Snackbar.Add("No view URL available.", Severity.Warning);
+            return;
+        }
+
+        await JsRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (Generation.OutputFileId is not Guid fileId || DownloadFileAsync is null) {
+            Snackbar.Add("Download is unavailable for this generation.", Severity.Info);
+            return;
+        }
+
+        await DownloadFileAsync(fileId, CancellationToken.None);
+        Snackbar.Add("Download started.", Severity.Success);
+    }
+}
