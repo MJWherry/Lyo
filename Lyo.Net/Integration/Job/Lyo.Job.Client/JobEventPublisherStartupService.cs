@@ -4,9 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Job.Client;
 
-/// <summary>
-/// Connects <see cref="IJobEventPublisher" /> to the message queue at host startup. Registered automatically by <see cref="Extensions.AddMqJobEventPublisher" />.
-/// </summary>
+/// <summary>Connects <see cref="IJobEventPublisher" /> to the message queue at host startup. Registered automatically by <see cref="Extensions.AddMqJobEventPublisher" />.</summary>
 internal sealed class JobEventPublisherStartupService : IHostedService
 {
     private readonly IJobEventPublisher _eventPublisher;

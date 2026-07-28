@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Query.Models.Common;
 
 namespace Lyo.Query.Models.Common.Request;
 
@@ -73,7 +72,7 @@ public static class QueryRequestClone
             QueryConcreteReq concrete => Clone(concrete),
             ProjectionQueryReq projection => Clone(projection),
             QueryReq root => Clone(root),
-            _ => throw new ArgumentException($"Unsupported query request type: {source.GetType().Name}", nameof(source))
+            var _ => throw new ArgumentException($"Unsupported query request type: {source.GetType().Name}", nameof(source))
         };
 
     private static List<object[]> CloneKeys(List<object[]> keys) => [..keys.Select(i => i.ToArray())];
@@ -81,12 +80,7 @@ public static class QueryRequestClone
     private static List<SortBy> CloneSortBy(List<SortBy> sortBy)
         => [..sortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })];
 
-    private static FromClause CloneFromClause(FromClause source)
-        => new() {
-            Alias = source.Alias,
-            EntityType = source.EntityType,
-            Query = CloneSourceQueryScope(source.Query)
-        };
+    private static FromClause CloneFromClause(FromClause source) => new() { Alias = source.Alias, EntityType = source.EntityType, Query = CloneSourceQueryScope(source.Query) };
 
     private static JoinClause CloneJoinClause(JoinClause source)
         => new() {
@@ -103,9 +97,6 @@ public static class QueryRequestClone
         if (source is null)
             return null;
 
-        return new() {
-            WhereClause = source.WhereClause,
-            Keys = CloneKeys(source.Keys)
-        };
+        return new() { WhereClause = source.WhereClause, Keys = CloneKeys(source.Keys) };
     }
 }

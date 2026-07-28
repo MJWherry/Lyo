@@ -24,13 +24,13 @@ Copy this checklist and track progress:
 
 Read the classification checklist in `Lyo.Net/docs/package-layout.md` and answer its questions in order. Result is an archetype:
 
-| Archetype | Placement | Example |
-|---|---|---|
-| A — Lyo canonical domain | `Core/{Domain}/` | `Lyo.People.Models` |
-| B — capability + provider | `Communication\|Security/{Capability}/` | `Lyo.Translation.Google` |
-| C — thin vendor client | `Integration/{Vendor}/` | `Lyo.Endato.Client` |
-| D — vendor product vertical | `Integration/{Vendor}/` | `Lyo.Discord.Postgres` |
-| E — platform | `Integration/Api\|Web\|Job`, `Data/*`, `Features/*`, `Tools/*` | `Lyo.Api.Export` |
+| Archetype                   | Placement                                                      | Example                  |
+|-----------------------------|----------------------------------------------------------------|--------------------------|
+| A — Lyo canonical domain    | `Core/{Domain}/`                                               | `Lyo.People.Models`      |
+| B — capability + provider   | `Communication\|Security/{Capability}/`                        | `Lyo.Translation.Google` |
+| C — thin vendor client      | `Integration/{Vendor}/`                                        | `Lyo.Endato.Client`      |
+| D — vendor product vertical | `Integration/{Vendor}/`                                        | `Lyo.Discord.Postgres`   |
+| E — platform                | `Integration/Api\|Web\|Job`, `Data/*`, `Features/*`, `Tools/*` | `Lyo.Api.Export`         |
 
 Enforce the dependency law: Core must never reference Integration, vendor SDKs, or vendor clients. Archetype C packages require the `.Client` suffix.
 
@@ -62,19 +62,23 @@ Folder mirrors assembly: `{Area}/{Group}/Lyo.{X}/Lyo.{X}.csproj`. Standard suffi
 </Project>
 ```
 
-Variations: Blazor components use `Microsoft.NET.Sdk.Razor` + `net10.0` + `<FrameworkReference Include="Microsoft.AspNetCore.App"/>`; hosts/tests/benchmarks target `net10.0` only. Every package ships a `README.md` describing purpose, registration (`Add{Feature}` call), and configuration section.
+Variations: Blazor components use `Microsoft.NET.Sdk.Razor` + `net10.0` + `<FrameworkReference Include="Microsoft.AspNetCore.App"/>`; hosts/tests/benchmarks target `net10.0` only.
+Every package ships a `README.md` describing purpose, registration (`Add{Feature}` call), and configuration section.
 
 ### 4. Register in Lyo.slnx
 
-Add `<Project Path="{Area}/{Group}/Lyo.{X}/Lyo.{X}.csproj" />` inside the matching `<Folder Name="/{Area}/{Group}/">` element of `Lyo.Net/Lyo.slnx`. Create the folder element if missing.
+Add `<Project Path="{Area}/{Group}/Lyo.{X}/Lyo.{X}.csproj" />` inside the matching `<Folder Name="/{Area}/{Group}/">` element of `Lyo.Net/Lyo.slnx`. Create the folder element if
+missing.
 
 ### 5. Dependencies
 
-Central Package Management: `PackageReference` entries carry no `Version`. New packages get a `<PackageVersion Include="..." Version="[x.y.z,)"/>` row in `Lyo.Net/Directory.Packages.props` (keep alphabetical).
+Central Package Management: `PackageReference` entries carry no `Version`. New packages get a `<PackageVersion Include="..." Version="[x.y.z,)"/>` row in
+`Lyo.Net/Directory.Packages.props` (keep alphabetical).
 
 ### 6. Tests
 
-Create `Lyo.{X}.Tests` beside the source project (xUnit; copy an existing sibling test csproj). Register it in `Lyo.slnx` too. Method naming: `Method_Scenario_ExpectedResult`. Postgres/Redis suites use Testcontainers.
+Create `Lyo.{X}.Tests` beside the source project (xUnit; copy an existing sibling test csproj). Register it in `Lyo.slnx` too. Method naming: `Method_Scenario_ExpectedResult`.
+Postgres/Redis suites use Testcontainers.
 
 ### 7. Inventory
 

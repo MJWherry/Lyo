@@ -45,11 +45,9 @@ public partial class JobContext : DbContext
 
     public JobContext(DbContextOptions<JobContext> options)
         : base(options)
-    {
-        // SavingChanges fires for both SaveChanges and SaveChangesAsync — an override of only the sync SaveChanges would miss every
-        // async save (which is what all the services use).
-        SavingChanges += (_, _) => ApplyAuditTimestamps();
-    }
+    // SavingChanges fires for both SaveChanges and SaveChangesAsync — an override of only the sync SaveChanges would miss every
+    // async save (which is what all the services use).
+        => SavingChanges += (_, _) => ApplyAuditTimestamps();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -232,6 +230,7 @@ public partial class JobContext : DbContext
                 .HasFilter("idempotency_key IS NOT NULL")
                 .IsUnique()
                 .HasDatabaseName("ix_job_run_idempotency_key_unique");
+
             entity.HasIndex(e => e.ParentJobRunId, "ix_job_run_parent_job_run_id");
             entity.HasIndex(e => new { e.JobScheduleId, e.ScheduledSlotUtc })
                 .HasFilter("job_schedule_id IS NOT NULL AND scheduled_slot_utc IS NOT NULL")
@@ -251,10 +250,8 @@ public partial class JobContext : DbContext
                 .WithMany(p => p.InverseTriggeredByJobRun)
                 .HasForeignKey(d => d.TriggeredByJobRunId)
                 .HasConstraintName("fk_job_run_triggered_by");
-            entity.HasOne(d => d.ParentJobRun)
-                .WithMany(p => p.InverseParentJobRun)
-                .HasForeignKey(d => d.ParentJobRunId)
-                .HasConstraintName("fk_job_run_parent");
+
+            entity.HasOne(d => d.ParentJobRun).WithMany(p => p.InverseParentJobRun).HasForeignKey(d => d.ParentJobRunId).HasConstraintName("fk_job_run_parent");
         });
 
         modelBuilder.Entity<JobRunLog>(entity => {
@@ -341,6 +338,7 @@ public partial class JobContext : DbContext
                 .HasForeignKey(d => d.JobDefinitionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
+
             entity.HasOne(d => d.JobBlackoutCalendar)
                 .WithMany(p => p.JobSchedules)
                 .HasForeignKey(d => d.JobBlackoutCalendarId)
@@ -468,6 +466,7 @@ public partial class JobContext : DbContext
                 .HasForeignKey(d => d.JobWorkflowId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_workflow_step_job_workflow_job_workflow_id");
+
             entity.HasOne(d => d.JobDefinition)
                 .WithMany(p => p.JobWorkflowSteps)
                 .HasForeignKey(d => d.JobDefinitionId)
@@ -512,15 +511,14 @@ public partial class JobContext : DbContext
                 .HasForeignKey(d => d.JobWorkflowRunId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_workflow_run_step_job_workflow_run_job_workflow_run_id");
+
             entity.HasOne(d => d.JobWorkflowStep)
                 .WithMany(p => p.JobWorkflowRunSteps)
                 .HasForeignKey(d => d.JobWorkflowStepId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_workflow_run_step_job_workflow_step_job_workflow_step_id");
-            entity.HasOne(d => d.JobRun)
-                .WithMany(p => p.JobWorkflowRunSteps)
-                .HasForeignKey(d => d.JobRunId)
-                .HasConstraintName("fk_job_workflow_run_step_job_run_job_run_id");
+
+            entity.HasOne(d => d.JobRun).WithMany(p => p.JobWorkflowRunSteps).HasForeignKey(d => d.JobRunId).HasConstraintName("fk_job_workflow_run_step_job_run_job_run_id");
         });
 
         OnModelCreatingPartial(modelBuilder);
@@ -530,11 +528,9 @@ public partial class JobContext : DbContext
 
     private static JobState ToJobState(string v) => (JobState)Enum.Parse(typeof(JobState), v, true);
 
-    private static Models.Enums.JobWorkflowRunState ToJobWorkflowRunState(string v)
-        => (Models.Enums.JobWorkflowRunState)Enum.Parse(typeof(Models.Enums.JobWorkflowRunState), v, true);
+    private static JobWorkflowRunState ToJobWorkflowRunState(string v) => (JobWorkflowRunState)Enum.Parse(typeof(JobWorkflowRunState), v, true);
 
-    private static Models.Enums.JobWorkflowStepState ToJobWorkflowStepState(string v)
-        => (Models.Enums.JobWorkflowStepState)Enum.Parse(typeof(Models.Enums.JobWorkflowStepState), v, true);
+    private static JobWorkflowStepState ToJobWorkflowStepState(string v) => (JobWorkflowStepState)Enum.Parse(typeof(JobWorkflowStepState), v, true);
 
     private void ApplyAuditTimestamps()
     {

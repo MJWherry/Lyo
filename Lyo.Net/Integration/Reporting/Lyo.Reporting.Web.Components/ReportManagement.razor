@@ -24,15 +24,13 @@
     public string BaseRoute { get; set; } = "Reporting";
 
     /// <summary>
-    /// Host callback to download a persisted output by opaque file id (typically FileStorage).
-    /// When null, download actions show a snackbar that no download handler is configured.
+    /// Host callback to download a persisted output by opaque file id (typically FileStorage). When null, download actions show a snackbar that no download handler is
+    /// configured.
     /// </summary>
     [Parameter]
     public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
 
-    /// <summary>
-    /// Host callback returning a browser URL to view HTML/PDF output. When null, View is disabled.
-    /// </summary>
+    /// <summary>Host callback returning a browser URL to view HTML/PDF output. When null, View is disabled.</summary>
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
 
@@ -53,6 +51,7 @@
     {
         if (_tabInitialized)
             return;
+
         if (DefinitionId is null && GenerationId is null && string.IsNullOrWhiteSpace(InitialTab))
             return;
 
@@ -64,12 +63,14 @@
     {
         if (GenerationId.HasValue)
             return 1;
+
         if (DefinitionId.HasValue)
             return 0;
 
         return InitialTab?.Trim().ToLowerInvariant() switch {
             "generations" or "generation" => 1,
-            _ => 0
+            var _ => 0
         };
     }
+
 }

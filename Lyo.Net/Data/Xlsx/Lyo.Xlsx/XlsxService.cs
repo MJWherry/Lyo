@@ -86,8 +86,7 @@ public class XlsxService : IXlsxService
         => _reader.ParseXlsxStreamAsDataTable(xlsxStream, useHeaderRow);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean})' />
-    public Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null)
-        => _reader.ParseXlsxBytesAsDataTable(xlsxBytes, useHeaderRow);
+    public Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null) => _reader.ParseXlsxBytesAsDataTable(xlsxBytes, useHeaderRow);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ExportToHtmlTable(System.Byte[],System.Nullable{System.Boolean})' />
     public string ExportToHtmlTable(byte[] xlsxBytes, bool? useHeaderRow = null)
@@ -383,7 +382,7 @@ public class XlsxService : IXlsxService
             }
 
             using var outputStream = File.Create(outputFile);
-            MergeXlsxStreams(inputStreams, outputStream, mode, leaveOpen: true);
+            MergeXlsxStreams(inputStreams, outputStream, mode, true);
         }
         finally {
             foreach (var stream in inputStreams)
@@ -391,7 +390,8 @@ public class XlsxService : IXlsxService
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxStreams(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,Lyo.Xlsx.Models.XlsxMergeMode,System.Boolean)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxStreams(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,Lyo.Xlsx.Models.XlsxMergeMode,System.Boolean)' />
     public void MergeXlsxStreams(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false)
     {
         var inputList = inputs.ToList();
@@ -412,11 +412,13 @@ public class XlsxService : IXlsxService
         ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
         using var outputStream = new MemoryStream();
         var inputStreams = inputList.Select(bytes => {
-            ArgumentHelpers.ThrowIfNull(bytes);
-            return (Stream)new MemoryStream(bytes);
-        }).ToList();
+                ArgumentHelpers.ThrowIfNull(bytes);
+                return (Stream)new MemoryStream(bytes);
+            })
+            .ToList();
+
         try {
-            MergeXlsxStreams(inputStreams, outputStream, mode, leaveOpen: true);
+            MergeXlsxStreams(inputStreams, outputStream, mode, true);
         }
         finally {
             foreach (var stream in inputStreams)
@@ -772,11 +774,13 @@ public class XlsxService : IXlsxService
         => _reader.ParseXlsxBytesAsDataTableAsync(xlsxBytes, sheetIndex, useHeaderRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxFileAsAllSheetsAsync(System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct =
+ default)
         => _reader.ParseXlsxFileAsAllSheetsAsync(xlsxFilePath, useHeaderRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxStreamAsAllSheetsAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct =
+ default)
         => _reader.ParseXlsxStreamAsAllSheetsAsync(xlsxStream, useHeaderRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxBytesAsAllSheetsAsync(System.Byte[],System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
@@ -894,7 +898,8 @@ public class XlsxService : IXlsxService
         => Task.Run(() => SplitXlsxByRows(xlsxFilePath, rowsPerFile, outputDirectory, sheetName), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxByRowsAsync(System.IO.Stream,System.Int32,System.Func{System.Int32,System.IO.Stream},System.String,System.Boolean,System.Threading.CancellationToken)' />
-    public Task SplitXlsxByRowsAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false, CancellationToken ct = default)
+    public Task SplitXlsxByRowsAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false, CancellationToken ct =
+ default)
         => Task.Run(() => SplitXlsxByRows(input, rowsPerFile, outputStreamFactory, sheetName, leaveOpen), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.SplitXlsxBytesByRowsAsync(System.Byte[],System.Int32,System.String,System.Threading.CancellationToken)' />
@@ -906,7 +911,8 @@ public class XlsxService : IXlsxService
         => Task.Run(() => MergeXlsxFiles(inputFiles, outputFile, mode), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxStreamsAsync(System.Collections.Generic.IEnumerable{System.IO.Stream},System.IO.Stream,Lyo.Xlsx.Models.XlsxMergeMode,System.Boolean,System.Threading.CancellationToken)' />
-    public Task MergeXlsxStreamsAsync(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false, CancellationToken ct = default)
+    public Task MergeXlsxStreamsAsync(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false, CancellationToken ct =
+ default)
         => Task.Run(() => MergeXlsxStreams(inputs, output, mode, leaveOpen), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxBytesAsync(System.Collections.Generic.IEnumerable{System.Byte[]},Lyo.Xlsx.Models.XlsxMergeMode,System.Threading.CancellationToken)' />

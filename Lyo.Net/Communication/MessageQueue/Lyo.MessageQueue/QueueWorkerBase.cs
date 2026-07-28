@@ -25,8 +25,8 @@ internal static class QueueWorkerHelpers
 
     /// <summary>
     /// Deserializes a queue message with an autocorrect ladder. Envelope-shaped JSON is unwrapped via the full <see cref="QueueMessageEnvelope{T}" /> first; if that fails, the
-    /// <c>Payload</c> element alone is deserialized as <typeparamref name="TRequest" /> and the envelope metadata is reconstructed from the root JSON. Non-envelope JSON is
-    /// deserialized as a raw legacy <typeparamref name="TRequest" />. Returns false when the message cannot be recovered by any path (caller should treat it as poison).
+    /// <c>Payload</c> element alone is deserialized as <typeparamref name="TRequest" /> and the envelope metadata is reconstructed from the root JSON. Non-envelope JSON is deserialized
+    /// as a raw legacy <typeparamref name="TRequest" />. Returns false when the message cannot be recovered by any path (caller should treat it as poison).
     /// </summary>
     internal static bool TryDeserializeMessage<TRequest>(byte[] messageBytes, JsonSerializerOptions options, out TRequest? payload, out QueueMessageEnvelope<TRequest>? envelope)
     {
@@ -42,8 +42,7 @@ internal static class QueueWorkerHelpers
 
         using (doc) {
             var root = doc.RootElement;
-            var hasEnvelopeShape = root.ValueKind == JsonValueKind.Object &&
-                (root.TryGetProperty("RequeueCount", out var _) || root.TryGetProperty("requeueCount", out var _)) &&
+            var hasEnvelopeShape = root.ValueKind == JsonValueKind.Object && (root.TryGetProperty("RequeueCount", out var _) || root.TryGetProperty("requeueCount", out var _)) &&
                 (root.TryGetProperty("Payload", out var _) || root.TryGetProperty("payload", out var _));
 
             if (hasEnvelopeShape) {
@@ -153,13 +152,16 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
     /// <summary>
     /// Base delay between retry attempts, scaled linearly by the attempt number. Only honored when the transport supports delayed delivery (<see cref="IDelayedMqService" />);
-    /// otherwise retries republish immediately. Null or zero = no delay. Set by DI registration (e.g. <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.RequeueDelay" />)
-    /// rather than the constructor to preserve binary compatibility; workers may also set it directly.
+    /// otherwise retries republish immediately. Null or zero = no delay. Set by DI registration (e.g. <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.RequeueDelay" />) rather than
+    /// the constructor to preserve binary compatibility; workers may also set it directly.
     /// </summary>
     public TimeSpan? RequeueDelay { get; set; }
 
     /// <summary>Milliseconds to wait during <see cref="StopAsync" /> for in-flight messages to complete before giving up. Defaults to 30 000 ms (30 seconds).</summary>
     protected virtual int DrainTimeoutMs => 30_000;
+
+    /// <summary>Envelope metadata for the message currently being processed, when the transport uses <see cref="QueueMessageEnvelope{T}" />.</summary>
+    protected QueueMessageEnvelope<TRequest>? CurrentMessageEnvelope { get; private set; }
 
     /// <summary>Initializes a new instance of the queue worker.</summary>
     /// <param name="mqService">The message queue service.</param>
@@ -168,8 +170,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// <param name="metrics">Optional metrics.</param>
     /// <param name="serializerOptions">Optional JSON serializer options.</param>
     /// <param name="maxRequeueCount">
-    /// Maximum number of requeues before routing to the DLQ (or dropping). Null means no limit. DI registration paths (e.g. <c>AddJobWorker</c>) resolve a configurable default
-    /// from <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" /> before invoking this constructor.
+    /// Maximum number of requeues before routing to the DLQ (or dropping). Null means no limit. DI registration paths (e.g. <c>AddJobWorker</c>) resolve a
+    /// configurable default from <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" /> before invoking this constructor.
     /// </param>
     /// <param name="dlqName">
     /// Dead-letter queue name. When <paramref name="maxRequeueCount" /> is reached, the message is published here instead of being dropped. When null, messages that
@@ -241,7 +243,6 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         IsRunning = true;
         Logger.LogInformation("Starting worker for queue {QueueName}...", QueueName);
         var result = await MqService.SubscribeToQueue(QueueName, ProcessMessageAsync, _cancellationTokenSource.Token).ConfigureAwait(false);
-
         if (result) {
             Logger.LogInformation("Worker for queue {QueueName} started successfully.", QueueName);
             Metrics.IncrementCounter("queue.worker.started", tags: [("queue", QueueName)]);
@@ -292,15 +293,12 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         Logger.LogInformation("Worker for queue {QueueName} stopped.", QueueName);
     }
 
-    /// <summary>Envelope metadata for the message currently being processed, when the transport uses <see cref="QueueMessageEnvelope{T}" />.</summary>
-    protected QueueMessageEnvelope<TRequest>? CurrentMessageEnvelope { get; private set; }
-
     /// <summary>Processes a message.</summary>
     protected abstract Task<TResult> DoWorkAsync(TRequest request, CancellationToken ct);
 
     /// <summary>
-    /// Message handler for the queue subscription. Always returns false (ack) except during host shutdown — retries happen via counted application-level requeues
-    /// (<see cref="ApplicationRequeueAsync" />) so a bad message or a repeatedly-throwing <see cref="DoWorkAsync" /> can never spin in an infinite broker redelivery loop.
+    /// Message handler for the queue subscription. Always returns false (ack) except during host shutdown — retries happen via counted application-level requeues (
+    /// <see cref="ApplicationRequeueAsync" />) so a bad message or a repeatedly-throwing <see cref="DoWorkAsync" /> can never spin in an infinite broker redelivery loop.
     /// </summary>
     private async Task<bool> ProcessMessageAsync(byte[] messageBytes)
     {
@@ -356,8 +354,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
     /// <summary>
     /// Retries a failed message by republishing it with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />. Legacy (non-enveloped) messages are wrapped so the
-    /// count is tracked going forward. When the count reaches the max requeue limit the message is routed to the DLQ (or dropped). Always returns false — the original delivery
-    /// is acked and the republished copy is the retry.
+    /// count is tracked going forward. When the count reaches the max requeue limit the message is routed to the DLQ (or dropped). Always returns false — the original delivery is acked
+    /// and the republished copy is the retry.
     /// </summary>
     private async Task<bool> ApplicationRequeueAsync(TRequest payload, QueueMessageEnvelope<TRequest>? envelope, byte[] originalBytes)
     {

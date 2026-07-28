@@ -14,10 +14,13 @@ internal static class EndpointAuthExtensions
         EndpointAuth.Validate(endpointAuth);
         if (endpointAuth.AllowAnonymous)
             return builder.AllowAnonymous();
+
         if (endpointAuth.AuthorizationPolicy != null)
             return builder.RequireAuthorization(endpointAuth.AuthorizationPolicy);
+
         if (endpointAuth.AuthorizationPolicies is { Length: > 0 })
             return builder.RequireAuthorization(endpointAuth.AuthorizationPolicies);
+
         return builder.RequireAuthorization();
     }
 }

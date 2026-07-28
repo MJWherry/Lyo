@@ -10,8 +10,8 @@ namespace Lyo.Reporting.Web;
 public static class Extensions
 {
     /// <summary>
-    /// Registers <see cref="HtmlPdfReportRenderer"/> as an <see cref="IReportRenderer"/>.
-    /// Requires <see cref="Lyo.Web.WebRenderer.IWebRendererService"/> to be registered separately.
+    /// Registers <see cref="HtmlPdfReportRenderer" /> as an <see cref="IReportRenderer" />. Requires <see cref="Lyo.Web.WebRenderer.IWebRendererService" /> to be registered
+    /// separately.
     /// </summary>
     public static IServiceCollection AddReportingWebRenderer(this IServiceCollection services)
     {

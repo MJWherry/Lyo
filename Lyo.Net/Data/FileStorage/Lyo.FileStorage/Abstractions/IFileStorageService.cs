@@ -126,9 +126,7 @@ public interface IFileStorageService : IHealth
     /// <remarks>Cloud backends typically copy-then-delete; treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.</remarks>
     Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default);
 
-    /// <summary>
-    /// Updates <see cref="FileStoreResult.OriginalFileName" /> in metadata only. Backing object keys and <see cref="FileStoreResult.SourceFileName" /> are unchanged.
-    /// </summary>
+    /// <summary>Updates <see cref="FileStoreResult.OriginalFileName" /> in metadata only. Backing object keys and <see cref="FileStoreResult.SourceFileName" /> are unchanged.</summary>
     Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default);
 
     /// <summary>Gets a file from storage.</summary>

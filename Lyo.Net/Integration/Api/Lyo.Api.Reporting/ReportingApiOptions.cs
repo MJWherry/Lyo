@@ -4,10 +4,8 @@ using Lyo.Reporting.Postgres.Database;
 namespace Lyo.Api.Reporting;
 
 /// <summary>
-/// Per-surface authorization for reporting endpoints. All surfaces default to
-/// <see cref="EndpointAuth.RequireAuthorization()"/> (authenticated user); hosts must opt into
-/// <see cref="EndpointAuth.Anonymous()"/> explicitly. Hosts should set policies for Worker/Discord
-/// Generate (e.g. <c>"ReportingGenerate"</c>).
+/// Per-surface authorization for reporting endpoints. All surfaces default to <see cref="EndpointAuth.RequireAuthorization()" /> (authenticated user); hosts must opt into
+/// <see cref="EndpointAuth.Anonymous()" /> explicitly. Hosts should set policies for Worker/Discord Generate (e.g. <c>"ReportingGenerate"</c>).
 /// </summary>
 public sealed class ReportingApiOptions
 {
@@ -24,29 +22,26 @@ public sealed class ReportingApiOptions
     public EndpointAuth? DownloadAuth { get; init; } = EndpointAuth.RequireAuthorization();
 
     /// <summary>
-    /// Host-supplied factory that opens a readable stream for a generation's persisted output
-    /// (e.g. FileStorage lookup by <see cref="ReportGeneration.OutputFileId"/>). The Download endpoint
-    /// is only mapped when this is set. Return null when the output no longer exists.
+    /// Host-supplied factory that opens a readable stream for a generation's persisted output (e.g. FileStorage lookup by <see cref="ReportGeneration.OutputFileId" />). The
+    /// Download endpoint is only mapped when this is set. Return null when the output no longer exists.
     /// </summary>
     public Func<ReportDownloadContext, CancellationToken, Task<Stream?>>? DownloadStreamFactory { get; init; }
 
     /// <summary>
-    /// Creates options applying the same <paramref name="auth"/> to every surface
-    /// (Definitions, Generations, Generate/Rerun, Download). Use the object initializer form when
-    /// surfaces need different policies (e.g. a stricter <see cref="GenerateAuth"/>).
+    /// Creates options applying the same <paramref name="auth" /> to every surface (Definitions, Generations, Generate/Rerun, Download). Use the object initializer form when
+    /// surfaces need different policies (e.g. a stricter <see cref="GenerateAuth" />).
     /// </summary>
-    public static ReportingApiOptions WithAuth(
-        EndpointAuth? auth,
-        Func<ReportDownloadContext, CancellationToken, Task<Stream?>>? downloadStreamFactory = null) => new() {
-        DefinitionAuth = auth,
-        GenerationAuth = auth,
-        GenerateAuth = auth,
-        DownloadAuth = auth,
-        DownloadStreamFactory = downloadStreamFactory
-    };
+    public static ReportingApiOptions WithAuth(EndpointAuth? auth, Func<ReportDownloadContext, CancellationToken, Task<Stream?>>? downloadStreamFactory = null)
+        => new() {
+            DefinitionAuth = auth,
+            GenerationAuth = auth,
+            GenerateAuth = auth,
+            DownloadAuth = auth,
+            DownloadStreamFactory = downloadStreamFactory
+        };
 }
 
-/// <summary>Context passed to <see cref="ReportingApiOptions.DownloadStreamFactory"/> for a downloadable generation.</summary>
+/// <summary>Context passed to <see cref="ReportingApiOptions.DownloadStreamFactory" /> for a downloadable generation.</summary>
 public sealed class ReportDownloadContext
 {
     public required Guid GenerationId { get; init; }

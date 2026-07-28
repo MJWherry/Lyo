@@ -1,8 +1,8 @@
 namespace Lyo.Common.Conversion;
 
 /// <summary>
-/// Exception thrown when <see cref="TypeConversion" /> cannot convert a value to the requested target type.
-/// Derives from <see cref="InvalidOperationException" /> so existing handlers that catch the previous exception type continue to work.
+/// Exception thrown when <see cref="TypeConversion" /> cannot convert a value to the requested target type. Derives from <see cref="InvalidOperationException" /> so existing
+/// handlers that catch the previous exception type continue to work.
 /// </summary>
 public class TypeConversionException : InvalidOperationException
 {

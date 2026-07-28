@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Lyo.Job.Models;
 using Lyo.MessageQueue;
 using Lyo.Notification;
 using Microsoft.Extensions.Hosting;
@@ -11,8 +10,8 @@ using Constants = Lyo.Job.Models.Constants;
 namespace Lyo.Job.Alerts;
 
 /// <summary>
-/// Subscribes to <c>job.events</c> with routing key <see cref="Constants.Mq.JobAlertRoutingKey" /> and dispatches deserialized
-/// <see cref="JobAlertEvent" /> payloads via <see cref="INotificationPublisher" /> and/or HTTP POST to <see cref="JobAlertsOptions.AlertWebhookUrl" />.
+/// Subscribes to <c>job.events</c> with routing key <see cref="Constants.Mq.JobAlertRoutingKey" /> and dispatches deserialized <see cref="JobAlertEvent" /> payloads via
+/// <see cref="INotificationPublisher" /> and/or HTTP POST to <see cref="JobAlertsOptions.AlertWebhookUrl" />.
 /// </summary>
 public sealed class JobAlertConsumer : BackgroundService
 {
@@ -49,7 +48,6 @@ public sealed class JobAlertConsumer : BackgroundService
         await _mqService.CreateQueue(AlertQueueName, true, false, false, null, stoppingToken).ConfigureAwait(false);
         await _mqService.BindQueueToExchange(AlertQueueName, Constants.Mq.JobEventExchange, Constants.Mq.JobAlertRoutingKey, stoppingToken).ConfigureAwait(false);
         await _mqService.SubscribeToQueue(AlertQueueName, HandleMessageAsync, stoppingToken).ConfigureAwait(false);
-
         try {
             await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(false);
         }

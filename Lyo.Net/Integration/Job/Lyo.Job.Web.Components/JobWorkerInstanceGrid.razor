@@ -1,4 +1,3 @@
-@using Lyo.Web.Components.DataGrid
 @inject ISnackbar Snackbar
 @inject IJsInterop Js
 
@@ -46,11 +45,7 @@
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("WorkerType", "Worker Type"),
-        new("MachineName", "Machine"),
-        new("State")
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WorkerType", "Worker Type"), new("MachineName", "Machine"), new("State")];
 
     private static object[] GetKey(object? item)
     {

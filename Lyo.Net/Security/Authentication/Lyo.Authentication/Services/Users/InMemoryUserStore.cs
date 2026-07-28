@@ -49,9 +49,7 @@ public sealed class InMemoryUserStore : IUserStore
     {
         ArgumentHelpers.ThrowIfNull(scopes);
         var snap = scopes.ToArray();
-        _byId.AddOrUpdate(
-            id, _ => throw new NotFoundException($"User id '{id}' not found."), (_, existing) => existing with { Scopes = snap, UpdatedAt = DateTime.UtcNow });
-
+        _byId.AddOrUpdate(id, _ => throw new NotFoundException($"User id '{id}' not found."), (_, existing) => existing with { Scopes = snap, UpdatedAt = DateTime.UtcNow });
         return Task.CompletedTask;
     }
 

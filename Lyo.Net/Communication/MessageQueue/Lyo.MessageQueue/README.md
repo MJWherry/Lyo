@@ -35,7 +35,9 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
   is a typed publish helper that wraps `payload` in a fresh `QueueMessageEnvelope<T>` (requeue count `0`,
   generated `MessageId`, `EnqueuedAt = UtcNow`) and forwards the JSON bytes to `SendToQueue`. Use it when
   publishing to queues consumed by `QueueWorkerBase` so requeue tracking starts on the first hop.
-- **`QueueMessageExtensions.SubscribeToQueueAsync<T>(this IMqService, string queueName, Func<T, QueueMessageEnvelope<T>?, Task<bool>> handler, JsonSerializerOptions?, CancellationToken)`**
+- **
+  `QueueMessageExtensions.SubscribeToQueueAsync<T>(this IMqService, string queueName, Func<T, QueueMessageEnvelope<T>?, Task<bool>> handler, JsonSerializerOptions?, CancellationToken)`
+  **
   is the typed consuming counterpart: it deserializes each message with the same autocorrect ladder used by
   `QueueWorkerBase` (full envelope → payload-only → bare legacy `T`), passes the payload plus envelope
   (null for legacy messages) to your handler, and **acks unparseable messages** instead of letting them
@@ -108,6 +110,7 @@ section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signa
 |--------------------------|-------------|---------|------------------------------------------------------------------------------------------------------------------|
 | `DefaultMaxRequeueCount` | `int?`      | `5`     | Requeue cap applied when a worker doesn't pass an explicit `maxRequeueCount`. `null` = unlimited retries.        |
 | `RequeueDelay`           | `TimeSpan?` | `2s`    | Base retry delay (linear backoff by attempt). Requires an `IDelayedMqService` transport; `null`/zero = no delay. |
+
 - Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and
   emits metrics via the injected `IMetrics`:
     - `queue.worker.message.processing.duration` (timer; tag `queue`)

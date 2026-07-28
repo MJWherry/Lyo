@@ -1,17 +1,19 @@
 @using System.Globalization
-
 @switch (Type) {
     case JobParameterType.Bool:
         <MudSwitch T="bool" Value="@BoolValue" ValueChanged="@(v => SetValue(v ? "true" : "false"))" Color="Color.Primary" Label="@Label" Class="ma-0"/>
+
         break;
     case JobParameterType.Int:
     case JobParameterType.Long:
         <MudNumericField T="long?" Value="@LongValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
                          Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
     case JobParameterType.Decimal:
         <MudNumericField T="decimal?" Value="@DecimalValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
                          Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
     case JobParameterType.DateTime:
         <MudStack Row Spacing="1">
@@ -20,23 +22,28 @@
             <MudTimePicker Time="@DateTimeValue?.TimeOfDay" TimeChanged="@(t => SetDateTime(DateTimeValue ?? DateTime.Today, t))"
                            Label="Time" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
         </MudStack>
+
         break;
     case JobParameterType.DateOnly:
         <MudDatePicker Date="@DateOnlyValue" DateChanged="@(d => SetValue(d?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)))"
                        Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
     case JobParameterType.TimeOnly:
         <MudTimePicker Time="@TimeOnlyValue" TimeChanged="@(t => SetValue(t?.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture)))"
                        Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
     case JobParameterType.Json:
     case JobParameterType.Xml:
         <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
                       Lines="3" MaxLines="8" AutoGrow Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
     default:
         <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
                       Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         break;
 }
 

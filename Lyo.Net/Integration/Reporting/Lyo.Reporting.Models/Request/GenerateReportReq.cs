@@ -5,16 +5,13 @@ namespace Lyo.Reporting.Models.Request;
 /// <summary>Request to generate a report from a saved definition and/or ad-hoc report JSON.</summary>
 public sealed class GenerateReportReq
 {
-    /// <summary>Existing definition to generate from. Required when <see cref="ReportDataJson"/> is null.</summary>
+    /// <summary>Existing definition to generate from. Required when <see cref="ReportDataJson" /> is null.</summary>
     public Guid? ReportDefinitionId { get; set; }
 
-    /// <summary>
-    /// Ad-hoc report composition JSON when not using a definition.
-    /// Prefer <see cref="OverrideReportDataJson"/> to override a definition's stored JSON.
-    /// </summary>
+    /// <summary>Ad-hoc report composition JSON when not using a definition. Prefer <see cref="OverrideReportDataJson" /> to override a definition's stored JSON.</summary>
     public string? ReportDataJson { get; set; }
 
-    /// <summary>When set with <see cref="ReportDefinitionId"/>, replaces the definition's stored composition JSON.</summary>
+    /// <summary>When set with <see cref="ReportDefinitionId" />, replaces the definition's stored composition JSON.</summary>
     public string? OverrideReportDataJson { get; set; }
 
     /// <summary>Output format. When null, resolved from definition → profile → Html.</summary>

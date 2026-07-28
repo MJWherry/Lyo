@@ -589,27 +589,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
     }
 
-    /// <summary>Reads a <c>[length:int32 LE][bytes]</c> field from <paramref name="input" />, rejecting negative lengths or lengths above <paramref name="maxLength" />.</summary>
-    private static async Task<byte[]> ReadLengthPrefixedAsync(Stream input, int maxLength, string fieldName, CancellationToken ct)
-    {
-        var lengthBuffer = new byte[4];
-        if (await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, 4, ct).ConfigureAwait(false) != 4)
-            throw new EndOfStreamException($"Unexpected end of stream while reading {fieldName} length.");
-
-        var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-        if (length < 0 || length > maxLength)
-            throw new InvalidDataException($"Invalid {fieldName} length: {length}. Maximum allowed: {maxLength} bytes.");
-
-        if (length == 0)
-            return [];
-
-        var value = new byte[length];
-        if (await AeadChunkCodec.ReadAtLeastAsync(input, value, length, ct).ConfigureAwait(false) != length)
-            throw new EndOfStreamException($"Unexpected end of stream while reading {fieldName}.");
-
-        return value;
-    }
-
     public async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
@@ -744,9 +723,30 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
     }
 
+    /// <summary>Reads a <c>[length:int32 LE][bytes]</c> field from <paramref name="input" />, rejecting negative lengths or lengths above <paramref name="maxLength" />.</summary>
+    private static async Task<byte[]> ReadLengthPrefixedAsync(Stream input, int maxLength, string fieldName, CancellationToken ct)
+    {
+        var lengthBuffer = new byte[4];
+        if (await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, 4, ct).ConfigureAwait(false) != 4)
+            throw new EndOfStreamException($"Unexpected end of stream while reading {fieldName} length.");
+
+        var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        if (length < 0 || length > maxLength)
+            throw new InvalidDataException($"Invalid {fieldName} length: {length}. Maximum allowed: {maxLength} bytes.");
+
+        if (length == 0)
+            return [];
+
+        var value = new byte[length];
+        if (await AeadChunkCodec.ReadAtLeastAsync(input, value, length, ct).ConfigureAwait(false) != length)
+            throw new EndOfStreamException($"Unexpected end of stream while reading {fieldName}.");
+
+        return value;
+    }
+
     /// <summary>
-    /// Builds the AAD input for chunk authentication: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by the
-    /// per-stream nonce prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are excluded so headers can be rewritten in place during KEK rotation.
+    /// Builds the AAD input for chunk authentication: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by
+    /// the per-stream nonce prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are excluded so headers can be rewritten in place during KEK rotation.
     /// </summary>
     private static byte[] BuildImmutableAadHeader(ReadOnlySpan<byte> immutableFixedFields, ReadOnlySpan<byte> noncePrefix)
     {

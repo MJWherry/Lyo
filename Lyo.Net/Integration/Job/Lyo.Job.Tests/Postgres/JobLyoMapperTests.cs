@@ -6,6 +6,7 @@ using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
+using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -22,10 +23,16 @@ public class JobLyoMapperTests
             WorkerType = "cs",
             RetryBackoffType = JobRetryBackoffType.Exponential,
             CreateParameters = [
-                new JobParameterReq { Key = "A", Type = JobParameterType.String, Value = "1", Enabled = true, Required = true }
+                new() {
+                    Key = "A",
+                    Type = JobParameterType.String,
+                    Value = "1",
+                    Enabled = true,
+                    Required = true
+                }
             ],
             CreateSchedules = [
-                new JobScheduleReq {
+                new() {
                     Type = ScheduleType.Interval,
                     MonthFlags = MonthFlags.EveryMonth,
                     DayFlags = DayFlags.Weekdays,
@@ -34,34 +41,47 @@ public class JobLyoMapperTests
                     EndTime = new TimeOnly(17, 0),
                     Enabled = true,
                     CreateScheduleParameters = [
-                        new JobScheduleParameterReq { Key = "ClientId", Type = JobParameterType.Guid, Value = Guid.NewGuid().ToString("D"), Enabled = true }
+                        new() {
+                            Key = "ClientId",
+                            Type = JobParameterType.Guid,
+                            Value = Guid.NewGuid().ToString("D"),
+                            Enabled = true
+                        }
                     ]
                 }
             ],
             CreateTriggers = [
-                new JobTriggerReq {
+                new() {
                     TriggersJobDefinitionId = otherDefId,
                     JobResultKey = "Result",
                     Comparison = ComparisonOperatorEnum.Equals,
                     JobResultValue = "Success",
                     Enabled = true,
                     CreateTriggerParameters = [
-                        new JobTriggerParameterReq { Key = "X", Type = JobParameterType.Int, Value = "2", Enabled = true }
+                        new() {
+                            Key = "X",
+                            Type = JobParameterType.Int,
+                            Value = "2",
+                            Enabled = true
+                        }
                     ]
                 }
             ],
-            CreateParallelRestrictions = [
-                new JobParallelRestrictionReq(otherDefId, "no overlap", true)
-            ],
-            CreateBlackoutCalendar = new JobBlackoutCalendarReq {
+            CreateParallelRestrictions = [new(otherDefId, "no overlap")],
+            CreateBlackoutCalendar = new() {
                 Name = "Maint",
                 CreateBlackoutWindows = [
-                    new() { Name = "Night", DayFlags = DayFlags.EveryDay, StartTime = TimeOnly.Parse("02:00"), EndTime = TimeOnly.Parse("04:00") }
+                    new() {
+                        Name = "Night",
+                        DayFlags = DayFlags.EveryDay,
+                        StartTime = TimeOnly.Parse("02:00"),
+                        EndTime = TimeOnly.Parse("04:00")
+                    }
                 ]
             }
         };
-        req.CreateSchedules[0].CreateBlackoutCalendar = req.CreateBlackoutCalendar;
 
+        req.CreateSchedules[0].CreateBlackoutCalendar = req.CreateBlackoutCalendar;
         var entity = _mapper.Map<JobDefinition>(req);
         Assert.NotEqual(default, entity.CreatedTimestamp);
         Assert.Equal(nameof(JobRetryBackoffType.Exponential), entity.RetryBackoffType);
@@ -73,7 +93,6 @@ public class JobLyoMapperTests
         Assert.Single(entity.JobTriggerJobDefinitions);
         Assert.Single(entity.JobTriggerJobDefinitions.First().JobTriggerParameters);
         Assert.Single(entity.JobParallelRestrictionBaseJobDefinitions);
-
         var res = _mapper.Map<JobDefinitionRes>(entity);
         Assert.Equal("Mapped Job", res.Name);
         Assert.Equal(JobRetryBackoffType.Exponential, res.RetryBackoffType);
@@ -93,7 +112,7 @@ public class JobLyoMapperTests
             Id = Guid.NewGuid(),
             JobDefinitionId = Guid.NewGuid(),
             State = JobState.Finished,
-            Result = Models.Enums.JobRunResult.Success,
+            Result = JobRunResult.Success,
             RetryAttempt = 1,
             Priority = 3,
             AllowTriggers = true,
@@ -115,18 +134,18 @@ public class JobLyoMapperTests
     [Fact]
     public void Schedule_StartEndTime_UsesInvariantFormatting()
     {
-        var entity = _mapper.Map<JobSchedule>(new JobScheduleReq {
-            Type = ScheduleType.Interval,
-            MonthFlags = MonthFlags.EveryMonth,
-            DayFlags = DayFlags.EveryDay,
-            StartTime = new TimeOnly(2, 5, 7),
-            EndTime = new TimeOnly(14, 30),
-            IntervalMinutes = 5
-        });
+        var entity = _mapper.Map<JobSchedule>(
+            new JobScheduleReq {
+                Type = ScheduleType.Interval,
+                MonthFlags = MonthFlags.EveryMonth,
+                DayFlags = DayFlags.EveryDay,
+                StartTime = new TimeOnly(2, 5, 7),
+                EndTime = new TimeOnly(14, 30),
+                IntervalMinutes = 5
+            });
 
         Assert.Equal("02:05:07", entity.StartTime);
         Assert.Equal("14:30:00", entity.EndTime);
-
         var res = _mapper.Map<JobScheduleRes>(entity);
         Assert.Equal(new TimeOnly(2, 5, 7), res.StartTime);
         Assert.Equal(new TimeOnly(14, 30), res.EndTime);

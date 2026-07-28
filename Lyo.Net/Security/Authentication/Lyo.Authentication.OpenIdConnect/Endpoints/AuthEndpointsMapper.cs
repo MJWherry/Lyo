@@ -260,21 +260,17 @@ public static class AuthEndpointsMapper
     private static AuthCookiePathOptions ResolvePaths(HttpContext ctx) => ctx.GetEndpoint()?.Metadata.GetMetadata<AuthCookiePathOptions>() ?? DefaultPaths;
 
     /// <summary>
-    /// Cookie <c>Path</c> must match the browser-visible URL prefix. Behind a path-prefix reverse proxy
-    /// (<c>/api</c>), include <see cref="HttpRequest.PathBase"/> or <c>X-Forwarded-Prefix</c> so the
-    /// cookie is sent on <c>/api/auth/callback/...</c>.
+    /// Cookie <c>Path</c> must match the browser-visible URL prefix. Behind a path-prefix reverse proxy (<c>/api</c>), include <see cref="HttpRequest.PathBase" /> or
+    /// <c>X-Forwarded-Prefix</c> so the cookie is sent on <c>/api/auth/callback/...</c>.
     /// </summary>
     private static string CookiePath(HttpContext ctx, string stateCookiePath)
     {
-        var prefix = ctx.Request.PathBase.HasValue
-            ? ctx.Request.PathBase.Value!.TrimEnd('/')
-            : ctx.Request.Headers["X-Forwarded-Prefix"].ToString().Trim().TrimEnd('/');
+        var prefix = ctx.Request.PathBase.HasValue ? ctx.Request.PathBase.Value!.TrimEnd('/') : ctx.Request.Headers["X-Forwarded-Prefix"].ToString().Trim().TrimEnd('/');
         return prefix.Length == 0 ? stateCookiePath : prefix + stateCookiePath;
     }
 
     private static bool IsSecureRequest(HttpContext ctx)
-        => ctx.Request.IsHttps
-           || string.Equals(ctx.Request.Headers["X-Forwarded-Proto"].ToString(), "https", StringComparison.OrdinalIgnoreCase);
+        => ctx.Request.IsHttps || string.Equals(ctx.Request.Headers["X-Forwarded-Proto"].ToString(), "https", StringComparison.OrdinalIgnoreCase);
 
     private static async Task<IResult> MeAsync(HttpContext ctx, IUserStore users, IExternalIdentityStore identities)
     {

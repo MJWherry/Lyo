@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Api.Mapping;
-using Lyo.Job.Postgres.Mapping;
 using Lyo.Common;
 using Lyo.Common.Conversion;
 using Lyo.Common.Enums;
@@ -8,8 +7,7 @@ using Lyo.DateAndTime;
 using Lyo.Discord.Postgres;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Geolocation.Models.Enums;
-using Lyo.Job.Postgres;
-using Lyo.People.Models;
+using Lyo.Job.Postgres.Mapping;
 using Lyo.People.Models.Enum;
 using Lyo.People.Postgres.Database;
 using Lyo.Query.Models.Common;
@@ -17,7 +15,6 @@ using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
 using Mapster;
 using MapsterMapper;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.TestApi;
 
@@ -46,8 +43,7 @@ public static class SetupMapster
     private static DateTime? ToDateTime(DateOnly? value) => value.HasValue ? value.Value.ToDateTime(TimeOnly.MinValue) : null;
 
     private static List<PersonAddressRes> MapPersonAddresses(PersonEntity src)
-        => src.ContactAddresses
-            .Where(ca => ca.Address != null)
+        => src.ContactAddresses.Where(ca => ca.Address != null)
             .Select(ca => {
                 var a = ca.Address!;
                 return new PersonAddressRes {
@@ -81,14 +77,10 @@ public static class SetupMapster
             .ToList();
 
     private static List<PersonEmailAddressRes> MapPersonEmailAddresses(PersonEntity src)
-        => src.ContactEmailAddresses
-            .Where(ce => ce.EmailAddress != null)
-            .Select(ce => new PersonEmailAddressRes(ce.EmailAddress!.Id, ce.PersonId, ce.EmailAddress.Email))
-            .ToList();
+        => src.ContactEmailAddresses.Where(ce => ce.EmailAddress != null).Select(ce => new PersonEmailAddressRes(ce.EmailAddress!.Id, ce.PersonId, ce.EmailAddress.Email)).ToList();
 
     private static List<PersonPhoneNumberRes> MapPersonPhoneNumbers(PersonEntity src)
-        => src.ContactPhoneNumbers
-            .Where(cp => cp.PhoneNumber != null)
+        => src.ContactPhoneNumbers.Where(cp => cp.PhoneNumber != null)
             .Select(cp => {
                 var p = cp.PhoneNumber!;
                 return new PersonPhoneNumberRes {
@@ -148,9 +140,7 @@ public static class SetupMapster
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();
         services.AddSingleton<JobLyoMapper>();
-        services.AddScoped<ILyoMapper>(sp => new CompositeLyoMapper(
-            sp.GetRequiredService<JobLyoMapper>(),
-            new MapsterLyoMapper(sp.GetRequiredService<IMapper>())));
+        services.AddScoped<ILyoMapper>(sp => new CompositeLyoMapper(sp.GetRequiredService<JobLyoMapper>(), new MapsterLyoMapper(sp.GetRequiredService<IMapper>())));
         return services;
     }
 
@@ -189,7 +179,6 @@ public static class SetupMapster
             config.NewConfig<PersonAddressReq, AddressEntity>().IgnoreNonMapped(true);
             config.NewConfig<PersonEmailAddressReq, EmailAddressEntity>().Map(dest => dest.Email, src => src.Address).IgnoreNonMapped(true);
             config.NewConfig<PersonPhoneNumberReq, PhoneNumberEntity>().IgnoreNonMapped(true);
-
             config.NewConfig<PersonEntity, PersonRes>()
                 .Ignore(dest => dest.EndatoPersonId)
                 .Map(dest => dest.Addresses, src => MapPersonAddresses(src))

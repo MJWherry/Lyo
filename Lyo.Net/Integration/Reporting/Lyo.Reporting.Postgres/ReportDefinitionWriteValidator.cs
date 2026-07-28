@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Common.Conversion;
@@ -8,19 +9,18 @@ using Lyo.Reporting.Postgres.Database;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Write-time validation for definitions and definition parameters so bad data (invalid regex, unknown format,
-/// malformed composition JSON) fails at create/update instead of at generate time. Shared by the API CRUD hooks.
+/// Write-time validation for definitions and definition parameters so bad data (invalid regex, unknown format, malformed composition JSON) fails at create/update instead of
+/// at generate time. Shared by the API CRUD hooks.
 /// </summary>
 public static class ReportDefinitionWriteValidator
 {
     public static void ValidateDefinition(ReportDefinition definition, int maxReportDataJsonBytes)
     {
         var errors = new List<string>();
-
         if (string.IsNullOrWhiteSpace(definition.ReportDataJson))
             errors.Add("ReportDataJson is required.");
         else {
-            var bytes = System.Text.Encoding.UTF8.GetByteCount(definition.ReportDataJson);
+            var bytes = Encoding.UTF8.GetByteCount(definition.ReportDataJson);
             if (bytes > maxReportDataJsonBytes)
                 errors.Add($"ReportDataJson exceeds MaxReportDataJsonBytes ({bytes} > {maxReportDataJsonBytes}).");
             else if (!IsParseableJson(definition.ReportDataJson))
@@ -33,11 +33,11 @@ public static class ReportDefinitionWriteValidator
         foreach (var parameter in definition.Parameters)
             CollectParameterErrors(parameter, errors);
 
-        var duplicateKeys = definition.Parameters
-            .Where(p => !string.IsNullOrWhiteSpace(p.Key))
+        var duplicateKeys = definition.Parameters.Where(p => !string.IsNullOrWhiteSpace(p.Key))
             .GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key);
+
         foreach (var key in duplicateKeys)
             errors.Add($"Parameter key '{key}' appears more than once; parameter keys must be unique per definition.");
 
@@ -54,7 +54,6 @@ public static class ReportDefinitionWriteValidator
     private static void CollectParameterErrors(ReportDefinitionParameter parameter, List<string> errors)
     {
         var label = string.IsNullOrWhiteSpace(parameter.Key) ? "(no key)" : parameter.Key;
-
         if (string.IsNullOrWhiteSpace(parameter.Key))
             errors.Add("Parameter Key is required.");
 
@@ -76,8 +75,10 @@ public static class ReportDefinitionWriteValidator
 
         if (parameter.MinLength is < 0)
             errors.Add($"Parameter '{label}' MinLength must not be negative.");
+
         if (parameter.MaxLength is < 0)
             errors.Add($"Parameter '{label}' MaxLength must not be negative.");
+
         if (parameter is { MinLength: { } min, MaxLength: { } max } && min > max)
             errors.Add($"Parameter '{label}' MinLength ({min}) must not exceed MaxLength ({max}).");
     }

@@ -112,10 +112,7 @@ public class TwilioMessageQueryBuilderTests
     [Fact]
     public void Build_InvertedDateBounds_ThrowsArgumentOutsideRangeException()
     {
-        var builder = TwilioMessageQueryBuilder.New()
-            .WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc))
-            .WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-
+        var builder = TwilioMessageQueryBuilder.New().WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc)).WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
         Assert.Throws<ArgumentOutsideRangeException>(builder.Build);
     }
 
@@ -235,7 +232,6 @@ public class TwilioMessageQueryBuilderTests
         var first = builder.Build();
         var second = builder.Build();
         Assert.NotSame(first, second);
-
         first.Directions.Clear();
         Assert.Single(second.Directions);
     }
@@ -245,14 +241,7 @@ public class TwilioMessageQueryBuilderTests
     {
         var after = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var before = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc);
-        var filter = TwilioMessageQueryBuilder.New()
-            .WithFrom("+15551234567")
-            .WithTo("+19876543210")
-            .WithDateRange(after, before)
-            .WithPageSize(25)
-            .Outbound()
-            .Build();
-
+        var filter = TwilioMessageQueryBuilder.New().WithFrom("+15551234567").WithTo("+19876543210").WithDateRange(after, before).WithPageSize(25).Outbound().Build();
         Assert.Equal("+15551234567", filter.From);
         Assert.Equal("+19876543210", filter.To);
         Assert.Equal(after, filter.DateSentAfter);

@@ -30,7 +30,6 @@ public sealed class CompressEncryptPipelineTests
         var key = RandomNumberGenerator.GetBytes(32);
         var plaintext = new byte[300_000];
         RandomNumberGenerator.Fill(plaintext.AsSpan(0, 1000)); // mostly zeros so compression actually shrinks it
-
         using var encrypted = new MemoryStream();
         using (var input = new MemoryStream(plaintext))
             await CompressEncryptPipeline.CompressThenEncryptAsync(input, encrypted, compression, encryption, key: key, ct: ct);
@@ -57,11 +56,11 @@ public sealed class CompressEncryptPipelineTests
             await CompressEncryptPipeline.CompressThenEncryptAsync(input, encrypted, CreateCompressionService(), encryption, key: key, ct: ct);
 
         // Decompress side is capped at 1 KB (the options minimum), so the guard fires almost immediately.
-        var bombGuarded = CreateCompressionService(maxInputSize: 1024);
+        var bombGuarded = CreateCompressionService(1024);
         encrypted.Position = 0;
         using var output = new MemoryStream();
-        await Assert.ThrowsAsync<InvalidDataException>(
-            () => CompressEncryptPipeline.DecryptThenDecompressAsync(encrypted, output, bombGuarded, encryption, key: key, ct: ct).WaitAsync(NoHangTimeout, ct));
+        await Assert.ThrowsAsync<InvalidDataException>(()
+            => CompressEncryptPipeline.DecryptThenDecompressAsync(encrypted, output, bombGuarded, encryption, key: key, ct: ct).WaitAsync(NoHangTimeout, ct));
     }
 
     [Fact]
@@ -74,8 +73,8 @@ public sealed class CompressEncryptPipelineTests
         var plaintext = RandomNumberGenerator.GetBytes(1024 * 1024);
         using var input = new MemoryStream(plaintext);
         using var output = new MemoryStream();
-        var ex = await Assert.ThrowsAnyAsync<Exception>(
-            () => CompressEncryptPipeline.CompressThenEncryptAsync(input, output, CreateCompressionService(), CreateEncryptionService(), key: invalidKey, ct: ct)
+        var ex = await Assert.ThrowsAnyAsync<Exception>(()
+            => CompressEncryptPipeline.CompressThenEncryptAsync(input, output, CreateCompressionService(), CreateEncryptionService(), key: invalidKey, ct: ct)
                 .WaitAsync(NoHangTimeout, ct));
 
         Assert.IsNotType<TimeoutException>(ex);

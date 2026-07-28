@@ -1,7 +1,6 @@
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Cache;
 using Lyo.Common;

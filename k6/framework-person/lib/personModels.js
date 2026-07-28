@@ -6,7 +6,7 @@ import {
   DEFAULT_SOURCE_FILTER_VALUES,
   DEFAULT_PERSON_INCLUDES as CORE_DEFAULT_PERSON_INCLUDES,
   DEFAULT_PERSON_SELECT_FIELDS as CORE_DEFAULT_PERSON_SELECT_FIELDS,
-} from "../../../packages/lyo-person-api-client/dist/index.js";
+} from "../../../packages/typescript/lyo-person-api-client/dist/index.js";
 
 export {
   QUERY_FIELD_SOURCE,

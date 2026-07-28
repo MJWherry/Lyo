@@ -3,10 +3,10 @@ using Lyo.Reporting.Models.Response;
 
 namespace Lyo.Reporting.Models.Rendering;
 
-/// <summary>Input for <see cref="IReportRenderer.RenderAsync"/>.</summary>
+/// <summary>Input for <see cref="IReportRenderer.RenderAsync" />.</summary>
 public sealed class ReportRenderRequest
 {
-    /// <summary>Serialized <see cref="Models.Report{T}"/> JSON.</summary>
+    /// <summary>Serialized <see cref="Models.Report{T}" /> JSON.</summary>
     public string ReportDataJson { get; init; } = null!;
 
     public ReportFormat Format { get; init; }
@@ -18,7 +18,7 @@ public sealed class ReportRenderRequest
 
     public IReadOnlyList<ReportGenerationParameterRes> Parameters { get; init; } = [];
 
-    /// <summary>JSON object map of Key→Value synthesized from <see cref="Parameters"/>.</summary>
+    /// <summary>JSON object map of Key→Value synthesized from <see cref="Parameters" />.</summary>
     public string? ParametersJson { get; init; }
 
     public IServiceProvider? Services { get; init; }

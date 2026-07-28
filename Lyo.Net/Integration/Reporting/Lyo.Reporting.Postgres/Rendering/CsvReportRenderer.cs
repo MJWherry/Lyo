@@ -23,13 +23,8 @@ public sealed class CsvReportRenderer(ICsvService csvService) : IReportRenderer
             throw new NotSupportedException($"{nameof(CsvReportRenderer)} cannot render format {request.Format}.");
 
         ct.ThrowIfCancellationRequested();
-
-        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions)
-                     ?? throw new ReportValidationException("Failed to deserialize report JSON.");
-
-        var grid = FindFirstGrid(report)
-                   ?? throw new ReportValidationException("CSV generation requires at least one grid in the report.");
-
+        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions) ?? throw new ReportValidationException("Failed to deserialize report JSON.");
+        var grid = FindFirstGrid(report) ?? throw new ReportValidationException("CSV generation requires at least one grid in the report.");
         var dict = new Dictionary<int, IReadOnlyDictionary<int, string>>();
         var header = new Dictionary<int, string>();
         for (var c = 0; c < grid.Columns.Count; c++)
@@ -48,9 +43,9 @@ public sealed class CsvReportRenderer(ICsvService csvService) : IReportRenderer
             dict[r + 1] = cells;
         }
 
-        await csvService.ExportToCsvFromDictionaryAsync(dict, request.OutputFilePath, hasHeaderRow: true, ct).ConfigureAwait(false);
+        await csvService.ExportToCsvFromDictionaryAsync(dict, request.OutputFilePath, true, ct).ConfigureAwait(false);
         var fileName = request.SuggestedFileName ?? "report.csv";
-        return new ReportRenderResult {
+        return new() {
             FilePath = request.OutputFilePath,
             ContentType = "text/csv; charset=utf-8",
             FileName = fileName,
@@ -63,6 +58,7 @@ public sealed class CsvReportRenderer(ICsvService csvService) : IReportRenderer
         foreach (var section in report.Sections.OrderBy(s => s.Order)) {
             if (section.Grids.Count > 0)
                 return section.Grids[0];
+
             foreach (var sub in section.Subsections.OrderBy(s => s.Order)) {
                 if (sub.Grids.Count > 0)
                     return sub.Grids[0];

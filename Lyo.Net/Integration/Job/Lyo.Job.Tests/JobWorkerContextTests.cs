@@ -1,3 +1,4 @@
+using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Worker;
@@ -15,7 +16,6 @@ public class JobWorkerContextTests
         var run = CreateRun();
         var builder = new JobWorkerResultBuilder();
         var context = new TestJobWorkerContext(run, cts.Token, builder);
-
         Assert.Same(run, context.Run);
         Assert.NotNull(context.Logger);
         Assert.Equal(cts.Token, context.CancellationToken);
@@ -26,19 +26,18 @@ public class JobWorkerContextTests
     public void Context_CancellationToken_PropagatesCancellation()
     {
         using var cts = new CancellationTokenSource();
-        var context = new TestJobWorkerContext(CreateRun(), cts.Token, new JobWorkerResultBuilder());
-
+        var context = new TestJobWorkerContext(CreateRun(), cts.Token, new());
         cts.Cancel();
-
         Assert.True(context.CancellationToken.IsCancellationRequested);
     }
 
-    private static JobRunRes CreateRun() => new() {
-        Id = Guid.NewGuid(),
-        JobDefinitionId = Guid.NewGuid(),
-        CreatedTimestamp = DateTime.UtcNow,
-        State = Lyo.Job.Models.Enums.JobState.Running
-    };
+    private static JobRunRes CreateRun()
+        => new() {
+            Id = Guid.NewGuid(),
+            JobDefinitionId = Guid.NewGuid(),
+            CreatedTimestamp = DateTime.UtcNow,
+            State = JobState.Running
+        };
 
     private sealed class TestJobWorkerContext(JobRunRes run, CancellationToken ct, JobWorkerResultBuilder results) : IJobWorkerContext
     {

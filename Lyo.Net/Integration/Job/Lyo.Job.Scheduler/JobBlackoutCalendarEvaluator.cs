@@ -2,7 +2,6 @@ using Lyo.Common.Enums;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 #if NET6_0_OR_GREATER
-using TimeOnly = System.TimeOnly;
 
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
@@ -13,9 +12,7 @@ namespace Lyo.Job.Scheduler;
 /// <summary>Evaluates whether scheduled slots fall inside <see cref="JobBlackoutCalendarRes" /> do-not-run windows.</summary>
 internal static class JobBlackoutCalendarEvaluator
 {
-    /// <summary>
-    /// Adjusts a candidate slot for blackout policy. Returns null when the slot should be skipped, or the (possibly deferred) UTC slot when it may fire.
-    /// </summary>
+    /// <summary>Adjusts a candidate slot for blackout policy. Returns null when the slot should be skipped, or the (possibly deferred) UTC slot when it may fire.</summary>
     public static DateTime? AdjustSlotForBlackout(DateTime slotUtc, JobBlackoutCalendarRes? calendar, TimeZoneInfo? timeZone)
     {
         if (calendar is null || !calendar.Enabled || calendar.BlackoutWindows is not { Count: > 0 })
@@ -24,7 +21,6 @@ internal static class JobBlackoutCalendarEvaluator
         var tz = timeZone ?? TimeZoneInfo.Utc;
         var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(slotUtc, DateTimeKind.Utc), tz);
         var dayFlag = GetDayFlagForDate(local);
-
         foreach (var window in calendar.BlackoutWindows.Where(w => w.Enabled)) {
             if (!MatchesWindowDate(window, local, dayFlag))
                 continue;
@@ -40,7 +36,7 @@ internal static class JobBlackoutCalendarEvaluator
             return window.Policy switch {
                 JobBlackoutPolicy.Skip => null,
                 JobBlackoutPolicy.Defer => TimeZoneInfo.ConvertTimeToUtc(windowEnd, tz),
-                _ => slotUtc
+                var _ => slotUtc
             };
         }
 

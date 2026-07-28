@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Error;
@@ -12,7 +13,6 @@ using Lyo.Cache;
 using Lyo.Common.Enums;
 using Lyo.Formatter;
 using Lyo.Metrics;
-using Lyo.Metrics.Models;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -24,10 +24,7 @@ using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Api.Services.Crud.Read.Query.Root;
 
-/// <summary>
-/// Root <see cref="QueryReq" />: arbitrary From/Joins (EF Join/GroupJoin on ON columns) + sparse Select.
-/// Not navigation-based — that is <c>/QueryProject</c>.
-/// </summary>
+/// <summary>Root <see cref="QueryReq" />: arbitrary From/Joins (EF Join/GroupJoin on ON columns) + sparse Select. Not navigation-based — that is <c>/QueryProject</c>.</summary>
 public interface IRootQueryService<TContext>
     where TContext : DbContext
 {
@@ -42,8 +39,7 @@ public sealed class RootQueryService<TContext>(
     IProjectionService projectionService,
     IFormatterService? formatterService = null,
     ILogger<RootQueryService<TContext>>? logger = null,
-    IMetrics? metrics = null)
-    : IRootQueryService<TContext>
+    IMetrics? metrics = null) : IRootQueryService<TContext>
     where TContext : DbContext
 {
     private const string Operation = "query_root";
@@ -58,7 +54,6 @@ public sealed class RootQueryService<TContext>(
         var fromEntityName = string.IsNullOrWhiteSpace(request.From.EntityType) ? "unknown" : request.From.EntityType.Trim();
         _metrics.IncrementCounter("api.crud.requests", 1, CrudTags(fromEntityName));
         using var timer = _metrics.StartTimer("api.crud.duration", CrudTags(fromEntityName));
-
         try {
             if (request.ComputedFields.Count > 0)
                 RootQueryComputedFields.EnsureSelectIncludesComputedDependencies(request, projectionService, formatterService);
@@ -73,26 +68,21 @@ public sealed class RootQueryService<TContext>(
                 _metrics.IncrementCounter("api.crud.failure", 1, CrudTags(fromEntityName));
                 return ResultFactory.ProjectedQueryFailure<object?>(
                     request,
-                    LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(ApiErrorCodes.InvalidQuery)
-                        .WithMessage("Invalid root query.")
-                        .AddErrors(validationErrors)
-                        .Build());
+                    LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.InvalidQuery).WithMessage("Invalid root query.").AddErrors(validationErrors).Build());
             }
 
             if (!registry.TryGet(request.From.EntityType, out var fromEntry)) {
                 _metrics.IncrementCounter("api.crud.failure", 1, CrudTags(fromEntityName));
-                return ResultFactory.ProjectedQueryFailure<object?>(request, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, "From entity type not found.", DateTime.UtcNow));
+                return ResultFactory.ProjectedQueryFailure<object?>(
+                    request, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, "From entity type not found.", DateTime.UtcNow));
             }
 
             fromEntityName = fromEntry.ClrType.Name;
             var planStart = Stopwatch.GetTimestamp();
             var plan = PlanCache.GetOrAdd(BuildShapeKey(request), _ => BuildPlan(request, registry, fromEntry));
             TrackPhase(fromEntityName, "plan_resolve", planStart);
-
             var cacheKey = QueryCacheKeyBuilder.AppendProjectedShapeSuffix(
-                QueryCacheKeyBuilder.BuildRootQuery(request, typeof(TContext).Name),
-                request.Options.ZipSiblingCollectionSelections);
+                QueryCacheKeyBuilder.BuildRootQuery(request, typeof(TContext).Name), request.Options.ZipSiblingCollectionSelections);
 
             async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildEntryAsync(CancellationToken token)
             {
@@ -152,10 +142,8 @@ public sealed class RootQueryService<TContext>(
         fromSet = ApplySourceScope(fromSet, fromEntry.ClrType, request.From.Query);
         fromSet = ApplyOuterWhereAndSort(fromSet, fromEntry.ClrType, request);
         TrackPhase(fromEntityName, "source_scope_sort", scopeStart);
-
         var start = request.Start ?? 0;
         var amount = request.Amount ?? queryOptions.DefaultPageSize;
-
         int? total = null;
         if (request.Options.TotalCountMode == QueryTotalCountMode.Exact) {
             var countStart = Stopwatch.GetTimestamp();
@@ -177,30 +165,21 @@ public sealed class RootQueryService<TContext>(
         }
 
         var joinStart = Stopwatch.GetTimestamp();
-        var projectedRows = await RootQueryJoinExecutor
-            .ExecuteAsync(fromSet, fromEntry.ClrType, start, amount, scopedJoins, plan, ct)
-            .ConfigureAwait(false);
+        var projectedRows = await RootQueryJoinExecutor.ExecuteAsync(fromSet, fromEntry.ClrType, start, amount, scopedJoins, plan, ct).ConfigureAwait(false);
         TrackPhase(fromEntityName, "join_execute", joinStart);
 
         // SQL LEFT JOIN fans out; collapse to one item per From row (amount/start are From-side).
         var collapseStart = Stopwatch.GetTimestamp();
         var items = CollapseFanOutToFromItems(projectedRows, plan);
         TrackPhase(fromEntityName, "fan_out_collapse", collapseStart);
-        _metrics.IncrementCounter(
-            "api.queryroot.join_fanout",
-            projectedRows.Count,
-            [("entity", fromEntityName), ("joins", plan.Joins.Count.ToString())]);
-
+        _metrics.IncrementCounter("api.queryroot.join_fanout", projectedRows.Count, [("entity", fromEntityName), ("joins", plan.Joins.Count.ToString())]);
         if (request.ComputedFields.Count > 0) {
             var computedStart = Stopwatch.GetTimestamp();
             items = RootQueryComputedFields.Apply(items, request.ComputedFields, plan, projectionService, formatterService).ToList();
             TrackPhase(fromEntityName, "computed_fields", computedStart);
         }
 
-        var hasMore = request.Options.TotalCountMode == QueryTotalCountMode.Exact && total.HasValue
-            ? start + items.Count < total.Value
-            : items.Count >= amount;
-
+        var hasMore = request.Options.TotalCountMode == QueryTotalCountMode.Exact && total.HasValue ? start + items.Count < total.Value : items.Count >= amount;
         return ResultFactory.ProjectedQuerySuccess<object?>(request, items, start, amount, total, hasMore, entityTypes: plan.EntityTypeNames);
     }
 
@@ -211,15 +190,9 @@ public sealed class RootQueryService<TContext>(
     }
 
     private IEnumerable<(string, string)> CrudTags(string fromEntityName)
-        => [
-            ("operation", Operation), ("context", typeof(TContext).Name), ("database_type", fromEntityName),
-            ("is_bulk", "false")
-        ];
+        => [("operation", Operation), ("context", typeof(TContext).Name), ("database_type", fromEntityName), ("is_bulk", "false")];
 
-    /// <summary>
-    /// Rows are <c>[FromPk, ...SelectSpecs]</c>. Group by FromPk; join columns become arrays of bags
-    /// (and chained joins nest under the parent join bag).
-    /// </summary>
+    /// <summary>Rows are <c>[FromPk, ...SelectSpecs]</c>. Group by FromPk; join columns become arrays of bags (and chained joins nest under the parent join bag).</summary>
     private static List<object?> CollapseFanOutToFromItems(List<object?[]> rows, RootQueryShapePlan plan)
     {
         if (rows.Count == 0)
@@ -230,6 +203,7 @@ public sealed class RootQueryService<TContext>(
             var flat = new List<object?>(rows.Count);
             foreach (var row in rows)
                 flat.Add(MapSingleRow(row.AsSpan(1), plan));
+
             return flat;
         }
 
@@ -305,7 +279,7 @@ public sealed class RootQueryService<TContext>(
                     bag[child.ResultName] = childList.Count switch {
                         0 => null,
                         1 => childList[0],
-                        _ => childList
+                        var _ => childList
                     };
                 }
             }
@@ -326,7 +300,7 @@ public sealed class RootQueryService<TContext>(
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var unique = new List<object?>();
         foreach (var bag in bags) {
-            var key = System.Text.Json.JsonSerializer.Serialize(bag);
+            var key = JsonSerializer.Serialize(bag);
             if (seen.Add(key))
                 unique.Add(bag);
         }
@@ -342,6 +316,7 @@ public sealed class RootQueryService<TContext>(
         var root = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < plan.SelectSpecs.Count; i++)
             root[plan.SelectSpecs[i].PropertyName] = selectValues[i];
+
         return root;
     }
 
@@ -349,6 +324,7 @@ public sealed class RootQueryService<TContext>(
     {
         var setMethod = typeof(DbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .First(m => m.Name == nameof(DbContext.Set) && m.IsGenericMethodDefinition && m.GetParameters().Length == 0);
+
         return (IQueryable)setMethod.MakeGenericMethod(clrType).Invoke(context, null)!;
     }
 
@@ -357,8 +333,7 @@ public sealed class RootQueryService<TContext>(
         if (scope?.WhereClause is null && (scope?.Keys.Count ?? 0) == 0)
             return source;
 
-        var method = typeof(RootQueryService<TContext>).GetMethod(nameof(ApplySourceScopeGeneric), BindingFlags.Instance | BindingFlags.NonPublic)!
-            .MakeGenericMethod(clrType);
+        var method = typeof(RootQueryService<TContext>).GetMethod(nameof(ApplySourceScopeGeneric), BindingFlags.Instance | BindingFlags.NonPublic)!.MakeGenericMethod(clrType);
         return (IQueryable)method.Invoke(this, [source, scope])!;
     }
 
@@ -368,6 +343,7 @@ public sealed class RootQueryService<TContext>(
         var q = (IQueryable<TEntity>)source;
         if (scope?.WhereClause != null)
             q = filterService.ApplyWhereClause(q, scope.WhereClause);
+
         return q;
     }
 
@@ -375,6 +351,7 @@ public sealed class RootQueryService<TContext>(
     {
         var method = typeof(RootQueryService<TContext>).GetMethod(nameof(ApplyOuterWhereAndSortGeneric), BindingFlags.Instance | BindingFlags.NonPublic)!
             .MakeGenericMethod(clrType);
+
         return (IQueryable)method.Invoke(this, [source, request])!;
     }
 
@@ -402,13 +379,11 @@ public sealed class RootQueryService<TContext>(
             return null;
 
         return clause switch {
-            ConditionClause c => new ConditionClause(StripAliasPrefix(c.Field, alias), c.Comparison, c.Value, c.Description) {
-                SubClause = StripAliasPrefix(c.SubClause, alias)
-            },
+            ConditionClause c => new ConditionClause(StripAliasPrefix(c.Field, alias), c.Comparison, c.Value, c.Description) { SubClause = StripAliasPrefix(c.SubClause, alias) },
             GroupClause g => new GroupClause(g.Operator, g.Children.Select(ch => StripAliasPrefix(ch, alias)!).ToList(), g.Description) {
                 SubClause = StripAliasPrefix(g.SubClause, alias)
             },
-            _ => clause
+            var _ => clause
         };
     }
 
@@ -426,23 +401,22 @@ public sealed class RootQueryService<TContext>(
         // Do not use `q is IOrderedQueryable` — EF DbSet implements that interface even before OrderBy.
         var methodName = (alreadyOrdered, direction) switch {
             (false, SortDirection.Asc) => nameof(Queryable.OrderBy),
-            (false, _) => nameof(Queryable.OrderByDescending),
+            (false, var _) => nameof(Queryable.OrderByDescending),
             (true, SortDirection.Asc) => nameof(Queryable.ThenBy),
-            (true, _) => nameof(Queryable.ThenByDescending)
+            (true, var _) => nameof(Queryable.ThenByDescending)
         };
 
         var result = typeof(Queryable).GetMethods()
             .First(m => m.Name == methodName && m.GetParameters().Length == 2)
             .MakeGenericMethod(typeof(TEntity), prop.Type)
             .Invoke(null, [q, keySelector])!;
+
         return (IQueryable<TEntity>)result;
     }
 
     private static async Task<int> CountAsync(IQueryable source, Type clrType, CancellationToken ct)
     {
-        var method = typeof(EntityFrameworkQueryableExtensions).GetMethods()
-            .First(m => m.Name == "CountAsync" && m.GetParameters().Length == 2)
-            .MakeGenericMethod(clrType);
+        var method = typeof(EntityFrameworkQueryableExtensions).GetMethods().First(m => m.Name == "CountAsync" && m.GetParameters().Length == 2).MakeGenericMethod(clrType);
         var task = (Task)method.Invoke(null, [source, ct])!;
         await task.ConfigureAwait(false);
         return (int)task.GetType().GetProperty("Result")!.GetValue(task)!;
@@ -457,43 +431,36 @@ public sealed class RootQueryService<TContext>(
             registry.TryGet(join.EntityType, out var joinEntry);
             var joinAlias = join.Alias.Trim();
             aliases[joinAlias] = joinEntry!;
-
             var onPlans = join.On.Select(o => {
-                var (fa, fp) = Split(o.From);
-                var (ta, tp) = Split(o.To);
-                // Normalize so Right is the join being added when possible
-                string leftAlias, rightAlias;
-                PropertyInfo leftProp, rightProp;
-                if (string.Equals(ta, joinAlias, StringComparison.OrdinalIgnoreCase)) {
-                    leftAlias = fa;
-                    rightAlias = ta;
-                    aliases[fa].TryGetProperty(fp, out leftProp!);
-                    aliases[ta].TryGetProperty(tp, out rightProp!);
-                }
-                else if (string.Equals(fa, joinAlias, StringComparison.OrdinalIgnoreCase)) {
-                    leftAlias = ta;
-                    rightAlias = fa;
-                    aliases[ta].TryGetProperty(tp, out leftProp!);
-                    aliases[fa].TryGetProperty(fp, out rightProp!);
-                }
-                else {
-                    leftAlias = fa;
-                    rightAlias = ta;
-                    aliases[fa].TryGetProperty(fp, out leftProp!);
-                    aliases[ta].TryGetProperty(tp, out rightProp!);
-                }
+                    var (fa, fp) = Split(o.From);
+                    var (ta, tp) = Split(o.To);
+                    // Normalize so Right is the join being added when possible
+                    string leftAlias, rightAlias;
+                    PropertyInfo leftProp, rightProp;
+                    if (string.Equals(ta, joinAlias, StringComparison.OrdinalIgnoreCase)) {
+                        leftAlias = fa;
+                        rightAlias = ta;
+                        aliases[fa].TryGetProperty(fp, out leftProp!);
+                        aliases[ta].TryGetProperty(tp, out rightProp!);
+                    }
+                    else if (string.Equals(fa, joinAlias, StringComparison.OrdinalIgnoreCase)) {
+                        leftAlias = ta;
+                        rightAlias = fa;
+                        aliases[ta].TryGetProperty(tp, out leftProp!);
+                        aliases[fa].TryGetProperty(fp, out rightProp!);
+                    }
+                    else {
+                        leftAlias = fa;
+                        rightAlias = ta;
+                        aliases[fa].TryGetProperty(fp, out leftProp!);
+                        aliases[ta].TryGetProperty(tp, out rightProp!);
+                    }
 
-                return new RootQueryOnPlan(leftAlias, leftProp, rightAlias, rightProp);
-            }).ToList();
+                    return new RootQueryOnPlan(leftAlias, leftProp, rightAlias, rightProp);
+                })
+                .ToList();
 
-            joins.Add(
-                new(
-                    joinAlias,
-                    join.EntityType,
-                    string.IsNullOrWhiteSpace(join.As) ? joinAlias : join.As.Trim(),
-                    join.Type,
-                    onPlans,
-                    join.Query));
+            joins.Add(new(joinAlias, join.EntityType, string.IsNullOrWhiteSpace(join.As) ? joinAlias : join.As.Trim(), join.Type, onPlans, join.Query));
         }
 
         var specs = new List<RootQuerySelectSpec>();
@@ -511,9 +478,9 @@ public sealed class RootQueryService<TContext>(
             specs.Add(new(path, alias, propName, prop!, isFrom, joinResultName));
         }
 
-        var pk = fromEntry.PrimaryKey?.Properties.FirstOrDefault()?.PropertyInfo
-            ?? fromEntry.ClrType.GetProperty("Id", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
-            ?? throw new InvalidOperationException($"From entity '{fromEntry.ClrType.Name}' has no primary key for fan-out collapse.");
+        var pk = fromEntry.PrimaryKey?.Properties.FirstOrDefault()?.PropertyInfo ??
+            fromEntry.ClrType.GetProperty("Id", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase) ??
+            throw new InvalidOperationException($"From entity '{fromEntry.ClrType.Name}' has no primary key for fan-out collapse.");
 
         var typeNames = new[] { fromEntry.ClrType.Name }.Concat(joins.Select(j => j.EntityTypeName)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
         return new(fromAlias, pk, specs, joins, typeNames);
@@ -546,11 +513,7 @@ public sealed class RootQueryService<TContext>(
 
     private static string[] BuildTags(RootQueryEntityRegistry registry, RootQueryShapePlan plan)
     {
-        var tags = new HashSet<string>(StringComparer.Ordinal) {
-            QueryCacheTagBuilder.QueryScopeTag,
-            "queryroot",
-            "entities"
-        };
+        var tags = new HashSet<string>(StringComparer.Ordinal) { QueryCacheTagBuilder.QueryScopeTag, "queryroot", "entities" };
         foreach (var name in plan.EntityTypeNames) {
             if (registry.TryGet(name, out var e))
                 tags.Add(QueryCacheTagBuilder.EntityTypeTag(e.ClrType));

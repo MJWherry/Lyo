@@ -806,13 +806,11 @@ public class QueryService<TContext>(
     private List<ApiError> ValidateCommonQueryGuardrails(QueryConcreteReq queryRequest)
     {
         var errors = new List<ApiError>();
-        if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount) {
+        if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount)
             errors.Add(new(ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
-        }
 
-        if (queryRequest.Keys.Count > queryOptions.MaxKeySetCount) {
+        if (queryRequest.Keys.Count > queryOptions.MaxKeySetCount)
             errors.Add(new(ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
-        }
 
         errors.AddRange(ValidateIncludePageSizeGuardrail(queryRequest.Amount, queryRequest.Include.Count));
         return errors;
@@ -835,9 +833,8 @@ public class QueryService<TContext>(
     private List<ApiError> ValidateProjectedQueryGuardrails(ProjectionQueryReq queryRequest)
     {
         var errors = new List<ApiError>();
-        if (queryRequest.Select.Count > queryOptions.MaxSelectFieldCount) {
+        if (queryRequest.Select.Count > queryOptions.MaxSelectFieldCount)
             errors.Add(new(ApiErrorCodes.InvalidQuery, $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
-        }
 
         if (queryRequest.ComputedFields.Count > queryOptions.MaxComputedFieldCount) {
             errors.Add(

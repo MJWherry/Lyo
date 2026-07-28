@@ -168,8 +168,7 @@ public abstract class FileStorageServiceBase
     protected void RaiseFileMetadataRetrieved(Guid fileId, FileStoreSnapshot snapshot) => FileMetadataRetrieved?.Invoke(this, new(fileId, snapshot));
 
     /// <summary>Raises <see cref="FileMoved" /> after a successful path-prefix relocate.</summary>
-    protected void RaiseFileMoved(Guid fileId, FileStoreSnapshot snapshot, string? previousPathPrefix)
-        => FileMoved?.Invoke(this, new(fileId, snapshot, previousPathPrefix));
+    protected void RaiseFileMoved(Guid fileId, FileStoreSnapshot snapshot, string? previousPathPrefix) => FileMoved?.Invoke(this, new(fileId, snapshot, previousPathPrefix));
 
     /// <summary>Raises <see cref="FileRenamed" /> after a successful display-name update.</summary>
     protected void RaiseFileRenamed(Guid fileId, FileStoreSnapshot snapshot, string? previousOriginalFileName)
@@ -199,11 +198,9 @@ public abstract class FileStorageServiceBase
     {
         ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIfNullOrWhiteSpace(request.OriginalFileName, "OriginalFileName is required for rename.");
-
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot rename file {fileId}; it is awaiting direct-upload finalize.");
-
         if (string.Equals(meta.OriginalFileName, request.OriginalFileName, StringComparison.Ordinal))
             return meta;
 
@@ -218,6 +215,7 @@ public abstract class FileStorageServiceBase
                         FileAuditEventType.Rename, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
                         meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
                 .ConfigureAwait(false);
+
             throw;
         }
     }

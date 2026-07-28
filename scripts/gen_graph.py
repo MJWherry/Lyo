@@ -10,74 +10,24 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
+import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from lyo_tooling.dotnet import (  # noqa: E402
+    REPO_ROOT,
+    framework_label,
+    load_central_package_versions,
+    normalize_nuget_version,
+    parse_msbuild_xml,
+)
+
 SLNX = REPO_ROOT / "Lyo.Net" / "Lyo.slnx"
 OUT_HTML = REPO_ROOT / "docs" / "Lyo.ProjectGraph.html"
-NS_RE = re.compile(r"\sxmlns=\"[^\"]+\"")
-
-# Central Package Management: csproj PackageReference entries are version-less; versions live
-# in this props file as ranges (e.g. `[1.2.3,)`) and are resolved from here.
-CENTRAL_PACKAGES_PROPS = REPO_ROOT / "Lyo.Net" / "Directory.Packages.props"
-
-# Match `'$(TargetFramework)' == 'netstandard2.0'` and friends.
-# The closing `'` after `)` is optional to stay tolerant of variants.
-_TFM_EQ_RE = re.compile(
-    r"\$\(\s*TargetFramework\s*\)\s*'?\s*==\s*'?([\w.+-]+)'?"
-)
-_TFM_NEQ_RE = re.compile(
-    r"\$\(\s*TargetFramework\s*\)\s*'?\s*!=\s*'?([\w.+-]+)'?"
-)
-
-
-def normalize_nuget_version(version: str) -> str:
-    """Reduce a NuGet range to its declared minimum ('[1.2.3,)' / '[1.2.3,2.0.0)' -> '1.2.3').
-
-    Exact pins ('5.0.0') and floating versions ('2.*') pass through unchanged.
-    """
-    v = version.strip()
-    if v.startswith(("[", "(")):
-        lower = v[1:].split(",", 1)[0].strip().rstrip("])")
-        return lower or v
-    return v
-
-
-def load_central_package_versions() -> dict[str, str]:
-    """Package -> declared minimum version from Directory.Packages.props."""
-    if not CENTRAL_PACKAGES_PROPS.is_file():
-        print(f"warning: {CENTRAL_PACKAGES_PROPS} not found; package versions will be blank.")
-        return {}
-    try:
-        root = ET.fromstring(NS_RE.sub("", CENTRAL_PACKAGES_PROPS.read_text(encoding="utf-8"), count=1))
-    except ET.ParseError as exc:
-        print(f"warning: could not parse {CENTRAL_PACKAGES_PROPS}: {exc}")
-        return {}
-    versions: dict[str, str] = {}
-    for node in root.iter("PackageVersion"):
-        name = node.attrib.get("Include")
-        version = node.attrib.get("Version")
-        if name and version:
-            versions[name] = normalize_nuget_version(version)
-    return versions
-
-
-def framework_label(condition: str) -> str:
-    """Reduce an MSBuild Condition string to a short framework label."""
-    if not condition:
-        return "all"
-    m = _TFM_EQ_RE.search(condition)
-    if m:
-        return m.group(1)
-    m = _TFM_NEQ_RE.search(condition)
-    if m:
-        return f"!{m.group(1)}"
-    short = condition.strip().strip("'\"")
-    return short[:40] + ("..." if len(short) > 40 else "")
 
 
 # ---------------------------------------------------------------------------
@@ -97,8 +47,7 @@ class Project:
 
 
 def load_slnx_projects() -> list[Project]:
-    text = NS_RE.sub("", SLNX.read_text(encoding="utf-8"), count=1)
-    root = ET.fromstring(text)
+    root = parse_msbuild_xml(SLNX)
     base = SLNX.parent
     projects: list[Project] = []
     for folder in root.iter("Folder"):
@@ -120,9 +69,8 @@ def load_slnx_projects() -> list[Project]:
 def parse_refs(p: Project, central_versions: dict[str, str]) -> None:
     if not p.abs_path.exists():
         return
-    text = NS_RE.sub("", p.abs_path.read_text(encoding="utf-8"), count=1)
     try:
-        root = ET.fromstring(text)
+        root = parse_msbuild_xml(p.abs_path)
     except ET.ParseError:
         return
     seen: set[str] = set()

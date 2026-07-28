@@ -81,4 +81,5 @@ Binding examples: **`CacheOptions:Payload:AutoCompress`**, **`CacheOptions:Paylo
 **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to use the host’s **`JsonOptions`** (falling back to shared defaults). That keeps cached query payloads aligned
 with REST JSON for **`QueryConcreteReq`** / **`ProjectionQueryReq`** shapes.
 
-See the Lyo.Api README *Query result caching* section for **`QueryOptions:CacheQueryResultsAsUtf8Payload`** and how **`POST …/QueryConcrete`** and **`POST …/QueryProject`** both honor it.
+See the Lyo.Api README *Query result caching* section for **`QueryOptions:CacheQueryResultsAsUtf8Payload`** and how **`POST …/QueryConcrete`** and **`POST …/QueryProject`** both
+honor it.

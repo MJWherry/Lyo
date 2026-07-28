@@ -9,7 +9,7 @@ public sealed class ReportDefinitionReq
 
     public string? Description { get; set; }
 
-    /// <summary>Serialized report composition JSON (<see cref="Models.Report{T}"/>).</summary>
+    /// <summary>Serialized report composition JSON (<see cref="Models.Report{T}" />).</summary>
     public string ReportDataJson { get; set; } = null!;
 
     public string? Tags { get; set; }

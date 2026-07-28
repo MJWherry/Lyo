@@ -13,8 +13,6 @@ public class JobRunParameterExtensionsTests
         Second = 2
     }
 
-    public sealed record SamplePayload(string Name, int Count);
-
     private static IReadOnlyList<JobRunParameterRes> Params(params (string Key, string? Value)[] entries)
         => entries.Select(e => new JobRunParameterRes(Guid.NewGuid(), Guid.NewGuid(), e.Key, JobParameterType.String, e.Value, null, null, true)).ToList();
 
@@ -141,7 +139,7 @@ public class JobRunParameterExtensionsTests
     public void GetAs_JsonParameter_DeserializesComplexType()
     {
         var parameters = Params(("Payload", """{"Name":"abc","Count":3}"""));
-        Assert.Equal(new SamplePayload("abc", 3), parameters.GetAs<SamplePayload>("Payload"));
+        Assert.Equal(new("abc", 3), parameters.GetAs<SamplePayload>("Payload"));
     }
 
     [Fact]
@@ -182,7 +180,7 @@ public class JobRunParameterExtensionsTests
     public void Results_GetAs_JsonValue_Deserializes()
     {
         var results = Results(("Payload", """{"Name":"x","Count":1}"""));
-        Assert.Equal(new SamplePayload("x", 1), results.GetAs<SamplePayload>("Payload"));
+        Assert.Equal(new("x", 1), results.GetAs<SamplePayload>("Payload"));
     }
 
     // ---- JobRunRes delegation ----
@@ -190,24 +188,18 @@ public class JobRunParameterExtensionsTests
     [Fact]
     public void JobRunRes_GetParameterValueAs_DelegatesToExtensions()
     {
-        var run = new JobRunRes {
-            Id = Guid.NewGuid(),
-            JobRunParameters = Params(("N", "42"), ("Payload", """{"Name":"abc","Count":3}"""))
-        };
-
+        var run = new JobRunRes { Id = Guid.NewGuid(), JobRunParameters = Params(("N", "42"), ("Payload", """{"Name":"abc","Count":3}""")) };
         Assert.Equal(42, run.GetParameterValueAs<int>("n"));
-        Assert.Equal(new SamplePayload("abc", 3), run.GetParameterValueAs<SamplePayload>("Payload"));
+        Assert.Equal(new("abc", 3), run.GetParameterValueAs<SamplePayload>("Payload"));
     }
 
     [Fact]
     public void JobRunRes_GetResultValueAs_DelegatesToExtensions()
     {
-        var run = new JobRunRes {
-            Id = Guid.NewGuid(),
-            JobRunResults = Results(("Result", "Success"), ("CreateCount", "5"))
-        };
-
+        var run = new JobRunRes { Id = Guid.NewGuid(), JobRunResults = Results(("Result", "Success"), ("CreateCount", "5")) };
         Assert.Equal("Success", run.GetResultValueAs<string?>("Result"));
         Assert.Equal(5, run.GetResultValueAs<int?>("CreateCount"));
     }
+
+    public sealed record SamplePayload(string Name, int Count);
 }

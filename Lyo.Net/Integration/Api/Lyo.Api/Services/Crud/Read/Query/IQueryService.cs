@@ -8,7 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
-/// <summary>Query and get operations: filtered/sorted/paged <see cref="QueryConcreteReq" />, projected <see cref="ProjectionQueryReq" />, and single-entity loads with optional includes.</summary>
+/// <summary>
+/// Query and get operations: filtered/sorted/paged <see cref="QueryConcreteReq" />, projected <see cref="ProjectionQueryReq" />, and single-entity loads with optional
+/// includes.
+/// </summary>
 public interface IQueryService<TContext>
     where TContext : DbContext
 {

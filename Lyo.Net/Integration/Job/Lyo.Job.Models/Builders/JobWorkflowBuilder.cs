@@ -28,15 +28,17 @@ public class JobWorkflowBuilder
         string? parametersJson = null,
         bool enabled = true)
     {
-        _workflow.CreateSteps.Add(new() {
-            JobDefinitionId = jobDefinitionId,
-            StepName = stepName,
-            StepOrder = stepOrder,
-            DependsOnStepIds = dependsOnStepIds,
-            FailurePolicy = failurePolicy,
-            ParametersJson = parametersJson,
-            Enabled = enabled
-        });
+        _workflow.CreateSteps.Add(
+            new() {
+                JobDefinitionId = jobDefinitionId,
+                StepName = stepName,
+                StepOrder = stepOrder,
+                DependsOnStepIds = dependsOnStepIds,
+                FailurePolicy = failurePolicy,
+                ParametersJson = parametersJson,
+                Enabled = enabled
+            });
+
         return this;
     }
 

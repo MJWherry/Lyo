@@ -3,14 +3,13 @@ using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
 #if NETSTANDARD2_0
-using Lyo.Common;
 #endif
 
 namespace Lyo.Xlsx;
 
 /// <summary>
-/// Streams worksheets one at a time into a single XLSX package via <see cref="OpenXmlStreamWriter" />; disposing finalizes the workbook (and closes the
-/// destination stream only when this session owns it, i.e. it was created from a file path).
+/// Streams worksheets one at a time into a single XLSX package via <see cref="OpenXmlStreamWriter" />; disposing finalizes the workbook (and closes the destination stream
+/// only when this session owns it, i.e. it was created from a file path).
 /// </summary>
 internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
 {

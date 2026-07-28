@@ -67,10 +67,7 @@ public interface IXlsxService
     /// <summary>Serializes a Lyo data table to XLSX bytes.</summary>
     byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable);
 
-    /// <summary>
-    /// Opens an incremental multi-sheet writing session on <paramref name="xlsxStream" />; dispose the session to finalize the workbook. The stream is
-    /// left open for the caller.
-    /// </summary>
+    /// <summary>Opens an incremental multi-sheet writing session on <paramref name="xlsxStream" />; dispose the session to finalize the workbook. The stream is left open for the caller.</summary>
     IXlsxDocumentWriter CreateDocumentWriter(Stream xlsxStream);
 
     /// <summary>Opens an incremental multi-sheet writing session on <paramref name="xlsxFilePath" />; dispose the session to finalize and close the file.</summary>
@@ -410,7 +407,13 @@ public interface IXlsxService
     Task<IReadOnlyList<string>> SplitXlsxByRowsAsync(string xlsxFilePath, int rowsPerFile, string outputDirectory, string? sheetName = null, CancellationToken ct = default);
 
     /// <summary>Asynchronously splits one worksheet from a workbook stream into multiple output streams.</summary>
-    Task SplitXlsxByRowsAsync(Stream input, int rowsPerFile, Func<int, Stream> outputStreamFactory, string? sheetName = null, bool leaveOpen = false, CancellationToken ct = default);
+    Task SplitXlsxByRowsAsync(
+        Stream input,
+        int rowsPerFile,
+        Func<int, Stream> outputStreamFactory,
+        string? sheetName = null,
+        bool leaveOpen = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously splits one worksheet from workbook bytes into multiple XLSX payloads.</summary>
     Task<IReadOnlyList<byte[]>> SplitXlsxBytesByRowsAsync(byte[] xlsxBytes, int rowsPerFile, string? sheetName = null, CancellationToken ct = default);
@@ -419,7 +422,12 @@ public interface IXlsxService
     Task MergeXlsxFilesAsync(IEnumerable<string> inputFiles, string outputFile, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default);
 
     /// <summary>Asynchronously merges multiple XLSX streams into one output stream.</summary>
-    Task MergeXlsxStreamsAsync(IEnumerable<Stream> inputs, Stream output, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, bool leaveOpen = false, CancellationToken ct = default);
+    Task MergeXlsxStreamsAsync(
+        IEnumerable<Stream> inputs,
+        Stream output,
+        XlsxMergeMode mode = XlsxMergeMode.PreserveSheets,
+        bool leaveOpen = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously merges multiple XLSX byte arrays into one workbook payload.</summary>
     Task<byte[]> MergeXlsxBytesAsync(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default);

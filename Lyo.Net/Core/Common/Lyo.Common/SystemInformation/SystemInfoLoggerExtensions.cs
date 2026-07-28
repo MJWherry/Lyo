@@ -37,17 +37,21 @@ public static class SystemInfoLoggerExtensions
         if (!logger.IsEnabled(level))
             return;
 
-        logger.Log(level,
-            "Hardware: {CpuModel} | {ProcessorCount} logical cores | {ProcessArchitecture} process on {OsArchitecture} OS | {TotalPhysicalMemoryBytes} bytes RAM",
+        logger.Log(
+            level, "Hardware: {CpuModel} | {ProcessorCount} logical cores | {ProcessArchitecture} process on {OsArchitecture} OS | {TotalPhysicalMemoryBytes} bytes RAM",
             hardware.CpuModel ?? "Unknown CPU", hardware.ProcessorCount, hardware.ProcessArchitecture, hardware.OsArchitecture, hardware.TotalPhysicalMemoryBytes);
 
-        foreach (var drive in hardware.Drives)
-            logger.Log(level, "Drive {DriveName} ({DriveFormat}, {DriveType}): {AvailableFreeSpaceBytes} free of {TotalSizeBytes} bytes",
-                drive.Name, drive.Format, drive.Type, drive.AvailableFreeSpaceBytes, drive.TotalSizeBytes);
+        foreach (var drive in hardware.Drives) {
+            logger.Log(
+                level, "Drive {DriveName} ({DriveFormat}, {DriveType}): {AvailableFreeSpaceBytes} free of {TotalSizeBytes} bytes", drive.Name, drive.Format, drive.Type,
+                drive.AvailableFreeSpaceBytes, drive.TotalSizeBytes);
+        }
 
-        foreach (var monitor in hardware.Monitors)
-            logger.Log(level, "Monitor {Connector} ({ManufacturerId}, {CurrentResolution}): {MonitorModel}",
-                monitor.Connector, monitor.ManufacturerId ?? "unknown", monitor.CurrentResolution ?? "unknown", monitor.Model ?? "Unknown model");
+        foreach (var monitor in hardware.Monitors) {
+            logger.Log(
+                level, "Monitor {Connector} ({ManufacturerId}, {CurrentResolution}): {MonitorModel}", monitor.Connector, monitor.ManufacturerId ?? "unknown",
+                monitor.CurrentResolution ?? "unknown", monitor.Model ?? "Unknown model");
+        }
     }
 
     /// <summary>Logs an operating system / runtime / process summary line at <paramref name="level" />.</summary>
@@ -61,10 +65,11 @@ public static class SystemInfoLoggerExtensions
         if (!logger.IsEnabled(level))
             return;
 
-        logger.Log(level,
+        logger.Log(
+            level,
             "Software: {OsDescription} | {FrameworkDescription} | RID {RuntimeIdentifier} | CLR {ClrVersion} | {ProcessBitness} process | ServerGC {IsServerGC} | PID {ProcessId} ({ProcessName}), up {ProcessUptime}",
-            software.OsDescription, software.FrameworkDescription, software.RuntimeIdentifier ?? "unknown", software.ClrVersion,
-            software.Is64BitProcess ? "64-bit" : "32-bit", software.IsServerGC, software.ProcessId, software.ProcessName, software.ProcessUptime);
+            software.OsDescription, software.FrameworkDescription, software.RuntimeIdentifier ?? "unknown", software.ClrVersion, software.Is64BitProcess ? "64-bit" : "32-bit",
+            software.IsServerGC, software.ProcessId, software.ProcessName, software.ProcessUptime);
     }
 
     /// <summary>Logs a network summary line plus one line per interface (with addresses) at <paramref name="level" />.</summary>
@@ -78,14 +83,17 @@ public static class SystemInfoLoggerExtensions
         if (!logger.IsEnabled(level))
             return;
 
-        logger.Log(level, "Network: host {HostName} | network available {IsNetworkAvailable} | {InterfaceCount} interfaces",
-            network.HostName, network.IsNetworkAvailable, network.Interfaces.Count);
+        logger.Log(
+            level, "Network: host {HostName} | network available {IsNetworkAvailable} | {InterfaceCount} interfaces", network.HostName, network.IsNetworkAvailable,
+            network.Interfaces.Count);
 
-        foreach (var nic in network.Interfaces)
-            logger.Log(level,
+        foreach (var nic in network.Interfaces) {
+            logger.Log(
+                level,
                 "Interface {InterfaceName} ({InterfaceType}, {OperationalStatus}, {SpeedBitsPerSecond} bps, MAC {MacAddress}): IP [{UnicastAddresses}], gateway [{GatewayAddresses}], DNS [{DnsAddresses}]",
-                nic.Name, nic.InterfaceType, nic.OperationalStatus, nic.SpeedBitsPerSecond, nic.MacAddress ?? "none",
-                string.Join(", ", nic.UnicastAddresses), string.Join(", ", nic.GatewayAddresses), string.Join(", ", nic.DnsAddresses));
+                nic.Name, nic.InterfaceType, nic.OperationalStatus, nic.SpeedBitsPerSecond, nic.MacAddress ?? "none", string.Join(", ", nic.UnicastAddresses),
+                string.Join(", ", nic.GatewayAddresses), string.Join(", ", nic.DnsAddresses));
+        }
     }
 
     /// <summary>Logs an environment summary line plus the (already redacted) environment variables at <paramref name="level" />.</summary>
@@ -99,12 +107,14 @@ public static class SystemInfoLoggerExtensions
         if (!logger.IsEnabled(level))
             return;
 
-        logger.Log(level,
+        logger.Log(
+            level,
             "Environment: machine {MachineName} | user {UserDomainName}\\{UserName} | cwd {CurrentDirectory} | culture {CultureName} | tz {TimeZoneId} (UTC{UtcOffset}) | system uptime {SystemUptime}",
-            environment.MachineName, environment.UserDomainName, environment.UserName, environment.CurrentDirectory, environment.CultureName,
-            environment.TimeZoneId, environment.UtcOffset, environment.SystemUptime);
+            environment.MachineName, environment.UserDomainName, environment.UserName, environment.CurrentDirectory, environment.CultureName, environment.TimeZoneId,
+            environment.UtcOffset, environment.SystemUptime);
 
-        logger.Log(level, "Environment variables: {EnvironmentVariables}",
+        logger.Log(
+            level, "Environment variables: {EnvironmentVariables}",
             string.Join(", ", environment.Variables.OrderBy(v => v.Key, StringComparer.OrdinalIgnoreCase).Select(v => $"{v.Key}={v.Value}")));
     }
 }

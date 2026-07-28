@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Connects <see cref="IJobEventPublisher" /> to the message queue at host startup. Registered automatically by <see cref="Extensions.AddMqJobEventPublisher" /> so API hosts can
-/// enqueue job runs without also running <see cref="Lyo.Job.Scheduler.JobScheduler" /> or a worker.
+/// Connects <see cref="IJobEventPublisher" /> to the message queue at host startup. Registered automatically by <see cref="Extensions.AddMqJobEventPublisher" /> so API hosts
+/// can enqueue job runs without also running <see cref="Lyo.Job.Scheduler.JobScheduler" /> or a worker.
 /// </summary>
 internal sealed class JobEventPublisherStartupService : IHostedService
 {

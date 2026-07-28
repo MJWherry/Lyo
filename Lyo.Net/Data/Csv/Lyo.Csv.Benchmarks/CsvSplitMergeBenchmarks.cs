@@ -14,11 +14,11 @@ public class CsvSplitMergeBenchmarks
 {
     private readonly CsvService _csv = new();
     private byte[] _bytes = null!;
+    private string _combineOutputPath = null!;
     private string _filePath = null!;
     private string _outputDirectory = null!;
-    private string _combineOutputPath = null!;
-    private IReadOnlyList<byte[]> _splitParts = null!;
     private IReadOnlyList<string> _splitFilePaths = null!;
+    private IReadOnlyList<byte[]> _splitParts = null!;
 
     [Params(1_000, 10_000, 100_000)]
     public int RowCount { get; set; }
@@ -49,7 +49,7 @@ public class CsvSplitMergeBenchmarks
             File.Delete(_combineOutputPath);
 
         if (Directory.Exists(_outputDirectory))
-            Directory.Delete(_outputDirectory, recursive: true);
+            Directory.Delete(_outputDirectory, true);
     }
 
     [Benchmark(Baseline = true)]
@@ -70,10 +70,7 @@ public class CsvSplitMergeBenchmarks
 
     [Benchmark]
     [BenchmarkDescription("Combine split CSV part files on disk into one output file.")]
-    public async Task CombineCsvFiles()
-    {
-        await _csv.CombineCsvFilesAsync(_splitFilePaths, _combineOutputPath).ConfigureAwait(false);
-    }
+    public async Task CombineCsvFiles() => await _csv.CombineCsvFilesAsync(_splitFilePaths, _combineOutputPath).ConfigureAwait(false);
 
     [Benchmark]
     [BenchmarkDescription("Split CSV bytes then combine parts and count parsed rows (round trip).")]

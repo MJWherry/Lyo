@@ -6,8 +6,8 @@ namespace Lyo.Encryption.AesSiv;
 /// <summary>
 /// Per-stream AES-SIV (RFC 5297) cipher for the streaming chunk loop (see <see cref="IAeadStreamCryptor" />). AES-SIV is deterministic and nonce-less, so the stream-supplied
 /// per-chunk value (a 4-byte counter with no random prefix) is fed as associated data to bind each chunk's position while keeping streaming output deterministic for a given key,
-/// plaintext, and chunk size. Stream-level associated data (V2 header AAD) is prepended to the counter inside the same S2V component. The 16-byte synthetic IV travels in the
-/// trailing tag slot expected by the codec (it is reassembled to the RFC 5297 <c>SIV || ciphertext</c> layout internally).
+/// plaintext, and chunk size. Stream-level associated data (V2 header AAD) is prepended to the counter inside the same S2V component. The 16-byte synthetic IV travels in the trailing
+/// tag slot expected by the codec (it is reassembled to the RFC 5297 <c>SIV || ciphertext</c> layout internally).
 /// </summary>
 internal sealed class AesSivStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamCryptor
 {
@@ -46,6 +46,8 @@ internal sealed class AesSivStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamC
         siv.Decrypt(combined, plaintext, ad);
     }
 
+    public void Dispose() => SecurityUtilities.Clear(_key);
+
     /// <summary>Concatenates stream AAD (empty for V1) and the per-chunk counter into one reused S2V associated-data component.</summary>
     private ReadOnlySpan<byte> ComposeAssociatedData(ReadOnlySpan<byte> associatedData, ReadOnlySpan<byte> nonce)
     {
@@ -60,6 +62,4 @@ internal sealed class AesSivStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamC
         nonce.CopyTo(_adBuffer.AsSpan(associatedData.Length));
         return _adBuffer.AsSpan(0, length);
     }
-
-    public void Dispose() => SecurityUtilities.Clear(_key);
 }

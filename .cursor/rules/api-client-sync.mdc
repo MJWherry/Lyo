@@ -1,0 +1,33 @@
+---
+description: When the Lyo API surface changes, update the C#, TypeScript, and Python clients to match
+globs: Lyo.Net/Integration/Api/Lyo.Api/**,Lyo.Net/Integration/Api/Lyo.Api.Models/**
+alwaysApply: false
+---
+
+# Keep API Clients in Sync
+
+When changing the Lyo API surface (endpoints, routes, request/response contracts, query
+models in `Lyo.Api` or `Lyo.Api.Models`), update **all three clients** in the same change:
+
+1. **C#** — `Lyo.Net/Integration/Api/Lyo.Api.Client`
+2. **TypeScript** — `packages/typescript/lyo-api-client` (core) and
+   `packages/typescript/lyo-person-api-client` (Person endpoints, builders, response guards)
+3. **Python** — `packages/python/lyo-api-client` (`lyo_api_client` core and
+   `lyo_person_api_client`: models, builders, guards, `PersonApiClient`)
+
+## What "in sync" means
+
+- New/renamed endpoints get a corresponding method in each client (e.g. the Person Query
+  endpoints `POST /person/QueryConcrete`, `POST /person/QueryProject`, `POST /Query`).
+- Contract changes (fields, `$type` discriminators, casing like `whereClause`) are mirrored
+  in the TS interfaces and the Python dataclasses' `to_dict()` wire format — the Python
+  builders must emit payloads identical to their TS counterparts.
+- Update runtime response guards (`responseGuards.ts` / `guards.py`) when response shapes change.
+- Purely internal API refactors that don't change the wire contract need no client changes.
+
+## Verify
+
+- TS: `npm run build` in both `packages/typescript/*` packages.
+- Python: `pytest` in `packages/python/lyo-api-client` (tests assert TS/Python payload parity,
+  so update the expected payloads in `tests/test_builders.py` alongside contract changes).
+- If a client can't be updated in the same change, say so explicitly rather than skipping it silently.

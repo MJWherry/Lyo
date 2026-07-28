@@ -1,8 +1,8 @@
 namespace Lyo.Exceptions.Models;
 
 /// <summary>
-/// Accumulates field-level validation errors and throws a single <see cref="ValidationException" /> only when errors exist. Avoids hand-building the errors
-/// dictionary and throwing on the first failure.
+/// Accumulates field-level validation errors and throws a single <see cref="ValidationException" /> only when errors exist. Avoids hand-building the errors dictionary and
+/// throwing on the first failure.
 /// </summary>
 /// <example>
 /// <code>
@@ -34,7 +34,7 @@ public sealed class ValidationErrorsBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fieldName);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorMessage);
         if (!_errors.TryGetValue(fieldName, out var messages)) {
-            messages = new List<string>();
+            messages = new();
             _errors[fieldName] = messages;
         }
 
@@ -66,8 +66,7 @@ public sealed class ValidationErrorsBuilder
     public ValidationErrorsBuilder AddIf(bool condition, string fieldName, string errorMessage) => condition ? Add(fieldName, errorMessage) : this;
 
     /// <summary>Returns the accumulated errors as the dictionary shape used by <see cref="ValidationException.Errors" />.</summary>
-    public Dictionary<string, IReadOnlyList<string>> Build()
-        => _errors.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value.AsReadOnly());
+    public Dictionary<string, IReadOnlyList<string>> Build() => _errors.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value.AsReadOnly());
 
     /// <summary>Throws a <see cref="ValidationException" /> containing all accumulated errors when any exist; otherwise does nothing.</summary>
     /// <param name="message">The exception message. A default message is used when null.</param>

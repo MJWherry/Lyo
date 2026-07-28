@@ -17,15 +17,15 @@ Builders follow **method-chaining** ergonomics so gateways/tests avoid object in
 Concrete result records emitted by `Lyo.Api` endpoints (see [`Common/Response/Result.cs`](Common/Response/Result.cs) and [
 `Common/Response/ResultFactory.cs`](Common/Response/ResultFactory.cs)). There is no generic `ApiResponse<T>` / `BulkApiResponse<T>` — each operation has its own typed envelope:
 
-| Envelope                                          | Returned by                 | Notable fields                                                                                                 |
-|---------------------------------------------------|-----------------------------|----------------------------------------------------------------------------------------------------------------|
-| **`QueryRes<T>`**                                 | `POST {route}/QueryConcrete`        | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).    |
-| **`ProjectedQueryRes<T>`**                        | `POST {route}/QueryProject` | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`.   |
-| **`CreateResult<T>`** / **`CreateBulkResult<T>`** | Create + Bulk create        | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`.                             |
-| **`UpdateResult<T>`** / **`UpdateBulkResult<T>`** | Update + Bulk update        | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`.         |
-| **`PatchResult<T>`** / **`PatchBulkResult<T>`**   | Patch + Bulk patch          | `Result` enum, `OldData`/`NewData`, `UpdatedProperties`; `IsSuccess` derived from `Updated`/`NoChange`.        |
-| **`UpsertResult<T>`** / **`UpsertBulkResult<T>`** | Upsert + Bulk upsert        | `Result` enum (`Created`/`Updated`/`NoChange`/`Failed`); bulk includes `Created/Updated/NoChange/FailedCount`. |
-| **`DeleteResult<T>`** / **`DeleteBulkResult<T>`** | Delete + Bulk delete        | `IsSuccess`, `Data` (deleted row), `Error`.                                                                    |
+| Envelope                                          | Returned by                  | Notable fields                                                                                                 |
+|---------------------------------------------------|------------------------------|----------------------------------------------------------------------------------------------------------------|
+| **`QueryRes<T>`**                                 | `POST {route}/QueryConcrete` | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).    |
+| **`ProjectedQueryRes<T>`**                        | `POST {route}/QueryProject`  | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`.   |
+| **`CreateResult<T>`** / **`CreateBulkResult<T>`** | Create + Bulk create         | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`.                             |
+| **`UpdateResult<T>`** / **`UpdateBulkResult<T>`** | Update + Bulk update         | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`.         |
+| **`PatchResult<T>`** / **`PatchBulkResult<T>`**   | Patch + Bulk patch           | `Result` enum, `OldData`/`NewData`, `UpdatedProperties`; `IsSuccess` derived from `Updated`/`NoChange`.        |
+| **`UpsertResult<T>`** / **`UpsertBulkResult<T>`** | Upsert + Bulk upsert         | `Result` enum (`Created`/`Updated`/`NoChange`/`Failed`); bulk includes `Created/Updated/NoChange/FailedCount`. |
+| **`DeleteResult<T>`** / **`DeleteBulkResult<T>`** | Delete + Bulk delete         | `IsSuccess`, `Data` (deleted row), `Error`.                                                                    |
 
 Use **`ResultFactory.QuerySuccess` / `ProjectedQuerySuccess` / `CreateBulk` / `UpdateBulk` / …`** to build envelopes from CRUD service code — they pre-compute counts, query scores,
 and split success vs failure paths.

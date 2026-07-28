@@ -3,7 +3,10 @@ namespace Lyo.MessageQueue.RabbitMq;
 /// <summary>Consolidated constants for the RabbitMQ message queue library.</summary>
 public static class Constants
 {
-    /// <summary>Consumer dispatch concurrency applied to subscription channels when the queue has no processing limit (0 = unlimited). Bounds handler parallelism per channel without acting as backpressure.</summary>
+    /// <summary>
+    /// Consumer dispatch concurrency applied to subscription channels when the queue has no processing limit (0 = unlimited). Bounds handler parallelism per channel without
+    /// acting as backpressure.
+    /// </summary>
     public const ushort UnlimitedDispatchConcurrency = 32;
 
     /// <summary>Suffix appended to a queue name to derive its companion delay wait queue (TTL + dead-letter pattern).</summary>

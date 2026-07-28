@@ -218,9 +218,8 @@ public sealed class LyoBenchmarkExporter : IExporter
     private static void DescribeGroups(Summary summary, MicroBenchmarkReportBuilder builder)
     {
         var types = summary.BenchmarksCases.Select(c => c.Descriptor.Type).GroupBy(t => t.Name).Select(g => g.First());
-        foreach (var type in types) {
+        foreach (var type in types)
             builder.DescribeGroup(type.Name, type.GetCustomAttribute<BenchmarkDescriptionAttribute>()?.Text, ReadParameterDescriptors(type), ReadDataset(type));
-        }
     }
 
     private static List<ParameterDescriptor> ReadParameterDescriptors(Type type)

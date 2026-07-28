@@ -197,9 +197,7 @@ public sealed class MessageQueueTests
         await mq.ConnectAsync(TestContext.Current.CancellationToken);
         await mq.CreateQueue("throw-test", ct: TestContext.Current.CancellationToken);
         await mq.SendToQueue("throw-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
-        using var worker = new ConfigurableTestQueueWorker(
-            mq, "throw-test", (_, _) => throw new InvalidOperationException("boom"), 3, "throw-test.dlq");
-
+        using var worker = new ConfigurableTestQueueWorker(mq, "throw-test", (_, _) => throw new InvalidOperationException("boom"), 3, "throw-test.dlq");
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await worker.StartAsync(cts.Token);
         IReadOnlyList<QueuePeekMessage> dlq = [];
@@ -222,9 +220,7 @@ public sealed class MessageQueueTests
         await mq.ConnectAsync(TestContext.Current.CancellationToken);
         await mq.CreateQueue("fail-test", ct: TestContext.Current.CancellationToken);
         await mq.SendToQueue("fail-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
-        using var worker = new ConfigurableTestQueueWorker(
-            mq, "fail-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), 3, "fail-test.dlq");
-
+        using var worker = new ConfigurableTestQueueWorker(mq, "fail-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), 3, "fail-test.dlq");
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await worker.StartAsync(cts.Token);
         IReadOnlyList<QueuePeekMessage> dlq = [];
@@ -246,8 +242,7 @@ public sealed class MessageQueueTests
         await mq.CreateQueue("options-test", ct: TestContext.Current.CancellationToken);
         await mq.SendToQueue("options-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         using var worker = new ConfigurableTestQueueWorker(
-            mq, "options-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), null, "options-test.dlq",
-            new QueueWorkerOptions { DefaultMaxRequeueCount = 2, RequeueDelay = null });
+            mq, "options-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), null, "options-test.dlq", new() { DefaultMaxRequeueCount = 2, RequeueDelay = null });
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await worker.StartAsync(cts.Token);
@@ -276,7 +271,7 @@ public sealed class MessageQueueTests
             mq, "delay-test", (_, _) => {
                 attemptTimes.Add(DateTime.UtcNow);
                 return Result<TestRequest>.Failure("nope", "TestFailure");
-            }, 2, "delay-test.dlq", new QueueWorkerOptions { RequeueDelay = TimeSpan.FromMilliseconds(300) });
+            }, 2, "delay-test.dlq", new() { RequeueDelay = TimeSpan.FromMilliseconds(300) });
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         await worker.StartAsync(cts.Token);
@@ -302,7 +297,6 @@ public sealed class MessageQueueTests
         // One enveloped message and one legacy (bare payload) message — both must arrive typed.
         await mq.SendToQueueWithEnvelopeAsync("typed-test", new TestRequest("e1", "enveloped"), options, traceId: "trace-1");
         await mq.SendToQueue("typed-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("l1", "legacy"), options));
-
         var received = new List<(TestRequest Payload, QueueMessageEnvelope<TestRequest>? Envelope)>();
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueueAsync<TestRequest>(
@@ -330,7 +324,6 @@ public sealed class MessageQueueTests
         await mq.CreateQueue("typed-poison-test", ct: TestContext.Current.CancellationToken);
         await mq.SendToQueue("typed-poison-test", Encoding.UTF8.GetBytes("not json at all"));
         await mq.SendToQueue("typed-poison-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("ok", "good"), new JsonSerializerOptions()));
-
         var received = new List<TestRequest>();
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueueAsync<TestRequest>(

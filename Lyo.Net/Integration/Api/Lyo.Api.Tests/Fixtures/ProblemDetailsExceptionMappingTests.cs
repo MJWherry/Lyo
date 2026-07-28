@@ -40,8 +40,7 @@ public class ProblemDetailsExceptionMappingTests
     {
         var ex = new ValidationException(
             new Dictionary<string, IReadOnlyList<string>> {
-                ["Name"] = new List<string> { "Name is required.", "Name is too short." },
-                ["Age"] = new List<string> { "Age must be positive." }
+                ["Name"] = new List<string> { "Name is required.", "Name is too short." }, ["Age"] = new List<string> { "Age must be positive." }
             });
 
         var err = LyoProblemDetailsBuilder.FromException(ex).Build();
@@ -56,9 +55,7 @@ public class ProblemDetailsExceptionMappingTests
     [Fact]
     public void FromException_UnprocessableEntityException_Maps422WithFieldErrors()
     {
-        var ex = new UnprocessableEntityException(
-            new Dictionary<string, IReadOnlyList<string>> { ["Email"] = new List<string> { "Email is already taken." } });
-
+        var ex = new UnprocessableEntityException(new Dictionary<string, IReadOnlyList<string>> { ["Email"] = new List<string> { "Email is already taken." } });
         var err = LyoProblemDetailsBuilder.FromException(ex).Build();
         Assert.Equal(422, err.Status);
         Assert.Single(err.Errors);
@@ -96,8 +93,7 @@ public class ProblemDetailsExceptionMappingTests
     [InlineData(503, Constants.ApiErrorCodes.ServiceUnavailable)]
     [InlineData(504, Constants.ApiErrorCodes.GatewayTimeout)]
     [InlineData(418, Constants.ApiErrorCodes.Unknown)]
-    public void MapHttpStatusToErrorCode_MapsExpectedCodes(int status, string expectedCode)
-        => Assert.Equal(expectedCode, LyoProblemDetails.MapHttpStatusToErrorCode(status));
+    public void MapHttpStatusToErrorCode_MapsExpectedCodes(int status, string expectedCode) => Assert.Equal(expectedCode, LyoProblemDetails.MapHttpStatusToErrorCode(status));
 
     [Theory]
     [InlineData(Constants.ApiErrorCodes.Unauthorized, 401)]
@@ -108,6 +104,5 @@ public class ProblemDetailsExceptionMappingTests
     [InlineData(Constants.ApiErrorCodes.ServiceUnavailable, 503)]
     [InlineData(Constants.ApiErrorCodes.GatewayTimeout, 504)]
     [InlineData(Constants.ApiErrorCodes.ValidationFailed, 400)]
-    public void MapErrorCodeToHttpStatus_MapsNewCodes(string code, int expectedStatus)
-        => Assert.Equal(expectedStatus, LyoProblemDetails.MapErrorCodeToHttpStatus(code));
+    public void MapErrorCodeToHttpStatus_MapsNewCodes(string code, int expectedStatus) => Assert.Equal(expectedStatus, LyoProblemDetails.MapErrorCodeToHttpStatus(code));
 }

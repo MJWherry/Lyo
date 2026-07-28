@@ -7,7 +7,7 @@ using Lyo.Reporting.Postgres.Database;
 
 namespace Lyo.Reporting.Postgres.Mapping;
 
-/// <summary>Hand-rolled <see cref="ILyoMapper"/> for reporting Req/entity/Res.</summary>
+/// <summary>Hand-rolled <see cref="ILyoMapper" /> for reporting Req/entity/Res.</summary>
 public sealed class ReportingLyoMapper : ILyoMapper
 {
     public TResult Map<TResult>(object source)
@@ -20,7 +20,7 @@ public sealed class ReportingLyoMapper : ILyoMapper
             ReportDefinitionParameter e when typeof(TResult) == typeof(ReportDefinitionParameterRes) => (TResult)(object)ToRes(e),
             ReportGeneration e when typeof(TResult) == typeof(ReportGenerationRes) => (TResult)(object)ToRes(e),
             ReportGenerationParameter e when typeof(TResult) == typeof(ReportGenerationParameterRes) => (TResult)(object)ToRes(e),
-            _ => throw Unmapped(source.GetType(), typeof(TResult))
+            var _ => throw Unmapped(source.GetType(), typeof(TResult))
         };
 
     public void Map<TSource, TDest>(TSource source, TDest destination)
@@ -89,37 +89,13 @@ public sealed class ReportingLyoMapper : ILyoMapper
 
     internal static ReportDefinitionRes ToRes(ReportDefinition e)
         => new(
-            e.Id,
-            e.Name,
-            e.Description,
-            e.ReportDataJson,
-            e.Tags,
-            e.IsActive,
-            ParseFormatNullable(e.DefaultFormat),
-            e.DefaultFileName,
-            e.DefaultPathPrefix,
-            e.GenerationProfileKey,
-            e.CreatedBy,
-            e.CreatedTimestamp,
-            e.UpdatedTimestamp,
-            e.Parameters.Select(ToRes).ToList());
+            e.Id, e.Name, e.Description, e.ReportDataJson, e.Tags, e.IsActive, ParseFormatNullable(e.DefaultFormat), e.DefaultFileName, e.DefaultPathPrefix, e.GenerationProfileKey,
+            e.CreatedBy, e.CreatedTimestamp, e.UpdatedTimestamp, e.Parameters.Select(ToRes).ToList());
 
     internal static ReportDefinitionParameterRes ToRes(ReportDefinitionParameter e)
         => new(
-            e.Id,
-            e.ReportDefinitionId,
-            e.Key,
-            e.Description,
-            ParseParameterType(e.Type),
-            MaskParameterValue(e.Value, e.EncryptedValue),
-            MaskParameterEncryptedValue(e.EncryptedValue),
-            e.AllowMultiple,
-            e.Required,
-            e.ValidationRegex,
-            e.MinLength,
-            e.MaxLength,
-            e.AllowedValues,
-            e.CreatedTimestamp,
+            e.Id, e.ReportDefinitionId, e.Key, e.Description, ParseParameterType(e.Type), MaskParameterValue(e.Value, e.EncryptedValue),
+            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.CreatedTimestamp,
             e.UpdatedTimestamp);
 
     internal static ReportGeneration ReqToNew(ReportGenerationReq req)
@@ -163,30 +139,12 @@ public sealed class ReportingLyoMapper : ILyoMapper
 
     internal static ReportGenerationRes ToRes(ReportGeneration e)
         => new(
-            e.Id,
-            e.ReportDefinitionId,
-            e.ReportDataJson,
-            ParseFormat(e.Format),
-            ParseStatus(e.Status),
-            e.OutputFileId,
-            e.OriginalFileName,
-            e.ContentType,
-            e.ErrorMessage,
-            e.PathPrefix,
-            e.CreatedBy,
-            e.CreatedTimestamp,
-            e.StartedTimestamp,
-            e.FinishedTimestamp,
-            e.Parameters.Select(ToRes).ToList());
+            e.Id, e.ReportDefinitionId, e.ReportDataJson, ParseFormat(e.Format), ParseStatus(e.Status), e.OutputFileId, e.OriginalFileName, e.ContentType, e.ErrorMessage,
+            e.PathPrefix, e.CreatedBy, e.CreatedTimestamp, e.StartedTimestamp, e.FinishedTimestamp, e.Parameters.Select(ToRes).ToList());
 
     internal static ReportGenerationParameterRes ToRes(ReportGenerationParameter e)
         => new(
-            e.Id,
-            e.ReportGenerationId,
-            e.Key,
-            ParseParameterType(e.Type),
-            MaskParameterValue(e.Value, e.EncryptedValue),
-            e.Description,
+            e.Id, e.ReportGenerationId, e.Key, ParseParameterType(e.Type), MaskParameterValue(e.Value, e.EncryptedValue), e.Description,
             MaskParameterEncryptedValue(e.EncryptedValue));
 
     private static ReportFormat ParseFormat(string value) => TypeConversion.EnumOrDefault(value, ReportFormat.Html);
@@ -201,9 +159,7 @@ public sealed class ReportingLyoMapper : ILyoMapper
 
     private static byte[]? MaskParameterEncryptedValue(byte[]? encryptedValue) => encryptedValue is not null ? null : encryptedValue;
 
-    internal static string TruncateCreatedBy(string value)
-        => value.Length > 50 ? value[..50] : value;
+    internal static string TruncateCreatedBy(string value) => value.Length > 50 ? value[..50] : value;
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping registered from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping registered from {source.Name} to {dest.Name}.");
 }

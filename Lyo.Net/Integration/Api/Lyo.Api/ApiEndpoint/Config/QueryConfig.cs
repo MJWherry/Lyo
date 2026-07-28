@@ -25,9 +25,8 @@ public sealed record QueryConfig<TDbEntity>
     public int? MaxComputedTemplateLength { get; init; }
 
     /// <summary>
-    /// Property names (or dotted paths) that projected queries may never select or reference in computed templates.
-    /// A bare name also denies any nested path ending in that name (e.g. <c>EncryptedValue</c> denies <c>Parameters.EncryptedValue</c>).
-    /// Use for sensitive entity columns that response mapping would otherwise mask.
+    /// Property names (or dotted paths) that projected queries may never select or reference in computed templates. A bare name also denies any nested path ending in that name
+    /// (e.g. <c>EncryptedValue</c> denies <c>Parameters.EncryptedValue</c>). Use for sensitive entity columns that response mapping would otherwise mask.
     /// </summary>
     public IReadOnlyCollection<string>? DeniedSelectFields { get; init; }
 }

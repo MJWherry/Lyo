@@ -67,7 +67,7 @@ See [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) for liv
 Results appear in the console and under `BenchmarkDotNet.Artifacts/results/` (Markdown, CSV, HTML). Refresh the HTML dashboard:
 
 ```bash
-python3 scripts/benchmarks/build-manifests.py --encryption-only
+python3 scripts/benchmarks/build_manifests.py --encryption-only
 ```
 
 Optional future runs may add `--exporters json`; v1 reads CSV reports.

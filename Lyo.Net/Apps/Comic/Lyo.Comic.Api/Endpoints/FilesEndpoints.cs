@@ -1,3 +1,4 @@
+using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Storage;
@@ -125,8 +126,7 @@ public static class FilesEndpoints
 
     /// <summary>400 with a <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> body so error responses stay RFC 7807 shaped.</summary>
     private static IResult BadRequestProblem(string message)
-        => Results.BadRequest(
-            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidRequest).WithMessage(message).Build());
+        => Results.BadRequest(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidRequest).WithMessage(message).Build());
 
     private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {

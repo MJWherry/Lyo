@@ -27,6 +27,6 @@ public class SmsMessageQueryFilter
     /// <summary>Returns a readable summary of filter criteria.</summary>
     /// <returns>A string containing sender, recipient, date bounds, page size, and directions.</returns>
     public override string ToString()
-        => $"From: {From}, To: {To}, DateSentAfter: {DateSentAfter}, DateSentBefore: {DateSentBefore}, PageSize: {PageSize}, Directions: "
-            + (Directions.Count == 0 ? "(any)" : string.Join("|", Directions));
+        => $"From: {From}, To: {To}, DateSentAfter: {DateSentAfter}, DateSentBefore: {DateSentBefore}, PageSize: {PageSize}, Directions: " +
+            (Directions.Count == 0 ? "(any)" : string.Join("|", Directions));
 }

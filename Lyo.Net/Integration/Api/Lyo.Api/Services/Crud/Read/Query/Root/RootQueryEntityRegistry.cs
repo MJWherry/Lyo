@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -10,16 +9,13 @@ public sealed class RootQueryEntityRegistry
 {
     private readonly Dictionary<string, RootQueryEntityEntry> _byName;
 
-    public RootQueryEntityRegistry(IReadOnlyDictionary<string, RootQueryEntityEntry> byName)
-        => _byName = new(byName, StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyCollection<string> EntityTypeNames => _byName.Keys;
+
+    public RootQueryEntityRegistry(IReadOnlyDictionary<string, RootQueryEntityEntry> byName) => _byName = new(byName, StringComparer.OrdinalIgnoreCase);
 
     public bool TryGet(string entityTypeName, out RootQueryEntityEntry entry) => _byName.TryGetValue(entityTypeName, out entry!);
 
-    public IReadOnlyCollection<string> EntityTypeNames => _byName.Keys;
-
-    public static RootQueryEntityRegistry FromDbContext<TContext>(
-        TContext context,
-        IEnumerable<Type> allowlistedEntityTypes)
+    public static RootQueryEntityRegistry FromDbContext<TContext>(TContext context, IEnumerable<Type> allowlistedEntityTypes)
         where TContext : DbContext
     {
         var map = new Dictionary<string, RootQueryEntityEntry>(StringComparer.OrdinalIgnoreCase);
@@ -48,17 +44,11 @@ public sealed class RootQueryEntityRegistry
     }
 
     private static string StripEntitySuffix(string clrName)
-        => clrName.EndsWith("Entity", StringComparison.Ordinal) && clrName.Length > "Entity".Length
-            ? clrName[..^"Entity".Length]
-            : "";
+        => clrName.EndsWith("Entity", StringComparison.Ordinal) && clrName.Length > "Entity".Length ? clrName[..^"Entity".Length] : "";
 }
 
 /// <summary>One allowlisted entity for root Query.</summary>
-public sealed record RootQueryEntityEntry(
-    Type ClrType,
-    IEntityType EfEntityType,
-    IReadOnlyDictionary<string, PropertyInfo> Properties,
-    IKey? PrimaryKey)
+public sealed record RootQueryEntityEntry(Type ClrType, IEntityType EfEntityType, IReadOnlyDictionary<string, PropertyInfo> Properties, IKey? PrimaryKey)
 {
     public bool TryGetProperty(string name, out PropertyInfo property) => Properties.TryGetValue(name, out property!);
 }

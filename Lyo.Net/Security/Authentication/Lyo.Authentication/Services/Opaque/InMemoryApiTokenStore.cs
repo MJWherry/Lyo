@@ -32,9 +32,7 @@ public sealed class InMemoryApiTokenStore : IApiTokenStore
     public Task TouchLastUsedAsync(string id, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
-        _records.AddOrUpdate(
-            id, _ => throw new NotFoundException($"Token id '{id}' not found."), (_, existing) => existing with { LastUsedAt = utcNow, UpdatedAt = utcNow });
-
+        _records.AddOrUpdate(id, _ => throw new NotFoundException($"Token id '{id}' not found."), (_, existing) => existing with { LastUsedAt = utcNow, UpdatedAt = utcNow });
         return Task.CompletedTask;
     }
 

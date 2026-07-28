@@ -1,6 +1,3 @@
-#if !NETSTANDARD2_0
-using System.Security.Cryptography;
-#endif
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
@@ -10,6 +7,9 @@ using Lyo.Authentication.Services.Users;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+#if !NETSTANDARD2_0
+using System.Security.Cryptography;
+#endif
 
 namespace Lyo.Authentication.Services.Opaque;
 

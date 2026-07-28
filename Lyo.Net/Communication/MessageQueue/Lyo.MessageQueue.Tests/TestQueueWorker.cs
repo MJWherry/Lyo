@@ -38,8 +38,7 @@ internal sealed class ConfigurableTestQueueWorker : QueueWorkerBase<TestRequest,
         int? maxRequeueCount = null,
         string? dlqName = null,
         QueueWorkerOptions? workerOptions = null)
-        : base(
-            mqService, queueName, NullLogger.Instance, null, new() { PropertyNameCaseInsensitive = true }, maxRequeueCount ?? workerOptions?.DefaultMaxRequeueCount, dlqName)
+        : base(mqService, queueName, NullLogger.Instance, null, new() { PropertyNameCaseInsensitive = true }, maxRequeueCount ?? workerOptions?.DefaultMaxRequeueCount, dlqName)
     {
         _behavior = behavior;
 

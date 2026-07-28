@@ -9,7 +9,7 @@ The interactive review lives in the HTML dashboard (auto-loaded from latest Benc
 
 ```bash
 dotnet run -c Release --project Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks
-python3 scripts/benchmarks/build-manifests.py --encryption-only
+python3 scripts/benchmarks/build_manifests.py --encryption-only
 ```
 
 Generated data: `docs/benchmarks/data/encryption-latest.json`.

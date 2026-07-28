@@ -129,10 +129,10 @@ TypeConversion.Logger = loggerFactory.CreateLogger("TypeConversion");
 
 ### NuGet packages
 
-| Package                                     | Version    | Notes                          |
-|---------------------------------------------|------------|--------------------------------|
+| Package                                     | Version     | Notes                          |
+|---------------------------------------------|-------------|--------------------------------|
 | `System.Text.Json`                          | `[10.0.5,)` | *netstandard2.0 only*          |
-| `System.Memory`                             | `4.6.3`    | *netstandard2.0 only*          |
+| `System.Memory`                             | `4.6.3`     | *netstandard2.0 only*          |
 | `Microsoft.Extensions.Logging.Abstractions` | `[10.0.5,)` | Static `TypeConversion.Logger` |
 
 ### Project references

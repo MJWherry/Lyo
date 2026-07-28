@@ -45,14 +45,17 @@ public static class Constants
 
             /// <summary>POST endpoint returning the latest run / latest successful run / latest failed run per definition id (batch, used by the scheduler refresh).</summary>
             public const string DefinitionsLatestRuns = $"{Definitions}/LatestRuns";
+
             public const string DefinitionParameters = $"{Definitions}/Parameter";
             public const string Schedules = $"{Route}/Schedule";
             public const string ScheduleParameters = $"{Route}/ScheduleParameters";
             public const string Triggers = $"{Route}/Triggers";
             public const string TriggerParameters = $"{Route}/TriggerParameters";
             public const string Runs = $"{Route}/Run";
+
             /// <summary>POST endpoint that creates a run via <c>JobService.CreateJobRun</c> (not the generic CRUD create).</summary>
             public const string RunsCreate = $"{Runs}/Create";
+
             public const string RunsQuery = $"{Runs}/QueryConcrete";
             public const string RunLogs = $"{Runs}/Log";
             public const string RunParameters = $"{Runs}/Parameter";

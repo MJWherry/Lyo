@@ -109,25 +109,25 @@ payloads** by design.
 
 ### 17 Endpoints from One Builder
 
-| Operation              | Method | Endpoint        |
-|------------------------|--------|-----------------|
-| Query (entity graph)   | POST   | `/QueryConcrete` (typed or `{entityType}/QueryConcrete`) |
-| Projected query        | POST   | `/QueryProject` |
+| Operation              | Method | Endpoint                                                     |
+|------------------------|--------|--------------------------------------------------------------|
+| Query (entity graph)   | POST   | `/QueryConcrete` (typed or `{entityType}/QueryConcrete`)     |
+| Projected query        | POST   | `/QueryProject`                                              |
 | Root join query        | POST   | `{dynamicBase}/Query` (From/Joins + Select → projected rows) |
-| Get by ID              | GET    | `/{id}`         |
-| Create                 | POST   | `/`             |
-| Create Bulk            | POST   | `/Bulk`         |
-| Update                 | POST   | `/Update`       |
-| Update Bulk            | POST   | `/Bulk/Update`  |
-| Patch (property-level) | PATCH  | `/`             |
-| Patch Bulk             | PATCH  | `/Bulk`         |
-| Upsert                 | POST   | `/Upsert`       |
-| Upsert Bulk            | POST   | `/Bulk/Upsert`  |
-| Delete                 | DELETE | `/{id}`         |
-| Delete (by body)       | DELETE | `/`             |
-| Delete Bulk            | DELETE | `/Bulk`         |
-| Export                 | POST   | `/Export`       |
-| Stored Procedures      | —      | Configurable    |
+| Get by ID              | GET    | `/{id}`                                                      |
+| Create                 | POST   | `/`                                                          |
+| Create Bulk            | POST   | `/Bulk`                                                      |
+| Update                 | POST   | `/Update`                                                    |
+| Update Bulk            | POST   | `/Bulk/Update`                                               |
+| Patch (property-level) | PATCH  | `/`                                                          |
+| Patch Bulk             | PATCH  | `/Bulk`                                                      |
+| Upsert                 | POST   | `/Upsert`                                                    |
+| Upsert Bulk            | POST   | `/Bulk/Upsert`                                               |
+| Delete                 | DELETE | `/{id}`                                                      |
+| Delete (by body)       | DELETE | `/`                                                          |
+| Delete Bulk            | DELETE | `/Bulk`                                                      |
+| Export                 | POST   | `/Export`                                                    |
+| Stored Procedures      | —      | Configurable                                                 |
 
 ### Bulk Operations with Individual Fallback
 
@@ -171,7 +171,8 @@ Query your data and export it directly as CSV, XLSX, or JSON — with column map
 
 ### Cross-Schema Navigations (same database)
 
-Register relationships at DI startup without editing scaffolded `OnModelCreating`. Related tables must share the host’s database; EF emits JOINs so Include / Where / Sort / Select stay one query with correct paging.
+Register relationships at DI startup without editing scaffolded `OnModelCreating`. Related tables must share the host’s database; EF emits JOINs so Include / Where / Sort / Select
+stay one query with correct paging.
 
 ```csharp
 services.AddCrossSchemaNavigations<AppDbContext>(navs =>
@@ -250,7 +251,8 @@ Built-in support for local caching or distributed caching via FusionCache:
   *`projshape:…`** (useful for frontend grids keyed by projection shape).
 - **Per–root-entity isolation across unrelated types** — invalidation for **Person** does not clear **Order** caches; unrelated aggregates use different **`entity:`** tags and
   keys.
-- **Includes and related entity types** — **`GET`**, **`/QueryConcrete`**, and **`/QueryProject`** attach tags for **`GetReferencedTypes`** and per-entity instance tags. Updating a **child
+- **Includes and related entity types** — **`GET`**, **`/QueryConcrete`**, and **`/QueryProject`** attach tags for **`GetReferencedTypes`** and per-entity instance tags. Updating a
+  **child
   ** row invalidates **parent** cached reads that carried that child’s **`entity:{child}:{pk}`** tag (granular path) or the child type’s broad tag when using *
   *`InvalidateQueryCacheAsync<Child>()`**.
 
@@ -292,54 +294,59 @@ Use it in background jobs, data pipelines, report generation — anywhere you fi
 
 ## Performance
 
-Benchmarked on a laptop (Intel Core Ultra 7 155U, 62 GB RAM) with API, PostgreSQL, and the load generator all running on the same machine. Latest archived k6 suite: **April 2026**
-(`k6/framework-person/results/20260419-190727/`). **`CacheOptions:QueryCacheTagGranularity`** was **`Broad`** (non-granular tags, default). See `K6_BENCHMARK_ANALYSIS.md` for full
-per-scenario tables, methodology, and caveats. Production deployments on dedicated infrastructure would perform better.
+Benchmarked on a laptop (Intel Core Ultra 7 155U, 62 GB RAM) with API, PostgreSQL, and the load generator all running on the same machine. Latest archived k6 suite: **July 2026**
+(`k6/framework-person/results/20260726-235847/`), the full 12-suite matrix (QueryConcrete / QueryProject / root `/Query` × load/stress/spike/soak, **~1.35M requests** total).
+**`CacheOptions:QueryCacheTagGranularity`** was **`Broad`** (non-granular tags, default) and the harness bypasses caches. See `K6_BENCHMARK_ANALYSIS.md` for methodology and
+caveats. Production deployments on dedicated infrastructure would perform better.
 
-### Lightweight Queries (filters, sorts, projections, subqueries)
+### Lightweight Queries (projections, root joins, computed fields)
 
-| Metric          | Result (April 2026 archive)       |
-|-----------------|-----------------------------------|
-| Scenario spread | **~6–18 ms** avg (spike → mixed)  |
-| p95 latency     | **~9–29 ms** (scenario-dependent) |
-| p99 latency     | **~12–41 ms** (mixed load)        |
-| Throughput      | 20–56 req/s sustained             |
-| Success rate    | **100%**                          |
+QueryProject and root `/Query` suites under load/spike/soak (July 2026 archive):
 
-Select projection spike scenario averages **~6 ms**; mixed five-shape rotation **~18 ms** avg; subquery load **~13 ms** avg — on shared laptop hardware with cache-bypass style
-keys.
+| Metric          | Result (July 2026 archive)                                     |
+|-----------------|----------------------------------------------------------------|
+| Scenario spread | **~12–23 ms** avg (root load → projection spike)               |
+| p95 latency     | **~31–65 ms** (scenario-dependent; medians **~8–13 ms**)       |
+| p99 latency     | **~42–84 ms**                                                  |
+| Throughput      | 7–60 req/s sustained (arrival-rate capped)                     |
+| Success rate    | **100%**                                                       |
 
-### Heavy Navigation Queries (3 tables, 100–300 rows, ~601 KB response)
+Root flat select averages **~3 ms**; scalar computed projection (`fullName`) **~4 ms**; a chained three-table root join with exact count stays **~23 ms** avg under load — on
+shared laptop hardware with cache-bypassing pagination.
 
-| Metric          | Result (April 2026 archive)           |
-|-----------------|---------------------------------------|
-| Average latency | **93 ms**                             |
-| Median latency  | 72 ms                                 |
-| p95 latency     | 244 ms                                |
-| Throughput      | **181** req/s under 40 concurrent VUs |
-| Success rate    | **100%** (all within 2.5 s SLA)       |
+### Heavy Navigation Queries (full entities, 1–3 include branches, 100–300 rows)
 
-Realistic workload: person → contact_addresses → address. **87K+** HTTP requests in the stress stage for this archive (stage length vs prior runs affects totals). API, Postgres,
-and k6 share CPU under load. The 7-table, ~2000-row stress case is more demanding; see `K6_BENCHMARK_ANALYSIS.md`.
+Full-entity `QueryConcrete` suites, `realistic_include`/`heavy_include` cases (person → contact_addresses → address, up to 3 include branches):
 
-### Sustained Load (2-hour soak test)
+| Metric                     | Result (July 2026 archive)                       |
+|----------------------------|--------------------------------------------------|
+| Steady-state average       | **~96–119 ms** (spike/soak)                      |
+| Steady-state p95           | ~224–233 ms                                      |
+| Stress (ramp to 40 VUs)    | ~659 ms avg / ~1.79 s p95                        |
+| Throughput                 | **71 req/s** mixed-case stress (**34K** requests in the stress stage) |
+| Success rate               | status/shape **100%**; checks **99.98%** under stress |
 
-| Metric          | Result (April 2026 archive) |
-|-----------------|-----------------------------|
-| Total requests  | **303,896**                 |
-| Duration        | 2 hours (configured)        |
-| Average latency | 85 ms                       |
-| Success rate    | **100%** (all k6 checks)    |
-| Errors          | **0**                       |
+API, Postgres, and k6 share CPU under load, so the stress tail is pessimistic. Lighter `QueryConcrete` cases (baseline, filter+sort, subquery, QueryNode tree) stay **~14–22 ms
+p95** under load; see `K6_BENCHMARK_ANALYSIS.md` and the dashboard for per-case hotspots.
 
-Zero HTTP failures over the soak window. Mixed query types with periodic heavy-include spikes; tail latency includes intentional heavy shapes — see `K6_BENCHMARK_ANALYSIS.md` for
-p95/p99.
+### Sustained Load (three 2-hour soak tests)
+
+| Metric          | Result (July 2026 archive)                                                     |
+|-----------------|--------------------------------------------------------------------------------|
+| Total requests  | **1,178,393** (340K Query · 406K QueryProject · 432K root Query)               |
+| Duration        | 3 × 2 hours (one soak per endpoint family)                                     |
+| Average latency | **12–45 ms** per endpoint family                                               |
+| Success rate    | **100%** (all k6 checks)                                                       |
+| Errors          | **0**                                                                          |
+
+Zero HTTP failures across all three soak windows. Mixed query cases with periodic heavy-include shapes; tail latency includes intentional heavy shapes — p95 stayed at **181 ms**
+(Query), **65 ms** (QueryProject), and **31 ms** (root Query).
 
 ### How This Compares
 
 | Framework                          | Typical dynamic read p95 (industry ballpark) | Notes                                 |
 |------------------------------------|----------------------------------------------|---------------------------------------|
-| **Lyo** (archived k6)              | **~9–29 ms** lightweight scenarios           | Expression trees + EF Core + Postgres |
+| **Lyo** (archived k6)              | **~31–65 ms** projection/root scenarios (medians ~8–13 ms; lightest shapes ~4–6 ms p95) | Expression trees + EF Core + Postgres |
 | Hasura / PostgREST                 | 5–30 ms                                      | No ORM — direct DB to JSON            |
 | Typical EF Core API (hand-written) | 50–200 ms                                    | Manual filter/sort implementation     |
 | Django REST Framework              | 50–300 ms                                    | Python ORM                            |

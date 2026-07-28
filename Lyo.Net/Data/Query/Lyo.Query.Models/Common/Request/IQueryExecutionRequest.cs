@@ -3,9 +3,7 @@ namespace Lyo.Query.Models.Common.Request;
 /// <summary>Shared execution shape for filtered, paged loads (<see cref="QueryConcreteReq" />, <see cref="ProjectionQueryReq" />, <see cref="QueryReq" />).</summary>
 public interface IQueryExecutionRequest
 {
-    /// <summary>
-    /// Options that control total count, include filtering, and projection-specific behavior (concrete type depends on the request DTO).
-    /// </summary>
+    /// <summary>Options that control total count, include filtering, and projection-specific behavior (concrete type depends on the request DTO).</summary>
     QueryRequestOptions Options { get; }
 
     /// <summary>Zero-based offset for paging.</summary>

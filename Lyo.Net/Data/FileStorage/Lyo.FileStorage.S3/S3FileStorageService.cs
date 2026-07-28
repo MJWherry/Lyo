@@ -227,11 +227,9 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         ArgumentHelpers.ThrowIfNull(request);
         ValidatePathPrefix(request.PathPrefix);
         var destPrefix = NormalizePathPrefix(request.PathPrefix);
-
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId}; it is awaiting direct-upload finalize.");
-
         var previousPrefix = meta.PathPrefix;
         if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
             return meta;
@@ -255,10 +253,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             S3UploadServerSideEncryption.ApplyToCopyDestination(copy, _options);
             await _s3Client.CopyObjectAsync(copy, ct).ConfigureAwait(false);
             copyCompleted = true;
-
             var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
             metadataSaved = true;
-
             try {
                 await _s3Client.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = srcKey }, CancellationToken.None).ConfigureAwait(false);
             }

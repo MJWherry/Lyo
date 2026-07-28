@@ -15,17 +15,13 @@ using Microsoft.Extensions.Hosting;
 
 namespace Lyo.Api.Tests.Middleware;
 
-/// <summary>
-/// End-to-end tests for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test server.
-/// </summary>
+/// <summary>End-to-end tests for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test server.</summary>
 public class LoggingMiddlewareTests
 {
     private static readonly JsonSerializerOptions SerializerOptions = LyoJsonSerializerOptions.Create();
 
     private static async Task<IHost> StartHostAsync()
-        => await new HostBuilder()
-            .ConfigureWebHost(web => web
-                .UseTestServer()
+        => await new HostBuilder().ConfigureWebHost(web => web.UseTestServer()
                 .ConfigureServices(services => {
                     services.AddLogging();
                     services.AddRouting();

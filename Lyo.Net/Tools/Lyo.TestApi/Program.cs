@@ -6,6 +6,7 @@ using Lyo.Api;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;
+using Lyo.Api.Reporting;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Authentication;
 using Lyo.Authentication.AspNetCore;
@@ -28,7 +29,6 @@ using Lyo.Endato.Postgres;
 using Lyo.Endato.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
-using Lyo.Api.Reporting;
 using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
@@ -44,7 +44,6 @@ using Lyo.Lock.Redis;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.People.Postgres;
 using Lyo.People.Postgres.Database;
-using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres;
 using Lyo.Sms.Twilio.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
@@ -108,40 +107,38 @@ builder.Services.AddPostgresJobManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
-builder.Services.AddJobMaintenanceService();
 
+builder.Services.AddJobMaintenanceService();
 builder.Services.AddLyoCrudServices<JobContext>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddHttpContextAccessor();
 // Uncomment to run the built-in cron/interval scheduler in this process:
 // builder.Services.AddJobScheduler();
-
 builder.Services.AddIOTempService();
 builder.Services.AddReportingApi(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
-builder.Services.AddReportingGenerationHooks(new ReportGenerationHooks {
-    AfterRenderAsync = async (ctx, ct) => {
-        var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
-        var saved = await storage.SaveFileAsync(
-                ctx.StagedFilePath!,
-                ctx.FileName,
-                pathPrefix: ctx.PathPrefix ?? ctx.Request.PathPrefix ?? "reports",
-                contentType: ctx.ContentType,
-                ct: ct)
-            .ConfigureAwait(false);
-        ctx.OutputFileId = saved.Id;
-    },
-    // Retention cleanup / definition delete: remove the persisted output before the generation row goes away.
-    OnCleanupAsync = async (ctx, ct) => {
-        if (ctx.OutputFileId is not Guid fileId)
-            return;
 
-        var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
-        await storage.DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
-    }
-});
+builder.Services.AddReportingGenerationHooks(
+    new() {
+        AfterRenderAsync = async (ctx, ct) => {
+            var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
+            var saved = await storage.SaveFileAsync(
+                    ctx.StagedFilePath!, ctx.FileName, pathPrefix: ctx.PathPrefix ?? ctx.Request.PathPrefix ?? "reports", contentType: ctx.ContentType, ct: ct)
+                .ConfigureAwait(false);
+
+            ctx.OutputFileId = saved.Id;
+        },
+        // Retention cleanup / definition delete: remove the persisted output before the generation row goes away.
+        OnCleanupAsync = async (ctx, ct) => {
+            if (ctx.OutputFileId is not Guid fileId)
+                return;
+
+            var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
+            await storage.DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
+        }
+    });
 
 builder.Services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connStr, EnableAutoMigrations = true });

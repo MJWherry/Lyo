@@ -10,22 +10,18 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Job.Client;
 
 /// <summary>
-/// <see cref="IJobEventPublisher" /> for scheduler/worker hosts, backed by <see cref="IMqService" /> and optional <see cref="IJobClient" /> for worker-type discovery.
-/// Does not use EF or <c>Lyo.Job.Postgres</c> — API hosts with a job database should use the Postgres publisher instead.
+/// <see cref="IJobEventPublisher" /> for scheduler/worker hosts, backed by <see cref="IMqService" /> and optional <see cref="IJobClient" /> for worker-type discovery. Does
+/// not use EF or <c>Lyo.Job.Postgres</c> — API hosts with a job database should use the Postgres publisher instead.
 /// <para>Register via <c>services.AddMqJobEventPublisher()</c> after registering <see cref="IMqService" /> (e.g. RabbitMQ).</para>
 /// </summary>
 public sealed class MqJobEventPublisher : IJobEventPublisher
 {
     private readonly IJobClient? _jobClient;
     private readonly ILogger<MqJobEventPublisher> _logger;
-    private readonly IMqService _mqService;
     private readonly JobMqOptions _mqOptions;
+    private readonly IMqService _mqService;
 
-    public MqJobEventPublisher(
-        IMqService mqService,
-        ILogger<MqJobEventPublisher> logger,
-        IOptions<JobMqOptions> mqOptions,
-        IJobClient? jobClient = null)
+    public MqJobEventPublisher(IMqService mqService, ILogger<MqJobEventPublisher> logger, IOptions<JobMqOptions> mqOptions, IJobClient? jobClient = null)
     {
         _mqService = mqService;
         _logger = logger;
@@ -40,13 +36,10 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     public async Task SetupAsync(CancellationToken ct = default)
     {
         await _mqService.ConnectAsync(ct).ConfigureAwait(false);
-
         await EnsureQueueCreatedAsync(Constants.Mq.QueueJobRunFinish, null, ct).ConfigureAwait(false);
-
         var defQueue = Constants.Mq.JobDefinitionChangeKey;
         await EnsureQueueCreatedAsync(defQueue, null, ct).ConfigureAwait(false);
         await EnsureBoundAsync(defQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobDefinitionChangeKey, ct).ConfigureAwait(false);
-
         var workerTypes = await ResolveWorkerTypesAsync(ct).ConfigureAwait(false);
         await SetupWorkerQueuesAsync(workerTypes, ct).ConfigureAwait(false);
     }
@@ -95,7 +88,14 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     /// <inheritdoc />
     public Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default)
     {
-        var alert = new { DefinitionId = definitionId, RunId = runId, AlertType = alertType, Message = message, Timestamp = DateTime.UtcNow };
+        var alert = new {
+            DefinitionId = definitionId,
+            RunId = runId,
+            AlertType = alertType,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        };
+
         _logger.LogDebug("Publishing alert {AlertType} for definition {DefinitionId} run {RunId}", alertType, definitionId, runId);
         return _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobAlertRoutingKey, JsonSerializer.SerializeToUtf8Bytes(alert));
     }
@@ -119,7 +119,6 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
             throw new InvalidOperationException($"Failed to declare per-instance cancellation queue '{queueName}'.");
 
         await EnsureBoundAsync(queueName, Constants.Mq.JobEventExchange, Constants.Mq.JobRunCancelledRoutingKey, ct).ConfigureAwait(false);
-
         await _mqService.SubscribeToQueueAsync<Guid>(
                 queueName, async (runId, _) => {
                     try {
@@ -139,6 +138,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         if (workerTypes.Count == 0) {
             _logger.LogWarning(
                 "No worker types configured for job run queue provisioning. Add JobMqOptions:WorkerTypes or ensure the Job API has definitions, or declare queues manually.");
+
             return;
         }
 
@@ -182,9 +182,11 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
             foreach (var kv in arguments)
                 args[kv.Key] = kv.Value;
         }
-        if (!await _mqService.CreateQueue(queueName, true, false, false, args, ct).ConfigureAwait(false))
+
+        if (!await _mqService.CreateQueue(queueName, true, false, false, args, ct).ConfigureAwait(false)) {
             throw new InvalidOperationException(
                 $"Failed to declare queue '{queueName}'. If it already exists with different arguments, delete it in RabbitMQ and restart the host.");
+        }
     }
 
     private async Task EnsureBoundAsync(string queueName, string exchangeName, string routingKey, CancellationToken ct)

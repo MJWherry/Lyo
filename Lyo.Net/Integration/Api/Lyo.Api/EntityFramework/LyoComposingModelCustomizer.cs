@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Api.EntityFramework;
 
 /// <summary>
-/// Runs the default model build (<c>OnModelCreating</c>), then applies <see cref="CrossSchemaNavigationOptionsExtension" />
-/// registrations so hosts can add same-DB / cross-schema navigations without editing the context.
+/// Runs the default model build (<c>OnModelCreating</c>), then applies <see cref="CrossSchemaNavigationOptionsExtension" /> registrations so hosts can add same-DB /
+/// cross-schema navigations without editing the context.
 /// </summary>
 public sealed class LyoComposingModelCustomizer : RelationalModelCustomizer
 {
@@ -18,7 +17,6 @@ public sealed class LyoComposingModelCustomizer : RelationalModelCustomizer
     public override void Customize(ModelBuilder modelBuilder, DbContext context)
     {
         base.Customize(modelBuilder, context);
-
         var options = context.GetService<IDbContextOptions>();
         var extension = options?.FindExtension<CrossSchemaNavigationOptionsExtension>();
         if (extension is null || extension.Registrations.Count == 0)

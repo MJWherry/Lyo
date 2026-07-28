@@ -393,7 +393,7 @@ public class EncryptionHeaderTests
 
         // 32-byte KEK with a symmetric AEAD KEK service -> AES Key Wrap.
         using (var aesKwService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
-                   new AesGcmEncryptionService(keyStore), new AesGcmEncryptionService(keyStore), keyStore)) {
+            new AesGcmEncryptionService(keyStore), new AesGcmEncryptionService(keyStore), keyStore)) {
             using var output = new MemoryStream();
             await aesKwService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(32), ct: ct);
             output.Position = 0;
@@ -405,7 +405,7 @@ public class EncryptionHeaderTests
 
         // 64-byte KEK (AES-SIV) is not a valid AES Key Wrap key -> KEK-service envelope, always larger than dekLength + 8.
         using (var envelopeService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
-                   new AesGcmEncryptionService(keyStore), new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512), keyStore)) {
+            new AesGcmEncryptionService(keyStore), new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512), keyStore)) {
             using var output = new MemoryStream();
             await envelopeService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(64), ct: ct);
             output.Position = 0;

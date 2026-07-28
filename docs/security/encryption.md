@@ -14,27 +14,27 @@ decrypt on the other when keys and formats match. On `net10.0` BCL primitives ar
 used where available; on `netstandard2.0` BouncyCastle provides the same sizes
 and on-the-wire layout.
 
-| Algorithm | Key / nonce / tag |
-|-----------|-------------------|
-| AES-GCM | 16/24/32-byte key; 12-byte nonce; 16-byte tag |
-| ChaCha20-Poly1305 | 32-byte key; 12-byte nonce; 16-byte tag |
-| AES-CCM | 16/24/32-byte key; 12-byte nonce; 16-byte tag |
-| AES-SIV (RFC 5297) | 32/48/64-byte key material; deterministic |
-| XChaCha20-Poly1305 | 32-byte key; 24-byte nonce; 16-byte tag |
-| RSA (OAEP-SHA256) | >= 2048-bit modulus (3072+ recommended) |
+| Algorithm          | Key / nonce / tag                             |
+|--------------------|-----------------------------------------------|
+| AES-GCM            | 16/24/32-byte key; 12-byte nonce; 16-byte tag |
+| ChaCha20-Poly1305  | 32-byte key; 12-byte nonce; 16-byte tag       |
+| AES-CCM            | 16/24/32-byte key; 12-byte nonce; 16-byte tag |
+| AES-SIV (RFC 5297) | 32/48/64-byte key material; deterministic     |
+| XChaCha20-Poly1305 | 32-byte key; 24-byte nonce; 16-byte tag       |
+| RSA (OAEP-SHA256)  | >= 2048-bit modulus (3072+ recommended)       |
 
 `EncryptionAlgorithm` IDs are stable and embedded in the stream header so a blob
 self-describes its algorithm:
 
-| ID | Algorithm | Default extension |
-|---:|-----------|-------------------|
-| 0 | `AesGcm` | `.ag` |
-| 1 | `ChaCha20Poly1305` | `.chacha` |
-| 2 | `AesGcmRsa` | `.agr` |
-| 3 | `Rsa` | `.rsa` |
-| 4 | `AesCcm` | — |
-| 5 | `AesSiv` | — |
-| 6 | `XChaCha20Poly1305` | — |
+| ID | Algorithm           | Default extension |
+|---:|---------------------|-------------------|
+|  0 | `AesGcm`            | `.ag`             |
+|  1 | `ChaCha20Poly1305`  | `.chacha`         |
+|  2 | `AesGcmRsa`         | `.agr`            |
+|  3 | `Rsa`               | `.rsa`            |
+|  4 | `AesCcm`            | —                 |
+|  5 | `AesSiv`            | —                 |
+|  6 | `XChaCha20Poly1305` | —                 |
 
 ## Streaming format
 

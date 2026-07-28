@@ -1,7 +1,7 @@
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Read.Query.Root;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -10,37 +10,6 @@ namespace Lyo.Api.Tests;
 
 public sealed class RootQueryValidatorTests
 {
-    private sealed class OrderEntity
-    {
-        public Guid Id { get; set; }
-        public Guid PersonId { get; set; }
-        public string? Label { get; set; }
-    }
-
-    private sealed class PersonEntity
-    {
-        public Guid Id { get; set; }
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-    }
-
-    private sealed class TestDbContext : DbContext
-    {
-        public TestDbContext(DbContextOptions<TestDbContext> options)
-            : base(options)
-        {
-        }
-
-        public DbSet<OrderEntity> Orders => Set<OrderEntity>();
-        public DbSet<PersonEntity> People => Set<PersonEntity>();
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<OrderEntity>().HasKey(e => e.Id);
-            modelBuilder.Entity<PersonEntity>().HasKey(e => e.Id);
-        }
-    }
-
     private static RootQueryEntityRegistry CreateRegistry()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>().UseSqlite($"DataSource=file:rootquery-{Guid.NewGuid():N}?mode=memory&cache=shared").Options;
@@ -53,7 +22,7 @@ public sealed class RootQueryValidatorTests
     private static QueryReq ValidBase()
         => QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }), "recipient")
             .AddSelects("o.Id", "p.FirstName")
             .Build();
 
@@ -68,13 +37,7 @@ public sealed class RootQueryValidatorTests
     public void Validate_Accepts_BareFromPropertyInOuterWhereAndSort()
     {
         var registry = CreateRegistry();
-        var req = QueryReqBuilder.New()
-            .From("o", nameof(OrderEntity))
-            .AddSelects("o.Label")
-            .AddWhere(w => w.Equals("Label", "x"))
-            .AddSort("Label")
-            .Build();
-
+        var req = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Label").AddWhere(w => w.Equals("Label", "x")).AddSort("Label").Build();
         Assert.Empty(RootQueryValidator.Validate(req, registry));
     }
 
@@ -82,13 +45,7 @@ public sealed class RootQueryValidatorTests
     public void Validate_Accepts_FromAliasedOuterWhereAndSort()
     {
         var registry = CreateRegistry();
-        var req = QueryReqBuilder.New()
-            .From("o", nameof(OrderEntity))
-            .AddSelects("o.Label")
-            .AddWhere(w => w.Equals("o.Label", "x"))
-            .AddSort("o.Label")
-            .Build();
-
+        var req = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Label").AddWhere(w => w.Equals("o.Label", "x")).AddSort("o.Label").Build();
         Assert.Empty(RootQueryValidator.Validate(req, registry));
     }
 
@@ -98,7 +55,7 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }))
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }))
             .AddSelects("o.Id", "p.FirstName")
             .AddWhere(w => w.Equals("p.FirstName", "Ann"))
             .Build();
@@ -112,8 +69,7 @@ public sealed class RootQueryValidatorTests
     {
         var registry = CreateRegistry();
         var req = ValidBase();
-        req.SortBy.Add(new SortBy("p.FirstName", SortDirection.Asc));
-
+        req.SortBy.Add(new("p.FirstName", SortDirection.Asc));
         var errors = RootQueryValidator.Validate(req, registry);
         Assert.Contains(errors, e => e.Description.Contains("SortBy", StringComparison.OrdinalIgnoreCase));
     }
@@ -124,7 +80,7 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New()
             .From("o", "Order")
-            .Join("p", "Person", JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }))
+            .Join("p", "Person", JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }))
             .AddSelects("o.Id", "p.FirstName")
             .Build();
 
@@ -163,7 +119,7 @@ public sealed class RootQueryValidatorTests
     public void Validate_Rejects_MissingFromAliasAndEntityType()
     {
         var registry = CreateRegistry();
-        var req = new QueryReq { From = new FromClause { Alias = "", EntityType = "" }, Select = ["o.Id"] };
+        var req = new QueryReq { From = new() { Alias = "", EntityType = "" }, Select = ["o.Id"] };
         var errors = RootQueryValidator.Validate(req, registry);
         Assert.Contains(errors, e => e.Description.Contains("From.Alias", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(errors, e => e.Description.Contains("From.EntityType", StringComparison.OrdinalIgnoreCase));
@@ -175,8 +131,8 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }))
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }))
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }))
             .AddSelects("o.Id")
             .Build();
 
@@ -190,7 +146,7 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("o", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "o.Id" }))
+            .Join("o", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "o.Id" }))
             .AddSelects("o.Id")
             .Build();
 
@@ -203,7 +159,13 @@ public sealed class RootQueryValidatorTests
     {
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Id").Build();
-        req.Joins.Add(new JoinClause { Alias = "p", EntityType = nameof(PersonEntity), Type = JoinType.Left, On = [] });
+        req.Joins.Add(
+            new() {
+                Alias = "p",
+                EntityType = nameof(PersonEntity),
+                Type = JoinType.Left,
+                On = []
+            });
 
         var errors = RootQueryValidator.Validate(req, registry);
         Assert.Contains(errors, e => e.Description.Contains(".On", StringComparison.OrdinalIgnoreCase));
@@ -215,11 +177,11 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Id").Build();
         req.Joins.Add(
-            new JoinClause {
+            new() {
                 Alias = "p",
                 EntityType = nameof(PersonEntity),
                 Type = (JoinType)99,
-                On = [new JoinOn { From = "o.PersonId", To = "p.Id" }]
+                On = [new() { From = "o.PersonId", To = "p.Id" }]
             });
 
         var errors = RootQueryValidator.Validate(req, registry);
@@ -231,7 +193,13 @@ public sealed class RootQueryValidatorTests
     {
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Id").Build();
-        req.Joins.Add(new JoinClause { Alias = "", EntityType = "", Type = JoinType.Left, On = [new JoinOn { From = "o.PersonId", To = "p.Id" }] });
+        req.Joins.Add(
+            new() {
+                Alias = "",
+                EntityType = "",
+                Type = JoinType.Left,
+                On = [new() { From = "o.PersonId", To = "p.Id" }]
+            });
 
         var errors = RootQueryValidator.Validate(req, registry);
         Assert.Contains(errors, e => e.Description.Contains("Alias is required", StringComparison.OrdinalIgnoreCase));
@@ -271,7 +239,7 @@ public sealed class RootQueryValidatorTests
         var registry = CreateRegistry();
         var req = QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.Missing", To = "p.Id" }))
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.Missing", To = "p.Id" }))
             .AddSelects("o.Id")
             .Build();
 
@@ -284,17 +252,18 @@ public sealed class RootQueryValidatorTests
     {
         var a = QueryReqBuilder.New()
             .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }), "recipient")
-            .AddSelects("o.Id", "p.FirstName")
-            .Build();
-        var b = QueryReqBuilder.New()
-            .From("o", nameof(OrderEntity))
-            .Join("p", nameof(PersonEntity), JoinType.Inner, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .Join("p", nameof(PersonEntity), JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }), "recipient")
             .AddSelects("o.Id", "p.FirstName")
             .Build();
 
-        var keyA = Lyo.Api.Services.Crud.Read.Query.QueryCacheKeyBuilder.BuildRootQuery(a, "TestDbContext");
-        var keyB = Lyo.Api.Services.Crud.Read.Query.QueryCacheKeyBuilder.BuildRootQuery(b, "TestDbContext");
+        var b = QueryReqBuilder.New()
+            .From("o", nameof(OrderEntity))
+            .Join("p", nameof(PersonEntity), JoinType.Inner, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .AddSelects("o.Id", "p.FirstName")
+            .Build();
+
+        var keyA = QueryCacheKeyBuilder.BuildRootQuery(a, "TestDbContext");
+        var keyB = QueryCacheKeyBuilder.BuildRootQuery(b, "TestDbContext");
         Assert.NotEqual(keyA, keyB);
     }
 
@@ -304,11 +273,44 @@ public sealed class RootQueryValidatorTests
         var a = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Id").SetPagination(0, 10).Build();
         var b = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Id").SetPagination(10, 10).Build();
         var c = QueryReqBuilder.New().From("o", nameof(OrderEntity)).AddSelects("o.Label").SetPagination(0, 10).Build();
-
-        var keyA = Lyo.Api.Services.Crud.Read.Query.QueryCacheKeyBuilder.BuildRootQuery(a, "Ctx");
-        var keyB = Lyo.Api.Services.Crud.Read.Query.QueryCacheKeyBuilder.BuildRootQuery(b, "Ctx");
-        var keyC = Lyo.Api.Services.Crud.Read.Query.QueryCacheKeyBuilder.BuildRootQuery(c, "Ctx");
+        var keyA = QueryCacheKeyBuilder.BuildRootQuery(a, "Ctx");
+        var keyB = QueryCacheKeyBuilder.BuildRootQuery(b, "Ctx");
+        var keyC = QueryCacheKeyBuilder.BuildRootQuery(c, "Ctx");
         Assert.NotEqual(keyA, keyB);
         Assert.NotEqual(keyA, keyC);
+    }
+
+    private sealed class OrderEntity
+    {
+        public Guid Id { get; set; }
+
+        public Guid PersonId { get; set; }
+
+        public string? Label { get; set; }
+    }
+
+    private sealed class PersonEntity
+    {
+        public Guid Id { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+    }
+
+    private sealed class TestDbContext : DbContext
+    {
+        public DbSet<OrderEntity> Orders => Set<OrderEntity>();
+
+        public DbSet<PersonEntity> People => Set<PersonEntity>();
+
+        public TestDbContext(DbContextOptions<TestDbContext> options)
+            : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrderEntity>().HasKey(e => e.Id);
+            modelBuilder.Entity<PersonEntity>().HasKey(e => e.Id);
+        }
     }
 }

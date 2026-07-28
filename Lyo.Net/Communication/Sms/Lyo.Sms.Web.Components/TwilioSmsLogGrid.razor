@@ -1,10 +1,6 @@
-@using Lyo.Api.Client
-@using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
 @using Lyo.Web.Components.Export.Xlsx
-@using Lyo.Web.Components.Models
-
 <LyoDataGridProjected ApiClient="ApiClient"
                       GridKey="TwilioSmsLogGrid"
                       Route="@_logRoute"
@@ -38,6 +34,7 @@
 </LyoDataGridProjected>
 
 @code {
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -48,15 +45,7 @@
 
     private string _logRoute => $"{BaseRoute.TrimEnd('/')}/TwilioSmsLogEntity";
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("To"),
-        new("From"),
-        new("Status"),
-        new("Direction"),
-        new("IsSuccess", "Success"),
-        new("Body")
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Success"), new("Body")];
 
     private static object[] GetKey(object? item)
     {
@@ -66,4 +55,5 @@
         var id = ProjectedValueHelper.GetValue(item, "Id");
         return id != null ? [id] : [];
     }
+
 }

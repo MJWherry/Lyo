@@ -1,7 +1,7 @@
+using System.Text;
 using System.Text.Json;
 using Lyo.Reporting.Builders;
 using Lyo.Reporting.Models.Enums;
-using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres.Rendering;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
@@ -17,7 +17,7 @@ public sealed class ReportRendererTests : IDisposable
     public ReportRendererTests()
     {
         // ExcelDataReader (Xlsx read-back verification) requires legacy code pages.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddXlsxService();
@@ -29,20 +29,14 @@ public sealed class ReportRendererTests : IDisposable
     public void Dispose()
     {
         _provider.Dispose();
-        Directory.Delete(_tempDir, recursive: true);
+        Directory.Delete(_tempDir, true);
     }
 
     private static string MultiGridReportJson()
         => JsonSerializer.Serialize(
             ReportBuilder<object>.New()
                 .SetTitle("Multi")
-                .AddSection(
-                    "S1", s => s.AddGrid(
-                        "People", g => g
-                            .AddColumn("Name")
-                            .AddColumn("Age")
-                            .AddRow("Ada", 36)
-                            .AddRow("Grace", 40)))
+                .AddSection("S1", s => s.AddGrid("People", g => g.AddColumn("Name").AddColumn("Age").AddRow("Ada", 36).AddRow("Grace", 40)))
                 .AddSection("S2", s => s.AddGrid("Totals", g => g.AddColumn("Count").AddRow("2")))
                 .Build());
 
@@ -52,22 +46,18 @@ public sealed class ReportRendererTests : IDisposable
         var xlsx = _provider.GetRequiredService<IXlsxService>();
         var renderer = new XlsxReportRenderer(xlsx);
         var outputPath = Path.Combine(_tempDir, "multi.xlsx");
-
         Assert.True(renderer.CanRender(ReportFormat.Xlsx));
         Assert.False(renderer.CanRender(ReportFormat.Csv));
-
         var result = await renderer.RenderAsync(
-            new ReportRenderRequest {
+            new() {
                 ReportDataJson = MultiGridReportJson(),
                 Format = ReportFormat.Xlsx,
                 OutputFilePath = outputPath,
                 SuggestedFileName = "multi.xlsx"
-            },
-            TestContext.Current.CancellationToken);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.True(new FileInfo(outputPath).Length > 0);
-
         var sheetNames = xlsx.Reader.ListSheetNames(outputPath);
         Assert.Equal(["People", "Totals"], sheetNames);
 
@@ -75,8 +65,7 @@ public sealed class ReportRendererTests : IDisposable
         var people = xlsx.Reader.ParseXlsxFileAsDictionary(outputPath, "People");
         Assert.Equal("Ada", people[0][0]);
         Assert.Equal("40", people[1][1]);
-
-        var table = xlsx.Reader.ParseXlsxFileAsDataTable(outputPath, "People", useHeaderRow: true);
+        var table = xlsx.Reader.ParseXlsxFileAsDataTable(outputPath, "People", true);
         Assert.True(table.IsSuccess);
         Assert.Equal("Name", table.Data!.Headers[0].DisplayValue);
         Assert.Equal("Age", table.Data.Headers[1].DisplayValue);
@@ -87,24 +76,16 @@ public sealed class ReportRendererTests : IDisposable
     {
         var report = ReportBuilder<object>.New()
             .SetTitle("Dupes")
-            .AddSection(
-                s => s
-                    .AddGrid("Same", g => g.AddColumn("A").AddRow("1"))
-                    .AddGrid("Same", g => g.AddColumn("A").AddRow("2"))
-                    .AddGrid(new string('L', 60), g => g.AddColumn("A").AddRow("3")))
+            .AddSection(s => s.AddGrid("Same", g => g.AddColumn("A").AddRow("1"))
+                .AddGrid("Same", g => g.AddColumn("A").AddRow("2"))
+                .AddGrid(new('L', 60), g => g.AddColumn("A").AddRow("3")))
             .Build();
 
         var xlsx = _provider.GetRequiredService<IXlsxService>();
         var renderer = new XlsxReportRenderer(xlsx);
         var outputPath = Path.Combine(_tempDir, "dupes.xlsx");
-
         await renderer.RenderAsync(
-            new ReportRenderRequest {
-                ReportDataJson = JsonSerializer.Serialize(report),
-                Format = ReportFormat.Xlsx,
-                OutputFilePath = outputPath
-            },
-            TestContext.Current.CancellationToken);
+            new() { ReportDataJson = JsonSerializer.Serialize(report), Format = ReportFormat.Xlsx, OutputFilePath = outputPath }, TestContext.Current.CancellationToken);
 
         var sheetNames = xlsx.Reader.ListSheetNames(outputPath);
         Assert.Equal(3, sheetNames.Count);
@@ -118,18 +99,15 @@ public sealed class ReportRendererTests : IDisposable
         var renderer = new JsonReportRenderer();
         var outputPath = Path.Combine(_tempDir, "report.json");
         var json = MultiGridReportJson();
-
         Assert.True(renderer.CanRender(ReportFormat.Json));
         Assert.False(renderer.CanRender(ReportFormat.Pdf));
-
         var result = await renderer.RenderAsync(
-            new ReportRenderRequest {
+            new() {
                 ReportDataJson = json,
                 Format = ReportFormat.Json,
                 OutputFilePath = outputPath,
                 SuggestedFileName = "report.json"
-            },
-            TestContext.Current.CancellationToken);
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal("application/json; charset=utf-8", result.ContentType);
         var written = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);

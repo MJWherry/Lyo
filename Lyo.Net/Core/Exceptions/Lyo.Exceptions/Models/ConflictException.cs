@@ -4,20 +4,13 @@ namespace Lyo.Exceptions.Models;
 
 /// <summary>Exception thrown when a conflict occurs, such as a duplicate resource or concurrent modification. Maps to HTTP 409.</summary>
 /// <remarks>
-/// Prefer <see cref="ForResource" /> over the two-argument constructors: <c>new ConflictException("Order", null)</c> binds to the
-/// <c>(string message, Exception?)</c> overload and never sets <see cref="ResourceName" />.
+/// Prefer <see cref="ForResource" /> over the two-argument constructors: <c>new ConflictException("Order", null)</c> binds to the <c>(string message, Exception?)</c>
+/// overload and never sets <see cref="ResourceName" />.
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public class ConflictException : HttpException
 {
     private const int HttpStatusCode = 409;
-
-    /// <summary>Creates a <see cref="ConflictException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
-    /// <param name="resourceName">The name or type of the resource that caused the conflict.</param>
-    /// <param name="resourceId">The identifier of the resource that caused the conflict.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public static ConflictException ForResource(string resourceName, object? resourceId = null, Exception? innerException = null)
-        => new(resourceName, resourceId, innerException);
 
     /// <summary>Gets the name or identifier of the resource that caused the conflict.</summary>
     public string? ResourceName { get; }
@@ -65,6 +58,12 @@ public class ConflictException : HttpException
         ResourceName = resourceName;
         ResourceId = resourceId;
     }
+
+    /// <summary>Creates a <see cref="ConflictException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
+    /// <param name="resourceName">The name or type of the resource that caused the conflict.</param>
+    /// <param name="resourceId">The identifier of the resource that caused the conflict.</param>
+    /// <param name="innerException">The exception that is the cause of the current exception.</param>
+    public static ConflictException ForResource(string resourceName, object? resourceId = null, Exception? innerException = null) => new(resourceName, resourceId, innerException);
 
     public override string ToString() => $"{base.ToString()} (Resource: {ResourceName}, ID: {ResourceId})";
 }

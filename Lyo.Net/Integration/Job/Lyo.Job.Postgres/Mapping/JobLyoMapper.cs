@@ -11,9 +11,7 @@ using JobRunResultEntity = Lyo.Job.Postgres.Database.JobRunResult;
 
 namespace Lyo.Job.Postgres.Mapping;
 
-/// <summary>
-/// Hand-rolled <see cref="ILyoMapper" /> for job Req/entity/Res. Explicit property assignments — no Mapster.
-/// </summary>
+/// <summary>Hand-rolled <see cref="ILyoMapper" /> for job Req/entity/Res. Explicit property assignments — no Mapster.</summary>
 public sealed class JobLyoMapper : ILyoMapper
 {
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
@@ -38,7 +36,6 @@ public sealed class JobLyoMapper : ILyoMapper
             JobRunResultReq req when typeof(TResult) == typeof(JobRunResultEntity) => (TResult)(object)ReqToNew(req),
             JobRunLogReq req when typeof(TResult) == typeof(JobRunLog) => (TResult)(object)ReqToNew(req),
             JobWorkerInstanceReq req when typeof(TResult) == typeof(JobWorkerInstance) => (TResult)(object)ReqToNew(req),
-
             JobDefinition e when typeof(TResult) == typeof(JobDefinitionRes) => (TResult)(object)ToRes(e),
             JobParameter e when typeof(TResult) == typeof(JobParameterRes) => (TResult)(object)ToRes(e),
             JobSchedule e when typeof(TResult) == typeof(JobScheduleRes) => (TResult)(object)ToRes(e),
@@ -57,10 +54,8 @@ public sealed class JobLyoMapper : ILyoMapper
             JobRunResultEntity e when typeof(TResult) == typeof(JobRunResultRes) => (TResult)(object)ToRes(e),
             JobRunLog e when typeof(TResult) == typeof(JobRunLogRes) => (TResult)(object)ToRes(e),
             JobWorkerInstance e when typeof(TResult) == typeof(JobWorkerInstanceRes) => (TResult)(object)ToRes(e),
-
             JobRunRes res when typeof(TResult) == typeof(JobRunReq) => (TResult)(object)ResToReq(res),
-
-            _ => throw Unmapped(source.GetType(), typeof(TResult))
+            var _ => throw Unmapped(source.GetType(), typeof(TResult))
         };
 
     public void Map<TSource, TDest>(TSource source, TDest destination)
@@ -125,8 +120,7 @@ public sealed class JobLyoMapper : ILyoMapper
         }
     }
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping configured from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping configured from {source.Name} to {dest.Name}.");
 
     private static DateTime UtcNow() => DateTime.UtcNow;
 
@@ -142,11 +136,12 @@ public sealed class JobLyoMapper : ILyoMapper
 
     private static byte[]? MaskParameterEncryptedValue(byte[]? encryptedValue) => encryptedValue is not null ? null : encryptedValue;
 
-    private static DateTime ToUtcDateTime(DateTime value) => value.Kind switch {
-        DateTimeKind.Utc => value,
-        DateTimeKind.Local => value.ToUniversalTime(),
-        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
-    };
+    private static DateTime ToUtcDateTime(DateTime value)
+        => value.Kind switch {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            var _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
 
     // ─── Req → new entity ───────────────────────────────────────────────────
 
@@ -180,6 +175,7 @@ public sealed class JobLyoMapper : ILyoMapper
             JobTriggerJobDefinitions = r.CreateTriggers.Select(ReqToNew).ToList(),
             JobParallelRestrictionBaseJobDefinitions = r.CreateParallelRestrictions.Select(ReqToNew).ToList()
         };
+
         JobBlackoutCalendarEntityHelper.ApplyDefinitionBlackoutDefaults(r, dest);
         return dest;
     }
@@ -276,10 +272,11 @@ public sealed class JobLyoMapper : ILyoMapper
             Enabled = r.Enabled,
             CreatedTimestamp = now,
             JobBlackoutWindows = r.CreateBlackoutWindows.Select(w => {
-                var window = ReqToNew(w);
-                window.CreatedTimestamp = now;
-                return window;
-            }).ToList()
+                    var window = ReqToNew(w);
+                    window.CreatedTimestamp = now;
+                    return window;
+                })
+                .ToList()
         };
     }
 
@@ -370,12 +367,7 @@ public sealed class JobLyoMapper : ILyoMapper
             EncryptedValue = r.EncryptedValue
         };
 
-    internal static JobRunResultEntity ReqToNew(JobRunResultReq r)
-        => new() {
-            Key = r.Key,
-            Type = r.Type.ToString(),
-            Value = r.Value
-        };
+    internal static JobRunResultEntity ReqToNew(JobRunResultReq r) => new() { Key = r.Key, Type = r.Type.ToString(), Value = r.Value };
 
     internal static JobRunLog ReqToNew(JobRunLogReq r)
         => new() {
@@ -402,15 +394,11 @@ public sealed class JobLyoMapper : ILyoMapper
 
     internal static JobDefinitionRes ToRes(JobDefinition e)
         => new(
-            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled,
-            e.JobParameters.Select(ToRes).ToList(),
-            e.JobSchedules.Select(ToRes).ToList(),
-            e.JobTriggerJobDefinitions.Select(ToRes).ToList(),
-            e.JobParallelRestrictionBaseJobDefinitions.Select(ToRes).ToList(),
-            e.MaxRetryCount, e.RetryBackoffSeconds, e.TimeoutMinutes, e.MaxConcurrentRuns, e.CircuitBreakerThreshold,
-            e.CircuitBreakerResetMinutes, e.CircuitBreakerTrippedAt, Enum.Parse<JobRetryBackoffType>(e.RetryBackoffType), e.Priority, e.RetentionDays,
-            e.MaxRunsPerHour, e.ExpectedDurationMinutes, e.MustStartByMinutes, e.AlertOnFailure, e.AlertAfterConsecutiveFailures, e.AlertWebhookUrl,
-            e.DefinitionVersion);
+            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled, e.JobParameters.Select(ToRes).ToList(), e.JobSchedules.Select(ToRes).ToList(),
+            e.JobTriggerJobDefinitions.Select(ToRes).ToList(), e.JobParallelRestrictionBaseJobDefinitions.Select(ToRes).ToList(), e.MaxRetryCount, e.RetryBackoffSeconds,
+            e.TimeoutMinutes, e.MaxConcurrentRuns, e.CircuitBreakerThreshold, e.CircuitBreakerResetMinutes, e.CircuitBreakerTrippedAt,
+            Enum.Parse<JobRetryBackoffType>(e.RetryBackoffType), e.Priority, e.RetentionDays, e.MaxRunsPerHour, e.ExpectedDurationMinutes, e.MustStartByMinutes, e.AlertOnFailure,
+            e.AlertAfterConsecutiveFailures, e.AlertWebhookUrl, e.DefinitionVersion);
 
     internal static JobParameterRes ToRes(JobParameter e)
         => new(
@@ -421,44 +409,40 @@ public sealed class JobLyoMapper : ILyoMapper
         => new(
             e.Id, e.JobDefinitionId, Enum.Parse<MonthFlags>(e.MonthFlags), Enum.Parse<DayFlags>(e.DayFlags), Enum.Parse<ScheduleType>(e.Type),
             (e.Times ?? []).Select(ParseTime).ToList(), ParseTimeOrNull(e.StartTime), ParseTimeOrNull(e.EndTime), e.IntervalMinutes, e.Description, e.Enabled,
-            e.JobScheduleParameters.Select(ToRes).ToList(), e.CronExpression, Enum.Parse<JobMisfirePolicy>(e.MisfirePolicy), e.StartDateUtc, e.EndDateUtc,
-            e.TimeZoneId, e.JobBlackoutCalendarId, e.JobBlackoutCalendar is null ? null : ToRes(e.JobBlackoutCalendar));
+            e.JobScheduleParameters.Select(ToRes).ToList(), e.CronExpression, Enum.Parse<JobMisfirePolicy>(e.MisfirePolicy), e.StartDateUtc, e.EndDateUtc, e.TimeZoneId,
+            e.JobBlackoutCalendarId, e.JobBlackoutCalendar is null ? null : ToRes(e.JobBlackoutCalendar));
 
     internal static JobScheduleParameterRes ToRes(JobScheduleParameter e)
         => new(e.Id, e.JobScheduleId, e.Key, Enum.Parse<JobParameterType>(e.Type), e.Value, e.Description, null, e.Enabled);
 
     internal static JobTriggerRes ToRes(JobTrigger e)
         => new(
-            e.Id, e.TriggersJobDefinitionId, e.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(e.TriggerComparator), e.TriggerJobResultValue,
-            e.Description, e.Enabled, null, e.JobTriggerParameters.Select(ToRes).ToList(), null);
+            e.Id, e.TriggersJobDefinitionId, e.TriggerJobResultKey, Enum.Parse<ComparisonOperatorEnum>(e.TriggerComparator), e.TriggerJobResultValue, e.Description, e.Enabled,
+            null, e.JobTriggerParameters.Select(ToRes).ToList(), null);
 
     internal static JobTriggerParameterRes ToRes(JobTriggerParameter e)
         => new(e.Id, e.JobTriggerId, e.Key, Enum.Parse<JobParameterType>(e.Type), e.Value, e.Description, null, e.Enabled);
 
-    internal static JobParallelRestrictionRes ToRes(JobParallelRestriction e)
-        => new(e.Id, e.BaseJobDefinitionId, e.OtherJobDefinitionId, e.Description, e.Enabled, null);
+    internal static JobParallelRestrictionRes ToRes(JobParallelRestriction e) => new(e.Id, e.BaseJobDefinitionId, e.OtherJobDefinitionId, e.Description, e.Enabled, null);
 
-    internal static JobBlackoutCalendarRes ToRes(JobBlackoutCalendar e)
-        => new(e.Id, e.Name, e.Description, e.Enabled, e.JobBlackoutWindows.Select(ToRes).ToList());
+    internal static JobBlackoutCalendarRes ToRes(JobBlackoutCalendar e) => new(e.Id, e.Name, e.Description, e.Enabled, e.JobBlackoutWindows.Select(ToRes).ToList());
 
     internal static JobBlackoutWindowRes ToRes(JobBlackoutWindow e)
         => new(
-            e.Id, e.JobBlackoutCalendarId, e.Name, Enum.Parse<DayFlags>(e.DayFlags), ParseTime(e.StartTime), ParseTime(e.EndTime),
-            Enum.Parse<JobBlackoutPolicy>(e.Policy), e.Enabled, e.StartDateUtc, e.EndDateUtc);
+            e.Id, e.JobBlackoutCalendarId, e.Name, Enum.Parse<DayFlags>(e.DayFlags), ParseTime(e.StartTime), ParseTime(e.EndTime), Enum.Parse<JobBlackoutPolicy>(e.Policy),
+            e.Enabled, e.StartDateUtc, e.EndDateUtc);
 
-    internal static JobWorkflowRes ToRes(JobWorkflow e)
-        => new(e.Id, e.Name, e.Description, e.Enabled, e.JobWorkflowSteps.Select(ToRes).ToList());
+    internal static JobWorkflowRes ToRes(JobWorkflow e) => new(e.Id, e.Name, e.Description, e.Enabled, e.JobWorkflowSteps.Select(ToRes).ToList());
 
     internal static JobWorkflowStepRes ToRes(JobWorkflowStep e)
         => new(
-            e.Id, e.JobWorkflowId, e.JobDefinitionId, e.StepName, e.StepOrder, e.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(e.FailurePolicy),
-            e.ParametersJson, e.Enabled, null);
+            e.Id, e.JobWorkflowId, e.JobDefinitionId, e.StepName, e.StepOrder, e.DependsOnStepIds, Enum.Parse<JobWorkflowFailurePolicy>(e.FailurePolicy), e.ParametersJson,
+            e.Enabled);
 
     internal static JobWorkflowRunRes ToRes(JobWorkflowRun e)
-        => new(e.Id, e.JobWorkflowId, e.State, e.StartedTimestamp, e.FinishedTimestamp, e.CreatedTimestamp, e.JobWorkflowRunSteps.Select(ToRes).ToList(), null);
+        => new(e.Id, e.JobWorkflowId, e.State, e.StartedTimestamp, e.FinishedTimestamp, e.CreatedTimestamp, e.JobWorkflowRunSteps.Select(ToRes).ToList());
 
-    internal static JobWorkflowRunStepRes ToRes(JobWorkflowRunStep e)
-        => new(e.Id, e.JobWorkflowRunId, e.JobWorkflowStepId, e.JobRunId, e.State, null, null);
+    internal static JobWorkflowRunStepRes ToRes(JobWorkflowRunStep e) => new(e.Id, e.JobWorkflowRunId, e.JobWorkflowStepId, e.JobRunId, e.State);
 
     internal static JobRunRes ToRes(JobRun e)
         => new() {
@@ -500,11 +484,9 @@ public sealed class JobLyoMapper : ILyoMapper
             e.Id, e.JobRunId, e.Key, Enum.Parse<JobParameterType>(e.Type), MaskParameterValue(e.Value, e.EncryptedValue), e.Description,
             MaskParameterEncryptedValue(e.EncryptedValue), false);
 
-    internal static JobRunResultRes ToRes(JobRunResultEntity e)
-        => new(e.Id, e.JobRunId, e.Key, Enum.Parse<JobParameterType>(e.Type), e.Value);
+    internal static JobRunResultRes ToRes(JobRunResultEntity e) => new(e.Id, e.JobRunId, e.Key, Enum.Parse<JobParameterType>(e.Type), e.Value);
 
-    internal static JobRunLogRes ToRes(JobRunLog e)
-        => new(e.Id, e.JobRunId, Enum.Parse<JobLogLevel>(e.Level), e.Message, e.Context, e.StackTrace, e.Timestamp);
+    internal static JobRunLogRes ToRes(JobRunLog e) => new(e.Id, e.JobRunId, Enum.Parse<JobLogLevel>(e.Level), e.Message, e.Context, e.StackTrace, e.Timestamp);
 
     internal static JobWorkerInstanceRes ToRes(JobWorkerInstance e)
         => new(e.Id, e.WorkerType, e.MachineName, e.ProcessId, Enum.Parse<JobWorkerInstanceState>(e.State), e.InFlightCount, e.StartedTimestamp, e.LastHeartbeatUtc);
@@ -530,13 +512,14 @@ public sealed class JobLyoMapper : ILyoMapper
             BatchIndex = r.BatchIndex,
             BatchTotal = r.BatchTotal,
             JobRunParameters = (r.JobRunParameters ?? []).Select(p => new JobRunParameterReq {
-                Key = p.Key,
-                Description = p.Description,
-                Type = p.Type,
-                Value = p.Value,
-                EncryptedValue = p.EncryptedValue,
-                Enabled = p.Enabled
-            }).ToList()
+                    Key = p.Key,
+                    Description = p.Description,
+                    Type = p.Type,
+                    Value = p.Value,
+                    EncryptedValue = p.EncryptedValue,
+                    Enabled = p.Enabled
+                })
+                .ToList()
         };
 
     // ─── Req → existing entity (update/patch) ───────────────────────────────

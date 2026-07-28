@@ -44,5 +44,9 @@ public sealed class PersonEntityConfiguration : IEntityTypeConfiguration<PersonE
         builder.HasIndex(e => new { e.LastName, e.FirstName }).HasDatabaseName("ix_person_last_name_first_name");
         builder.HasIndex(e => e.IsActive).HasDatabaseName("ix_person_is_active");
         builder.HasIndex(e => e.CreatedTimestamp).HasDatabaseName("ix_person_created_timestamp");
+        // Query-path indexes: source-type filters and the common multi-key sorts used by dynamic queries.
+        builder.HasIndex(e => e.SourceEntityType).HasDatabaseName("ix_person_source_entity_type");
+        builder.HasIndex(e => new { e.LastName, e.FirstName, e.Id }).HasDatabaseName("ix_person_last_name_first_name_id");
+        builder.HasIndex(e => new { e.FirstName, e.LastName, e.DateOfBirth }).HasDatabaseName("ix_person_first_name_last_name_date_of_birth");
     }
 }

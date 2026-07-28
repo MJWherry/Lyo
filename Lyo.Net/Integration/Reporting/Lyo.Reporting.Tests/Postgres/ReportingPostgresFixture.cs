@@ -23,22 +23,18 @@ public sealed class ReportingPostgresFixture : PostgresContainerFixtureBase
 
     protected override async ValueTask OnContainerStartedAsync(string connectionString, CancellationToken cancellationToken)
     {
-        FakeFileStorage = new FakeFileStorageService();
+        FakeFileStorage = new();
         var services = new ServiceCollection();
         services.AddLogging(b => {
             b.AddConsole();
             b.SetMinimumLevel(LogLevel.Warning);
         });
+
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddIOTempService();
         services.AddSingleton<IFileStorageService>(FakeFileStorage);
-        services.AddPostgresReportingManagement(
-            new PostgresReportingOptions {
-                ConnectionString = connectionString,
-                EnableAutoMigrations = true
-            });
-
+        services.AddPostgresReportingManagement(new PostgresReportingOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
         ServiceProvider = services.BuildServiceProvider();
         using (var scope = ServiceProvider.CreateScope()) {
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();

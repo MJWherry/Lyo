@@ -142,11 +142,9 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         ArgumentHelpers.ThrowIfNull(request);
         ValidatePathPrefix(request.PathPrefix);
         var destPrefix = NormalizePathPrefix(request.PathPrefix);
-
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId}; it is awaiting direct-upload finalize.");
-
         var previousPrefix = meta.PathPrefix;
         if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
             return meta;
@@ -164,10 +162,8 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             var dst = _containerClient.GetBlobClient(destBlobName);
             await dst.SyncCopyFromUriAsync(src.Uri, cancellationToken: ct).ConfigureAwait(false);
             copyCompleted = true;
-
             var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
             metadataSaved = true;
-
             try {
                 await _containerClient.GetBlobClient(srcBlobName).DeleteIfExistsAsync(cancellationToken: CancellationToken.None).ConfigureAwait(false);
             }

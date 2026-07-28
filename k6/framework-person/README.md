@@ -3,8 +3,8 @@
 Reusable k6 framework for `TestApi` person querying with multiple workload profiles and query shapes based on your `QueryRequest` model.
 
 Shared reusable API code lives outside k6 in:
-- `packages/lyo-api-client`
-- `packages/lyo-person-api-client`
+- `packages/typescript/lyo-api-client`
+- `packages/typescript/lyo-person-api-client`
 
 `k6/framework-person` contains test orchestration only.
 
@@ -12,9 +12,9 @@ Shared reusable API code lives outside k6 in:
 
 The primary production path is now a **symmetric matrix**:
 
-- Endpoints: `/person/QueryConcrete`, `/person/QueryProject`
-- Profiles: `load`, `stress`, `spike`, `soak`
-- Dedicated suites: 8 scenario files (one per endpoint x profile)
+- Endpoints: `/person/QueryConcrete`, `/person/QueryProject`, root `POST /Query` (From/Joins sparse projection)
+- Profiles: `load`, `stress`, `spike`, `soak`, `ceiling` (saturation)
+- Dedicated suites: 15 scenario files (one per endpoint x profile)
 
 Core matrix orchestration is data-driven via:
 
@@ -25,22 +25,22 @@ Core matrix orchestration is data-driven via:
 
 ## Benchmarks & “modern standards”
 
-Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). `build-manifests.py` normalizes the raw `*.summary.json` into the unified `lyo.bench/v1` schema (`type: "load"` — cases / scenarios / rollups / SLO / grades; see [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md)). It also attaches a per-case `cases` block (query structure: where clauses, filters, sort, includes, selection field count) from the `K6_CASE_META` map in `build-manifests.py` — keep that map in sync with [`lib/cases.js`](lib/cases.js) / [`lib/queryFactory.js`](lib/queryFactory.js) when cases change, so the dashboard explains what each scenario actually tested. The **authoritative review** is the HTML dashboard:
+Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). `build_manifests.py` normalizes the raw `*.summary.json` into the unified `lyo.bench/v1` schema (`type: "load"` — cases / scenarios / rollups / SLO / grades; see [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md)). It also attaches a per-case `cases` block (query structure: where clauses, filters, sort, includes, selection field count) from the `K6_CASE_META` map in `build_manifests.py` — keep that map in sync with [`lib/cases.js`](lib/cases.js) / [`lib/queryFactory.js`](lib/queryFactory.js) when cases change, so the dashboard explains what each scenario actually tested. The **authoritative review** is the HTML dashboard:
 
-- **[Benchmark dashboard](../../docs/benchmarks/index.html)** — open after `build-manifests.py`, then click the **Query API (k6)** report
+- **[Benchmark dashboard](../../docs/benchmarks/index.html)** — open after `build_manifests.py`, then click the **Query API (k6)** report
 - Stub / refresh notes: [`K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
 
-**Latest full suite analyzed there (June 2026, symmetric matrix)**: `k6/results/prod-matrix-20260623-163003/` (earlier April 2026 5-scenario archives are retained in the analysis doc for historical comparison).
+**Latest full suite analyzed there (July 2026, 12-suite matrix incl. root `/Query`)**: `k6/framework-person/results/20260726-235847/` (the June 2026 `prod-like-20260624-234715` 8-suite archive and earlier April 2026 5-scenario archives are retained for historical comparison).
 
 At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs split infra). **`Lyo.TestApi`** uses **`CacheOptions:QueryCacheTagGranularity`** = **`Broad`** (default) for these numbers:
 
 | Bucket | What to expect in the wild | This stack (see analysis) |
 |--------|----------------------------|---------------------------|
-| Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100–300 ms**; internal microservices often **~50–150 ms** | Mixed query **~29 ms p95**; subquery load **~18 ms p95** on the archived run |
-| Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5–30 ms** p95 for simple reads on small data | Competitive **order of magnitude** for comparable shapes and sizes |
+| Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100–300 ms**; internal microservices often **~50–150 ms** | Baseline/filter/subquery cases **~14–22 ms p95** under load; projections **~6–51 ms p95**; root joins **~5–46 ms p95** on the July 2026 run |
+| Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5–30 ms** p95 for simple reads on small data | Competitive **order of magnitude** for comparable shapes and sizes (root flat select **~5 ms p95**, scalar computed projection **~6 ms p95**) |
 | GraphQL (Hasura vs hand-written resolvers) | Hasura: similar to thin gateways; Apollo/Hot Chocolate/gqlgen: **~40 ms–seconds** depending on N+1 and DataLoader | Analysis separates **gateway GraphQL** from **resolver-heavy GraphQL**; see industry tables |
 | ORM-heavy APIs (typical EF/Django/Rails) | Often **50–400 ms** for non-trivial reads | **Lower** than “typical ORM” bands in the analysis for the scenarios tested |
-| Large payloads / deep graphs | Dominated by **bytes and join depth** — compare after pagination, not a single global SLO | Heavy-include stress **~93 ms avg** with **100%** within scenario SLA under 40 VUs |
+| Large payloads / deep graphs | Dominated by **bytes and join depth** — compare after pagination, not a single global SLO | Heavy-include **~96–119 ms avg** at steady state (spike/soak); **~659 ms avg** under 40-VU stress with **99.98%** checks |
 
 Treat any table as **directional**: dataset size, indexes, cache keys, and hardware dominate absolute milliseconds.
 
@@ -56,6 +56,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `stress` (ramping VUs)
   - `spike` (ramping arrival rate burst)
   - `soak` (long-running leak watch)
+  - `ceiling` (saturation: staggered constant-arrival-rate steps that climb until the server can no longer keep up; zero iteration sleep, no pass/fail thresholds — each step is its own k6 scenario so the summary carries per-step p95/dropped-iterations and the dashboard reports the highest dropped-free rate as the measured ceiling)
 - Query shapes:
   - baseline pagination
   - filter groups + multi-sort
@@ -64,6 +65,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `QueryNode` + `SubQuery` (two-phase style)
   - heavy includes (cache-bypass or cache-hit mode)
   - QueryProject projection and computed fields (scenarios 06–07)
+  - root `POST /Query` From/Joins shapes (flat, left join, chained joins, chained + exact count)
 
 ## Directory layout
 
@@ -79,6 +81,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `personModels.js` shared field names and source-type constants
   - `queryFactory.js` `QueryConcreteReq` body builders (`/person/QueryConcrete`)
   - `projectionQueries.js` `ProjectionQueryReq` body builders (`/person/QueryProject`)
+  - `rootQueries.js` root query body builders (`POST /Query` — From/Joins sparse projection)
 - `scenarios/`
   - `query_load.js`
   - `query_stress.js`
@@ -88,6 +91,13 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `queryproject_stress.js`
   - `queryproject_spike.js`
   - `queryproject_soak.js`
+  - `queryroot_load.js`
+  - `queryroot_stress.js`
+  - `queryroot_spike.js`
+  - `queryroot_soak.js`
+  - `query_ceiling.js`
+  - `queryproject_ceiling.js`
+  - `queryroot_ceiling.js`
   - (legacy scenarios retained for migration compatibility)
 - `run_all.sh` strict matrix runner with package-build preflight
 
@@ -96,7 +106,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
 Build shared TypeScript packages first:
 
 ```bash
-cd packages/lyo-api-client && npm install && npm run build
+cd packages/typescript/lyo-api-client && npm install && npm run build
 cd ../lyo-person-api-client && npm install && npm run build
 cd ../../
 ```
@@ -125,6 +135,10 @@ Run everything:
 ./k6/framework-person/run_all.sh query spike
 ./k6/framework-person/run_all.sh nonsoak
 
+# Saturation (ceiling) runs — find the max sustained arrival rate
+RUN_LABEL=ceiling-uncached ./k6/framework-person/run_all.sh ceiling
+CACHE_HIT_MODE=true RUN_LABEL=ceiling-cached ./k6/framework-person/run_all.sh ceiling
+
 # Equivalent via env var (comma-separated)
 TEST_FILTER="query_spike,queryproject_load" ./k6/framework-person/run_all.sh
 ```
@@ -145,6 +159,8 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - `SLEEP_SECONDS`
 - Matrix control:
   - `MODE` (`full` or `smoke`) in `run_all.sh`
+  - `RUN_LABEL` (prefixes the results directory name, e.g. `RUN_LABEL=ceiling-cached` → `results/ceiling-cached-<timestamp>/`; shows up in the dashboard snapshot dropdown)
+  - `CACHE_HIT_MODE` (`true|false`, default `false`) pins request shapes — fixed `Start=0`/`Amount=amountMin`, round-robin case rotation, and all include/Select/sort randomization off — so every case settles on one server cache key and repeat requests hit TestApi's query cache. Use for cache-hit benchmarking; the default (varied paging) measures cache-miss behavior.
   - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.
   - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
   - Fairness default: both `/person/QueryConcrete` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
@@ -176,6 +192,7 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - Stress: `STRESS_START_VUS`, `STRESS_TARGET1`, `STRESS_TARGET2`, stage durations
   - Spike: `SPIKE_START_RATE`, `SPIKE_TARGET_RATE`, `SPIKE_MAX_VUS`
   - Soak: `SOAK_VUS`, `SOAK_DURATION`, `SOAK_HEAVY_EVERY`
+  - Ceiling: `CEILING_RATES` (CSV arrival-rate steps, default `25,50,100,150,200,300,450,700,1000`), `CEILING_STEP_DURATION` (default `45s`), `CEILING_MAX_VUS` (default `400`), `CEILING_GRACEFUL_STOP` (default `10s`)
 - Heavy include:
   - `BYPASS_CACHE=true|false`
   - `HEAVY_AMOUNT`, `HEAVY_MIN_AMOUNT`, `HEAVY_MAX_AMOUNT` (defaults: `200`, `150`, `300`)

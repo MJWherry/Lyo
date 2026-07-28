@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;

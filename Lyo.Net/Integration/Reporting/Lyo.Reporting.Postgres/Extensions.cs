@@ -3,6 +3,7 @@ using Lyo.Api.Mapping;
 using Lyo.Csv;
 using Lyo.Exceptions;
 using Lyo.Postgres;
+using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Profiles;
 using Lyo.Reporting.Models.Providers;
 using Lyo.Reporting.Models.Rendering;
@@ -32,9 +33,7 @@ public static class Extensions
             return services.AddReportingDbContextFactory(options);
         }
 
-        public IServiceCollection AddReportingDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresReportingOptions.SectionName)
+        public IServiceCollection AddReportingDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresReportingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -53,10 +52,9 @@ public static class Extensions
             options.Validate();
             services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<ReportingContext, PostgresReportingOptions>();
-            services.AddDbContextFactory<ReportingContext>(
-                dbOptions => dbOptions.UseNpgsql(
-                    options.ConnectionString,
-                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresReportingOptions.Schema)));
+            services.AddDbContextFactory<ReportingContext>(dbOptions => dbOptions.UseNpgsql(
+                options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresReportingOptions.Schema)));
+
             return services;
         }
 
@@ -69,9 +67,7 @@ public static class Extensions
             return services.AddPostgresReportingManagement(options);
         }
 
-        public IServiceCollection AddPostgresReportingManagementFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresReportingOptions.SectionName)
+        public IServiceCollection AddPostgresReportingManagementFromConfiguration(IConfiguration configuration, string configSectionName = PostgresReportingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresReportingOptions();
@@ -83,12 +79,10 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Drop-and-play reporting: DbContextFactory, migrations, CRUD services, mapper, CSV/XLSX/JSON <see cref="IReportRenderer"/>s,
-        /// <see cref="ReportService"/>, <see cref="ReportGenerationThrottle"/>, and <see cref="ReportRetentionService"/>.
-        /// Requires AddLyoQueryServices, cache, and IIOTempService for generate staging.
-        /// HTML/PDF: call <c>AddReportingWebRenderer()</c> from Lyo.Reporting.Web on the host.
-        /// Persist outputs: <see cref="AddReportingGenerationHooks"/>.
-        /// Map HTTP endpoints via <c>Lyo.Api.Reporting</c> <c>BuildReportingGroup</c>.
+        /// Drop-and-play reporting: DbContextFactory, migrations, CRUD services, mapper, CSV/XLSX/JSON <see cref="IReportRenderer" />s, <see cref="ReportService" />,
+        /// <see cref="ReportGenerationThrottle" />, and <see cref="ReportRetentionService" />. Requires AddLyoQueryServices, cache, and IIOTempService for generate staging. HTML/PDF: call
+        /// <c>AddReportingWebRenderer()</c> from Lyo.Reporting.Web on the host. Persist outputs: <see cref="AddReportingGenerationHooks" />. Map HTTP endpoints via <c>Lyo.Api.Reporting</c>
+        /// <c>BuildReportingGroup</c>.
         /// </summary>
         public IServiceCollection AddPostgresReportingManagement(PostgresReportingOptions options)
         {
@@ -108,10 +102,9 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Opt-in hosted worker that runs <see cref="ReportRetentionService"/> maintenance (retention cleanup and
-        /// stuck-generation recovery) every <see cref="PostgresReportingOptions.MaintenanceInterval"/>.
-        /// Call after <see cref="AddPostgresReportingManagement(PostgresReportingOptions)"/>. Not needed on hosts
-        /// that already schedule <see cref="ReportRetentionService.CleanupAsync(CancellationToken)"/> themselves.
+        /// Opt-in hosted worker that runs <see cref="ReportRetentionService" /> maintenance (retention cleanup and stuck-generation recovery) every
+        /// <see cref="PostgresReportingOptions.MaintenanceInterval" />. Call after <see cref="AddPostgresReportingManagement(PostgresReportingOptions)" />. Not needed on hosts that already
+        /// schedule <see cref="ReportRetentionService.CleanupAsync(CancellationToken)" /> themselves.
         /// </summary>
         public IServiceCollection AddReportingMaintenanceWorker()
         {
@@ -121,8 +114,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers host <see cref="ReportGenerationHooks"/> used by <see cref="ReportService"/>
-        /// (e.g. save staged output via FileStorage). Replaces any previously registered hooks instance.
+        /// Registers host <see cref="ReportGenerationHooks" /> used by <see cref="ReportService" /> (e.g. save staged output via FileStorage). Replaces any previously registered
+        /// hooks instance.
         /// </summary>
         public IServiceCollection AddReportingGenerationHooks(ReportGenerationHooks hooks)
         {
@@ -133,11 +126,11 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers a generation profile (defaults for format/filename/path) keyed by <see cref="ReportingGenerationProfile.Key"/>.</summary>
+        /// <summary>Registers a generation profile (defaults for format/filename/path) keyed by <see cref="ReportingGenerationProfile.Key" />.</summary>
         /// <remarks>
-        /// Uses <see cref="ServiceCollectionServiceExtensions.AddSingleton{TService}(IServiceCollection, TService)"/> rather than
-        /// <c>TryAddEnumerable</c>: profiles are the same concrete type, which DI rejects as indistinguishable for enumerable registration.
-        /// All registered profiles are still available via <c>IEnumerable&lt;ReportingGenerationProfile&gt;</c>.
+        /// Uses <see cref="ServiceCollectionServiceExtensions.AddSingleton{TService}(IServiceCollection, TService)" /> rather than <c>TryAddEnumerable</c>: profiles are the same
+        /// concrete type, which DI rejects as indistinguishable for enumerable registration. All registered profiles are still available via
+        /// <c>IEnumerable&lt;ReportingGenerationProfile&gt;</c>.
         /// </remarks>
         public IServiceCollection AddReportingGenerationProfile(ReportingGenerationProfile profile)
         {
@@ -145,6 +138,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(profile);
             if (string.IsNullOrWhiteSpace(profile.Key))
                 throw new ArgumentException("Profile Key is required.", nameof(profile));
+
             services.AddSingleton(profile);
             return services;
         }
@@ -158,7 +152,7 @@ public static class Extensions
             return services.AddReportingGenerationProfile(builder.Build());
         }
 
-        /// <summary>Registers an <see cref="IReportDataProvider"/> (typically on the API host).</summary>
+        /// <summary>Registers an <see cref="IReportDataProvider" /> (typically on the API host).</summary>
         public IServiceCollection AddReportDataProvider<TProvider>()
             where TProvider : class, IReportDataProvider
         {
@@ -166,7 +160,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers an <see cref="IReportDataProvider"/> instance.</summary>
+        /// <summary>Registers an <see cref="IReportDataProvider" /> instance.</summary>
         public IServiceCollection AddReportDataProvider(IReportDataProvider provider)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -177,14 +171,14 @@ public static class Extensions
     }
 }
 
-/// <summary>Fluent builder for <see cref="ReportingGenerationProfile"/>.</summary>
+/// <summary>Fluent builder for <see cref="ReportingGenerationProfile" />.</summary>
 public sealed class ReportingGenerationProfileBuilder(string key)
 {
-    private Models.Enums.ReportFormat? _defaultFormat;
     private string? _defaultFileName;
+    private ReportFormat? _defaultFormat;
     private string? _defaultPathPrefix;
 
-    public ReportingGenerationProfileBuilder DefaultFormat(Models.Enums.ReportFormat format)
+    public ReportingGenerationProfileBuilder DefaultFormat(ReportFormat format)
     {
         _defaultFormat = format;
         return this;

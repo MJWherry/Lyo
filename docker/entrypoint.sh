@@ -19,7 +19,7 @@ cd "$REPO_ROOT"
 
 TARGET="${TARGET:-all}"
 
-# The only path mounted out to the host; build-manifests.py (bench) writes here as root, so hand
+# The only path mounted out to the host; build_manifests.py (bench) writes here as root, so hand
 # ownership back to the host user on exit (success or failure).
 DATA_DIR="$REPO_ROOT/docs/benchmarks/data"
 chown_data() {
@@ -42,7 +42,7 @@ for proj in "${projects[@]}"; do
   base="$(basename "$proj" .csproj)"
   case "$base" in
     *.Benchmarks)
-      # Lyo.<X>.Benchmarks -> lowercase <X>, matching run-dotnet-benchmarks.sh / build-manifests.py.
+      # Lyo.<X>.Benchmarks -> lowercase <X>, matching run-dotnet-benchmarks.sh / build_manifests.py.
       name="${base#Lyo.}"
       name="${name%.Benchmarks}"
       categories+=("$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')")

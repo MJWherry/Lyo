@@ -69,8 +69,7 @@ public class ExportService<TContext>(
             if (request.Query.Keys.Count > 0)
                 amount = Math.Min(Math.Max(request.Query.Keys.Count, queryOptions.MinPagingAmount), queryOptions.MaxExportSize);
             // Projected selects with navigations derive includes; keep under MaxIncludePageSize when not key-scoped.
-            else if (queryOptions.MaxIncludePageSize > 0
-                     && (request.Query.Include.Count > 0 || request.Query.Select.Any(static s => s.Contains('.', StringComparison.Ordinal))))
+            else if (queryOptions.MaxIncludePageSize > 0 && (request.Query.Include.Count > 0 || request.Query.Select.Any(static s => s.Contains('.', StringComparison.Ordinal))))
                 amount = Math.Min(amount, queryOptions.MaxIncludePageSize);
 
             var query = new ProjectionQueryReq {

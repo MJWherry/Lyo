@@ -5,7 +5,7 @@ namespace Lyo.Exceptions.Tests;
 public class ArgumentHelpersTests
 {
     [Fact]
-    public void ThrowIfNull_NonNull_DoesNotThrow() => ArgumentHelpers.ThrowIfNull(new object());
+    public void ThrowIfNull_NonNull_DoesNotThrow() => ArgumentHelpers.ThrowIfNull(new());
 
     [Fact]
     public void ThrowIfNull_Null_ThrowsWithCallerExpressionAsParamName()
@@ -83,8 +83,7 @@ public class ArgumentHelpersTests
     [Theory]
     [InlineData("")]
     [InlineData("  ")]
-    public void ThrowIfWhiteSpaceOrEmpty_EmptyOrWhitespace_Throws(string value)
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfWhiteSpaceOrEmpty(value));
+    public void ThrowIfWhiteSpaceOrEmpty_EmptyOrWhitespace_Throws(string value) => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfWhiteSpaceOrEmpty(value));
 
     [Fact]
     public void ThrowIf_False_DoesNotThrow() => ArgumentHelpers.ThrowIf(false, "unused");
@@ -113,8 +112,7 @@ public class ArgumentHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNotInRange_DateTime_InRange_DoesNotThrow()
-        => ArgumentHelpers.ThrowIfNotInRange(new DateTime(2024, 6, 1), new DateTime(2024, 1, 1), new DateTime(2024, 12, 31));
+    public void ThrowIfNotInRange_DateTime_InRange_DoesNotThrow() => ArgumentHelpers.ThrowIfNotInRange(new(2024, 6, 1), new DateTime(2024, 1, 1), new DateTime(2024, 12, 31));
 
     [Fact]
     public void ThrowIfNotInRange_DateTime_OutOfRange_Throws()
@@ -173,20 +171,17 @@ public class ArgumentHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNullOrEmpty_Collection_Empty_ThrowsArgument()
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNullOrEmpty(new List<int>()));
+    public void ThrowIfNullOrEmpty_Collection_Empty_ThrowsArgument() => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNullOrEmpty(new List<int>()));
 
     [Fact]
     public void ThrowIfNullOrEmpty_LazyEnumerable_Empty_ThrowsArgument()
         => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNullOrEmpty(Enumerable.Range(0, 5).Where(i => i > 10)));
 
     [Fact]
-    public void ThrowIfNullOrEmpty_Dictionary_Empty_ThrowsArgument()
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNullOrEmpty(new Dictionary<string, int>()));
+    public void ThrowIfNullOrEmpty_Dictionary_Empty_ThrowsArgument() => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNullOrEmpty(new Dictionary<string, int>()));
 
     [Fact]
-    public void ThrowIfNullOrEmpty_Dictionary_NonEmpty_DoesNotThrow()
-        => ArgumentHelpers.ThrowIfNullOrEmpty(new Dictionary<string, int> { ["a"] = 1 });
+    public void ThrowIfNullOrEmpty_Dictionary_NonEmpty_DoesNotThrow() => ArgumentHelpers.ThrowIfNullOrEmpty(new Dictionary<string, int> { ["a"] = 1 });
 
     [Fact]
     public void ThrowIfZero_NonZero_DoesNotThrow() => ArgumentHelpers.ThrowIfZero(7);
@@ -205,21 +200,18 @@ public class ArgumentHelpersTests
     public void ThrowIfNegative_NonNegative_DoesNotThrow(int value) => ArgumentHelpers.ThrowIfNegative(value);
 
     [Fact]
-    public void ThrowIfNegative_Negative_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNegative(-1));
+    public void ThrowIfNegative_Negative_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNegative(-1));
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void ThrowIfNegativeOrZero_NonPositive_Throws(int value)
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNegativeOrZero(value));
+    public void ThrowIfNegativeOrZero_NonPositive_Throws(int value) => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNegativeOrZero(value));
 
     [Fact]
     public void ThrowIfNegativeOrZero_Positive_DoesNotThrow() => ArgumentHelpers.ThrowIfNegativeOrZero(1);
 
     [Fact]
-    public void ThrowIfPositive_Positive_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfPositive(1));
+    public void ThrowIfPositive_Positive_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfPositive(1));
 
     [Theory]
     [InlineData(0)]
@@ -229,62 +221,52 @@ public class ArgumentHelpersTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    public void ThrowIfPositiveOrZero_NonNegative_Throws(int value)
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfPositiveOrZero(value));
+    public void ThrowIfPositiveOrZero_NonNegative_Throws(int value) => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfPositiveOrZero(value));
 
     [Fact]
     public void ThrowIfPositiveOrZero_Negative_DoesNotThrow() => ArgumentHelpers.ThrowIfPositiveOrZero(-1);
 
     [Fact]
-    public void ThrowIfGreaterThan_Above_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfGreaterThan(11, 10));
+    public void ThrowIfGreaterThan_Above_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfGreaterThan(11, 10));
 
     [Fact]
     public void ThrowIfGreaterThan_Equal_DoesNotThrow() => ArgumentHelpers.ThrowIfGreaterThan(10, 10);
 
     [Fact]
-    public void ThrowIfGreaterThanOrEqual_Equal_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfGreaterThanOrEqual(10, 10));
+    public void ThrowIfGreaterThanOrEqual_Equal_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfGreaterThanOrEqual(10, 10));
 
     [Fact]
     public void ThrowIfGreaterThanOrEqual_Below_DoesNotThrow() => ArgumentHelpers.ThrowIfGreaterThanOrEqual(9, 10);
 
     [Fact]
-    public void ThrowIfLessThan_Below_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfLessThan(9, 10));
+    public void ThrowIfLessThan_Below_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfLessThan(9, 10));
 
     [Fact]
     public void ThrowIfLessThan_Equal_DoesNotThrow() => ArgumentHelpers.ThrowIfLessThan(10, 10);
 
     [Fact]
-    public void ThrowIfLessThanOrEqual_Equal_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfLessThanOrEqual(10, 10));
+    public void ThrowIfLessThanOrEqual_Equal_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfLessThanOrEqual(10, 10));
 
     [Fact]
     public void ThrowIfLessThanOrEqual_Above_DoesNotThrow() => ArgumentHelpers.ThrowIfLessThanOrEqual(11, 10);
 
     [Fact]
-    public void ThrowIfNotNullAndLessThanOrEqual_Null_DoesNotThrow()
-        => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(null, 5.0);
+    public void ThrowIfNotNullAndLessThanOrEqual_Null_DoesNotThrow() => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(null, 5.0);
 
     [Fact]
-    public void ThrowIfNotNullAndLessThanOrEqual_Above_DoesNotThrow()
-        => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(6.0, 5.0);
+    public void ThrowIfNotNullAndLessThanOrEqual_Above_DoesNotThrow() => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(6.0, 5.0);
 
     [Fact]
-    public void ThrowIfNotNullAndLessThanOrEqual_Equal_Throws()
-        => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(5.0, 5.0));
+    public void ThrowIfNotNullAndLessThanOrEqual_Equal_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(5.0, 5.0));
 
     [Fact]
-    public void ThrowIfEqual_Equal_Throws()
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfEqual(5, 5));
+    public void ThrowIfEqual_Equal_Throws() => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfEqual(5, 5));
 
     [Fact]
     public void ThrowIfEqual_NotEqual_DoesNotThrow() => ArgumentHelpers.ThrowIfEqual(5, 6);
 
     [Fact]
-    public void ThrowIfNotEqual_NotEqual_Throws()
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNotEqual(5, 6));
+    public void ThrowIfNotEqual_NotEqual_Throws() => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfNotEqual(5, 6));
 
     [Fact]
     public void ThrowIfNotEqual_Equal_DoesNotThrow() => ArgumentHelpers.ThrowIfNotEqual(5, 5);

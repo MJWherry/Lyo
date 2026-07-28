@@ -9,10 +9,9 @@ namespace Lyo.Job.Postgres;
 internal static class JobBlackoutCalendarEntityHelper
 {
     /// <summary>
-    /// After mapping a <see cref="JobDefinitionReq" />, ensures schedules inheriting the definition default share one
-    /// <see cref="JobBlackoutCalendar" /> entity and schedules with explicit overrides keep their own.
-    /// Maps definition-level <see cref="JobDefinitionReq.CreateBlackoutCalendar" /> when it was not cascaded onto schedules.
-    /// Treats schedule calendars as inherited when they structurally match the definition calendar (JSON round-trip).
+    /// After mapping a <see cref="JobDefinitionReq" />, ensures schedules inheriting the definition default share one <see cref="JobBlackoutCalendar" /> entity and schedules
+    /// with explicit overrides keep their own. Maps definition-level <see cref="JobDefinitionReq.CreateBlackoutCalendar" /> when it was not cascaded onto schedules. Treats schedule
+    /// calendars as inherited when they structurally match the definition calendar (JSON round-trip).
     /// </summary>
     public static void ApplyDefinitionBlackoutDefaults(JobDefinitionReq src, JobDefinition dest)
     {
@@ -21,11 +20,9 @@ internal static class JobBlackoutCalendarEntityHelper
 
         var destSchedules = dest.JobSchedules.ToList();
         JobBlackoutCalendar? sharedCalendar = null;
-
         for (var i = 0; i < src.CreateSchedules.Count && i < destSchedules.Count; i++) {
             var srcSchedule = src.CreateSchedules[i];
             var destSchedule = destSchedules[i];
-
             if (HasScheduleBlackoutOverride(src, srcSchedule))
                 continue;
 
@@ -40,9 +37,9 @@ internal static class JobBlackoutCalendarEntityHelper
 
             // Prefer a calendar already built from a cascaded/structurally-matching schedule CreateBlackoutCalendar;
             // otherwise map the definition-level calendar once (definition-only API payloads).
-            sharedCalendar ??= destSchedule.JobBlackoutCalendar
-                ?? destSchedules.Select(s => s.JobBlackoutCalendar).FirstOrDefault(c => c != null)
-                ?? JobLyoMapper.ReqToNew(src.CreateBlackoutCalendar);
+            sharedCalendar ??= destSchedule.JobBlackoutCalendar ??
+                destSchedules.Select(s => s.JobBlackoutCalendar).FirstOrDefault(c => c != null) ?? JobLyoMapper.ReqToNew(src.CreateBlackoutCalendar);
+
             destSchedule.JobBlackoutCalendar = sharedCalendar;
         }
     }
@@ -86,7 +83,6 @@ internal static class JobBlackoutCalendarEntityHelper
             calendar.Id = LyoGuid.CreateCombPostgres();
 
         schedule.JobBlackoutCalendarId = calendar.Id;
-
         foreach (var window in calendar.JobBlackoutWindows) {
             if (window.Id == default)
                 window.Id = LyoGuid.CreateCombPostgres();
@@ -107,8 +103,7 @@ internal static class JobBlackoutCalendarEntityHelper
             return false;
 
         // After JSON deserialize, shared calendars become distinct instances with identical content.
-        if (definition.CreateBlackoutCalendar is not null
-            && StructurallyEquals(schedule.CreateBlackoutCalendar, definition.CreateBlackoutCalendar))
+        if (definition.CreateBlackoutCalendar is not null && StructurallyEquals(schedule.CreateBlackoutCalendar, definition.CreateBlackoutCalendar))
             return false;
 
         return true;
@@ -116,23 +111,15 @@ internal static class JobBlackoutCalendarEntityHelper
 
     internal static bool StructurallyEquals(JobBlackoutCalendarReq a, JobBlackoutCalendarReq b)
     {
-        if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal)
-            || !string.Equals(a.Description, b.Description, StringComparison.Ordinal)
-            || a.Enabled != b.Enabled
-            || a.CreateBlackoutWindows.Count != b.CreateBlackoutWindows.Count)
+        if (!string.Equals(a.Name, b.Name, StringComparison.Ordinal) || !string.Equals(a.Description, b.Description, StringComparison.Ordinal) || a.Enabled != b.Enabled ||
+            a.CreateBlackoutWindows.Count != b.CreateBlackoutWindows.Count)
             return false;
 
         for (var i = 0; i < a.CreateBlackoutWindows.Count; i++) {
             var wa = a.CreateBlackoutWindows[i];
             var wb = b.CreateBlackoutWindows[i];
-            if (!string.Equals(wa.Name, wb.Name, StringComparison.Ordinal)
-                || wa.DayFlags != wb.DayFlags
-                || wa.StartTime != wb.StartTime
-                || wa.EndTime != wb.EndTime
-                || wa.Policy != wb.Policy
-                || wa.Enabled != wb.Enabled
-                || wa.StartDateUtc != wb.StartDateUtc
-                || wa.EndDateUtc != wb.EndDateUtc)
+            if (!string.Equals(wa.Name, wb.Name, StringComparison.Ordinal) || wa.DayFlags != wb.DayFlags || wa.StartTime != wb.StartTime || wa.EndTime != wb.EndTime ||
+                wa.Policy != wb.Policy || wa.Enabled != wb.Enabled || wa.StartDateUtc != wb.StartDateUtc || wa.EndDateUtc != wb.EndDateUtc)
                 return false;
         }
 

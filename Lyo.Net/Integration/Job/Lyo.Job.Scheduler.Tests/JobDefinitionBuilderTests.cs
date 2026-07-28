@@ -1,6 +1,5 @@
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Builders;
-using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -10,8 +9,7 @@ public class JobDefinitionBuilderTests
     public void WithBlackoutCalendar_OnDefinition_AppliesInlineCalendarToEverySchedule()
     {
         var definition = JobDefinitionBuilder.New("Test Job")
-            .WithBlackoutCalendar("Maintenance", b => b
-                .AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00", JobBlackoutPolicy.Skip))
+            .WithBlackoutCalendar("Maintenance", b => b.AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00"))
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
             .AddSchedule(s => s.Weekdays().SetCron("0 9 * * *"))
             .Build();
@@ -30,7 +28,6 @@ public class JobDefinitionBuilderTests
     public void WithBlackoutCalendar_OnDefinition_AppliesCalendarIdToEverySchedule()
     {
         var calendarId = Guid.NewGuid();
-
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
             .WithBlackoutCalendar(calendarId)
@@ -48,7 +45,6 @@ public class JobDefinitionBuilderTests
     public void WithBlackoutCalendar_ById_CascadesToSchedulesAddedBeforeAndAfter()
     {
         var calendarId = Guid.NewGuid();
-
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
             .WithBlackoutCalendar(calendarId)
@@ -67,8 +63,7 @@ public class JobDefinitionBuilderTests
     {
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
-            .WithBlackoutCalendar("Maintenance", b => b
-                .AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00", JobBlackoutPolicy.Skip))
+            .WithBlackoutCalendar("Maintenance", b => b.AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00"))
             .AddSchedule(s => s.Weekdays().SetCron("0 9 * * *"))
             .Build();
 
@@ -98,22 +93,15 @@ public class JobDefinitionBuilderTests
     public void AddSchedule_WithInlineBlackoutCalendar_OverridesDefinitionDefault()
     {
         var definition = JobDefinitionBuilder.New("Test Job")
-            .WithBlackoutCalendar("Default", b => b
-                .AddBlackoutWindow("Default Window", DayFlags.EveryDay, "01:00", "02:00"))
-            .AddSchedule(s => s
-                .EveryDay()
-                .SetCron("0 * * * *")
-                .WithBlackoutCalendar("Override", b => b
-                    .AddBlackoutWindow("Override Window", DayFlags.Weekdays, "03:00", "04:00")))
+            .WithBlackoutCalendar("Default", b => b.AddBlackoutWindow("Default Window", DayFlags.EveryDay, "01:00", "02:00"))
+            .AddSchedule(s => s.EveryDay().SetCron("0 * * * *").WithBlackoutCalendar("Override", b => b.AddBlackoutWindow("Override Window", DayFlags.Weekdays, "03:00", "04:00")))
             .AddSchedule(s => s.Weekdays().SetCron("0 9 * * *"))
             .Build();
 
         var overrideSchedule = definition.CreateSchedules[0];
         var inheritedSchedule = definition.CreateSchedules[1];
-
         Assert.Equal("Override", overrideSchedule.CreateBlackoutCalendar!.Name);
         Assert.NotSame(definition.CreateBlackoutCalendar, overrideSchedule.CreateBlackoutCalendar);
-
         Assert.Same(definition.CreateBlackoutCalendar, inheritedSchedule.CreateBlackoutCalendar);
     }
 
@@ -121,11 +109,9 @@ public class JobDefinitionBuilderTests
     public void AddSchedule_WithBlackoutCalendarId_IsNotOverwrittenByDefinitionCascade()
     {
         var scheduleId = Guid.NewGuid();
-
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *").WithBlackoutCalendar(scheduleId))
-            .WithBlackoutCalendar("Maintenance", b => b
-                .AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00"))
+            .WithBlackoutCalendar("Maintenance", b => b.AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00"))
             .AddSchedule(s => s.Weekdays().SetCron("0 9 * * *"))
             .Build();
 
@@ -138,10 +124,7 @@ public class JobDefinitionBuilderTests
     public void AddSchedule_WithAddBlackoutWindow_EmbedsOnSchedule()
     {
         var definition = JobDefinitionBuilder.New("Test Job")
-            .AddSchedule(s => s
-                .EveryDay()
-                .SetCron("0 * * * *")
-                .AddBlackoutWindow("Nightly", DayFlags.EveryDay, "01:00", "02:00"))
+            .AddSchedule(s => s.EveryDay().SetCron("0 * * * *").AddBlackoutWindow("Nightly", DayFlags.EveryDay, "01:00", "02:00"))
             .Build();
 
         Assert.Single(definition.CreateSchedules);

@@ -28,7 +28,7 @@
                                Label="Format override"
                                Variant="Variant.Outlined"
                                Clearable="true">
-                        @foreach (ReportFormat f in Enum.GetValues<ReportFormat>()) {
+                        @foreach (var f in Enum.GetValues<ReportFormat>()) {
                             <MudSelectItem T="ReportFormat?" Value="@f">@f</MudSelectItem>
                         }
                     </MudSelect>
@@ -142,7 +142,7 @@
                 ReportParameterType.Int => !IntValue.HasValue,
                 ReportParameterType.Long => !LongValue.HasValue,
                 ReportParameterType.DateTime => !DateTimeValue.HasValue,
-                _ => string.IsNullOrWhiteSpace(StringValue)
+                var _ => string.IsNullOrWhiteSpace(StringValue)
             };
 
         public string? ValueAsString()
@@ -151,7 +151,7 @@
                 ReportParameterType.Int => IntValue?.ToString(),
                 ReportParameterType.Long => LongValue?.ToString(),
                 ReportParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
-                _ => StringValue
+                var _ => StringValue
             };
     }
 
@@ -164,14 +164,10 @@
     private void OnDefinitionChanged(ReportDefinitionRes? def)
     {
         _selected = def;
-        _paramModels = (def?.Parameters ?? []).Select(p => new ParamModel {
-            Param = p,
-            StringValue = p.Value ?? ""
-        }).ToList();
+        _paramModels = (def?.Parameters ?? []).Select(p => new ParamModel { Param = p, StringValue = p.Value ?? "" }).ToList();
     }
 
-    private bool IsValid()
-        => _selected is not null && _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
+    private bool IsValid() => _selected is not null && _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
 
     private async Task Submit()
     {
@@ -185,17 +181,20 @@
                 Format = _formatOverride,
                 FileName = string.IsNullOrWhiteSpace(_fileName) ? null : _fileName,
                 Parameters = _paramModels.Select(p => new ReportGenerationParameterReq {
-                    Key = p.Param.Key,
-                    Type = p.Param.Type,
-                    Value = p.ValueAsString(),
-                    Description = p.Param.Description
-                }).ToList()
+                        Key = p.Param.Key,
+                        Type = p.Param.Type,
+                        Value = p.ValueAsString(),
+                        Description = p.Param.Description
+                    })
+                    .ToList()
             };
+
             var result = await ApiClient.PostAsAsync<GenerateReportReq, ReportGenerationRes>(GenerateRoute, req);
             if (result.Status == ReportGenerationStatus.Succeeded)
                 Snackbar.Add($"Report generated ({result.Format}).", Severity.Success);
             else
                 Snackbar.Add($"Generation finished with status {result.Status}.", Severity.Warning);
+
             MudDialog.Close(DialogResult.Ok(result));
         }
         catch (Exception ex) {
@@ -205,4 +204,5 @@
             _busy = false;
         }
     }
+
 }

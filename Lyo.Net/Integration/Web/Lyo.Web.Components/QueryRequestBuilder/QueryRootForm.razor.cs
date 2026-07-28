@@ -38,7 +38,7 @@ public partial class QueryRootForm
     protected override void OnParametersSet()
     {
         Request.Options ??= new();
-        Request.From ??= new FromClause();
+        Request.From ??= new();
         Request.Joins ??= [];
         Request.Select ??= [];
         Request.ComputedFields ??= [];
@@ -74,12 +74,13 @@ public partial class QueryRootForm
     private async Task AddJoin()
     {
         Request.Joins.Add(
-            new JoinClause {
+            new() {
                 Alias = "j" + (Request.Joins.Count + 1),
                 EntityType = "",
                 Type = JoinType.Left,
-                On = [new JoinOn { From = $"{Request.From.Alias}.Id", To = "j.Id" }]
+                On = [new() { From = $"{Request.From.Alias}.Id", To = "j.Id" }]
             });
+
         await NotifyAsync();
     }
 
@@ -115,7 +116,7 @@ public partial class QueryRootForm
 
     private async Task AddOn(JoinClause join)
     {
-        join.On.Add(new JoinOn { From = $"{Request.From.Alias}.", To = $"{join.Alias}." });
+        join.On.Add(new() { From = $"{Request.From.Alias}.", To = $"{join.Alias}." });
         await NotifyAsync();
     }
 

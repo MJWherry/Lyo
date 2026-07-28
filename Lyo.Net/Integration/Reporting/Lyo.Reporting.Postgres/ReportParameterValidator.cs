@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Lyo.Common.Conversion;
 using Lyo.Reporting.Models.Enums;
@@ -24,9 +25,7 @@ internal static class ReportParameterValidator
         bool rejectUnknownKeys = false)
     {
         var errors = new List<string>();
-        var byKey = requestParameters.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
-
+        var byKey = requestParameters.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
         if (rejectUnknownKeys) {
             var known = new HashSet<string>(definitionParameters.Select(d => d.Key), StringComparer.OrdinalIgnoreCase);
             var unknown = byKey.Keys.Where(k => !known.Contains(k)).OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
@@ -101,18 +100,18 @@ internal static class ReportParameterValidator
     /// <summary>Type coercion check for non-empty values. String/Unknown/Enum accept anything (Enum is constrained via AllowedValues).</summary>
     internal static bool IsValidForType(ReportParameterType type, string value)
         => type switch {
-            ReportParameterType.Bool => bool.TryParse(value, out _),
-            ReportParameterType.DateTime => DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out _),
-            ReportParameterType.DateOnly => DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out _),
-            ReportParameterType.TimeOnly => TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out _),
-            ReportParameterType.Int => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
-            ReportParameterType.Long => long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
-            ReportParameterType.Decimal => decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out _),
-            ReportParameterType.Guid => Guid.TryParse(value, out _),
+            ReportParameterType.Bool => bool.TryParse(value, out var _),
+            ReportParameterType.DateTime => DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var _),
+            ReportParameterType.DateOnly => DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var _),
+            ReportParameterType.TimeOnly => TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var _),
+            ReportParameterType.Int => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var _),
+            ReportParameterType.Long => long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var _),
+            ReportParameterType.Decimal => decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var _),
+            ReportParameterType.Guid => Guid.TryParse(value, out var _),
             ReportParameterType.Regex => IsValidRegex(value),
             ReportParameterType.Json => IsValidJson(value),
             ReportParameterType.Xml => IsValidXml(value),
-            _ => true
+            var _ => true
         };
 
     private static bool IsValidRegex(string pattern)
@@ -146,7 +145,7 @@ internal static class ReportParameterValidator
             _ = XDocument.Parse(value);
             return true;
         }
-        catch (System.Xml.XmlException) {
+        catch (XmlException) {
             return false;
         }
     }

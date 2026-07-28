@@ -12,20 +12,16 @@ public sealed class ReportGenerationThrottleTests
         };
 
     [Fact]
-    public async Task Unlimited_returns_null_releaser()
-        => Assert.Null(await Create(0).AcquireAsync(TestContext.Current.CancellationToken));
+    public async Task Unlimited_returns_null_releaser() => Assert.Null(await Create(0).AcquireAsync(TestContext.Current.CancellationToken));
 
     [Fact]
     public async Task Saturated_throttle_fails_with_busy_and_recovers_after_release()
     {
         var throttle = Create(1);
-
         var slot = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(slot);
-
         var ex = await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestContext.Current.CancellationToken));
         Assert.Contains("busy", ex.Message, StringComparison.OrdinalIgnoreCase);
-
         slot!.Dispose();
         var next = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(next);
@@ -39,7 +35,6 @@ public sealed class ReportGenerationThrottleTests
         var slot = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
         slot!.Dispose();
         slot.Dispose();
-
         var a = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestContext.Current.CancellationToken));
         a!.Dispose();

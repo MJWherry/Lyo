@@ -4,12 +4,12 @@ Unified tests for the job domain: client, worker, and Postgres integration.
 
 ## Layout
 
-| Area | Location | Trait |
-|------|----------|-------|
-| Client | project root | _(none — fast unit tests)_ |
-| Worker | project root | _(none — fast unit tests)_ |
-| Postgres mapping/extensions | `Postgres/` | _(none — fast unit tests)_ |
-| Postgres integration | `Postgres/` | `Category=Integration` |
+| Area                        | Location     | Trait                      |
+|-----------------------------|--------------|----------------------------|
+| Client                      | project root | _(none — fast unit tests)_ |
+| Worker                      | project root | _(none — fast unit tests)_ |
+| Postgres mapping/extensions | `Postgres/`  | _(none — fast unit tests)_ |
+| Postgres integration        | `Postgres/`  | `Category=Integration`     |
 
 ## Running
 

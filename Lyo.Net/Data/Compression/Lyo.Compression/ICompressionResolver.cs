@@ -27,7 +27,13 @@ public interface ICompressionResolver
     void Decompress(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm);
 
     /// <summary>Asynchronously compresses streams with <paramref name="algorithm" /> at optional per-call <paramref name="level" />.</summary>
-    Task CompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CompressionLevel? level = null, CancellationToken ct = default);
+    Task CompressAsync(
+        Stream inputStream,
+        Stream outputStream,
+        CompressionAlgorithm algorithm,
+        int? chunkSize = null,
+        CompressionLevel? level = null,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously decompresses streams with <paramref name="algorithm" />.</summary>
     Task DecompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CancellationToken ct = default);

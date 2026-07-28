@@ -9,16 +9,16 @@ public sealed class ReportDefinitionWriteValidatorTests
 {
     private const int MaxJsonBytes = 1024;
 
-    private static ReportDefinition ValidDefinition() => new() {
-        Id = Guid.NewGuid(),
-        Name = "Valid",
-        ReportDataJson = """{"Title":"x"}""",
-        DefaultFormat = nameof(ReportFormat.Csv)
-    };
+    private static ReportDefinition ValidDefinition()
+        => new() {
+            Id = Guid.NewGuid(),
+            Name = "Valid",
+            ReportDataJson = """{"Title":"x"}""",
+            DefaultFormat = nameof(ReportFormat.Csv)
+        };
 
     [Fact]
-    public void ValidateDefinition_accepts_valid_definition()
-        => ReportDefinitionWriteValidator.ValidateDefinition(ValidDefinition(), MaxJsonBytes);
+    public void ValidateDefinition_accepts_valid_definition() => ReportDefinitionWriteValidator.ValidateDefinition(ValidDefinition(), MaxJsonBytes);
 
     [Fact]
     public void ValidateDefinition_rejects_malformed_json()
@@ -51,9 +51,7 @@ public sealed class ReportDefinitionWriteValidatorTests
     public void ValidateDefinition_validates_nested_parameters()
     {
         var definition = ValidDefinition();
-        definition.Parameters = [
-            new ReportDefinitionParameter { Key = "P", Type = "NotAType" }
-        ];
+        definition.Parameters = [new() { Key = "P", Type = "NotAType" }];
         var ex = Assert.Throws<ReportValidationException>(() => ReportDefinitionWriteValidator.ValidateDefinition(definition, MaxJsonBytes));
         Assert.Contains("ReportParameterType", ex.Message, StringComparison.Ordinal);
     }
@@ -62,10 +60,7 @@ public sealed class ReportDefinitionWriteValidatorTests
     public void ValidateDefinition_rejects_duplicate_parameter_keys_case_insensitive()
     {
         var definition = ValidDefinition();
-        definition.Parameters = [
-            new ReportDefinitionParameter { Key = "ClientId", Type = nameof(ReportParameterType.String) },
-            new ReportDefinitionParameter { Key = "clientid", Type = nameof(ReportParameterType.String) }
-        ];
+        definition.Parameters = [new() { Key = "ClientId", Type = nameof(ReportParameterType.String) }, new() { Key = "clientid", Type = nameof(ReportParameterType.String) }];
         var ex = Assert.Throws<ReportValidationException>(() => ReportDefinitionWriteValidator.ValidateDefinition(definition, MaxJsonBytes));
         Assert.Contains("more than once", ex.Message, StringComparison.Ordinal);
     }
@@ -74,10 +69,7 @@ public sealed class ReportDefinitionWriteValidatorTests
     public void ValidateDefinition_accepts_distinct_parameter_keys()
     {
         var definition = ValidDefinition();
-        definition.Parameters = [
-            new ReportDefinitionParameter { Key = "ClientId", Type = nameof(ReportParameterType.String) },
-            new ReportDefinitionParameter { Key = "Region", Type = nameof(ReportParameterType.String) }
-        ];
+        definition.Parameters = [new() { Key = "ClientId", Type = nameof(ReportParameterType.String) }, new() { Key = "Region", Type = nameof(ReportParameterType.String) }];
         ReportDefinitionWriteValidator.ValidateDefinition(definition, MaxJsonBytes);
     }
 
@@ -92,11 +84,7 @@ public sealed class ReportDefinitionWriteValidatorTests
     [Fact]
     public void ValidateParameter_rejects_oversized_regex()
     {
-        var parameter = new ReportDefinitionParameter {
-            Key = "P",
-            Type = nameof(ReportParameterType.String),
-            ValidationRegex = new string('a', 501)
-        };
+        var parameter = new ReportDefinitionParameter { Key = "P", Type = nameof(ReportParameterType.String), ValidationRegex = new('a', 501) };
         var ex = Assert.Throws<ReportValidationException>(() => ReportDefinitionWriteValidator.ValidateParameter(parameter));
         Assert.Contains("exceeds", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -110,6 +98,7 @@ public sealed class ReportDefinitionWriteValidatorTests
             MinLength = 10,
             MaxLength = 5
         };
+
         var ex = Assert.Throws<ReportValidationException>(() => ReportDefinitionWriteValidator.ValidateParameter(parameter));
         Assert.Contains("MinLength", ex.Message, StringComparison.Ordinal);
     }
@@ -117,7 +106,7 @@ public sealed class ReportDefinitionWriteValidatorTests
     [Fact]
     public void ValidateParameter_accepts_valid_parameter()
         => ReportDefinitionWriteValidator.ValidateParameter(
-            new ReportDefinitionParameter {
+            new() {
                 Key = "P",
                 Type = nameof(ReportParameterType.Guid),
                 ValidationRegex = "^[0-9a-f-]+$",

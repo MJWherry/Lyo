@@ -6,8 +6,8 @@ namespace Lyo.FileStorage.S3;
 internal static class S3AwsCredentialHelpers
 {
     /// <summary>
-    /// Returns <see langword="true" /> and a <see cref="BasicAWSCredentials" /> instance when both keys are non-whitespace; otherwise
-    /// <see langword="false" /> (callers should use the default AWS credential chain).
+    /// Returns <see langword="true" /> and a <see cref="BasicAWSCredentials" /> instance when both keys are non-whitespace; otherwise <see langword="false" /> (callers should
+    /// use the default AWS credential chain).
     /// </summary>
     internal static bool TryGetExplicitCredentials(string? accessKeyId, string? secretAccessKey, out BasicAWSCredentials? credentials)
     {

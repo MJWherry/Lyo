@@ -16,9 +16,9 @@ public sealed class LyoAuthClientOptions
     public string AuthBaseUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Browser-facing absolute base URL of the API's OIDC endpoints (e.g. <c>https://app.example.com/api</c>).
-    /// Used when 302ing the user to <c>/auth/login/{provider}</c>. When empty, falls back to <see cref="AuthBaseUrl" /> (fine for local single-host).
-    /// In Docker/compose, keep <see cref="AuthBaseUrl" /> as the internal service URL and set this to the public reverse-proxy URL.
+    /// Browser-facing absolute base URL of the API's OIDC endpoints (e.g. <c>https://app.example.com/api</c>). Used when 302ing the user to <c>/auth/login/{provider}</c>. When
+    /// empty, falls back to <see cref="AuthBaseUrl" /> (fine for local single-host). In Docker/compose, keep <see cref="AuthBaseUrl" /> as the internal service URL and set this to the
+    /// public reverse-proxy URL.
     /// </summary>
     public string? PublicAuthBaseUrl { get; set; }
 

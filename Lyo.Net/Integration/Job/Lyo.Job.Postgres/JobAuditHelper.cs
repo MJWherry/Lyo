@@ -31,7 +31,7 @@ internal static class JobAuditHelper
             return;
 
         var actor = GetActor(services);
-        var evt = new AuditEvent(new EntityRef(entityType, entityId.ToString()), eventType, message, actor);
+        var evt = new AuditEvent(new(entityType, entityId.ToString()), eventType, message, actor);
         recorder.RecordEvent(evt);
     }
 }

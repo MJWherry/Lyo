@@ -12,8 +12,8 @@ public sealed class JobMaintenanceOptions
     public int CheckIntervalSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Global default retention in days for finished job runs (including their logs, parameters, and results). 0 disables purging. Definitions can override this via their
-    /// own <c>RetentionDays</c>. Default 0 (keep forever).
+    /// Global default retention in days for finished job runs (including their logs, parameters, and results). 0 disables purging. Definitions can override this via their own
+    /// <c>RetentionDays</c>. Default 0 (keep forever).
     /// </summary>
     public int DefaultRetentionDays { get; set; }
 
@@ -25,8 +25,8 @@ public sealed class JobMaintenanceOptions
 
     /// <summary>
     /// Minutes a due <c>Queued</c> run may sit untouched before the maintenance service re-publishes its dispatch message (recovery for lost publishes, delayed retries, and
-    /// crashed suppressed-dispatch owners). Duplicate deliveries are harmless — <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once. Set above the
-    /// worst-case legitimate queue wait for your workers. 0 disables recovery. Default 10.
+    /// crashed suppressed-dispatch owners). Duplicate deliveries are harmless — <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once. Set above the worst-case
+    /// legitimate queue wait for your workers. 0 disables recovery. Default 10.
     /// </summary>
     public int QueuedRunRedispatchMinutes { get; set; } = 10;
 

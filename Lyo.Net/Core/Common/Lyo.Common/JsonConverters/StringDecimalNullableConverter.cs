@@ -24,9 +24,7 @@ public class StringDecimalNullableConverter : JsonConverter<decimal?>
         return decimal.TryParse(reader.ValueSpan, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? value : null;
 #else
         var stringValue = reader.GetString();
-        return string.IsNullOrWhiteSpace(stringValue) || !decimal.TryParse(stringValue, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
-            ? null
-            : value;
+        return string.IsNullOrWhiteSpace(stringValue) || !decimal.TryParse(stringValue, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? null : value;
 #endif
     }
 

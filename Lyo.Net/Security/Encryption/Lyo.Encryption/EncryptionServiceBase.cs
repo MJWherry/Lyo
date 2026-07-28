@@ -17,11 +17,10 @@ namespace Lyo.Encryption;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Nonce collision bounds and key rotation.</b> Algorithms with 96-bit (12-byte) random nonces (AES-GCM, ChaCha20-Poly1305, AES-CCM) are subject to the birthday bound:
-/// after roughly 2^32 encryptions under one key the probability of a nonce collision — which is catastrophic for GCM/Poly1305 — becomes non-negligible. NIST SP 800-38D
-/// recommends staying well below that (collision probability ≤ 2^-32, i.e. at most ~2^32 random-nonce operations per key). Each single-shot <c>Encrypt</c> call and each
-/// encrypted stream consumes one random nonce (streams derive per-chunk nonces from a counter, so chunk count does not matter). Rotate keys (via the KeyStore key versioning)
-/// long before approaching these volumes.
+/// <b>Nonce collision bounds and key rotation.</b> Algorithms with 96-bit (12-byte) random nonces (AES-GCM, ChaCha20-Poly1305, AES-CCM) are subject to the birthday bound: after
+/// roughly 2^32 encryptions under one key the probability of a nonce collision — which is catastrophic for GCM/Poly1305 — becomes non-negligible. NIST SP 800-38D recommends staying
+/// well below that (collision probability ≤ 2^-32, i.e. at most ~2^32 random-nonce operations per key). Each single-shot <c>Encrypt</c> call and each encrypted stream consumes one
+/// random nonce (streams derive per-chunk nonces from a counter, so chunk count does not matter). Rotate keys (via the KeyStore key versioning) long before approaching these volumes.
 /// </para>
 /// <para>
 /// <b>High-volume workloads.</b> When a single key must protect very large numbers of messages, prefer XChaCha20-Poly1305 (192-bit nonces make random collisions negligible,
@@ -226,37 +225,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         await AeadStreamProcessor.DecryptChunksAsync(input, output, cryptor, noncePrefix, aadNonFinal, aadFinal, ct).ConfigureAwait(false);
     }
 
-    /// <summary>Composes the full stream header (<c>[version][algorithmId][keyIdLen][keyId][keyVersionLen][keyVersion][noncePrefix]</c>) as a single buffer.</summary>
-    internal static byte[] BuildStreamHeader(byte formatVersion, byte algorithmId, byte[] keyIdBytes, byte[] keyVersionBytes, byte[] noncePrefix)
-    {
-        var header = new byte[1 + 1 + 4 + keyIdBytes.Length + 4 + keyVersionBytes.Length + noncePrefix.Length];
-        header[0] = formatVersion;
-        header[1] = algorithmId;
-        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(2, 4), keyIdBytes.Length);
-        keyIdBytes.CopyTo(header.AsSpan(6));
-        var offset = 6 + keyIdBytes.Length;
-        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(offset, 4), keyVersionBytes.Length);
-        keyVersionBytes.CopyTo(header.AsSpan(offset + 4));
-        noncePrefix.CopyTo(header.AsSpan(offset + 4 + keyVersionBytes.Length));
-        return header;
-    }
-
-    /// <summary>
-    /// Builds the two per-chunk AAD variants for a stream: <c>header || finalFlagByte (0/1) || callerAssociatedData</c>. Binding the final-flag byte into the AAD prevents an
-    /// attacker from clearing or setting the (plaintext) final marker on an existing chunk.
-    /// </summary>
-    internal static (byte[] AadNonFinal, byte[] AadFinal) BuildChunkAads(byte[] header, byte[]? associatedData)
-    {
-        var userLength = associatedData?.Length ?? 0;
-        var aadNonFinal = new byte[header.Length + 1 + userLength];
-        header.CopyTo(aadNonFinal.AsSpan());
-        aadNonFinal[header.Length] = 0;
-        associatedData?.CopyTo(aadNonFinal.AsSpan(header.Length + 1));
-        var aadFinal = (byte[])aadNonFinal.Clone();
-        aadFinal[header.Length] = 1;
-        return (aadNonFinal, aadFinal);
-    }
-
     // File operation methods from IEncryptionService
     /// <inheritdoc />
     public virtual async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
@@ -296,6 +264,37 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         using var outputStream = new MemoryStream(capacity);
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
         return outputStream.ToArray();
+    }
+
+    /// <summary>Composes the full stream header (<c>[version][algorithmId][keyIdLen][keyId][keyVersionLen][keyVersion][noncePrefix]</c>) as a single buffer.</summary>
+    internal static byte[] BuildStreamHeader(byte formatVersion, byte algorithmId, byte[] keyIdBytes, byte[] keyVersionBytes, byte[] noncePrefix)
+    {
+        var header = new byte[1 + 1 + 4 + keyIdBytes.Length + 4 + keyVersionBytes.Length + noncePrefix.Length];
+        header[0] = formatVersion;
+        header[1] = algorithmId;
+        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(2, 4), keyIdBytes.Length);
+        keyIdBytes.CopyTo(header.AsSpan(6));
+        var offset = 6 + keyIdBytes.Length;
+        BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(offset, 4), keyVersionBytes.Length);
+        keyVersionBytes.CopyTo(header.AsSpan(offset + 4));
+        noncePrefix.CopyTo(header.AsSpan(offset + 4 + keyVersionBytes.Length));
+        return header;
+    }
+
+    /// <summary>
+    /// Builds the two per-chunk AAD variants for a stream: <c>header || finalFlagByte (0/1) || callerAssociatedData</c>. Binding the final-flag byte into the AAD prevents an
+    /// attacker from clearing or setting the (plaintext) final marker on an existing chunk.
+    /// </summary>
+    internal static (byte[] AadNonFinal, byte[] AadFinal) BuildChunkAads(byte[] header, byte[]? associatedData)
+    {
+        var userLength = associatedData?.Length ?? 0;
+        var aadNonFinal = new byte[header.Length + 1 + userLength];
+        header.CopyTo(aadNonFinal.AsSpan());
+        aadNonFinal[header.Length] = 0;
+        associatedData?.CopyTo(aadNonFinal.AsSpan(header.Length + 1));
+        var aadFinal = (byte[])aadNonFinal.Clone();
+        aadFinal[header.Length] = 1;
+        return (aadNonFinal, aadFinal);
     }
 
     /// <summary>

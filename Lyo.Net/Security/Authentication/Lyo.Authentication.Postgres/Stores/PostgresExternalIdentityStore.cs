@@ -4,9 +4,9 @@ using Lyo.Authentication.Services.Users;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Postgres.Stores;
 

@@ -155,7 +155,7 @@ public class StreamingChunkFormatTests
 
         // A second stream must draw a different random nonce prefix, so nonces are unique across streams too.
         var encryptedAgain = await EncryptAsync(svc, plaintext, key, null, 16, ct);
-        var noncesAgain = ExtractChunkNonces(encryptedAgain, out _);
+        var noncesAgain = ExtractChunkNonces(encryptedAgain, out var _);
         distinct.UnionWith(noncesAgain.Select(Convert.ToHexString));
         Assert.Equal(nonces.Count + noncesAgain.Count, distinct.Count);
     }
@@ -272,15 +272,13 @@ public class StreamingChunkFormatTests
         }
 
         using (var wrongInput = new MemoryStream(encrypted)) {
-            using (var wrongOutput = new MemoryStream()) {
+            using (var wrongOutput = new MemoryStream())
                 await Assert.ThrowsAnyAsync<DecryptionFailedException>(() => svc.DecryptToStreamAsync(wrongInput, wrongOutput, null, key, "tenant-43/file-7"u8.ToArray(), ct));
-            }
         }
 
         using (var missingInput = new MemoryStream(encrypted)) {
-            using (var missingOutput = new MemoryStream()) {
+            using (var missingOutput = new MemoryStream())
                 await Assert.ThrowsAnyAsync<DecryptionFailedException>(() => svc.DecryptToStreamAsync(missingInput, missingOutput, null, key, ct: ct));
-            }
         }
     }
 
@@ -416,8 +414,8 @@ public class StreamingChunkFormatTests
     }
 
     /// <summary>
-    /// Parses the stream format header (which carries the per-stream nonce prefix) then walks each compact chunk frame (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>),
-    /// deriving each chunk's nonce as <c>prefix || counter</c> exactly as the codec does — the wire itself carries no nonces.
+    /// Parses the stream format header (which carries the per-stream nonce prefix) then walks each compact chunk frame (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving
+    /// each chunk's nonce as <c>prefix || counter</c> exactly as the codec does — the wire itself carries no nonces.
     /// </summary>
     private static List<byte[]> ExtractChunkNonces(byte[] encrypted, out int finalFlagCount)
     {

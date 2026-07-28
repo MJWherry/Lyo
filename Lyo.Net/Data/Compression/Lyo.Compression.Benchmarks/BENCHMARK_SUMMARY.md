@@ -9,7 +9,7 @@ The interactive review lives in the HTML dashboard (auto-loaded from latest Benc
 
 ```bash
 dotnet run -c Release --project Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks
-python3 scripts/benchmarks/build-manifests.py --compression-only
+python3 scripts/benchmarks/build_manifests.py --compression-only
 ```
 
 Generated data: `docs/benchmarks/data/compression-latest.json`.

@@ -45,8 +45,8 @@ public static class JobRunParameterExtensions
         }
 
         /// <summary>
-        /// Returns the bool value of the parameter with the given key, or null if absent / not parseable. Parses leniently: accepts
-        /// <see cref="TypeConversion.DefaultTrueValues" /> and <see cref="TypeConversion.DefaultFalseValues" /> tokens (case-insensitive).
+        /// Returns the bool value of the parameter with the given key, or null if absent / not parseable. Parses leniently: accepts <see cref="TypeConversion.DefaultTrueValues" />
+        /// and <see cref="TypeConversion.DefaultFalseValues" /> tokens (case-insensitive).
         /// </summary>
         public bool? GetBool(string key) => TypeConversion.TryToBoolean(parameters.GetString(key), out var result) ? result : null;
 
@@ -124,8 +124,8 @@ public static class JobRunParameterExtensions
         }
 
         /// <summary>
-        /// Returns the bool value of the result with the given key, or null if absent / not parseable. Parses leniently: accepts
-        /// <see cref="TypeConversion.DefaultTrueValues" /> and <see cref="TypeConversion.DefaultFalseValues" /> tokens (case-insensitive).
+        /// Returns the bool value of the result with the given key, or null if absent / not parseable. Parses leniently: accepts <see cref="TypeConversion.DefaultTrueValues" /> and
+        /// <see cref="TypeConversion.DefaultFalseValues" /> tokens (case-insensitive).
         /// </summary>
         public bool? GetBool(string key) => TypeConversion.TryToBoolean(results.GetString(key), out var result) ? result : null;
 

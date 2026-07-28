@@ -41,6 +41,7 @@ using Lyo.Preview;
 using Lyo.Profanity;
 using Lyo.QRCode;
 using Lyo.Query.Models.Common;
+using Lyo.Reporting.Postgres;
 using Lyo.Scheduler;
 using Lyo.ShortUrl;
 using Lyo.ShortUrl.Postgres;
@@ -59,7 +60,6 @@ using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
-using Lyo.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
 using Mapster;
@@ -205,15 +205,8 @@ using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
 var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
-
 var twilio = sp.GetRequiredService<ISmsService>() as TwilioSmsService;
-
-var results = await twilio.GetMessagesAsync(TwilioMessageQueryBuilder.
-    New()
-    .Inbound()
-    .WithDateRange(new (2026,7,4,0,0,0), 
-        new(2026,7,4,23,59,59))
-    .Build());
+var results = await twilio.GetMessagesAsync(TwilioMessageQueryBuilder.New().Inbound().WithDateRange(new(2026, 7, 4, 0, 0, 0), new(2026, 7, 4, 23, 59, 59)).Build());
 //var pws = pw.CreateSession();
 //await pws.StartBrowserAsync();
 //await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");

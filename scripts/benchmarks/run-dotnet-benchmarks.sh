@@ -12,7 +12,7 @@
 #   --filter GLOB  Extra BenchmarkDotNet filter passed through to every suite (default '*').
 #
 # Each suite's in-process LyoBenchmarkExporter writes <name>.lyobench.json into BenchmarkDotNet.Artifacts
-# next to its project. After each suite finishes, build-manifests.py exports that category immediately
+# next to its project. After each suite finishes, build_manifests.py exports that category immediately
 # (archives a history snapshot, computes deltas vs the prior run, and updates data/<name>.{json,js}).
 set -euo pipefail
 
@@ -65,7 +65,7 @@ for category in "${CATEGORIES[@]}"; do
   fi
 
   echo "==> Running $category benchmarks"
-  # Pin the artifacts path next to the project so build-manifests.py can find <name>.lyobench.json
+  # Pin the artifacts path next to the project so build_manifests.py can find <name>.lyobench.json
   # regardless of the directory this script is invoked from (BenchmarkDotNet otherwise uses the cwd).
   # --join produces ONE joined Summary across every benchmark class in the suite, so the exporter
   # writes a single <name>.lyobench.json containing all groups/comparison. Without it BenchmarkSwitcher
@@ -87,7 +87,7 @@ for category in "${CATEGORIES[@]}"; do
   fi
   dotnet "${args[@]}"
   echo "==> Exporting $category dashboard data"
-  python3 "$ROOT_DIR/scripts/benchmarks/build-manifests.py" --"${category}-only"
+  python3 "$ROOT_DIR/scripts/benchmarks/build_manifests.py" --"${category}-only"
 done
 
 echo "Done. Reload docs/benchmarks/index.html to view results."

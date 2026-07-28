@@ -8,11 +8,11 @@ public sealed class RabbitMqServiceTests
 {
     private readonly RabbitMqBrokerFixture _broker;
 
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     public RabbitMqServiceTests(RabbitMqBrokerFixture broker) => _broker = broker;
 
     private static string UniqueQueue(string prefix) => $"{prefix}.{Guid.NewGuid():N}";
-
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     /// <summary>Polls until <paramref name="condition" /> returns true or the timeout elapses. Management API statistics lag a few seconds behind broker state.</summary>
     private static async Task<bool> WaitUntilAsync(Func<Task<bool>> condition, TimeSpan? timeout = null)
@@ -33,10 +33,8 @@ public sealed class RabbitMqServiceTests
     {
         var service = _broker.CreateService();
         Assert.False(service.IsConnected());
-
         await service.ConnectAsync(Ct);
         Assert.True(service.IsConnected());
-
         await service.DisconnectAsync(Ct);
         Assert.False(service.IsConnected());
 
@@ -52,7 +50,6 @@ public sealed class RabbitMqServiceTests
         await using var service = _broker.CreateService();
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("lifecycle");
-
         Assert.True(await service.CreateQueue(queue, ct: Ct));
         Assert.True(await service.SendToQueue(queue, Encoding.UTF8.GetBytes("peek-me")));
 
@@ -60,10 +57,8 @@ public sealed class RabbitMqServiceTests
         Assert.True(await WaitUntilAsync(async () => (await service.PeekQueueMessages(queue, ct: Ct)).Count == 1));
         var peeked = await service.PeekQueueMessages(queue, ct: Ct);
         Assert.Equal("peek-me", peeked[0].Payload);
-
         Assert.True(await service.ClearQueue(queue, Ct));
         Assert.True(await WaitUntilAsync(async () => (await service.PeekQueueMessages(queue, ct: Ct)).Count == 0));
-
         Assert.True(await service.DeleteQueue(queue, ct: Ct));
     }
 
@@ -73,10 +68,7 @@ public sealed class RabbitMqServiceTests
         await using var service = _broker.CreateService();
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("missing");
-
-        Assert.False(
-            await service.SubscribeToQueue(
-                queue, _ => Task.FromResult(false), Ct));
+        Assert.False(await service.SubscribeToQueue(queue, _ => Task.FromResult(false), Ct));
     }
 
     [Fact]
@@ -86,7 +78,6 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("roundtrip");
         await service.CreateQueue(queue, ct: Ct);
-
         var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         Assert.True(
             await service.SubscribeToQueue(
@@ -107,7 +98,6 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("requeue");
         await service.CreateQueue(queue, ct: Ct);
-
         var deliveries = 0;
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await service.SubscribeToQueue(
@@ -138,20 +128,17 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         await service.CreateQueue(limitedQueue, ct: Ct);
         await service.CreateQueue(parallelQueue, ct: Ct);
-
         const int messageCount = 8;
         var limitedTracker = new ParallelismTracker(messageCount);
         var parallelTracker = new ParallelismTracker(messageCount);
         await service.SubscribeToQueue(limitedQueue, _ => limitedTracker.TrackAsync(), Ct);
         await service.SubscribeToQueue(parallelQueue, _ => parallelTracker.TrackAsync(), Ct);
-
         for (var i = 0; i < messageCount; i++) {
             await service.SendToQueue(limitedQueue, Encoding.UTF8.GetBytes($"m{i}"));
             await service.SendToQueue(parallelQueue, Encoding.UTF8.GetBytes($"m{i}"));
         }
 
         await Task.WhenAll(limitedTracker.AllProcessed, parallelTracker.AllProcessed).WaitAsync(TimeSpan.FromSeconds(30), Ct);
-
         Assert.Equal(1, limitedTracker.MaxObservedParallelism);
         Assert.True(parallelTracker.MaxObservedParallelism > 1, $"expected parallel queue to exceed 1 concurrent message, observed {parallelTracker.MaxObservedParallelism}");
         Assert.True(parallelTracker.MaxObservedParallelism <= 4, $"expected parallel queue to stay at or below its limit of 4, observed {parallelTracker.MaxObservedParallelism}");
@@ -164,7 +151,6 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("confirms");
         await service.CreateQueue(queue, ct: Ct);
-
         Assert.True(await service.SendToQueue(queue, Encoding.UTF8.GetBytes("confirmed")));
         Assert.True(await WaitUntilAsync(async () => (await service.PeekQueueMessages(queue, ct: Ct)).Count == 1));
     }
@@ -176,7 +162,6 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("delayed");
         await service.CreateQueue(queue, ct: Ct);
-
         var received = new TaskCompletionSource<DateTime>(TaskCreationOptions.RunContinuationsAsynchronously);
         await service.SubscribeToQueue(
             queue, _ => {
@@ -191,7 +176,6 @@ public sealed class RabbitMqServiceTests
         // Not before: nothing is delivered while the message sits in the wait queue.
         await Task.Delay(700, Ct);
         Assert.False(received.Task.IsCompleted, "message was delivered before its delay elapsed");
-
         var receivedAt = await received.Task.WaitAsync(TimeSpan.FromSeconds(15), Ct);
         Assert.True(receivedAt - sentAt >= TimeSpan.FromMilliseconds(1200), $"message arrived too early: {receivedAt - sentAt}");
     }
@@ -207,11 +191,7 @@ public sealed class RabbitMqServiceTests
         // Per-queue TTL means an unconsumed message is dead-lettered by the broker itself — the application never touches it.
         Assert.True(await service.CreateQueueWithDlq(queue, arguments: new Dictionary<string, object> { ["x-message-ttl"] = 500 }, ct: Ct));
         Assert.True(await service.SendToQueue(queue, Encoding.UTF8.GetBytes("reject-me")));
-
-        Assert.True(
-            await WaitUntilAsync(async () => (await service.PeekQueueMessages(dlq, ct: Ct)).Count == 1),
-            "expected the expired message to land in the DLQ");
-
+        Assert.True(await WaitUntilAsync(async () => (await service.PeekQueueMessages(dlq, ct: Ct)).Count == 1), "expected the expired message to land in the DLQ");
         var dlqMessages = await service.PeekQueueMessages(dlq, ct: Ct);
         Assert.Equal("reject-me", dlqMessages[0].Payload);
     }
@@ -223,7 +203,6 @@ public sealed class RabbitMqServiceTests
         await service.ConnectAsync(Ct);
         var queue = UniqueQueue("stats");
         await service.CreateQueue(queue, ct: Ct);
-
         for (var i = 0; i < 3; i++)
             await service.SendToQueue(queue, Encoding.UTF8.GetBytes($"s{i}"));
 
@@ -237,7 +216,6 @@ public sealed class RabbitMqServiceTests
 
         var all = await service.GetAllQueuesInfoAsync(Ct);
         Assert.Contains(all, q => q.Name == queue);
-
         var missing = await service.GetQueueInfoAsync($"does-not-exist-{Guid.NewGuid():N}", Ct);
         Assert.Null(missing);
     }
@@ -251,11 +229,11 @@ public sealed class RabbitMqServiceTests
         private int _max;
         private int _processed;
 
-        public ParallelismTracker(int expectedCount) => _expectedCount = expectedCount;
-
         public Task AllProcessed => _allProcessed.Task;
 
         public int MaxObservedParallelism => _max;
+
+        public ParallelismTracker(int expectedCount) => _expectedCount = expectedCount;
 
         public async Task<bool> TrackAsync()
         {

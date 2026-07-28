@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
 #endif
+
 #if NET10_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
@@ -15,9 +16,9 @@ using System.Collections.Frozen;
 namespace Lyo.Common.Conversion;
 
 /// <summary>
-/// Central type-conversion engine for the Lyo library suite. Converts CLR objects, strings, spans, and <see cref="JsonElement" /> values to target types, including
-/// nullable unwrapping, enums (by name or numeric value), and collection materialization. Consolidates the conversion pipelines previously duplicated across
-/// the API, query, and web-component layers.
+/// Central type-conversion engine for the Lyo library suite. Converts CLR objects, strings, spans, and <see cref="JsonElement" /> values to target types, including nullable
+/// unwrapping, enums (by name or numeric value), and collection materialization. Consolidates the conversion pipelines previously duplicated across the API, query, and web-component
+/// layers.
 /// </summary>
 /// <remarks>
 /// <para>Throwing members raise <see cref="TypeConversionException" /> on failure; <c>Try*</c> members return <see langword="false" /> instead of throwing.</para>
@@ -52,9 +53,9 @@ public static class TypeConversion
         LogLevel.Error, new(3, "TypeConversionFailed"), "Cannot convert value '{Value}' of type {SourceType} to {TargetType}");
 
     /// <summary>
-    /// Logger used by all conversion members. Defaults to <see cref="NullLogger.Instance" /> (no-op). Successful conversions log at Debug, failed <c>Try*</c>
-    /// calls at Warning, and thrown <see cref="TypeConversionException" />s at Error. All logging is guarded by <see cref="ILogger.IsEnabled" /> and uses cached
-    /// <see cref="LoggerMessage" /> delegates, so it is allocation-free when disabled.
+    /// Logger used by all conversion members. Defaults to <see cref="NullLogger.Instance" /> (no-op). Successful conversions log at Debug, failed <c>Try*</c> calls at Warning,
+    /// and thrown <see cref="TypeConversionException" />s at Error. All logging is guarded by <see cref="ILogger.IsEnabled" /> and uses cached <see cref="LoggerMessage" /> delegates, so
+    /// it is allocation-free when disabled.
     /// </summary>
     public static ILogger Logger { get; set; } = NullLogger.Instance;
 
@@ -181,7 +182,7 @@ public static class TypeConversion
             return parsed.Value;
         }
 #endif
-        return TryConvertTo((object)value.ToString(), out result, lenientBoolean);
+        return TryConvertTo(value.ToString(), out result, lenientBoolean);
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -189,9 +190,9 @@ public static class TypeConversion
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
-    /// Converts a value to <paramref name="targetType" />, materializing collection targets (arrays, <see cref="List{T}" />, <see cref="HashSet{T}" />, interfaces
-    /// such as <see cref="IReadOnlyList{T}" />/<see cref="ISet{T}" />, and other concrete collections with an <see cref="IEnumerable{T}" /> constructor). Single values
-    /// are wrapped when the target is a collection; enumerable values have each element converted to the collection element type.
+    /// Converts a value to <paramref name="targetType" />, materializing collection targets (arrays, <see cref="List{T}" />, <see cref="HashSet{T}" />, interfaces such as
+    /// <see cref="IReadOnlyList{T}" />/<see cref="ISet{T}" />, and other concrete collections with an <see cref="IEnumerable{T}" /> constructor). Single values are wrapped when the
+    /// target is a collection; enumerable values have each element converted to the collection element type.
     /// </summary>
     /// <param name="value">The value to convert (scalar, enumerable, or <see cref="JsonElement" />).</param>
     /// <param name="targetType">The target type (scalar or collection).</param>
@@ -305,8 +306,8 @@ public static class TypeConversion
         };
 
     /// <summary>
-    /// Converts a <see cref="JsonElement" /> to <paramref name="targetType" /> using strict typed accessors (a string token is not converted to a number, etc.),
-    /// with a serializer fallback for complex types. For lenient token handling use <see cref="ConvertTo(object?, Type, bool)" />.
+    /// Converts a <see cref="JsonElement" /> to <paramref name="targetType" /> using strict typed accessors (a string token is not converted to a number, etc.), with a
+    /// serializer fallback for complex types. For lenient token handling use <see cref="ConvertTo(object?, Type, bool)" />.
     /// </summary>
     /// <param name="element">The element to convert.</param>
     /// <param name="targetType">The target type (may be nullable or an enum; enums accept names or numeric values).</param>
@@ -359,14 +360,16 @@ public static class TypeConversion
     /// <param name="value">The enum name or numeric string.</param>
     /// <param name="defaultValue">The fallback returned when parsing fails.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TEnum EnumOrDefault<TEnum>(string? value, TEnum defaultValue = default) where TEnum : struct, Enum
+    public static TEnum EnumOrDefault<TEnum>(string? value, TEnum defaultValue = default)
+        where TEnum : struct, Enum
         => Enum.TryParse<TEnum>(value, true, out var parsed) ? parsed : defaultValue;
 
     /// <summary>Parses an enum from a string (case-insensitive), returning <see langword="null" /> when parsing fails or the value is <see langword="null" />.</summary>
     /// <typeparam name="TEnum">The enum type.</typeparam>
     /// <param name="value">The enum name or numeric string.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TEnum? EnumOrNull<TEnum>(string? value) where TEnum : struct, Enum
+    public static TEnum? EnumOrNull<TEnum>(string? value)
+        where TEnum : struct, Enum
         => Enum.TryParse<TEnum>(value, true, out var parsed) ? parsed : null;
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -514,7 +517,6 @@ public static class TypeConversion
             return false;
         }
 #endif
-
         if (metadata.UnderlyingType == typeof(Guid)) {
             if (value is string guidString && Guid.TryParse(guidString, out var guid)) {
                 result = guid;
@@ -734,7 +736,7 @@ public static class TypeConversion
 #if NETSTANDARD2_0
             // netstandard2.0 lacks the non-generic Enum.TryParse(Type, ...); Enum.Parse accepts both names ("Success") and numeric strings ("1").
             try {
-                result = Enum.Parse(enumType, stringValue, ignoreCase: true);
+                result = Enum.Parse(enumType, stringValue, true);
                 return true;
             }
             catch (Exception ex) {
@@ -751,9 +753,7 @@ public static class TypeConversion
 
         try {
             var underlying = Enum.GetUnderlyingType(enumType);
-            var numeric = value is IConvertible
-                ? Convert.ChangeType(value, underlying)
-                : value;
+            var numeric = value is IConvertible ? Convert.ChangeType(value, underlying) : value;
             result = Enum.ToObject(enumType, numeric);
             return true;
         }
@@ -822,7 +822,6 @@ public static class TypeConversion
             return result != null;
         }
 #endif
-
         try {
             result = Convert.ChangeType(str, underlyingType);
             return true;

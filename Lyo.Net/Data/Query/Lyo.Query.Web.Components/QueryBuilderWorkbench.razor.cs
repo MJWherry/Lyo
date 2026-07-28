@@ -218,8 +218,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
 
         foreach (var kvp in _runConfig.HostEndpoints) {
             if (string.Equals(
-                QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key),
-                QueryWorkbenchHostNormalization.NormalizeBaseUrl(_runConfig.SelectedHost!),
+                QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key), QueryWorkbenchHostNormalization.NormalizeBaseUrl(_runConfig.SelectedHost!),
                 StringComparison.OrdinalIgnoreCase))
                 return kvp.Value is { Count: > 0 } ? kvp.Value : [];
         }
@@ -295,7 +294,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.Options.TotalCountMode = source switch {
             ProjectionQueryReq p => p.Options.TotalCountMode,
             QueryConcreteReq c => c.Options.TotalCountMode,
-            _ => target.Options.TotalCountMode
+            var _ => target.Options.TotalCountMode
         };
     }
 
@@ -315,7 +314,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         => new() {
             Start = 0,
             Amount = 20,
-            From = new FromClause { Alias = "o", EntityType = "" },
+            From = new() { Alias = "o", EntityType = "" },
             Joins = [],
             Select = []
         };
@@ -323,7 +322,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
     private static void EnsureRootQueryShape(QueryReq q)
     {
         q.Options ??= new();
-        q.From ??= new FromClause();
+        q.From ??= new();
         q.Joins ??= [];
         q.Select ??= [];
         if (string.IsNullOrWhiteSpace(q.From.Alias))

@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
@@ -22,19 +21,12 @@ public class JobWorkerBaseRegistrationTests
     {
         var api = new ControllableWorkerInstanceApiClient { FailRegisterCount = 1 };
         var worker = CreateWorker(api);
-
         try {
             await worker.StartAsync(TestContext.Current.CancellationToken);
-
             Assert.True(worker.IsRunning);
             Assert.Equal(1, api.RegisterAttempts);
             Assert.Equal(0, api.SuccessfulRegisters);
-
-            await WaitUntilAsync(
-                () => api.SuccessfulRegisters >= 1 && api.HeartbeatCount >= 1,
-                TimeSpan.FromSeconds(5),
-                TestContext.Current.CancellationToken);
-
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 1 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
             Assert.True(api.RegisterAttempts >= 2);
             Assert.Equal(1, api.SuccessfulRegisters);
             Assert.True(api.HeartbeatCount >= 1);
@@ -49,17 +41,10 @@ public class JobWorkerBaseRegistrationTests
     {
         var api = new ControllableWorkerInstanceApiClient { FailHeartbeat404Count = 1 };
         var worker = CreateWorker(api);
-
         try {
             await worker.StartAsync(TestContext.Current.CancellationToken);
-
             Assert.Equal(1, api.SuccessfulRegisters);
-
-            await WaitUntilAsync(
-                () => api.SuccessfulRegisters >= 2 && api.HeartbeatCount >= 1,
-                TimeSpan.FromSeconds(5),
-                TestContext.Current.CancellationToken);
-
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 2 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
             Assert.True(api.RegisterAttempts >= 2);
             Assert.Equal(2, api.SuccessfulRegisters);
             Assert.True(api.Heartbeat404Count >= 1);
@@ -70,12 +55,7 @@ public class JobWorkerBaseRegistrationTests
         }
     }
 
-    private static TestJobWorker CreateWorker(ControllableWorkerInstanceApiClient api)
-        => new(
-            new FakeMqService(),
-            new JobClient(api),
-            new FakeJobEventPublisher(),
-            "cs");
+    private static TestJobWorker CreateWorker(ControllableWorkerInstanceApiClient api) => new(new FakeMqService(), new JobClient(api), new FakeJobEventPublisher(), "cs");
 
     private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout, CancellationToken ct)
     {
@@ -88,11 +68,8 @@ public class JobWorkerBaseRegistrationTests
         }
     }
 
-    private sealed class TestJobWorker(
-        IMqService mq,
-        IJobClient jobClient,
-        IJobEventPublisher events,
-        string workerType) : JobWorkerBase(mq, jobClient, events, workerType, NullLogger.Instance)
+    private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events, string workerType)
+        : JobWorkerBase(mq, jobClient, events, workerType, NullLogger.Instance)
     {
         protected override TimeSpan HeartbeatInterval => TimeSpan.FromMilliseconds(50);
 
@@ -102,16 +79,14 @@ public class JobWorkerBaseRegistrationTests
     /// <summary>API client that simulates Job WorkerInstance register/heartbeat failures for recovery tests.</summary>
     private sealed class ControllableWorkerInstanceApiClient : IApiClient
     {
-        private int _remainingRegisterFailures;
         private int _remainingHeartbeat404s;
+        private int _remainingRegisterFailures;
 
-        public int FailRegisterCount
-        {
+        public int FailRegisterCount {
             set => _remainingRegisterFailures = value;
         }
 
-        public int FailHeartbeat404Count
-        {
+        public int FailHeartbeat404Count {
             set => _remainingHeartbeat404s = value;
         }
 
@@ -129,16 +104,22 @@ public class JobWorkerBaseRegistrationTests
 
         public HttpClient GetClient() => new();
 
-        public Task<TResult?> GetAsAsync<TRequest, TResult>(string uri, TRequest? query = default, string? enumerableDelimiter = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult?> GetAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? query = default,
+            string? enumerableDelimiter = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => Task.FromResult(default(TResult));
 
-        public Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => Task.FromResult(default(TResult));
+        public Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => Task.FromResult(default(TResult));
 
-        public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException();
+        public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
-        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(
+            string uri,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<(byte[] Content, FileTypeInfo FileType)> GetFileWithTypeAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -153,9 +134,7 @@ public class JobWorkerBaseRegistrationTests
                 return Task.FromResult(default(TResult)!);
 
             // StopAsync patches State=Stopped; do not count as heartbeat and do not inject 404s.
-            if (request is PatchRequest patch &&
-                patch.Properties.TryGetValue("State", out var state) &&
-                Equals(state, JobWorkerInstanceState.Stopped))
+            if (request is PatchRequest patch && patch.Properties.TryGetValue("State", out var state) && Equals(state, JobWorkerInstanceState.Stopped))
                 return Task.FromResult(default(TResult)!);
 
             if (_remainingHeartbeat404s > 0) {
@@ -182,27 +161,34 @@ public class JobWorkerBaseRegistrationTests
             var id = Guid.NewGuid();
             SuccessfulRegisters++;
             var now = DateTime.UtcNow;
-            var created = new CreateResult<JobWorkerInstanceRes>(
-                true,
-                new JobWorkerInstanceRes(id, "cs", "host", 1, JobWorkerInstanceState.Running, 0, now, now),
-                null);
-
+            var created = new CreateResult<JobWorkerInstanceRes>(true, new(id, "cs", "host", 1, JobWorkerInstanceState.Running, 0, now, now), null);
             return Task.FromResult((TResult)(object)created);
         }
 
-        public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException();
+        public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
         public Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult> PostFileAsAsync<TResult>(
+            string uri,
+            Stream stream,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult> PostFileAsAsync<TResult>(
+            string uri,
+            byte[] data,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -214,10 +200,8 @@ public class JobWorkerBaseRegistrationTests
         public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException();
+        public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
-        private static bool IsWorkerInstanceRoute(string uri)
-            => uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase);
+        private static bool IsWorkerInstanceRoute(string uri) => uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase);
     }
 }

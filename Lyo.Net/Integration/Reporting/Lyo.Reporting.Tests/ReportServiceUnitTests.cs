@@ -1,9 +1,7 @@
 using System.Text.Json;
 using Lyo.Exceptions.Models;
 using Lyo.Reporting.Models.Enums;
-using Lyo.Reporting.Models.Profiles;
 using Lyo.Reporting.Models.Providers;
-using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.Extensions.Options;
@@ -16,13 +14,8 @@ public sealed class ReportServiceUnitTests
     public void Duplicate_provider_keys_fail_with_actionable_message()
     {
         var ex = Assert.Throws<ConflictException>(() => new ReportService(
-            null!,
-            [],
-            [new FakeProvider("dup-key"), new FakeProvider("DUP-KEY")],
-            [],
-            null!,
-            Options.Create(new PostgresReportingOptions { ConnectionString = "x" }),
-            null!));
+            null!, [], [new FakeProvider("dup-key"), new FakeProvider("DUP-KEY")], [], null!, Options.Create(new PostgresReportingOptions { ConnectionString = "x" }), null!));
+
         Assert.Contains("dup-key", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("unique", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -31,22 +24,9 @@ public sealed class ReportServiceUnitTests
     public void Duplicate_profile_keys_fail_with_actionable_message()
     {
         var ex = Assert.Throws<ConflictException>(() => new ReportService(
-            null!,
-            [],
-            [],
-            [new ReportingGenerationProfile { Key = "profile-a" }, new ReportingGenerationProfile { Key = "Profile-A" }],
-            null!,
-            Options.Create(new PostgresReportingOptions { ConnectionString = "x" }),
-            null!));
+            null!, [], [], [new() { Key = "profile-a" }, new() { Key = "Profile-A" }], null!, Options.Create(new PostgresReportingOptions { ConnectionString = "x" }), null!));
+
         Assert.Contains("profile-a", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private sealed class FakeProvider(string profileKey) : IReportDataProvider
-    {
-        public string ProfileKey => profileKey;
-
-        public Task<ReportDataProviderResult> BuildAsync(ReportDataProviderRequest request, CancellationToken ct = default)
-            => Task.FromResult(new ReportDataProviderResult());
     }
 
     [Theory]
@@ -59,8 +39,7 @@ public sealed class ReportServiceUnitTests
     [InlineData("...", null)]
     [InlineData("   ", null)]
     [InlineData(null, null)]
-    public void SanitizeFileName_strips_paths_and_invalid_input(string? input, string? expected)
-        => Assert.Equal(expected, ReportService.SanitizeFileName(input));
+    public void SanitizeFileName_strips_paths_and_invalid_input(string? input, string? expected) => Assert.Equal(expected, ReportService.SanitizeFileName(input));
 
     [Fact]
     public void SanitizeFileName_removes_invalid_and_control_chars()
@@ -81,11 +60,8 @@ public sealed class ReportServiceUnitTests
     [Fact]
     public void SerializeParametersJson_preserves_multi_values_as_arrays()
     {
-        var json = ReportService.SerializeParametersJson([
-            new("Tag", ReportParameterType.String, "a"),
-            new("Tag", ReportParameterType.String, "b"),
-            new("Single", ReportParameterType.String, "only")
-        ]);
+        var json = ReportService.SerializeParametersJson(
+            [new("Tag", ReportParameterType.String, "a"), new("Tag", ReportParameterType.String, "b"), new("Single", ReportParameterType.String, "only")]);
 
         using var doc = JsonDocument.Parse(json);
         var tag = doc.RootElement.GetProperty("Tag");
@@ -97,15 +73,15 @@ public sealed class ReportServiceUnitTests
     [Fact]
     public void MergeParameters_keeps_all_values_for_multi_value_keys()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Tag", Type = nameof(ReportParameterType.String), AllowMultiple = true }
-        };
-
-        var merged = ReportService.MergeParameters(def, [
-            new("Tag", ReportParameterType.String, "a"),
-            new("Tag", ReportParameterType.String, "b")
-        ]);
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "Tag", Type = nameof(ReportParameterType.String), AllowMultiple = true } };
+        var merged = ReportService.MergeParameters(def, [new("Tag", ReportParameterType.String, "a"), new("Tag", ReportParameterType.String, "b")]);
         Assert.Equal(2, merged.Count(p => p.Key == "Tag"));
+    }
+
+    private sealed class FakeProvider(string profileKey) : IReportDataProvider
+    {
+        public string ProfileKey => profileKey;
+
+        public Task<ReportDataProviderResult> BuildAsync(ReportDataProviderRequest request, CancellationToken ct = default) => Task.FromResult(new ReportDataProviderResult());
     }
 }

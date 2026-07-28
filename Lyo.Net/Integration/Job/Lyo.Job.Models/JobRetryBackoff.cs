@@ -18,7 +18,7 @@ public static class JobRetryBackoff
 
         var delay = type switch {
             JobRetryBackoffType.Exponential => baseSeconds * (1 << (attempt - 1)),
-            _ => baseSeconds * attempt
+            var _ => baseSeconds * attempt
         };
 
         if (type != JobRetryBackoffType.Exponential)

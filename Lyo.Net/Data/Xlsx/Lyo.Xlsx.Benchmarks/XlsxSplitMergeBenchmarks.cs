@@ -14,13 +14,13 @@ namespace Lyo.Xlsx.Benchmarks;
 [BenchmarkSla(MaxMeanMs = 30000, Standard = "XLSX split/merge is heavier than CSV; up to 100k rows per sheet should complete within ~30s.")]
 public class XlsxSplitMergeBenchmarks
 {
-    private byte[] _singleSheetBytes = null!;
-    private byte[] _multiSheetBytes = null!;
     private byte[] _mergeInputA = null!;
     private byte[] _mergeInputB = null!;
-    private string _singleSheetFilePath = null!;
-    private string _outputDirectory = null!;
     private string _mergeOutputPath = null!;
+    private byte[] _multiSheetBytes = null!;
+    private string _outputDirectory = null!;
+    private byte[] _singleSheetBytes = null!;
+    private string _singleSheetFilePath = null!;
     private XlsxService _xlsx = null!;
 
     [Params(1_000, 10_000, 100_000)]
@@ -37,14 +37,13 @@ public class XlsxSplitMergeBenchmarks
         var rows = SampleRecord.Generate(RowCount);
         _singleSheetBytes = _xlsx.ExportToXlsxBytes(rows);
         _mergeInputA = _singleSheetBytes;
-        _mergeInputB = _xlsx.ExportToXlsxBytes(SampleRecord.Generate(RowCount, startId: RowCount));
-
+        _mergeInputB = _xlsx.ExportToXlsxBytes(SampleRecord.Generate(RowCount, RowCount));
         var perSheetRows = Math.Max(1, RowCount / 3);
         _multiSheetBytes = _xlsx.ExportToXlsxBytes(
             new Dictionary<string, IEnumerable<SampleRecord>> {
                 { "SheetA", SampleRecord.Generate(perSheetRows) },
-                { "SheetB", SampleRecord.Generate(perSheetRows, startId: perSheetRows) },
-                { "SheetC", SampleRecord.Generate(perSheetRows, startId: perSheetRows * 2) }
+                { "SheetB", SampleRecord.Generate(perSheetRows, perSheetRows) },
+                { "SheetC", SampleRecord.Generate(perSheetRows, perSheetRows * 2) }
             });
 
         _singleSheetFilePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-splitmerge-{Guid.NewGuid():N}.xlsx");
@@ -64,7 +63,7 @@ public class XlsxSplitMergeBenchmarks
             File.Delete(_mergeOutputPath);
 
         if (Directory.Exists(_outputDirectory))
-            Directory.Delete(_outputDirectory, recursive: true);
+            Directory.Delete(_outputDirectory, true);
     }
 
     [Benchmark(Baseline = true)]
@@ -83,7 +82,7 @@ public class XlsxSplitMergeBenchmarks
     [BenchmarkDescription("Merge two single-sheet workbooks preserving all worksheets.")]
     public long MergeBytesPreserveSheets()
     {
-        var merged = _xlsx.MergeXlsxBytes([_mergeInputA, _mergeInputB], XlsxMergeMode.PreserveSheets);
+        var merged = _xlsx.MergeXlsxBytes([_mergeInputA, _mergeInputB]);
         return merged.LongLength;
     }
 
@@ -103,7 +102,7 @@ public class XlsxSplitMergeBenchmarks
         var inputB = Path.Combine(_outputDirectory, "merge-b.xlsx");
         File.WriteAllBytes(inputA, _mergeInputA);
         File.WriteAllBytes(inputB, _mergeInputB);
-        _xlsx.MergeXlsxFiles([inputA, inputB], _mergeOutputPath, XlsxMergeMode.PreserveSheets);
+        _xlsx.MergeXlsxFiles([inputA, inputB], _mergeOutputPath);
     }
 
     [Benchmark]
@@ -111,6 +110,6 @@ public class XlsxSplitMergeBenchmarks
     public long SplitThenMergeBytes()
     {
         var parts = _xlsx.SplitXlsxBytesByRows(_singleSheetBytes, RowsPerFile);
-        return _xlsx.MergeXlsxBytes(parts, XlsxMergeMode.PreserveSheets).LongLength;
+        return _xlsx.MergeXlsxBytes(parts).LongLength;
     }
 }

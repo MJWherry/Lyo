@@ -168,9 +168,8 @@ public class WhereClauseBuilder
     }
 
     /// <summary>
-    /// When a caller passes a collection (e.g. <c>In(field, myList)</c>), C# overload resolution prefers the
-    /// <c>params T[]</c> overload with <c>T</c> inferred as the collection type, wrapping the collection in a
-    /// single-element array. Unwrap it so the condition value is the flat collection.
+    /// When a caller passes a collection (e.g. <c>In(field, myList)</c>), C# overload resolution prefers the <c>params T[]</c> overload with <c>T</c> inferred as the collection
+    /// type, wrapping the collection in a single-element array. Unwrap it so the condition value is the flat collection.
     /// </summary>
     private static object NormalizeMultiValue<T>(T[] values)
     {

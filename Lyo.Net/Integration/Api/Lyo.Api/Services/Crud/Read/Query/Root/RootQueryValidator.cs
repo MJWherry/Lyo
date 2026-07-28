@@ -24,11 +24,10 @@ public static class RootQueryValidator
         if (request.Select.Count == 0)
             errors.Add(Err("Select requires at least one field."));
 
-        if (!string.IsNullOrWhiteSpace(request.From.EntityType) && !registry.TryGet(request.From.EntityType, out _))
+        if (!string.IsNullOrWhiteSpace(request.From.EntityType) && !registry.TryGet(request.From.EntityType, out var _))
             errors.Add(Err($"Unknown or disallowed From.EntityType '{request.From.EntityType}'."));
 
         ValidateSourceScope(request.From.Query, "From.Query", errors);
-
         var aliases = new Dictionary<string, RootQueryEntityEntry>(StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrWhiteSpace(request.From.Alias) && registry.TryGet(request.From.EntityType, out var fromEntry))
             aliases[request.From.Alias.Trim()] = fromEntry;
@@ -55,10 +54,9 @@ public static class RootQueryValidator
                 errors.Add(Err($"{prefix}.On requires at least one clause."));
 
             ValidateSourceScope(join.Query, $"{prefix}.Query", errors);
-
             foreach (var on in join.On) {
-                ValidateAliasPropertyPath(on.From, aliases, $"{prefix}.On.From", errors, requireKnownAlias: true);
-                ValidateAliasPropertyPath(on.To, aliases, $"{prefix}.On.To", errors, requireKnownAlias: true);
+                ValidateAliasPropertyPath(on.From, aliases, $"{prefix}.On.From", errors, true);
+                ValidateAliasPropertyPath(on.To, aliases, $"{prefix}.On.To", errors, true);
             }
         }
 
@@ -96,7 +94,7 @@ public static class RootQueryValidator
             return;
         }
 
-        ValidateAliasPropertyPath(path, aliases, "Select", errors, requireKnownAlias: true);
+        ValidateAliasPropertyPath(path, aliases, "Select", errors, true);
     }
 
     private static void ValidateAliasPropertyPath(
@@ -115,10 +113,11 @@ public static class RootQueryValidator
         if (!aliases.TryGetValue(parts[0], out var entry)) {
             if (requireKnownAlias)
                 errors.Add(Err($"{context} path '{path}' uses unknown alias '{parts[0]}'."));
+
             return;
         }
 
-        if (!entry.TryGetProperty(parts[1], out _))
+        if (!entry.TryGetProperty(parts[1], out var _))
             errors.Add(Err($"{context} path '{path}': property '{parts[1]}' not found on '{entry.ClrType.Name}'."));
     }
 
@@ -134,12 +133,15 @@ public static class RootQueryValidator
 
                 if (c.SubClause != null)
                     ValidateOuterPathsFromAliasOnly(c.SubClause, fromAlias, context + ".SubClause", errors);
+
                 break;
             case GroupClause g:
                 foreach (var child in g.Children)
                     ValidateOuterPathsFromAliasOnly(child, fromAlias, context, errors);
+
                 if (g.SubClause != null)
                     ValidateOuterPathsFromAliasOnly(g.SubClause, fromAlias, context + ".SubClause", errors);
+
                 break;
         }
     }
@@ -156,6 +158,5 @@ public static class RootQueryValidator
         return trimmed.StartsWith(fromAlias + ".", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static ApiError Err(string description)
-        => new(ApiErrorCodes.InvalidQuery, description);
+    private static ApiError Err(string description) => new(ApiErrorCodes.InvalidQuery, description);
 }

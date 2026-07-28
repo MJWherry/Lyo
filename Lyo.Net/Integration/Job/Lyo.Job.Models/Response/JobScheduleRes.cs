@@ -1,13 +1,13 @@
-using System.Diagnostics;
-using Lyo.Common.Enums;
-using Lyo.Common.Extensions;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
-
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
+using Lyo.Job.Models.Enums;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Response;
 
@@ -26,7 +26,7 @@ public sealed record JobScheduleRes(
     bool Enabled,
     IReadOnlyList<JobScheduleParameterRes>? Parameters,
     string? CronExpression = null,
-    Enums.JobMisfirePolicy MisfirePolicy = Enums.JobMisfirePolicy.Skip,
+    JobMisfirePolicy MisfirePolicy = JobMisfirePolicy.Skip,
     DateTime? StartDateUtc = null,
     DateTime? EndDateUtc = null,
     string? TimeZoneId = null,

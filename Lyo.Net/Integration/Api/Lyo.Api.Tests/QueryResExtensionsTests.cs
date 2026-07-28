@@ -1,7 +1,6 @@
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Api.Tests;
@@ -17,12 +16,11 @@ public class QueryResExtensionsTests
             Amount = 20,
             WhereClause = where,
             Include = ["phones"],
-            SortBy = [new SortBy("Id", SortDirection.Asc)]
+            SortBy = [new("Id", SortDirection.Asc)]
         };
-        var result = ResultFactory.QuerySuccess(request, ["a", "b"], start: 0, amount: 2, total: 100, hasMore: true);
 
+        var result = ResultFactory.QuerySuccess(request, ["a", "b"], 0, 2, 100, true);
         var next = result.WithStart(40);
-
         Assert.NotSame(request, next);
         Assert.Equal(40, next.Start);
         Assert.Equal(20, next.Amount);
@@ -35,10 +33,8 @@ public class QueryResExtensionsTests
     public void QueryRes_ToNextQueryRequest_AdvancesByRequestAmount()
     {
         var request = new QueryConcreteReq { Start = 10, Amount = 25 };
-        var result = ResultFactory.QuerySuccess(request, new[] { 1, 2, 3 }, start: 10, amount: 3, total: 100, hasMore: true);
-
+        var result = ResultFactory.QuerySuccess(request, new[] { 1, 2, 3 }, 10, 3, 100, true);
         var next = result.ToNextQueryRequest();
-
         Assert.Equal(35, next.Start);
         Assert.Equal(25, next.Amount);
     }
@@ -47,10 +43,8 @@ public class QueryResExtensionsTests
     public void QueryRes_ToNextQueryRequest_FallsBackToResultAmountWhenRequestAmountMissing()
     {
         var request = new QueryConcreteReq { Start = 0 };
-        var result = ResultFactory.QuerySuccess(request, new[] { "x", "y" }, start: 0, amount: 2, total: null, hasMore: true);
-
+        var result = ResultFactory.QuerySuccess(request, new[] { "x", "y" }, 0, 2, null, true);
         var next = result.ToNextQueryRequest();
-
         Assert.Equal(2, next.Start);
     }
 
@@ -61,12 +55,11 @@ public class QueryResExtensionsTests
             Start = 50,
             Amount = 10,
             Select = ["Id", "Name"],
-            ComputedFields = [new ComputedField("Label", "{Name}")]
+            ComputedFields = [new("Label", "{Name}")]
         };
-        var result = ResultFactory.ProjectedQuerySuccess(request, new[] { new Dictionary<string, object?>() }, start: 50, amount: 10, total: 200, hasMore: true);
 
+        var result = ResultFactory.ProjectedQuerySuccess(request, new[] { new Dictionary<string, object?>() }, 50, 10, 200, true);
         var next = result.ToNextProjectionQueryRequest();
-
         Assert.Equal(60, next.Start);
         Assert.Equal(["Id", "Name"], next.Select);
         Assert.Single(next.ComputedFields);
@@ -79,13 +72,12 @@ public class QueryResExtensionsTests
         var request = new QueryReq {
             Start = 0,
             Amount = 5,
-            From = new FromClause { Alias = "p", EntityType = "PersonEntity" },
+            From = new() { Alias = "p", EntityType = "PersonEntity" },
             Select = ["p.Id"]
         };
-        var result = ResultFactory.ProjectedQuerySuccess(request, new object[5], start: 0, amount: 5, total: 20, hasMore: true);
 
+        var result = ResultFactory.ProjectedQuerySuccess(request, new object[5], 0, 5, 20, true);
         var next = result.ToNextRootQueryRequest();
-
         Assert.Equal(5, next.Start);
         Assert.Equal("p", next.From.Alias);
         Assert.Equal(["p.Id"], next.Select);
@@ -94,13 +86,8 @@ public class QueryResExtensionsTests
     [Fact]
     public void ProjectedQueryRes_ToNextProjectionQueryRequest_ThrowsWhenRootRequest()
     {
-        var request = new QueryReq {
-            Amount = 1,
-            From = new FromClause { Alias = "p", EntityType = "PersonEntity" },
-            Select = ["p.Id"]
-        };
-        var result = ResultFactory.ProjectedQuerySuccess(request, new object[1], start: 0, amount: 1, total: 1);
-
+        var request = new QueryReq { Amount = 1, From = new() { Alias = "p", EntityType = "PersonEntity" }, Select = ["p.Id"] };
+        var result = ResultFactory.ProjectedQuerySuccess(request, new object[1], 0, 1, 1);
         Assert.Throws<InvalidOperationException>(() => result.ToNextProjectionQueryRequest());
     }
 
@@ -108,10 +95,8 @@ public class QueryResExtensionsTests
     public void ProjectedQueryRes_WithStart_WorksForProjection()
     {
         var request = new ProjectionQueryReq { Start = 0, Amount = 10, Select = ["Id"] };
-        var result = ResultFactory.ProjectedQuerySuccess(request, Array.Empty<object>(), start: 0, amount: 0, total: 0);
-
+        var result = ResultFactory.ProjectedQuerySuccess(request, Array.Empty<object>(), 0, 0, 0);
         var next = result.WithStart(100);
-
         Assert.IsType<ProjectionQueryReq>(next);
         Assert.Equal(100, next.Start);
         Assert.Equal(10, next.Amount);

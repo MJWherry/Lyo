@@ -1,8 +1,8 @@
 namespace Lyo.Reporting.Models.Providers;
 
 /// <summary>
-/// Host-registered provider that builds report composition (or a pre-rendered file) for a
-/// <see cref="Profiles.ReportingGenerationProfile"/> key. Registered on the API host, not workers.
+/// Host-registered provider that builds report composition (or a pre-rendered file) for a <see cref="Profiles.ReportingGenerationProfile" /> key. Registered on the API host,
+/// not workers.
 /// </summary>
 public interface IReportDataProvider
 {

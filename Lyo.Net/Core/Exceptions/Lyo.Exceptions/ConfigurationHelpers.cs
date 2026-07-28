@@ -12,8 +12,8 @@ namespace Lyo.Exceptions;
 /// <summary>Helper methods for configuration validation that throw <see cref="ConfigurationException" />.</summary>
 /// <remarks>
 /// Unlike <see cref="OperationHelpers" /> (invalid runtime state) and <see cref="ArgumentHelpers" /> (caller contract violations), this type signals missing or invalid
-/// application configuration — required connection strings, key material, options values, or service registrations. Overloads optionally capture the caller&apos;s value
-/// expression (via <see cref="CallerArgumentExpressionAttribute" />), surfaced as the <see cref="ConfigurationException.SettingName" /> of thrown exceptions.
+/// application configuration — required connection strings, key material, options values, or service registrations. Overloads optionally capture the caller&apos;s value expression
+/// (via <see cref="CallerArgumentExpressionAttribute" />), surfaced as the <see cref="ConfigurationException.SettingName" /> of thrown exceptions.
 /// </remarks>
 public static class ConfigurationHelpers
 {

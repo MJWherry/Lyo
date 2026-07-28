@@ -19,8 +19,8 @@ public sealed record LyoProblemDetails(
     Dictionary<string, object?>? Extensions = null) : ILyoProblemDetails
 {
     /// <summary>
-    /// Root <see cref="Detail"/> plus structured <see cref="Errors"/> descriptions when present.
-    /// Prefer this for exception/UI surfaces so callers see validation entries, not only the summary.
+    /// Root <see cref="Detail" /> plus structured <see cref="Errors" /> descriptions when present. Prefer this for exception/UI surfaces so callers see validation entries, not
+    /// only the summary.
     /// </summary>
     public string GetFullMessage()
     {
@@ -32,8 +32,7 @@ public sealed record LyoProblemDetails(
             return Detail;
 
         // FromCode / single-error cases often duplicate Detail onto Errors[0].
-        if (string.IsNullOrWhiteSpace(Detail)
-            || Errors.Any(e => string.Equals(e.Description, Detail, StringComparison.Ordinal)))
+        if (string.IsNullOrWhiteSpace(Detail) || Errors.Any(e => string.Equals(e.Description, Detail, StringComparison.Ordinal)))
             return errorText;
 
         return $"{Detail} {errorText}";

@@ -18,12 +18,23 @@ public sealed class ReportGenerationCleanupTests
             }
         };
 
-        var withOutput = new ReportGeneration { Id = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), ReportDataJson = "{}", Format = "Csv", Status = "Succeeded" };
-        var withoutOutput = new ReportGeneration { Id = Guid.NewGuid(), ReportDataJson = "{}", Format = "Csv", Status = "Failed" };
+        var withOutput = new ReportGeneration {
+            Id = Guid.NewGuid(),
+            OutputFileId = Guid.NewGuid(),
+            ReportDataJson = "{}",
+            Format = "Csv",
+            Status = "Succeeded"
+        };
+
+        var withoutOutput = new ReportGeneration {
+            Id = Guid.NewGuid(),
+            ReportDataJson = "{}",
+            Format = "Csv",
+            Status = "Failed"
+        };
 
         await using var provider = new ServiceCollection().BuildServiceProvider();
         await ReportGenerationCleanup.InvokeCleanupHooksAsync([withOutput, withoutOutput], hooks, provider, TestContext.Current.CancellationToken);
-
         Assert.Single(cleaned);
         Assert.Equal(withOutput.OutputFileId, cleaned[0]);
     }
@@ -33,24 +44,31 @@ public sealed class ReportGenerationCleanupTests
     {
         await using var provider = new ServiceCollection().BuildServiceProvider();
         await ReportGenerationCleanup.InvokeCleanupHooksAsync(
-            [new ReportGeneration { Id = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), ReportDataJson = "{}", Format = "Csv", Status = "Succeeded" }],
-            hooks: null,
-            provider,
-            TestContext.Current.CancellationToken);
+        [
+            new() {
+                Id = Guid.NewGuid(),
+                OutputFileId = Guid.NewGuid(),
+                ReportDataJson = "{}",
+                Format = "Csv",
+                Status = "Succeeded"
+            }
+        ], null, provider, TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task Hook_failure_propagates_so_delete_aborts()
     {
-        var hooks = new ReportGenerationHooks {
-            OnCleanupAsync = (_, _) => throw new IOException("storage down")
-        };
-
+        var hooks = new ReportGenerationHooks { OnCleanupAsync = (_, _) => throw new IOException("storage down") };
         await using var provider = new ServiceCollection().BuildServiceProvider();
         await Assert.ThrowsAsync<IOException>(async () => await ReportGenerationCleanup.InvokeCleanupHooksAsync(
-            [new ReportGeneration { Id = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), ReportDataJson = "{}", Format = "Csv", Status = "Succeeded" }],
-            hooks,
-            provider,
-            TestContext.Current.CancellationToken));
+        [
+            new() {
+                Id = Guid.NewGuid(),
+                OutputFileId = Guid.NewGuid(),
+                ReportDataJson = "{}",
+                Format = "Csv",
+                Status = "Succeeded"
+            }
+        ], hooks, provider, TestContext.Current.CancellationToken));
     }
 }

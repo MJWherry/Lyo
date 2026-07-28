@@ -49,7 +49,7 @@ dotnet run -c Release --project Lyo.Net/Data/Compression/Lyo.Compression.Benchma
 Results are written under `BenchmarkDotNet.Artifacts/` next to the binary. Refresh the HTML dashboard after runs:
 
 ```bash
-python3 scripts/benchmarks/build-manifests.py --compression-only
+python3 scripts/benchmarks/build_manifests.py --compression-only
 ```
 
 See [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) and [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md).
@@ -59,7 +59,7 @@ See [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) and [`
 1. Capture a clean baseline before your change: `dotnet run -c Release ...` and archive the artifacts folder.
 2. Apply the code change and rerun the same filter set.
 3. Compare with BenchmarkDotNet's built-in `--statisticalTest` flag or paste both `*.md` tables into a diff.
-4. Regenerate the dashboard manifest: `python3 scripts/benchmarks/build-manifests.py --compression-only`.
+4. Regenerate the dashboard manifest: `python3 scripts/benchmarks/build_manifests.py --compression-only`.
 
 ## Notes / caveats
 

@@ -93,10 +93,7 @@ else {
 
     private LyoForm<PersonRes>? _formRef;
 
-    private static readonly HashSet<string> AllowedPersonPatchProperties = [
-        nameof(PersonRes.EndatoPersonId), nameof(PersonRes.NamePrefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName),
-        nameof(PersonRes.NameSuffix), nameof(PersonRes.SourceEntityType)
-    ];
+    private static readonly HashSet<string> AllowedPersonPatchProperties = [nameof(PersonRes.EndatoPersonId), nameof(PersonRes.NamePrefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName), nameof(PersonRes.NameSuffix), nameof(PersonRes.SourceEntityType)];
 
     protected override void OnParametersSet()
     {

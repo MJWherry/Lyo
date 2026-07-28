@@ -4,8 +4,8 @@ using System.Text.Json;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common;
+using Lyo.Common.Enums;
 using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Api.Tests;
@@ -28,12 +28,11 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
         var name = $"RootJoin_{Guid.NewGuid():N}"[..20];
         var defId = await fixture.SeedJobDefinitionAsync(name);
         await fixture.SeedJobRunAsync(defId, "root-join-user");
-
         var request = QueryReqBuilder.New()
             .From("d", "JobDefinition")
             .Join(
                 "r", "JobRun", JoinType.Left, on => {
-                    on.Add(new JoinOn { From = "d.Id", To = "r.JobDefinitionId" });
+                    on.Add(new() { From = "d.Id", To = "r.JobDefinitionId" });
                 }, "r")
             .AddSelects("d.Name", "r.CreatedBy")
             .AddWhere(w => w.Equals("d.Id", defId))
@@ -44,7 +43,6 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
         var response = await _client.PostAsJsonAsync(RootQueryRoute, request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
-
         Assert.NotNull(result);
         Assert.True(result.IsSuccess, result.Error?.Detail);
         Assert.Equal(1, result.Total);
@@ -52,7 +50,6 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
         Assert.Equal(JsonValueKind.Object, row.ValueKind);
         Assert.True(row.TryGetProperty("Name", out var nameProp) || row.TryGetProperty("name", out nameProp));
         Assert.Equal(name, nameProp.GetString());
-
         Assert.True(row.TryGetProperty("r", out var runs) || row.TryGetProperty("R", out runs));
         Assert.True(runs.ValueKind is JsonValueKind.Array or JsonValueKind.Object);
         if (runs.ValueKind == JsonValueKind.Array)
@@ -64,18 +61,10 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
     {
         var name = $"RootFlat_{Guid.NewGuid():N}"[..20];
         var defId = await fixture.SeedJobDefinitionAsync(name);
-
-        var request = QueryReqBuilder.New()
-            .From("d", "JobDefinition")
-            .AddSelects("d.Name")
-            .AddWhere(w => w.Equals("d.Id", defId))
-            .SetPagination(0, 5)
-            .Build();
-
+        var request = QueryReqBuilder.New().From("d", "JobDefinition").AddSelects("d.Name").AddWhere(w => w.Equals("d.Id", defId)).SetPagination(0, 5).Build();
         var response = await _client.PostAsJsonAsync(RootQueryRoute, request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
-
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -84,12 +73,7 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
     [Fact]
     public async Task RootQuery_InvalidSelect_Returns400()
     {
-        var request = QueryReqBuilder.New()
-            .From("d", "JobDefinition")
-            .AddSelects("d.NotARealColumn")
-            .SetPagination(0, 5)
-            .Build();
-
+        var request = QueryReqBuilder.New().From("d", "JobDefinition").AddSelects("d.NotARealColumn").SetPagination(0, 5).Build();
         var response = await _client.PostAsJsonAsync(RootQueryRoute, request, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -99,7 +83,6 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
     {
         var request = QueryReqBuilder.New().From("d", "JobDefinition").AddSelects("d.Name").Build();
         request.Include.Add("JobRuns");
-
         var response = await _client.PostAsJsonAsync(RootQueryRoute, request, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -119,16 +102,15 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
         await fixture.SeedJobDefinitionAsync($"{prefix}_a");
         await fixture.SeedJobDefinitionAsync($"{prefix}_b");
         await fixture.SeedJobDefinitionAsync($"{prefix}_c");
-
         var request = QueryReqBuilder.New()
             .From("d", "JobDefinition")
             .Join(
                 "r", "JobRun", JoinType.Left, on => {
-                    on.Add(new JoinOn { From = "d.Id", To = "r.JobDefinitionId" });
+                    on.Add(new() { From = "d.Id", To = "r.JobDefinitionId" });
                 }, "r")
             .AddSelects("d.Name", "r.CreatedBy")
             .AddWhere(w => w.StartsWith("d.Name", prefix!))
-            .AddSort("d.Name", Common.Enums.SortDirection.Asc)
+            .AddSort("d.Name", SortDirection.Asc)
             .SetPagination(0, 2)
             .SetTotalCountMode(QueryTotalCountMode.Exact)
             .Build();
@@ -136,7 +118,6 @@ public sealed class RootQueryApiPostgresTests(ApiPostgresFixture fixture) : IDis
         var response = await _client.PostAsJsonAsync(RootQueryRoute, request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
-
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Items!.Count);

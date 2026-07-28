@@ -3,8 +3,8 @@ using System.Reflection;
 namespace Lyo.Xlsx.Models;
 
 /// <summary>
-/// Incremental multi-sheet XLSX writing session. Each <c>AddSheet*</c> call streams one worksheet into the underlying workbook; disposing the session
-/// finalizes the workbook. Sheet names must be unique within the session.
+/// Incremental multi-sheet XLSX writing session. Each <c>AddSheet*</c> call streams one worksheet into the underlying workbook; disposing the session finalizes the workbook.
+/// Sheet names must be unique within the session.
 /// </summary>
 public interface IXlsxDocumentWriter : IDisposable
 {
@@ -20,8 +20,8 @@ public interface IXlsxDocumentWriter : IDisposable
     void AddSheetFromDataTable(string sheetName, DataTable.Models.DataTable dataTable, CancellationToken ct = default);
 
     /// <summary>
-    /// Streams a row/column dictionary map as a worksheet named <paramref name="sheetName" />; <paramref name="useHeaderRow" /> controls whether the
-    /// first row is treated as headers.
+    /// Streams a row/column dictionary map as a worksheet named <paramref name="sheetName" />; <paramref name="useHeaderRow" /> controls whether the first row is treated as
+    /// headers.
     /// </summary>
     void AddSheetFromDictionary(string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, CancellationToken ct = default);
 }

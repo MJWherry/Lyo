@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
 
@@ -34,7 +35,7 @@ public class JobBlackoutWindow
     /// <summary>How runs that fall inside this window are handled. Stored as string.</summary>
     [Required]
     [MaxLength(10)]
-    public string Policy { get; set; } = nameof(Models.Enums.JobBlackoutPolicy.Skip);
+    public string Policy { get; set; } = nameof(JobBlackoutPolicy.Skip);
 
     public bool Enabled { get; set; }
 

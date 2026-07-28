@@ -1,7 +1,7 @@
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
 @using Lyo.Reporting.Web.Components
-@using FsConstants = Lyo.Gateway.Models.Constants.FileStorageWorkbench
+@using FsConstants = Models.Constants.FileStorageWorkbench
 
 <ReportManagement BaseRoute="@_baseRoute"
                   DownloadFileAsync="DownloadFileAsync"
@@ -18,10 +18,10 @@
 
     private Task DownloadFileAsync(Guid fileId, CancellationToken ct)
     {
-        Navigation.NavigateTo($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}", forceLoad: true);
+        Navigation.NavigateTo($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}", true);
         return Task.CompletedTask;
     }
 
-    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct)
-        => Task.FromResult<string?>(Navigation.ToAbsoluteUri($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}").ToString());
+    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct) => Task.FromResult<string?>(Navigation.ToAbsoluteUri($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}").ToString());
+
 }

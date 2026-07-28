@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Lyo.Compression;
 using Lyo.Compression.Compressors;
@@ -5,6 +6,7 @@ using Lyo.Compression.LZ4;
 using Lyo.Compression.Models;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions.Models;
@@ -14,6 +16,7 @@ using Lyo.IO.Temp.Models;
 using Lyo.Keystore;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
+using HashAlgorithm = Lyo.FileMetadataStore.Models.HashAlgorithm;
 using LocalDiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
 
 namespace Lyo.FileStorage.Tests;
@@ -1345,8 +1348,8 @@ public class LocalFileStorageServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Migrating between KEKs that differ in AES Key Wrap eligibility changes the DEK blob's encoding; the rewritten on-disk header must carry the recomputed
-    /// DekEncoding byte (a stale byte from the old header makes the file undecryptable).
+    /// Migrating between KEKs that differ in AES Key Wrap eligibility changes the DEK blob's encoding; the rewritten on-disk header must carry the recomputed DekEncoding byte (a
+    /// stale byte from the old header makes the file undecryptable).
     /// </summary>
     [Fact]
     public async Task MigrateDeksAsync_KekChangesDekEncoding_RewritesHeaderEncodingAndStillDecrypts()
@@ -1355,22 +1358,19 @@ public class LocalFileStorageServiceTests : IDisposable
         const string targetKeyId = "envelope-key";
         var keyStore = new LocalKeyStore();
         // 32-byte source KEK -> DEK protected via AES Key Wrap; 64-byte target KEK (AES-SIV) is not AES-KW eligible -> KEK-service envelope.
-        keyStore.AddKey(sourceKeyId, "1", System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        keyStore.AddKey(sourceKeyId, "1", RandomNumberGenerator.GetBytes(32));
         keyStore.SetCurrentVersion(sourceKeyId, "1");
-        keyStore.AddKey(targetKeyId, "1", System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        keyStore.AddKey(targetKeyId, "1", RandomNumberGenerator.GetBytes(64));
         keyStore.SetCurrentVersion(targetKeyId, "1");
-
         var dekService = new AesGcmEncryptionService(keyStore);
-        var kekService = new Lyo.Encryption.AesSiv.AesSivEncryptionService(keyStore, Lyo.Encryption.AesSiv.AesSivKeySizeBits.Bits512);
+        var kekService = new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
-
         var originalData = "DEK encoding must follow the KEK across migration"u8.ToArray();
         var saveResult = await service.SaveFileAsync(originalData, "encoding.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken);
-
-        var filePath = Directory
-            .GetFiles(_tempSession.SessionDirectory, saveResult.Id.ToString("N") + "*", SearchOption.AllDirectories)
+        var filePath = Directory.GetFiles(_tempSession.SessionDirectory, saveResult.Id.ToString("N") + "*", SearchOption.AllDirectories)
             .Single(p => !p.EndsWith(".meta", StringComparison.Ordinal));
+
         using (var headerStream = File.OpenRead(filePath))
             Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, EncryptionHeader.Read(headerStream).DekEncoding);
 
@@ -1384,8 +1384,7 @@ public class LocalFileStorageServiceTests : IDisposable
             migratedHeader = EncryptionHeader.Read(headerStream);
 
         Assert.Equal(EncryptionHeader.DekEncodingEnvelope, migratedHeader.DekEncoding);
-        Assert.Equal(
-            migratedHeader.DekEncoding, EncryptionHeader.InferDekEncoding(migratedHeader.EncryptedDataEncryptionKey.Length, migratedHeader.DekKeyMaterialBytes));
+        Assert.Equal(migratedHeader.DekEncoding, EncryptionHeader.InferDekEncoding(migratedHeader.EncryptedDataEncryptionKey.Length, migratedHeader.DekKeyMaterialBytes));
 
         // Roundtrip: the file must still decrypt under the target KEK.
         var decrypted = await service.GetFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);

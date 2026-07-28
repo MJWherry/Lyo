@@ -27,8 +27,8 @@ public sealed class JobSchedulerOptions
     public string CreatedBy { get; set; } = "Scheduler";
 
     /// <summary>
-    /// How schedule slots missed while no scheduler was running are handled by default: skip them or run a single catch-up run. Individual schedules can override this via
-    /// their own misfire policy.
+    /// How schedule slots missed while no scheduler was running are handled by default: skip them or run a single catch-up run. Individual schedules can override this via their
+    /// own misfire policy.
     /// </summary>
     public bool EnableMisfireCatchUp { get; set; } = true;
 

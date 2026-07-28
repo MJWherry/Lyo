@@ -6,9 +6,8 @@ using Lyo.Query.Models.Common.Request;
 namespace Lyo.Api.ApiEndpoint;
 
 /// <summary>
-/// Enforces the <c>DeniedSelectFields</c> deny-list on projected queries and exports. Projections read raw entities
-/// and bypass response mapping, so sensitive columns (e.g. encrypted values that mapping would mask) must be
-/// rejected before the query runs.
+/// Enforces the <c>DeniedSelectFields</c> deny-list on projected queries and exports. Projections read raw entities and bypass response mapping, so sensitive columns (e.g.
+/// encrypted values that mapping would mask) must be rejected before the query runs.
 /// </summary>
 public static class DeniedSelectFieldPolicy
 {
@@ -17,10 +16,8 @@ public static class DeniedSelectFieldPolicy
     {
         var trimmed = field.Trim();
         foreach (var denied in deniedFields) {
-            if (trimmed.Equals(denied, StringComparison.OrdinalIgnoreCase)
-                || trimmed.EndsWith("." + denied, StringComparison.OrdinalIgnoreCase)
-                || trimmed.StartsWith(denied + ".", StringComparison.OrdinalIgnoreCase)
-                || trimmed.Contains("." + denied + ".", StringComparison.OrdinalIgnoreCase))
+            if (trimmed.Equals(denied, StringComparison.OrdinalIgnoreCase) || trimmed.EndsWith("." + denied, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(denied + ".", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("." + denied + ".", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
 
@@ -32,10 +29,7 @@ public static class DeniedSelectFieldPolicy
         => !string.IsNullOrEmpty(template) && deniedFields.Any(denied => template.Contains(denied, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Validates projected select fields and computed templates against the deny-list.</summary>
-    public static List<ApiError> ValidateProjection(
-        IEnumerable<string> selectFields,
-        IEnumerable<ComputedField> computedFields,
-        IReadOnlyCollection<string> deniedFields)
+    public static List<ApiError> ValidateProjection(IEnumerable<string> selectFields, IEnumerable<ComputedField> computedFields, IReadOnlyCollection<string> deniedFields)
     {
         var errors = new List<ApiError>();
         foreach (var field in selectFields) {
@@ -58,9 +52,7 @@ public static class DeniedSelectFieldPolicy
             return [];
 
         var errors = ValidateProjection(request.Query?.Select ?? [], request.Query?.ComputedFields ?? [], deniedFields);
-
-        var columnValues = (request.Columns?.Select(c => c.Value) ?? [])
-            .Concat(request.ColumnList?.Select(c => c.Value) ?? []);
+        var columnValues = (request.Columns?.Select(c => c.Value) ?? []).Concat(request.ColumnList?.Select(c => c.Value) ?? []);
         foreach (var value in columnValues) {
             if (string.IsNullOrEmpty(value))
                 continue;

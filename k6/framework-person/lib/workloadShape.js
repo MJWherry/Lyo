@@ -143,7 +143,15 @@ export function navBranchRates(prefix = "") {
   };
 }
 
+/** True when CACHE_HIT_MODE pins request shapes for server cache hits. */
+export function cacheHitMode() {
+  return toBool("CACHE_HIT_MODE", false);
+}
+
 export function shouldRandomize(flagName, fallback = true) {
+  if (cacheHitMode()) {
+    return false;
+  }
   return toBool(flagName, fallback);
 }
 

@@ -3,7 +3,7 @@ using Lyo.Reporting.Models.Enums;
 
 namespace Lyo.Reporting.Postgres.Database;
 
-/// <summary>A single generated report output. Optional <see cref="OutputFileId"/> is set by consumer hooks.</summary>
+/// <summary>A single generated report output. Optional <see cref="OutputFileId" /> is set by consumer hooks.</summary>
 public sealed class ReportGeneration
 {
     [Key]

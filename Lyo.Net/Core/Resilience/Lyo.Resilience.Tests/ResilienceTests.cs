@@ -60,11 +60,9 @@ public sealed class ResilienceTests
 
     private static ServiceProvider BuildProviderWithFastRetryPipeline()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
                 new Dictionary<string, string?> {
-                    ["Lyo:ResiliencePipelines:test-pipeline:Retry:MaxRetryAttempts"] = "3",
-                    ["Lyo:ResiliencePipelines:test-pipeline:Retry:Delay"] = "00:00:00.001"
+                    ["Lyo:ResiliencePipelines:test-pipeline:Retry:MaxRetryAttempts"] = "3", ["Lyo:ResiliencePipelines:test-pipeline:Retry:Delay"] = "00:00:00.001"
                 })
             .Build();
 

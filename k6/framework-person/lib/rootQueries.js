@@ -1,4 +1,4 @@
-import { buildOptions } from "../../../packages/lyo-person-api-client/dist/index.js";
+import { buildOptions } from "../../../packages/typescript/lyo-person-api-client/dist/index.js";
 
 /** Root POST /Query — Person only (no joins). */
 export function rootFlatPersonQuery({ start = 0, amount = 100 } = {}) {

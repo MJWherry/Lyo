@@ -85,7 +85,6 @@ public sealed class JobDefinitionReq
     }
 
     public override string ToString()
-        => $"{Name}, {Description} (Enabled={Enabled}) Params(C={CreateParameters.Count}) "
-            + $"Schedules(C={CreateSchedules.Count}) Triggers(C={CreateTriggers.Count}) "
-            + $"Blackout(Id={JobBlackoutCalendarId}, Inline={CreateBlackoutCalendar != null})";
+        => $"{Name}, {Description} (Enabled={Enabled}) Params(C={CreateParameters.Count}) " + $"Schedules(C={CreateSchedules.Count}) Triggers(C={CreateTriggers.Count}) " +
+            $"Blackout(Id={JobBlackoutCalendarId}, Inline={CreateBlackoutCalendar != null})";
 }

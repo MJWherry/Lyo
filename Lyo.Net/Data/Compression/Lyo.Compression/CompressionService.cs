@@ -104,8 +104,8 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     {
         if (!_factories.TryGetValue(key.Algorithm, out var factory)) {
             throw new NotSupportedException(
-                $"No compressor registered for algorithm '{key.Algorithm.Name}'. " +
-                $"Did you forget to install/register the Lyo.Compression.{key.Algorithm.Name} addon package " + $"(e.g. services.Add{key.Algorithm.Name}Compressor())?");
+                $"No compressor registered for algorithm '{key.Algorithm.Name}'. " + $"Did you forget to install/register the Lyo.Compression.{key.Algorithm.Name} addon package " +
+                $"(e.g. services.Add{key.Algorithm.Name}Compressor())?");
         }
 
         return factory.Create(key.Level);
@@ -128,7 +128,13 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         => DecompressWithCompressor(inputStream, outputStream, GetCompressor(algorithm));
 
     /// <inheritdoc />
-    public Task CompressAsync(Stream inputStream, Stream outputStream, CompressionAlgorithm algorithm, int? chunkSize = null, CompressionLevel? level = null, CancellationToken ct = default)
+    public Task CompressAsync(
+        Stream inputStream,
+        Stream outputStream,
+        CompressionAlgorithm algorithm,
+        int? chunkSize = null,
+        CompressionLevel? level = null,
+        CancellationToken ct = default)
         => CompressAsyncWithCompressor(inputStream, outputStream, GetCompressor(algorithm, level), ct);
 
     /// <inheritdoc />
@@ -234,8 +240,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
 
     /// <summary>
     /// Replaces <paramref name="targetFilePath" /> with <paramref name="tempFilePath" /> in a single rename where the platform supports it. On net10+ this is
-    /// <c>File.Move(…, overwrite: true)</c> (one atomic rename, no window where the target is missing); netstandard2.0 has no overwrite overload, so it falls back to
-    /// delete-then-move.
+    /// <c>File.Move(…, overwrite: true)</c> (one atomic rename, no window where the target is missing); netstandard2.0 has no overwrite overload, so it falls back to delete-then-move.
     /// </summary>
     private static void MoveOverwrite(string tempFilePath, string targetFilePath)
     {
@@ -798,10 +803,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         ([0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00], "XZ"), // .xz container
         ([0x42, 0x5A, 0x68], "BZip2"), // "BZh"
         // ZLib (RFC 1950): 0x78 CMF + the four standard FLG values (level 1/fast/default/best), each keeping the (CMF<<8|FLG) % 31 == 0 invariant.
-        ([0x78, 0x01], "ZLib"),
-        ([0x78, 0x5E], "ZLib"),
-        ([0x78, 0x9C], "ZLib"),
-        ([0x78, 0xDA], "ZLib")
+        ([0x78, 0x01], "ZLib"), ([0x78, 0x5E], "ZLib"), ([0x78, 0x9C], "ZLib"), ([0x78, 0xDA], "ZLib")
     ];
 
     public bool IsLikelyCompressed(byte[]? data)

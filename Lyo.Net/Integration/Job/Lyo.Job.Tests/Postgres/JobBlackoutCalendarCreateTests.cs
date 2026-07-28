@@ -20,28 +20,28 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var create = scope.ServiceProvider.GetRequiredService<ICreateService<JobContext>>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-
         var definitionId = LyoGuid.CreateCombPostgres();
         var created = await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-            new JobDefinitionReq {
+            new() {
                 Name = $"BlackoutDef-{definitionId:N}",
                 Type = "Test",
                 WorkerType = "cs",
                 Enabled = true,
-                CreateBlackoutCalendar = new() {
-                    Name = "Maintenance",
-                    Enabled = true,
-                    CreateBlackoutWindows = [
-                        new() {
-                            Name = "Nightly",
-                            DayFlags = DayFlags.Weekdays,
-                            StartTime = TimeOnly.Parse("02:00"),
-                            EndTime = TimeOnly.Parse("04:00"),
-                            Policy = JobBlackoutPolicy.Skip,
-                            Enabled = true
-                        }
-                    ]
-                },
+                CreateBlackoutCalendar =
+                    new() {
+                        Name = "Maintenance",
+                        Enabled = true,
+                        CreateBlackoutWindows = [
+                            new() {
+                                Name = "Nightly",
+                                DayFlags = DayFlags.Weekdays,
+                                StartTime = TimeOnly.Parse("02:00"),
+                                EndTime = TimeOnly.Parse("04:00"),
+                                Policy = JobBlackoutPolicy.Skip,
+                                Enabled = true
+                            }
+                        ]
+                    },
                 CreateSchedules = [
                     new() {
                         Type = ScheduleType.Cron,
@@ -60,26 +60,23 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
                         Description = "weekday-morning"
                     }
                 ]
-            },
-            ctx => {
+            }, ctx => {
                 ctx.Entity.Id = definitionId;
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = "cs";
                 foreach (var schedule in ctx.Entity.JobSchedules) {
                     if (schedule.Id == default)
                         schedule.Id = LyoGuid.CreateCombPostgres();
+
                     schedule.JobDefinitionId = definitionId;
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            },
-            ct: TestContext.Current.CancellationToken);
+            }, ct: TestContext.Current.CancellationToken);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-
         await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var schedules = await db.JobSchedules
-            .AsNoTracking()
+        var schedules = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
             .Where(s => s.JobDefinitionId == definitionId)
@@ -89,13 +86,11 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         Assert.Equal(2, schedules.Count);
         Assert.All(schedules, s => Assert.NotNull(s.JobBlackoutCalendarId));
         Assert.Equal(schedules[0].JobBlackoutCalendarId, schedules[1].JobBlackoutCalendarId);
-
         var calendar = schedules[0].JobBlackoutCalendar;
         Assert.NotNull(calendar);
         Assert.Equal("Maintenance", calendar!.Name);
         Assert.True(calendar.Enabled);
         Assert.NotEqual(default, calendar.CreatedTimestamp);
-
         var window = Assert.Single(calendar.JobBlackoutWindows);
         Assert.Equal("Nightly", window.Name);
         Assert.Equal(nameof(DayFlags.Weekdays), window.DayFlags);
@@ -104,9 +99,8 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         Assert.Equal(calendar.Id, window.JobBlackoutCalendarId);
         Assert.True(TimeOnly.TryParse(window.StartTime, out var start));
         Assert.True(TimeOnly.TryParse(window.EndTime, out var end));
-        Assert.Equal(new TimeOnly(2, 0), start);
-        Assert.Equal(new TimeOnly(4, 0), end);
-
+        Assert.Equal(new(2, 0), start);
+        Assert.Equal(new(4, 0), end);
         Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken));
     }
 
@@ -116,10 +110,9 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var create = scope.ServiceProvider.GetRequiredService<ICreateService<JobContext>>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-
         var definitionId = LyoGuid.CreateCombPostgres();
         var created = await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-            new JobDefinitionReq {
+            new() {
                 Name = $"BlackoutSched-{definitionId:N}",
                 Type = "Test",
                 WorkerType = "cs",
@@ -147,26 +140,23 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
                         }
                     }
                 ]
-            },
-            ctx => {
+            }, ctx => {
                 ctx.Entity.Id = definitionId;
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = "cs";
                 foreach (var schedule in ctx.Entity.JobSchedules) {
                     if (schedule.Id == default)
                         schedule.Id = LyoGuid.CreateCombPostgres();
+
                     schedule.JobDefinitionId = definitionId;
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            },
-            ct: TestContext.Current.CancellationToken);
+            }, ct: TestContext.Current.CancellationToken);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-
         await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var schedule = await db.JobSchedules
-            .AsNoTracking()
+        var schedule = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
             .SingleAsync(s => s.JobDefinitionId == definitionId, TestContext.Current.CancellationToken);

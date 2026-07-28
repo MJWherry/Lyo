@@ -23,7 +23,7 @@ public class ConfigurationHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNull_NonNull_DoesNotThrow() => ConfigurationHelpers.ThrowIfNull(new object());
+    public void ThrowIfNull_NonNull_DoesNotThrow() => ConfigurationHelpers.ThrowIfNull(new());
 
     [Fact]
     public void ThrowIfNull_Null_ThrowsWithCallerExpressionAsSettingName()

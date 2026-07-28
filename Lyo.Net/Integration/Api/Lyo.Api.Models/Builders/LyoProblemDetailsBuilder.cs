@@ -39,13 +39,11 @@ public sealed class LyoProblemDetailsBuilder
 
     public static LyoProblemDetailsBuilder FromException(Exception ex, string? errorCode = null)
     {
-        var code = errorCode
-            ?? (ex as HttpException)?.ErrorCode
-            ?? ex switch {
-                HttpException http => LyoProblemDetails.MapHttpStatusToErrorCode(http.StatusCode),
-                ValidationException => Constants.ApiErrorCodes.ValidationFailed,
-                var _ => Constants.ApiErrorCodes.Unknown
-            };
+        var code = errorCode ?? (ex as HttpException)?.ErrorCode ?? ex switch {
+            HttpException http => LyoProblemDetails.MapHttpStatusToErrorCode(http.StatusCode),
+            ValidationException => Constants.ApiErrorCodes.ValidationFailed,
+            var _ => Constants.ApiErrorCodes.Unknown
+        };
 
         var b = CreateWithActivity().WithErrorCode(code);
         switch (ex) {

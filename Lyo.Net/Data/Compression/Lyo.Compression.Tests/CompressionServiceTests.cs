@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Text;
 using Lyo.Common.Enums;
 using Lyo.Compression.BZip2;
@@ -113,8 +112,7 @@ public class CompressionServiceTests : IDisposable
 
     /// <summary>
     /// Every algorithm must produce one wire format across all APIs: byte[] Compress output must be readable by the stream Decompress path. Guards the
-    /// <see cref="CompressionAlgorithm.BinaryCompressMatchesStreamFormat" /> flags and the LZ4 StreamCompatible binary mode (whose default block modes are NOT
-    /// stream-readable).
+    /// <see cref="CompressionAlgorithm.BinaryCompressMatchesStreamFormat" /> flags and the LZ4 StreamCompatible binary mode (whose default block modes are NOT stream-readable).
     /// </summary>
     [Theory]
     [MemberData(nameof(AllAlgorithms))]
@@ -123,7 +121,6 @@ public class CompressionServiceTests : IDisposable
         var service = NewService(new() { DefaultAlgorithm = algorithm });
         var original = Encoding.UTF8.GetBytes(new string('A', 1000) + "cross-API format consistency" + new string('B', 1000));
         service.Compress(original, out var compressed);
-
         using var compressedStream = new MemoryStream(compressed);
         using var decompressedStream = new MemoryStream();
         service.Decompress(compressedStream, decompressedStream);
@@ -377,28 +374,12 @@ public class CompressionServiceTests : IDisposable
         // 64 KB of zeros compresses to well under the 1 KB limit, so the bomb can only be caught while inflating — the byte[] path must not fully expand first.
         var service = NewService();
         service.Compress(new byte[64 * 1024], out var compressed);
-
         var limitedService = NewService(new() { MaxInputSize = 1024 });
-        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, out _));
+        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, out var _));
 
         // An unrestricted service still roundtrips the same payload.
         service.Decompress(compressed, out var decompressed);
         Assert.Equal(new byte[64 * 1024], decompressed);
-    }
-
-    /// <summary>Write-only, non-seekable stream wrapper: forces the bomb guard (rather than a seek-based position check) to catch oversized decompression output.</summary>
-    private sealed class NonSeekableWriteStream(Stream inner) : Stream
-    {
-        public override bool CanRead => false;
-        public override bool CanSeek => false;
-        public override bool CanWrite => true;
-        public override long Length => throw new NotSupportedException();
-        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
-        public override void Flush() => inner.Flush();
-        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-        public override void SetLength(long value) => throw new NotSupportedException();
-        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
     }
 
     [Fact]
@@ -1081,5 +1062,32 @@ public class CompressionServiceTests : IDisposable
         serviceWithInvalidDefault.CompressString(original, out var compressed2, Encoding.UTF8);
         serviceWithInvalidDefault.DecompressString(compressed2, out var decompressed2, Encoding.UTF8);
         Assert.Equal(original, decompressed2);
+    }
+
+    /// <summary>Write-only, non-seekable stream wrapper: forces the bomb guard (rather than a seek-based position check) to catch oversized decompression output.</summary>
+    private sealed class NonSeekableWriteStream(Stream inner) : Stream
+    {
+        public override bool CanRead => false;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
     }
 }

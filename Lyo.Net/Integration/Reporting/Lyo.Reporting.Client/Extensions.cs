@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Reporting.Client;
 
-/// <summary>DI extensions for <see cref="ReportingClient"/>.</summary>
+/// <summary>DI extensions for <see cref="ReportingClient" />.</summary>
 public static class Extensions
 {
     public static IServiceCollection AddReportingClient<TApiClient>(this IServiceCollection services, ReportingClientOptions? options = null)

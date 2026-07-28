@@ -32,8 +32,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Registers the scheduler/worker <see cref="MqJobEventPublisher" /> (<see cref="IMqService" /> + optional <see cref="IJobClient" />). Do not use the Postgres
-    /// publisher on these hosts. Requires <see cref="IMqService" /> (e.g. RabbitMQ).
+    /// Registers the scheduler/worker <see cref="MqJobEventPublisher" /> (<see cref="IMqService" /> + optional <see cref="IJobClient" />). Do not use the Postgres publisher on
+    /// these hosts. Requires <see cref="IMqService" /> (e.g. RabbitMQ).
     /// </summary>
     public static IServiceCollection AddMqJobEventPublisher(this IServiceCollection services)
     {
@@ -41,17 +41,16 @@ public static class Extensions
         services.AddOptions<JobMqOptions>();
         services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMqOptions>>().Value);
         services.AddSingleton<IJobEventPublisher>(sp => new MqJobEventPublisher(
-            sp.GetRequiredService<IMqService>(),
-            sp.GetRequiredService<ILogger<MqJobEventPublisher>>(),
-            sp.GetRequiredService<IOptions<JobMqOptions>>(),
+            sp.GetRequiredService<IMqService>(), sp.GetRequiredService<ILogger<MqJobEventPublisher>>(), sp.GetRequiredService<IOptions<JobMqOptions>>(),
             sp.GetService<IJobClient>()));
+
         services.AddHostedService<JobEventPublisherStartupService>();
         return services;
     }
 
     /// <summary>
-    /// Registers <see cref="MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> from configuration. For scheduler/worker hosts — API hosts with
-    /// <c>Lyo.Job.Postgres</c> should use that package's <c>AddMqJobEventPublisher*</c> instead.
+    /// Registers <see cref="MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> from configuration. For scheduler/worker hosts — API hosts with <c>Lyo.Job.Postgres</c>
+    /// should use that package's <c>AddMqJobEventPublisher*</c> instead.
     /// </summary>
     public static IServiceCollection AddMqJobEventPublisherFromConfiguration(
         this IServiceCollection services,
@@ -62,10 +61,9 @@ public static class Extensions
         services.AddOptions<JobMqOptions>();
         services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMqOptions>>().Value);
         services.AddSingleton<IJobEventPublisher>(sp => new MqJobEventPublisher(
-            sp.GetRequiredService<IMqService>(),
-            sp.GetRequiredService<ILogger<MqJobEventPublisher>>(),
-            sp.GetRequiredService<IOptions<JobMqOptions>>(),
+            sp.GetRequiredService<IMqService>(), sp.GetRequiredService<ILogger<MqJobEventPublisher>>(), sp.GetRequiredService<IOptions<JobMqOptions>>(),
             sp.GetService<IJobClient>()));
+
         services.AddHostedService<JobEventPublisherStartupService>();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())

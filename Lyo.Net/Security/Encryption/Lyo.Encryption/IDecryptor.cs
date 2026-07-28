@@ -72,8 +72,8 @@ public interface IDecryptor
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided key directly.</param>
     /// <param name="key">Optional decryption key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <param name="associatedData">
-    /// Optional associated data that was authenticated with the stream at encryption time. Must match the encrypt-time value exactly (null when none was used)
-    /// or chunk authentication fails. Only supported for V2 streams produced by AEAD implementations.
+    /// Optional associated data that was authenticated with the stream at encryption time. Must match the encrypt-time value exactly (null when none was
+    /// used) or chunk authentication fails. Only supported for V2 streams produced by AEAD implementations.
     /// </param>
     /// <param name="ct">Cancellation token</param>
     /// <exception cref="InvalidDataException">Thrown when encrypted stream format is invalid, unsupported format version, invalid chunk length, or corrupted</exception>

@@ -15,7 +15,8 @@
                         <MudTextField T="string" Label="Description" Value="@Definition.Description" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudTextField T="string" Label="Default Format" Value="@(Definition.DefaultFormat?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        <MudTextField T="string" Label="Default Format" Value="@(Definition.DefaultFormat?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"/>
                     </MudItem>
                     <MudItem xs="12" md="3">
                         <MudTextField T="string" Label="Profile Key" Value="@Definition.GenerationProfileKey" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
@@ -71,4 +72,5 @@
     [Parameter]
     [EditorRequired]
     public string DefinitionRoute { get; set; } = "Reporting/Definition";
+
 }

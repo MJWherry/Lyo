@@ -18,10 +18,10 @@ internal static class AeadStreamProcessor
     public const int CounterSize = 4;
 
     /// <summary>
-    /// Encrypt loop: reads <paramref name="input" /> in <paramref name="effectiveChunkSize" /> chunks and writes compact frames to <paramref name="output" />. Each chunk's
-    /// nonce is <paramref name="noncePrefix" /> (drawn once per stream and persisted in the stream header) followed by a 4-byte little-endian chunk counter; the nonce is never
-    /// written to the wire, so the decryptor must derive the identical sequence — reordered, replayed, or dropped chunks fail authentication. The last chunk is flagged as final
-    /// (detecting truncation) and every chunk authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> (stream header + final-flag byte + caller AAD).
+    /// Encrypt loop: reads <paramref name="input" /> in <paramref name="effectiveChunkSize" /> chunks and writes compact frames to <paramref name="output" />. Each chunk's nonce
+    /// is <paramref name="noncePrefix" /> (drawn once per stream and persisted in the stream header) followed by a 4-byte little-endian chunk counter; the nonce is never written to the
+    /// wire, so the decryptor must derive the identical sequence — reordered, replayed, or dropped chunks fail authentication. The last chunk is flagged as final (detecting truncation)
+    /// and every chunk authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> (stream header + final-flag byte + caller AAD).
     /// </summary>
     public static async Task EncryptChunksAsync(
         Stream input,
@@ -71,9 +71,9 @@ internal static class AeadStreamProcessor
     }
 
     /// <summary>
-    /// Decrypt loop: reads compact frames from <paramref name="input" />, deriving each chunk's nonce from <paramref name="noncePrefix" /> plus a local counter (the wire
-    /// carries no nonce) and authenticating <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. Throws if the stream ends before the final-flagged chunk
-    /// (truncation) or contains data after it (extension).
+    /// Decrypt loop: reads compact frames from <paramref name="input" />, deriving each chunk's nonce from <paramref name="noncePrefix" /> plus a local counter (the wire carries
+    /// no nonce) and authenticating <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. Throws if the stream ends before the final-flagged chunk (truncation) or
+    /// contains data after it (extension).
     /// </summary>
     public static async Task DecryptChunksAsync(
         Stream input,

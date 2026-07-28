@@ -34,7 +34,7 @@
                             @if (BulkExportControls is not null) {
                                 <MudMenuItem>
                                     <div @key="CanExport()">
-                                        @BulkExportControls((IDataGridExportHost)this)
+                                        @BulkExportControls(this)
                                     </div>
                                 </MudMenuItem>
                             }

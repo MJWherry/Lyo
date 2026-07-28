@@ -1,5 +1,4 @@
 using Lyo.Reporting.Models.Enums;
-using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 
@@ -10,10 +9,7 @@ public sealed class ReportParameterValidatorTests
     [Fact]
     public void Validate_requires_missing_required_parameter()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "ClientId", Type = nameof(ReportParameterType.Guid), Required = true }
-        };
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "ClientId", Type = nameof(ReportParameterType.Guid), Required = true } };
         var errors = ReportParameterValidator.Validate(def, []);
         Assert.Contains(errors, e => e.Contains("ClientId", StringComparison.Ordinal) && e.Contains("required", StringComparison.OrdinalIgnoreCase));
     }
@@ -33,18 +29,10 @@ public sealed class ReportParameterValidatorTests
             }
         };
 
-        Assert.Contains(
-            ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "A")]),
-            e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(
-            ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "ABCDE")]),
-            e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(
-            ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "ab")]),
-            e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(
-            ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "XY")]),
-            e => e.Contains("allowed", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "A")]), e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "ABCDE")]), e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "ab")]), e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "XY")]), e => e.Contains("allowed", StringComparison.OrdinalIgnoreCase));
         Assert.Empty(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "AB")]));
     }
 
@@ -52,13 +40,15 @@ public sealed class ReportParameterValidatorTests
     public void Validate_rejects_multiple_when_not_allowed()
     {
         var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Tag", Type = nameof(ReportParameterType.String), Required = true, AllowMultiple = false }
+            new() {
+                Key = "Tag",
+                Type = nameof(ReportParameterType.String),
+                Required = true,
+                AllowMultiple = false
+            }
         };
 
-        var errors = ReportParameterValidator.Validate(def, [
-            new("Tag", ReportParameterType.String, "a"),
-            new("Tag", ReportParameterType.String, "b")
-        ]);
+        var errors = ReportParameterValidator.Validate(def, [new("Tag", ReportParameterType.String, "a"), new("Tag", ReportParameterType.String, "b")]);
         Assert.Contains(errors, e => e.Contains("multiple", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -85,10 +75,7 @@ public sealed class ReportParameterValidatorTests
     [InlineData(nameof(ReportParameterType.Regex), "^[a-z]+$", true)]
     public void Validate_enforces_typed_values(string type, string value, bool valid)
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "P", Type = type, Required = true }
-        };
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "P", Type = type, Required = true } };
         var errors = ReportParameterValidator.Validate(def, [new("P", ReportParameterType.Unknown, value)]);
         if (valid)
             Assert.Empty(errors);
@@ -99,10 +86,7 @@ public sealed class ReportParameterValidatorTests
     [Fact]
     public void Validate_treats_invalid_definition_pattern_as_error_not_exception()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Code", Type = nameof(ReportParameterType.String), ValidationRegex = "[unclosed" }
-        };
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "Code", Type = nameof(ReportParameterType.String), ValidationRegex = "[unclosed" } };
         var errors = ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "x")]);
         Assert.Contains(errors, e => e.Contains("invalid validation pattern", StringComparison.OrdinalIgnoreCase));
     }
@@ -111,7 +95,7 @@ public sealed class ReportParameterValidatorTests
     public void Validate_rejects_oversized_definition_pattern()
     {
         var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Code", Type = nameof(ReportParameterType.String), ValidationRegex = new string('a', ReportParameterValidator.MaxValidationRegexLength + 1) }
+            new() { Key = "Code", Type = nameof(ReportParameterType.String), ValidationRegex = new('a', ReportParameterValidator.MaxValidationRegexLength + 1) }
         };
 
         var errors = ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "x")]);
@@ -121,33 +105,18 @@ public sealed class ReportParameterValidatorTests
     [Fact]
     public void Validate_rejects_unknown_keys_when_generating_from_definition()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Known", Type = nameof(ReportParameterType.String) }
-        };
-
-        var errors = ReportParameterValidator.Validate(
-            def,
-            [new("Known", ReportParameterType.String, "x"), new("Mystery", ReportParameterType.String, "y")],
-            rejectUnknownKeys: true);
+        var def = new List<ReportDefinitionParameter> { new() { Key = "Known", Type = nameof(ReportParameterType.String) } };
+        var errors = ReportParameterValidator.Validate(def, [new("Known", ReportParameterType.String, "x"), new("Mystery", ReportParameterType.String, "y")], true);
         Assert.Contains(errors, e => e.Contains("Mystery", StringComparison.Ordinal) && e.Contains("Unknown parameter key", StringComparison.OrdinalIgnoreCase));
-
-        var allowed = ReportParameterValidator.Validate(
-            def,
-            [new("Known", ReportParameterType.String, "x"), new("Mystery", ReportParameterType.String, "y")],
-            rejectUnknownKeys: false);
+        var allowed = ReportParameterValidator.Validate(def, [new("Known", ReportParameterType.String, "x"), new("Mystery", ReportParameterType.String, "y")]);
         Assert.Empty(allowed);
     }
 
     [Fact]
     public void Validate_required_is_satisfied_by_encrypted_value_alone()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() { Key = "Secret", Type = nameof(ReportParameterType.String), Required = true }
-        };
-
-        var errors = ReportParameterValidator.Validate(
-            def,
-            [new ReportGenerationParameterReq { Key = "Secret", Type = ReportParameterType.String, EncryptedValue = [1, 2, 3] }]);
+        var def = new List<ReportDefinitionParameter> { new() { Key = "Secret", Type = nameof(ReportParameterType.String), Required = true } };
+        var errors = ReportParameterValidator.Validate(def, [new() { Key = "Secret", Type = ReportParameterType.String, EncryptedValue = [1, 2, 3] }]);
         Assert.Empty(errors);
     }
 }

@@ -71,6 +71,61 @@ export function spikeOptions(extra = {}) {
   };
 }
 
+function parseDurationSeconds(value, fallbackSeconds) {
+  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h)?$/.exec(String(value || "").trim());
+  if (!match) {
+    return fallbackSeconds;
+  }
+  const amount = Number(match[1]);
+  const unit = match[2] || "s";
+  const scale = unit === "ms" ? 0.001 : unit === "m" ? 60 : unit === "h" ? 3600 : 1;
+  return amount * scale;
+}
+
+/**
+ * Saturation ("ceiling") profile: staggered constant-arrival-rate steps that climb until the
+ * server saturates. Each step is its own scenario so the summary export carries per-step
+ * latency and dropped-iteration submetrics — the knee is read straight from the summary JSON.
+ * No pass/fail thresholds: saturation intentionally blows past every SLO, and a threshold
+ * failure exit code would abort run_all.sh. The listed thresholds are tautologies whose only
+ * purpose is to force k6 to export the per-step submetrics.
+ */
+export function ceilingOptions(extra = {}) {
+  const rates = env("CEILING_RATES", "25,50,100,150,200,300,450,700,1000")
+    .split(",")
+    .map((x) => Math.trunc(Number(x.trim())))
+    .filter((x) => Number.isFinite(x) && x > 0);
+  const stepDuration = env("CEILING_STEP_DURATION", "45s");
+  const stepSeconds = parseDurationSeconds(stepDuration, 45);
+  const maxVUs = toInt("CEILING_MAX_VUS", 400);
+
+  const scenarios = {};
+  const thresholds = {};
+  rates.forEach((rate, index) => {
+    const name = `r${rate}`;
+    scenarios[name] = {
+      executor: "constant-arrival-rate",
+      rate,
+      timeUnit: "1s",
+      duration: stepDuration,
+      startTime: `${Math.round(index * stepSeconds)}s`,
+      preAllocatedVUs: Math.min(maxVUs, Math.max(20, Math.ceil(rate / 4))),
+      maxVUs,
+      gracefulStop: env("CEILING_GRACEFUL_STOP", "10s"),
+    };
+    thresholds[`http_req_duration{scenario:${name}}`] = ["p(95)>=0"];
+    thresholds[`http_reqs{scenario:${name}}`] = ["count>=0"];
+    thresholds[`dropped_iterations{scenario:${name}}`] = ["count>=0"];
+  });
+
+  return {
+    scenarios,
+    thresholds,
+    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+    ...extra,
+  };
+}
+
 export function soakOptions(extra = {}) {
   return {
     scenarios: {
@@ -102,6 +157,11 @@ function perCaseThresholds(caseDefs) {
 }
 
 export function matrixOptions(profile, caseDefs, extra = {}) {
+  if (profile === "ceiling") {
+    // No per-case SLO thresholds: a saturation run is expected to blow past them.
+    return ceilingOptions(extra);
+  }
+
   const thresholds = commonThresholds(perCaseThresholds(caseDefs));
   const mergedExtra = {
     ...extra,

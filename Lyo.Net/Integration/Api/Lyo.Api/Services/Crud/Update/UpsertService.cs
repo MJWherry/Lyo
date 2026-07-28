@@ -4,7 +4,6 @@ using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
-using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;

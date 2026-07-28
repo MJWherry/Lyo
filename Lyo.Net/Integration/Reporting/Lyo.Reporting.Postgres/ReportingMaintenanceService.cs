@@ -6,9 +6,9 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Opt-in hosted worker (<c>AddReportingMaintenanceWorker</c>) that runs <see cref="ReportRetentionService.CleanupAsync(CancellationToken)"/>
-/// (stuck-run recovery + retention cleanup) every <see cref="PostgresReportingOptions.MaintenanceInterval"/>.
-/// Hosts that already schedule cleanup themselves (e.g. via Lyo.Scheduler or a Lyo.Job interval job) don't need this.
+/// Opt-in hosted worker (<c>AddReportingMaintenanceWorker</c>) that runs <see cref="ReportRetentionService.CleanupAsync(CancellationToken)" /> (stuck-run recovery +
+/// retention cleanup) every <see cref="PostgresReportingOptions.MaintenanceInterval" />. Hosts that already schedule cleanup themselves (e.g. via Lyo.Scheduler or a Lyo.Job interval
+/// job) don't need this.
 /// </summary>
 public sealed class ReportingMaintenanceService(
     IServiceScopeFactory scopeFactory,
@@ -19,7 +19,6 @@ public sealed class ReportingMaintenanceService(
     {
         var interval = options.Value.MaintenanceInterval;
         logger.LogInformation("Reporting maintenance worker started (interval {Interval})", interval);
-
         using var timer = new PeriodicTimer(interval);
         while (!stoppingToken.IsCancellationRequested) {
             try {

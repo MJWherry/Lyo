@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Common.Identifiers;
@@ -21,12 +20,12 @@ using Constants = Lyo.Reporting.Models.Constants;
 
 namespace Lyo.Api.Reporting;
 
-/// <summary>Maps reporting HTTP endpoints with optional per-surface <see cref="EndpointAuth"/>.</summary>
+/// <summary>Maps reporting HTTP endpoints with optional per-surface <see cref="EndpointAuth" />.</summary>
 public static class Extensions
 {
     /// <summary>
-    /// Sensitive parameter columns that projected queries and exports may never select:
-    /// response mapping masks <c>Value</c>/<c>EncryptedValue</c>, but projections read raw entities.
+    /// Sensitive parameter columns that projected queries and exports may never select: response mapping masks <c>Value</c>/<c>EncryptedValue</c>, but projections read raw
+    /// entities.
     /// </summary>
     private static readonly string[] ParameterDeniedSelectFields = ["EncryptedValue", "Value"];
 
@@ -40,11 +39,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// One-call host registration for the reporting API: <c>AddPostgresReportingManagement</c>
-    /// (DbContext factory, migrations, CRUD services, renderers, <c>ReportService</c>, retention, throttle)
-    /// plus <see cref="AddLyoApiReporting"/>. Map endpoints afterwards with <see cref="BuildReportingGroup"/>.
-    /// Persist outputs via <c>AddReportingGenerationHooks</c>; opt into the background sweeper with
-    /// <c>AddReportingMaintenanceWorker</c>.
+    /// One-call host registration for the reporting API: <c>AddPostgresReportingManagement</c> (DbContext factory, migrations, CRUD services, renderers, <c>ReportService</c>,
+    /// retention, throttle) plus <see cref="AddLyoApiReporting" />. Map endpoints afterwards with <see cref="BuildReportingGroup" />. Persist outputs via
+    /// <c>AddReportingGenerationHooks</c>; opt into the background sweeper with <c>AddReportingMaintenanceWorker</c>.
     /// </summary>
     public static IServiceCollection AddReportingApi(this IServiceCollection services, Action<PostgresReportingOptions> configure)
     {
@@ -55,7 +52,7 @@ public static class Extensions
         return services.AddReportingApi(options);
     }
 
-    /// <inheritdoc cref="AddReportingApi(IServiceCollection, Action{PostgresReportingOptions})"/>
+    /// <inheritdoc cref="AddReportingApi(IServiceCollection, Action{PostgresReportingOptions})" />
     public static IServiceCollection AddReportingApi(this IServiceCollection services, PostgresReportingOptions options)
     {
         ArgumentHelpers.ThrowIfNull(services);
@@ -66,8 +63,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// <see cref="AddReportingApi(IServiceCollection, PostgresReportingOptions)"/> with options bound from
-    /// <paramref name="configuration"/> (section <see cref="PostgresReportingOptions.SectionName"/> by default).
+    /// <see cref="AddReportingApi(IServiceCollection, PostgresReportingOptions)" /> with options bound from <paramref name="configuration" /> (section
+    /// <see cref="PostgresReportingOptions.SectionName" /> by default).
     /// </summary>
     public static IServiceCollection AddReportingApiFromConfiguration(
         this IServiceCollection services,
@@ -85,20 +82,16 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps Definition CRUD (+ Export), Definition Parameter CRUD, Generation read-only, Generate, Rerun,
-    /// and (when <see cref="ReportingApiOptions.DownloadStreamFactory"/> is set) Download.
-    /// Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting"/>.
+    /// Maps Definition CRUD (+ Export), Definition Parameter CRUD, Generation read-only, Generate, Rerun, and (when <see cref="ReportingApiOptions.DownloadStreamFactory" /> is
+    /// set) Download. Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
     /// </summary>
     public static WebApplication BuildReportingGroup(this WebApplication app, ReportingApiOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(app);
-        options ??= new ReportingApiOptions();
-
-        app.CreateBuilder<ReportingContext, ReportDefinition, ReportDefinitionReq, ReportDefinitionRes, Guid>(
-                Constants.Rest.Reporting.Definitions, "Reporting")
+        options ??= new();
+        app.CreateBuilder<ReportingContext, ReportDefinition, ReportDefinitionReq, ReportDefinitionRes, Guid>(Constants.Rest.Reporting.Definitions, "Reporting")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance,
-                new() {
+                ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, new() {
                     QueryAuth = options.DefinitionAuth,
                     GetAuth = options.DefinitionAuth,
                     CreateAuth = options.DefinitionAuth,
@@ -125,6 +118,7 @@ public static class Extensions
                         foreach (var parameter in ctx.Entity.Parameters) {
                             if (parameter.Id == default)
                                 parameter.Id = LyoGuid.CreateCombPostgres();
+
                             parameter.ReportDefinitionId = ctx.Entity.Id;
                             parameter.CreatedTimestamp = now;
                         }
@@ -145,19 +139,15 @@ public static class Extensions
                     // Cascade delete removes generation rows but not host-persisted outputs; give the host's
                     // OnCleanupAsync hook a chance to delete each stored blob first. A hook failure aborts the delete.
                     BeforeDeleteAsync = (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync(
-                            ctx.Entity.Generations,
-                            ctx.Services.GetService<ReportGenerationHooks>(),
-                            ctx.Services,
-                            ct)
+                            ctx.Entity.Generations, ctx.Services.GetService<ReportGenerationHooks>(), ctx.Services, ct)
                         .AsTask()
                 })
             .Build();
 
-        app.CreateBuilder<ReportingContext, ReportDefinitionParameter, ReportDefinitionParameterReq, ReportDefinitionParameterRes, Guid>(
-                Constants.Rest.Reporting.DefinitionParameters, "Reporting")
+        app.CreateBuilder<ReportingContext, ReportDefinitionParameter, ReportDefinitionParameterReq, ReportDefinitionParameterRes,
+                Guid>(Constants.Rest.Reporting.DefinitionParameters, "Reporting")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud,
-                new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     QueryAuth = options.DefinitionAuth,
                     GetAuth = options.DefinitionAuth,
                     CreateAuth = options.DefinitionAuth,
@@ -190,11 +180,9 @@ public static class Extensions
                 })
             .Build();
 
-        app.CreateBuilder<ReportingContext, ReportGeneration, ReportGenerationReq, ReportGenerationRes, Guid>(
-                Constants.Rest.Reporting.Generations, "Reporting")
+        app.CreateBuilder<ReportingContext, ReportGeneration, ReportGenerationReq, ReportGenerationRes, Guid>(Constants.Rest.Reporting.Generations, "Reporting")
             .WithCrud(
-                ApiFeatureSet.ReadOnly,
-                new() {
+                ApiFeatureSet.ReadOnly, new() {
                     QueryAuth = options.GenerationAuth,
                     GetAuth = options.GenerationAuth,
                     MetadataAuth = options.GenerationAuth,
@@ -203,8 +191,7 @@ public static class Extensions
             .Build();
 
         var generate = app.MapPost(
-                $"/{Constants.Rest.Reporting.GenerationsGenerate}",
-                async (GenerateReportReq req, ReportService reportService, HttpContext http, CancellationToken ct) => {
+                $"/{Constants.Rest.Reporting.GenerationsGenerate}", async (GenerateReportReq req, ReportService reportService, HttpContext http, CancellationToken ct) => {
                     StampCreatedBy(req, http);
                     return await ExecuteGenerationAsync(() => reportService.GenerateAsync(req, ct: ct)).ConfigureAwait(false);
                 })
@@ -212,7 +199,6 @@ public static class Extensions
             .WithName("GenerateReport");
 
         generate.ApplyEndpointAuth(options.GenerateAuth);
-
         var rerun = app.MapPost(
                 $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsRerunSuffix}",
                 async (Guid id, ReportService reportService, HttpContext http, CancellationToken ct) => {
@@ -223,11 +209,13 @@ public static class Extensions
             .WithName("RerunReportGeneration");
 
         rerun.ApplyEndpointAuth(options.GenerateAuth);
-
         if (options.DownloadStreamFactory is { } downloadFactory) {
             var download = app.MapGet(
-                    $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsDownloadSuffix}",
-                    async (Guid id, IDbContextFactory<ReportingContext> dbFactory, HttpContext http, CancellationToken ct) => {
+                    $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsDownloadSuffix}", async (
+                        Guid id,
+                        IDbContextFactory<ReportingContext> dbFactory,
+                        HttpContext http,
+                        CancellationToken ct) => {
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var generation = await db.ReportGenerations.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
                         if (generation is null)
@@ -235,21 +223,19 @@ public static class Extensions
 
                         if (generation.Status != nameof(ReportGenerationStatus.Succeeded) || generation.OutputFileId is not Guid outputFileId) {
                             return Results.Problem(
-                                $"Generation {id} has no downloadable output (status {generation.Status}).",
-                                statusCode: StatusCodes.Status409Conflict,
+                                $"Generation {id} has no downloadable output (status {generation.Status}).", statusCode: StatusCodes.Status409Conflict,
                                 title: "Report output not available.");
                         }
 
                         var stream = await downloadFactory(
-                                new ReportDownloadContext {
+                                new() {
                                     GenerationId = generation.Id,
                                     OutputFileId = outputFileId,
                                     ContentType = generation.ContentType,
                                     FileName = generation.OriginalFileName,
                                     PathPrefix = generation.PathPrefix,
                                     Services = http.RequestServices
-                                },
-                                ct)
+                                }, ct)
                             .ConfigureAwait(false);
 
                         if (stream is null)

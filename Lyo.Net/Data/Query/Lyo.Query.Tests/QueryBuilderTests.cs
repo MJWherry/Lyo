@@ -1,7 +1,6 @@
 using Lyo.Query.Models.Attributes;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Tests;
@@ -23,7 +22,7 @@ public class QueryBuilderTests
     {
         var qr = QueryReqBuilder.New()
             .From("o", "OrderEntity")
-            .Join("p", "PersonEntity", JoinType.Left, on => on.Add(new JoinOn { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .Join("p", "PersonEntity", JoinType.Left, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }), "recipient")
             .AddSelects("o.Id", "p.FirstName")
             .SetPagination(0, 10)
             .Build();
@@ -41,13 +40,7 @@ public class QueryBuilderTests
         var id1 = Guid.NewGuid();
         var id2 = Guid.NewGuid();
         var id3 = Guid.NewGuid();
-        var qr = QueryConcreteReqBuilder.New()
-            .AddKey(id1)
-            .AddKey("tenant-a", 1)
-            .AddKeys([id2], [id3])
-            .AddKeys((IEnumerable<object[]>)[[42]])
-            .Build();
-
+        var qr = QueryConcreteReqBuilder.New().AddKey(id1).AddKey("tenant-a", 1).AddKeys([id2], [id3]).AddKeys([[42]]).Build();
         Assert.Equal(5, qr.Keys.Count);
         Assert.Equal(new object[] { id1 }, qr.Keys[0]);
         Assert.Equal(new object[] { "tenant-a", 1 }, qr.Keys[1]);
@@ -59,12 +52,7 @@ public class QueryBuilderTests
     [Fact]
     public void ProjectionQueryReqBuilder_AddKey_AddKeys_AppendsRows()
     {
-        var qr = ProjectionQueryReqBuilder.New()
-            .AddSelects("Id")
-            .AddKey(7)
-            .AddKeys(["tenant-b", 2], [8])
-            .Build();
-
+        var qr = ProjectionQueryReqBuilder.New().AddSelects("Id").AddKey(7).AddKeys(["tenant-b", 2], [8]).Build();
         Assert.Equal(3, qr.Keys.Count);
         Assert.Equal(new object[] { 7 }, qr.Keys[0]);
         Assert.Equal(new object[] { "tenant-b", 2 }, qr.Keys[1]);
@@ -74,13 +62,7 @@ public class QueryBuilderTests
     [Fact]
     public void QueryReqBuilder_AddKey_AddKeys_AppendsRows()
     {
-        var qr = QueryReqBuilder.New()
-            .From("o", "OrderEntity")
-            .AddSelects("o.Id")
-            .AddKey(9)
-            .AddKeys([10], [11])
-            .Build();
-
+        var qr = QueryReqBuilder.New().From("o", "OrderEntity").AddSelects("o.Id").AddKey(9).AddKeys([10], [11]).Build();
         Assert.Equal(3, qr.Keys.Count);
         Assert.Equal(new object[] { 9 }, qr.Keys[0]);
         Assert.Equal(new object[] { 10 }, qr.Keys[1]);
@@ -90,7 +72,10 @@ public class QueryBuilderTests
     [Fact]
     public void QueryConcreteReqBuilder_AddWhere_WithBuilderFunc()
     {
-        var qr = QueryConcreteReqBuilder.New().AddWhere(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active"))).Build();
+        var qr = QueryConcreteReqBuilder.New()
+            .AddWhere(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active")))
+            .Build();
+
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("Name", qr.WhereClause!.ToString());
         Assert.Contains("Status", qr.WhereClause.ToString());

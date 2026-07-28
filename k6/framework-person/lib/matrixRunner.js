@@ -5,7 +5,7 @@ import { getCaseDefinitions, getEndpointCaseIds, resolveCaseSlowMs } from "./cas
 import { loadMatrixConfig, nextStartAmount, resolveCaseIdsForEndpoint } from "./config.js";
 import { scenarioDuration } from "./metrics.js";
 import { matrixOptions } from "./profiles.js";
-import { createSeededRng, requestSeed, resolveCaseWeight, weightedPick } from "./workloadShape.js";
+import { cacheHitMode, createSeededRng, requestSeed, resolveCaseWeight, weightedPick } from "./workloadShape.js";
 
 export function createEndpointProfileScenario({ endpointKind, profile, testTag }) {
   const config = loadMatrixConfig({ endpointKind, profile });
@@ -46,7 +46,8 @@ export function createEndpointProfileScenario({ endpointKind, profile, testTag }
     options,
     run() {
       const startedAt = Date.now();
-      const useWeightedSelection = toBool("RANDOMIZE_CASE_SELECTION", true);
+      // Cache-hit runs rotate cases round-robin so each case settles on one cache key.
+      const useWeightedSelection = toBool("RANDOMIZE_CASE_SELECTION", true) && !cacheHitMode();
       const selectedCase = useWeightedSelection
         ? weightedPick(
             caseDefs,

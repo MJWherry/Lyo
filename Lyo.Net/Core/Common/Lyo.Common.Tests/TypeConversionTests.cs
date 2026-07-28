@@ -33,8 +33,7 @@ public class TypeConversionTests
     [InlineData("42.5", typeof(double), 42.5)]
     [InlineData("true", typeof(bool), true)]
     [InlineData("2", typeof(short), (short)2)]
-    public void ConvertTo_StringToPrimitive_Parses(string input, Type targetType, object expected)
-        => Assert.Equal(expected, TypeConversion.ConvertTo(input, targetType));
+    public void ConvertTo_StringToPrimitive_Parses(string input, Type targetType, object expected) => Assert.Equal(expected, TypeConversion.ConvertTo(input, targetType));
 
     [Fact]
     public void ConvertTo_StringToDecimal_Parses() => Assert.Equal(42.5m, TypeConversion.ConvertTo("42.5", typeof(decimal)));
@@ -75,7 +74,7 @@ public class TypeConversionTests
     [Fact]
     public void ConvertTo_Unconvertible_ThrowsWithDescriptiveMessage()
     {
-        var ex = Assert.Throws<TypeConversionException>(() => TypeConversion.ConvertTo(new object(), typeof(int)));
+        var ex = Assert.Throws<TypeConversionException>(() => TypeConversion.ConvertTo(new(), typeof(int)));
         Assert.Contains("Cannot convert", ex.Message);
     }
 
@@ -115,8 +114,7 @@ public class TypeConversionTests
     [InlineData("0", false)]
     [InlineData("f", false)]
     [InlineData("N", false)]
-    public void ConvertTo_LenientBoolean_AcceptsExtraTokens(string input, bool expected)
-        => Assert.Equal(expected, TypeConversion.ConvertTo(input, typeof(bool), lenientBoolean: true));
+    public void ConvertTo_LenientBoolean_AcceptsExtraTokens(string input, bool expected) => Assert.Equal(expected, TypeConversion.ConvertTo(input, typeof(bool), true));
 
     // ---- ConvertTo: JsonElement ----
 
@@ -206,13 +204,13 @@ public class TypeConversionTests
     }
 
     [Fact]
-    public void TryFromJsonElement_WrongKind_ReturnsFalse() => Assert.False(TypeConversion.TryFromJsonElement<int>(ToElement("abc"), out _));
+    public void TryFromJsonElement_WrongKind_ReturnsFalse() => Assert.False(TypeConversion.TryFromJsonElement<int>(ToElement("abc"), out var _));
 
     [Fact]
     public void TryFromJsonElement_DateTimeString_Parses()
     {
         Assert.True(TypeConversion.TryFromJsonElement<DateTime>(ToElement("2026-07-26T10:00:00Z"), out var value));
-        Assert.Equal(new DateTime(2026, 7, 26, 10, 0, 0, DateTimeKind.Utc), value.ToUniversalTime());
+        Assert.Equal(new(2026, 7, 26, 10, 0, 0, DateTimeKind.Utc), value.ToUniversalTime());
     }
 
     // ---- ConvertToWithCollections ----
@@ -392,17 +390,17 @@ public class TypeConversionTests
     [Fact]
     public void TryConvertTo_NonGeneric_Failure()
     {
-        Assert.False(TypeConversion.TryConvertTo(new object(), typeof(int), out var result));
+        Assert.False(TypeConversion.TryConvertTo(new(), typeof(int), out var result));
         Assert.Null(result);
     }
 
     [Fact]
-    public void TryConvertTo_Enum_MissDoesNotThrow() => Assert.False(TypeConversion.TryConvertTo<SampleEnum>("bogus", out _));
+    public void TryConvertTo_Enum_MissDoesNotThrow() => Assert.False(TypeConversion.TryConvertTo<SampleEnum>("bogus", out var _));
 
     [Fact]
     public void TryConvertTo_LenientBoolean_ParsesTokens()
     {
-        Assert.True(TypeConversion.TryConvertTo<bool>("yes", out var result, lenientBoolean: true));
+        Assert.True(TypeConversion.TryConvertTo<bool>("yes", out var result, true));
         Assert.True(result);
     }
 
@@ -432,7 +430,7 @@ public class TypeConversionTests
     }
 
     [Fact]
-    public void TryFromJsonElement_NonGeneric_WrongKind_ReturnsFalse() => Assert.False(TypeConversion.TryFromJsonElement(ToElement("abc"), typeof(int), out _));
+    public void TryFromJsonElement_NonGeneric_WrongKind_ReturnsFalse() => Assert.False(TypeConversion.TryFromJsonElement(ToElement("abc"), typeof(int), out var _));
 
     // ---- ConvertToOrDefault ----
 
@@ -443,7 +441,7 @@ public class TypeConversionTests
     public void ConvertToOrDefault_Failure_ReturnsDefault() => Assert.Equal(-1, TypeConversion.ConvertToOrDefault("abc", -1));
 
     [Fact]
-    public void ConvertToOrDefault_Null_ReturnsDefault() => Assert.Equal(-1, TypeConversion.ConvertToOrDefault<int>(null, -1));
+    public void ConvertToOrDefault_Null_ReturnsDefault() => Assert.Equal(-1, TypeConversion.ConvertToOrDefault(null, -1));
 
     // ---- ToEnumerable / ConvertToArray / ConvertToList ----
 
@@ -501,24 +499,24 @@ public class TypeConversionTests
     [Fact]
     public void TryToBoolean_NullOrUnknown_ReturnsFalse()
     {
-        Assert.False(TypeConversion.TryToBoolean(null, out _));
-        Assert.False(TypeConversion.TryToBoolean("maybe", out _));
+        Assert.False(TypeConversion.TryToBoolean(null, out var _));
+        Assert.False(TypeConversion.TryToBoolean("maybe", out var _));
     }
 
     [Fact]
     public void ToBoolean_CustomTokenSets_OverrideDefaults()
     {
-        Assert.True(TypeConversion.ToBoolean("enabled", trueValues: ["enabled"], falseValues: ["disabled"]));
-        Assert.False(TypeConversion.ToBoolean("DISABLED", trueValues: ["enabled"], falseValues: ["disabled"]));
+        Assert.True(TypeConversion.ToBoolean("enabled", ["enabled"], ["disabled"]));
+        Assert.False(TypeConversion.ToBoolean("DISABLED", ["enabled"], ["disabled"]));
     }
 
     [Fact]
     public void TryToBoolean_CustomTokens_UnknownToken_FallsBackToBoolParse()
     {
         // "yes" is not in the custom sets and is not bool-parseable, so it misses
-        Assert.False(TypeConversion.TryToBoolean("yes", out _, trueValues: ["enabled"], falseValues: ["disabled"]));
+        Assert.False(TypeConversion.TryToBoolean("yes", out var _, ["enabled"], ["disabled"]));
         // "true" still parses via bool.TryParse even with custom sets
-        Assert.True(TypeConversion.TryToBoolean("true", out var result, trueValues: ["enabled"], falseValues: ["disabled"]));
+        Assert.True(TypeConversion.TryToBoolean("true", out var result, ["enabled"], ["disabled"]));
         Assert.True(result);
     }
 
@@ -544,6 +542,7 @@ public class TypeConversionTests
     public void ConvertTo_Span_Invalid_Throws()
     {
         static void Act() => TypeConversion.ConvertTo<int>("abc".AsSpan());
+
         Assert.Throws<TypeConversionException>(Act);
     }
 
@@ -569,7 +568,7 @@ public class TypeConversionTests
     }
 
     [Fact]
-    public void TryToBoolean_Span_UnknownToken_ReturnsFalse() => Assert.False(TypeConversion.TryToBoolean("maybe".AsSpan(), out _));
+    public void TryToBoolean_Span_UnknownToken_ReturnsFalse() => Assert.False(TypeConversion.TryToBoolean("maybe".AsSpan(), out var _));
 
     // ---- Collection-target materialization ----
 
@@ -601,15 +600,11 @@ public class TypeConversionTests
         Assert.Equal([1, 2], Assert.IsAssignableFrom<IEnumerable<int>>(result));
     }
 
-    // ---- JSON-string fallback (complex targets) ----
-
-    public sealed record SamplePayload(string Name, int Count);
-
     [Fact]
     public void ConvertTo_JsonObjectString_DeserializesComplexType()
     {
         var result = TypeConversion.ConvertTo<SamplePayload>("""{"Name":"abc","Count":3}""");
-        Assert.Equal(new SamplePayload("abc", 3), result);
+        Assert.Equal(new("abc", 3), result);
     }
 
     [Fact]
@@ -623,17 +618,17 @@ public class TypeConversionTests
     public void ConvertTo_JsonStringWithLeadingWhitespace_Deserializes()
     {
         var result = TypeConversion.ConvertTo<SamplePayload>("""  {"Name":"x","Count":1}""");
-        Assert.Equal(new SamplePayload("x", 1), result);
+        Assert.Equal(new("x", 1), result);
     }
 
     [Fact]
-    public void TryConvertTo_NonJsonString_ToComplexType_Fails() => Assert.False(TypeConversion.TryConvertTo<SamplePayload>("not json", out _));
+    public void TryConvertTo_NonJsonString_ToComplexType_Fails() => Assert.False(TypeConversion.TryConvertTo<SamplePayload>("not json", out var _));
 
     [Fact]
-    public void TryConvertTo_MalformedJson_ToComplexType_Fails() => Assert.False(TypeConversion.TryConvertTo<SamplePayload>("{broken", out _));
+    public void TryConvertTo_MalformedJson_ToComplexType_Fails() => Assert.False(TypeConversion.TryConvertTo<SamplePayload>("{broken", out var _));
 
     [Fact]
-    public void ConvertTo_JsonLookingString_ToScalarTarget_StillFails() => Assert.Throws<TypeConversionException>(() => TypeConversion.ConvertTo<int>((object)"[1]"));
+    public void ConvertTo_JsonLookingString_ToScalarTarget_StillFails() => Assert.Throws<TypeConversionException>(() => TypeConversion.ConvertTo<int>("[1]"));
 
     // ---- Logger ----
 
@@ -644,9 +639,8 @@ public class TypeConversionTests
         var original = TypeConversion.Logger;
         TypeConversion.Logger = logger;
         try {
-            Assert.False(TypeConversion.TryConvertTo<int>("abc", out _));
+            Assert.False(TypeConversion.TryConvertTo<int>("abc", out var _));
             Assert.Contains(logger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("abc"));
-
             Assert.Throws<TypeConversionException>(() => TypeConversion.ConvertTo("not-a-guid", typeof(Guid)));
             Assert.Contains(logger.Entries, e => e.Level == LogLevel.Error && e.Message.Contains("not-a-guid"));
         }
@@ -670,11 +664,17 @@ public class TypeConversionTests
         }
     }
 
+    // ---- JSON-string fallback (complex targets) ----
+
+    public sealed record SamplePayload(string Name, int Count);
+
     private sealed class CapturingLogger : ILogger
     {
         public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 

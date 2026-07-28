@@ -1,3 +1,8 @@
+#if NET6_0_OR_GREATER
+using TimeOnly = System.TimeOnly;
+#else
+using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
+#endif
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
@@ -5,12 +10,6 @@ using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
-#if NET6_0_OR_GREATER
-using TimeOnly = System.TimeOnly;
-
-#else
-using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
-#endif
 
 namespace Lyo.Job.Models.Builders;
 
@@ -82,25 +81,38 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
     }
 
     /// <summary>Creates an inline blackout calendar on this definition and applies it to every schedule (unless a schedule overrides it).</summary>
-    public JobDefinitionBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure)
-        => WithBlackoutCalendar("Blackout", configure);
+    public JobDefinitionBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure) => WithBlackoutCalendar("Blackout", configure);
 
     /// <summary>Adds a do-not-run window to the definition-level inline blackout calendar.</summary>
-    public JobDefinitionBuilder AddBlackoutWindow(string name, DayFlags days, string startTime, string endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    public JobDefinitionBuilder AddBlackoutWindow(
+        string name,
+        DayFlags days,
+        string startTime,
+        string endTime,
+        JobBlackoutPolicy policy = JobBlackoutPolicy.Skip,
+        bool enabled = true)
         => AddBlackoutWindow(name, days, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, enabled);
 
     /// <summary>Adds a do-not-run window to the definition-level inline blackout calendar.</summary>
-    public JobDefinitionBuilder AddBlackoutWindow(string name, DayFlags days, TimeOnly startTime, TimeOnly endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    public JobDefinitionBuilder AddBlackoutWindow(
+        string name,
+        DayFlags days,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        JobBlackoutPolicy policy = JobBlackoutPolicy.Skip,
+        bool enabled = true)
     {
         EnsureDefinitionBlackoutCalendar();
-        _request.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(new() {
-            Name = name,
-            DayFlags = days,
-            StartTime = startTime,
-            EndTime = endTime,
-            Policy = policy,
-            Enabled = enabled
-        });
+        _request.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(
+            new() {
+                Name = name,
+                DayFlags = days,
+                StartTime = startTime,
+                EndTime = endTime,
+                Policy = policy,
+                Enabled = enabled
+            });
+
         CascadeBlackoutToExistingSchedules();
         return this;
     }

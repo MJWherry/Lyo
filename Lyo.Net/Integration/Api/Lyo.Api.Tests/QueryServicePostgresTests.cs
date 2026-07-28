@@ -1,10 +1,10 @@
+using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
@@ -137,12 +137,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryConcreteReq {
-            Start = 0,
-            Amount = 10,
-            Keys = Enumerable.Range(0, 301).Select(_ => new object[] { Guid.NewGuid() }).ToList()
-        };
-
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, Keys = Enumerable.Range(0, 301).Select(_ => new object[] { Guid.NewGuid() }).ToList() };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Key set count", StringComparison.OrdinalIgnoreCase));
@@ -153,12 +148,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new ProjectionQueryReq {
-            Start = 0,
-            Amount = 10,
-            Select = Enumerable.Range(0, 301).Select(i => $"Field{i}").ToList()
-        };
-
+        var request = new ProjectionQueryReq { Start = 0, Amount = 10, Select = Enumerable.Range(0, 301).Select(i => $"Field{i}").ToList() };
         var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Select field count", StringComparison.OrdinalIgnoreCase));
@@ -186,12 +176,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryConcreteReq {
-            Start = 0,
-            Amount = 10,
-            WhereClause = WhereClauseBuilder.Condition("NotARealField", ComparisonOperatorEnum.Equals, "x")
-        };
-
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("NotARealField", ComparisonOperatorEnum.Equals, "x") };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
@@ -202,8 +187,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryConcreteReq { Start = 0, Amount = 10, SortBy = [new SortBy("NotARealField", SortDirection.Asc)] };
-
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, SortBy = [new("NotARealField", SortDirection.Asc)] };
         var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
@@ -215,8 +199,8 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var defId = await fixture.SeedJobDefinitionAsync("GetInvalidInclude");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        await Assert.ThrowsAsync<Models.Error.ApiErrorException>(() =>
-            queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ApiErrorException>(()
+            => queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]

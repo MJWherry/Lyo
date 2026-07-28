@@ -1,11 +1,11 @@
 using CsvHelper.Configuration;
-using HelperCsvReader = CsvHelper.CsvReader;
 using Lyo.Common.Extensions;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Result;
 using Microsoft.Extensions.Logging;
+using HelperCsvReader = CsvHelper.CsvReader;
 #if NET10_0_OR_GREATER
 using System.Reflection;
 using System.Runtime.CompilerServices;

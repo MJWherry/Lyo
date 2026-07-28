@@ -2,7 +2,10 @@ using System.Reflection;
 
 namespace Lyo.Xlsx.Models;
 
-/// <summary>Exports data to XLSX (Excel) format via a streaming OpenXML writer: typed rows, selected properties, multi-sheet workbooks, Lyo data tables, and async APIs on modern targets.</summary>
+/// <summary>
+/// Exports data to XLSX (Excel) format via a streaming OpenXML writer: typed rows, selected properties, multi-sheet workbooks, Lyo data tables, and async APIs on modern
+/// targets.
+/// </summary>
 public interface IXlsxWriter
 {
     /// <summary>Writes <paramref name="data" /> to <paramref name="xlsxFilePath" />; optional <paramref name="worksheetName" />.</summary>
@@ -59,10 +62,7 @@ public interface IXlsxWriter
     /// <summary>Serializes a Lyo data table to XLSX bytes.</summary>
     byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable);
 
-    /// <summary>
-    /// Opens an incremental multi-sheet writing session on <paramref name="xlsxStream" />; dispose the session to finalize the workbook. The stream is
-    /// left open for the caller.
-    /// </summary>
+    /// <summary>Opens an incremental multi-sheet writing session on <paramref name="xlsxStream" />; dispose the session to finalize the workbook. The stream is left open for the caller.</summary>
     IXlsxDocumentWriter CreateDocumentWriter(Stream xlsxStream);
 
     /// <summary>Opens an incremental multi-sheet writing session on <paramref name="xlsxFilePath" />; dispose the session to finalize and close the file.</summary>

@@ -41,10 +41,7 @@ namespace Lyo.Job.Postgres;
 /// </item>
 /// <item>
 /// <term>SLA breach detection</term>
-/// <description>
-/// Marks runs with <c>SlaBreached=true</c> when a running job exceeds <c>ExpectedDurationMinutes</c> or a queued job is past
-/// <c>MustStartByMinutes</c> without starting.
-/// </description>
+/// <description>Marks runs with <c>SlaBreached=true</c> when a running job exceeds <c>ExpectedDurationMinutes</c> or a queued job is past <c>MustStartByMinutes</c> without starting.</description>
 /// </item>
 /// </list>
 /// Register via <see cref="Extensions.AddJobMaintenanceService" />.
@@ -59,6 +56,8 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
 
     private DateTime? _lastSuccessfulTickUtc;
     private string? _lastTickError;
+
+    public bool IsRunning => !ExecuteTask?.IsCompleted ?? false;
 
     public JobMaintenanceService(
         IDbContextFactory<JobContext> dbFactory,
@@ -77,8 +76,6 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
     /// <inheritdoc />
     public string HealthCheckName => "job-maintenance";
 
-    public bool IsRunning => !ExecuteTask?.IsCompleted ?? false;
-
     /// <inheritdoc />
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
@@ -94,9 +91,9 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         // Unhealthy when not running, or when no tick has succeeded for 3 intervals.
         var staleAfter = TimeSpan.FromSeconds(_options.CheckIntervalSeconds * 3);
         var stale = _lastSuccessfulTickUtc.HasValue && DateTime.UtcNow - _lastSuccessfulTickUtc.Value > staleAfter;
-        var result = !IsRunning ? HealthResult.Unhealthy(sw.Elapsed, "Maintenance service is not running", metadata)
-            : stale ? HealthResult.Unhealthy(sw.Elapsed, $"No successful maintenance tick since {_lastSuccessfulTickUtc:u}", metadata)
-            : HealthResult.Healthy(sw.Elapsed, "Maintenance service running", metadata);
+        var result = !IsRunning ? HealthResult.Unhealthy(sw.Elapsed, "Maintenance service is not running", metadata) :
+            stale ? HealthResult.Unhealthy(sw.Elapsed, $"No successful maintenance tick since {_lastSuccessfulTickUtc:u}", metadata) :
+            HealthResult.Healthy(sw.Elapsed, "Maintenance service running", metadata);
 
         return Task.FromResult(result);
     }
@@ -107,9 +104,8 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(_options.CheckIntervalSeconds));
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false)) {
             try {
-                using (_metrics.StartTimer(Constants.Metrics.Maintenance.TickDuration)) {
+                using (_metrics.StartTimer(Constants.Metrics.Maintenance.TickDuration))
                     await RunMaintenanceAsync(stoppingToken).ConfigureAwait(false);
-                }
 
                 _lastSuccessfulTickUtc = DateTime.UtcNow;
                 _lastTickError = null;
@@ -204,12 +200,11 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             run.FinishedTimestamp = now;
             failed++;
             timedOutRunIds.Add(run.Id);
-
             if (_eventPublisher.IsConnected()) {
                 try {
                     await _eventPublisher.PublishAlertAsync(
-                        run.JobDefinitionId, run.Id, JobAlertType.DeadJob,
-                        $"Job run {run.Id} for '{run.JobDefinition.Name}' timed out (no heartbeat)", ct).ConfigureAwait(false);
+                            run.JobDefinitionId, run.Id, JobAlertType.DeadJob, $"Job run {run.Id} for '{run.JobDefinition.Name}' timed out (no heartbeat)", ct)
+                        .ConfigureAwait(false);
                 }
                 catch (Exception ex) {
                     _logger.LogError(ex, "Failed to publish dead-job alert for run {RunId}", run.Id);
@@ -227,9 +222,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
     {
         var now = DateTime.UtcNow;
         var candidates = await db.JobRuns.Include(r => r.JobDefinition)
-            .Where(r => !r.SlaBreached && (
-                (r.State == JobState.Running || r.State == JobState.Cancelling) ||
-                r.State == JobState.Queued))
+            .Where(r => !r.SlaBreached && (r.State == JobState.Running || r.State == JobState.Cancelling || r.State == JobState.Queued))
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -251,8 +244,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
                     continue;
             }
 
-            _logger.LogWarning(
-                "SLA breach detected for run {RunId} (definition {DefinitionName}, state {State})", run.Id, def.Name, run.State);
+            _logger.LogWarning("SLA breach detected for run {RunId} (definition {DefinitionName}, state {State})", run.Id, def.Name, run.State);
             run.SlaBreached = true;
             breached++;
         }
@@ -285,8 +277,8 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
 
     /// <summary>
     /// Recovery path for <c>Queued</c> runs that were persisted but never dispatched (publish failure after insert, delayed retries whose slot has passed, or suppressed
-    /// dispatches whose owner crashed before publishing). Re-publishes the run-created message; duplicate deliveries are harmless because <c>StartedJobRun</c> only
-    /// transitions <c>Queued -&gt; Running</c> once.
+    /// dispatches whose owner crashed before publishing). Re-publishes the run-created message; duplicate deliveries are harmless because <c>StartedJobRun</c> only transitions
+    /// <c>Queued -&gt; Running</c> once.
     /// </summary>
     private async Task RedispatchStuckQueuedRunsAsync(JobContext db, CancellationToken ct)
     {
@@ -300,9 +292,9 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         // (b) any due queued run untouched for longer than the threshold (lost dispatch). Redispatching bumps UpdatedTimestamp so a stuck
         // run is retried once per threshold window, not every tick.
         var candidates = await db.JobRuns.Include(r => r.JobDefinition)
-            .Where(r => r.State == JobState.Queued && !r.DryRun && (
-                (r.ScheduledSlotUtc != null && r.ScheduledSlotUtc <= now && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < r.ScheduledSlotUtc) ||
-                ((r.ScheduledSlotUtc == null || r.ScheduledSlotUtc <= now) && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < cutoff)))
+            .Where(r => r.State == JobState.Queued && !r.DryRun &&
+                ((r.ScheduledSlotUtc != null && r.ScheduledSlotUtc <= now && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < r.ScheduledSlotUtc) ||
+                    ((r.ScheduledSlotUtc == null || r.ScheduledSlotUtc <= now) && (r.UpdatedTimestamp ?? r.CreatedTimestamp) < cutoff)))
             .OrderBy(r => r.CreatedTimestamp)
             .Take(_options.QueuedRunRedispatchBatchSize)
             .ToListAsync(ct)
@@ -357,11 +349,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         var defaults = _options.DefaultRetentionDays;
 
         // Definitions with an explicit retention always purge; others only when a global default is configured.
-        var definitions = await db.JobDefinitions.Where(d => d.RetentionDays > 0 || defaults > 0)
-            .Select(d => new { d.Id, d.RetentionDays })
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
-
+        var definitions = await db.JobDefinitions.Where(d => d.RetentionDays > 0 || defaults > 0).Select(d => new { d.Id, d.RetentionDays }).ToListAsync(ct).ConfigureAwait(false);
         var totalPurged = 0;
         var budget = _options.PurgeBatchSize;
         foreach (var def in definitions) {
@@ -373,8 +361,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
                 continue;
 
             var cutoff = now.AddDays(-retentionDays);
-            var expired = await db.JobRuns
-                .Where(r => r.JobDefinitionId == def.Id && r.State == JobState.Finished && r.FinishedTimestamp != null && r.FinishedTimestamp < cutoff)
+            var expired = await db.JobRuns.Where(r => r.JobDefinitionId == def.Id && r.State == JobState.Finished && r.FinishedTimestamp != null && r.FinishedTimestamp < cutoff)
                 .OrderBy(r => r.FinishedTimestamp)
                 .Take(budget)
                 .Include(r => r.JobRunLogs)
@@ -408,11 +395,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             // Detach workflow run steps that reference purged runs. Unlike the delete endpoint (which removes the steps entirely on an
             // explicit user delete), retention purge preserves workflow history and only nulls the run reference.
             var expiredIds = expired.Select(r => r.Id).ToList();
-            var workflowSteps = await db.JobWorkflowRunSteps
-                .Where(s => s.JobRunId != null && expiredIds.Contains(s.JobRunId.Value))
-                .ToListAsync(ct)
-                .ConfigureAwait(false);
-
+            var workflowSteps = await db.JobWorkflowRunSteps.Where(s => s.JobRunId != null && expiredIds.Contains(s.JobRunId.Value)).ToListAsync(ct).ConfigureAwait(false);
             foreach (var step in workflowSteps)
                 step.JobRunId = null;
 

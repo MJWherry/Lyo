@@ -1,5 +1,4 @@
 using Lyo.Job.Models.Enums;
-using Lyo.Job.Models.Request;
 using Lyo.Job.Worker;
 using Constants = Lyo.Job.Models.Constants;
 
@@ -11,7 +10,6 @@ public class JobWorkerResultBuilderTests
     public void Build_DefaultOutcome_IsSuccess()
     {
         var results = new JobWorkerResultBuilder().Build();
-
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.Success));
     }
 
@@ -19,7 +17,6 @@ public class JobWorkerResultBuilderTests
     public void Fail_SetsFailureOutcome()
     {
         var results = new JobWorkerResultBuilder().Fail().Build();
-
         Assert.Equal(JobRunResult.Failure, new JobWorkerResultBuilder().Fail().CurrentOutcome);
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.Failure));
     }
@@ -28,7 +25,6 @@ public class JobWorkerResultBuilderTests
     public void Cancel_SetsCancelledOutcome()
     {
         var results = new JobWorkerResultBuilder().Cancel().Build();
-
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.Cancelled));
     }
 
@@ -36,15 +32,13 @@ public class JobWorkerResultBuilderTests
     public void SucceedWithWarnings_SetsSuccessWithWarningsOutcome()
     {
         var results = new JobWorkerResultBuilder().SucceedWithWarnings().Build();
-
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.SuccessWithWarnings));
     }
 
     [Fact]
     public void AddResult_AddsCustomEntry()
     {
-        var results = new JobWorkerResultBuilder().AddResult("CustomKey", "value", JobParameterType.String).Build();
-
+        var results = new JobWorkerResultBuilder().AddResult("CustomKey", "value").Build();
         Assert.Contains(results, r => r.Key == "CustomKey" && r.Value == "value" && r.Type == JobParameterType.String);
     }
 
@@ -52,15 +46,13 @@ public class JobWorkerResultBuilderTests
     public void AddCount_AddsIntegerEntry()
     {
         var results = new JobWorkerResultBuilder().AddCount("Processed", 42).Build();
-
         Assert.Contains(results, r => r.Key == "Processed" && r.Value == "42" && r.Type == JobParameterType.Int);
     }
 
     [Fact]
     public void AddError_RecordsFailureReasonAndFails()
     {
-        var results = new JobWorkerResultBuilder().AddError("Something broke", index: 2).Build();
-
+        var results = new JobWorkerResultBuilder().AddError("Something broke", 2).Build();
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.FailureReason(2) && r.Value == "Something broke");
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.Failure));
     }
@@ -69,7 +61,6 @@ public class JobWorkerResultBuilderTests
     public void AddFailedItem_RecordsItemAndOptionalReason()
     {
         var results = new JobWorkerResultBuilder().AddFailedItem(1, "item-42", "bad data").Build();
-
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.FailedItem(1) && r.Value == "item-42");
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.FailureReason(1) && r.Value == "bad data");
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.Result && r.Value == nameof(JobRunResult.Failure));
@@ -79,7 +70,6 @@ public class JobWorkerResultBuilderTests
     public void AddApiCallTime_UsesApiCallTimeKey()
     {
         var results = new JobWorkerResultBuilder().AddApiCallTime("ExternalApi", 1234).Build();
-
         Assert.Contains(results, r => r.Key == Constants.Data.JobRunResultKey.ApiCallTime("ExternalApi") && r.Value == "1234" && r.Type == JobParameterType.Long);
     }
 

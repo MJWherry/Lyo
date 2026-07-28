@@ -8,7 +8,7 @@ import {
   projectionUnifiedCollectionQuery as buildProjectionUnifiedCollectionQuery,
   computedCollectionParallelQuery as buildComputedCollectionParallelQuery,
   computedScalarTemplateQuery as buildComputedScalarTemplateQuery,
-} from "../../../packages/lyo-person-api-client/dist/index.js";
+} from "../../../packages/typescript/lyo-person-api-client/dist/index.js";
 import {
   buildSortBy,
   createSeededRng,

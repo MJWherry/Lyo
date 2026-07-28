@@ -59,7 +59,6 @@
     {
         try {
             var existing = (JobParameters ?? []).ToDictionary(p => p.Id);
-
             foreach (var removed in existing.Values.Where(e => _rows.All(d => d.Id != e.Id)))
                 await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
 

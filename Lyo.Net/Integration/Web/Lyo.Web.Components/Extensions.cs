@@ -70,8 +70,8 @@ internal static class Extensions
     public static bool IsMultiValueComparisonOperator(this ComparisonOperatorEnum comparison) => comparison is ComparisonOperatorEnum.In or ComparisonOperatorEnum.NotIn;
 
     /// <summary>
-    /// Normalizes a condition <c>In</c>/<c>NotIn</c> value for chip/CSV editors.
-    /// Handles JSON-deserialized <see cref="JsonElement"/> arrays and non-string enumerables, not only <see cref="IEnumerable{String}"/>.
+    /// Normalizes a condition <c>In</c>/<c>NotIn</c> value for chip/CSV editors. Handles JSON-deserialized <see cref="JsonElement" /> arrays and non-string enumerables, not only
+    /// <see cref="IEnumerable{String}" />.
     /// </summary>
     public static List<string> ToMultiValueStrings(object? value)
     {
@@ -81,13 +81,14 @@ internal static class Extensions
         if (value is string s)
             return SplitCsv(s);
 
-        if (value is JsonElement je)
+        if (value is JsonElement je) {
             return je.ValueKind switch {
                 JsonValueKind.Array => je.EnumerateArray().Select(FormatJsonElementItem).Where(static x => x.Length > 0).ToList(),
                 JsonValueKind.String => SplitCsv(je.GetString()),
                 JsonValueKind.Null or JsonValueKind.Undefined => [],
                 var _ => [je.ToString()]
             };
+        }
 
         if (value is IEnumerable enumerable and not string and not byte[]) {
             var list = new List<string>();
@@ -98,6 +99,7 @@ internal static class Extensions
                     JsonElement el => FormatJsonElementItem(el),
                     var o => o.ToString()
                 };
+
                 if (!string.IsNullOrWhiteSpace(text))
                     list.Add(text.Trim());
             }
@@ -110,12 +112,8 @@ internal static class Extensions
     }
 
     private static List<string> SplitCsv(string? value)
-        => string.IsNullOrWhiteSpace(value)
-            ? []
-            : value.Split(',').Select(static part => part.Trim()).Where(static part => part.Length > 0).ToList();
+        => string.IsNullOrWhiteSpace(value) ? [] : value.Split(',').Select(static part => part.Trim()).Where(static part => part.Length > 0).ToList();
 
     private static string FormatJsonElementItem(JsonElement el)
-        => el.ValueKind is JsonValueKind.Array or JsonValueKind.Object or JsonValueKind.Number
-            ? el.ToString()
-            : TypeConversion.FromJsonElement(el)?.ToString() ?? "";
+        => el.ValueKind is JsonValueKind.Array or JsonValueKind.Object or JsonValueKind.Number ? el.ToString() : TypeConversion.FromJsonElement(el)?.ToString() ?? "";
 }

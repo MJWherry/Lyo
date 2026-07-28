@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
 
@@ -32,7 +33,7 @@ public class JobDefinition
     /// <summary>How the retry delay grows across attempts: Linear (backoff × attempt) or Exponential (backoff × 2^(attempt-1) with jitter). Stored as string.</summary>
     [Required]
     [MaxLength(12)]
-    public string RetryBackoffType { get; set; } = nameof(Models.Enums.JobRetryBackoffType.Linear);
+    public string RetryBackoffType { get; set; } = nameof(JobRetryBackoffType.Linear);
 
     /// <summary>Message priority (0-9) applied to runs of this definition. Higher values are consumed first when the worker queue supports priorities. 0 = default.</summary>
     public int Priority { get; set; }

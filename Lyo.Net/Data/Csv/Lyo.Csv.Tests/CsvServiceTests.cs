@@ -971,7 +971,6 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
         var createdPaths = await svc.SplitCsvFileAsync(tempFile, 3, outputDir, TestContext.Current.CancellationToken);
         Assert.Equal(4, createdPaths.Count);
-
         var firstFileData = svc.ParseFile<Person>(createdPaths[0]).ToList();
         Assert.Equal(3, firstFileData.Count);
     }

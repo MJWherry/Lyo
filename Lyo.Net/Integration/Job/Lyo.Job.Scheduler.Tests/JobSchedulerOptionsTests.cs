@@ -1,5 +1,4 @@
 using Lyo.Exceptions.Models;
-using Lyo.Job.Scheduler;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -17,9 +16,7 @@ public class JobSchedulerOptionsTests
     {
         var options = CreateValidOptions();
         options.ApiBaseUrl = "  ";
-
         var errors = options.GetValidationErrors();
-
         Assert.Contains(errors, e => e.Contains(nameof(JobSchedulerOptions.ApiBaseUrl), StringComparison.Ordinal));
     }
 
@@ -30,9 +27,7 @@ public class JobSchedulerOptionsTests
     {
         var options = CreateValidOptions();
         options.DefinitionRefreshIntervalSeconds = interval;
-
         var errors = options.GetValidationErrors();
-
         Assert.Contains(errors, e => e.Contains(nameof(JobSchedulerOptions.DefinitionRefreshIntervalSeconds), StringComparison.Ordinal));
     }
 
@@ -43,9 +38,7 @@ public class JobSchedulerOptionsTests
     {
         var options = CreateValidOptions();
         options.ScheduleCheckIntervalSeconds = interval;
-
         var errors = options.GetValidationErrors();
-
         Assert.Contains(errors, e => e.Contains(nameof(JobSchedulerOptions.ScheduleCheckIntervalSeconds), StringComparison.Ordinal));
     }
 
@@ -54,9 +47,7 @@ public class JobSchedulerOptionsTests
     {
         var options = CreateValidOptions();
         options.MisfireLookbackMinutes = -1;
-
         var errors = options.GetValidationErrors();
-
         Assert.Contains(errors, e => e.Contains(nameof(JobSchedulerOptions.MisfireLookbackMinutes), StringComparison.Ordinal));
     }
 
@@ -65,15 +56,15 @@ public class JobSchedulerOptionsTests
     {
         var options = CreateValidOptions();
         options.ApiBaseUrl = "";
-
         var ex = Assert.Throws<ValidationException>(() => options.Validate());
         Assert.Contains(nameof(JobSchedulerOptions), ex.Message, StringComparison.Ordinal);
     }
 
-    private static JobSchedulerOptions CreateValidOptions() => new() {
-        ApiBaseUrl = "https://api.example.com",
-        DefinitionRefreshIntervalSeconds = 30,
-        ScheduleCheckIntervalSeconds = 10,
-        MisfireLookbackMinutes = 1440
-    };
+    private static JobSchedulerOptions CreateValidOptions()
+        => new() {
+            ApiBaseUrl = "https://api.example.com",
+            DefinitionRefreshIntervalSeconds = 30,
+            ScheduleCheckIntervalSeconds = 10,
+            MisfireLookbackMinutes = 1440
+        };
 }

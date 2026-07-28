@@ -58,11 +58,7 @@
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("Status"),
-        new("Format"),
-        new("CreatedBy", "Created By")
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Status"), new("Format"), new("CreatedBy", "Created By")];
 
     private static object[] GetKey(object? item)
     {
@@ -73,13 +69,14 @@
     private static bool HasOutput(object? item)
     {
         var id = ProjectedValueHelper.GetValue(item, "OutputFileId");
-        return ProjectedValueHelper.TryGetGuid(id, out _);
+        return ProjectedValueHelper.TryGetGuid(id, out var _);
     }
 
     private async Task<ReportGenerationRes?> FetchGeneration(object? id)
     {
         if (!ProjectedValueHelper.TryGetGuid(id, out var guid))
             return null;
+
         var req = new QueryConcreteReq { Keys = [[guid]], Amount = 1, Include = ["Parameters"] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportGenerationRes>>($"{_generationRoute}/QueryConcrete", req);
         return res?.Items?.FirstOrDefault();
@@ -94,11 +91,7 @@
             return;
         }
 
-        var parameters = new DialogParameters<ReportGenerationView> {
-            { d => d.Generation, gen },
-            { d => d.DownloadFileAsync, DownloadFileAsync },
-            { d => d.ViewFileUrlAsync, ViewFileUrlAsync }
-        };
+        var parameters = new DialogParameters<ReportGenerationView> { { d => d.Generation, gen }, { d => d.DownloadFileAsync, DownloadFileAsync }, { d => d.ViewFileUrlAsync, ViewFileUrlAsync } };
         await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Large);
     }
 
@@ -140,4 +133,5 @@
         await DownloadFileAsync(guid, CancellationToken.None);
         Snackbar.Add("Download started.", Severity.Success);
     }
+
 }

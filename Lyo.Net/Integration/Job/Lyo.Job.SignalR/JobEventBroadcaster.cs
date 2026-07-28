@@ -1,5 +1,5 @@
+using System.Text;
 using System.Text.Json;
-using Lyo.Job.Models;
 using Lyo.MessageQueue;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
@@ -15,12 +15,8 @@ public sealed class JobEventBroadcaster : BackgroundService
     private const string DashboardQueue = "job.signalr.dashboard";
 
     private static readonly string[] RoutingKeys = [
-        Constants.Mq.JobRunCreatedRoutingKey,
-        Constants.Mq.JobRunStartedRoutingKey,
-        Constants.Mq.JobRunFinishedRoutingKey,
-        Constants.Mq.JobRunCancelledRoutingKey,
-        Constants.Mq.JobAlertRoutingKey,
-        Constants.Mq.JobDefinitionChangeKey
+        Constants.Mq.JobRunCreatedRoutingKey, Constants.Mq.JobRunStartedRoutingKey, Constants.Mq.JobRunFinishedRoutingKey, Constants.Mq.JobRunCancelledRoutingKey,
+        Constants.Mq.JobAlertRoutingKey, Constants.Mq.JobDefinitionChangeKey
     ];
 
     private readonly IHubContext<JobHub> _hub;
@@ -67,12 +63,8 @@ public sealed class JobEventBroadcaster : BackgroundService
             }
 
             var hubEvent = new JobHubEvent(
-                eventType,
-                eventType.StartsWith("job.notifications.run.", StringComparison.Ordinal) ? id : null,
-                eventType == Constants.Mq.JobDefinitionChangeKey ? id : null,
-                null,
-                DateTime.UtcNow,
-                id is null ? System.Text.Encoding.UTF8.GetString(body) : null);
+                eventType, eventType.StartsWith("job.notifications.run.", StringComparison.Ordinal) ? id : null, eventType == Constants.Mq.JobDefinitionChangeKey ? id : null, null,
+                DateTime.UtcNow, id is null ? Encoding.UTF8.GetString(body) : null);
 
             await _hub.Clients.All.SendAsync("JobEvent", hubEvent, CancellationToken.None).ConfigureAwait(false);
             return false;
@@ -91,6 +83,6 @@ public sealed class JobEventBroadcaster : BackgroundService
             Constants.Mq.JobRunCancelledRoutingKey => "run.cancelled",
             Constants.Mq.JobAlertRoutingKey => "alert",
             Constants.Mq.JobDefinitionChangeKey => "definition.updated",
-            _ => routingKey
+            var _ => routingKey
         };
 }

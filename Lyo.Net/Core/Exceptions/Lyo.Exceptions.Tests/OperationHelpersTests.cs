@@ -13,7 +13,7 @@ public class OperationHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNull_NonNull_DoesNotThrow() => OperationHelpers.ThrowIfNull(new object());
+    public void ThrowIfNull_NonNull_DoesNotThrow() => OperationHelpers.ThrowIfNull(new());
 
     [Fact]
     public void ThrowIfNull_Null_ThrowsWithDefaultMessage()
@@ -33,8 +33,7 @@ public class OperationHelpersTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void ThrowIfNullOrWhiteSpace_Missing_Throws(string? value)
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNullOrWhiteSpace(value));
+    public void ThrowIfNullOrWhiteSpace_Missing_Throws(string? value) => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNullOrWhiteSpace(value));
 
     [Fact]
     public void ThrowIfNullOrWhiteSpace_Value_DoesNotThrow() => OperationHelpers.ThrowIfNullOrWhiteSpace("value");
@@ -42,8 +41,7 @@ public class OperationHelpersTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ThrowIfNullOrEmpty_String_Missing_Throws(string? value)
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNullOrEmpty(value));
+    public void ThrowIfNullOrEmpty_String_Missing_Throws(string? value) => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNullOrEmpty(value));
 
     [Fact]
     public void ThrowIfNullOrEmpty_String_Whitespace_DoesNotThrow() => OperationHelpers.ThrowIfNullOrEmpty("  ");
@@ -73,8 +71,7 @@ public class OperationHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNotReadable_Null_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotReadable(null));
+    public void ThrowIfNotReadable_Null_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotReadable(null));
 
     [Fact]
     public void ThrowIfNotReadable_Disposed_Throws()
@@ -94,7 +91,7 @@ public class OperationHelpersTests
     [Fact]
     public void ThrowIfNotWritable_ReadOnly_Throws()
     {
-        using var stream = new MemoryStream(new byte[] { 1 }, writable: false);
+        using var stream = new MemoryStream(new byte[] { 1 }, false);
         Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotWritable(stream));
     }
 
@@ -175,66 +172,52 @@ public class OperationHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNotInRange_Array_LengthOutOfRange_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotInRange(new int[6], 1, 5));
+    public void ThrowIfNotInRange_Array_LengthOutOfRange_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotInRange(new int[6], 1, 5));
 
     [Fact]
-    public void ThrowIfZero_Zero_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfZero(0));
+    public void ThrowIfZero_Zero_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfZero(0));
 
     [Fact]
     public void ThrowIfZero_NonZero_DoesNotThrow() => OperationHelpers.ThrowIfZero(3);
 
     [Fact]
-    public void ThrowIfNegative_Negative_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNegative(-1));
+    public void ThrowIfNegative_Negative_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNegative(-1));
 
     [Fact]
     public void ThrowIfNegative_Zero_DoesNotThrow() => OperationHelpers.ThrowIfNegative(0);
 
     [Fact]
-    public void ThrowIfNegativeOrZero_Zero_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNegativeOrZero(0));
+    public void ThrowIfNegativeOrZero_Zero_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNegativeOrZero(0));
 
     [Fact]
-    public void ThrowIfPositive_Positive_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfPositive(1));
+    public void ThrowIfPositive_Positive_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfPositive(1));
 
     [Fact]
-    public void ThrowIfPositiveOrZero_Zero_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfPositiveOrZero(0));
+    public void ThrowIfPositiveOrZero_Zero_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfPositiveOrZero(0));
 
     [Fact]
-    public void ThrowIfGreaterThan_Above_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfGreaterThan(11, 10));
+    public void ThrowIfGreaterThan_Above_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfGreaterThan(11, 10));
 
     [Fact]
-    public void ThrowIfGreaterThanOrEqual_Equal_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfGreaterThanOrEqual(10, 10));
+    public void ThrowIfGreaterThanOrEqual_Equal_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfGreaterThanOrEqual(10, 10));
 
     [Fact]
-    public void ThrowIfLessThan_Below_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfLessThan(9, 10));
+    public void ThrowIfLessThan_Below_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfLessThan(9, 10));
 
     [Fact]
-    public void ThrowIfLessThanOrEqual_Equal_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfLessThanOrEqual(10, 10));
+    public void ThrowIfLessThanOrEqual_Equal_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfLessThanOrEqual(10, 10));
 
     [Fact]
-    public void ThrowIfNotNullAndLessThanOrEqual_Null_DoesNotThrow()
-        => OperationHelpers.ThrowIfNotNullAndLessThanOrEqual(null, 5.0);
+    public void ThrowIfNotNullAndLessThanOrEqual_Null_DoesNotThrow() => OperationHelpers.ThrowIfNotNullAndLessThanOrEqual(null, 5.0);
 
     [Fact]
-    public void ThrowIfNotNullAndLessThanOrEqual_Equal_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotNullAndLessThanOrEqual(5.0, 5.0));
+    public void ThrowIfNotNullAndLessThanOrEqual_Equal_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotNullAndLessThanOrEqual(5.0, 5.0));
 
     [Fact]
-    public void ThrowIfEqual_Equal_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfEqual(5, 5));
+    public void ThrowIfEqual_Equal_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfEqual(5, 5));
 
     [Fact]
-    public void ThrowIfNotEqual_NotEqual_Throws()
-        => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotEqual(5, 6));
+    public void ThrowIfNotEqual_NotEqual_Throws() => Assert.Throws<InvalidOperationException>(() => OperationHelpers.ThrowIfNotEqual(5, 6));
 
     [Fact]
     public void ThrowIfNotEqual_Equal_DoesNotThrow() => OperationHelpers.ThrowIfNotEqual(5, 5);

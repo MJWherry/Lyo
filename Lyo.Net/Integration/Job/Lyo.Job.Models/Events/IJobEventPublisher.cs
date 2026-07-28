@@ -4,8 +4,8 @@ namespace Lyo.Job.Models.Events;
 
 /// <summary>
 /// Transport-agnostic abstraction for job lifecycle event publishing and subscription. Implement this interface to use any message broker (RabbitMQ, Azure Service Bus, AWS
-/// SQS, etc.) and register the implementation in the DI container. API hosts with a job database use <c>MqJobEventPublisher</c> in <c>Lyo.Job.Postgres</c>; scheduler/worker hosts
-/// use <c>Lyo.Job.Client.MqJobEventPublisher</c> (<c>IMqService</c> + Job API client, no EF).
+/// SQS, etc.) and register the implementation in the DI container. API hosts with a job database use <c>MqJobEventPublisher</c> in <c>Lyo.Job.Postgres</c>; scheduler/worker hosts use
+/// <c>Lyo.Job.Client.MqJobEventPublisher</c> (<c>IMqService</c> + Job API client, no EF).
 /// </summary>
 public interface IJobEventPublisher
 {
@@ -64,8 +64,8 @@ public interface IJobEventPublisher
 
     /// <summary>
     /// Subscribe to run-cancellation notifications for a specific worker type. Workers call this on startup to receive cancellation signals for runs they are processing.
-    /// Implementations must deliver each cancellation to <b>every</b> subscribed instance (broadcast/fanout, e.g. a per-instance exclusive queue bound to the cancel routing
-    /// key) — a shared competing-consumer queue would deliver each cancel to only one instance of a scaled-out worker type and silently lose cancellations.
+    /// Implementations must deliver each cancellation to <b>every</b> subscribed instance (broadcast/fanout, e.g. a per-instance exclusive queue bound to the cancel routing key) — a
+    /// shared competing-consumer queue would deliver each cancel to only one instance of a scaled-out worker type and silently lose cancellations.
     /// </summary>
     /// <param name="workerType">The worker type — used to derive the subscription name.</param>
     /// <param name="handler">Called with the <see cref="Guid" /> of the run that should be cancelled. Instances not executing that run simply ignore it.</param>

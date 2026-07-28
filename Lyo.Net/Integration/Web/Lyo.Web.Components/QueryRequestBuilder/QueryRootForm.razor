@@ -1,11 +1,14 @@
 @using Lyo.Query.Models.Enums
-@using Lyo.Web.Components.QueryNodeEditor
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-query-root-form">
     <MudStack Spacing="4">
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6">Root /Query (From + Joins)</MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                Posts to <c>{host}/{route}/Query</c> — use the dynamic CRUD base route (no <c>{entityType}</c> segment).
+                Posts to
+                <c>{host}/{route}/Query</c>
+                — use the dynamic CRUD base route (no
+                <c>{entityType}</c>
+                segment).
                 Outer where/sort must use the From alias; filter join sides via nested join query (JSON editor) for now.
             </MudText>
         </MudPaper>
@@ -167,11 +170,11 @@
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">Filter (From alias only)</MudText>
             <QueryNodeEditorTree WhereClause="@Request.WhereClause"
-                                  PropertyDefinitions="@PropertyDefinitions"
-                                  WhereClauseChanged="@OnWhereClauseChanged"
-                                  SelectedNodeChanged="@OnSelectedWhereClauseChanged"
-                                  AllowDragDrop="@AllowFilterDragDrop"
-                                  AutoSelectNewNode="@AutoSelectNewFilterNode"/>
+                                 PropertyDefinitions="@PropertyDefinitions"
+                                 WhereClauseChanged="@OnWhereClauseChanged"
+                                 SelectedNodeChanged="@OnSelectedWhereClauseChanged"
+                                 AllowDragDrop="@AllowFilterDragDrop"
+                                 AutoSelectNewNode="@AutoSelectNewFilterNode"/>
         </MudPaper>
     </MudStack>
 </LyoElementRoot>

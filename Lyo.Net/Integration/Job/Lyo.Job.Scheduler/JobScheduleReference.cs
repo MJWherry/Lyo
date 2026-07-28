@@ -4,8 +4,8 @@ namespace Lyo.Job.Scheduler;
 internal static class JobScheduleReference
 {
     /// <summary>
-    /// Picks the cursor passed to <c>ScheduleCalculator.GetNextRun</c>. Prefers last success, then last attempted slot,
-    /// then schedule start / misfire lookback — never a decade-old default that traps never-run schedules.
+    /// Picks the cursor passed to <c>ScheduleCalculator.GetNextRun</c>. Prefers last success, then last attempted slot, then schedule start / misfire lookback — never a
+    /// decade-old default that traps never-run schedules.
     /// </summary>
     public static DateTime Resolve(
         DateTime? lastSuccessfulStartedUtc,
@@ -16,10 +16,7 @@ internal static class JobScheduleReference
         DateTime nowUtc,
         int misfireLookbackMinutes)
     {
-        var lastRunTime = lastSuccessfulStartedUtc
-                          ?? lastRunScheduledSlotUtc
-                          ?? lastRunStartedUtc
-                          ?? lastRunCreatedUtc;
+        var lastRunTime = lastSuccessfulStartedUtc ?? lastRunScheduledSlotUtc ?? lastRunStartedUtc ?? lastRunCreatedUtc;
         if (lastRunTime.HasValue)
             return lastRunTime.Value;
 

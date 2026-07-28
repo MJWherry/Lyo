@@ -56,7 +56,7 @@ COPY --from=build /src /src
 
 WORKDIR /src
 
-# python3 runs scripts/benchmarks/build-manifests.py (stdlib only) after a bench run. The OCR tests
+# python3 runs scripts/benchmarks/build_manifests.py (stdlib only) after a bench run. The OCR tests
 # also load the native libs at runtime (the build-stage symlinks in /src point back at these system
 # libs), so install them here too when this image's target selects the OCR project.
 #

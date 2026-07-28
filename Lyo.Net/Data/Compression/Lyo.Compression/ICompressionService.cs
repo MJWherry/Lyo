@@ -100,8 +100,8 @@ public interface ICompressionService
     double GetCompressionRatio(byte[] originalBytes, byte[] compressedBytes);
 
     /// <summary>
-    /// Heuristic check for known compressed magic bytes (GZip, ZLib, Zstd, LZ4, XZ, BZip2). Raw Deflate and Brotli have no magic bytes and are never detected. Not a
-    /// guarantee — treat as a hint only.
+    /// Heuristic check for known compressed magic bytes (GZip, ZLib, Zstd, LZ4, XZ, BZip2). Raw Deflate and Brotli have no magic bytes and are never detected. Not a guarantee —
+    /// treat as a hint only.
     /// </summary>
     bool IsLikelyCompressed(byte[] data);
 

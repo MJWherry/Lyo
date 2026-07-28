@@ -801,10 +801,9 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         if (_loading)
             return string.Empty;
 
-        if (EffectiveSelectedCount > 0)
-            return EffectiveSelectedCount <= MaxBulkSize
-                ? $"({EffectiveSelectedCount:N0} items)"
-                : "(too many items)";
+        if (EffectiveSelectedCount > 0) {
+            return EffectiveSelectedCount <= MaxBulkSize ? $"({EffectiveSelectedCount:N0} items)" : "(too many items)";
+        }
 
         var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
         if (total <= 0)

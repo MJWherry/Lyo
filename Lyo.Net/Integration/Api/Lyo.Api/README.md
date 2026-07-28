@@ -15,11 +15,11 @@ tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s
 
 ### Endpoint Builders
 
-| Builder                     | Route style                                                                                                                                                                                             | Use case                                                                                                                                                                                              |
-|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **CreateBuilder**           | Structured REST under `baseRoute`: `{baseRoute}/QueryConcrete`, `{baseRoute}/QueryProject`, `{baseRoute}` + `GetDefaultEndpoint<TKey>()` for GET/DELETE by key (e.g. `{baseRoute}/{id:guid}`), etc.             | Typed `TRequest` / `TResponse`, one registration per entity, **`ILyoMapper`** for DTO mapping, full CRUD control                                                                                      |
-| **MapDynamicCrudEndpoints** | Dynamic segment `{entityType}`: `{baseRoute}/{entityType}/QueryConcrete`, `…/QueryProject`, …; also **`POST {baseRoute}/Query`** (root From/Joins); `GET {baseRoute}/Metadata` | All (or filtered) EF model types on a single `DbContext`; JSON bodies deserialize to entities; no DTO layer                                                                                           |
-| **CreateReadOnlyBuilder**   | Same URL shape as **CreateBuilder**                                                                                                                                                                     | `TRequest` is fixed to `object`; use `.WithReadOnlyEndpoints()` or `WithCrud(ApiFeatureSet.ReadOnly, …)` so only **Query**, **QueryProject**, and **Get** are emitted (`ReadOnly` = `Query` \| `Get`) |
+| Builder                     | Route style                                                                                                                                                                                         | Use case                                                                                                                                                                                              |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **CreateBuilder**           | Structured REST under `baseRoute`: `{baseRoute}/QueryConcrete`, `{baseRoute}/QueryProject`, `{baseRoute}` + `GetDefaultEndpoint<TKey>()` for GET/DELETE by key (e.g. `{baseRoute}/{id:guid}`), etc. | Typed `TRequest` / `TResponse`, one registration per entity, **`ILyoMapper`** for DTO mapping, full CRUD control                                                                                      |
+| **MapDynamicCrudEndpoints** | Dynamic segment `{entityType}`: `{baseRoute}/{entityType}/QueryConcrete`, `…/QueryProject`, …; also **`POST {baseRoute}/Query`** (root From/Joins); `GET {baseRoute}/Metadata`                      | All (or filtered) EF model types on a single `DbContext`; JSON bodies deserialize to entities; no DTO layer                                                                                           |
+| **CreateReadOnlyBuilder**   | Same URL shape as **CreateBuilder**                                                                                                                                                                 | `TRequest` is fixed to `object`; use `.WithReadOnlyEndpoints()` or `WithCrud(ApiFeatureSet.ReadOnly, …)` so only **Query**, **QueryProject**, and **Get** are emitted (`ReadOnly` = `Query` \| `Get`) |
 
 **Entry points:** `WebApplication` extension methods in [`ApiEndpointBuilderExtensions`](ApiEndpoint/ApiEndpointBuilderExtensions.cs) (`CreateBuilder`, `CreateReadOnlyBuilder`)
 and [`DynamicCrudEndpointBuilder`](ApiEndpoint/Dynamic/DynamicCrudEndpointBuilder.cs) (`MapDynamicCrudEndpoints`). `baseRoute` should not end with `/`; it is combined with route
@@ -31,7 +31,8 @@ Full route list for the typed builder: [Endpoints](#endpoints) below.
 
 ### Query Engine
 
-- **WhereClause** – Filter tree for `QueryConcreteReq` / `ProjectionQueryReq`, serialized as **`whereClause`**. JSON type discriminators are **`condition`** (leaf: field + comparison +
+- **WhereClause** – Filter tree for `QueryConcreteReq` / `ProjectionQueryReq`, serialized as **`whereClause`**. JSON type discriminators are **`condition`** (leaf: field +
+  comparison +
   value) and **`group`** (branch: AND/OR + children). Nested groups are unlimited depth. See [`Lyo.Query.Models` README](../../../Data/Query/Lyo.Query.Models/README.md) for the DTO
   shape.
 - **SubQuery / two-phase** – Optional **`subClause`** on a node (or **`WhereClauseBuilder`** helpers such as **`AddSubClause`**) runs the root filter in the database and the nested
@@ -119,7 +120,8 @@ builder.Services.AddXlsxExport();  // Lyo.Api.Export.Xlsx + AddXlsxService()
 
 ### Cross-schema / same-context navigations (DI, no `OnModelCreating` edits)
 
-When related rows live in the **same database** but another schema/module (or an unmapped FK on the same context), register navigations at startup. EF then JOINs in one SQL query so Include / Where / Sort / Select keep correct pagination — do **not** post-filter in memory.
+When related rows live in the **same database** but another schema/module (or an unmapped FK on the same context), register navigations at startup. EF then JOINs in one SQL query
+so Include / Where / Sort / Select keep correct pagination — do **not** post-filter in memory.
 
 Requirements:
 
@@ -151,9 +153,11 @@ builder.Services.AddDbContextFactoryWithLyoNavigations<AppDbContext>(ob =>
     ob.UseNpgsql(connectionString));
 ```
 
-`LyoComposingModelCustomizer` runs after the context’s `OnModelCreating` and applies the registrations. Clients then use normal includes (`Person`, `Person.FirstName` filters, QueryProject `Select`).
+`LyoComposingModelCustomizer` runs after the context’s `OnModelCreating` and applies the registrations. Clients then use normal includes (`Person`, `Person.FirstName` filters,
+QueryProject `Select`).
 
-DI navigations intentionally diverge from the EF migration snapshot (soft FKs / `ExcludeFromMigrations`). When registrations exist, `AddDbContextFactoryWithLyoNavigations` ignores `PendingModelChangesWarning` so `MigrateAsync` is not blocked.
+DI navigations intentionally diverge from the EF migration snapshot (soft FKs / `ExcludeFromMigrations`). When registrations exist, `AddDbContextFactoryWithLyoNavigations` ignores
+`PendingModelChangesWarning` so `MigrateAsync` is not blocked.
 
 ### `ApiClientOptions` and integration HTTP clients
 
@@ -165,16 +169,16 @@ decompression, and request compression bind under each integration’s configura
 
 All registrations are extension methods on `IServiceCollection` (no `IServiceCollection` first parameter shown — they live inside `extension(IServiceCollection services)` blocks):
 
-| Method                                           | Registers                                                                                                                                                                                                                                                                                           |
-|--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddLyoQueryServices()`                          | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.                      |
-| `AddCrossSchemaNavigations<TContext>(configure)` | Registers same-context / cross-schema navigations applied after `OnModelCreating` (see [Cross-schema navigations](#cross-schema--same-context-navigations-di-no-onmodelcreating-edits)).                                                                                                              |
-| `AddDbContextFactoryWithLyoNavigations<TContext>` | `IDbContextFactory<TContext>` + `LyoComposingModelCustomizer` so cross-schema registrations take effect. Call after `AddCrossSchemaNavigations`.                                                                                                                                                      |
-| `AddLyoCrudServices<TContext>()`                 | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
-| `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`) | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`.                                                                                                                                                                                |
-| `AddCsvExport()` / `AddXlsxExport()`             | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`).                                                                                                                                                                                                                                          |
-| `AddPostgresSprocService<TContext>()`            | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                                  |
-| `AddLyoDiffServices()`                           | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                                                   |
+| Method                                            | Registers                                                                                                                                                                                                                                                                                           |
+|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddLyoQueryServices()`                           | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.                      |
+| `AddCrossSchemaNavigations<TContext>(configure)`  | Registers same-context / cross-schema navigations applied after `OnModelCreating` (see [Cross-schema navigations](#cross-schema--same-context-navigations-di-no-onmodelcreating-edits)).                                                                                                            |
+| `AddDbContextFactoryWithLyoNavigations<TContext>` | `IDbContextFactory<TContext>` + `LyoComposingModelCustomizer` so cross-schema registrations take effect. Call after `AddCrossSchemaNavigations`.                                                                                                                                                    |
+| `AddLyoCrudServices<TContext>()`                  | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
+| `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`)  | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`.                                                                                                                                                                                |
+| `AddCsvExport()` / `AddXlsxExport()`              | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`).                                                                                                                                                                                                                                          |
+| `AddPostgresSprocService<TContext>()`             | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                                  |
+| `AddLyoDiffServices()`                            | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                                                   |
 
 ### Diagnostic recording ([`LyoApiDiagnosticExtensions`](LyoApiDiagnosticExtensions.cs))
 
@@ -192,7 +196,7 @@ Request/response middleware with four jobs:
   and serialized as `application/problem+json`. The `Lyo.Exceptions` HTTP hierarchy drives the response status:
 
   | Thrown exception | Status | Notes |
-  |---|---|---|
+    |---|---|---|
   | `HttpException` (e.g. `NotFoundException`, `ConflictException`, `BadRequestException`) | `HttpException.StatusCode` | `ErrorCode` becomes `errors[].code` when set; 4xx logs Warning, 5xx logs Error |
   | `RateLimitExceededException` / `ServiceUnavailableException` with `RetryAfter` | 429 / 503 | `Retry-After` header is emitted (seconds) |
   | `UnprocessableEntityException` with field errors | 422 | one `errors[]` entry per field message |
@@ -252,7 +256,7 @@ turned on).
 
 | Method | Route                                        | Description                                                                                                                     |
 |--------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| POST   | `{baseRoute}/QueryConcrete`                          | Entity-graph query with filters, includes, sort, pagination (typed CreateBuilder)                                              |
+| POST   | `{baseRoute}/QueryConcrete`                  | Entity-graph query with filters, includes, sort, pagination (typed CreateBuilder)                                               |
 | POST   | `{baseRoute}/QueryProject`                   | Projected query (`Select`); SQL-level projection when possible; optional computed fields when `ProjectionComputedFields` is set |
 | POST   | `{dynamicBase}/Query`                        | **Root** From/Joins + Select (dynamic CRUD only); any allowlisted entity on that context; returns `ProjectedQueryRes`           |
 | POST   | `{baseRoute}/Export`                         | Export to CSV / XLSX / JSON (`IExportService` required)                                                                         |
@@ -303,7 +307,8 @@ Features are extensible records in a set (`features.Contains(ApiFeature.Query)`)
 
 ## Dynamic Endpoint Builder (MapDynamicCrudEndpoints)
 
-Register CRUD endpoints for all entities in a DbContext with **dynamic routes** `{baseRoute}/{entityType}/…` (e.g. `POST /api/Job/Person/QueryConcrete`, `GET /api/Job/Person/{id}` when
+Register CRUD endpoints for all entities in a DbContext with **dynamic routes** `{baseRoute}/{entityType}/…` (e.g. `POST /api/Job/Person/QueryConcrete`, `GET /api/Job/Person/{id}`
+when
 `BaseRoute = "api/Job"`). `entityType` is the entity type’s CLR **name**. Uses entity-as-request-response (no DTOs) and infers primary key and default order from the EF model.
 
 For **per-entity routes with custom DTOs**, use `CreateBuilder` (see Quick Start).
@@ -600,14 +605,17 @@ Use **`ProjectionQueryReqBuilder`** when building **`ProjectionQueryReq`** (incl
 
 ### Projection (QueryProject)
 
-`POST {baseRoute}/QueryProject` accepts a **`ProjectionQueryReq`** body and returns a **`ProjectedQueryRes<T>`** envelope (not the same shape as **`QueryRes<T>`** from **`/QueryConcrete`**).
-Navigation-based Select only — no From/Joins. The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field dependencies may have been merged server-side). On success,
+`POST {baseRoute}/QueryProject` accepts a **`ProjectionQueryReq`** body and returns a **`ProjectedQueryRes<T>`** envelope (not the same shape as **`QueryRes<T>`** from *
+*`/QueryConcrete`**).
+Navigation-based Select only — no From/Joins. The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field dependencies may have been
+merged server-side). On success,
 **`entityTypes`** lists CLR entity class names involved in the projection (root + navigations + template paths);
 see [Projection (QueryProject) & SQL-Level Query Generation](#projection-queryproject--sql-level-query-generation) above.
 
 ### Root Query (From / Joins)
 
-`POST {dynamicBase}/Query` (registered by **`MapDynamicCrudEndpoints`**, at the context base — **not** under `{entityType}`) accepts a **`QueryReq`** with required **`From`**, optional **`Joins`**, and required **`Select`**. Returns **`ProjectedQueryRes`** (generic JSON rows).
+`POST {dynamicBase}/Query` (registered by **`MapDynamicCrudEndpoints`**, at the context base — **not** under `{entityType}`) accepts a **`QueryReq`** with required **`From`**,
+optional **`Joins`**, and required **`Select`**. Returns **`ProjectedQueryRes`** (generic JSON rows).
 
 - Sources are mapped EF entity types (`entityType` = CLR type name, same as dynamic routes) plus optional nested **`query`** (Where/Keys scope on that `DbSet` before join).
 - Outer `whereClause` / `sortBy` may only reference the **From** alias in v1; filter join sides via nested `Join.Query`.
@@ -887,11 +895,13 @@ How tags attach to cached reads (see **`QueryService.QueryCore`**, **`Get`** ove
 
 - **`GET …/{id}`** (mapped and raw overloads): cache **key** is **`BuildSingleEntityGetCacheKey`**; tags include **`entity:{type}`** and **`entity:{type}:{pk}`** (plus cascade tags
   when **`includes`** are used). **Patch** / **Update** **`cache.Set`** for the written DTO uses the **same key shape** and **instance tag** so post-write caches stay aligned.
-- **`POST …/QueryConcrete`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type
+- **`POST …/QueryConcrete`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF
+  entity type
   from **`loaderService.GetReferencedTypes`**, and **instance tags** for entities in the result. **`InvalidateQueryCacheAsync<AddressEntity>()`** (broad) or **per-key**
   invalidation for Address rows clears cached parent reads (e.g. Person) that carried **`entity:address:…`** tags.
 - **`POST …/QueryProject`**: the **SQL projection** path adds **`projshape:…`**, **`queryproject`**, **`GetReferencedTypes`** type tags, **instance tags** from projected rows (root
-  and include cascade where applicable), plus the same scope tags as **`/QueryConcrete`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type still
+  and include cascade where applicable), plus the same scope tags as **`/QueryConcrete`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type
+  still
   invalidates matching **`QueryProject`** entries via shared **`entity:{child}:…`** instance tags.
 
 | Concern                                           | Behavior                                                                                                                                                                                                                                     |

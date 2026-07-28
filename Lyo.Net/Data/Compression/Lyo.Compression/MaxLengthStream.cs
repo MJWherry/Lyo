@@ -2,14 +2,13 @@ namespace Lyo.Compression;
 
 /// <summary>
 /// Write-only pass-through stream that throws <see cref="InvalidDataException" /> as soon as the total number of bytes written exceeds a limit. Wrapped around decompression
-/// output streams so a decompression bomb is stopped mid-flight — including for non-seekable outputs where an after-the-fact position check is impossible. Does not own or dispose
-/// the inner stream.
+/// output streams so a decompression bomb is stopped mid-flight — including for non-seekable outputs where an after-the-fact position check is impossible. Does not own or dispose the
+/// inner stream.
 /// </summary>
 internal sealed class MaxLengthStream : Stream
 {
     private readonly Stream _inner;
     private readonly long _maxLength;
-    private long _written;
 
     /// <param name="inner">Destination stream that receives all writes.</param>
     /// <param name="maxLength">Maximum cumulative bytes that may be written before the stream throws.</param>
@@ -20,7 +19,7 @@ internal sealed class MaxLengthStream : Stream
     }
 
     /// <summary>Total bytes written through this wrapper so far.</summary>
-    public long BytesWritten => _written;
+    public long BytesWritten { get; private set; }
 
     public override bool CanRead => false;
 
@@ -28,9 +27,12 @@ internal sealed class MaxLengthStream : Stream
 
     public override bool CanWrite => _inner.CanWrite;
 
-    public override long Length => _written;
+    public override long Length => BytesWritten;
 
-    public override long Position { get => _written; set => throw new NotSupportedException(); }
+    public override long Position {
+        get => BytesWritten;
+        set => throw new NotSupportedException();
+    }
 
     public override void Flush() => _inner.Flush();
 
@@ -76,8 +78,8 @@ internal sealed class MaxLengthStream : Stream
 
     private void EnsureWithinLimit(int count)
     {
-        _written += count;
-        if (_written > _maxLength)
+        BytesWritten += count;
+        if (BytesWritten > _maxLength)
             throw new InvalidDataException($"Decompressed size exceeds maximum allowed input size ({_maxLength} bytes). Possible decompression bomb.");
     }
 }

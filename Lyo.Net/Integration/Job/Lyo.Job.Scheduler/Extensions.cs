@@ -30,19 +30,15 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds <see cref="JobScheduler" /> as a hosted service, binding options from the <see cref="JobSchedulerOptions.SectionName" /> configuration section and validating
-        /// them on host start. Requires <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> (register via
-        /// <c>Lyo.Job.Client.AddMqJobEventPublisher*</c>).
+        /// Adds <see cref="JobScheduler" /> as a hosted service, binding options from the <see cref="JobSchedulerOptions.SectionName" /> configuration section and validating them on
+        /// host start. Requires <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> (register via <c>Lyo.Job.Client.AddMqJobEventPublisher*</c>).
         /// </summary>
         public IServiceCollection AddJobScheduler(string configSectionName = JobSchedulerOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             services.AddSingleton<IValidateOptions<JobSchedulerOptions>, JobSchedulerOptionsValidator>();
-            services.AddOptions<JobSchedulerOptions>()
-                .BindConfiguration(configSectionName)
-                .ValidateOnStart();
-
+            services.AddOptions<JobSchedulerOptions>().BindConfiguration(configSectionName).ValidateOnStart();
             services.AddSingleton(p => p.GetRequiredService<IOptions<JobSchedulerOptions>>().Value);
             return services.AddJobSchedulerCore();
         }
@@ -50,13 +46,8 @@ public static class Extensions
         private IServiceCollection AddJobSchedulerCore()
         {
             services.AddSingleton(sp => new JobScheduler(
-                sp.GetRequiredService<JobSchedulerOptions>(),
-                sp.GetRequiredService<IApiClient>(),
-                sp.GetRequiredService<IFormatterService>(),
-                sp.GetRequiredService<IJobEventPublisher>(),
-                sp.GetService<ILogger<JobScheduler>>(),
-                sp.GetService<IMetrics>(),
-                sp.GetService<IMqService>()));
+                sp.GetRequiredService<JobSchedulerOptions>(), sp.GetRequiredService<IApiClient>(), sp.GetRequiredService<IFormatterService>(),
+                sp.GetRequiredService<IJobEventPublisher>(), sp.GetService<ILogger<JobScheduler>>(), sp.GetService<IMetrics>(), sp.GetService<IMqService>()));
 
             services.AddSingleton<IJobScheduler>(p => p.GetRequiredService<JobScheduler>());
             services.AddHostedService(p => p.GetRequiredService<JobScheduler>());

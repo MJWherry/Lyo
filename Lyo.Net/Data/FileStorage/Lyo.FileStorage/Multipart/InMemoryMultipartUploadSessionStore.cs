@@ -29,8 +29,7 @@ public sealed class InMemoryMultipartUploadSessionStore : IMultipartUploadSessio
     public Task SetStatusAsync(Guid sessionId, MultipartSessionStatus status, CancellationToken ct = default)
     {
         var updated = _sessions.AddOrUpdate(
-            sessionId, _ => throw new NotFoundException($"Cannot set status for missing multipart session {sessionId}."),
-            (_, existing) => existing with { Status = status });
+            sessionId, _ => throw new NotFoundException($"Cannot set status for missing multipart session {sessionId}."), (_, existing) => existing with { Status = status });
 
         _ = updated;
         return Task.CompletedTask;

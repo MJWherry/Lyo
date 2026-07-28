@@ -71,26 +71,21 @@ public class OrThrowExtensionsTests
     }
 
     [Fact]
-    public void OrThrow_String_Value_ReturnsValue()
-        => Assert.Equal("value", "value".OrThrow(() => new KeyNotFoundException("missing")));
+    public void OrThrow_String_Value_ReturnsValue() => Assert.Equal("value", "value".OrThrow(() => new KeyNotFoundException("missing")));
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void OrThrow_String_Missing_ThrowsFactoryException(string? value)
-        => Assert.Throws<KeyNotFoundException>(() => value.OrThrow(() => new KeyNotFoundException("missing")));
+    public void OrThrow_String_Missing_ThrowsFactoryException(string? value) => Assert.Throws<KeyNotFoundException>(() => value.OrThrow(() => new KeyNotFoundException("missing")));
 
     [Fact]
-    public void OrThrow_String_Whitespace_ReturnsWhitespace()
-        => Assert.Equal("  ", "  ".OrThrow(() => new KeyNotFoundException("missing")));
+    public void OrThrow_String_Whitespace_ReturnsWhitespace() => Assert.Equal("  ", "  ".OrThrow(() => new KeyNotFoundException("missing")));
 
     [Fact]
-    public void OrThrowIfWhiteSpace_String_Whitespace_Throws()
-        => Assert.Throws<KeyNotFoundException>(() => "  ".OrThrowIfWhiteSpace(() => new KeyNotFoundException("missing")));
+    public void OrThrowIfWhiteSpace_String_Whitespace_Throws() => Assert.Throws<KeyNotFoundException>(() => "  ".OrThrowIfWhiteSpace(() => new KeyNotFoundException("missing")));
 
     [Fact]
-    public void OrThrowIfWhiteSpace_String_Value_ReturnsValue()
-        => Assert.Equal("value", "value".OrThrowIfWhiteSpace(() => new KeyNotFoundException("missing")));
+    public void OrThrowIfWhiteSpace_String_Value_ReturnsValue() => Assert.Equal("value", "value".OrThrowIfWhiteSpace(() => new KeyNotFoundException("missing")));
 
     [Fact]
     public void OrThrow_String_MessageFactory_Empty_ThrowsWithDefaultMessage()
@@ -114,8 +109,7 @@ public class OrThrowExtensionsTests
     }
 
     [Fact]
-    public void OrThrowInvalidOperation_String_Value_ReturnsValue()
-        => Assert.Equal("value", "value".OrThrowInvalidOperation());
+    public void OrThrowInvalidOperation_String_Value_ReturnsValue() => Assert.Equal("value", "value".OrThrowInvalidOperation());
 
     [Fact]
     public void OrThrowInvalidOperationIfWhiteSpace_Whitespace_ThrowsWithDefaultMessage()

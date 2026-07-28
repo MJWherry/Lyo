@@ -27,6 +27,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
 
     /// <summary>Delay wait queues (see <see cref="SendToQueueDelayed" />) already declared on the broker, to skip redundant declares on subsequent publishes.</summary>
     private readonly ConcurrentDictionary<string, byte> _declaredWaitQueues = new();
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<RabbitMqService> _logger;
     private readonly IMetrics _metrics;
@@ -513,13 +514,6 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         }
     }
 
-    /// <summary>Builds the publish properties applied to every outgoing message: persistence per <see cref="RabbitMqOptions.PersistentMessages" />, a message id, and a UTC timestamp.</summary>
-    private BasicProperties CreateBasicProperties() => new() {
-        Persistent = _options.PersistentMessages,
-        MessageId = Guid.NewGuid().ToString("D"),
-        Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-    };
-
     /// <inheritdoc />
     public async Task<bool> SendToQueueWithPriority(string queueName, byte[] data, byte priority)
     {
@@ -661,9 +655,9 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Sends a message that becomes visible on <paramref name="queueName" /> only after <paramref name="delay" /> has elapsed. Implemented with a companion wait queue
-    /// (<c>{queueName}.wait</c>) whose dead-letter target is the real queue: the message is published to the wait queue with a per-message TTL, and when the TTL fires the
-    /// broker dead-letters it onto the destination. No broker plugin required.
+    /// Sends a message that becomes visible on <paramref name="queueName" /> only after <paramref name="delay" /> has elapsed. Implemented with a companion wait queue (
+    /// <c>{queueName}.wait</c>) whose dead-letter target is the real queue: the message is published to the wait queue with a per-message TTL, and when the TTL fires the broker
+    /// dead-letters it onto the destination. No broker plugin required.
     /// </summary>
     public async Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
     {
@@ -683,11 +677,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         var waitQueue = queueName + Constants.WaitQueueSuffix;
         try {
             if (!_declaredWaitQueues.ContainsKey(waitQueue)) {
-                var arguments = new Dictionary<string, object?> {
-                    ["x-dead-letter-exchange"] = string.Empty,
-                    ["x-dead-letter-routing-key"] = queueName
-                };
-
+                var arguments = new Dictionary<string, object?> { ["x-dead-letter-exchange"] = string.Empty, ["x-dead-letter-routing-key"] = queueName };
                 await _publishChannel!.QueueDeclareAsync(waitQueue, true, false, false, arguments, cancellationToken: ct).ConfigureAwait(false);
                 _declaredWaitQueues.TryAdd(waitQueue, 0);
                 _logger.LogDebug("Declared delay wait queue {WaitQueue} dead-lettering to {QueueName}", waitQueue, queueName);
@@ -705,13 +695,19 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         catch (Exception ex) {
             _logger.LogError(ex, "Failed to send delayed message to queue {QueueName} via {WaitQueue}", queueName, waitQueue);
             if (_options.EnableMetrics)
-                _metrics.IncrementCounter(Constants.Metrics.SendToQueueFailure, 1, [(Constants.Metrics.Tags.Queue, queueName), (Constants.Metrics.Tags.Reason, "delayed_exception")]);
+                _metrics.IncrementCounter(
+                    Constants.Metrics.SendToQueueFailure, 1, [(Constants.Metrics.Tags.Queue, queueName), (Constants.Metrics.Tags.Reason, "delayed_exception")]);
 
             return false;
         }
     }
 
-    public async Task<bool> CreateQueueWithDlq(string queueName, bool durable = true, string? dlqName = null, IDictionary<string, object>? arguments = null, CancellationToken ct = default)
+    public async Task<bool> CreateQueueWithDlq(
+        string queueName,
+        bool durable = true,
+        string? dlqName = null,
+        IDictionary<string, object>? arguments = null,
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(queueName)) {
             _logger.LogWarning("Cannot create queue with DLQ: queue name is null or empty");
@@ -779,35 +775,6 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         }
     }
 
-    /// <summary>Maps a management API queue object to <see cref="MessageQueueInfo" />. Rates (when present) land in AdditionalProperties as messages/sec.</summary>
-    private static MessageQueueInfo ParseQueueInfo(JsonElement el)
-    {
-        var additional = new Dictionary<string, object>();
-        if (el.TryGetProperty("messages_details", out var messagesDetails) && messagesDetails.TryGetProperty("rate", out var messagesRate))
-            additional["messages_rate"] = messagesRate.GetDouble();
-
-        if (el.TryGetProperty("message_stats", out var stats)) {
-            if (stats.TryGetProperty("publish_details", out var publishDetails) && publishDetails.TryGetProperty("rate", out var publishRate))
-                additional["publish_rate"] = publishRate.GetDouble();
-
-            if (stats.TryGetProperty("deliver_get_details", out var deliverDetails) && deliverDetails.TryGetProperty("rate", out var deliverRate))
-                additional["deliver_rate"] = deliverRate.GetDouble();
-        }
-
-        if (el.TryGetProperty("memory", out var memory) && memory.ValueKind == JsonValueKind.Number)
-            additional["memory_bytes"] = memory.GetInt64();
-
-        return new(
-            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
-            el.TryGetProperty("state", out var state) ? state.GetString() : null,
-            el.TryGetProperty("type", out var type) ? type.GetString() : null,
-            el.TryGetProperty("messages", out var messages) && messages.ValueKind == JsonValueKind.Number ? messages.GetInt64() : 0,
-            el.TryGetProperty("messages_ready", out var ready) && ready.ValueKind == JsonValueKind.Number ? ready.GetInt64() : 0,
-            el.TryGetProperty("messages_unacknowledged", out var unacked) && unacked.ValueKind == JsonValueKind.Number ? unacked.GetInt64() : 0,
-            el.TryGetProperty("consumers", out var consumers) && consumers.ValueKind == JsonValueKind.Number ? consumers.GetInt32() : 0,
-            additional);
-    }
-
     public async Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(queueName)) {
@@ -830,9 +797,8 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
             // handler invocations the client runs in parallel on this channel (the 7.x default is 1, i.e. strictly sequential).
             var limit = _options.GetProcessingLimit(queueName);
             var dispatchConcurrency = limit > 0 ? (ushort)Math.Min(limit, ushort.MaxValue) : Constants.UnlimitedDispatchConcurrency;
-            var channelOptions = new CreateChannelOptions(publisherConfirmationsEnabled: false, publisherConfirmationTrackingEnabled: false, consumerDispatchConcurrency: dispatchConcurrency);
+            var channelOptions = new CreateChannelOptions(false, false, consumerDispatchConcurrency: dispatchConcurrency);
             var subscriptionChannel = await _connection!.CreateChannelAsync(channelOptions, ct).ConfigureAwait(false);
-
             await AssertQueueExistsForSubscriptionAsync(subscriptionChannel, queueName, ct).ConfigureAwait(false);
 
             // Broker-side backpressure: only `limit` unacked messages are delivered to this consumer at a time; the rest stay on the server.
@@ -865,6 +831,37 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         }
     }
 
+    /// <summary>Builds the publish properties applied to every outgoing message: persistence per <see cref="RabbitMqOptions.PersistentMessages" />, a message id, and a UTC timestamp.</summary>
+    private BasicProperties CreateBasicProperties()
+        => new() { Persistent = _options.PersistentMessages, MessageId = Guid.NewGuid().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
+
+    /// <summary>Maps a management API queue object to <see cref="MessageQueueInfo" />. Rates (when present) land in AdditionalProperties as messages/sec.</summary>
+    private static MessageQueueInfo ParseQueueInfo(JsonElement el)
+    {
+        var additional = new Dictionary<string, object>();
+        if (el.TryGetProperty("messages_details", out var messagesDetails) && messagesDetails.TryGetProperty("rate", out var messagesRate))
+            additional["messages_rate"] = messagesRate.GetDouble();
+
+        if (el.TryGetProperty("message_stats", out var stats)) {
+            if (stats.TryGetProperty("publish_details", out var publishDetails) && publishDetails.TryGetProperty("rate", out var publishRate))
+                additional["publish_rate"] = publishRate.GetDouble();
+
+            if (stats.TryGetProperty("deliver_get_details", out var deliverDetails) && deliverDetails.TryGetProperty("rate", out var deliverRate))
+                additional["deliver_rate"] = deliverRate.GetDouble();
+        }
+
+        if (el.TryGetProperty("memory", out var memory) && memory.ValueKind == JsonValueKind.Number)
+            additional["memory_bytes"] = memory.GetInt64();
+
+        return new(
+            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty, el.TryGetProperty("state", out var state) ? state.GetString() : null,
+            el.TryGetProperty("type", out var type) ? type.GetString() : null,
+            el.TryGetProperty("messages", out var messages) && messages.ValueKind == JsonValueKind.Number ? messages.GetInt64() : 0,
+            el.TryGetProperty("messages_ready", out var ready) && ready.ValueKind == JsonValueKind.Number ? ready.GetInt64() : 0,
+            el.TryGetProperty("messages_unacknowledged", out var unacked) && unacked.ValueKind == JsonValueKind.Number ? unacked.GetInt64() : 0,
+            el.TryGetProperty("consumers", out var consumers) && consumers.ValueKind == JsonValueKind.Number ? consumers.GetInt32() : 0, additional);
+    }
+
     /// <summary>
     /// Verifies the queue already exists (passive declare). Subscribers never create queues — provision them at host startup via <see cref="CreateQueue" /> or
     /// <c>DefinedQueues</c>.
@@ -872,12 +869,11 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     private static async Task AssertQueueExistsForSubscriptionAsync(IChannel channel, string queueName, CancellationToken ct)
     {
         try {
-            await channel.QueueDeclareAsync(queueName, true, false, false, null, passive: true, cancellationToken: ct).ConfigureAwait(false);
+            await channel.QueueDeclareAsync(queueName, true, false, false, null, true, cancellationToken: ct).ConfigureAwait(false);
         }
         catch (OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 404) {
             throw new NotFoundException(
-                $"Queue '{queueName}' does not exist. Declare it at application startup before subscribing — workers must not create queues on register/start.",
-                ex);
+                $"Queue '{queueName}' does not exist. Declare it at application startup before subscribing — workers must not create queues on register/start.", ex);
         }
     }
 
@@ -891,12 +887,11 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
 
             // Create a shared channel for publishing and queue management operations. With publisher confirms enabled,
             // BasicPublishAsync only completes once the broker confirms the publish (and throws on nack).
-            var publishChannelOptions = _options.PublisherConfirms
-                ? new CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true)
-                : null;
-
+            var publishChannelOptions = _options.PublisherConfirms ? new CreateChannelOptions(true, true) : null;
             _publishChannel = await _connection.CreateChannelAsync(publishChannelOptions, ct).ConfigureAwait(false);
-            _logger.LogInformation("Successfully connected to RabbitMQ (PublisherConfirms: {Confirms}, AutomaticRecovery: {Recovery})", _options.PublisherConfirms, _options.AutomaticRecovery);
+            _logger.LogInformation(
+                "Successfully connected to RabbitMQ (PublisherConfirms: {Confirms}, AutomaticRecovery: {Recovery})", _options.PublisherConfirms, _options.AutomaticRecovery);
+
             if (_options.EnableMetrics)
                 _metrics.IncrementCounter(Constants.Metrics.ConnectionEstablished, 1);
         }

@@ -10,9 +10,9 @@ editing after a run.
 - **Micro (BenchmarkDotNet):** each suite's in-process exporter
   (`LyoBenchmarkExporter` in [`Lyo.Benchmarking`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmarking/README.md))
   writes `<name>.lyobench.json` (`type: "micro"`) into its `BenchmarkDotNet.Artifacts`.
-- **Load (k6):** k6 cannot emit the schema, so `build-manifests.py` normalizes the raw
+- **Load (k6):** k6 cannot emit the schema, so `build_manifests.py` normalizes the raw
   `*.summary.json` files into a `LoadTestReport` (`type: "load"`).
-- `build-manifests.py` then writes, per report, `data/<name>.json` (portable) and
+- `build_manifests.py` then writes, per report, `data/<name>.json` (portable) and
   `data/<name>.js` (sets `window.LyoBench.reports["<name>"]`), plus `data/registry.js`
   listing every report. Each export also archives a timestamped snapshot under
   `history/<name>/`, computes Δ columns vs the immediately prior snapshot, and embeds a
@@ -35,13 +35,13 @@ The models + schema contract live in
 [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md). For micro
 reports the context comes from attributes (`[BenchmarkReport(Description=…)]`, `[BenchmarkDescription]`,
 `[BenchmarkParameter]`, `[BenchmarkDataShape]`); for k6 it comes from the `K6_CASE_META` map in
-`build-manifests.py` (mirroring `k6/framework-person/lib/cases.js`).
+`build_manifests.py` (mirroring `k6/framework-person/lib/cases.js`).
 
 ## Pages
 
-| Page | Role |
-|------|------|
-| [index.html](index.html) | Card hub, built from `data/registry.js`. |
+| Page                       | Role                                                                                |
+|----------------------------|-------------------------------------------------------------------------------------|
+| [index.html](index.html)   | Card hub, built from `data/registry.js`.                                            |
 | [report.html](report.html) | Single viewer; `report.html#<name>` dispatches on `type` to a micro or load layout. |
 
 ## Generate / refresh
@@ -52,9 +52,9 @@ scripts/benchmarks/run-dotnet-benchmarks.sh                 # all suites — exp
 scripts/benchmarks/run-dotnet-benchmarks.sh --no-docker hashing csv
 
 # Or just rebuild dashboard data from existing artifacts / k6 results
-python3 scripts/benchmarks/build-manifests.py               # micro + k6
-python3 scripts/benchmarks/build-manifests.py --k6-only
-python3 scripts/benchmarks/build-manifests.py --hashing-only
+python3 scripts/benchmarks/build_manifests.py               # micro + k6
+python3 scripts/benchmarks/build_manifests.py --k6-only
+python3 scripts/benchmarks/build_manifests.py --hashing-only
 ```
 
 Each successful export appends to `history/<name>/` (unless that `runId` was already
@@ -64,7 +64,7 @@ archived run** (green = better; red = worse). The first archived run has no Δ c
 
 ### Troubleshooting stale runs
 
-`build-manifests.py` searches the suite's project `BenchmarkDotNet.Artifacts/` plus fallback
+`build_manifests.py` searches the suite's project `BenchmarkDotNet.Artifacts/` plus fallback
 `BenchmarkDotNet.Artifacts/` at the repo root and under `Lyo.Net/`. It prefers **joined**
 runs (`runId` contains `joined`) over ad-hoc filtered runs, then the newest timestamp.
 
@@ -76,7 +76,7 @@ If the dashboard still shows a June run after you benchmarked in July:
 2. **Avoid bare `dotnet run` from the repo root** — without `--artifacts`, BenchmarkDotNet
    writes to `./BenchmarkDotNet.Artifacts/` and without `--join` you only get the last
    benchmark class, not the full suite.
-3. **Regenerate** — `python3 scripts/benchmarks/build-manifests.py --csv-only` (or `--<name>-only`
+3. **Regenerate** — `python3 scripts/benchmarks/build_manifests.py --csv-only` (or `--<name>-only`
    for the suite you ran).
 4. Check the manifest output for `using …` / `synced …` lines to see which artifact file
    was picked.

@@ -44,7 +44,7 @@ default job, the memory diagnoser, and the `LyoBenchmarkExporter`.
 ## Output
 
 The exporter emits the unified `lyo.bench/v1` schema (see
-[`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md)). `scripts/benchmarks/build-manifests.py`
+[`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md)). `scripts/benchmarks/build_manifests.py`
 copies those `*.lyobench.json` files into `docs/benchmarks/data/` and normalizes k6 output to the
 same schema; the dashboard renders both through one viewer.
 

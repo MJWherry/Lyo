@@ -273,12 +273,7 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNullOrNotInRange<T>(
-        T value,
-        T? min = null,
-        T? max = null,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfNullOrNotInRange<T>(T value, T? min = null, T? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : struct, IComparable<T>, IConvertible
         => ThrowIfNotInRange(value, min, max, paramName, message);
 

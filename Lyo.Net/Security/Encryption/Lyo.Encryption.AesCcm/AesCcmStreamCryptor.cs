@@ -12,8 +12,8 @@ namespace Lyo.Encryption.AesCcm;
 /// </summary>
 internal sealed class AesCcmStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamCryptor
 {
-    private readonly KeyParameter _key = new(key.ToArray());
     private readonly CcmBlockCipher _cipher = new(new AesEngine());
+    private readonly KeyParameter _key = new(key.ToArray());
     private readonly byte[] _nonceBuffer = new byte[AesCcmHelper.NonceSize];
     private byte[] _inBuffer = [];
 
@@ -43,11 +43,11 @@ internal sealed class AesCcmStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamC
         SecurityUtilities.Clear(unpacked);
     }
 
+    public void Dispose() => SecurityUtilities.Clear(_inBuffer);
+
     private void EnsureBuffer(int size)
     {
         if (_inBuffer.Length < size)
             _inBuffer = new byte[size];
     }
-
-    public void Dispose() => SecurityUtilities.Clear(_inBuffer);
 }

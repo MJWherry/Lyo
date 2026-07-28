@@ -9,7 +9,6 @@ public class SystemInfoCollectorTests
     public void Collect_PopulatesAllSections()
     {
         var info = SystemInfoCollector.Collect();
-
         Assert.NotNull(info.Hardware);
         Assert.NotNull(info.Software);
         Assert.NotNull(info.Network);
@@ -21,7 +20,6 @@ public class SystemInfoCollectorTests
     public void GetHardwareInfo_ReturnsSaneValues()
     {
         var hardware = SystemInfoCollector.GetHardwareInfo();
-
         Assert.True(hardware.ProcessorCount > 0);
         Assert.False(string.IsNullOrEmpty(hardware.ProcessArchitecture));
         Assert.False(string.IsNullOrEmpty(hardware.OsArchitecture));
@@ -34,7 +32,6 @@ public class SystemInfoCollectorTests
     public void GetSoftwareInfo_ReturnsSaneValues()
     {
         var software = SystemInfoCollector.GetSoftwareInfo();
-
         Assert.False(string.IsNullOrEmpty(software.OsDescription));
         Assert.False(string.IsNullOrEmpty(software.FrameworkDescription));
         Assert.False(string.IsNullOrEmpty(software.OsVersion));
@@ -47,21 +44,20 @@ public class SystemInfoCollectorTests
     public void GetNetworkInfo_ReturnsSaneValues()
     {
         var network = SystemInfoCollector.GetNetworkInfo();
-
         Assert.False(string.IsNullOrEmpty(network.HostName));
         Assert.NotNull(network.Interfaces);
-        Assert.All(network.Interfaces, nic => {
-            Assert.NotNull(nic.UnicastAddresses);
-            Assert.NotNull(nic.GatewayAddresses);
-            Assert.NotNull(nic.DnsAddresses);
-        });
+        Assert.All(
+            network.Interfaces, nic => {
+                Assert.NotNull(nic.UnicastAddresses);
+                Assert.NotNull(nic.GatewayAddresses);
+                Assert.NotNull(nic.DnsAddresses);
+            });
     }
 
     [Fact]
     public void GetEnvironmentInfo_ReturnsSaneValues()
     {
         var environment = SystemInfoCollector.GetEnvironmentInfo();
-
         Assert.False(string.IsNullOrEmpty(environment.MachineName));
         Assert.False(string.IsNullOrEmpty(environment.TimeZoneId));
         Assert.True(environment.SystemUptime > TimeSpan.Zero);
@@ -76,7 +72,6 @@ public class SystemInfoCollectorTests
         Environment.SetEnvironmentVariable("LYO_TEST_PLAIN", "plain-value");
         try {
             var environment = SystemInfoCollector.GetEnvironmentInfo();
-
             Assert.Equal("********", environment.Variables["LYO_TEST_SECRET"]);
             Assert.Equal("plain-value", environment.Variables["LYO_TEST_PLAIN"]);
         }
@@ -109,9 +104,7 @@ public class SystemInfoCollectorTests
     {
         var logger = new CapturingLogger(LogLevel.Trace);
         var info = SystemInfoCollector.Collect();
-
         logger.LogSystemInfo(info, LogLevel.Warning);
-
         Assert.NotEmpty(logger.Entries);
         Assert.All(logger.Entries, entry => Assert.Equal(LogLevel.Warning, entry.Level));
         Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Hardware:"));
@@ -125,9 +118,7 @@ public class SystemInfoCollectorTests
     {
         var logger = new CapturingLogger(LogLevel.Warning);
         var info = SystemInfoCollector.Collect();
-
         logger.LogSystemInfo(info, LogLevel.Debug);
-
         Assert.Empty(logger.Entries);
     }
 
@@ -138,7 +129,6 @@ public class SystemInfoCollectorTests
         try {
             var logger = new CapturingLogger(LogLevel.Trace);
             logger.LogEnvironmentInfo(SystemInfoCollector.GetEnvironmentInfo(), LogLevel.Trace);
-
             var variablesEntry = Assert.Single(logger.Entries, entry => entry.Message.StartsWith("Environment variables:"));
             Assert.DoesNotContain("should-not-appear", variablesEntry.Message);
             Assert.Contains("LYO_TEST_LOG_SECRET=********", variablesEntry.Message);
@@ -152,7 +142,9 @@ public class SystemInfoCollectorTests
     {
         public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => null;
 
         public bool IsEnabled(LogLevel logLevel) => logLevel >= minLevel;
 

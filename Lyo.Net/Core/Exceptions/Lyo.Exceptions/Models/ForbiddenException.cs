@@ -2,19 +2,12 @@ namespace Lyo.Exceptions.Models;
 
 /// <summary>Exception thrown when access to a resource is forbidden due to insufficient permissions. Maps to HTTP 403.</summary>
 /// <remarks>
-/// Prefer <see cref="ForResource" /> over the multi-argument constructor: <c>new ForbiddenException("Report", null)</c> binds to the
-/// <c>(string message, Exception?)</c> overload and never sets <see cref="ResourceName" />.
+/// Prefer <see cref="ForResource" /> over the multi-argument constructor: <c>new ForbiddenException("Report", null)</c> binds to the <c>(string message, Exception?)</c>
+/// overload and never sets <see cref="ResourceName" />.
 /// </remarks>
 public class ForbiddenException : HttpException
 {
     private const int HttpStatusCode = 403;
-
-    /// <summary>Creates a <see cref="ForbiddenException" /> for a resource, guaranteeing <see cref="ResourceName" />, <see cref="ResourceId" />, and <see cref="Reason" /> are set.</summary>
-    /// <param name="resourceName">The name or type of the resource that access was forbidden for.</param>
-    /// <param name="resourceId">The identifier of the resource that access was forbidden for.</param>
-    /// <param name="reason">The reason for the forbidden access.</param>
-    public static ForbiddenException ForResource(string resourceName, object? resourceId = null, string? reason = null)
-        => new(resourceName, resourceId, reason);
 
     /// <summary>Gets the name or identifier of the resource that access was forbidden for.</summary>
     public string? ResourceName { get; }
@@ -51,6 +44,12 @@ public class ForbiddenException : HttpException
         ResourceId = resourceId;
         Reason = reason;
     }
+
+    /// <summary>Creates a <see cref="ForbiddenException" /> for a resource, guaranteeing <see cref="ResourceName" />, <see cref="ResourceId" />, and <see cref="Reason" /> are set.</summary>
+    /// <param name="resourceName">The name or type of the resource that access was forbidden for.</param>
+    /// <param name="resourceId">The identifier of the resource that access was forbidden for.</param>
+    /// <param name="reason">The reason for the forbidden access.</param>
+    public static ForbiddenException ForResource(string resourceName, object? resourceId = null, string? reason = null) => new(resourceName, resourceId, reason);
 
     private static string BuildMessage(string resourceName, object? resourceId, string? reason)
     {

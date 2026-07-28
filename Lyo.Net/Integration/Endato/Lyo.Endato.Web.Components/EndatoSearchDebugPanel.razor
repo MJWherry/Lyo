@@ -78,13 +78,15 @@
     [Parameter]
     public EndatoSearchMode SearchMode { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public PersonQuery PersonQuery { get; set; } = new();
 
     [Parameter]
     public EventCallback<PersonQuery> PersonQueryChanged { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public EnrichmentQuery EnrichmentQuery { get; set; } = new();
 
     [Parameter]

@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using ExcelDataReader;
+using Lyo.DataTable.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Lyo.Xlsx.Models;
@@ -507,8 +508,8 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "A").SetHeader(1, "B").SetHeader(2, "C");
         // Row 0: "Merged" spans two columns; row 0-1: "Tall" spans two rows in column 2.
-        dt.SetCell(0, 0, new DataTable.Models.DataTableCell<string>("Merged", ColSpan: 2));
-        dt.SetCell(0, 2, new DataTable.Models.DataTableCell<string>("Tall", RowSpan: 2));
+        dt.SetCell(0, 0, new DataTableCell<string>("Merged", ColSpan: 2));
+        dt.SetCell(0, 2, new DataTableCell<string>("Tall", RowSpan: 2));
         dt.SetCell(1, 0, "x");
         dt.SetCell(1, 1, "y");
         var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
@@ -636,6 +637,348 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal("AsyncA", results[0].ValueOrThrow().Rows[0][1].DisplayValue);
         Assert.Equal("AsyncB", results[1].ValueOrThrow().Rows[0][1].DisplayValue);
     }
+
+    private byte[] BuildTwoSheetWorkbook(XlsxService svc)
+    {
+        TestModel[] a = [new() { Id = 1, Name = "A", Age = 10 }];
+        TestModel[] b = [new() { Id = 2, Name = "B", Age = 20 }, new() { Id = 3, Name = "C", Age = 30 }];
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", a }, { "SheetB", b } };
+        return svc.ExportToXlsxBytes(dataSets);
+    }
+
+    [Fact]
+    public void ListSheetNames_ReturnsSheetsInWorkbookOrder()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var fromBytes = svc.ListSheetNames(bytes);
+        Assert.Equal(["SheetA", "SheetB"], fromBytes);
+        using var ms = BytesToStream(bytes);
+        var fromStream = svc.ListSheetNames(ms);
+        Assert.Equal(["SheetA", "SheetB"], fromStream);
+        var path = _tempSession.GetFilePath("list-sheets.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var fromFile = svc.ListSheetNames(path);
+        Assert.Equal(["SheetA", "SheetB"], fromFile);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_BySheetName_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var dict = svc.ParseXlsxBytesAsDictionary(bytes, "SheetB");
+        Assert.Equal(2, dict.Count);
+        Assert.Equal("B", dict[0][1]);
+        Assert.Equal("C", dict[1][1]);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_BySheetIndex_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var dict = svc.ParseXlsxBytesAsDictionary(bytes, 1);
+        Assert.Equal(2, dict.Count);
+        Assert.Equal("B", dict[0][1]);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_UnknownSheet_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, "NoSuchSheet"));
+        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, 5));
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_BySheetName_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var result = svc.ParseXlsxBytesAsDataTable(bytes, "SheetB");
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.Equal("Name", dt.Headers[1].DisplayValue);
+        Assert.Equal(2, dt.Rows.Count);
+        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
+        Assert.Equal("C", dt.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_BySheetIndex_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var first = svc.ParseXlsxBytesAsDataTable(bytes, 0);
+        Assert.True(first.IsSuccess);
+        Assert.Equal("A", first.ValueOrThrow().Rows[0][1].DisplayValue);
+        var second = svc.ParseXlsxBytesAsDataTable(bytes, 1);
+        Assert.True(second.IsSuccess);
+        Assert.Equal("B", second.ValueOrThrow().Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_UnknownSheet_ReturnsFailure()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, "NoSuchSheet").IsSuccess);
+        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, 5).IsSuccess);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsAllSheets_ReturnsAllSheetsInOrder()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
+        Assert.Equal(2, sheets.Count);
+        Assert.Equal(["SheetA", "SheetB"], sheets.Keys.ToArray());
+        Assert.Single(sheets["SheetA"].Rows);
+        Assert.Equal("A", sheets["SheetA"].Rows[0][1].DisplayValue);
+        Assert.Equal(2, sheets["SheetB"].Rows.Count);
+        Assert.Equal("C", sheets["SheetB"].Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxFileAndStream_SheetOverloads_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var path = _tempSession.GetFilePath("sheet-overloads.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var fileDict = svc.ParseXlsxFileAsDictionary(path, "SheetB");
+        Assert.Equal("B", fileDict[0][1]);
+        var fileDt = svc.ParseXlsxFileAsDataTable(path, 1);
+        Assert.True(fileDt.IsSuccess);
+        Assert.Equal("B", fileDt.ValueOrThrow().Rows[0][1].DisplayValue);
+        var fileSheets = svc.ParseXlsxFileAsAllSheets(path);
+        Assert.Equal(2, fileSheets.Count);
+        using var ms1 = BytesToStream(bytes);
+        var streamDict = svc.ParseXlsxStreamAsDictionary(ms1, 1);
+        Assert.Equal("B", streamDict[0][1]);
+        using var ms2 = BytesToStream(bytes);
+        var streamDt = svc.ParseXlsxStreamAsDataTable(ms2, "SheetA");
+        Assert.True(streamDt.IsSuccess);
+        Assert.Equal("A", streamDt.ValueOrThrow().Rows[0][1].DisplayValue);
+        using var ms3 = BytesToStream(bytes);
+        var streamSheets = svc.ParseXlsxStreamAsAllSheets(ms3);
+        Assert.Equal(2, streamSheets.Count);
+    }
+
+    [Fact]
+    public void DocumentWriter_MultiSheetSession_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        using var ms = new MemoryStream();
+        var ct = TestContext.Current.CancellationToken;
+        using (var doc = svc.CreateDocumentWriter(ms)) {
+            doc.AddSheet("Typed", new[] { new TestModel { Id = 1, Name = "Alpha", Age = 11 } }, ct);
+            List<PropertyInfo> props = [typeof(TestModel).GetProperty(nameof(TestModel.Name))!];
+            doc.AddSheet("Selected", new[] { new TestModel { Id = 2, Name = "Beta", Age = 22 } }, props, ct);
+            var dictData = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+                { 0, new Dictionary<int, string> { { 0, "H1" }, { 1, "H2" } } }, { 1, new Dictionary<int, string> { { 0, "v1" }, { 1, "v2" } } }
+            };
+
+            doc.AddSheetFromDictionary("Dict", dictData, ct: ct);
+            var source = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytes(new[] { new TestModel { Id = 3, Name = "Gamma", Age = 33 } })).ValueOrThrow();
+            doc.AddSheetFromDataTable("Table", source, ct);
+        }
+
+        var bytes = ms.ToArray();
+        Assert.True(bytes.Length > 0);
+        var names = svc.ListSheetNames(bytes);
+        Assert.Equal(["Typed", "Selected", "Dict", "Table"], names);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
+        Assert.Equal(4, sheets.Count);
+        Assert.Equal("Alpha", sheets["Typed"].Rows[0][1].DisplayValue);
+        Assert.Equal("Name", sheets["Selected"].Headers[0].DisplayValue);
+        Assert.Equal("Beta", sheets["Selected"].Rows[0][0].DisplayValue);
+        Assert.Equal("H1", sheets["Dict"].Headers[0].DisplayValue);
+        Assert.Equal("v2", sheets["Dict"].Rows[0][1].DisplayValue);
+        Assert.Equal("Gamma", sheets["Table"].Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void DocumentWriter_ToFile_FinalizesOnDispose()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var path = _tempSession.GetFilePath("doc-writer.xlsx");
+        var ct = TestContext.Current.CancellationToken;
+        using (var doc = svc.CreateDocumentWriter(path)) {
+            doc.AddSheet("First", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+            doc.AddSheet("Second", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct);
+        }
+
+        Assert.True(File.Exists(path));
+        Assert.Equal(["First", "Second"], svc.ListSheetNames(path));
+        var dt = svc.ParseXlsxFileAsDataTable(path, "Second").ValueOrThrow();
+        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void DocumentWriter_DuplicateSheetName_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var ct = TestContext.Current.CancellationToken;
+        using var ms = new MemoryStream();
+        using var doc = svc.CreateDocumentWriter(ms);
+        doc.AddSheet("Dup", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+        Assert.Throws<ArgumentException>(() => doc.AddSheet("Dup", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
+        // Case-insensitive: Excel treats sheet names case-insensitively.
+        Assert.Throws<ArgumentException>(() => doc.AddSheet("DUP", new[] { new TestModel { Id = 3, Name = "C", Age = 30 } }, ct));
+    }
+
+    [Fact]
+    public void DocumentWriter_AddSheetAfterDispose_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var ct = TestContext.Current.CancellationToken;
+        using var ms = new MemoryStream();
+        var doc = svc.CreateDocumentWriter(ms);
+        doc.AddSheet("Only", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+        doc.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => doc.AddSheet("Late", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
+    }
+
+    [Fact]
+    public void DocumentWriter_SpannedDataTable_EmitsMerges()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var spanned = new DataTable.Models.DataTable();
+        spanned.SetHeader(0, "A").SetHeader(1, "B");
+        spanned.SetCell(0, 0, new DataTableCell<string>("wide", ColSpan: 2));
+        using var ms = new MemoryStream();
+        using (var doc = svc.CreateDocumentWriter(ms))
+            doc.AddSheetFromDataTable("Spans", spanned, TestContext.Current.CancellationToken);
+
+        var dt = svc.ParseXlsxBytesAsDataTable(ms.ToArray(), "Spans").ValueOrThrow();
+        Assert.Equal(2, dt.Rows[0][0].ColSpan);
+    }
+
+    [Fact]
+    public void SplitXlsxBytesBySheet_ProducesOneWorkbookPerSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var parts = svc.SplitXlsxBytesBySheet(bytes);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("A", svc.ParseXlsxBytesAsDataTable(parts["SheetA"]).ValueOrThrow().Rows[0][1].DisplayValue);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts["SheetB"]).ValueOrThrow().Rows.Count);
+    }
+
+    [Fact]
+    public void SplitXlsxByRows_RepeatsHeaderAndChunksData()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 5).Select(i => new TestModel { Id = i, Name = $"N{i}", Age = i }).ToList();
+        var bytes = svc.ExportToXlsxBytes(data);
+        var parts = svc.SplitXlsxBytesByRows(bytes, 2);
+        Assert.Equal(3, parts.Count);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts[0]).ValueOrThrow().Rows.Count);
+        Assert.Single(svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Rows);
+        Assert.Equal("Name", svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Headers[1].DisplayValue);
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_PreserveSheets_KeepsAllSheetsWithDedupe()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes(
+            new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", [new() { Id = 1, Name = "A", Age = 10 }] }, { "Shared", [new() { Id = 2, Name = "B", Age = 20 }] } });
+
+        var wb2 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> { { "Shared", [new() { Id = 3, Name = "C", Age = 30 }] } });
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2]);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(mergedBytes);
+        Assert.Equal(3, sheets.Count);
+        Assert.True(sheets.ContainsKey("SheetA"));
+        Assert.True(sheets.ContainsKey("Shared"));
+        Assert.True(sheets.ContainsKey("Shared (2)"));
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_ConcatenateRows_AppendsAllDataRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes([new TestModel { Id = 1, Name = "A", Age = 10 }]);
+        var wb2 = svc.ExportToXlsxBytes([new TestModel { Id = 2, Name = "B", Age = 20 }]);
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.ConcatenateRows);
+        var merged = svc.ParseXlsxBytesAsDataTable(mergedBytes, "Merged").ValueOrThrow();
+        Assert.Equal(2, merged.Rows.Count);
+        Assert.Equal("A", merged.Rows[0][1].DisplayValue);
+        Assert.Equal("B", merged.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void SplitXlsxBySheet_FileAndStreamVariants_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var path = _tempSession.GetFilePath("split-by-sheet.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var outputDir = Path.Combine(Path.GetDirectoryName(path)!, "split-out");
+        Directory.CreateDirectory(outputDir);
+        var createdPaths = svc.SplitXlsxBySheet(path, outputDir);
+        Assert.Equal(2, createdPaths.Count);
+        Assert.Equal("A", svc.ParseXlsxFileAsDataTable(createdPaths[0]).ValueOrThrow().Rows[0][1].DisplayValue);
+        var streamSheetNames = new List<string>();
+        using (var input = BytesToStream(bytes)) {
+            svc.SplitXlsxBySheet(
+                input, sheetName => {
+                    streamSheetNames.Add(sheetName);
+                    return new MemoryStream();
+                }, true);
+        }
+
+        Assert.Equal(["SheetA", "SheetB"], streamSheetNames);
+    }
+
+#if NET
+    [Fact]
+    public async Task SheetControlAsync_Variants_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var ct = TestContext.Current.CancellationToken;
+        var path = _tempSession.GetFilePath("sheet-async.xlsx");
+        await File.WriteAllBytesAsync(path, bytes, ct);
+        var names = await svc.ListSheetNamesAsync(bytes, ct);
+        Assert.Equal(["SheetA", "SheetB"], names);
+        var fileNames = await svc.ListSheetNamesAsync(path, ct);
+        Assert.Equal(["SheetA", "SheetB"], fileNames);
+        var dict = await svc.ParseXlsxBytesAsDictionaryAsync(bytes, "SheetB", ct);
+        Assert.Equal("B", dict[0][1]);
+        var dt = await svc.ParseXlsxBytesAsDataTableAsync(bytes, 1, ct: ct);
+        Assert.True(dt.IsSuccess);
+        Assert.Equal("B", dt.ValueOrThrow().Rows[0][1].DisplayValue);
+        var sheets = await svc.ParseXlsxBytesAsAllSheetsAsync(bytes, ct: ct);
+        Assert.Equal(2, sheets.Count);
+        var fileSheets = await svc.ParseXlsxFileAsAllSheetsAsync(path, ct: ct);
+        Assert.Equal(2, fileSheets.Count);
+    }
+#endif
 
 #if !NETSTANDARD2_0
     [Fact]
@@ -778,381 +1121,6 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var dict = await svc.ParseXlsxFileAsDictionaryAsync(path, TestContext.Current.CancellationToken);
         Assert.Single(dict);
         Assert.Equal("Test", dict[0][0]);
-    }
-#endif
-
-    private byte[] BuildTwoSheetWorkbook(XlsxService svc)
-    {
-        TestModel[] a = [new() { Id = 1, Name = "A", Age = 10 }];
-        TestModel[] b = [new() { Id = 2, Name = "B", Age = 20 }, new() { Id = 3, Name = "C", Age = 30 }];
-        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", a }, { "SheetB", b } };
-        return svc.ExportToXlsxBytes(dataSets);
-    }
-
-    [Fact]
-    public void ListSheetNames_ReturnsSheetsInWorkbookOrder()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var fromBytes = svc.ListSheetNames(bytes);
-        Assert.Equal(["SheetA", "SheetB"], fromBytes);
-
-        using var ms = BytesToStream(bytes);
-        var fromStream = svc.ListSheetNames(ms);
-        Assert.Equal(["SheetA", "SheetB"], fromStream);
-
-        var path = _tempSession.GetFilePath("list-sheets.xlsx");
-        File.WriteAllBytes(path, bytes);
-        var fromFile = svc.ListSheetNames(path);
-        Assert.Equal(["SheetA", "SheetB"], fromFile);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDictionary_BySheetName_SelectsCorrectSheet()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var dict = svc.ParseXlsxBytesAsDictionary(bytes, "SheetB");
-        Assert.Equal(2, dict.Count);
-        Assert.Equal("B", dict[0][1]);
-        Assert.Equal("C", dict[1][1]);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDictionary_BySheetIndex_SelectsCorrectSheet()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var dict = svc.ParseXlsxBytesAsDictionary(bytes, 1);
-        Assert.Equal(2, dict.Count);
-        Assert.Equal("B", dict[0][1]);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDictionary_UnknownSheet_Throws()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, "NoSuchSheet"));
-        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, 5));
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDataTable_BySheetName_SelectsCorrectSheet()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var result = svc.ParseXlsxBytesAsDataTable(bytes, "SheetB");
-        Assert.True(result.IsSuccess);
-        var dt = result.ValueOrThrow();
-        Assert.Equal("Name", dt.Headers[1].DisplayValue);
-        Assert.Equal(2, dt.Rows.Count);
-        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
-        Assert.Equal("C", dt.Rows[1][1].DisplayValue);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDataTable_BySheetIndex_SelectsCorrectSheet()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var first = svc.ParseXlsxBytesAsDataTable(bytes, 0);
-        Assert.True(first.IsSuccess);
-        Assert.Equal("A", first.ValueOrThrow().Rows[0][1].DisplayValue);
-
-        var second = svc.ParseXlsxBytesAsDataTable(bytes, 1);
-        Assert.True(second.IsSuccess);
-        Assert.Equal("B", second.ValueOrThrow().Rows[0][1].DisplayValue);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsDataTable_UnknownSheet_ReturnsFailure()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, "NoSuchSheet").IsSuccess);
-        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, 5).IsSuccess);
-    }
-
-    [Fact]
-    public void ParseXlsxBytesAsAllSheets_ReturnsAllSheetsInOrder()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-
-        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
-        Assert.Equal(2, sheets.Count);
-        Assert.Equal(["SheetA", "SheetB"], sheets.Keys.ToArray());
-        Assert.Single(sheets["SheetA"].Rows);
-        Assert.Equal("A", sheets["SheetA"].Rows[0][1].DisplayValue);
-        Assert.Equal(2, sheets["SheetB"].Rows.Count);
-        Assert.Equal("C", sheets["SheetB"].Rows[1][1].DisplayValue);
-    }
-
-    [Fact]
-    public void ParseXlsxFileAndStream_SheetOverloads_Work()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-        var path = _tempSession.GetFilePath("sheet-overloads.xlsx");
-        File.WriteAllBytes(path, bytes);
-
-        var fileDict = svc.ParseXlsxFileAsDictionary(path, "SheetB");
-        Assert.Equal("B", fileDict[0][1]);
-
-        var fileDt = svc.ParseXlsxFileAsDataTable(path, 1);
-        Assert.True(fileDt.IsSuccess);
-        Assert.Equal("B", fileDt.ValueOrThrow().Rows[0][1].DisplayValue);
-
-        var fileSheets = svc.ParseXlsxFileAsAllSheets(path);
-        Assert.Equal(2, fileSheets.Count);
-
-        using var ms1 = BytesToStream(bytes);
-        var streamDict = svc.ParseXlsxStreamAsDictionary(ms1, 1);
-        Assert.Equal("B", streamDict[0][1]);
-
-        using var ms2 = BytesToStream(bytes);
-        var streamDt = svc.ParseXlsxStreamAsDataTable(ms2, "SheetA");
-        Assert.True(streamDt.IsSuccess);
-        Assert.Equal("A", streamDt.ValueOrThrow().Rows[0][1].DisplayValue);
-
-        using var ms3 = BytesToStream(bytes);
-        var streamSheets = svc.ParseXlsxStreamAsAllSheets(ms3);
-        Assert.Equal(2, streamSheets.Count);
-    }
-
-    [Fact]
-    public void DocumentWriter_MultiSheetSession_RoundTrips()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        using var ms = new MemoryStream();
-
-        var ct = TestContext.Current.CancellationToken;
-        using (var doc = svc.CreateDocumentWriter(ms)) {
-            doc.AddSheet("Typed", new[] { new TestModel { Id = 1, Name = "Alpha", Age = 11 } }, ct);
-
-            List<PropertyInfo> props = [typeof(TestModel).GetProperty(nameof(TestModel.Name))!];
-            doc.AddSheet("Selected", new[] { new TestModel { Id = 2, Name = "Beta", Age = 22 } }, props, ct);
-
-            var dictData = new Dictionary<int, IReadOnlyDictionary<int, string>> {
-                { 0, new Dictionary<int, string> { { 0, "H1" }, { 1, "H2" } } },
-                { 1, new Dictionary<int, string> { { 0, "v1" }, { 1, "v2" } } }
-            };
-            doc.AddSheetFromDictionary("Dict", dictData, ct: ct);
-
-            var source = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytes(new[] { new TestModel { Id = 3, Name = "Gamma", Age = 33 } })).ValueOrThrow();
-            doc.AddSheetFromDataTable("Table", source, ct);
-        }
-
-        var bytes = ms.ToArray();
-        Assert.True(bytes.Length > 0);
-
-        var names = svc.ListSheetNames(bytes);
-        Assert.Equal(["Typed", "Selected", "Dict", "Table"], names);
-
-        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
-        Assert.Equal(4, sheets.Count);
-        Assert.Equal("Alpha", sheets["Typed"].Rows[0][1].DisplayValue);
-        Assert.Equal("Name", sheets["Selected"].Headers[0].DisplayValue);
-        Assert.Equal("Beta", sheets["Selected"].Rows[0][0].DisplayValue);
-        Assert.Equal("H1", sheets["Dict"].Headers[0].DisplayValue);
-        Assert.Equal("v2", sheets["Dict"].Rows[0][1].DisplayValue);
-        Assert.Equal("Gamma", sheets["Table"].Rows[0][1].DisplayValue);
-    }
-
-    [Fact]
-    public void DocumentWriter_ToFile_FinalizesOnDispose()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var path = _tempSession.GetFilePath("doc-writer.xlsx");
-
-        var ct = TestContext.Current.CancellationToken;
-        using (var doc = svc.CreateDocumentWriter(path)) {
-            doc.AddSheet("First", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
-            doc.AddSheet("Second", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct);
-        }
-
-        Assert.True(File.Exists(path));
-        Assert.Equal(["First", "Second"], svc.ListSheetNames(path));
-        var dt = svc.ParseXlsxFileAsDataTable(path, "Second").ValueOrThrow();
-        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
-    }
-
-    [Fact]
-    public void DocumentWriter_DuplicateSheetName_Throws()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var ct = TestContext.Current.CancellationToken;
-        using var ms = new MemoryStream();
-        using var doc = svc.CreateDocumentWriter(ms);
-        doc.AddSheet("Dup", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
-        Assert.Throws<ArgumentException>(() => doc.AddSheet("Dup", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
-        // Case-insensitive: Excel treats sheet names case-insensitively.
-        Assert.Throws<ArgumentException>(() => doc.AddSheet("DUP", new[] { new TestModel { Id = 3, Name = "C", Age = 30 } }, ct));
-    }
-
-    [Fact]
-    public void DocumentWriter_AddSheetAfterDispose_Throws()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var ct = TestContext.Current.CancellationToken;
-        using var ms = new MemoryStream();
-        var doc = svc.CreateDocumentWriter(ms);
-        doc.AddSheet("Only", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
-        doc.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => doc.AddSheet("Late", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
-    }
-
-    [Fact]
-    public void DocumentWriter_SpannedDataTable_EmitsMerges()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var spanned = new DataTable.Models.DataTable();
-        spanned.SetHeader(0, "A").SetHeader(1, "B");
-        spanned.SetCell(0, 0, new DataTable.Models.DataTableCell<string>("wide", ColSpan: 2));
-
-        using var ms = new MemoryStream();
-        using (var doc = svc.CreateDocumentWriter(ms))
-            doc.AddSheetFromDataTable("Spans", spanned, TestContext.Current.CancellationToken);
-
-        var dt = svc.ParseXlsxBytesAsDataTable(ms.ToArray(), "Spans").ValueOrThrow();
-        Assert.Equal(2, dt.Rows[0][0].ColSpan);
-    }
-
-    [Fact]
-    public void SplitXlsxBytesBySheet_ProducesOneWorkbookPerSheet()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-        var parts = svc.SplitXlsxBytesBySheet(bytes);
-        Assert.Equal(2, parts.Count);
-        Assert.Equal("A", svc.ParseXlsxBytesAsDataTable(parts["SheetA"]).ValueOrThrow().Rows[0][1].DisplayValue);
-        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts["SheetB"]).ValueOrThrow().Rows.Count);
-    }
-
-    [Fact]
-    public void SplitXlsxByRows_RepeatsHeaderAndChunksData()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var data = Enumerable.Range(1, 5).Select(i => new TestModel { Id = i, Name = $"N{i}", Age = i }).ToList();
-        var bytes = svc.ExportToXlsxBytes(data);
-        var parts = svc.SplitXlsxBytesByRows(bytes, 2);
-        Assert.Equal(3, parts.Count);
-        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts[0]).ValueOrThrow().Rows.Count);
-        Assert.Single(svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Rows);
-        Assert.Equal("Name", svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Headers[1].DisplayValue);
-    }
-
-    [Fact]
-    public void MergeXlsxBytes_PreserveSheets_KeepsAllSheetsWithDedupe()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var wb1 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> {
-            { "SheetA", [new() { Id = 1, Name = "A", Age = 10 }] },
-            { "Shared", [new() { Id = 2, Name = "B", Age = 20 }] }
-        });
-        var wb2 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> {
-            { "Shared", [new() { Id = 3, Name = "C", Age = 30 }] }
-        });
-        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.PreserveSheets);
-        var sheets = svc.ParseXlsxBytesAsAllSheets(mergedBytes);
-        Assert.Equal(3, sheets.Count);
-        Assert.True(sheets.ContainsKey("SheetA"));
-        Assert.True(sheets.ContainsKey("Shared"));
-        Assert.True(sheets.ContainsKey("Shared (2)"));
-    }
-
-    [Fact]
-    public void MergeXlsxBytes_ConcatenateRows_AppendsAllDataRows()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var wb1 = svc.ExportToXlsxBytes([new TestModel { Id = 1, Name = "A", Age = 10 }]);
-        var wb2 = svc.ExportToXlsxBytes([new TestModel { Id = 2, Name = "B", Age = 20 }]);
-        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.ConcatenateRows);
-        var merged = svc.ParseXlsxBytesAsDataTable(mergedBytes, "Merged").ValueOrThrow();
-        Assert.Equal(2, merged.Rows.Count);
-        Assert.Equal("A", merged.Rows[0][1].DisplayValue);
-        Assert.Equal("B", merged.Rows[1][1].DisplayValue);
-    }
-
-    [Fact]
-    public void SplitXlsxBySheet_FileAndStreamVariants_Work()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-        var path = _tempSession.GetFilePath("split-by-sheet.xlsx");
-        File.WriteAllBytes(path, bytes);
-        var outputDir = Path.Combine(Path.GetDirectoryName(path)!, "split-out");
-        Directory.CreateDirectory(outputDir);
-        var createdPaths = svc.SplitXlsxBySheet(path, outputDir);
-        Assert.Equal(2, createdPaths.Count);
-        Assert.Equal("A", svc.ParseXlsxFileAsDataTable(createdPaths[0]).ValueOrThrow().Rows[0][1].DisplayValue);
-
-        var streamSheetNames = new List<string>();
-        using (var input = BytesToStream(bytes))
-            svc.SplitXlsxBySheet(input, sheetName => {
-                streamSheetNames.Add(sheetName);
-                return new MemoryStream();
-            }, leaveOpen: true);
-
-        Assert.Equal(["SheetA", "SheetB"], streamSheetNames);
-    }
-
-#if NET
-    [Fact]
-    public async Task SheetControlAsync_Variants_Work()
-    {
-        EnsureCodePages();
-        var svc = new XlsxService(_logger);
-        var bytes = BuildTwoSheetWorkbook(svc);
-        var ct = TestContext.Current.CancellationToken;
-        var path = _tempSession.GetFilePath("sheet-async.xlsx");
-        await File.WriteAllBytesAsync(path, bytes, ct);
-
-        var names = await svc.ListSheetNamesAsync(bytes, ct);
-        Assert.Equal(["SheetA", "SheetB"], names);
-
-        var fileNames = await svc.ListSheetNamesAsync(path, ct);
-        Assert.Equal(["SheetA", "SheetB"], fileNames);
-
-        var dict = await svc.ParseXlsxBytesAsDictionaryAsync(bytes, "SheetB", ct);
-        Assert.Equal("B", dict[0][1]);
-
-        var dt = await svc.ParseXlsxBytesAsDataTableAsync(bytes, 1, ct: ct);
-        Assert.True(dt.IsSuccess);
-        Assert.Equal("B", dt.ValueOrThrow().Rows[0][1].DisplayValue);
-
-        var sheets = await svc.ParseXlsxBytesAsAllSheetsAsync(bytes, ct: ct);
-        Assert.Equal(2, sheets.Count);
-
-        var fileSheets = await svc.ParseXlsxFileAsAllSheetsAsync(path, ct: ct);
-        Assert.Equal(2, fileSheets.Count);
     }
 #endif
 }

@@ -32,18 +32,15 @@ public class ValidationErrorsBuilderTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Add_WhitespaceFieldName_Throws(string fieldName)
-        => Assert.Throws<ArgumentException>(() => new ValidationErrorsBuilder().Add(fieldName, "message"));
+    public void Add_WhitespaceFieldName_Throws(string fieldName) => Assert.Throws<ArgumentException>(() => new ValidationErrorsBuilder().Add(fieldName, "message"));
 
     [Fact]
-    public void Add_NullFieldName_Throws()
-        => Assert.Throws<ArgumentNullException>(() => new ValidationErrorsBuilder().Add(null!, "message"));
+    public void Add_NullFieldName_Throws() => Assert.Throws<ArgumentNullException>(() => new ValidationErrorsBuilder().Add(null!, "message"));
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Add_WhitespaceMessage_Throws(string message)
-        => Assert.Throws<ArgumentException>(() => new ValidationErrorsBuilder().Add("Email", message));
+    public void Add_WhitespaceMessage_Throws(string message) => Assert.Throws<ArgumentException>(() => new ValidationErrorsBuilder().Add("Email", message));
 
     [Fact]
     public void AddRange_AddsAllNonWhitespaceMessages()
@@ -55,8 +52,7 @@ public class ValidationErrorsBuilderTests
     }
 
     [Fact]
-    public void AddRange_NullMessages_Throws()
-        => Assert.Throws<ArgumentNullException>(() => new ValidationErrorsBuilder().AddRange("Email", null!));
+    public void AddRange_NullMessages_Throws() => Assert.Throws<ArgumentNullException>(() => new ValidationErrorsBuilder().AddRange("Email", null!));
 
     [Fact]
     public void AddIf_True_AddsError()

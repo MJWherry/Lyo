@@ -11,13 +11,10 @@ using ReportingConstants = Lyo.Reporting.Models.Constants;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Deletes terminal (Succeeded/Failed) generations older than <see cref="PostgresReportingOptions.GenerationRetention"/>
-/// and marks stale non-terminal (Pending/Running) generations Failed after
-/// <see cref="PostgresReportingOptions.StuckGenerationTimeout"/> (e.g. the host crashed mid-generation).
-/// Hosts schedule <see cref="CleanupAsync(CancellationToken)"/> themselves (e.g. via Lyo.Scheduler or
-/// <c>AddReportingMaintenanceWorker</c>). Output blobs live in host storage, so
-/// <see cref="ReportGenerationHooks.OnCleanupAsync"/> runs per row before deletion; a hook failure logs and skips
-/// that row without blocking cleanup of the remaining rows.
+/// Deletes terminal (Succeeded/Failed) generations older than <see cref="PostgresReportingOptions.GenerationRetention" /> and marks stale non-terminal (Pending/Running)
+/// generations Failed after <see cref="PostgresReportingOptions.StuckGenerationTimeout" /> (e.g. the host crashed mid-generation). Hosts schedule
+/// <see cref="CleanupAsync(CancellationToken)" /> themselves (e.g. via Lyo.Scheduler or <c>AddReportingMaintenanceWorker</c>). Output blobs live in host storage, so
+/// <see cref="ReportGenerationHooks.OnCleanupAsync" /> runs per row before deletion; a hook failure logs and skips that row without blocking cleanup of the remaining rows.
 /// </summary>
 public sealed class ReportRetentionService(
     IDbContextFactory<ReportingContext> dbFactory,
@@ -36,9 +33,9 @@ public sealed class ReportRetentionService(
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
 
     /// <summary>Runs one maintenance pass (stuck-run recovery, then retention). Returns the number of generations deleted; 0 when retention is not configured.</summary>
-    public Task<int> CleanupAsync(CancellationToken ct = default) => CleanupAsync(hooks: null, ct);
+    public Task<int> CleanupAsync(CancellationToken ct = default) => CleanupAsync(null, ct);
 
-    /// <summary>Runs one maintenance pass with explicit hooks (null falls back to the DI-registered <see cref="ReportGenerationHooks"/>).</summary>
+    /// <summary>Runs one maintenance pass with explicit hooks (null falls back to the DI-registered <see cref="ReportGenerationHooks" />).</summary>
     public async Task<int> CleanupAsync(ReportGenerationHooks? hooks, CancellationToken ct = default)
     {
         var deleted = await CleanupTerminalAsync(hooks, ct).ConfigureAwait(false);
@@ -46,7 +43,6 @@ public sealed class ReportRetentionService(
         // Recovery runs after the delete pass so a newly recovered row stays visible (as Failed, with an
         // explanatory error) for at least one retention interval instead of vanishing in the same pass.
         await RecoverStuckGenerationsAsync(ct).ConfigureAwait(false);
-
         return deleted;
     }
 
@@ -59,11 +55,9 @@ public sealed class ReportRetentionService(
         var cutoff = DateTime.UtcNow - retention;
         var deletedTotal = 0;
         var skippedIds = new List<Guid>();
-
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         while (!ct.IsCancellationRequested) {
-            var batch = await db.ReportGenerations
-                .Where(g => g.CreatedTimestamp < cutoff && TerminalStatuses.Contains(g.Status) && !skippedIds.Contains(g.Id))
+            var batch = await db.ReportGenerations.Where(g => g.CreatedTimestamp < cutoff && TerminalStatuses.Contains(g.Status) && !skippedIds.Contains(g.Id))
                 .OrderBy(g => g.CreatedTimestamp)
                 .Take(BatchSize)
                 .ToListAsync(ct)
@@ -89,8 +83,8 @@ public sealed class ReportRetentionService(
 
             if (skippedIds.Count >= MaxSkippedPerPass) {
                 logger.LogWarning(
-                    "Reporting retention cleanup stopped after {Skipped} rows were skipped by cleanup hook failures; remaining rows retried next pass",
-                    skippedIds.Count);
+                    "Reporting retention cleanup stopped after {Skipped} rows were skipped by cleanup hook failures; remaining rows retried next pass", skippedIds.Count);
+
                 break;
             }
         }
@@ -105,9 +99,8 @@ public sealed class ReportRetentionService(
     }
 
     /// <summary>
-    /// Marks Pending/Running generations older than <see cref="PostgresReportingOptions.StuckGenerationTimeout"/>
-    /// as Failed so crashed hosts don't strand rows forever. Returns the number of generations recovered;
-    /// 0 when recovery is not configured.
+    /// Marks Pending/Running generations older than <see cref="PostgresReportingOptions.StuckGenerationTimeout" /> as Failed so crashed hosts don't strand rows forever. Returns
+    /// the number of generations recovered; 0 when recovery is not configured.
     /// </summary>
     public async Task<int> RecoverStuckGenerationsAsync(CancellationToken ct = default)
     {
@@ -116,12 +109,11 @@ public sealed class ReportRetentionService(
 
         var cutoff = DateTime.UtcNow - stuckTimeout;
         var recoveredTotal = 0;
-
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         while (!ct.IsCancellationRequested) {
             var batch = await db.ReportGenerations
-                .Where(g => (g.Status == nameof(ReportGenerationStatus.Running) && (g.StartedTimestamp ?? g.CreatedTimestamp) < cutoff)
-                            || (g.Status == nameof(ReportGenerationStatus.Pending) && g.CreatedTimestamp < cutoff))
+                .Where(g => (g.Status == nameof(ReportGenerationStatus.Running) && (g.StartedTimestamp ?? g.CreatedTimestamp) < cutoff) ||
+                    (g.Status == nameof(ReportGenerationStatus.Pending) && g.CreatedTimestamp < cutoff))
                 .OrderBy(g => g.CreatedTimestamp)
                 .Take(BatchSize)
                 .ToListAsync(ct)
@@ -134,13 +126,12 @@ public sealed class ReportRetentionService(
             foreach (var generation in batch) {
                 var stuckStatus = generation.Status;
                 logger.LogWarning(
-                    "Report generation {GenerationId} stuck in {Status} since {Since:u}; marking Failed",
-                    generation.Id, stuckStatus, generation.StartedTimestamp ?? generation.CreatedTimestamp);
+                    "Report generation {GenerationId} stuck in {Status} since {Since:u}; marking Failed", generation.Id, stuckStatus,
+                    generation.StartedTimestamp ?? generation.CreatedTimestamp);
 
                 generation.Status = nameof(ReportGenerationStatus.Failed);
                 generation.FinishedTimestamp = now;
-                generation.ErrorMessage =
-                    $"Generation was stuck in status {stuckStatus} for over {stuckTimeout}; " +
+                generation.ErrorMessage = $"Generation was stuck in status {stuckStatus} for over {stuckTimeout}; " +
                     "marked Failed by stuck-run recovery (the host likely crashed or restarted mid-generation).";
             }
 
@@ -164,13 +155,12 @@ public sealed class ReportRetentionService(
 
         try {
             await hooks.OnCleanupAsync(
-                    new ReportCleanupContext {
+                    new() {
                         GenerationId = generation.Id,
                         OutputFileId = generation.OutputFileId,
                         PathPrefix = generation.PathPrefix,
                         Services = services
-                    },
-                    ct)
+                    }, ct)
                 .ConfigureAwait(false);
 
             return true;

@@ -25,9 +25,7 @@ public sealed class XlsxReportRenderer(IXlsxService xlsxService) : IReportRender
         if (!CanRender(request.Format))
             throw new NotSupportedException($"{nameof(XlsxReportRenderer)} cannot render format {request.Format}.");
 
-        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions)
-                     ?? throw new ReportValidationException("Failed to deserialize report JSON.");
-
+        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions) ?? throw new ReportValidationException("Failed to deserialize report JSON.");
         var grids = CollectGrids(report);
         if (grids.Count == 0)
             throw new ReportValidationException("XLSX generation requires at least one grid in the report.");
@@ -38,7 +36,7 @@ public sealed class XlsxReportRenderer(IXlsxService xlsxService) : IReportRender
             foreach (var grid in grids) {
                 index++;
                 var sheetName = BuildSheetName(grid.Title, index, usedNames);
-                writer.AddSheetFromDictionary(sheetName, GridToDictionary(grid), useHeaderRow: true, ct);
+                writer.AddSheetFromDictionary(sheetName, GridToDictionary(grid), true, ct);
             }
         }
 
@@ -94,6 +92,7 @@ public sealed class XlsxReportRenderer(IXlsxService xlsxService) : IReportRender
         baseName = new string(baseName.Where(c => c is not ('\\' or '/' or '*' or '[' or ']' or ':' or '?')).ToArray()).Trim();
         if (baseName.Length == 0)
             baseName = $"Grid {index}";
+
         if (baseName.Length > MaxSheetNameLength)
             baseName = baseName[..MaxSheetNameLength];
 
@@ -101,9 +100,7 @@ public sealed class XlsxReportRenderer(IXlsxService xlsxService) : IReportRender
         var suffix = 2;
         while (!usedNames.Add(name)) {
             var tag = $" ({suffix++})";
-            name = baseName.Length + tag.Length > MaxSheetNameLength
-                ? baseName[..(MaxSheetNameLength - tag.Length)] + tag
-                : baseName + tag;
+            name = baseName.Length + tag.Length > MaxSheetNameLength ? baseName[..(MaxSheetNameLength - tag.Length)] + tag : baseName + tag;
         }
 
         return name;

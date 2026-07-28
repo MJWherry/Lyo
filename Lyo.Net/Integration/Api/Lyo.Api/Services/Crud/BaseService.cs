@@ -76,9 +76,9 @@ public abstract class BaseService<TContext>(IDbContextFactory<TContext> contextF
     }
 
     /// <summary>
-    /// Maps source onto an existing destination entity, or copies mapped non-key property values directly when TSource and TDest are the
-    /// same type (skips mapping). The dynamic CRUD endpoints deserialize request bodies into the entity type itself, so update/upsert
-    /// would otherwise ask the mapper for an entity-to-entity mapping that domain mappers don't configure.
+    /// Maps source onto an existing destination entity, or copies mapped non-key property values directly when TSource and TDest are the same type (skips mapping). The dynamic
+    /// CRUD endpoints deserialize request bodies into the entity type itself, so update/upsert would otherwise ask the mapper for an entity-to-entity mapping that domain mappers don't
+    /// configure.
     /// </summary>
     protected static void MapOrCopy<TSource, TDest>(ILyoMapper mapper, DbContext context, TSource source, TDest destination)
         where TDest : class

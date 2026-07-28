@@ -11,15 +11,6 @@ public class GoneException : HttpException
     /// <summary>Gets the identifier of the resource that is gone, if applicable.</summary>
     public object? ResourceId { get; }
 
-    /// <summary>Creates a <see cref="GoneException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
-    /// <param name="resourceName">The name or type of the resource that is gone.</param>
-    /// <param name="resourceId">The identifier of the resource that is gone.</param>
-    public static GoneException ForResource(string resourceName, object? resourceId = null)
-    {
-        var message = resourceId != null ? $"{resourceName} with ID '{resourceId}' is no longer available." : $"{resourceName} is no longer available.";
-        return new(message, resourceName, resourceId);
-    }
-
     /// <summary>Initializes a new instance of the <see cref="GoneException" /> class.</summary>
     public GoneException()
         : base(HttpStatusCode, "The requested resource is no longer available.") { }
@@ -40,5 +31,14 @@ public class GoneException : HttpException
     {
         ResourceName = resourceName;
         ResourceId = resourceId;
+    }
+
+    /// <summary>Creates a <see cref="GoneException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
+    /// <param name="resourceName">The name or type of the resource that is gone.</param>
+    /// <param name="resourceId">The identifier of the resource that is gone.</param>
+    public static GoneException ForResource(string resourceName, object? resourceId = null)
+    {
+        var message = resourceId != null ? $"{resourceName} with ID '{resourceId}' is no longer available." : $"{resourceName} is no longer available.";
+        return new(message, resourceName, resourceId);
     }
 }

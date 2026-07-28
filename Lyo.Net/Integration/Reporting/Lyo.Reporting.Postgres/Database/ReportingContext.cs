@@ -18,7 +18,6 @@ public sealed class ReportingContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(PostgresReportingOptions.Schema);
-
         modelBuilder.Entity<ReportDefinition>(entity => {
             entity.ToTable("report_definition");
             entity.HasKey(e => e.Id);
@@ -61,10 +60,7 @@ public sealed class ReportingContext : DbContext
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
             entity.HasIndex(e => e.ReportDefinitionId).HasDatabaseName("ix_report_definition_parameter_definition_id");
             entity.HasIndex(e => new { e.ReportDefinitionId, e.Key }).IsUnique().HasDatabaseName("ix_report_definition_parameter_definition_key");
-            entity.HasOne(e => e.ReportDefinition)
-                .WithMany(d => d.Parameters)
-                .HasForeignKey(e => e.ReportDefinitionId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ReportDefinition).WithMany(d => d.Parameters).HasForeignKey(e => e.ReportDefinitionId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ReportGeneration>(entity => {
@@ -88,10 +84,7 @@ public sealed class ReportingContext : DbContext
             entity.HasIndex(e => e.Status).HasDatabaseName("ix_report_generation_status");
             entity.HasIndex(e => e.CreatedTimestamp).HasDatabaseName("ix_report_generation_created_timestamp");
             entity.HasIndex(e => e.OutputFileId).HasDatabaseName("ix_report_generation_output_file_id");
-            entity.HasOne(e => e.ReportDefinition)
-                .WithMany(d => d.Generations)
-                .HasForeignKey(e => e.ReportDefinitionId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ReportDefinition).WithMany(d => d.Generations).HasForeignKey(e => e.ReportDefinitionId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ReportGenerationParameter>(entity => {
@@ -106,10 +99,7 @@ public sealed class ReportingContext : DbContext
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
             entity.HasIndex(e => e.ReportGenerationId).HasDatabaseName("ix_report_generation_parameter_generation_id");
             entity.HasIndex(e => new { e.ReportGenerationId, e.Key }).HasDatabaseName("ix_report_generation_parameter_generation_key");
-            entity.HasOne(e => e.ReportGeneration)
-                .WithMany(g => g.Parameters)
-                .HasForeignKey(e => e.ReportGenerationId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ReportGeneration).WithMany(g => g.Parameters).HasForeignKey(e => e.ReportGenerationId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

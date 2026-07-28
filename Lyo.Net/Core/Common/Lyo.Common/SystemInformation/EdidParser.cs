@@ -10,10 +10,9 @@ internal static class EdidParser
     private static readonly int[] DescriptorOffsets = [54, 72, 90, 108];
 
     /// <summary>Determines whether <paramref name="edid" /> starts with the fixed 8-byte EDID header (<c>00 FF FF FF FF FF FF 00</c>) and is at least one 128-byte block long.</summary>
-    internal static bool IsValid(byte[]? edid) =>
-        edid is { Length: >= MinimumLength }
-        && edid[0] == 0x00 && edid[1] == 0xFF && edid[2] == 0xFF && edid[3] == 0xFF
-        && edid[4] == 0xFF && edid[5] == 0xFF && edid[6] == 0xFF && edid[7] == 0x00;
+    internal static bool IsValid(byte[]? edid)
+        => edid is { Length: >= MinimumLength } && edid[0] == 0x00 && edid[1] == 0xFF && edid[2] == 0xFF && edid[3] == 0xFF && edid[4] == 0xFF && edid[5] == 0xFF &&
+            edid[6] == 0xFF && edid[7] == 0x00;
 
     /// <summary>Decodes the three-letter PNP manufacturer code packed as three 5-bit letters (big-endian) in bytes 8-9.</summary>
     /// <returns>The manufacturer code (e.g. <c>AUO</c>, <c>DEL</c>), or <see langword="null" /> when the blob is invalid or the letters are out of range.</returns>
@@ -32,7 +31,7 @@ internal static class EdidParser
             letters[i] = (char)('A' + value - 1);
         }
 
-        return new string(letters);
+        return new(letters);
     }
 
     /// <summary>Extracts the monitor model name from the display product name descriptor (tag <c>0xFC</c>) in one of the four 18-byte descriptor blocks.</summary>

@@ -8,7 +8,10 @@ namespace Lyo.Encryption;
 /// </summary>
 public sealed record EncryptionHeader
 {
-    /// <summary><see cref="DekEncoding" /> value: the DEK is encrypted with the KEK encryption service's regular single-shot format (used when no raw AES-sized KEK is available, e.g. RSA KEKs).</summary>
+    /// <summary>
+    /// <see cref="DekEncoding" /> value: the DEK is encrypted with the KEK encryption service's regular single-shot format (used when no raw AES-sized KEK is available, e.g. RSA
+    /// KEKs).
+    /// </summary>
     public const byte DekEncodingEnvelope = 0;
 
     /// <summary><see cref="DekEncoding" /> value: the DEK is wrapped with AES Key Wrap (RFC 3394) — deterministic, integrity-checked, and always exactly <c>dekLength + 8</c> bytes.</summary>
@@ -161,16 +164,16 @@ public sealed record EncryptionHeader
     }
 
     /// <summary>
-    /// Infers how an encrypted DEK blob is encoded from its length: AES Key Wrap output is always exactly
-    /// <paramref name="dekKeyMaterialBytes" /> + <see cref="AesKeyWrapOverhead" /> bytes, while KEK-service envelopes (version + nonce + tag + ciphertext) are always larger.
+    /// Infers how an encrypted DEK blob is encoded from its length: AES Key Wrap output is always exactly <paramref name="dekKeyMaterialBytes" /> +
+    /// <see cref="AesKeyWrapOverhead" /> bytes, while KEK-service envelopes (version + nonce + tag + ciphertext) are always larger.
     /// </summary>
     public static byte InferDekEncoding(int encryptedDekLength, byte dekKeyMaterialBytes)
         => encryptedDekLength == dekKeyMaterialBytes + AesKeyWrapOverhead ? DekEncodingAesKeyWrap : DekEncodingEnvelope;
 
     /// <summary>
     /// Creates a copy of this header with updated values. When <paramref name="encryptedDataEncryptionKey" /> is supplied (e.g. during DEK migration to a different KEK),
-    /// <see cref="DekEncoding" /> is recomputed from the new blob via <see cref="InferDekEncoding" /> — the old value may no longer match when the source and target KEKs
-    /// differ in AES Key Wrap eligibility, and a stale byte would make the file undecryptable.
+    /// <see cref="DekEncoding" /> is recomputed from the new blob via <see cref="InferDekEncoding" /> — the old value may no longer match when the source and target KEKs differ in AES
+    /// Key Wrap eligibility, and a stale byte would make the file undecryptable.
     /// </summary>
     public EncryptionHeader With(
         string? keyId = null,

@@ -14,8 +14,8 @@ public static class QueueMessageExtensions
     /// <param name="enqueuedAt">Optional enqueue timestamp. Defaults to UtcNow.</param>
     /// <param name="traceId">Optional trace ID for distributed tracing.</param>
     /// <param name="priority">
-    /// Optional message priority (0 = default). Honored only when the transport implements <see cref="IPriorityMqService" /> and the queue supports priorities; otherwise the
-    /// message is sent normally.
+    /// Optional message priority (0 = default). Honored only when the transport implements <see cref="IPriorityMqService" /> and the queue supports priorities;
+    /// otherwise the message is sent normally.
     /// </param>
     /// <returns>True if the message was sent successfully.</returns>
     public static Task<bool> SendToQueueWithEnvelopeAsync<T>(
@@ -37,15 +37,13 @@ public static class QueueMessageExtensions
     }
 
     /// <summary>
-    /// Subscribes to a queue with typed message handling — the consuming counterpart of <see cref="SendToQueueWithEnvelopeAsync{T}" />. Messages are deserialized with the
-    /// same autocorrect ladder used by <see cref="QueueWorkerBase{TRequest, TResult}" /> (full envelope → payload-only → bare legacy <typeparamref name="T" />), so enveloped
-    /// and legacy producers are both supported. Messages that cannot be deserialized by any path are acknowledged (dropped) instead of being redelivered forever.
+    /// Subscribes to a queue with typed message handling — the consuming counterpart of <see cref="SendToQueueWithEnvelopeAsync{T}" />. Messages are deserialized with the same
+    /// autocorrect ladder used by <see cref="QueueWorkerBase{TRequest, TResult}" /> (full envelope → payload-only → bare legacy <typeparamref name="T" />), so enveloped and legacy
+    /// producers are both supported. Messages that cannot be deserialized by any path are acknowledged (dropped) instead of being redelivered forever.
     /// </summary>
     /// <param name="mqService">The message queue service.</param>
     /// <param name="queueName">The queue to subscribe to.</param>
-    /// <param name="handler">
-    /// Receives the deserialized payload and the envelope (null for legacy non-enveloped messages). Return true to requeue the message, false to acknowledge it.
-    /// </param>
+    /// <param name="handler">Receives the deserialized payload and the envelope (null for legacy non-enveloped messages). Return true to requeue the message, false to acknowledge it.</param>
     /// <param name="serializerOptions">Optional serializer options.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if the subscription was established.</returns>

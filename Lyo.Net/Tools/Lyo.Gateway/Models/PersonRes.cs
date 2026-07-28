@@ -77,8 +77,7 @@ public sealed record PersonRes
 
     public IReadOnlyList<PersonPhoneNumberRes>? PhoneNumbers { get; init; }
 
-    public PersonAddressRes? MostRecentAddress
-        => Addresses?.OrderByDescending(a => a.UpdatedTimestamp ?? a.CreatedTimestamp).FirstOrDefault();
+    public PersonAddressRes? MostRecentAddress => Addresses?.OrderByDescending(a => a.UpdatedTimestamp ?? a.CreatedTimestamp).FirstOrDefault();
 
     public string FullName => $"{FirstName}{(string.IsNullOrEmpty(MiddleName) ? " " : $" {MiddleName} ")}{LastName}";
 

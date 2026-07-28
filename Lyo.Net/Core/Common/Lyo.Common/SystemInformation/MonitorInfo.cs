@@ -8,11 +8,4 @@ namespace Lyo.Common.SystemInformation;
 /// <param name="RefreshRateHz">Current refresh rate in Hz (Windows only).</param>
 /// <param name="Adapter">Display adapter (GPU) name driving the monitor (Windows only).</param>
 /// <param name="IsPrimary">Whether this is the primary display (Windows only; <see langword="null" /> when unknown).</param>
-public sealed record MonitorInfo(
-    string Connector,
-    string? Model,
-    string? ManufacturerId,
-    string? CurrentResolution,
-    int? RefreshRateHz,
-    string? Adapter,
-    bool? IsPrimary);
+public sealed record MonitorInfo(string Connector, string? Model, string? ManufacturerId, string? CurrentResolution, int? RefreshRateHz, string? Adapter, bool? IsPrimary);

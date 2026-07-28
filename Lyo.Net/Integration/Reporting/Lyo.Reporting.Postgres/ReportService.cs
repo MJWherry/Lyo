@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Lyo.Common.Conversion;
 using Lyo.Common.Identifiers;
@@ -23,8 +24,8 @@ using ReportingConstants = Lyo.Reporting.Models.Constants;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Orchestrates report generation: optional <see cref="IReportDataProvider"/>, render via <see cref="IReportRenderer"/>
-/// into IoTemp, then optional consumer hooks (e.g. persist via FileStorage). Reporting does not reference FileStorage.
+/// Orchestrates report generation: optional <see cref="IReportDataProvider" />, render via <see cref="IReportRenderer" /> into IoTemp, then optional consumer hooks (e.g.
+/// persist via FileStorage). Reporting does not reference FileStorage.
 /// </summary>
 public sealed class ReportService(
     IDbContextFactory<ReportingContext> dbFactory,
@@ -41,10 +42,10 @@ public sealed class ReportService(
     internal const int MaxFileNameLength = 255;
 
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
-    private readonly Dictionary<string, IReportDataProvider> _providersByKey =
-        ToUniqueKeyMap(dataProviders, p => p.ProfileKey, "IReportDataProvider.ProfileKey");
-    private readonly Dictionary<string, ReportingGenerationProfile> _profilesByKey =
-        ToUniqueKeyMap(profiles, p => p.Key, "ReportingGenerationProfile.Key");
+
+    private readonly Dictionary<string, ReportingGenerationProfile> _profilesByKey = ToUniqueKeyMap(profiles, p => p.Key, "ReportingGenerationProfile.Key");
+
+    private readonly Dictionary<string, IReportDataProvider> _providersByKey = ToUniqueKeyMap(dataProviders, p => p.ProfileKey, "IReportDataProvider.ProfileKey");
 
     /// <summary>Case-insensitive keyed lookup that fails with an actionable message when two registrations share a key.</summary>
     private static Dictionary<string, T> ToUniqueKeyMap<T>(IEnumerable<T> items, Func<T, string> keySelector, string what)
@@ -60,7 +61,7 @@ public sealed class ReportService(
     }
 
     public Task<ReportGenerationRes> GenerateAsync(GenerateReportReq request, ReportGenerationHooks? hooks = null, CancellationToken ct = default)
-        => GenerateCoreAsync(request, hooks, bypassAdHocPolicy: false, ct);
+        => GenerateCoreAsync(request, hooks, false, ct);
 
     // bypassAdHocPolicy: true for trusted internal snapshots (rerun) that must generate even when AllowAdHocGeneration is disabled.
     private async Task<ReportGenerationRes> GenerateCoreAsync(GenerateReportReq request, ReportGenerationHooks? hooks, bool bypassAdHocPolicy, CancellationToken ct)
@@ -68,21 +69,16 @@ public sealed class ReportService(
         ArgumentHelpers.ThrowIfNull(request);
         hooks ??= services.GetService<ReportGenerationHooks>() ?? new ReportGenerationHooks();
         var opts = options.Value;
-
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
         ReportDefinition? definition = null;
         List<ReportDefinitionParameter> definitionParameters = [];
         string? profileKey = null;
         string reportDataJson;
-        Guid? definitionId = request.ReportDefinitionId;
-
+        var definitionId = request.ReportDefinitionId;
         if (definitionId is Guid defId) {
-            definition = await db.ReportDefinitions.AsNoTracking()
-                             .Include(d => d.Parameters)
-                             .FirstOrDefaultAsync(d => d.Id == defId, ct)
-                             .ConfigureAwait(false)
-                         ?? throw new ReportValidationException($"Report definition {defId} was not found.");
+            definition = await db.ReportDefinitions.AsNoTracking().Include(d => d.Parameters).FirstOrDefaultAsync(d => d.Id == defId, ct).ConfigureAwait(false) ??
+                throw new ReportValidationException($"Report definition {defId} was not found.");
+
             if (!definition.IsActive)
                 throw new ReportValidationException($"Report definition {defId} is inactive.");
 
@@ -96,23 +92,20 @@ public sealed class ReportService(
                 EnsureAdHocAllowed(opts, bypassAdHocPolicy, "ReportDataJson");
                 reportDataJson = request.ReportDataJson!;
             }
-            else {
+            else
                 reportDataJson = definition.ReportDataJson;
-            }
         }
         else if (!string.IsNullOrWhiteSpace(request.ReportDataJson)) {
             EnsureAdHocAllowed(opts, bypassAdHocPolicy, "ReportDataJson");
             reportDataJson = request.ReportDataJson!;
         }
-        else {
+        else
             throw new ReportValidationException("Either ReportDefinitionId or ReportDataJson is required.");
-        }
 
         EnsureJsonSize(reportDataJson, opts.MaxReportDataJsonBytes, "ReportDataJson");
         EnsureParseableJson(reportDataJson, "ReportDataJson");
-
         var mergedParameters = MergeParameters(definitionParameters, request.Parameters);
-        var validationErrors = ReportParameterValidator.Validate(definitionParameters, mergedParameters, rejectUnknownKeys: definition is not null);
+        var validationErrors = ReportParameterValidator.Validate(definitionParameters, mergedParameters, definition is not null);
         if (validationErrors.Count > 0)
             throw new ReportValidationException(string.Join(" ", validationErrors));
 
@@ -125,19 +118,18 @@ public sealed class ReportService(
         var pathPrefix = FirstNonEmpty(request.PathPrefix, definition?.DefaultPathPrefix, profile?.DefaultPathPrefix);
         var createdBy = FirstNonEmpty(request.CreatedBy, ReportAuditHelper.GetActorName(services)) ?? "Unknown";
         createdBy = ReportingLyoMapper.TruncateCreatedBy(createdBy);
-
         var generationParamEntities = mergedParameters.Select(p => {
-            var entity = ReportingLyoMapper.ReqToNew(p);
-            entity.Id = LyoGuid.CreateCombPostgres();
-            return entity;
-        }).ToList();
+                var entity = ReportingLyoMapper.ReqToNew(p);
+                entity.Id = LyoGuid.CreateCombPostgres();
+                return entity;
+            })
+            .ToList();
 
         var paramResList = generationParamEntities.Select(ReportingLyoMapper.ToRes).ToList();
         var parametersJson = SerializeParametersJson(mergedParameters);
 
         // Slot is held across provider + render work; released in the outer finally.
         using var generationSlot = throttle is not null ? await throttle.AcquireAsync(ct).ConfigureAwait(false) : null;
-
         var now = DateTime.UtcNow;
         var generation = new ReportGeneration {
             Id = LyoGuid.CreateCombPostgres(),
@@ -151,15 +143,14 @@ public sealed class ReportService(
             CreatedTimestamp = now,
             Parameters = generationParamEntities
         };
+
         foreach (var p in generation.Parameters)
             p.ReportGenerationId = generation.Id;
 
         // Fix Res generation ids now that we know them
         paramResList = generation.Parameters.Select(ReportingLyoMapper.ToRes).ToList();
-
         db.ReportGenerations.Add(generation);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
-
         var effectiveRequest = new GenerateReportReq {
             ReportDefinitionId = request.ReportDefinitionId,
             ReportDataJson = request.ReportDataJson,
@@ -188,21 +179,19 @@ public sealed class ReportService(
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         if (opts.GenerationTimeout is { } generationTimeout)
             timeoutCts.CancelAfter(generationTimeout);
+
         var runCt = timeoutCts.Token;
-
         string? preRenderedPath = null;
-
         try {
             if (!string.IsNullOrWhiteSpace(profileKey) && _providersByKey.TryGetValue(profileKey!, out var provider)) {
                 var providerResult = await provider.BuildAsync(
-                        new ReportDataProviderRequest {
+                        new() {
                             ReportDefinitionId = definitionId,
                             Parameters = paramResList,
                             ParametersJson = parametersJson,
                             ReportDataJson = reportDataJson,
                             Services = services
-                        },
-                        runCt)
+                        }, runCt)
                     .ConfigureAwait(false);
 
                 if (!string.IsNullOrWhiteSpace(providerResult.ReportDataJson)) {
@@ -225,10 +214,7 @@ public sealed class ReportService(
             generation.Status = nameof(ReportGenerationStatus.Running);
             generation.StartedTimestamp = DateTime.UtcNow;
             await db.SaveChangesAsync(runCt).ConfigureAwait(false);
-
-            var ioTemp = services.GetService<IIOTempService>()
-                         ?? throw new InvalidOperationException("IIOTempService is required for report generation staging.");
-
+            var ioTemp = services.GetService<IIOTempService>() ?? throw new InvalidOperationException("IIOTempService is required for report generation staging.");
             using var session = ioTemp.CreateSession();
             var extension = FormatExtension(format);
             var stagedName = SanitizeFileName(ctx.FileName) ?? $"report-{generation.Id:N}{extension}";
@@ -239,20 +225,19 @@ public sealed class ReportService(
             if (!string.IsNullOrWhiteSpace(preRenderedPath)) {
                 if (!File.Exists(preRenderedPath))
                     throw new ReportValidationException($"Pre-rendered file was not found: {preRenderedPath}");
+
                 EnsureFileSize(preRenderedPath!, opts.MaxOutputFileBytes);
                 stagedPath = session.GetFilePath(stagedName);
-                File.Copy(preRenderedPath!, stagedPath, overwrite: true);
+                File.Copy(preRenderedPath!, stagedPath, true);
                 ctx.StagedFilePath = stagedPath;
                 ctx.ContentType ??= GuessContentType(format);
                 ctx.FileName = stagedName;
             }
             else {
-                var renderer = renderers.FirstOrDefault(r => r.CanRender(format))
-                               ?? throw new InvalidOperationException($"No IReportRenderer registered for format {format}.");
-
+                var renderer = renderers.FirstOrDefault(r => r.CanRender(format)) ?? throw new InvalidOperationException($"No IReportRenderer registered for format {format}.");
                 stagedPath = session.GetFilePath(stagedName);
                 var renderResult = await renderer.RenderAsync(
-                        new ReportRenderRequest {
+                        new() {
                             ReportDataJson = ctx.ReportDataJson,
                             Format = format,
                             OutputFilePath = stagedPath,
@@ -260,8 +245,7 @@ public sealed class ReportService(
                             Parameters = paramResList,
                             ParametersJson = parametersJson,
                             Services = services
-                        },
-                        runCt)
+                        }, runCt)
                     .ConfigureAwait(false);
 
                 EnsureFileSize(renderResult.FilePath, opts.MaxOutputFileBytes);
@@ -285,7 +269,6 @@ public sealed class ReportService(
             generation.ReportDataJson = ctx.ReportDataJson;
             generation.ErrorMessage = null;
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
-
             _metrics.IncrementCounter(ReportingConstants.Metrics.GenerationSucceeded, tags: [("format", format.ToString())]);
             ReportAuditHelper.RecordGenerated(services, generation.Id);
             return ReportingLyoMapper.ToRes(generation);
@@ -312,7 +295,6 @@ public sealed class ReportService(
             }
 
             _metrics.IncrementCounter(ReportingConstants.Metrics.GenerationFailed, tags: [("format", format.ToString())]);
-
             if (hooks.OnFailureAsync is not null) {
                 try {
                     var failure = new ReportGenerateFailureContext {
@@ -329,8 +311,10 @@ public sealed class ReportService(
                         Services = ctx.Services,
                         Exception = ex
                     };
+
                     foreach (var item in ctx.Items)
                         failure.Items[item.Key] = item.Value;
+
                     await hooks.OnFailureAsync(failure, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception hookEx) {
@@ -346,11 +330,8 @@ public sealed class ReportService(
     public async Task<ReportGenerationRes> RerunAsync(Guid generationId, string? createdBy = null, ReportGenerationHooks? hooks = null, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var source = await db.ReportGenerations.AsNoTracking()
-                         .Include(g => g.Parameters)
-                         .FirstOrDefaultAsync(g => g.Id == generationId, ct)
-                         .ConfigureAwait(false)
-                     ?? throw new ReportValidationException($"Report generation {generationId} was not found.");
+        var source = await db.ReportGenerations.AsNoTracking().Include(g => g.Parameters).FirstOrDefaultAsync(g => g.Id == generationId, ct).ConfigureAwait(false) ??
+            throw new ReportValidationException($"Report generation {generationId} was not found.");
 
         var request = new GenerateReportReq {
             // Replay the stored snapshot verbatim; skip the definition so a since-changed/inactive definition can't alter the rerun.
@@ -360,16 +341,17 @@ public sealed class ReportService(
             PathPrefix = source.PathPrefix,
             CreatedBy = createdBy,
             Parameters = source.Parameters.Select(p => new ReportGenerationParameterReq {
-                Key = p.Key,
-                Type = TypeConversion.EnumOrDefault(p.Type, ReportParameterType.Unknown),
-                Value = p.Value,
-                Description = p.Description,
-                EncryptedValue = p.EncryptedValue
-            }).ToList()
+                    Key = p.Key,
+                    Type = TypeConversion.EnumOrDefault(p.Type, ReportParameterType.Unknown),
+                    Value = p.Value,
+                    Description = p.Description,
+                    EncryptedValue = p.EncryptedValue
+                })
+                .ToList()
         };
 
         // Reruns replay trusted stored snapshots, so they remain possible on hosts with AllowAdHocGeneration disabled.
-        return await GenerateCoreAsync(request, hooks, bypassAdHocPolicy: true, ct).ConfigureAwait(false);
+        return await GenerateCoreAsync(request, hooks, true, ct).ConfigureAwait(false);
     }
 
     /// <summary>Request values override definition defaults by Key; missing keys get default Value from definition.</summary>
@@ -377,34 +359,32 @@ public sealed class ReportService(
         IReadOnlyList<ReportDefinitionParameter> definitionParameters,
         IReadOnlyList<ReportGenerationParameterReq> requestParameters)
     {
-        var requestByKey = requestParameters
-            .GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
-
+        var requestByKey = requestParameters.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
         var result = new List<ReportGenerationParameterReq>();
-
         foreach (var def in definitionParameters) {
             if (requestByKey.TryGetValue(def.Key, out var provided) && provided.Count > 0) {
                 foreach (var p in provided) {
-                    result.Add(new ReportGenerationParameterReq {
-                        Key = def.Key,
-                        Type = TypeConversion.EnumOrDefault(def.Type, ReportParameterType.Unknown),
-                        Value = p.Value,
-                        Description = p.Description ?? def.Description,
-                        EncryptedValue = p.EncryptedValue ?? def.EncryptedValue
-                    });
+                    result.Add(
+                        new() {
+                            Key = def.Key,
+                            Type = TypeConversion.EnumOrDefault(def.Type, ReportParameterType.Unknown),
+                            Value = p.Value,
+                            Description = p.Description ?? def.Description,
+                            EncryptedValue = p.EncryptedValue ?? def.EncryptedValue
+                        });
                 }
 
                 requestByKey.Remove(def.Key);
             }
             else if (!string.IsNullOrEmpty(def.Value) || def.EncryptedValue is not null || def.Required) {
-                result.Add(new ReportGenerationParameterReq {
-                    Key = def.Key,
-                    Type = TypeConversion.EnumOrDefault(def.Type, ReportParameterType.Unknown),
-                    Value = def.Value,
-                    Description = def.Description,
-                    EncryptedValue = def.EncryptedValue
-                });
+                result.Add(
+                    new() {
+                        Key = def.Key,
+                        Type = TypeConversion.EnumOrDefault(def.Type, ReportParameterType.Unknown),
+                        Value = def.Value,
+                        Description = def.Description,
+                        EncryptedValue = def.EncryptedValue
+                    });
             }
         }
 
@@ -458,17 +438,19 @@ public sealed class ReportService(
     {
         if (request.Format is { } reqFormat)
             return reqFormat;
-        if (!string.IsNullOrWhiteSpace(definition?.DefaultFormat)
-            && TypeConversion.EnumOrNull<ReportFormat>(definition.DefaultFormat) is { } defFormat)
+
+        if (!string.IsNullOrWhiteSpace(definition?.DefaultFormat) && TypeConversion.EnumOrNull<ReportFormat>(definition.DefaultFormat) is { } defFormat)
             return defFormat;
+
         if (profile?.DefaultFormat is { } profileFormat)
             return profileFormat;
+
         return ReportFormat.Html;
     }
 
     private static void EnsureJsonSize(string json, int maxBytes, string name)
     {
-        var bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+        var bytes = Encoding.UTF8.GetByteCount(json);
         if (bytes > maxBytes)
             throw new ReportValidationException($"{name} exceeds MaxReportDataJsonBytes ({bytes} > {maxBytes}).");
     }
@@ -496,7 +478,7 @@ public sealed class ReportService(
             ReportFormat.Csv => ".csv",
             ReportFormat.Xlsx => ".xlsx",
             ReportFormat.Json => ".json",
-            _ => ".html"
+            var _ => ".html"
         };
 
     private static string GuessContentType(ReportFormat format)
@@ -505,7 +487,7 @@ public sealed class ReportService(
             ReportFormat.Csv => "text/csv; charset=utf-8",
             ReportFormat.Xlsx => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ReportFormat.Json => "application/json; charset=utf-8",
-            _ => "text/html; charset=utf-8"
+            var _ => "text/html; charset=utf-8"
         };
 
     private static string? FirstNonEmpty(params string?[] values)

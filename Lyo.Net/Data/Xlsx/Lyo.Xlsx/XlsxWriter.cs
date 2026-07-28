@@ -7,7 +7,6 @@ using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
 #if NETSTANDARD2_0
-using Lyo.Common;
 #endif
 
 namespace Lyo.Xlsx;
@@ -194,7 +193,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         _logger.LogDebug("Opening xlsx document writing session on {XlsxExportPath}", xlsxFilePath);
         var fileStream = File.Create(xlsxFilePath);
         try {
-            return new XlsxDocumentWriter(fileStream, _logger, ownsStream: true);
+            return new XlsxDocumentWriter(fileStream, _logger, true);
         }
         catch {
             fileStream.Dispose();
@@ -259,7 +258,7 @@ internal sealed class XlsxWriter : IXlsxWriter
             DateTime dateTime => XlsxCell.Date(dateTime),
             bool boolean => XlsxCell.Boolean(boolean),
             decimal or double or float or int or long => XlsxCell.Number(Convert.ToDouble(value, CultureInfo.InvariantCulture)),
-            _ => XlsxCell.Text(value.ToString())
+            var _ => XlsxCell.Text(value.ToString())
         };
 
     internal static (List<string> Headers, List<XlsxCell[]> Rows) BuildFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow)
@@ -272,7 +271,6 @@ internal sealed class XlsxWriter : IXlsxWriter
 
         var maxCol = data.Values.SelectMany(r => r.Keys).DefaultIfEmpty(-1).Max() + 1;
         maxCol = Math.Max(maxCol, 1);
-
         var dataStart = 0;
         if (useHeaderRow) {
             var firstRow = orderedRows[0].Value;

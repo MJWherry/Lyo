@@ -1,9 +1,9 @@
 using System.Reflection;
 using CsvHelper.Configuration;
-using HelperCsvWriter = CsvHelper.CsvWriter;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
+using HelperCsvWriter = CsvHelper.CsvWriter;
 #if NETSTANDARD2_0
 using Lyo.Common;
 #endif

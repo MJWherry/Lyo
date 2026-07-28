@@ -25,8 +25,7 @@ public class ApiExceptionTests
     [InlineData(404, false)]
     [InlineData(409, false)]
     [InlineData(500, false)]
-    public void IsTransient_FollowsStatusCode(int statusCode, bool expected)
-        => Assert.Equal(expected, new ApiException(statusCode, "failed").IsTransient);
+    public void IsTransient_FollowsStatusCode(int statusCode, bool expected) => Assert.Equal(expected, new ApiException(statusCode, "failed").IsTransient);
 
     [Fact]
     public void ErrorCode_CanBeSetViaInitializer()

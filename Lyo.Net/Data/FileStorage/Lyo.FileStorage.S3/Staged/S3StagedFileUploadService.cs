@@ -42,9 +42,7 @@ public sealed class S3StagedFileUploadService : IStagedFileUploadService
         _store = store;
         _physicalIo = new(options, s3);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<S3StagedFileUploadService>();
-        _coordinator = new(
-            store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
-
+        _coordinator = new(store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);

@@ -193,6 +193,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             WithQuery(config.QueryAuth);
             if (config.DeniedSelectFields is { Count: > 0 })
                 _queryConfig = _queryConfig! with { DeniedSelectFields = config.DeniedSelectFields };
+
             if (features.Contains(ApiFeature.ProjectionComputedFields))
                 WithProjectionComputedFields();
         }
@@ -995,11 +996,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         if (queryConfig.MaxComputedTemplateLength is int maxTemplateLength) {
             foreach (var computed in queryRequest.ComputedFields) {
-                if (computed.Template.Length > maxTemplateLength)
+                if (computed.Template.Length > maxTemplateLength) {
                     errors.Add(
                         new(
                             Constants.ApiErrorCodes.InvalidQuery,
                             $"Computed field '{computed.Name}' template length ({computed.Template.Length}) exceeds endpoint maximum ({maxTemplateLength})."));
+                }
             }
         }
 
@@ -1326,7 +1328,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IDeleteService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
-                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>([id!], _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
+                            [id!], _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);
 
                     if (result.Error is null)
@@ -1348,7 +1351,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     [FromServices] IDeleteService<TDbContext> basicService,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
-                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(request, _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
+                            request, _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);
 
                     var keys = request.Keys?.Cast<object?>().ToArray();

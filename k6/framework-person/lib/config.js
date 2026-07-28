@@ -1,4 +1,4 @@
-import { env, toFloat, toInt, variedAmount, variedStart } from "./env.js";
+import { env, toBool, toFloat, toInt, variedAmount, variedStart } from "./env.js";
 
 export function loadMatrixConfig({ endpointKind, profile }) {
   const baseUrl = env("BASE_URL", "http://localhost:5251");
@@ -26,8 +26,13 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     toInt("QUERY_START_MAX", toInt("QUERYPROJECT_START_MAX", 1000))
   );
 
-  const defaultSleep = profile === "soak" ? 0.15 : profile === "spike" ? 0.02 : 0.08;
+  const defaultSleep =
+    profile === "ceiling" ? 0 : profile === "soak" ? 0.15 : profile === "spike" ? 0.02 : 0.08;
   const sleepSeconds = toFloat("MATRIX_SLEEP_SECONDS", defaultSleep);
+
+  // CACHE_HIT_MODE pins request shapes (fixed paging, no randomized includes/Select/sorts)
+  // so every case settles on one server cache key and subsequent requests hit the cache.
+  const cacheHitMode = toBool("CACHE_HIT_MODE", false);
 
   return {
     endpointKind,
@@ -43,6 +48,7 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     amountMax,
     startMax,
     sleepSeconds,
+    cacheHitMode,
   };
 }
 
@@ -56,6 +62,9 @@ export function resolveCaseIdsForEndpoint(endpointKind, requestedCases, fallback
 }
 
 export function nextStartAmount(config, iter, vu) {
+  if (config.cacheHitMode) {
+    return { start: 0, amount: config.amountMin };
+  }
   return {
     start: variedStart(config.startMax, iter, vu),
     amount: variedAmount(config.amountMin, config.amountMax, iter, vu),

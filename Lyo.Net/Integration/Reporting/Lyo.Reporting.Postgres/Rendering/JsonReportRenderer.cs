@@ -19,7 +19,7 @@ public sealed class JsonReportRenderer : IReportRenderer
             throw new NotSupportedException($"{nameof(JsonReportRenderer)} cannot render format {request.Format}.");
 
         await File.WriteAllTextAsync(request.OutputFilePath, request.ReportDataJson, Encoding.UTF8, ct).ConfigureAwait(false);
-        return new ReportRenderResult {
+        return new() {
             FilePath = request.OutputFilePath,
             ContentType = "application/json; charset=utf-8",
             FileName = request.SuggestedFileName ?? "report.json",

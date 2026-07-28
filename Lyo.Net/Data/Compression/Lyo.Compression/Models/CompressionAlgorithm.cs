@@ -40,10 +40,9 @@ public abstract record CompressionAlgorithm
     public string Extension { get; }
 
     /// <summary>
-    /// True when the compressor's fast binary (<c>byte[]</c>) Compress emits the same wire format its stream Decompress reads. When true,
-    /// <see cref="CompressionService" /> uses the binary API for <c>byte[]</c> compression (block codecs like LZ4/Snappy/Zstd are near memcpy-speed there); when false, it
-    /// falls back to the stream path so every API produces one consistent format per algorithm. Override to false only for codecs whose binary and stream formats differ
-    /// (e.g. Snappy's raw block vs framed format).
+    /// True when the compressor's fast binary (<c>byte[]</c>) Compress emits the same wire format its stream Decompress reads. When true, <see cref="CompressionService" /> uses
+    /// the binary API for <c>byte[]</c> compression (block codecs like LZ4/Snappy/Zstd are near memcpy-speed there); when false, it falls back to the stream path so every API produces
+    /// one consistent format per algorithm. Override to false only for codecs whose binary and stream formats differ (e.g. Snappy's raw block vs framed format).
     /// </summary>
     public virtual bool BinaryCompressMatchesStreamFormat => true;
 

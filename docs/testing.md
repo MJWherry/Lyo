@@ -83,8 +83,8 @@ by a single viewer under [`docs/benchmarks/`](benchmarks/index.html):
 
 ```bash
 # Rebuild dashboard data from existing artifacts / k6 results
-python3 scripts/benchmarks/build-manifests.py               # micro + k6
-python3 scripts/benchmarks/build-manifests.py --k6-only
+python3 scripts/benchmarks/build_manifests.py               # micro + k6
+python3 scripts/benchmarks/build_manifests.py --k6-only
 ```
 
 After regenerating, open [`docs/benchmarks/index.html`](benchmarks/index.html).

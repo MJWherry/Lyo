@@ -2,8 +2,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
-using Lyo.Api.Models.Common.Request;
-using Lyo.Exceptions;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
@@ -37,8 +35,9 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <summary>Result metadata that tells <see cref="QueueWorkerBase{TRequest,TResult}" /> not to requeue the message even though the result is a failure.</summary>
     private static readonly IReadOnlyDictionary<string, object> NoRequeueMetadata = new Dictionary<string, object> { ["requeue"] = false };
 
-    private readonly IJobClient _jobClient;
     private readonly IJobEventPublisher _eventPublisher;
+
+    private readonly IJobClient _jobClient;
     private readonly IJobParameterEncryptionService? _parameterEncryption;
 
     /// <summary>
@@ -47,11 +46,12 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// </summary>
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellationSources = new();
 
-    private Guid? _workerInstanceId;
-    private int? _progressPercent;
     private string? _progressMessage;
+    private int? _progressPercent;
     private CancellationTokenSource? _workerHeartbeatCts;
     private Task? _workerHeartbeatTask;
+
+    private Guid? _workerInstanceId;
 
     /// <summary>Interval between heartbeat PATCH calls while a run is executing.</summary>
     protected virtual TimeSpan HeartbeatInterval => TimeSpan.FromSeconds(30);
@@ -96,17 +96,15 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
 
         await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
-
         await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct).ConfigureAwait(false);
-
         _workerHeartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _workerHeartbeatTask = RunWorkerInstanceHeartbeatAsync(_workerHeartbeatCts.Token);
     }
 
+    async Task IHostedService.StopAsync(CancellationToken cancellationToken) => await StopWorkerAsync(cancellationToken).ConfigureAwait(false);
+
     /// <inheritdoc />
     public new async Task StopAsync(CancellationToken ct = default) => await StopWorkerAsync(ct).ConfigureAwait(false);
-
-    async Task IHostedService.StopAsync(CancellationToken cancellationToken) => await StopWorkerAsync(cancellationToken).ConfigureAwait(false);
 
     private async Task StopWorkerAsync(CancellationToken ct)
     {
@@ -137,7 +135,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         using var scope = Logger.BeginScope("JobRunId={JobRunId} WorkerType={WorkerType}", runId, WorkerType);
         _progressPercent = null;
         _progressMessage = null;
-
         var run = await FetchRunAsync(runId, ct).ConfigureAwait(false);
         if (run is null) {
             Logger.LogError("Job run {RunId} not found — skipping", runId);
@@ -162,7 +159,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         }
 
         startedRun = DecryptRunParameters(startedRun);
-
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _runCancellationSources[runId] = runCts;
         var results = new JobWorkerResultBuilder();
@@ -221,8 +217,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     }
 
     /// <summary>
-    /// Best-effort <c>Running -&gt; Queued</c> hand-back during host shutdown. When the run is not <c>Running</c> anymore (e.g. a user cancellation moved it to
-    /// <c>Cancelling</c>), the requeue is rejected and the run is finalized by dead-job detection instead.
+    /// Best-effort <c>Running -&gt; Queued</c> hand-back during host shutdown. When the run is not <c>Running</c> anymore (e.g. a user cancellation moved it to <c>Cancelling</c>
+    /// ), the requeue is rejected and the run is finalized by dead-job detection instead.
     /// </summary>
     private async Task TryRequeueRunForShutdownAsync(Guid runId)
     {
@@ -252,7 +248,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             };
 
             var result = await _jobClient.WorkerInstances.RegisterAsync(req, ct).ConfigureAwait(false);
-
             if (!result.IsSuccess || result.Data is null)
                 Logger.LogWarning("Worker instance registration for {WorkerType} failed: {Error}", WorkerType, result.Error?.Detail ?? result.Error?.Title ?? "unknown");
             else if (result.Data.Id == Guid.Empty)
@@ -428,7 +423,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         {
             worker._progressPercent = percent;
             worker._progressMessage = message;
-
             await jobClient.Runs.PatchProgressAsync(Run.Id, percent, message, ct).ConfigureAwait(false);
             metrics.IncrementCounter(Constants.Metrics.Worker.ProgressReported);
         }

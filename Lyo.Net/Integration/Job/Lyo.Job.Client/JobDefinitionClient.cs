@@ -21,11 +21,6 @@ public sealed class JobDefinitionClient(IApiClient client, string? routePrefix =
         if (results.Items is null || !results.IsSuccess)
             return [];
 
-        return results.Items
-            .Select(d => d.WorkerType)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        return results.Items.Select(d => d.WorkerType).Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 }

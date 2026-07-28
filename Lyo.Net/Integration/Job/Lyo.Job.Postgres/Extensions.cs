@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResult = Lyo.Job.Postgres.Database.JobRunResult;
@@ -44,6 +45,7 @@ public static class Extensions
                         foreach (var parameter in ctx.Entity.JobParameters) {
                             if (parameter.Id == default)
                                 parameter.Id = LyoGuid.CreateCombPostgres();
+
                             parameter.JobDefinitionId = ctx.Entity.Id;
                             EncryptJobParameterEntity(ctx.Services, parameter);
                         }
@@ -51,10 +53,12 @@ public static class Extensions
                         foreach (var schedule in ctx.Entity.JobSchedules) {
                             if (schedule.Id == default)
                                 schedule.Id = LyoGuid.CreateCombPostgres();
+
                             schedule.JobDefinitionId = ctx.Entity.Id;
                             foreach (var scheduleParameter in schedule.JobScheduleParameters) {
                                 if (scheduleParameter.Id == default)
                                     scheduleParameter.Id = LyoGuid.CreateCombPostgres();
+
                                 scheduleParameter.JobScheduleId = schedule.Id;
                             }
                         }
@@ -62,10 +66,12 @@ public static class Extensions
                         foreach (var trigger in ctx.Entity.JobTriggerJobDefinitions) {
                             if (trigger.Id == default)
                                 trigger.Id = LyoGuid.CreateCombPostgres();
+
                             trigger.JobDefinitionId = ctx.Entity.Id;
                             foreach (var triggerParameter in trigger.JobTriggerParameters) {
                                 if (triggerParameter.Id == default)
                                     triggerParameter.Id = LyoGuid.CreateCombPostgres();
+
                                 triggerParameter.JobTriggerId = trigger.Id;
                             }
                         }
@@ -73,6 +79,7 @@ public static class Extensions
                         foreach (var restriction in ctx.Entity.JobParallelRestrictionBaseJobDefinitions) {
                             if (restriction.Id == default)
                                 restriction.Id = LyoGuid.CreateCombPostgres();
+
                             restriction.BaseJobDefinitionId = ctx.Entity.Id;
                         }
 
@@ -89,15 +96,13 @@ public static class Extensions
                     },
                     // Query dependents by FK — do not rely on DeleteIncludes; unloaded navigations left job_parameter rows behind (23503).
                     BeforeDelete = ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id),
-                    AfterDelete = ctx => app.Services.GetRequiredService<IJobEventPublisher>()
-                        .PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult()
+                    AfterDelete = ctx => app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult()
                 })
             .Build();
 
         app.CreateBuilder<JobContext, JobParameter, JobParameterReq, JobParameterRes, Guid>($"{Constants.Rest.Job.DefinitionParameters}", "Job")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud,
-                new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
                         EncryptJobParameterEntity(ctx.Services, ctx.Entity);
@@ -125,6 +130,7 @@ public static class Extensions
                         foreach (var scheduleParameter in ctx.Entity.JobScheduleParameters) {
                             if (scheduleParameter.Id == default)
                                 scheduleParameter.Id = LyoGuid.CreateCombPostgres();
+
                             scheduleParameter.JobScheduleId = ctx.Entity.Id;
                         }
 
@@ -143,8 +149,7 @@ public static class Extensions
                 })
             .Build();
 
-        app.CreateBuilder<JobContext, JobScheduleParameter, JobScheduleParameterReq, JobScheduleParameterRes, Guid>(
-                $"{Constants.Rest.Job.ScheduleParameters}", "Job")
+        app.CreateBuilder<JobContext, JobScheduleParameter, JobScheduleParameterReq, JobScheduleParameterRes, Guid>($"{Constants.Rest.Job.ScheduleParameters}", "Job")
             .WithCrud(
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
@@ -174,6 +179,7 @@ public static class Extensions
                         foreach (var triggerParameter in ctx.Entity.JobTriggerParameters) {
                             if (triggerParameter.Id == default)
                                 triggerParameter.Id = LyoGuid.CreateCombPostgres();
+
                             triggerParameter.JobTriggerId = ctx.Entity.Id;
                         }
                     },
@@ -243,27 +249,25 @@ public static class Extensions
                         foreach (var window in ctx.Entity.JobBlackoutWindows) {
                             if (window.Id == default)
                                 window.Id = LyoGuid.CreateCombPostgres();
+
                             window.JobBlackoutCalendarId = ctx.Entity.Id;
                         }
                     },
                     BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
                     BeforeDelete = ctx => {
-                        if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
-                            throw new ConflictException(
-                                $"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
+                        if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id)) {
+                            throw new ConflictException($"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
+                        }
 
-                        ctx.DbContext.JobBlackoutWindows.RemoveRange(
-                            ctx.DbContext.JobBlackoutWindows.Where(w => w.JobBlackoutCalendarId == ctx.Entity.Id).ToList());
+                        ctx.DbContext.JobBlackoutWindows.RemoveRange(ctx.DbContext.JobBlackoutWindows.Where(w => w.JobBlackoutCalendarId == ctx.Entity.Id).ToList());
                     }
                 })
             .Build();
 
         app.CreateBuilder<JobContext, JobBlackoutWindow, JobBlackoutWindowReq, JobBlackoutWindowRes, Guid>(Constants.Rest.Job.BlackoutWindows, "Job")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
-                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
-                })
+                ApiFeatureSet.DefaultCrud,
+                new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(), BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow })
             .Build();
 
         app.CreateBuilder<JobContext, JobWorkflow, JobWorkflowReq, JobWorkflowRes, Guid>(Constants.Rest.Job.Workflows, "Job")
@@ -274,6 +278,7 @@ public static class Extensions
                         foreach (var step in ctx.Entity.JobWorkflowSteps) {
                             if (step.Id == default)
                                 step.Id = LyoGuid.CreateCombPostgres();
+
                             step.JobWorkflowId = ctx.Entity.Id;
                         }
                     },
@@ -292,7 +297,8 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobWorkflowStep, JobWorkflowStepReq, JobWorkflowStepRes, Guid>(Constants.Rest.Job.WorkflowSteps, "Job")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
                     BeforeDelete = ctx => ctx.DbContext.JobWorkflowRunSteps.RemoveRange(ctx.Entity.JobWorkflowRunSteps),
                     DeleteIncludes = ["JobWorkflowRunSteps"]
@@ -307,6 +313,7 @@ public static class Extensions
                         foreach (var step in ctx.Entity.JobWorkflowRunSteps) {
                             if (step.Id == default)
                                 step.Id = LyoGuid.CreateCombPostgres();
+
                             step.JobWorkflowRunId = ctx.Entity.Id;
                         }
                     },
@@ -332,9 +339,7 @@ public static class Extensions
                 $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/Stats", async (Guid id, int days, JobService jobService, CancellationToken ct) => {
                     days = days > 0 ? days : 30;
                     var stats = await jobService.GetDefinitionStats(id, days, ct).ConfigureAwait(false);
-                    return stats is null
-                        ? Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build())
-                        : Results.Ok(stats);
+                    return stats is null ? Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build()) : Results.Ok(stats);
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
@@ -370,9 +375,7 @@ public static class Extensions
                 $"/{Constants.Rest.Job.RunsCreate}", async (JobRunReq req, JobService jobService, CancellationToken ct) => {
                     var result = await jobService.CreateJobRun(req, ct).ConfigureAwait(false);
                     // Return CreateResult so ApiClient deserializers (scheduler/worker/client) get IsSuccess/Data.
-                    return result.IsSuccess
-                        ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result)
-                        : ProblemResult(result.Error);
+                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.Runs}/{result.Data!.Id}", result) : ProblemResult(result.Error);
                 })
             .WithTags("Job")
             .WithName("CreateJobRun");
@@ -454,7 +457,7 @@ public static class Extensions
     private static IResult ProblemResult(LyoProblemDetails? error)
     {
         error ??= LyoProblemDetailsBuilder.CreateWithActivity()
-            .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidRequest)
+            .WithErrorCode(Api.Models.Constants.ApiErrorCodes.InvalidRequest)
             .WithMessage("The request could not be processed.")
             .Build();
 
@@ -485,7 +488,6 @@ public static class Extensions
     private static void RemoveScheduleDependents(JobContext db, JobSchedule schedule)
     {
         db.JobScheduleParameters.RemoveRange(db.JobScheduleParameters.Where(p => p.JobScheduleId == schedule.Id).ToList());
-
         foreach (var run in db.JobRuns.Where(r => r.JobScheduleId == schedule.Id).ToList())
             run.JobScheduleId = null;
 
@@ -513,7 +515,6 @@ public static class Extensions
     private static void RemoveJobRunDependents(JobContext db, JobRun jobRun)
     {
         db.JobWorkflowRunSteps.RemoveRange(db.JobWorkflowRunSteps.Where(s => s.JobRunId == jobRun.Id).ToList());
-
         foreach (var i in jobRun.InverseReRanFromJobRun)
             i.ReRanFromJobRunId = null;
 
@@ -528,11 +529,12 @@ public static class Extensions
         db.JobRunResults.RemoveRange(jobRun.JobRunResults);
     }
 
-    private static DateTime ToUtcDateTime(DateTime value) => value.Kind switch {
-        DateTimeKind.Utc => value,
-        DateTimeKind.Local => value.ToUniversalTime(),
-        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
-    };
+    private static DateTime ToUtcDateTime(DateTime value)
+        => value.Kind switch {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            var _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
 
     private static void NormalizeJobWorkerInstanceTimestamps(JobWorkerInstance entity)
     {
@@ -616,9 +618,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and
-        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices,
-        /// AddFusionCache or AddLocalCache.
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and <see cref="JobLyoMapper" /> as
+        /// <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices, AddFusionCache or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(Action<PostgresJobOptions> configure)
         {
@@ -642,9 +643,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and
-        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices,
-        /// AddFusionCache or AddLocalCache.
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), CRUD services, and <see cref="JobLyoMapper" /> as
+        /// <see cref="ILyoMapper" /> (hosts may replace with <see cref="CompositeLyoMapper" />). Requires: AddLyoQueryServices, AddFusionCache or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(PostgresJobOptions options)
         {
@@ -660,8 +660,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout), resets circuit breakers, purges old
-        /// run history per retention settings, and prunes stale worker instances. Requires <see cref="IDbContextFactory{JobContext}" /> to be registered (call
+        /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout), resets circuit breakers, purges old run
+        /// history per retention settings, and prunes stale worker instances. Requires <see cref="IDbContextFactory{JobContext}" /> to be registered (call
         /// <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
         /// </summary>
         /// <param name="configure">Optional action to configure <see cref="JobMaintenanceOptions" />.</param>
@@ -702,8 +702,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers <see cref="Events.MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> for API hosts with a job database.
-        /// Scheduler/worker hosts must use <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> instead. Requires <see cref="IMqService" />.
+        /// Registers <see cref="Events.MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> for API hosts with a job database. Scheduler/worker hosts must use
+        /// <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> instead. Requires <see cref="IMqService" />.
         /// </summary>
         public IServiceCollection AddMqJobEventPublisher()
         {
@@ -715,9 +715,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>
-        /// Registers the Postgres <see cref="Events.MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> from configuration (API hosts only).
-        /// </summary>
+        /// <summary>Registers the Postgres <see cref="Events.MqJobEventPublisher" /> and binds <see cref="JobMqOptions" /> from configuration (API hosts only).</summary>
         public IServiceCollection AddMqJobEventPublisherFromConfiguration(IConfiguration configuration, string configSectionName = JobMqOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -740,8 +738,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
             services.TryAddSingleton<IJobParameterEncryptionService>(sp => {
                 var encryption = sp.GetKeyedService<IEncryptionService>(keyName);
-                return new JobParameterEncryptionService(encryption, keyName, sp.GetService<Microsoft.Extensions.Logging.ILogger<JobParameterEncryptionService>>());
+                return new JobParameterEncryptionService(encryption, keyName, sp.GetService<ILogger<JobParameterEncryptionService>>());
             });
+
             return services;
         }
     }

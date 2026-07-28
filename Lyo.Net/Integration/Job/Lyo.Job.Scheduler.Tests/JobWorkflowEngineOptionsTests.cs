@@ -1,5 +1,4 @@
 using Lyo.Exceptions.Models;
-using Lyo.Job.Scheduler;
 
 namespace Lyo.Job.Scheduler.Tests;
 

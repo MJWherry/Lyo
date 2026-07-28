@@ -2,7 +2,8 @@
 
 Typed HTTP client for the Lyo Reporting API (`netstandard2.0;net10.0`).
 
-Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) — do **not** host `ReportService` in the worker.
+Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) — do **not** host
+`ReportService` in the worker.
 
 ```csharp
 services.AddReportingClient<MyApiClient>();
@@ -32,4 +33,5 @@ var rerun = await reporting.Generations.RerunAsync(generationId);
 var (content, fileName, contentLength) = await reporting.Generations.DownloadAsync(rerun.Id);
 ```
 
-Auth is on the underlying `IApiClient` / `HttpClient` (same bearer as other API calls). Output persistence (FileStorage, etc.) is configured on the API host via `ReportGenerationHooks`.
+Auth is on the underlying `IApiClient` / `HttpClient` (same bearer as other API calls). Output persistence (FileStorage, etc.) is configured on the API host via
+`ReportGenerationHooks`.

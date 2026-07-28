@@ -60,8 +60,11 @@
     private string? _runsDefinitionName;
 
     private string DefinitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
+
     private string RunRoute => $"{BaseRoute.TrimEnd('/')}/Run";
+
     private string ScheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
+
     private string TriggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
 
     protected override void OnParametersSet()
@@ -69,6 +72,7 @@
         // Apply deep-link tab once so later parameter churn does not reset the user's tab.
         if (_tabInitialized)
             return;
+
         if (DefinitionId is null && RunId is null && ScheduleId is null && WorkflowId is null && string.IsNullOrWhiteSpace(InitialTab))
             return;
 
@@ -85,7 +89,6 @@
             return;
 
         _deepLinkHandled = true;
-
         if (RunId is { } runId)
             await OpenRunAsync(runId);
         else if (DefinitionId is { } definitionId)
@@ -100,10 +103,13 @@
     {
         if (RunId.HasValue)
             return 3;
+
         if (DefinitionId.HasValue)
             return 1;
+
         if (ScheduleId.HasValue)
             return 2;
+
         if (WorkflowId.HasValue)
             return 5;
 
@@ -114,7 +120,7 @@
             "runs" or "run" => 3,
             "workers" or "worker" => 4,
             "workflows" or "workflow" => 5,
-            _ => 0
+            var _ => 0
         };
     }
 
@@ -128,11 +134,7 @@
 
     private async Task OpenDefinitionAsync(Guid id)
     {
-        var req = new QueryConcreteReq {
-            Keys = [[id]],
-            Amount = 1,
-            Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]
-        };
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def is null) {
@@ -146,17 +148,14 @@
             { d => d.ScheduleRoute, ScheduleRoute },
             { d => d.TriggerRoute, TriggerRoute }
         };
+
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
         await dialog.Result;
     }
 
     private async Task OpenRunAsync(Guid id)
     {
-        var req = new QueryConcreteReq {
-            Keys = [[id]],
-            Amount = 1,
-            Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"]
-        };
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>($"{RunRoute}/QueryConcrete", req);
         var run = res?.Items?.FirstOrDefault();
         if (run is null) {
@@ -164,11 +163,9 @@
             return;
         }
 
-        var parameters = new DialogParameters<JobRunDetailView> {
-            { d => d.JobRun, run },
-            { d => d.RunRoute, RunRoute }
-        };
+        var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, RunRoute } };
         var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Large);
         await dialog.Result;
     }
+
 }

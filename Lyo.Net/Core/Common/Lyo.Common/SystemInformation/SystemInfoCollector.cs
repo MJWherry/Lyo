@@ -16,75 +16,50 @@ namespace Lyo.Common.SystemInformation;
 /// </summary>
 public static class SystemInfoCollector
 {
-    private static readonly Regex SensitiveVariableRegex = new(@"(?i)(secret|token|password|passwd|pwd|api[_-]?key|connection[_-]?string|credential|auth)", RegexOptions.Compiled);
     private const string RedactedValue = "********";
+    private static readonly Regex SensitiveVariableRegex = new(@"(?i)(secret|token|password|passwd|pwd|api[_-]?key|connection[_-]?string|credential|auth)", RegexOptions.Compiled);
 
     /// <summary>Collects a full snapshot of hardware, software, network, and environment information.</summary>
     /// <returns>A populated <see cref="SystemInfo" /> with <see cref="SystemInfo.CollectedAtUtc" /> set to the current UTC time.</returns>
     public static SystemInfo Collect() => new(GetHardwareInfo(), GetSoftwareInfo(), GetNetworkInfo(), GetEnvironmentInfo(), DateTime.UtcNow);
 
     /// <summary>Collects hardware details: logical processor count, CPU model, architectures, total physical memory, ready drives, and connected monitors.</summary>
-    public static HardwareInfo GetHardwareInfo() =>
-        new(
-            Environment.ProcessorCount,
-            GetCpuModel(),
-            RuntimeInformation.ProcessArchitecture.ToString(),
-            RuntimeInformation.OSArchitecture.ToString(),
-            GetTotalPhysicalMemoryBytes(),
-            GetDrives(),
-            GetMonitors());
+    public static HardwareInfo GetHardwareInfo()
+        => new(
+            Environment.ProcessorCount, GetCpuModel(), RuntimeInformation.ProcessArchitecture.ToString(), RuntimeInformation.OSArchitecture.ToString(),
+            GetTotalPhysicalMemoryBytes(), GetDrives(), GetMonitors());
 
     /// <summary>Collects operating system, runtime, and current-process details.</summary>
     public static SoftwareInfo GetSoftwareInfo()
     {
         using var process = Process.GetCurrentProcess();
         var startTimeUtc = TryGetValue(() => process.StartTime.ToUniversalTime()) ?? default;
-
-        return new SoftwareInfo(
-            RuntimeInformation.OSDescription,
-            GetOsPlatform(),
-            Environment.OSVersion.VersionString,
-            RuntimeInformation.FrameworkDescription,
+        return new(
+            RuntimeInformation.OSDescription, GetOsPlatform(), Environment.OSVersion.VersionString, RuntimeInformation.FrameworkDescription,
 #if NET10_0_OR_GREATER
             RuntimeInformation.RuntimeIdentifier,
 #else
             null,
 #endif
-            Environment.Version.ToString(),
-            Environment.Is64BitOperatingSystem,
-            Environment.Is64BitProcess,
-            GCSettings.IsServerGC,
+            Environment.Version.ToString(), Environment.Is64BitOperatingSystem, Environment.Is64BitProcess, GCSettings.IsServerGC,
 #if NET10_0_OR_GREATER
             Environment.ProcessId,
 #else
             process.Id,
 #endif
-            TryGet(() => process.ProcessName) ?? string.Empty,
-            startTimeUtc,
-            startTimeUtc == default ? TimeSpan.Zero : DateTime.UtcNow - startTimeUtc);
+            TryGet(() => process.ProcessName) ?? string.Empty, startTimeUtc, startTimeUtc == default ? TimeSpan.Zero : DateTime.UtcNow - startTimeUtc);
     }
 
     /// <summary>Collects the host name, network availability, and details for each network interface.</summary>
-    public static NetworkInfo GetNetworkInfo() =>
-        new(
-            TryGet(Dns.GetHostName) ?? Environment.MachineName,
-            TryGetValue(NetworkInterface.GetIsNetworkAvailable) ?? false,
-            GetNetworkInterfaces());
+    public static NetworkInfo GetNetworkInfo()
+        => new(TryGet(Dns.GetHostName) ?? Environment.MachineName, TryGetValue(NetworkInterface.GetIsNetworkAvailable) ?? false, GetNetworkInterfaces());
 
     /// <summary>Collects machine, user, culture, timezone, uptime, and environment variable details. Secret-like variable values are redacted.</summary>
-    public static EnvironmentInfo GetEnvironmentInfo() =>
-        new(
-            Environment.MachineName,
-            TryGet(() => Environment.UserName) ?? string.Empty,
-            TryGet(() => Environment.UserDomainName) ?? string.Empty,
-            TryGet(() => Environment.CurrentDirectory) ?? string.Empty,
-            TryGet(() => Environment.SystemDirectory) ?? string.Empty,
-            TryGet(Path.GetTempPath) ?? string.Empty,
-            Environment.CommandLine,
-            CultureInfo.CurrentCulture.Name,
-            CultureInfo.CurrentUICulture.Name,
-            TimeZoneInfo.Local.Id,
-            TimeZoneInfo.Local.GetUtcOffset(DateTimeOffset.Now),
+    public static EnvironmentInfo GetEnvironmentInfo()
+        => new(
+            Environment.MachineName, TryGet(() => Environment.UserName) ?? string.Empty, TryGet(() => Environment.UserDomainName) ?? string.Empty,
+            TryGet(() => Environment.CurrentDirectory) ?? string.Empty, TryGet(() => Environment.SystemDirectory) ?? string.Empty, TryGet(Path.GetTempPath) ?? string.Empty,
+            Environment.CommandLine, CultureInfo.CurrentCulture.Name, CultureInfo.CurrentUICulture.Name, TimeZoneInfo.Local.Id, TimeZoneInfo.Local.GetUtcOffset(DateTimeOffset.Now),
 #if NET10_0_OR_GREATER
             TimeSpan.FromMilliseconds(Environment.TickCount64),
 #else
@@ -94,7 +69,7 @@ public static class SystemInfoCollector
 
     private static string? GetCpuModel()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             return TryGet(() => {
                 foreach (var line in File.ReadLines("/proc/cpuinfo")) {
                     if (!line.StartsWith("model name", StringComparison.OrdinalIgnoreCase))
@@ -107,6 +82,7 @@ public static class SystemInfoCollector
 
                 return null;
             });
+        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return TryGet(() => Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER"));
@@ -166,6 +142,7 @@ public static class SystemInfoCollector
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return TryGet(GetLinuxMonitors) ?? [];
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return TryGet(GetWindowsMonitors) ?? [];
 
@@ -184,18 +161,10 @@ public static class SystemInfoCollector
                 var directoryName = Path.GetFileName(connectorDirectory);
                 var separatorIndex = directoryName.IndexOf('-');
                 var connector = separatorIndex >= 0 ? directoryName.Substring(separatorIndex + 1) : directoryName;
-
                 var resolution = TryGet(() => File.ReadLines(Path.Combine(connectorDirectory, "modes")).FirstOrDefault());
                 var edid = TryGet(() => File.ReadAllBytes(Path.Combine(connectorDirectory, "edid")));
-
                 return new MonitorInfo(
-                    connector,
-                    EdidParser.GetModelName(edid),
-                    EdidParser.GetManufacturerId(edid),
-                    resolution.IsNullOrEmpty() ? null : resolution,
-                    RefreshRateHz: null,
-                    Adapter: null,
-                    IsPrimary: null);
+                    connector, EdidParser.GetModelName(edid), EdidParser.GetManufacturerId(edid), resolution.IsNullOrEmpty() ? null : resolution, null, null, null);
             });
 
             if (info is not null)
@@ -208,7 +177,7 @@ public static class SystemInfoCollector
     private static IReadOnlyList<MonitorInfo> GetWindowsMonitors()
     {
         var monitors = new List<MonitorInfo>();
-        for (var adapterIndex = 0u; ; adapterIndex++) {
+        for (var adapterIndex = 0u;; adapterIndex++) {
             var adapter = NativeDisplayMethods.NewDisplayDevice();
             if (!NativeDisplayMethods.EnumDisplayDevices(null, adapterIndex, ref adapter, 0))
                 break;
@@ -219,7 +188,6 @@ public static class SystemInfoCollector
             var info = TryGet(() => {
                 var monitor = NativeDisplayMethods.NewDisplayDevice();
                 var monitorName = NativeDisplayMethods.EnumDisplayDevices(adapter.DeviceName, 0, ref monitor, 0) ? monitor.DeviceString : null;
-
                 string? resolution = null;
                 int? refreshRate = null;
                 var devMode = new NativeDisplayMethods.DevMode { dmSize = (ushort)Marshal.SizeOf<NativeDisplayMethods.DevMode>() };
@@ -229,12 +197,7 @@ public static class SystemInfoCollector
                 }
 
                 return new MonitorInfo(
-                    adapter.DeviceName,
-                    monitorName,
-                    ManufacturerId: null,
-                    resolution,
-                    refreshRate,
-                    adapter.DeviceString,
+                    adapter.DeviceName, monitorName, null, resolution, refreshRate, adapter.DeviceString,
                     (adapter.StateFlags & NativeDisplayMethods.DisplayDevicePrimaryDevice) != 0);
             });
 
@@ -245,74 +208,14 @@ public static class SystemInfoCollector
         return monitors;
     }
 
-    /// <summary>user32 display enumeration interop; only invoked behind a Windows platform guard.</summary>
-    private static class NativeDisplayMethods
-    {
-        internal const uint DisplayDeviceAttachedToDesktop = 0x1;
-        internal const uint DisplayDevicePrimaryDevice = 0x4;
-        internal const int EnumCurrentSettings = -1;
-
-        internal static DisplayDevice NewDisplayDevice() => new() { cb = Marshal.SizeOf<DisplayDevice>() };
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        internal static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DisplayDevice lpDisplayDevice, uint dwFlags);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        internal static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DevMode lpDevMode);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct DisplayDevice
-        {
-            public int cb;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
-            public uint StateFlags;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct DevMode
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmDeviceName;
-            public ushort dmSpecVersion;
-            public ushort dmDriverVersion;
-            public ushort dmSize;
-            public ushort dmDriverExtra;
-            public uint dmFields;
-            public int dmPositionX;
-            public int dmPositionY;
-            public uint dmDisplayOrientation;
-            public uint dmDisplayFixedOutput;
-            public short dmColor;
-            public short dmDuplex;
-            public short dmYResolution;
-            public short dmTTOption;
-            public short dmCollate;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmFormName;
-            public ushort dmLogPixels;
-            public uint dmBitsPerPel;
-            public uint dmPelsWidth;
-            public uint dmPelsHeight;
-            public uint dmDisplayFlags;
-            public uint dmDisplayFrequency;
-            public uint dmICMMethod;
-            public uint dmICMIntent;
-            public uint dmMediaType;
-            public uint dmDitherType;
-            public uint dmReserved1;
-            public uint dmReserved2;
-            public uint dmPanningWidth;
-            public uint dmPanningHeight;
-        }
-    }
-
     private static string GetOsPlatform()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return nameof(OSPlatform.Windows);
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return nameof(OSPlatform.Linux);
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return nameof(OSPlatform.OSX);
 
@@ -328,15 +231,9 @@ public static class SystemInfoCollector
                 var macAddress = TryGet(() => nic.GetPhysicalAddress().ToString());
                 var speed = TryGetValue(() => nic.Speed);
                 return new NetworkInterfaceInfo(
-                    nic.Name,
-                    nic.Description,
-                    nic.NetworkInterfaceType.ToString(),
-                    nic.OperationalStatus.ToString(),
-                    speed is > 0 ? speed : null,
-                    macAddress.IsNullOrEmpty() ? null : FormatMacAddress(macAddress!),
-                    ToAddressList(ipProperties, p => p.UnicastAddresses.Select(a => a.Address)),
-                    ToAddressList(ipProperties, p => p.GatewayAddresses.Select(a => a.Address)),
-                    ToAddressList(ipProperties, p => p.DnsAddresses));
+                    nic.Name, nic.Description, nic.NetworkInterfaceType.ToString(), nic.OperationalStatus.ToString(), speed is > 0 ? speed : null,
+                    macAddress.IsNullOrEmpty() ? null : FormatMacAddress(macAddress!), ToAddressList(ipProperties, p => p.UnicastAddresses.Select(a => a.Address)),
+                    ToAddressList(ipProperties, p => p.GatewayAddresses.Select(a => a.Address)), ToAddressList(ipProperties, p => p.DnsAddresses));
             });
 
             if (info is not null)
@@ -386,7 +283,8 @@ public static class SystemInfoCollector
         return variables;
     }
 
-    private static T? TryGet<T>(Func<T?> getter) where T : class
+    private static T? TryGet<T>(Func<T?> getter)
+        where T : class
     {
         try {
             return getter();
@@ -396,13 +294,90 @@ public static class SystemInfoCollector
         }
     }
 
-    private static T? TryGetValue<T>(Func<T> getter) where T : struct
+    private static T? TryGetValue<T>(Func<T> getter)
+        where T : struct
     {
         try {
             return getter();
         }
         catch {
             return null;
+        }
+    }
+
+    /// <summary>user32 display enumeration interop; only invoked behind a Windows platform guard.</summary>
+    private static class NativeDisplayMethods
+    {
+        internal const uint DisplayDeviceAttachedToDesktop = 0x1;
+        internal const uint DisplayDevicePrimaryDevice = 0x4;
+        internal const int EnumCurrentSettings = -1;
+
+        internal static DisplayDevice NewDisplayDevice() => new() { cb = Marshal.SizeOf<DisplayDevice>() };
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        internal static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DisplayDevice lpDisplayDevice, uint dwFlags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        internal static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DevMode lpDevMode);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct DisplayDevice
+        {
+            public int cb;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string DeviceName;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceString;
+
+            public uint StateFlags;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceID;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceKey;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct DevMode
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmDeviceName;
+
+            public ushort dmSpecVersion;
+            public ushort dmDriverVersion;
+            public ushort dmSize;
+            public ushort dmDriverExtra;
+            public uint dmFields;
+            public int dmPositionX;
+            public int dmPositionY;
+            public uint dmDisplayOrientation;
+            public uint dmDisplayFixedOutput;
+            public short dmColor;
+            public short dmDuplex;
+            public short dmYResolution;
+            public short dmTTOption;
+            public short dmCollate;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmFormName;
+
+            public ushort dmLogPixels;
+            public uint dmBitsPerPel;
+            public uint dmPelsWidth;
+            public uint dmPelsHeight;
+            public uint dmDisplayFlags;
+            public uint dmDisplayFrequency;
+            public uint dmICMMethod;
+            public uint dmICMIntent;
+            public uint dmMediaType;
+            public uint dmDitherType;
+            public uint dmReserved1;
+            public uint dmReserved2;
+            public uint dmPanningWidth;
+            public uint dmPanningHeight;
         }
     }
 }

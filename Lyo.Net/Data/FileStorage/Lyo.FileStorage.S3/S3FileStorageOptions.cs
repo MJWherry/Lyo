@@ -13,14 +13,12 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? Region { get; set; }
 
     /// <summary>
-    /// Optional AWS access key ID. When null or whitespace (and likewise for <see cref="SecretAccessKey" />), the default AWS credential chain is used
-    /// (environment, shared credentials file, IAM role).
+    /// Optional AWS access key ID. When null or whitespace (and likewise for <see cref="SecretAccessKey" />), the default AWS credential chain is used (environment, shared
+    /// credentials file, IAM role).
     /// </summary>
     public string? AccessKeyId { get; set; }
 
-    /// <summary>
-    /// Optional AWS secret access key. When null or whitespace (and likewise for <see cref="AccessKeyId" />), the default AWS credential chain is used.
-    /// </summary>
+    /// <summary>Optional AWS secret access key. When null or whitespace (and likewise for <see cref="AccessKeyId" />), the default AWS credential chain is used.</summary>
     public string? SecretAccessKey { get; set; }
 
     /// <summary>Optional service URL for S3-compatible services (e.g., MinIO, LocalStack). If not specified, uses standard AWS S3 endpoints.</summary>

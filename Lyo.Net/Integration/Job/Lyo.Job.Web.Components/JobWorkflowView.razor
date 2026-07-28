@@ -66,8 +66,7 @@
     {
         _loading = true;
         try {
-            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/QueryConcrete",
-                new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
+            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
             _workflows = res?.Items ?? [];
             if (_selectedWorkflowId is null && _workflows.Count > 0)
                 _selectedWorkflowId = _workflows[0].Id;
@@ -102,7 +101,6 @@
         }
     }
 
-    private static Color GetStepColor(JobWorkflowStepRes step)
-        => step.Enabled ? Color.Primary : Color.Default;
+    private static Color GetStepColor(JobWorkflowStepRes step) => step.Enabled ? Color.Primary : Color.Default;
 
 }

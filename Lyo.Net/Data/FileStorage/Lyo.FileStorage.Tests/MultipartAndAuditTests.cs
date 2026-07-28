@@ -1,6 +1,6 @@
 using Lyo.FileStorage.Audit;
-using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Tests.Support;
 
 namespace Lyo.FileStorage.Tests;

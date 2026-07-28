@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.Http;
 namespace Lyo.Api;
 
 /// <summary>
-/// Cross-cutting helpers for API hosts: problem details from exceptions, uploaded-file hashing, and conversion wrappers used by validation and patch binding.
-/// Type/value conversion delegates to <see cref="TypeConversion" /> in Lyo.Common (with lenient boolean parsing for patch payloads).
+/// Cross-cutting helpers for API hosts: problem details from exceptions, uploaded-file hashing, and conversion wrappers used by validation and patch binding. Type/value
+/// conversion delegates to <see cref="TypeConversion" /> in Lyo.Common (with lenient boolean parsing for patch payloads).
 /// </summary>
 public static class Extensions
 {
@@ -54,11 +54,11 @@ public static class Extensions
                     : throw new ArgumentNullException(nameof(obj), $"Cannot convert null to non-nullable type {targetType.Name}");
             }
 
-            return TypeConversion.ConvertTo(obj, targetType, lenientBoolean: true);
+            return TypeConversion.ConvertTo(obj, targetType, true);
         }
 
         /// <summary>Converts an object (single value or collection) to the specified type</summary>
-        public object? ConvertToType(Type targetType) => TypeConversion.ConvertToWithCollections(obj, targetType, lenientBoolean: true);
+        public object? ConvertToType(Type targetType) => TypeConversion.ConvertToWithCollections(obj, targetType, true);
     }
 
     extension(JsonElement element)

@@ -18,8 +18,8 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Comic.Api.Services;
 
 /// <summary>
-/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryConcreteReqBuilder" /> per bounded schema so
-/// results participate in Lyo.Api query caching; favorite totals use store aggregation (GROUP BY) to avoid loading every favorite row.
+/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryConcreteReqBuilder" /> per bounded
+/// schema so results participate in Lyo.Api query caching; favorite totals use store aggregation (GROUP BY) to avoid loading every favorite row.
 /// </summary>
 public sealed class ComicEnrichmentService
 {

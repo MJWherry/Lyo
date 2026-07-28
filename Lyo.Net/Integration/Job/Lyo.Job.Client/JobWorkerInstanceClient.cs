@@ -17,16 +17,11 @@ public sealed class JobWorkerInstanceClient(IApiClient client, string? routePref
     public Task<CreateResult<JobWorkerInstanceRes>> RegisterAsync(JobWorkerInstanceReq request, CancellationToken ct = default)
         => client.PostAsAsync<JobWorkerInstanceReq, CreateResult<JobWorkerInstanceRes>>(Route, request, ct: ct);
 
-    public Task PatchAsync(PatchRequest patch, CancellationToken ct = default)
-        => client.PatchAsAsync<PatchRequest, object>(Route, patch, ct: ct);
+    public Task PatchAsync(PatchRequest patch, CancellationToken ct = default) => client.PatchAsAsync<PatchRequest, object>(Route, patch, ct: ct);
 
     public Task HeartbeatAsync(Guid instanceId, int inFlightCount, CancellationToken ct = default)
     {
-        var patch = PatchRequestBuilder.ForId(instanceId)
-            .SetProperty("LastHeartbeatUtc", DateTime.UtcNow)
-            .SetProperty("InFlightCount", inFlightCount)
-            .Build();
-
+        var patch = PatchRequestBuilder.ForId(instanceId).SetProperty("LastHeartbeatUtc", DateTime.UtcNow).SetProperty("InFlightCount", inFlightCount).Build();
         return PatchAsync(patch, ct);
     }
 

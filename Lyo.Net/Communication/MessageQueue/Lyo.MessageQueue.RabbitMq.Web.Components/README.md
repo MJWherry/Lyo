@@ -6,12 +6,12 @@ Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker
 
 `RabbitMqWorkbench.razor` is an internal dashboard for exercising the full `IRabbitMqService` surface:
 
-| Tab | Operations |
-|-----|------------|
-| **Exchange** | Create/delete exchanges, bind queues |
-| **Queue** | Create (optionally with DLQ + `x-max-priority`), peek, clear, delete; single-queue info via management API |
-| **Publish** | Send to queue/exchange (envelope wrap, priority, delayed delivery) |
-| **Stats** | All-queue statistics with optional name filter, manual refresh, and auto-refresh polling |
+| Tab          | Operations                                                                                                 |
+|--------------|------------------------------------------------------------------------------------------------------------|
+| **Exchange** | Create/delete exchanges, bind queues                                                                       |
+| **Queue**    | Create (optionally with DLQ + `x-max-priority`), peek, clear, delete; single-queue info via management API |
+| **Publish**  | Send to queue/exchange (envelope wrap, priority, delayed delivery)                                         |
+| **Stats**    | All-queue statistics with optional name filter, manual refresh, and auto-refresh polling                   |
 
 Queue creation supports:
 

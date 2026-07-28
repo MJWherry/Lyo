@@ -12,15 +12,9 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
 
     internal CrossSchemaNavigationBuilder(CrossSchemaNavigationOptions<TContext> options) => _options = options;
 
-    /// <summary>
-    /// Adds a relationship to a related type already mapped on <typeparamref name="TContext" /> (same database model).
-    /// Does not change table mapping or migrations.
-    /// </summary>
-    public CrossSchemaNavigationBuilder<TContext> AddSameContext<TRoot, TRelated>(
-        Expression<Func<TRoot, TRelated?>> navigation,
-        Expression<Func<TRoot, object?>> foreignKey)
-        where TRoot : class
-        where TRelated : class
+    /// <summary>Adds a relationship to a related type already mapped on <typeparamref name="TContext" /> (same database model). Does not change table mapping or migrations.</summary>
+    public CrossSchemaNavigationBuilder<TContext> AddSameContext<TRoot, TRelated>(Expression<Func<TRoot, TRelated?>> navigation, Expression<Func<TRoot, object?>> foreignKey)
+        where TRoot : class where TRelated : class
     {
         var navName = GetMemberName(navigation);
         var fkName = GetMemberName(foreignKey);
@@ -32,21 +26,16 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
                 ForeignKeyPropertyName = fkName,
                 SameContext = true,
                 Apply = mb => {
-                    mb.Entity<TRoot>()
-                        .HasOne(navigation)
-                        .WithMany()
-                        .HasForeignKey(fkName)
-                        .IsRequired(false)
-                        .OnDelete(DeleteBehavior.ClientNoAction);
+                    mb.Entity<TRoot>().HasOne(navigation).WithMany().HasForeignKey(fkName).IsRequired(false).OnDelete(DeleteBehavior.ClientNoAction);
                 }
             });
+
         return this;
     }
 
     /// <summary>
-    /// Maps <typeparamref name="TRelated" /> onto <typeparamref name="TContext" /> at <paramref name="schema" />.<paramref name="table" />
-    /// with <c>ExcludeFromMigrations</c>, then adds the <paramref name="navigation" /> relationship.
-    /// Related tables must live in the same database; ownership stays with the related module's migrations.
+    /// Maps <typeparamref name="TRelated" /> onto <typeparamref name="TContext" /> at <paramref name="schema" />.<paramref name="table" /> with <c>ExcludeFromMigrations</c>,
+    /// then adds the <paramref name="navigation" /> relationship. Related tables must live in the same database; ownership stays with the related module's migrations.
     /// </summary>
     public CrossSchemaNavigationBuilder<TContext> AddCrossSchema<TRoot, TRelated>(
         Expression<Func<TRoot, TRelated?>> navigation,
@@ -54,12 +43,10 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
         string table,
         string schema,
         Action<EntityTypeBuilder<TRelated>>? configureRelated = null)
-        where TRoot : class
-        where TRelated : class
+        where TRoot : class where TRelated : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-
         var navName = GetMemberName(navigation);
         var fkName = GetMemberName(foreignKey);
         _options.Registrations.Add(
@@ -73,14 +60,10 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
                     var related = mb.Entity<TRelated>();
                     configureRelated?.Invoke(related);
                     related.ToTable(table, schema, t => t.ExcludeFromMigrations());
-                    mb.Entity<TRoot>()
-                        .HasOne(navigation)
-                        .WithMany()
-                        .HasForeignKey(fkName)
-                        .IsRequired(false)
-                        .OnDelete(DeleteBehavior.ClientNoAction);
+                    mb.Entity<TRoot>().HasOne(navigation).WithMany().HasForeignKey(fkName).IsRequired(false).OnDelete(DeleteBehavior.ClientNoAction);
                 }
             });
+
         return this;
     }
 
@@ -92,9 +75,7 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
 
         return body switch {
             MemberExpression member => member.Member.Name,
-            _ => throw new ArgumentException(
-                $"Expression '{expression}' must be a simple property access (e.g. e => e.Person).",
-                nameof(expression))
+            var _ => throw new ArgumentException($"Expression '{expression}' must be a simple property access (e.g. e => e.Person).", nameof(expression))
         };
     }
 }

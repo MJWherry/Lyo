@@ -7,10 +7,11 @@ import {
   heavyIncludeQuery as buildHeavyIncludeQuery,
   realisticIncludeQuery as buildRealisticIncludeQuery,
   buildOptions as buildCoreOptions,
-} from "../../../packages/lyo-person-api-client/dist/index.js";
+} from "../../../packages/typescript/lyo-person-api-client/dist/index.js";
 import { DEFAULT_PERSON_INCLUDES, DEFAULT_SOURCE_FILTER_VALUES } from "./personModels.js";
 import {
   buildSortBy,
+  cacheHitMode,
   createSeededRng,
   navBranchRates,
   parseCsv,
@@ -156,12 +157,13 @@ export function twoPhaseSubQuery({ include = [], start = 0, amount = 1000, iter 
 }
 
 export function heavyIncludeQuery({ iter = 0, vu = 0, profile = "", bypassCache = true } = {}) {
+  const varyPaging = bypassCache && !cacheHitMode();
   const baseAmount = toInt("HEAVY_AMOUNT", 200);
   const minAmount = toInt("HEAVY_MIN_AMOUNT", 150);
   const maxAmount = toInt("HEAVY_MAX_AMOUNT", 300);
   const amountSpan = Math.max(1, maxAmount - minAmount + 1);
-  const amount = bypassCache ? minAmount + ((baseAmount + iter) % amountSpan) : baseAmount;
-  const start = bypassCache ? Math.max(0, toInt("START", 0) + ((iter * 5) % 200)) : toInt("START", 0);
+  const amount = varyPaging ? minAmount + ((baseAmount + iter) % amountSpan) : baseAmount;
+  const start = varyPaging ? Math.max(0, toInt("START", 0) + ((iter * 5) % 200)) : toInt("START", 0);
 
   const query = buildHeavyIncludeQuery({
     start,
@@ -192,11 +194,12 @@ export function heavyIncludeQuery({ iter = 0, vu = 0, profile = "", bypassCache 
 
 /** Realistic include query: 100–300 items, 3 table hops (contactaddresses.address only). Cache-bypassing via randomized start/amount. */
 export function realisticIncludeQuery({ iter = 0, vu = 0, profile = "" } = {}) {
+  const varyPaging = !cacheHitMode();
   const minAmount = toInt("REALISTIC_MIN_AMOUNT", 100);
   const maxAmount = toInt("REALISTIC_MAX_AMOUNT", 300);
   const amountSpan = Math.max(1, maxAmount - minAmount + 1);
-  const amount = minAmount + ((iter * 17 + 13) % amountSpan);
-  const start = Math.max(0, toInt("REALISTIC_START", 0) + ((iter * 13) % 500));
+  const amount = varyPaging ? minAmount + ((iter * 17 + 13) % amountSpan) : minAmount;
+  const start = varyPaging ? Math.max(0, toInt("REALISTIC_START", 0) + ((iter * 13) % 500)) : toInt("REALISTIC_START", 0);
 
   const query = buildRealisticIncludeQuery({ start, amount });
   withRandomIncludes(query, {

@@ -7,6 +7,7 @@
             <MudText Typo="Typo.h6">@(JobRun?.JobDefinition?.Name ?? "Job Run")</MudText>
             @if (JobRun != null) {
                 <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForState(JobRun.State)" Icon="@JobColorHelper.StateIcon(JobRun.State)">@JobRun.State</MudChip>
+
                 @if (JobRun.Result is { } result) {
                     <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)">@result</MudChip>
                 }

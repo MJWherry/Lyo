@@ -126,7 +126,9 @@
     public string BaseRoute { get; set; } = "Job";
 
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
+
     private string _scheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
+
     private string _triggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
 
     private bool _loading;
@@ -139,13 +141,7 @@
     {
         _loading = true;
         try {
-            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(
-                $"{_definitionRoute}/QueryConcrete",
-                new QueryConcreteReq {
-                    Amount = DefinitionQueryAmount,
-                    Include = ["JobSchedules"]
-                });
-
+            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = DefinitionQueryAmount, Include = ["JobSchedules"] });
             var definitions = res?.Items ?? [];
             _rows = BuildScheduleRows(definitions);
             _upcomingRuns = BuildUpcomingRuns(_rows);
@@ -168,37 +164,19 @@
                 continue;
 
             foreach (var schedule in def.JobSchedules) {
-                var nextRun = schedule.Enabled
-                    ? ScheduleCalculator.GetNextRun(schedule.ToScheduleDefinition())
-                    : null;
-
-                rows.Add(new ScheduleRow(def.Name, def.Id, schedule, nextRun));
+                var nextRun = schedule.Enabled ? ScheduleCalculator.GetNextRun(schedule.ToScheduleDefinition()) : null;
+                rows.Add(new(def.Name, def.Id, schedule, nextRun));
             }
         }
 
-        return rows
-            .OrderBy(r => r.NextRunUtc ?? DateTime.MaxValue)
-            .ThenBy(r => r.DefinitionName, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        return rows.OrderBy(r => r.NextRunUtc ?? DateTime.MaxValue).ThenBy(r => r.DefinitionName, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private static List<UpcomingRunRow> BuildUpcomingRuns(IEnumerable<ScheduleRow> rows)
-        => rows
-            .Where(r => r.Schedule.Enabled)
-            .SelectMany(r => ScheduleCalculator
-                .GetNextRuns(r.Schedule.ToScheduleDefinition(), maxCount: RunsPerScheduleLookAhead)
-                .Select(runAt => new UpcomingRunRow(runAt, r.DefinitionName, r.Schedule.Id, r.Schedule.Description, r.Schedule.Type)))
-            .OrderBy(r => r.RunAtUtc)
-            .Take(MaxUpcomingRuns)
-            .ToList();
+    private static List<UpcomingRunRow> BuildUpcomingRuns(IEnumerable<ScheduleRow> rows) => rows.Where(r => r.Schedule.Enabled).SelectMany(r => ScheduleCalculator.GetNextRuns(r.Schedule.ToScheduleDefinition(), maxCount: RunsPerScheduleLookAhead).Select(runAt => new UpcomingRunRow(runAt, r.DefinitionName, r.Schedule.Id, r.Schedule.Description, r.Schedule.Type))).OrderBy(r => r.RunAtUtc).Take(MaxUpcomingRuns).ToList();
 
     private async Task ToggleScheduleAsync(ScheduleRow row)
     {
-        var patch = new PatchRequestBuilder()
-            .WithKey(row.Schedule.Id)
-            .SetProperty("Enabled", !row.Schedule.Enabled)
-            .Build();
-
+        var patch = new PatchRequestBuilder().WithKey(row.Schedule.Id).SetProperty("Enabled", !row.Schedule.Enabled).Build();
         await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(_scheduleRoute, patch);
         Snackbar.Add($"Schedule {(row.Schedule.Enabled ? "disabled" : "enabled")}", Severity.Success);
         await RefreshAsync();
@@ -206,12 +184,7 @@
 
     private async Task ViewDefinitionAsync(Guid definitionId)
     {
-        var req = new QueryConcreteReq {
-            Keys = [[definitionId]],
-            Amount = 1,
-            Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]
-        };
-
+        var req = new QueryConcreteReq { Keys = [[definitionId]], Amount = 1, Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def == null)

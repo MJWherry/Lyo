@@ -47,7 +47,8 @@ FALLBACK_ARTIFACT_ROOTS = (
 )
 
 K6_RESULTS = REPO_ROOT / "k6" / "framework-person" / "results"
-K6_RUN_PREFIXES = ("prod-like-", "prod-matrix-")
+# Run dirs are named "<optional-prefix->YYYYMMDD-HHMMSS" (run_all.sh default is the bare timestamp).
+K6_RUN_TIMESTAMP = re.compile(r"(\d{8}-\d{6})$")
 K6_SUITE_NAMES = [
     "query_load",
     "query_stress",
@@ -61,6 +62,9 @@ K6_SUITE_NAMES = [
     "queryroot_stress",
     "queryroot_spike",
     "queryroot_soak",
+    "query_ceiling",
+    "queryproject_ceiling",
+    "queryroot_ceiling",
 ]
 K6_REPORT_NAME = "query-api"
 K6_REPORT_TITLE = "Query API (k6)"
@@ -903,16 +907,51 @@ def build_micro_category(category: dict[str, Any]) -> bool:
 # --------------------------------------------------------------------------------------
 # Load (k6) — normalize raw summaries into a LoadTestReport.
 # --------------------------------------------------------------------------------------
+def _k6_run_timestamp(run_id: str) -> str:
+    match = K6_RUN_TIMESTAMP.search(run_id)
+    return match.group(1) if match else ""
+
+
+def _k6_run_has_summaries(run_dir: Path) -> bool:
+    return any((run_dir / f"{name}.summary.json").is_file() for name in K6_SUITE_NAMES)
+
+
 def discover_k6_runs() -> list[tuple[str, Path]]:
+    """Usable run dirs, newest first by the timestamp embedded in the dir name (prefix-agnostic)."""
     if not K6_RESULTS.is_dir():
         return []
     runs = [
         (entry.name, entry)
         for entry in K6_RESULTS.iterdir()
-        if entry.is_dir() and any(entry.name.startswith(p) for p in K6_RUN_PREFIXES)
+        if entry.is_dir() and _k6_run_timestamp(entry.name) and _k6_run_has_summaries(entry)
     ]
-    runs.sort(key=lambda item: item[0], reverse=True)
+    runs.sort(key=lambda item: _k6_run_timestamp(item[0]), reverse=True)
     return runs
+
+
+def _k6_run_times(run_id: str, run_dir: Path) -> tuple[str | None, str | None]:
+    """(runStarted, runEnded) ISO strings: start from the dir-name timestamp (local time),
+    end from the newest summary file's mtime. Keeps report ranking tied to when the run
+    actually happened rather than when the manifest was rebuilt."""
+    started = None
+    stamp = _k6_run_timestamp(run_id)
+    if stamp:
+        started = (
+            datetime.strptime(stamp, "%Y%m%d-%H%M%S")
+            .astimezone()
+            .astimezone(timezone.utc)
+            .replace(microsecond=0)
+            .isoformat()
+        )
+    mtimes = [
+        (run_dir / f"{name}.summary.json").stat().st_mtime
+        for name in K6_SUITE_NAMES
+        if (run_dir / f"{name}.summary.json").is_file()
+    ]
+    ended = None
+    if mtimes:
+        ended = datetime.fromtimestamp(max(mtimes), tz=timezone.utc).replace(microsecond=0).isoformat()
+    return started, ended
 
 
 def metric_stat(metrics: dict[str, Any], key: str) -> dict[str, Any]:
@@ -964,6 +1003,43 @@ def split_suite_name(name: str) -> tuple[str, str]:
     return endpoint, profile
 
 
+CEILING_STEP_PATTERN = re.compile(r"^http_req_duration\{scenario:r(\d+)\}$")
+
+
+def ceiling_steps(metrics: dict[str, Any]) -> list[dict[str, Any]]:
+    """Per-step latency/drop data from a ceiling suite (one k6 scenario per arrival-rate step)."""
+    steps: list[dict[str, Any]] = []
+    for key, value in metrics.items():
+        match = CEILING_STEP_PATTERN.match(key)
+        if not match:
+            continue
+        rate = int(match.group(1))
+        dropped = int((metrics.get(f"dropped_iterations{{scenario:r{rate}}}") or {}).get("count") or 0)
+        requests = int((metrics.get(f"http_reqs{{scenario:r{rate}}}") or {}).get("count") or 0)
+        steps.append(
+            {
+                "targetRate": rate,
+                "avg": value.get("avg"),
+                "p95": value.get("p(95)"),
+                "p99": value.get("p(99)"),
+                "requests": requests,
+                "droppedIterations": dropped,
+            }
+        )
+    steps.sort(key=lambda step: step["targetRate"])
+    return steps
+
+
+def ceiling_sustained_rate(steps: list[dict[str, Any]]) -> int | None:
+    """Highest contiguous arrival-rate step the server kept up with (no dropped iterations)."""
+    sustained = None
+    for step in steps:
+        if step["droppedIterations"] > 0 or step["requests"] == 0:
+            break
+        sustained = step["targetRate"]
+    return sustained
+
+
 def build_scenarios(run_dir: Path) -> list[dict[str, Any]]:
     scenarios: list[dict[str, Any]] = []
     for name in K6_SUITE_NAMES:
@@ -973,22 +1049,26 @@ def build_scenarios(run_dir: Path) -> list[dict[str, Any]]:
         metrics = read_json(summary_path).get("metrics") or {}
         reqs = metrics.get("http_reqs") or {}
         endpoint, profile = split_suite_name(name)
-        scenarios.append(
-            {
-                "name": name,
-                "profile": profile,
-                "endpoint": endpoint,
-                "latency": metric_stat(metrics, "http_req_duration"),
-                "throughput": reqs.get("rate"),
-                "requests": int(reqs.get("count") or 0),
-                "checksPass": check_pass_rate(metrics),
-                "statusPass": (metrics.get("status_success_rate") or {}).get("value", 0) * 100,
-                "shapePass": (metrics.get("shape_success_rate") or {}).get("value", 0) * 100,
-                "latencyPass": (metrics.get("latency_success_rate") or {}).get("value", 0) * 100,
-                "droppedIterations": dropped_iterations(metrics),
-                "hotspots": query_case_hotspots(metrics),
-            }
-        )
+        scenario: dict[str, Any] = {
+            "name": name,
+            "profile": profile,
+            "endpoint": endpoint,
+            "latency": metric_stat(metrics, "http_req_duration"),
+            "throughput": reqs.get("rate"),
+            "requests": int(reqs.get("count") or 0),
+            "checksPass": check_pass_rate(metrics),
+            "statusPass": (metrics.get("status_success_rate") or {}).get("value", 0) * 100,
+            "shapePass": (metrics.get("shape_success_rate") or {}).get("value", 0) * 100,
+            "latencyPass": (metrics.get("latency_success_rate") or {}).get("value", 0) * 100,
+            "droppedIterations": dropped_iterations(metrics),
+            "hotspots": query_case_hotspots(metrics),
+        }
+        if profile == "ceiling":
+            steps = ceiling_steps(metrics)
+            if steps:
+                scenario["steps"] = steps
+                scenario["sustainedRate"] = ceiling_sustained_rate(steps)
+        scenarios.append(scenario)
     return scenarios
 
 
@@ -997,7 +1077,8 @@ def p95(scenario: dict[str, Any]) -> float | None:
 
 
 def endpoint_rollup(scenarios: list[dict[str, Any]], endpoint: str) -> dict[str, Any]:
-    filtered = [s for s in scenarios if s["endpoint"] == endpoint]
+    # Ceiling (saturation) suites intentionally exceed SLOs; keep them out of the pass-rate rollups.
+    filtered = [s for s in scenarios if s["endpoint"] == endpoint and s["profile"] != "ceiling"]
     total = sum(int(s["requests"]) for s in filtered)
     rollup: dict[str, Any] = {"endpoint": endpoint, "totalRequests": total}
     if total == 0:
@@ -1029,7 +1110,7 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
 
     grades: list[dict[str, str]] = []
 
-    query_scn = [s for s in scenarios if s["endpoint"] == "query"]
+    query_scn = [s for s in scenarios if s["endpoint"] == "query" and s["profile"] != "ceiling"]
     query_status = all((s.get("statusPass") or 0) >= 100 for s in query_scn)
     query_shape = all((s.get("shapePass") or 0) >= 100 for s in query_scn)
     grades.append(
@@ -1167,6 +1248,24 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         qr_rationale = "Incomplete QueryRoot suite coverage"
     grades.append(letter("QueryRoot path", qr_grade, qr_rationale))
 
+    ceiling_scn = [s for s in scenarios if s["profile"] == "ceiling" and s.get("steps")]
+    if ceiling_scn:
+        parts = []
+        for s in ceiling_scn:
+            sustained = s.get("sustainedRate")
+            step = next((st for st in s["steps"] if st["targetRate"] == sustained), None)
+            p95_txt = f" @ p95 {step['p95']:.0f} ms" if step and step.get("p95") is not None else ""
+            parts.append(f"{s['endpoint']} {sustained if sustained is not None else '<' + str(s['steps'][0]['targetRate'])} req/s{p95_txt}")
+        status_ok = all((s.get("statusPass") or 0) >= 100 for s in ceiling_scn)
+        grades.append(
+            letter(
+                "Saturation ceiling (max sustained arrival rate)",
+                "A" if status_ok else "B",
+                "Highest dropped-iteration-free step per endpoint: " + "; ".join(parts)
+                + ("" if status_ok else " (status errors under saturation)"),
+            )
+        )
+
     return grades
 
 
@@ -1216,7 +1315,25 @@ def slo_assessment(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
     if qr_stress is not None:
         add("QueryRoot stress", "300-1,000 ms", f"{qr_stress:.0f} ms", "Meets" if qr_stress <= 1000 else "Slightly above" if qr_stress <= 2000 else "Miss")
 
-    status_shape = all((s.get("statusPass") or 0) >= 100 and (s.get("shapePass") or 0) >= 100 for s in scenarios)
+    for name, label in (
+        ("query_ceiling", "Query saturation ceiling"),
+        ("queryproject_ceiling", "QueryProject saturation ceiling"),
+        ("queryroot_ceiling", "QueryRoot saturation ceiling"),
+    ):
+        scenario = by_name.get(name)
+        steps = (scenario or {}).get("steps") or []
+        if not steps:
+            continue
+        sustained = scenario.get("sustainedRate")
+        if sustained is None:
+            add(label, "find the knee", f"saturated below {steps[0]['targetRate']} req/s", "Measured")
+            continue
+        step = next((st for st in steps if st["targetRate"] == sustained), None)
+        p95_txt = f" @ p95 {step['p95']:.0f} ms" if step and step.get("p95") is not None else ""
+        add(label, "find the knee", f"{sustained} req/s sustained{p95_txt}", "Measured")
+
+    non_ceiling = [s for s in scenarios if s["profile"] != "ceiling"]
+    status_shape = all((s.get("statusPass") or 0) >= 100 and (s.get("shapePass") or 0) >= 100 for s in non_ceiling)
     add("Status + response-shape correctness", "99.9-100%", "100%", "Meets" if status_shape else "Miss")
 
     return rows
@@ -1257,6 +1374,7 @@ def build_k6(run_dir: Path | None) -> bool:
         print(f"k6: no summary files in {run_dir}.")
         return False
 
+    run_started, run_ended = _k6_run_times(run_id, run_dir)
     report = {
         "type": "load",
         "schema": SCHEMA,
@@ -1264,6 +1382,8 @@ def build_k6(run_dir: Path | None) -> bool:
         "title": K6_REPORT_TITLE,
         "description": K6_DESCRIPTION,
         "runId": run_id,
+        "runStarted": run_started,
+        "runEnded": run_ended,
         "generatedAt": utc_now_iso(),
         "environment": {"tool": "k6"},
         "notes": [

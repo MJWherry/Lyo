@@ -10,16 +10,16 @@ guides that do not belong to a single package.
 
 ## Guides
 
-| Document                                       | What it covers                                                                           |
-|------------------------------------------------|------------------------------------------------------------------------------------------|
-| [Getting started](getting-started.md)          | Prerequisites, consuming a package, a minimal working example.                           |
-| [Architecture](architecture.md)                | Area model, the dependency law, and how the package taxonomy fits together.              |
-| [Configuration](configuration.md)              | Environment variables and options used by the docker runner and tooling.                 |
-| [Testing](testing.md)                          | Running unit tests, BenchmarkDotNet suites, and k6 load tests (local and containerized). |
-| [Deployment](deployment.md)                    | The container stack, resource limits, and operational notes.                             |
-| [Publishing](publishing.md)                    | How packages are versioned and packed with `build-nuget.sh`.                             |
-| [Glossary](glossary.md)                        | Domain terms and recurring concepts.                                                     |
-| [Security](security/README.md)                 | Security model, reporting, and crypto design notes.                                      |
+| Document                              | What it covers                                                                           |
+|---------------------------------------|------------------------------------------------------------------------------------------|
+| [Getting started](getting-started.md) | Prerequisites, consuming a package, a minimal working example.                           |
+| [Architecture](architecture.md)       | Area model, the dependency law, and how the package taxonomy fits together.              |
+| [Configuration](configuration.md)     | Environment variables and options used by the docker runner and tooling.                 |
+| [Testing](testing.md)                 | Running unit tests, BenchmarkDotNet suites, and k6 load tests (local and containerized). |
+| [Deployment](deployment.md)           | The container stack, resource limits, and operational notes.                             |
+| [Publishing](publishing.md)           | How packages are versioned and packed with `build-nuget.sh`.                             |
+| [Glossary](glossary.md)               | Domain terms and recurring concepts.                                                     |
+| [Security](security/README.md)        | Security model, reporting, and crypto design notes.                                      |
 
 ## Interactive artifacts (HTML)
 

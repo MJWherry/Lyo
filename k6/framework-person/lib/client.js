@@ -1,12 +1,12 @@
 import http from "k6/http";
 import { check } from "k6";
 import { endpointUrl, env } from "./env.js";
-import { createApiClient } from "../../../packages/lyo-api-client/dist/index.js";
+import { createApiClient } from "../../../packages/typescript/lyo-api-client/dist/index.js";
 import {
   createPersonApiClient,
   isProjectedQueryRes,
   isQueryRes,
-} from "../../../packages/lyo-person-api-client/dist/index.js";
+} from "../../../packages/typescript/lyo-person-api-client/dist/index.js";
 import { createK6Transport } from "./k6Transport.js";
 import {
   failedStatusCount,

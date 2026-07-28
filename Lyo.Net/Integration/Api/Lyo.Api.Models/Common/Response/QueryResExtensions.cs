@@ -6,25 +6,6 @@ namespace Lyo.Api.Models.Common.Response;
 /// <summary>Paging helpers that clone a result's echoed query request with a new <see cref="QueryRequestBase.Start" />.</summary>
 public static class QueryResExtensions
 {
-    extension<T>(QueryRes<T> result)
-    {
-        /// <summary>Clones the echoed concrete request and sets <paramref name="start" />.</summary>
-        public QueryConcreteReq WithStart(int start)
-        {
-            ArgumentHelpers.ThrowIfNull(result);
-            var clone = QueryRequestClone.Clone(result.QueryRequest);
-            clone.Start = start;
-            return clone;
-        }
-
-        /// <summary>Clones the echoed concrete request with <c>Start</c> advanced by one page.</summary>
-        public QueryConcreteReq ToNextQueryRequest()
-        {
-            ArgumentHelpers.ThrowIfNull(result);
-            return result.WithStart(ComputeNextStart(result.Start, result.QueryRequest, result.Amount, result.Items?.Count));
-        }
-    }
-
     /// <summary>Clones the echoed projected/root request and sets <paramref name="start" />.</summary>
     public static QueryRequestBase WithStart<T>(this ProjectedQueryRes<T> result, int start)
     {
@@ -63,4 +44,23 @@ public static class QueryResExtensions
 
     private static int ComputeNextStart(int? resultStart, QueryRequestBase queryRequest, int? resultAmount, int? itemsCount)
         => (resultStart ?? queryRequest.Start ?? 0) + (queryRequest.Amount ?? resultAmount ?? itemsCount ?? 0);
+
+    extension<T>(QueryRes<T> result)
+    {
+        /// <summary>Clones the echoed concrete request and sets <paramref name="start" />.</summary>
+        public QueryConcreteReq WithStart(int start)
+        {
+            ArgumentHelpers.ThrowIfNull(result);
+            var clone = QueryRequestClone.Clone(result.QueryRequest);
+            clone.Start = start;
+            return clone;
+        }
+
+        /// <summary>Clones the echoed concrete request with <c>Start</c> advanced by one page.</summary>
+        public QueryConcreteReq ToNextQueryRequest()
+        {
+            ArgumentHelpers.ThrowIfNull(result);
+            return result.WithStart(ComputeNextStart(result.Start, result.QueryRequest, result.Amount, result.Items?.Count));
+        }
+    }
 }

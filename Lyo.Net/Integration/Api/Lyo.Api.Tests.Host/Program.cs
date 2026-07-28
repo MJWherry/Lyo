@@ -6,7 +6,6 @@ using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;
-using Lyo.Api.Tests.Host;
 using Lyo.Cache;
 using Lyo.Common;
 using Lyo.Csv;

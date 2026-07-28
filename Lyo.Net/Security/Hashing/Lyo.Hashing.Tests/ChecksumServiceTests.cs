@@ -40,7 +40,8 @@ public sealed class ChecksumServiceTests
 
     [Fact]
     public async Task ChecksumFileAsync_missing_file_throws()
-        => await Assert.ThrowsAsync<FileNotFoundException>(() => HashingService.Shared.ChecksumFileAsync(ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), TestContext.Current.CancellationToken));
+        => await Assert.ThrowsAsync<FileNotFoundException>(() => HashingService.Shared.ChecksumFileAsync(
+            ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), TestContext.Current.CancellationToken));
 
     [Fact]
     public void CreateChecksumStream_wraps_underlying_stream()

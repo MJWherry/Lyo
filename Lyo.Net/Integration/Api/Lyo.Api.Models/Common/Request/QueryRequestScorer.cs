@@ -74,8 +74,9 @@ public static class QueryRequestScorer
         var sortScore = ScoreSortBy(request.SortBy, out var sortCount);
         var selectScore = ScorePathList(request.Select, out var selectCount, out var selectMaxDepth, out var selectTotalPathSegments);
         var joinPathScore = ScorePathList(
-            request.Joins.SelectMany(j => j.On.SelectMany(o => new[] { o.From, o.To })).Append(request.From.EntityType).Append(request.From.Alias).ToList(),
-            out var joinPathCount, out var joinMaxDepth, out var joinTotalSegments);
+            request.Joins.SelectMany(j => j.On.SelectMany(o => new[] { o.From, o.To })).Append(request.From.EntityType).Append(request.From.Alias).ToList(), out var joinPathCount,
+            out var joinMaxDepth, out var joinTotalSegments);
+
         var computedFieldsScore = ScoreComputedFields(request.ComputedFields);
         var totalCountModeScore = ScoreTotalCountMode(request.Options.TotalCountMode);
         var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) =
@@ -86,8 +87,8 @@ public static class QueryRequestScorer
         var total = pagingScore + keysScore + sortScore + selectScore + joinPathScore + joinBonus + computedFieldsScore + totalCountModeScore + whereClauseScore;
         return new(
             total, pagingScore, keysScore, sortScore, selectScore + joinPathScore + joinBonus, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0,
-            request.Amount ?? 0, selectCount + joinPathCount, Math.Max(selectMaxDepth, joinMaxDepth), selectTotalPathSegments + joinTotalSegments, sortCount,
-            request.Keys.Count, nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
+            request.Amount ?? 0, selectCount + joinPathCount, Math.Max(selectMaxDepth, joinMaxDepth), selectTotalPathSegments + joinTotalSegments, sortCount, request.Keys.Count,
+            nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
     }
 
     private static int ScorePaging(int? start, int? amount)

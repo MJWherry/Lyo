@@ -2,7 +2,7 @@ using Lyo.Reporting.Models.Enums;
 
 namespace Lyo.Reporting.Models.Profiles;
 
-/// <summary>Host-registered defaults keyed by <see cref="Key"/> (matches definition <c>GenerationProfileKey</c>).</summary>
+/// <summary>Host-registered defaults keyed by <see cref="Key" /> (matches definition <c>GenerationProfileKey</c>).</summary>
 public sealed class ReportingGenerationProfile
 {
     public required string Key { get; init; }

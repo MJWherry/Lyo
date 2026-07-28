@@ -45,9 +45,11 @@ public class StringOrChainTests
     {
         var invoked = false;
         var result = "a".Or(() => {
-            invoked = true;
-            return "x";
-        }).OrDefault();
+                invoked = true;
+                return "x";
+            })
+            .OrDefault();
+
         Assert.Equal("a", result);
         Assert.False(invoked);
     }
@@ -56,24 +58,25 @@ public class StringOrChainTests
     public void Or_FuncContinuation_OnlyInvokedWhenMissing()
     {
         var invoked = false;
-        var result = "".Or("b").Or(() => {
-            invoked = true;
-            return "x";
-        }).OrDefault();
+        var result = "".Or("b")
+            .Or(() => {
+                invoked = true;
+                return "x";
+            })
+            .OrDefault();
+
         Assert.Equal("b", result);
         Assert.False(invoked);
     }
 
     [Fact]
-    public void OrIfWhiteSpace_FuncStarter_WhitespaceMissing_InvokesFactory()
-        => Assert.Equal("x", " ".OrIfWhiteSpace(() => "x").OrDefault());
+    public void OrIfWhiteSpace_FuncStarter_WhitespaceMissing_InvokesFactory() => Assert.Equal("x", " ".OrIfWhiteSpace(() => "x").OrDefault());
 
     [Fact]
     public void OrThrow_Resolved_ReturnsValue() => Assert.Equal("b", "".Or("b").OrThrow(() => new KeyNotFoundException("missing")));
 
     [Fact]
-    public void OrThrow_AllMissing_ThrowsFactoryException()
-        => Assert.Throws<KeyNotFoundException>(() => "".Or("").OrThrow(() => new KeyNotFoundException("missing")));
+    public void OrThrow_AllMissing_ThrowsFactoryException() => Assert.Throws<KeyNotFoundException>(() => "".Or("").OrThrow(() => new KeyNotFoundException("missing")));
 
     [Fact]
     public void OrThrow_MessageFactory_AllMissing_ThrowsWithMessage()
@@ -87,21 +90,17 @@ public class StringOrChainTests
         => Assert.Throws<KeyNotFoundException>(() => "".Or(" ").OrThrowIfWhiteSpace(() => new KeyNotFoundException("missing")));
 
     [Fact]
-    public void OrThrowInvalidOperation_AllMissing_Throws()
-        => Assert.Throws<InvalidOperationException>(() => "".Or("").OrThrowInvalidOperation());
+    public void OrThrowInvalidOperation_AllMissing_Throws() => Assert.Throws<InvalidOperationException>(() => "".Or("").OrThrowInvalidOperation());
 
     [Fact]
-    public void OrThrowInvalidOperationIfWhiteSpace_ResolvedWhitespace_Throws()
-        => Assert.Throws<InvalidOperationException>(() => "".Or(" ").OrThrowInvalidOperationIfWhiteSpace());
+    public void OrThrowInvalidOperationIfWhiteSpace_ResolvedWhitespace_Throws() => Assert.Throws<InvalidOperationException>(() => "".Or(" ").OrThrowInvalidOperationIfWhiteSpace());
 
     [Fact]
-    public void OrThrowArgument_AllMissing_Throws()
-        => Assert.Throws<ArgumentException>(() => "".Or("").OrThrowArgument());
+    public void OrThrowArgument_AllMissing_Throws() => Assert.Throws<ArgumentException>(() => "".Or("").OrThrowArgument());
 
     [Fact]
     public void OrThrowKeyNotFound_Resolved_ReturnsValue() => Assert.Equal("v", "".Or("v").OrThrowKeyNotFound());
 
     [Fact]
-    public void OrThrowNotSupported_AllMissing_Throws()
-        => Assert.Throws<NotSupportedException>(() => "".Or("").OrThrowNotSupported());
+    public void OrThrowNotSupported_AllMissing_Throws() => Assert.Throws<NotSupportedException>(() => "".Or("").OrThrowNotSupported());
 }

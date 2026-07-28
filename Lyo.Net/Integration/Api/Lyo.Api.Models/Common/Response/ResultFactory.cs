@@ -7,7 +7,14 @@ namespace Lyo.Api.Models.Common.Response;
 
 public static class ResultFactory
 {
-    public static QueryRes<T> QuerySuccess<T>(QueryConcreteReq queryRequest, IReadOnlyList<T> items, int? start, int? amount, int? total, bool? hasMore = null, int? queryScore = null)
+    public static QueryRes<T> QuerySuccess<T>(
+        QueryConcreteReq queryRequest,
+        IReadOnlyList<T> items,
+        int? start,
+        int? amount,
+        int? total,
+        bool? hasMore = null,
+        int? queryScore = null)
         => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? QueryRequestScorer.Score(queryRequest), null);
 
     public static QueryRes<T> QueryFailure<T>(QueryConcreteReq queryRequest, LyoProblemDetails error, int? queryScore = null)
@@ -36,7 +43,7 @@ public static class ResultFactory
             ProjectionQueryReq projection => QueryRequestScorer.Score(projection),
             QueryReq root => QueryRequestScorer.Score(root),
             QueryConcreteReq concrete => QueryRequestScorer.Score(concrete),
-            _ => 0
+            var _ => 0
         };
 
     // Create

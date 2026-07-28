@@ -1,3 +1,4 @@
+using System.Data;
 using System.Runtime.InteropServices;
 using ClosedXML.Excel;
 using ClosedXML.Graphics;
@@ -253,7 +254,7 @@ internal sealed class XlsxReader : IXlsxReader
 
     private IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxStreamAsDictionaryCore(
         Stream xlsxStream,
-        Func<System.Data.DataSet, System.Data.DataTable?> selectTable,
+        Func<DataSet, System.Data.DataTable?> selectTable,
         string missingSheetMessage)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -529,7 +530,8 @@ internal sealed class XlsxReader : IXlsxReader
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileAsDictionaryAsync(System.String,System.String,System.Threading.CancellationToken)' />
-    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, string sheetName, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, string sheetName, CancellationToken ct =
+ default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         await using var inputStream = File.OpenRead(xlsxFilePath);
@@ -537,7 +539,8 @@ internal sealed class XlsxReader : IXlsxReader
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileAsDictionaryAsync(System.String,System.Int32,System.Threading.CancellationToken)' />
-    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, int sheetIndex, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, int sheetIndex, CancellationToken ct =
+ default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         await using var inputStream = File.OpenRead(xlsxFilePath);
@@ -553,7 +556,8 @@ internal sealed class XlsxReader : IXlsxReader
         => GuardedRunAsync(() => ParseXlsxStreamAsDictionary(xlsxStream, sheetIndex), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxBytesAsDictionaryAsync(System.Byte[],System.String,System.Threading.CancellationToken)' />
-    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, string sheetName, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, string sheetName, CancellationToken ct =
+ default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
@@ -601,7 +605,8 @@ internal sealed class XlsxReader : IXlsxReader
         => GuardedRunAsync(() => ParseXlsxStreamAsDataTable(xlsxStream, sheetIndex, useHeaderRow), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxBytesAsDataTableAsync(System.Byte[],System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, CancellationToken ct =
+ default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
@@ -609,7 +614,8 @@ internal sealed class XlsxReader : IXlsxReader
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxBytesAsDataTableAsync(System.Byte[],System.Int32,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct =
+ default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
@@ -628,7 +634,8 @@ internal sealed class XlsxReader : IXlsxReader
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxStreamAsAllSheetsAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct =
+ default)
         => GuardedRunAsync(() => ParseXlsxStreamAsAllSheets(xlsxStream, useHeaderRow), ct);
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxBytesAsAllSheetsAsync(System.Byte[],System.Nullable{System.Boolean},System.Threading.CancellationToken)' />

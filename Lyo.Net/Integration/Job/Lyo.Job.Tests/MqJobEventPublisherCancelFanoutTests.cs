@@ -19,14 +19,11 @@ public class MqJobEventPublisherCancelFanoutTests
     {
         var mq = new RoutingFakeMqService();
         var publisher = CreatePublisher(mq);
-
         await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestContext.Current.CancellationToken);
-
         var queue = Assert.Single(mq.CreatedQueues);
         Assert.StartsWith(Constants.Mq.QueueGetJobRunCancel("cs") + ".", queue.Name, StringComparison.Ordinal);
         Assert.True(queue.Exclusive);
         Assert.True(queue.AutoDelete);
-
         var binding = Assert.Single(mq.Bindings);
         Assert.Equal(queue.Name, binding.QueueName);
         Assert.Equal(Constants.Mq.JobEventExchange, binding.ExchangeName);
@@ -42,27 +39,27 @@ public class MqJobEventPublisherCancelFanoutTests
         var receivedByInstanceB = new ConcurrentBag<Guid>();
 
         // Two instances of the same worker type — with the old shared queue only one of them would receive each cancel.
-        await publisher.SubscribeToRunCancellationsAsync("cs", runId => {
-            receivedByInstanceA.Add(runId);
-            return Task.CompletedTask;
-        }, TestContext.Current.CancellationToken);
-        await publisher.SubscribeToRunCancellationsAsync("cs", runId => {
-            receivedByInstanceB.Add(runId);
-            return Task.CompletedTask;
-        }, TestContext.Current.CancellationToken);
+        await publisher.SubscribeToRunCancellationsAsync(
+            "cs", runId => {
+                receivedByInstanceA.Add(runId);
+                return Task.CompletedTask;
+            }, TestContext.Current.CancellationToken);
+
+        await publisher.SubscribeToRunCancellationsAsync(
+            "cs", runId => {
+                receivedByInstanceB.Add(runId);
+                return Task.CompletedTask;
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, mq.CreatedQueues.Count);
         Assert.Equal(2, mq.CreatedQueues.Select(q => q.Name).Distinct().Count());
-
         var runId = Guid.NewGuid();
         await publisher.PublishRunCancelledAsync(runId, TestContext.Current.CancellationToken);
-
         Assert.Equal(runId, Assert.Single(receivedByInstanceA));
         Assert.Equal(runId, Assert.Single(receivedByInstanceB));
     }
 
-    private static MqJobEventPublisher CreatePublisher(IMqService mq)
-        => new(mq, NullLogger<MqJobEventPublisher>.Instance, Options.Create(new JobMqOptions()));
+    private static MqJobEventPublisher CreatePublisher(IMqService mq) => new(mq, NullLogger<MqJobEventPublisher>.Instance, Options.Create(new JobMqOptions()));
 
     /// <summary>Fake MQ that records queue declarations/bindings and routes exchange publishes to every bound queue's subscriber (broadcast semantics).</summary>
     private sealed class RoutingFakeMqService : IMqService
@@ -125,7 +122,6 @@ public class MqJobEventPublisherCancelFanoutTests
 
         public string HealthCheckName => "routing-fake-mq";
 
-        public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-            => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?>()));
+        public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?>()));
     }
 }

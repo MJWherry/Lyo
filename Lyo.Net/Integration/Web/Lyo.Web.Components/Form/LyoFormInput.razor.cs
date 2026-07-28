@@ -62,8 +62,8 @@ public partial class LyoFormInput<TModel, TValue>
     public bool UseRichTextEditor { get; set; }
 
     /// <summary>
-    /// Column width hint when hosted inside a <c>LyoFormGrid</c>. Defaults to <see cref="LyoFieldSize.Auto" />, which derives the width from the
-    /// property type (bools/numerics/times narrow, enums/dates medium, strings wide, multiline full row). Ignored outside a <c>LyoFormGrid</c>.
+    /// Column width hint when hosted inside a <c>LyoFormGrid</c>. Defaults to <see cref="LyoFieldSize.Auto" />, which derives the width from the property type
+    /// (bools/numerics/times narrow, enums/dates medium, strings wide, multiline full row). Ignored outside a <c>LyoFormGrid</c>.
     /// </summary>
     [Parameter]
     public LyoFieldSize FieldSize { get; set; } = LyoFieldSize.Auto;

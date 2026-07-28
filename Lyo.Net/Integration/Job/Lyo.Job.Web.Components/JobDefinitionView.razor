@@ -30,9 +30,12 @@
                                 <LyoFormInput TModel="EditModel" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Enabled)" Label="Enabled" AllowEditing="true"
                                               OnValueChanged="@(_ => StateHasChanged())"/>
                                 <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxRetryCount)" Label="Max Retries" AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.RetryBackoffSeconds)" Label="Retry Backoff (s)" AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.TimeoutMinutes)" Label="Timeout (min)" AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxConcurrentRuns)" Label="Max Concurrent" AllowEditing="true"/>
+                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.RetryBackoffSeconds)" Label="Retry Backoff (s)"
+                                              AllowEditing="true"/>
+                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.TimeoutMinutes)" Label="Timeout (min)"
+                                              AllowEditing="true"/>
+                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxConcurrentRuns)" Label="Max Concurrent"
+                                              AllowEditing="true"/>
                             </LyoFormGrid>
                         </LyoForm>
                     </div>
@@ -52,7 +55,8 @@
             </MudTabPanel>
             <MudTabPanel Text="Triggers">
                 <div class="pa-4">
-                    <JobTriggerView JobTriggers="JobDefinition?.JobTriggers" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" TriggerRoute="@TriggerRoute"/>
+                    <JobTriggerView JobTriggers="JobDefinition?.JobTriggers" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient"
+                                    TriggerRoute="@TriggerRoute"/>
                 </div>
             </MudTabPanel>
         </MudTabs>

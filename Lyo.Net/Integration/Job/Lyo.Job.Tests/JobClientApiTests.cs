@@ -5,20 +5,19 @@ using Lyo.Common.Records;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
-using Lyo.Job.Models.Response;
 
 namespace Lyo.Job.Tests;
 
 public class JobRunClientTests
 {
     private readonly RecordingApiClient _api = new();
-    private readonly JobRunClient _relativeClient;
     private readonly JobRunClient _prefixedClient;
+    private readonly JobRunClient _relativeClient;
 
     public JobRunClientTests()
     {
-        _relativeClient = new JobRunClient(_api);
-        _prefixedClient = new JobRunClient(_api, "https://localhost:5074");
+        _relativeClient = new(_api);
+        _prefixedClient = new(_api, "https://localhost:5074");
     }
 
     [Fact]
@@ -26,7 +25,6 @@ public class JobRunClientTests
     {
         var runId = Guid.NewGuid();
         await _relativeClient.StartAsync(runId, ["JobRunParameters"]);
-
         Assert.Equal($"Job/Run/{runId}/Started?include=JobRunParameters", _api.LastUri);
     }
 
@@ -35,7 +33,6 @@ public class JobRunClientTests
     {
         var runId = Guid.NewGuid();
         await _prefixedClient.StartAsync(runId);
-
         Assert.Equal($"https://localhost:5074/Job/Run/{runId}/Started", _api.LastUri);
     }
 
@@ -44,9 +41,7 @@ public class JobRunClientTests
     {
         var runId = Guid.NewGuid();
         var results = new[] { new JobRunResultReq("Result", JobRunResult.Success) };
-
         await _relativeClient.FinishAsync(runId, results);
-
         Assert.Equal($"Job/Run/{runId}/Finished", _api.LastUri);
         Assert.NotNull(_api.LastBody);
     }
@@ -54,8 +49,7 @@ public class JobRunClientTests
     [Fact]
     public async Task CreateAsync_PostsToRunsCreateNotRunsRoot()
     {
-        await _relativeClient.CreateAsync(new JobRunReq(Guid.NewGuid(), "tester", false));
-
+        await _relativeClient.CreateAsync(new(Guid.NewGuid(), "tester", false));
         Assert.Equal("Job/Run/Create", _api.LastUri);
         Assert.IsType<JobRunReq>(_api.LastBody);
     }
@@ -65,7 +59,6 @@ public class JobRunClientTests
     {
         var runId = Guid.NewGuid();
         await _relativeClient.PatchProgressAsync(runId, 42, "halfway");
-
         Assert.Equal($"Job/Run/{runId}", _api.LastUri);
         Assert.IsType<PatchRequest>(_api.LastBody);
     }
@@ -78,15 +71,15 @@ public class JobWorkerInstanceClientTests
     {
         var api = new RecordingApiClient();
         var client = new JobWorkerInstanceClient(api, "https://api.test");
-
-        await client.RegisterAsync(new JobWorkerInstanceReq {
-            WorkerType = "cs",
-            MachineName = "host",
-            ProcessId = 1,
-            State = JobWorkerInstanceState.Running,
-            StartedTimestamp = DateTime.UtcNow,
-            LastHeartbeatUtc = DateTime.UtcNow
-        });
+        await client.RegisterAsync(
+            new() {
+                WorkerType = "cs",
+                MachineName = "host",
+                ProcessId = 1,
+                State = JobWorkerInstanceState.Running,
+                StartedTimestamp = DateTime.UtcNow,
+                LastHeartbeatUtc = DateTime.UtcNow
+            });
 
         Assert.Equal("https://api.test/Job/WorkerInstance", api.LastUri);
         Assert.IsType<JobWorkerInstanceReq>(api.LastBody);
@@ -98,9 +91,7 @@ public class JobWorkerInstanceClientTests
         var api = new RecordingApiClient();
         var client = new JobWorkerInstanceClient(api);
         var id = Guid.NewGuid();
-
         await client.HeartbeatAsync(id, 3);
-
         Assert.Equal("Job/WorkerInstance", api.LastUri);
         var patch = Assert.IsType<PatchRequest>(api.LastBody);
         Assert.NotNull(patch.Keys);
@@ -121,7 +112,12 @@ internal sealed class RecordingApiClient : IApiClient
 
     public HttpClient GetClient() => new();
 
-    public Task<TResult?> GetAsAsync<TRequest, TResult>(string uri, TRequest? query = default, string? enumerableDelimiter = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult?> GetAsAsync<TRequest, TResult>(
+        string uri,
+        TRequest? query = default,
+        string? enumerableDelimiter = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
     {
         LastUri = uri;
         return Task.FromResult(default(TResult));
@@ -133,8 +129,7 @@ internal sealed class RecordingApiClient : IApiClient
         return Task.FromResult(default(TResult));
     }
 
-    public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
     public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
@@ -168,13 +163,25 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult> PostFileAsAsync<TResult>(
+        string uri,
+        Stream stream,
+        FileTypeInfo fileType,
+        string? fileName = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         => throw new NotImplementedException();
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult> PostFileAsAsync<TResult>(
+        string uri,
+        byte[] data,
+        FileTypeInfo fileType,
+        string? fileName = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         => throw new NotImplementedException();
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -186,6 +193,5 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Exceptions.Tests;
@@ -33,8 +32,7 @@ public class FormatHelpersTests
     }
 
     [Fact]
-    public void GetValidGuid_Invalid_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.GetValidGuid("nope"));
+    public void GetValidGuid_Invalid_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.GetValidGuid("nope"));
 
     [Theory]
     [InlineData("#FFF")]
@@ -47,8 +45,7 @@ public class FormatHelpersTests
     [InlineData("#FFFF")]
     [InlineData("#GGG")]
     [InlineData("red")]
-    public void ThrowIfInvalidHexColor_Invalid_Throws(string value)
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidHexColor(value));
+    public void ThrowIfInvalidHexColor_Invalid_Throws(string value) => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidHexColor(value));
 
     [Fact]
     public void GetValidHexColor_WithoutHash_ReturnsPrefixed() => Assert.Equal("#A1B2C3", FormatHelpers.GetValidHexColor("A1B2C3"));
@@ -60,20 +57,16 @@ public class FormatHelpersTests
     public void ThrowIfInvalidBase64_Valid_DoesNotThrow() => FormatHelpers.ThrowIfInvalidBase64("aGVsbG8=");
 
     [Fact]
-    public void ThrowIfInvalidBase64_Invalid_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidBase64("!!!not base64!!!"));
+    public void ThrowIfInvalidBase64_Invalid_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidBase64("!!!not base64!!!"));
 
     [Fact]
-    public void GetValidBase64_Valid_ReturnsDecodedBytes()
-        => Assert.Equal("hello", Encoding.UTF8.GetString(FormatHelpers.GetValidBase64("aGVsbG8=")));
+    public void GetValidBase64_Valid_ReturnsDecodedBytes() => Assert.Equal("hello", Encoding.UTF8.GetString(FormatHelpers.GetValidBase64("aGVsbG8=")));
 
     [Fact]
-    public void GetValidBase64_Invalid_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.GetValidBase64("!!!"));
+    public void GetValidBase64_Invalid_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.GetValidBase64("!!!"));
 
     [Fact]
-    public void ThrowIfInvalidDateTime_Valid_DoesNotThrow()
-        => FormatHelpers.ThrowIfInvalidDateTime("2024-01-15", formatProvider: CultureInfo.InvariantCulture);
+    public void ThrowIfInvalidDateTime_Valid_DoesNotThrow() => FormatHelpers.ThrowIfInvalidDateTime("2024-01-15", formatProvider: CultureInfo.InvariantCulture);
 
     [Fact]
     public void ThrowIfInvalidDateTime_Invalid_Throws()
@@ -81,21 +74,21 @@ public class FormatHelpersTests
 
     [Fact]
     public void GetValidDateTime_Valid_ReturnsParsedValue()
-        => Assert.Equal(new DateTime(2024, 1, 15), FormatHelpers.GetValidDateTime("2024-01-15", formatProvider: CultureInfo.InvariantCulture));
+        => Assert.Equal(new(2024, 1, 15), FormatHelpers.GetValidDateTime("2024-01-15", formatProvider: CultureInfo.InvariantCulture));
 
     [Fact]
     public void GetValidDateTime_Invalid_Throws()
         => Assert.Throws<InvalidFormatException>(() => FormatHelpers.GetValidDateTime("later", formatProvider: CultureInfo.InvariantCulture));
 
     [Fact]
-    public void ThrowIfInvalidFormat_Matching_DoesNotThrow()
-        => FormatHelpers.ThrowIfInvalidFormat("abc-123", new Regex("^[a-z0-9-]+$"), "Invalid slug: {0}");
+    public void ThrowIfInvalidFormat_Matching_DoesNotThrow() => FormatHelpers.ThrowIfInvalidFormat("abc-123", new("^[a-z0-9-]+$"), "Invalid slug: {0}");
 
     [Fact]
     public void ThrowIfInvalidFormat_NotMatching_ThrowsWithFormattedMessage()
     {
-        var ex = Assert.Throws<InvalidFormatException>(
-            () => FormatHelpers.ThrowIfInvalidFormat("ABC", new Regex("^[a-z]+$"), "Invalid slug: {0}", validFormats: "Lowercase letters only"));
+        var ex = Assert.Throws<InvalidFormatException>(()
+            => FormatHelpers.ThrowIfInvalidFormat("ABC", new("^[a-z]+$"), "Invalid slug: {0}", validFormats: "Lowercase letters only"));
+
         Assert.Contains("Invalid slug: ABC", ex.Message, StringComparison.Ordinal);
         Assert.Contains("Lowercase letters only", ex.ValidFormats);
     }
@@ -106,33 +99,28 @@ public class FormatHelpersTests
     [Theory]
     [InlineData("abc 123")]
     [InlineData("abc-1")]
-    public void ThrowIfNotAlphanumeric_Invalid_Throws(string value)
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotAlphanumeric(value));
+    public void ThrowIfNotAlphanumeric_Invalid_Throws(string value) => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotAlphanumeric(value));
 
     [Fact]
     public void ThrowIfNotAlpha_Valid_DoesNotThrow() => FormatHelpers.ThrowIfNotAlpha("abcDEF");
 
     [Fact]
-    public void ThrowIfNotAlpha_Digits_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotAlpha("abc1"));
+    public void ThrowIfNotAlpha_Digits_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotAlpha("abc1"));
 
     [Fact]
     public void ThrowIfNotNumeric_Valid_DoesNotThrow() => FormatHelpers.ThrowIfNotNumeric("0123456789");
 
     [Fact]
-    public void ThrowIfNotNumeric_Letters_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotNumeric("123a"));
+    public void ThrowIfNotNumeric_Letters_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotNumeric("123a"));
 
     [Fact]
     public void ThrowIfContainsWhitespace_NoWhitespace_DoesNotThrow() => FormatHelpers.ThrowIfContainsWhitespace("abc");
 
     [Fact]
-    public void ThrowIfContainsWhitespace_Whitespace_Throws()
-        => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfContainsWhitespace("a b"));
+    public void ThrowIfContainsWhitespace_Whitespace_Throws() => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfContainsWhitespace("a b"));
 
     [Fact]
-    public void ThrowIfContainsWhitespace_Empty_ThrowsArgument()
-        => Assert.Throws<ArgumentException>(() => FormatHelpers.ThrowIfContainsWhitespace(""));
+    public void ThrowIfContainsWhitespace_Empty_ThrowsArgument() => Assert.Throws<ArgumentException>(() => FormatHelpers.ThrowIfContainsWhitespace(""));
 
     [Fact]
     public void ThrowIfInvalidLength_InRange_DoesNotThrow() => FormatHelpers.ThrowIfInvalidLength("abc", 1, 5);

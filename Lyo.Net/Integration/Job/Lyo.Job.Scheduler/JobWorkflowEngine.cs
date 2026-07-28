@@ -3,7 +3,6 @@ using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -27,9 +26,7 @@ public sealed class JobWorkflowEngine : BackgroundService
     /// <summary>Maximum retries for a failing completion message before it is dropped. Bounded so a poison message cannot requeue forever.</summary>
     internal const int MaxRequeueCount = 5;
 
-    private static readonly string[] WorkflowRunIncludes = [
-        "JobWorkflowRunSteps", "JobWorkflowRunSteps.JobWorkflowStep", "JobWorkflow", "JobWorkflow.JobWorkflowSteps"
-    ];
+    private static readonly string[] WorkflowRunIncludes = ["JobWorkflowRunSteps", "JobWorkflowRunSteps.JobWorkflowStep", "JobWorkflow", "JobWorkflow.JobWorkflowSteps"];
 
     private readonly IApiClient _apiClient;
     private readonly IJobEventPublisher? _eventPublisher;
@@ -61,12 +58,10 @@ public sealed class JobWorkflowEngine : BackgroundService
             await _mqService.ConnectAsync(stoppingToken).ConfigureAwait(false);
 
         await _mqService.CreateQueue(FinishedEventsQueue, true, false, false, null, stoppingToken).ConfigureAwait(false);
-        await _mqService.BindQueueToExchange(FinishedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunFinishedRoutingKey, stoppingToken)
-            .ConfigureAwait(false);
+        await _mqService.BindQueueToExchange(FinishedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunFinishedRoutingKey, stoppingToken).ConfigureAwait(false);
 
         // Typed subscribe handles both enveloped retries (republished below) and the raw-Guid exchange messages.
         await _mqService.SubscribeToQueueAsync<Guid>(FinishedEventsQueue, OnRunFinishedAsync, ct: stoppingToken).ConfigureAwait(false);
-
         try {
             await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(false);
         }
@@ -106,12 +101,8 @@ public sealed class JobWorkflowEngine : BackgroundService
         if (run is null)
             return;
 
-        var stepState = run.Result is JobRunResult.Failure or JobRunResult.Cancelled or JobRunResult.Unknown
-            ? JobWorkflowStepState.Failed
-            : JobWorkflowStepState.Finished;
-
+        var stepState = run.Result is JobRunResult.Failure or JobRunResult.Cancelled or JobRunResult.Unknown ? JobWorkflowStepState.Failed : JobWorkflowStepState.Finished;
         await PatchWorkflowRunStepAsync(runStep.Id, stepState, runId).ConfigureAwait(false);
-
         var workflowRun = await GetWorkflowRunAsync(runStep.JobWorkflowRunId).ConfigureAwait(false);
         if (workflowRun?.RunSteps is null || workflowRun.JobWorkflow?.Steps is null)
             return;
@@ -135,7 +126,8 @@ public sealed class JobWorkflowEngine : BackgroundService
     {
         var where = WhereClauseBuilder.Condition("JobRunId", ComparisonOperatorEnum.Equals, jobRunId.ToString());
         var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRunStepRes>>(
-            BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/QueryConcrete"), new QueryConcreteReqBuilder().AddWhere(where).First().Build()).ConfigureAwait(false);
+                BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/QueryConcrete"), new QueryConcreteReqBuilder().AddWhere(where).First().Build())
+            .ConfigureAwait(false);
 
         return result.Items?.FirstOrDefault();
     }
@@ -174,11 +166,7 @@ public sealed class JobWorkflowEngine : BackgroundService
 
     private async Task FinalizeWorkflowRunAsync(Guid workflowRunId, JobWorkflowRunState state)
     {
-        var patch = PatchRequestBuilder.ForId(workflowRunId)
-            .SetProperty("State", state)
-            .SetProperty("FinishedTimestamp", DateTime.UtcNow)
-            .Build();
-
+        var patch = PatchRequestBuilder.ForId(workflowRunId).SetProperty("State", state).SetProperty("FinishedTimestamp", DateTime.UtcNow).Build();
         await _apiClient.PatchAsAsync<PatchRequest, object>(BuildUri($"{Constants.Rest.Job.WorkflowRuns}/{workflowRunId}"), patch).ConfigureAwait(false);
     }
 
@@ -198,7 +186,6 @@ public sealed class JobWorkflowEngine : BackgroundService
         var runSteps = workflowRun.RunSteps ?? [];
         var definitions = workflowRun.JobWorkflow?.Steps ?? [];
         var started = workflowRun.State == JobWorkflowRunState.Pending;
-
         foreach (var step in definitions.Where(s => s.Enabled).OrderBy(s => s.StepOrder)) {
             var runStep = runSteps.FirstOrDefault(rs => rs.JobWorkflowStepId == step.Id);
             if (runStep is null || runStep.State != JobWorkflowStepState.Pending)
@@ -215,13 +202,8 @@ public sealed class JobWorkflowEngine : BackgroundService
             if (created is null)
                 continue;
 
-            var patch = PatchRequestBuilder.ForId(runStep.Id)
-                .SetProperty("State", JobWorkflowStepState.Running)
-                .SetProperty("JobRunId", created.Id)
-                .Build();
-
+            var patch = PatchRequestBuilder.ForId(runStep.Id).SetProperty("State", JobWorkflowStepState.Running).SetProperty("JobRunId", created.Id).Build();
             await _apiClient.PatchAsAsync<PatchRequest, object>(BuildUri($"{Constants.Rest.Job.WorkflowRunSteps}/{runStep.Id}"), patch).ConfigureAwait(false);
-
             if (suppressDispatch)
                 await DispatchStepRunAsync(created).ConfigureAwait(false);
 
@@ -229,11 +211,7 @@ public sealed class JobWorkflowEngine : BackgroundService
         }
 
         if (started && workflowRun.State == JobWorkflowRunState.Pending) {
-            var patch = PatchRequestBuilder.ForId(workflowRun.Id)
-                .SetProperty("State", JobWorkflowRunState.Running)
-                .SetProperty("StartedTimestamp", DateTime.UtcNow)
-                .Build();
-
+            var patch = PatchRequestBuilder.ForId(workflowRun.Id).SetProperty("State", JobWorkflowRunState.Running).SetProperty("StartedTimestamp", DateTime.UtcNow).Build();
             await _apiClient.PatchAsAsync<PatchRequest, object>(BuildUri($"{Constants.Rest.Job.WorkflowRuns}/{workflowRun.Id}"), patch).ConfigureAwait(false);
         }
     }
@@ -278,10 +256,7 @@ public sealed class JobWorkflowEngine : BackgroundService
         if (string.IsNullOrWhiteSpace(step.DependsOnStepIds))
             return true;
 
-        var depIds = step.DependsOnStepIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(Guid.Parse)
-            .ToHashSet();
-
+        var depIds = step.DependsOnStepIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(Guid.Parse).ToHashSet();
         return depIds.All(depId => runSteps.Any(rs => rs.JobWorkflowStepId == depId && rs.State == JobWorkflowStepState.Finished));
     }
 

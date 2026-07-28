@@ -2,10 +2,7 @@ using Lyo.Reporting.Models.Enums;
 
 namespace Lyo.Reporting.Models.Request;
 
-/// <summary>
-/// Legacy update payload for a report generation. Prefer <see cref="GenerateReportReq"/> —
-/// generations are read-only on the API surface.
-/// </summary>
+/// <summary>Legacy update payload for a report generation. Prefer <see cref="GenerateReportReq" /> — generations are read-only on the API surface.</summary>
 public sealed class ReportGenerationReq
 {
     public Guid? ReportDefinitionId { get; set; }

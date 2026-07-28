@@ -10,6 +10,20 @@ public sealed class InMemoryMqService : IMqService, IDelayedMqService, IDisposab
     private readonly ConcurrentDictionary<string, ConcurrentQueue<byte[]>> _queues = new();
     private bool _connected;
 
+    public Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
+    {
+        if (delay <= TimeSpan.Zero)
+            return SendToQueue(queueName, data);
+
+        _ = Task.Run(
+            async () => {
+                await Task.Delay(delay, ct);
+                await SendToQueue(queueName, data);
+            }, ct);
+
+        return Task.FromResult(true);
+    }
+
     public void Dispose() => _connected = false;
 
     public string HealthCheckName => "inmemory-mq";
@@ -60,20 +74,6 @@ public sealed class InMemoryMqService : IMqService, IDelayedMqService, IDisposab
     {
         var queue = _queues.GetOrAdd(queueName, _ => new());
         queue.Enqueue(data);
-        return Task.FromResult(true);
-    }
-
-    public Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
-    {
-        if (delay <= TimeSpan.Zero)
-            return SendToQueue(queueName, data);
-
-        _ = Task.Run(
-            async () => {
-                await Task.Delay(delay, ct);
-                await SendToQueue(queueName, data);
-            }, ct);
-
         return Task.FromResult(true);
     }
 

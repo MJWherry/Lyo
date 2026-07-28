@@ -17,8 +17,8 @@ public interface IRabbitMqService : IMqService, IDelayedMqService, IPriorityMqSe
 
     /// <summary>
     /// Declares a queue together with a companion dead-letter queue (default <c>{queueName}.dlq</c>) and wires the main queue's <c>x-dead-letter-exchange</c> /
-    /// <c>x-dead-letter-routing-key</c> arguments so broker-side rejections (nack without requeue, TTL expiry, overflow) land in the DLQ instead of being dropped.
-    /// Note: RabbitMQ cannot change arguments on an existing queue — declaring over an existing queue with different arguments fails.
+    /// <c>x-dead-letter-routing-key</c> arguments so broker-side rejections (nack without requeue, TTL expiry, overflow) land in the DLQ instead of being dropped. Note: RabbitMQ cannot
+    /// change arguments on an existing queue — declaring over an existing queue with different arguments fails.
     /// </summary>
     /// <param name="queueName">The main queue name.</param>
     /// <param name="durable">Whether both queues survive a broker restart.</param>

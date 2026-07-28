@@ -124,7 +124,7 @@ public class UnauthorizedExceptionTests
     [Fact]
     public void ReasonConstructor_IncludesReasonInMessage()
     {
-        var ex = new UnauthorizedException("Token expired.", includeReasonInMessage: true);
+        var ex = new UnauthorizedException("Token expired.", true);
         Assert.Equal("Authentication is required. Reason: Token expired.", ex.Message);
         Assert.Equal("Token expired.", ex.Reason);
     }
@@ -132,7 +132,7 @@ public class UnauthorizedExceptionTests
     [Fact]
     public void ReasonConstructor_ExcludesReasonFromMessageWhenRequested()
     {
-        var ex = new UnauthorizedException("Token expired.", includeReasonInMessage: false);
+        var ex = new UnauthorizedException("Token expired.", false);
         Assert.Equal("Authentication is required.", ex.Message);
         Assert.Equal("Token expired.", ex.Reason);
     }
@@ -163,7 +163,7 @@ public class RateLimitExceededExceptionTests
     [Fact]
     public void RateLimitConstructor_OnlyLimit_BuildsMessage()
     {
-        var ex = new RateLimitExceededException(retryAfter: null, rateLimit: 50);
+        var ex = new RateLimitExceededException(null, 50);
         Assert.Contains("Limit: 50 requests.", ex.Message, StringComparison.Ordinal);
     }
 }
@@ -218,10 +218,7 @@ public class ValidationExceptionTests
     [Fact]
     public void ErrorsConstructor_AppendsErrorDetailsToMessage()
     {
-        var errors = new Dictionary<string, IReadOnlyList<string>> {
-            ["Name"] = ["Name is required.", "Name is too long."],
-            ["Age"] = ["Age must be positive."]
-        };
+        var errors = new Dictionary<string, IReadOnlyList<string>> { ["Name"] = ["Name is required.", "Name is too long."], ["Age"] = ["Age must be positive."] };
         var ex = new ValidationException(errors);
         Assert.Equal(2, ex.Errors.Count);
         Assert.Contains("Validation errors:", ex.Message, StringComparison.Ordinal);
@@ -283,8 +280,7 @@ public class ArgumentOutsideRangeExceptionTests
     }
 
     [Fact]
-    public void IsArgumentOutOfRangeException()
-        => Assert.IsAssignableFrom<ArgumentOutOfRangeException>(new ArgumentOutsideRangeException("p", 1, 2, 3));
+    public void IsArgumentOutOfRangeException() => Assert.IsAssignableFrom<ArgumentOutOfRangeException>(new ArgumentOutsideRangeException("p", 1, 2, 3));
 }
 
 public class InvalidFormatExceptionTests

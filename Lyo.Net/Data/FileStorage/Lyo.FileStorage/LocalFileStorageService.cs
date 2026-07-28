@@ -202,11 +202,9 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         ArgumentHelpers.ThrowIfNull(request);
         ValidatePathPrefix(request.PathPrefix);
         var destPrefix = NormalizePathPrefix(request.PathPrefix);
-
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot move file {fileId} pending direct upload.");
-
         var previousPrefix = meta.PathPrefix;
         if (string.Equals(previousPrefix, destPrefix, StringComparison.Ordinal))
             return meta;
@@ -467,9 +465,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         base.Dispose();
     }
 
-    /// <summary>
-    /// Moves a file, replacing an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).
-    /// </summary>
+    /// <summary>Moves a file, replacing an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).</summary>
     private static void MoveFileReplace(string sourcePath, string destinationPath)
     {
         if (File.Exists(destinationPath))
@@ -611,7 +607,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             catch (DirectoryNotFoundException) {
                 continue;
             }
-            
+
             foreach (var file in filesEnumerable) {
                 ct.ThrowIfCancellationRequested();
                 var full = TrimEnds(Path.GetFullPath(file));
@@ -633,7 +629,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             catch (DirectoryNotFoundException) {
                 continue;
             }
-            
+
             foreach (var sub in subdirs)
                 dirs.Enqueue(sub);
         }

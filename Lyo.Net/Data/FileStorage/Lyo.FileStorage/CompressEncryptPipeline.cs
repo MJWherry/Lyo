@@ -12,8 +12,8 @@ namespace Lyo.FileStorage;
 /// (compressed) representation is never buffered in full.
 /// </summary>
 /// <remarks>
-/// Compressing after encryption is useless (ciphertext is incompressible), so the order here is the only correct one. For the envelope-encryption (two-key) equivalent used by
-/// the storage backends, see <c>FileStorageStreamingPipelines</c>.
+/// Compressing after encryption is useless (ciphertext is incompressible), so the order here is the only correct one. For the envelope-encryption (two-key) equivalent used
+/// by the storage backends, see <c>FileStorageStreamingPipelines</c>.
 /// </remarks>
 public static class CompressEncryptPipeline
 {
@@ -153,14 +153,7 @@ public static class CompressEncryptPipeline
         }
     }
 
-    private static async Task DecryptIntoPipeAsync(
-        IEncryptionService encryption,
-        Stream input,
-        Pipe pipe,
-        string? keyId,
-        byte[]? key,
-        byte[]? associatedData,
-        CancellationToken ct)
+    private static async Task DecryptIntoPipeAsync(IEncryptionService encryption, Stream input, Pipe pipe, string? keyId, byte[]? key, byte[]? associatedData, CancellationToken ct)
     {
         try {
             using (var compressedWriter = pipe.Writer.AsStream(true))

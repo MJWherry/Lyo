@@ -308,8 +308,8 @@ internal sealed class PlainDirectUploadCoordinator
     }
 
     /// <summary>
-    /// Updates <see cref="FileStoreResult.PathPrefix" /> for an existing file id after backing bytes have been relocated, refreshes <see cref="FileStoreResult.Timestamp" />,
-    /// and emits a successful move audit.
+    /// Updates <see cref="FileStoreResult.PathPrefix" /> for an existing file id after backing bytes have been relocated, refreshes <see cref="FileStoreResult.Timestamp" />, and
+    /// emits a successful move audit.
     /// </summary>
     internal async Task<FileStoreResult> RecordMoveMetadataAsync(FileStoreResult sourceMeta, string? destPathPrefix, CancellationToken ct)
     {
@@ -351,8 +351,8 @@ internal sealed class PlainDirectUploadCoordinator
         await _metadataService.SaveMetadataAsync(sourceMeta.Id, renameMeta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(
                 new(
-                    FileAuditEventType.Rename, DateTime.UtcNow, sourceMeta.Id, renameMeta.TenantId, _operationContextAccessor.Current?.ActorId,
-                    sourceMeta.DataEncryptionKeyId, sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
+                    FileAuditEventType.Rename, DateTime.UtcNow, sourceMeta.Id, renameMeta.TenantId, _operationContextAccessor.Current?.ActorId, sourceMeta.DataEncryptionKeyId,
+                    sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
             .ConfigureAwait(false);
 
         return renameMeta;

@@ -425,7 +425,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     {
         SelectedItems = [];
         _savedSelectedKeys = [];
-        await SaveClientState(bypassDebounce: true);
+        await SaveClientState(true);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -518,7 +518,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         }
     }
 
-    private string GetDataRoute() => !QueryProjectRoute.IsNullOrEmpty() ? QueryProjectRoute : QueryRoute.Replace("/QueryConcrete", "/QueryProject", StringComparison.OrdinalIgnoreCase);
+    private string GetDataRoute()
+        => !QueryProjectRoute.IsNullOrEmpty() ? QueryProjectRoute : QueryRoute.Replace("/QueryConcrete", "/QueryProject", StringComparison.OrdinalIgnoreCase);
 
     private LyoProjectionQueryReqBuilder GetQuery(int offset, int pageSize)
     {
@@ -746,10 +747,9 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         if (_loading)
             return string.Empty;
 
-        if (EffectiveSelectedCount > 0)
-            return EffectiveSelectedCount <= MaxBulkSize
-                ? $"({EffectiveSelectedCount:N0} items)"
-                : "(too many items)";
+        if (EffectiveSelectedCount > 0) {
+            return EffectiveSelectedCount <= MaxBulkSize ? $"({EffectiveSelectedCount:N0} items)" : "(too many items)";
+        }
 
         var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
         if (total <= 0)

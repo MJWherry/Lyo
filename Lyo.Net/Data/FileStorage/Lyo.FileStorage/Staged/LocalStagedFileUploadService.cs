@@ -42,9 +42,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
         _options = options;
         _physicalIo = new(options);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalStagedFileUploadService>();
-        _coordinator = new(
-            store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
-
+        _coordinator = new(store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);
@@ -62,7 +60,8 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
     public async Task<StagedUploadBeginResult> BeginAsync(StagedUploadBeginRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_options.DirectUploadReceiveBaseUri))
-            throw new ConfigurationException("Local staged upload requires DiskFileStorageOptions.DirectUploadReceiveBaseUri.", nameof(DiskFileStorageOptions.DirectUploadReceiveBaseUri));
+            throw new ConfigurationException(
+                "Local staged upload requires DiskFileStorageOptions.DirectUploadReceiveBaseUri.", nameof(DiskFileStorageOptions.DirectUploadReceiveBaseUri));
 
         var (result, _) = await _coordinator.BeginCoreAsync(request, ct).ConfigureAwait(false);
         return result;

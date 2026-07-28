@@ -9,7 +9,7 @@ using Lyo.Web.WebRenderer;
 
 namespace Lyo.Reporting.Web.Rendering;
 
-/// <summary>Renders reports to HTML or PDF using Blazor <see cref="ReportViewer{T}"/> and <see cref="IWebRendererService"/>.</summary>
+/// <summary>Renders reports to HTML or PDF using Blazor <see cref="ReportViewer{T}" /> and <see cref="IWebRendererService" />.</summary>
 public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IReportRenderer
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -24,17 +24,14 @@ public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IRe
         if (!CanRender(request.Format))
             throw new NotSupportedException($"{nameof(HtmlPdfReportRenderer)} cannot render format {request.Format}.");
 
-        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions)
-                     ?? throw new ReportValidationException("Failed to deserialize report JSON.");
-
+        var report = JsonSerializer.Deserialize<Report<object>>(request.ReportDataJson, JsonOptions) ?? throw new ReportValidationException("Failed to deserialize report JSON.");
         var parameters = new Dictionary<string, object> { ["Report"] = report };
         var html = await webRenderer.RenderToHtmlAsync<ReportViewer<object>>(parameters, ct).ConfigureAwait(false);
-
         var fileName = request.SuggestedFileName;
         if (request.Format == ReportFormat.Html) {
             fileName ??= "report.html";
             await File.WriteAllTextAsync(request.OutputFilePath, html, Encoding.UTF8, ct).ConfigureAwait(false);
-            return new ReportRenderResult {
+            return new() {
                 FilePath = request.OutputFilePath,
                 ContentType = "text/html; charset=utf-8",
                 FileName = fileName,
@@ -45,7 +42,7 @@ public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IRe
         fileName ??= "report.pdf";
         var pdfBytes = await webRenderer.ConvertHtmlToPdfAsync(html, ct).ConfigureAwait(false);
         await File.WriteAllBytesAsync(request.OutputFilePath, pdfBytes, ct).ConfigureAwait(false);
-        return new ReportRenderResult {
+        return new() {
             FilePath = request.OutputFilePath,
             ContentType = "application/pdf",
             FileName = fileName,

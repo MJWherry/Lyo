@@ -72,7 +72,8 @@ public class QueryConcreteReqBuilder(QueryConcreteReq? baseQuery = null)
     }
 
     /// <summary>Appends a sort by property name, direction, and optional priority.</summary>
-    public QueryConcreteReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null) => AddSort(new(propertyName, direction, priority));
+    public QueryConcreteReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
+        => AddSort(new(propertyName, direction, priority));
 
     /// <summary>Appends one primary-key row (single or composite parts).</summary>
     public QueryConcreteReqBuilder AddKey(params object[] keyParts)

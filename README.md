@@ -23,12 +23,12 @@ These are the areas that tend to anchor product work; each links to deeper docs 
 | **File storage**        | Pluggable storage with optional compression and encryption, metadata, streaming, and duplicate handling.                                                                                                                                                                                                 | [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): abstractions, metadata, compression, encryption.                                                                                                                           |
 | **Cloud blob backends** | AWS S3–compatible and Azure Blob Storage implementations for the file storage abstractions.                                                                                                                                                                                                              | [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage · [Lyo.FileStorage.Blob](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Blob/README.md): Azure Blob backend                                          |
 | **PDF**                 | Load PDFs and extract text via **`IPdfService`** (`PdfService`): words/lines, bounding boxes, key–value and table-style extraction, merges. Models in `Lyo.Pdf.Models`; **Blazor PDF annotator** (draw regions → `PdfBoundingBox`) ships inside **`Lyo.Pdf.Web.Components`**, not as a separate library. | [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): PDF service, loading, extraction, and how to pair with the annotator. UI: [`Lyo.Pdf.Web.Components`](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/) (`PdfAnnotator/`).                                  |
-| **Encryption**          | Authenticated encryption (AES-GCM, ChaCha, CCM, SIV, XChaCha), RSA/hybrid, envelope/two-key, keystore integration. **June 2026 benchmarks:** AES-GCM **906 µs** encrypt @ 1 MB; **~1.2 GB/s** streaming @ 100 MB (AES-NI).                                                                                  | [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md) · [benchmark summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)                                                                                        |
+| **Encryption**          | Authenticated encryption (AES-GCM, ChaCha, CCM, SIV, XChaCha), RSA/hybrid, envelope/two-key, keystore integration. **June 2026 benchmarks:** AES-GCM **906 µs** encrypt @ 1 MB; **~1.2 GB/s** streaming @ 100 MB (AES-NI).                                                                               | [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md) · [benchmark summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)                                                                                         |
 | **Caching**             | Local and Fusion-backed **`ICacheService`**, typed byte payloads, query cache tags for invalidation (with **`Lyo.Api`**).                                                                                                                                                                                | [Lyo.Cache](Lyo.Net/Core/Cache/Lyo.Cache/README.md): local/Fusion registration, payload pipeline, query tag granularity.                                                                                                                          |
 | **Diagnostics**         | Stack decoding, exception classification, breadcrumbs, in-memory error inbox, trace sanitisation—optional **`IPackageMetadataStore`** for namespace→package enrichment.                                                                                                                                  | [Lyo.Diagnostic](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md) · [Lyo.Diagnostic.AspNetCore](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md) · [Lyo.PackageMetadata](Lyo.Net/Core/PackageMetadata/Lyo.PackageMetadata/README.md) |
 | **Content threat scan** | Heuristic scoring for readable text; optional Malware Bazaar, VirusTotal, and **`clamd`** reputation; composes with **`Lyo.FileStorage`** malware scanning.                                                                                                                                              | [Lyo.ContentThreatScan](Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan/README.md) · [Lyo.ContentThreatScan.Intel](Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md)                                                     |
 | **Hashing**             | SHA-2 digests, MD5 for non-security fingerprints, hex helpers, stream hashing, DI-friendly **`IHashingService`**.                                                                                                                                                                                        | [Lyo.Hashing](Lyo.Net/Security/Hashing/Lyo.Hashing/README.md): `Hasher`, `HashingService`, `HashingStream`.                                                                                                                                       |
-| **Compression**         | Ten codecs (LZ4, Zstd, Brotli, GZip, …), streams/files, size limits and bomb protections. **June 2026 benchmarks:** LZ4 ~131 µs / Zstd ~71 µs decompress @ 1 MB; Zstd ~31× faster streaming compress than GZip @ 100 MB.                                                                                  | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md) · [benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)                                                                          |
+| **Compression**         | Ten codecs (LZ4, Zstd, Brotli, GZip, …), streams/files, size limits and bomb protections. **June 2026 benchmarks:** LZ4 ~131 µs / Zstd ~71 µs decompress @ 1 MB; Zstd ~31× faster streaming compress than GZip @ 100 MB.                                                                                 | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md) · [benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)                                                                             |
 
 ---
 
@@ -100,7 +100,8 @@ top-level area.
 
 ### Data
 
-- [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md): multi-algorithm compression, streams, atomic file ops; [benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) (June 2026).
+- [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md): multi-algorithm compression, streams, atomic file
+  ops; [benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) (June 2026).
 - [Lyo.Csv](Lyo.Net/Data/Csv/Lyo.Csv/README.md): CSV read/write via CsvHelper.
 - [Lyo.FileStorage.Blob](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Blob/README.md): Azure Blob Storage backend for file storage (`Lyo.FileStorage.Blob`).
 - [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): file storage abstractions, metadata, compression, encryption.
@@ -156,7 +157,8 @@ top-level area.
 
 - [Lyo.ContentThreatScan](Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan/README.md): heuristic text threat scoring; composes with **`Lyo.FileStorage`** scanning.
 - [Lyo.ContentThreatScan.Intel](Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md): Malware Bazaar, VirusTotal, and **`clamd`** reputation pipeline.
-- [Lyo.Encryption.Benchmarks](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/README.md): BenchmarkDotNet suite (AES-GCM, ChaCha, CCM, SIV, XChaCha, RSA, hybrid, two-key, streaming); [summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (June 2026).
+- [Lyo.Encryption.Benchmarks](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/README.md): BenchmarkDotNet suite (AES-GCM, ChaCha, CCM, SIV, XChaCha, RSA, hybrid, two-key,
+  streaming); [summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (June 2026).
 - [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md): authenticated encryption, envelope/two-key patterns, keystore hooks.
 - [Lyo.Hashing](Lyo.Net/Security/Hashing/Lyo.Hashing/README.md): SHA-2/MD5 (non-security), hex helpers, **`IHashingService`**, stream hashing.
 
@@ -172,11 +174,11 @@ top-level area.
 
 ### Performance snapshots (latest archived runs)
 
-| Suite | Date | Environment | Headline results |
-|-------|------|-------------|------------------|
-| **Compression** ([summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)) | 2026-06-28 | .NET 10.0.9, Linux Mint 22.1, Core Ultra 7 155U | LZ4 fastest compress @ 1 MB (**~128 µs**); Zstd fastest decompress (**~71 µs @ 1 MB**, **~13 ms @ 100 MB**); Zstd streaming compress **~31×** GZip @ 100 MB, **~5×** @ 1 GB |
-| **Encryption** ([summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)) | 2026-06-30 | .NET 10.0.0, Ubuntu 24.04, Core Ultra 7 155U (AES-NI) | AES-GCM **906 µs / 614 µs** @ 1 MB; ChaCha **1.23 ms / 947 µs**; XChaCha **2.7 / 2.7 ms**; CCM **14 ms**; SIV **20 ms**; stream **~1.2 GB/s** @ 100 MB; hybrid **837 µs** enc @ 1 MB; RSA dec 1 MB **2.6 s** |
-| **K6 Query API** ([analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)) | 2026-06-24 | TestApi + PostgreSQL + k6 on same laptop | Symmetric matrix (8 suites): QueryProject stays fast (**~46–72 ms p95** load/spike/soak, **~463 ms p95** stress); Query endpoint has heavier tails (**~87 ms** load, up to **~1.36 s** stress); status/shape checks remain **100%** |
+| Suite                                                                                                  | Date       | Environment                                           | Headline results                                                                                                                                                                                                                    |
+|--------------------------------------------------------------------------------------------------------|------------|-------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Compression** ([summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md))  | 2026-06-28 | .NET 10.0.9, Linux Mint 22.1, Core Ultra 7 155U       | LZ4 fastest compress @ 1 MB (**~128 µs**); Zstd fastest decompress (**~71 µs @ 1 MB**, **~13 ms @ 100 MB**); Zstd streaming compress **~31×** GZip @ 100 MB, **~5×** @ 1 GB                                                         |
+| **Encryption** ([summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)) | 2026-06-30 | .NET 10.0.0, Ubuntu 24.04, Core Ultra 7 155U (AES-NI) | AES-GCM **906 µs / 614 µs** @ 1 MB; ChaCha **1.23 ms / 947 µs**; XChaCha **2.7 / 2.7 ms**; CCM **14 ms**; SIV **20 ms**; stream **~1.2 GB/s** @ 100 MB; hybrid **837 µs** enc @ 1 MB; RSA dec 1 MB **2.6 s**                        |
+| **K6 Query API** ([analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md))                | 2026-07-27 | TestApi + PostgreSQL + k6 on same laptop              | Full 12-suite matrix (Query / QueryProject / root Query × load/stress/spike/soak): root Query fastest (**~31–50 ms p95** load/spike/soak, **~701 ms p95** stress); QueryProject close behind (**~42–65 ms p95**, **~434 ms** stress); full-entity Query has heavier tails (**~103 ms** load, **~1.32 s** stress); status/shape checks **100%** across ~1.35M requests |
 
 ---
 
@@ -185,17 +187,17 @@ top-level area.
 Project-wide guides live in [`docs/`](docs/README.md); per-package API docs are
 the `README.md` beside each library.
 
-| Document | What it covers |
-|----------|----------------|
-| [Documentation index](docs/README.md) | Entry point for all cross-cutting guides and interactive artifacts. |
-| [Getting started](docs/getting-started.md) | Prerequisites, consuming a package, a minimal example. |
-| [Architecture](docs/architecture.md) | Area model and dependency law (detail in [`package-layout.md`](Lyo.Net/docs/package-layout.md)). |
-| [Configuration](docs/configuration.md) | Environment variables for the tooling/runner. |
-| [Testing](docs/testing.md) | Unit tests, benchmarks, and k6 — local and containerized. |
-| [Deployment](docs/deployment.md) | The container stack and operational notes. |
-| [Publishing](docs/publishing.md) | Versioning and packing with `build-nuget.sh`. |
-| [Security](docs/security/README.md) | Security model and crypto design notes ([`SECURITY.md`](SECURITY.md) for reporting). |
-| [Glossary](docs/glossary.md) | Domain terms and recurring concepts. |
+| Document                                   | What it covers                                                                                   |
+|--------------------------------------------|--------------------------------------------------------------------------------------------------|
+| [Documentation index](docs/README.md)      | Entry point for all cross-cutting guides and interactive artifacts.                              |
+| [Getting started](docs/getting-started.md) | Prerequisites, consuming a package, a minimal example.                                           |
+| [Architecture](docs/architecture.md)       | Area model and dependency law (detail in [`package-layout.md`](Lyo.Net/docs/package-layout.md)). |
+| [Configuration](docs/configuration.md)     | Environment variables for the tooling/runner.                                                    |
+| [Testing](docs/testing.md)                 | Unit tests, benchmarks, and k6 — local and containerized.                                        |
+| [Deployment](docs/deployment.md)           | The container stack and operational notes.                                                       |
+| [Publishing](docs/publishing.md)           | Versioning and packing with `build-nuget.sh`.                                                    |
+| [Security](docs/security/README.md)        | Security model and crypto design notes ([`SECURITY.md`](SECURITY.md) for reporting).             |
+| [Glossary](docs/glossary.md)               | Domain terms and recurring concepts.                                                             |
 
 Interactive (HTML, open locally or via Pages): the
 [project graph](docs/Lyo.ProjectGraph.html) and the

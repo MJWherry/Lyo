@@ -24,10 +24,9 @@ public class EdidParserTests
 
     [Fact]
     public void GetManufacturerId_DecodesPackedLetters()
-    {
-        // "AUO" packs to 0x06AF (A=1, U=21, O=15 as 5-bit letters, big-endian).
-        Assert.Equal("AUO", EdidParser.GetManufacturerId(CreateEdid()));
-    }
+        =>
+            // "AUO" packs to 0x06AF (A=1, U=21, O=15 as 5-bit letters, big-endian).
+            Assert.Equal("AUO", EdidParser.GetManufacturerId(CreateEdid()));
 
     [Fact]
     public void GetManufacturerId_BadHeader_ReturnsNull()
@@ -52,13 +51,13 @@ public class EdidParserTests
     [Fact]
     public void GetModelName_UsesLaterDescriptorBlocks()
     {
-        var edid = CreateEdid(includeModelDescriptor: false);
+        var edid = CreateEdid(false);
         WriteModelDescriptor(edid, 108, "LatePanel");
         Assert.Equal("LatePanel", EdidParser.GetModelName(edid));
     }
 
     [Fact]
-    public void GetModelName_NoDescriptor_ReturnsNull() => Assert.Null(EdidParser.GetModelName(CreateEdid(includeModelDescriptor: false)));
+    public void GetModelName_NoDescriptor_ReturnsNull() => Assert.Null(EdidParser.GetModelName(CreateEdid(false)));
 
     [Fact]
     public void GetModelName_BadHeader_ReturnsNull()
@@ -74,12 +73,12 @@ public class EdidParserTests
         edid[0] = 0x00;
         for (var i = 1; i <= 6; i++)
             edid[i] = 0xFF;
+
         edid[7] = 0x00;
 
         // Manufacturer "AUO"
         edid[8] = 0x06;
         edid[9] = 0xAF;
-
         if (includeModelDescriptor)
             WriteModelDescriptor(edid, 54, "TestPanel");
 
@@ -93,7 +92,6 @@ public class EdidParserTests
         edid[offset + 2] = 0x00;
         edid[offset + 3] = 0xFC;
         edid[offset + 4] = 0x00;
-
         var bytes = Encoding.ASCII.GetBytes(name);
         Array.Copy(bytes, 0, edid, offset + 5, bytes.Length);
         edid[offset + 5 + bytes.Length] = 0x0A;

@@ -1,8 +1,8 @@
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
-/// Editable row shared by the compact parameter tables (<see cref="JobParameterTable" />) used for definition parameters, schedule parameters,
-/// and run parameters. Which flag columns apply (Required / Allow Multiple / Enabled) is decided by the hosting table.
+/// Editable row shared by the compact parameter tables (<see cref="JobParameterTable" />) used for definition parameters, schedule parameters, and run parameters. Which flag
+/// columns apply (Required / Allow Multiple / Enabled) is decided by the hosting table.
 /// </summary>
 public class JobParameterEditRow
 {

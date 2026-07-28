@@ -15,9 +15,9 @@ namespace Lyo.Api.Middleware;
 
 /// <summary>
 /// Logs each request (debug) with trace id, user email (when present), path, and query string; logs response status. Catches unhandled exceptions and writes
-/// <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> as <c>application/problem+json</c>: <see cref="HttpException" /> maps to its <see cref="HttpException.StatusCode" />
-/// (with <c>Retry-After</c> for rate limit / unavailable), <see cref="ValidationException" /> maps to 400 with field errors, and anything else maps to 500.
-/// Error responses that complete with an empty body (e.g. bare <c>Results.NotFound()</c>) also receive a problem details body.
+/// <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> as <c>application/problem+json</c>: <see cref="HttpException" /> maps to its <see cref="HttpException.StatusCode" /> (with
+/// <c>Retry-After</c> for rate limit / unavailable), <see cref="ValidationException" /> maps to 400 with field errors, and anything else maps to 500. Error responses that complete
+/// with an empty body (e.g. bare <c>Results.NotFound()</c>) also receive a problem details body.
 /// </summary>
 //todo actually read body and log as debug
 //todo if problem details from some type of validation, inject our own error

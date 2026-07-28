@@ -64,11 +64,7 @@
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("Name"),
-        new("GenerationProfileKey", "Profile"),
-        new("IsActive", "Active", type: FilterPropertyType.Bool)
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("GenerationProfileKey", "Profile"), new("IsActive", "Active", FilterPropertyType.Bool)];
 
     private static object[] GetKey(object? item)
     {
@@ -88,14 +84,8 @@
 
     private async Task OpenRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(
-            $"{_definitionRoute}/QueryConcrete",
-            new() { Amount = 200, Include = ["Parameters"] });
-        var parameters = new DialogParameters<RunReportDialog> {
-            { d => d.Definitions, res?.Items ?? [] },
-            { d => d.GenerateRoute, $"{_generationRoute}/Generate" },
-            { d => d.ApiClient, ApiClient }
-        };
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["Parameters"] });
+        var parameters = new DialogParameters<RunReportDialog> { { d => d.Definitions, res?.Items ?? [] }, { d => d.GenerateRoute, $"{_generationRoute}/Generate" }, { d => d.ApiClient, ApiClient } };
         var dialog = await DialogService.ShowAsync<RunReportDialog>("Run Report", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -106,6 +96,7 @@
     {
         if (item == null)
             return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
         var def = await FetchDefinition(id);
         if (def is null) {
@@ -113,10 +104,7 @@
             return;
         }
 
-        var parameters = new DialogParameters<ReportDefinitionView> {
-            { d => d.Definition, def },
-            { d => d.DefinitionRoute, _definitionRoute }
-        };
+        var parameters = new DialogParameters<ReportDefinitionView> { { d => d.Definition, def }, { d => d.DefinitionRoute, _definitionRoute } };
         await DialogService.ShowAsync<ReportDefinitionView>("Report Definition", parameters, LyoDialogPresets.Large);
     }
 
@@ -124,6 +112,7 @@
     {
         if (item == null)
             return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
         var def = await FetchDefinition(id);
         if (def is null) {
@@ -137,7 +126,9 @@
             { d => d.GenerateRoute, $"{_generationRoute}/Generate" },
             { d => d.ApiClient, ApiClient }
         };
+
         var dialog = await DialogService.ShowAsync<RunReportDialog>("Run Report", parameters, LyoDialogPresets.Medium);
         await dialog.Result;
     }
+
 }

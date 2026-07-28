@@ -13,8 +13,8 @@ public static class JobScheduleExtensions
     {
         ArgumentHelpers.ThrowIfNull(req);
         return new(
-            req.Type, req.DayFlags, req.MonthFlags, req.Times, req.StartTime, req.EndTime, req.IntervalMinutes, null, ResolveTimeZone(req.TimeZoneId), req.Enabled,
-            req.Description, req.CronExpression);
+            req.Type, req.DayFlags, req.MonthFlags, req.Times, req.StartTime, req.EndTime, req.IntervalMinutes, null, ResolveTimeZone(req.TimeZoneId), req.Enabled, req.Description,
+            req.CronExpression);
     }
 
     /// <summary>Converts JobScheduleRes to ScheduleDefinition. The schedule's <c>TimeZoneId</c> (when set and valid) becomes the definition's time zone.</summary>
@@ -22,8 +22,8 @@ public static class JobScheduleExtensions
     {
         ArgumentHelpers.ThrowIfNull(res);
         return new(
-            res.Type, res.DayFlags, res.MonthFlags, res.Times, res.StartTime, res.EndTime, res.IntervalMinutes, null, ResolveTimeZone(res.TimeZoneId), res.Enabled,
-            res.Description, res.CronExpression);
+            res.Type, res.DayFlags, res.MonthFlags, res.Times, res.StartTime, res.EndTime, res.IntervalMinutes, null, ResolveTimeZone(res.TimeZoneId), res.Enabled, res.Description,
+            res.CronExpression);
     }
 
     /// <summary>Resolves a time zone id to a <see cref="TimeZoneInfo" />, returning null for missing or unknown ids.</summary>

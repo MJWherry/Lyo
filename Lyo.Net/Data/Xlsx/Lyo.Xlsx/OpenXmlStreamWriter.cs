@@ -15,8 +15,8 @@ internal enum XlsxCellKind
 }
 
 /// <summary>
-/// A single worksheet cell captured in a form that can be both written to the OpenXML stream and measured for approximate column width without
-/// re-inspecting the source value.
+/// A single worksheet cell captured in a form that can be both written to the OpenXML stream and measured for approximate column width without re-inspecting the source
+/// value.
 /// </summary>
 internal readonly struct XlsxCell
 {
@@ -56,8 +56,8 @@ internal readonly struct XlsxCell
 }
 
 /// <summary>
-/// Streams one or more worksheets straight into an XLSX package via <see cref="OpenXmlWriter" />, keeping memory bounded regardless of row count.
-/// Column widths are approximated from a bounded sample of the leading rows instead of ClosedXML's graphics-engine auto-fit.
+/// Streams one or more worksheets straight into an XLSX package via <see cref="OpenXmlWriter" />, keeping memory bounded regardless of row count. Column widths are
+/// approximated from a bounded sample of the leading rows instead of ClosedXML's graphics-engine auto-fit.
 /// </summary>
 internal sealed class OpenXmlStreamWriter : IDisposable
 {
@@ -81,7 +81,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
     {
         _document = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook);
         _workbookPart = _document.AddWorkbookPart();
-        _workbookPart.Workbook = new Workbook();
+        _workbookPart.Workbook = new();
         var stylesPart = _workbookPart.AddNewPart<WorkbookStylesPart>();
         stylesPart.Stylesheet = BuildStylesheet();
         stylesPart.Stylesheet.Save();
@@ -101,7 +101,6 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         var relationshipId = _workbookPart.GetIdOfPart(worksheetPart);
         var columnCount = headers.Count;
         var columnLetters = BuildColumnLetters(columnCount);
-
         var maxChars = new int[columnCount];
         for (var c = 0; c < columnCount; c++)
             maxChars[c] = headers[c]?.Length ?? 0;
@@ -123,11 +122,9 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             writer.WriteStartElement(new Worksheet());
             WriteColumns(writer, maxChars);
             writer.WriteStartElement(new SheetData());
-
             uint rowIndex = 1;
             WriteHeaderRow(writer, headers, columnLetters, rowIndex);
             rowIndex++;
-
             foreach (var row in sample) {
                 WriteDataRow(writer, row, columnLetters, rowIndex, pendingRows, mergeRefs);
                 rowIndex++;
@@ -294,32 +291,40 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             index = index / 26 - 1;
         } while (index >= 0);
 
-        return new string(buffer, position, buffer.Length - position);
+        return new(buffer, position, buffer.Length - position);
     }
 
     private static Stylesheet BuildStylesheet()
         => new(
-            new NumberingFormats(
-                new NumberingFormat { NumberFormatId = DateNumberFormatId, FormatCode = "mm/dd/yyyy" }
-            ) { Count = 1 },
+            new NumberingFormats(new NumberingFormat { NumberFormatId = DateNumberFormatId, FormatCode = "mm/dd/yyyy" }) { Count = 1 },
             new Fonts(
                 new Font(new FontSize { Val = 11d }, new Color { Theme = 1U }, new FontName { Val = "Calibri" }),
-                new Font(new Bold(), new FontSize { Val = 11d }, new Color { Theme = 1U }, new FontName { Val = "Calibri" })
-            ) { Count = 2 },
-            new Fills(
-                new Fill(new PatternFill { PatternType = PatternValues.None }),
-                new Fill(new PatternFill { PatternType = PatternValues.Gray125 })
-            ) { Count = 2 },
-            new Borders(
-                new Border(new LeftBorder(), new RightBorder(), new TopBorder(), new BottomBorder(), new DiagonalBorder())
-            ) { Count = 1 },
+                new Font(new Bold(), new FontSize { Val = 11d }, new Color { Theme = 1U }, new FontName { Val = "Calibri" })) { Count = 2 },
+            new Fills(new Fill(new PatternFill { PatternType = PatternValues.None }), new Fill(new PatternFill { PatternType = PatternValues.Gray125 })) { Count = 2 },
+            new Borders(new Border(new LeftBorder(), new RightBorder(), new TopBorder(), new BottomBorder(), new DiagonalBorder())) { Count = 1 },
             new CellStyleFormats(
-                new CellFormat { NumberFormatId = 0, FontId = 0, FillId = 0, BorderId = 0 }
-            ) { Count = 1 },
-            new CellFormats(
-                new CellFormat { NumberFormatId = 0, FontId = 0, FillId = 0, BorderId = 0 },
-                new CellFormat { NumberFormatId = 0, FontId = 1, FillId = 0, BorderId = 0, ApplyFont = true },
-                new CellFormat { NumberFormatId = DateNumberFormatId, FontId = 0, FillId = 0, BorderId = 0, ApplyNumberFormat = true }
-            ) { Count = 3 }
-        );
+                new CellFormat {
+                    NumberFormatId = 0,
+                    FontId = 0,
+                    FillId = 0,
+                    BorderId = 0
+                }) { Count = 1 }, new CellFormats(
+                new CellFormat {
+                    NumberFormatId = 0,
+                    FontId = 0,
+                    FillId = 0,
+                    BorderId = 0
+                }, new CellFormat {
+                    NumberFormatId = 0,
+                    FontId = 1,
+                    FillId = 0,
+                    BorderId = 0,
+                    ApplyFont = true
+                }, new CellFormat {
+                    NumberFormatId = DateNumberFormatId,
+                    FontId = 0,
+                    FillId = 0,
+                    BorderId = 0,
+                    ApplyNumberFormat = true
+                }) { Count = 3 });
 }

@@ -45,5 +45,5 @@ public class UnprocessableEntityException : HttpException
         : base(HttpStatusCode, message ?? "The request could not be processed. See Errors property for details.")
         => Errors = errors != null
             ? errors.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)(kvp.Value?.ToList().AsReadOnly() ?? (IReadOnlyList<string>)Array.Empty<string>()))
-            : new Dictionary<string, IReadOnlyList<string>>();
+            : new();
 }

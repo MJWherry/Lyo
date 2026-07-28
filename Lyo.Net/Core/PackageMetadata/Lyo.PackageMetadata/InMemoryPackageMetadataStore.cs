@@ -6,7 +6,7 @@ namespace Lyo.PackageMetadata;
 public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
 {
 #if NET9_0_OR_GREATER
-     private readonly Lock _gate = new();
+    private readonly Lock _gate = new();
 #else
     private readonly object _gate = new();
 #endif

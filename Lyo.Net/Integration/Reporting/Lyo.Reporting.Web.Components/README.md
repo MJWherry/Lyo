@@ -25,21 +25,22 @@ Pair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the AP
 }
 ```
 
-| Parameter | Notes |
-|-----------|-------|
-| `BaseRoute` | Reporting route prefix (default `"Reporting"`). |
-| `DownloadFileAsync` | Host callback for blob download by `OutputFileId`. |
-| `ViewFileUrlAsync` | Host callback returning a browser URL for HTML/PDF preview. |
+| Parameter           | Notes                                                       |
+|---------------------|-------------------------------------------------------------|
+| `BaseRoute`         | Reporting route prefix (default `"Reporting"`).             |
+| `DownloadFileAsync` | Host callback for blob download by `OutputFileId`.          |
+| `ViewFileUrlAsync`  | Host callback returning a browser URL for HTML/PDF preview. |
 
-When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. Generations without `OutputFileId` (persist hook skipped) only support the Details dialog.
+When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. Generations without `OutputFileId` (persist hook skipped) only
+support the Details dialog.
 
 ## Components
 
-| Component | Role |
-|-----------|------|
-| `ReportManagement` | Tabs: Definitions / Generations |
-| `ReportDefinitionGrid` | Definition list + Run |
-| `ReportDefinitionView` | Definition detail / JSON preview |
-| `RunReportDialog` | Parameters + format override → `POST …/Generation/Generate` |
-| `ReportGenerationGrid` | Generation list + View/Download |
-| `ReportGenerationView` | Generation detail + View/Download actions |
+| Component              | Role                                                        |
+|------------------------|-------------------------------------------------------------|
+| `ReportManagement`     | Tabs: Definitions / Generations                             |
+| `ReportDefinitionGrid` | Definition list + Run                                       |
+| `ReportDefinitionView` | Definition detail / JSON preview                            |
+| `RunReportDialog`      | Parameters + format override → `POST …/Generation/Generate` |
+| `ReportGenerationGrid` | Generation list + View/Download                             |
+| `ReportGenerationView` | Generation detail + View/Download actions                   |

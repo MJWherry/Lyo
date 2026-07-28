@@ -9,10 +9,9 @@ using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 namespace Lyo.Api.Services.Crud.Read.Query.Root;
 
 /// <summary>
-/// Applies SmartFormat <see cref="ComputedField" /> templates to root <c>/Query</c> rows after fan-out collapse.
-/// From-only templates become a root scalar; any template that references a join alias is written only onto
-/// each bag of the deepest join alias among those placeholders (From scalars are repeated per bag).
-/// Accepts Mustache-style <c>{{token}}</c> as well as SmartFormat <c>{token}</c>.
+/// Applies SmartFormat <see cref="ComputedField" /> templates to root <c>/Query</c> rows after fan-out collapse. From-only templates become a root scalar; any template that
+/// references a join alias is written only onto each bag of the deepest join alias among those placeholders (From scalars are repeated per bag). Accepts Mustache-style
+/// <c>{{token}}</c> as well as SmartFormat <c>{token}</c>.
 /// </summary>
 internal static partial class RootQueryComputedFields
 {
@@ -41,22 +40,19 @@ internal static partial class RootQueryComputedFields
     }
 
     /// <summary>Normalizes Mustache braces and appends missing <c>alias.property</c> Select paths referenced by templates.</summary>
-    public static IReadOnlyList<string> EnsureSelectIncludesComputedDependencies(
-        QueryReq request,
-        IProjectionService projectionService,
-        IFormatterService? formatter)
+    public static IReadOnlyList<string> EnsureSelectIncludesComputedDependencies(QueryReq request, IProjectionService projectionService, IFormatterService? formatter)
     {
         if (request.ComputedFields.Count == 0)
             return [];
 
         NormalizeTemplatesInPlace(request.ComputedFields);
-
         var deps = projectionService.GetComputedFieldDependencies(request.ComputedFields);
         if (deps.Count == 0 && formatter is not null) {
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var cf in request.ComputedFields) {
                 if (string.IsNullOrWhiteSpace(cf.Template))
                     continue;
+
                 foreach (var ph in formatter.GetPlaceholders(cf.Template))
                     set.Add(ph);
             }
@@ -91,7 +87,6 @@ internal static partial class RootQueryComputedFields
             return items;
 
         NormalizeTemplatesInPlace(computedFields);
-
         if (formatter is null) {
             var specs = ToProjectedSpecs(plan);
             var flattened = items.Select(i => i is IDictionary d ? FlattenRow(ToMutableDictionary(d), plan) : (object?)i).ToList();
@@ -105,9 +100,7 @@ internal static partial class RootQueryComputedFields
                 root = ToMutableDictionary(nested);
             else if (plan.SelectSpecs.Count == 1 && plan.SelectSpecs[0].IsFromSide) {
                 // Single From-side Select collapses to a scalar — promote so computed keys can attach.
-                root = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-                    [plan.SelectSpecs[0].PropertyName] = item
-                };
+                root = new(StringComparer.OrdinalIgnoreCase) { [plan.SelectSpecs[0].PropertyName] = item };
             }
             else {
                 results.Add(item);
@@ -128,12 +121,7 @@ internal static partial class RootQueryComputedFields
         return results;
     }
 
-    private static void ApplyOne(
-        Dictionary<string, object?> root,
-        Dictionary<string, object?> flat,
-        ComputedField field,
-        RootQueryShapePlan plan,
-        IFormatterService formatter)
+    private static void ApplyOne(Dictionary<string, object?> root, Dictionary<string, object?> flat, ComputedField field, RootQueryShapePlan plan, IFormatterService formatter)
     {
         var placeholders = formatter.GetPlaceholders(field.Template);
         if (placeholders.Count == 0) {
@@ -156,8 +144,10 @@ internal static partial class RootQueryComputedFields
         for (var i = 0; i < placeholders.Count; i++) {
             if (!IsJoinPlaceholder(placeholders[i], plan, out var phAlias))
                 continue;
+
             if (!string.Equals(phAlias, joinAlias, StringComparison.OrdinalIgnoreCase))
                 continue;
+
             if (IsCollection(values[i]))
                 maxLen = Math.Max(maxLen, GetLength(values[i]!));
         }
@@ -223,10 +213,10 @@ internal static partial class RootQueryComputedFields
         List<object?> formatted)
     {
         // Root-level join bags (target is a root join)
-        if (string.Equals(rootJoinResultName, plan.Joins.FirstOrDefault(j => string.Equals(j.Alias, targetAlias, StringComparison.OrdinalIgnoreCase))?.ResultName, StringComparison.OrdinalIgnoreCase)
-            && TryGetIgnoreCase(root, rootJoinResultName, out var bagsObj)
-            && bagsObj is not null) {
-            MutateBags(bagsObj, computedName, formatted, replaceRoot: bags => root[rootJoinResultName] = bags);
+        if (string.Equals(
+                rootJoinResultName, plan.Joins.FirstOrDefault(j => string.Equals(j.Alias, targetAlias, StringComparison.OrdinalIgnoreCase))?.ResultName,
+                StringComparison.OrdinalIgnoreCase) && TryGetIgnoreCase(root, rootJoinResultName, out var bagsObj) && bagsObj is not null) {
+            MutateBags(bagsObj, computedName, formatted, bags => root[rootJoinResultName] = bags);
             return;
         }
 
@@ -278,6 +268,7 @@ internal static partial class RootQueryComputedFields
                     for (var ci = 0; ci < childBags.Count && index < formatted.Count; ci++, index++) {
                         if (childBags[ci] is not IDictionary cd)
                             continue;
+
                         var mutable = ToMutableDictionary(cd);
                         mutable[computedName] = formatted[index];
                         childBags[ci] = mutable;
@@ -307,6 +298,7 @@ internal static partial class RootQueryComputedFields
         for (var i = 0; i < bags.Count && i < formatted.Count; i++) {
             if (bags[i] is not IDictionary bag)
                 continue;
+
             var mutable = ToMutableDictionary(bag);
             mutable[computedName] = formatted[i];
             bags[i] = mutable;
@@ -316,14 +308,10 @@ internal static partial class RootQueryComputedFields
     }
 
     /// <summary>
-    /// Among join aliases referenced by placeholders, picks the furthest from <see cref="RootQueryShapePlan.FromAlias" />.
-    /// Returns false when no join alias is referenced (From-only / constant).
+    /// Among join aliases referenced by placeholders, picks the furthest from <see cref="RootQueryShapePlan.FromAlias" />. Returns false when no join alias is referenced
+    /// (From-only / constant).
     /// </summary>
-    private static bool TryGetDeepestJoinAlias(
-        IReadOnlyList<string> placeholders,
-        RootQueryShapePlan plan,
-        out string joinAlias,
-        out string resultName)
+    private static bool TryGetDeepestJoinAlias(IReadOnlyList<string> placeholders, RootQueryShapePlan plan, out string joinAlias, out string resultName)
     {
         joinAlias = "";
         resultName = "";
@@ -417,14 +405,10 @@ internal static partial class RootQueryComputedFields
     }
 
     /// <summary>
-    /// Walks root → root-join bags → nested child bags to collect <paramref name="propertyName"/> for <paramref name="targetAlias"/>.
-    /// Length matches the fan-out of the target join (one value per bag).
+    /// Walks root → root-join bags → nested child bags to collect <paramref name="propertyName" /> for <paramref name="targetAlias" />. Length matches the fan-out of the target
+    /// join (one value per bag).
     /// </summary>
-    private static List<object?> ExtractColumnAlongJoinTree(
-        Dictionary<string, object?> root,
-        RootQueryShapePlan plan,
-        string targetAlias,
-        string propertyName)
+    private static List<object?> ExtractColumnAlongJoinTree(Dictionary<string, object?> root, RootQueryShapePlan plan, string targetAlias, string propertyName)
     {
         var column = new List<object?>();
         var rootJoins = plan.Joins.Where(j => string.Equals(j.On[0].LeftAlias, plan.FromAlias, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -438,13 +422,7 @@ internal static partial class RootQueryComputedFields
         return column;
     }
 
-    private static void CollectProperty(
-        List<object?> bags,
-        string currentAlias,
-        string targetAlias,
-        string propertyName,
-        RootQueryShapePlan plan,
-        List<object?> column)
+    private static void CollectProperty(List<object?> bags, string currentAlias, string targetAlias, string propertyName, RootQueryShapePlan plan, List<object?> column)
     {
         if (string.Equals(currentAlias, targetAlias, StringComparison.OrdinalIgnoreCase)) {
             foreach (var bag in bags) {
@@ -466,9 +444,9 @@ internal static partial class RootQueryComputedFields
 
             foreach (var child in childJoins) {
                 if (!TryGetIgnoreCase(d, child.ResultName, out var childObj) || childObj is null) {
-                    if (string.Equals(child.Alias, targetAlias, StringComparison.OrdinalIgnoreCase)
-                        || IsAncestorOf(child.Alias, targetAlias, plan))
+                    if (string.Equals(child.Alias, targetAlias, StringComparison.OrdinalIgnoreCase) || IsAncestorOf(child.Alias, targetAlias, plan))
                         column.Add(null);
+
                     continue;
                 }
 
@@ -485,11 +463,14 @@ internal static partial class RootQueryComputedFields
             var join = plan.Joins.FirstOrDefault(j => string.Equals(j.Alias, current, StringComparison.OrdinalIgnoreCase));
             if (join is null)
                 return false;
+
             var parent = join.On[0].LeftAlias;
             if (string.Equals(parent, ancestorAlias, StringComparison.OrdinalIgnoreCase))
                 return true;
+
             if (string.Equals(parent, plan.FromAlias, StringComparison.OrdinalIgnoreCase))
                 return false;
+
             current = parent;
         }
 
@@ -500,11 +481,10 @@ internal static partial class RootQueryComputedFields
         => bagsObj switch {
             IList list => list.Cast<object?>().ToList(),
             IDictionary d => [d],
-            _ => []
+            var _ => []
         };
 
-    private static object? ResolveFlat(Dictionary<string, object?> flat, string token)
-        => TryResolveKey(flat, token, out var val) ? val : null;
+    private static object? ResolveFlat(Dictionary<string, object?> flat, string token) => TryResolveKey(flat, token, out var val) ? val : null;
 
     private static bool TryResolveKey(Dictionary<string, object?> row, string token, out object? val)
     {
@@ -543,8 +523,7 @@ internal static partial class RootQueryComputedFields
         return j == 0 ? "" : new(buffer[..j]);
     }
 
-    private static bool IsCollection(object? value)
-        => value is not null and not string and not byte[] and IEnumerable;
+    private static bool IsCollection(object? value) => value is not null and not string and not byte[] and IEnumerable;
 
     private static int GetLength(object collection)
     {
@@ -554,6 +533,7 @@ internal static partial class RootQueryComputedFields
         var n = 0;
         foreach (var _ in (IEnumerable)collection)
             n++;
+
         return n;
     }
 
@@ -598,23 +578,21 @@ internal static partial class RootQueryComputedFields
         return false;
     }
 
-    private static bool TryGetIgnoreCase(Dictionary<string, object?> dict, string key, out object? value)
-        => dict.TryGetValue(key, out value);
+    private static bool TryGetIgnoreCase(Dictionary<string, object?> dict, string key, out object? value) => dict.TryGetValue(key, out value);
 
-    private static bool SelectContains(IEnumerable<string> select, string path)
-        => select.Any(s => string.Equals(s.Trim(), path, StringComparison.OrdinalIgnoreCase));
+    private static bool SelectContains(IEnumerable<string> select, string path) => select.Any(s => string.Equals(s.Trim(), path, StringComparison.OrdinalIgnoreCase));
 
     private static void NormalizeTemplatesInPlace(IReadOnlyList<ComputedField> computedFields)
     {
         foreach (var cf in computedFields) {
             if (string.IsNullOrWhiteSpace(cf.Template))
                 continue;
+
             cf.Template = NormalizeMustache(cf.Template);
         }
     }
 
-    internal static string NormalizeMustache(string template)
-        => MustachePlaceholderRegex().Replace(template, "{$1}");
+    internal static string NormalizeMustache(string template) => MustachePlaceholderRegex().Replace(template, "{$1}");
 
     private static IReadOnlyList<ProjectedFieldSpec> ToProjectedSpecs(RootQueryShapePlan plan)
         => plan.SelectSpecs.Select(s => new ProjectedFieldSpec(s.RequestedPath, s.RequestedPath, s.RequestedPath.Split('.'))).ToArray();

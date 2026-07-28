@@ -112,8 +112,8 @@ public partial class LyoForm<TModel>
     public Dictionary<string, PropertyChange> GetChanges() => _changes.Where(entry => entry.Value.HasChanged).ToDictionary(entry => entry.Key, entry => entry.Value);
 
     /// <summary>
-    /// Builds a <see cref="PatchRequest" /> for the entity identified by <paramref name="key" /> containing only the properties the user actually
-    /// changed in this form. Returns null when nothing changed, so callers can skip the API call entirely.
+    /// Builds a <see cref="PatchRequest" /> for the entity identified by <paramref name="key" /> containing only the properties the user actually changed in this form. Returns
+    /// null when nothing changed, so callers can skip the API call entirely.
     /// </summary>
     public PatchRequest? BuildPatchRequest(object key)
     {

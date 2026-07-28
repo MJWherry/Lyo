@@ -17,7 +17,7 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(alias);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(entityType);
-        _query.From = new FromClause { Alias = alias.Trim(), EntityType = entityType.Trim() };
+        _query.From = new() { Alias = alias.Trim(), EntityType = entityType.Trim() };
         if (configureQuery != null) {
             var scope = new SourceQueryScope();
             configureQuery(scope);
@@ -55,6 +55,7 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
             On = on,
             As = asName
         };
+
         if (configureQuery != null) {
             var scope = new SourceQueryScope();
             configureQuery(scope);
@@ -120,8 +121,7 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
         return this;
     }
 
-    public QueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
-        => AddSort(new(propertyName, direction, priority));
+    public QueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null) => AddSort(new(propertyName, direction, priority));
 
     /// <summary>Appends one primary-key row (single or composite parts).</summary>
     public QueryReqBuilder AddKey(params object[] keyParts)

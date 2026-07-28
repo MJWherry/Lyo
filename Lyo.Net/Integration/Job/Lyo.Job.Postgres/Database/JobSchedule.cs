@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
 
@@ -40,7 +41,7 @@ public class JobSchedule
     /// <summary>How slots missed while no scheduler was running are handled: Skip or RunOnce. Stored as string.</summary>
     [Required]
     [MaxLength(12)]
-    public string MisfirePolicy { get; set; } = nameof(Models.Enums.JobMisfirePolicy.Skip);
+    public string MisfirePolicy { get; set; } = nameof(JobMisfirePolicy.Skip);
 
     /// <summary>UTC date before which this schedule never fires. Null = no lower bound.</summary>
     public DateTime? StartDateUtc { get; set; }

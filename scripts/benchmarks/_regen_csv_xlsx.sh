@@ -15,5 +15,5 @@ dotnet run -c Release --project Lyo.Net/Data/Xlsx/Lyo.Xlsx.Benchmarks/Lyo.Xlsx.B
   2>&1 | tr '\r' '\n' | tail -n 4
 
 echo "==> manifests"
-python3 scripts/benchmarks/build-manifests.py >/dev/null 2>&1
+python3 scripts/benchmarks/build_manifests.py >/dev/null 2>&1
 echo "DONE_REGEN"

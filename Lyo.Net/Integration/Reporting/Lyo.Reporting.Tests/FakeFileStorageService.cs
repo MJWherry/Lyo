@@ -7,7 +7,7 @@ using Lyo.Health;
 
 namespace Lyo.Reporting.Tests;
 
-/// <summary>Minimal in-memory <see cref="IFileStorageService"/> for generation tests.</summary>
+/// <summary>Minimal in-memory <see cref="IFileStorageService" /> for generation tests.</summary>
 public sealed class FakeFileStorageService : IFileStorageService
 {
     public Dictionary<Guid, byte[]> Files { get; } = new();
@@ -15,15 +15,20 @@ public sealed class FakeFileStorageService : IFileStorageService
     public string HealthCheckName => nameof(FakeFileStorageService);
 
     public event EventHandler<FileSavedResult>? FileSaved;
+
     public event EventHandler<FileRetrievedResult>? FileRetrieved;
+
     public event EventHandler<FileDeletedResult>? FileDeleted;
+
     public event EventHandler<FileMovedResult>? FileMoved;
+
     public event EventHandler<FileRenamedResult>? FileRenamed;
+
     public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
+
     public event EventHandler<FileAuditEventArgs>? FileAuditOccurred;
 
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
 
     public Task<FileStoreResult> SaveFileAsync(
         byte[] data,
@@ -81,20 +86,16 @@ public sealed class FakeFileStorageService : IFileStorageService
     public Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration, string? pathPrefix, PreSignedReadUrlOptions? urlResponseOptions, CancellationToken ct = default)
         => throw new NotSupportedException();
 
-    public Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    public Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 
     public Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => throw new NotSupportedException();
 
-    public Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    public Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default) => throw new NotSupportedException();
 
-    public Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    public Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 
-    public Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    public Task<FileStoreResult> RenameFileAsync(Guid fileId, RenameFileRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 
     public Task<byte[]> GetFileAsync(Guid fileId, CompressionAlgorithm? compressionAlgorithmOverride = null, CancellationToken ct = default)
         => Task.FromResult(Files.TryGetValue(fileId, out var data) ? data : []);
@@ -112,6 +113,7 @@ public sealed class FakeFileStorageService : IFileStorageService
     {
         if (!Files.TryGetValue(fileId, out var data))
             throw new FileNotFoundException();
+
         return Task.FromResult(CreateResult(fileId, null, data.LongLength, null, null));
     }
 
@@ -134,6 +136,6 @@ public sealed class FakeFileStorageService : IFileStorageService
 
     private static FileStoreResult CreateResult(Guid id, string? name, long size, string? contentType, string? pathPrefix)
         => new(
-            id, name, size, [], name ?? "x.bin", size, [], false, null, null, null, false, null, null, null, null, null, null, null, null, DateTime.UtcNow,
-            pathPrefix, null, contentType);
+            id, name, size, [], name ?? "x.bin", size, [], false, null, null, null, false, null, null, null, null, null, null, null, null, DateTime.UtcNow, pathPrefix, null,
+            contentType);
 }

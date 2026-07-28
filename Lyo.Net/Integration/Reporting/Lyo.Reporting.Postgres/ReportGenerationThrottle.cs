@@ -4,18 +4,19 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Process-wide concurrency gate for report generation, sized by <see cref="PostgresReportingOptions.MaxConcurrentGenerations"/>.
-/// Registered as a singleton so all scoped <see cref="ReportService"/> instances share the same limit.
+/// Process-wide concurrency gate for report generation, sized by <see cref="PostgresReportingOptions.MaxConcurrentGenerations" />. Registered as a singleton so all scoped
+/// <see cref="ReportService" /> instances share the same limit.
 /// </summary>
 public sealed class ReportGenerationThrottle(IOptions<PostgresReportingOptions> options)
 {
-    /// <summary>How long generate waits for a slot before failing with <see cref="ReportBusyException"/>. Internal for tests.</summary>
-    internal TimeSpan AcquireTimeout { get; init; } = TimeSpan.FromSeconds(10);
-
     private readonly int _maxConcurrent = options.Value.MaxConcurrentGenerations;
+
     private readonly SemaphoreSlim? _semaphore = options.Value.MaxConcurrentGenerations > 0
         ? new SemaphoreSlim(options.Value.MaxConcurrentGenerations, options.Value.MaxConcurrentGenerations)
         : null;
+
+    /// <summary>How long generate waits for a slot before failing with <see cref="ReportBusyException" />. Internal for tests.</summary>
+    internal TimeSpan AcquireTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>Acquires a generation slot, or returns null when no limit is configured. Dispose the releaser to free the slot.</summary>
     public async Task<IDisposable?> AcquireAsync(CancellationToken ct)

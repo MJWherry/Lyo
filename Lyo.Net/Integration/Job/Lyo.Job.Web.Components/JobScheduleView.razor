@@ -1,5 +1,5 @@
-@inject ISnackbar Snackbar
 @using Lyo.Common.Enums
+@inject ISnackbar Snackbar
 
 <MudGrid Spacing="2">
     <MudItem xs="12" md="4">
@@ -82,9 +82,11 @@
                             <MudItem xs="6" md="3">
                                 <MudTimePicker Label="Start Time" @bind-Time="_edit.StartTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
+
                             <MudItem xs="6" md="3">
                                 <MudTimePicker Label="End Time" @bind-Time="_edit.EndTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
+
                             <MudItem xs="6" md="3">
                                 <MudNumericField T="int?" Label="Interval (min)" @bind-Value="_edit.IntervalMinutes" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
@@ -317,7 +319,6 @@
 
         try {
             var existing = (_selected.Parameters ?? []).ToDictionary(p => p.Id);
-
             foreach (var removed in existing.Values.Where(e => _paramRows.All(d => d.Id != e.Id)))
                 await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
 

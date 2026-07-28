@@ -41,8 +41,8 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
     public string[]? DeleteIncludes { get; init; }
 
     /// <summary>
-    /// Property names (or dotted paths) that projected queries and exports may never select or reference in templates.
-    /// Applied to the QueryProject and Export endpoints (QueryConcrete/Get map through the response type and are unaffected).
+    /// Property names (or dotted paths) that projected queries and exports may never select or reference in templates. Applied to the QueryProject and Export endpoints
+    /// (QueryConcrete/Get map through the response type and are unaffected).
     /// </summary>
     public IReadOnlyCollection<string>? DeniedSelectFields { get; init; }
 

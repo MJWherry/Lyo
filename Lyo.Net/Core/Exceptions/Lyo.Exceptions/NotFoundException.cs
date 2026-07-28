@@ -4,19 +4,12 @@ namespace Lyo.Exceptions;
 
 /// <summary>Exception thrown when a requested resource or entity is not found. Maps to HTTP 404.</summary>
 /// <remarks>
-/// Prefer <see cref="ForResource" /> over the two-argument constructors: <c>new NotFoundException("User", null)</c> binds to the
-/// <c>(string message, Exception?)</c> overload and never sets <see cref="ResourceName" />.
+/// Prefer <see cref="ForResource" /> over the two-argument constructors: <c>new NotFoundException("User", null)</c> binds to the <c>(string message, Exception?)</c> overload
+/// and never sets <see cref="ResourceName" />.
 /// </remarks>
 public class NotFoundException : HttpException
 {
     private const int HttpStatusCode = 404;
-
-    /// <summary>Creates a <see cref="NotFoundException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
-    /// <param name="resourceName">The name or type of the resource that was not found.</param>
-    /// <param name="resourceId">The identifier of the resource that was not found.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public static NotFoundException ForResource(string resourceName, object? resourceId = null, Exception? innerException = null)
-        => new(resourceName, resourceId, innerException);
 
     /// <summary>Gets the name or identifier of the resource that was not found.</summary>
     public string? ResourceName { get; }
@@ -59,4 +52,10 @@ public class NotFoundException : HttpException
         ResourceName = resourceName;
         ResourceId = resourceId;
     }
+
+    /// <summary>Creates a <see cref="NotFoundException" /> for a resource, guaranteeing <see cref="ResourceName" /> and <see cref="ResourceId" /> are set.</summary>
+    /// <param name="resourceName">The name or type of the resource that was not found.</param>
+    /// <param name="resourceId">The identifier of the resource that was not found.</param>
+    /// <param name="innerException">The exception that is the cause of the current exception.</param>
+    public static NotFoundException ForResource(string resourceName, object? resourceId = null, Exception? innerException = null) => new(resourceName, resourceId, innerException);
 }

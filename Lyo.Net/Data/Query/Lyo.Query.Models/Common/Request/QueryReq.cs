@@ -3,13 +3,12 @@ using System.Diagnostics;
 namespace Lyo.Query.Models.Common.Request;
 
 /// <summary>
-/// Request body for root <c>/Query</c> (context base, not under <c>{entityType}</c>) — From/Joins + sparse Select.
-/// Returns the same projected row shape as <c>/QueryProject</c>.
+/// Request body for root <c>/Query</c> (context base, not under <c>{entityType}</c>) — From/Joins + sparse Select. Returns the same projected row shape as
+/// <c>/QueryProject</c>.
 /// </summary>
 /// <remarks>
-/// <see cref="QueryRequestBase.Include" /> is forbidden. Outer <see cref="QueryRequestBase.WhereClause" /> / <see cref="QueryRequestBase.SortBy" />
-/// may only reference the From alias in v1 (paging safety). Joins are arbitrary EF Join/GroupJoin on ON columns
-/// (including chained join aliases) — not navigations (<c>/QueryProject</c> owns nav Select).
+/// <see cref="QueryRequestBase.Include" /> is forbidden. Outer <see cref="QueryRequestBase.WhereClause" /> / <see cref="QueryRequestBase.SortBy" /> may only reference the
+/// From alias in v1 (paging safety). Joins are arbitrary EF Join/GroupJoin on ON columns (including chained join aliases) — not navigations (<c>/QueryProject</c> owns nav Select).
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class QueryReq : QueryRequestBase, IQueryExecutionRequest
@@ -26,10 +25,8 @@ public sealed class QueryReq : QueryRequestBase, IQueryExecutionRequest
     public List<string> Select { get; set; } = [];
 
     /// <summary>
-    /// Optional computed fields (SmartFormat). Placeholders use Select paths as <c>{alias.property}</c>
-    /// (Mustache <c>{{alias.property}}</c> is also accepted). From-only templates become a root scalar;
-    /// any join placeholder is written only onto each bag of the deepest join alias referenced
-    /// (From values are repeated per bag when formatting).
+    /// Optional computed fields (SmartFormat). Placeholders use Select paths as <c>{alias.property}</c> (Mustache <c>{{alias.property}}</c> is also accepted). From-only
+    /// templates become a root scalar; any join placeholder is written only onto each bag of the deepest join alias referenced (From values are repeated per bag when formatting).
     /// </summary>
     public List<ComputedField> ComputedFields { get; set; } = [];
 

@@ -3,7 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$ROOT_DIR/../.." && pwd)"
-OUT_DIR="${OUT_DIR:-$ROOT_DIR/results/$(date +%Y%m%d-%H%M%S)}"
+# RUN_LABEL prefixes the results directory name (e.g. RUN_LABEL=ceiling-cached) so runs are
+# identifiable in the benchmark dashboard's snapshot dropdown.
+OUT_DIR="${OUT_DIR:-$ROOT_DIR/results/${RUN_LABEL:+${RUN_LABEL}-}$(date +%Y%m%d-%H%M%S)}"
 K6_BIN="${K6_BIN:-k6}"
 MODE="${MODE:-full}"
 CONTINUE_ON_FAILURE="${CONTINUE_ON_FAILURE:-false}"
@@ -30,6 +32,9 @@ declare -a MATRIX_TESTS=(
   "queryroot_stress.js"
   "queryroot_spike.js"
   "queryroot_soak.js"
+  "query_ceiling.js"
+  "queryproject_ceiling.js"
+  "queryroot_ceiling.js"
 )
 
 declare -a FILTER_KEYWORDS=()
@@ -40,7 +45,7 @@ print_filter_help() {
 Usage: ./run_all.sh [keyword ...]
 
 Keywords can be scenario names (substring match) or group aliases:
-  - load | stress | spike | soak
+  - load | stress | spike | soak | ceiling
   - query | queryproject | queryroot
   - nonsoak (alias: no-soak, nosoak)
   - all (or matrix)
@@ -49,6 +54,8 @@ Examples:
   ./run_all.sh spike
   ./run_all.sh query spike
   ./run_all.sh queryroot
+  ./run_all.sh ceiling                        # saturation runs (uncached)
+  CACHE_HIT_MODE=true ./run_all.sh ceiling    # saturation runs (cache-hit)
   TEST_FILTER="query_spike,queryproject_load" ./run_all.sh
 EOF
 }
@@ -68,7 +75,7 @@ matches_keyword() {
     all|matrix)
       return 0
       ;;
-    load|stress|spike|soak)
+    load|stress|spike|soak|ceiling)
       [[ "$test_name" == *"_$keyword" ]] && return 0
       ;;
     query)
@@ -133,7 +140,7 @@ done
 if [[ "${#SELECTED_TESTS[@]}" -eq 0 ]]; then
   echo "No tests matched filter(s): ${FILTER_KEYWORDS[*]}"
   echo "Available tests: ${MATRIX_TESTS[*]}"
-  echo "Supported groups: load stress spike soak query queryproject queryroot nonsoak all"
+  echo "Supported groups: load stress spike soak ceiling query queryproject queryroot nonsoak all"
   exit 1
 fi
 
@@ -148,8 +155,8 @@ echo "Selected tests: ${SELECTED_TESTS[*]}"
 echo
 
 echo "Building shared packages..."
-(cd "$REPO_ROOT/packages/lyo-api-client" && npm install && npm run build)
-(cd "$REPO_ROOT/packages/lyo-person-api-client" && npm install && npm run build)
+(cd "$REPO_ROOT/packages/typescript/lyo-api-client" && npm install && npm run build)
+(cd "$REPO_ROOT/packages/typescript/lyo-person-api-client" && npm install && npm run build)
 echo "Shared packages built."
 echo
 
@@ -173,6 +180,16 @@ for test_file in "${SELECTED_TESTS[@]}"; do
   if [[ -n "$TOKEN" ]]; then
     cmd+=("-e" "TOKEN=$TOKEN")
   fi
+
+  if [[ -n "${CACHE_HIT_MODE:-}" ]]; then
+    cmd+=("-e" "CACHE_HIT_MODE=$CACHE_HIT_MODE")
+  fi
+
+  for ceiling_var in CEILING_RATES CEILING_STEP_DURATION CEILING_MAX_VUS CEILING_GRACEFUL_STOP; do
+    if [[ -n "${!ceiling_var:-}" ]]; then
+      cmd+=("-e" "$ceiling_var=${!ceiling_var}")
+    fi
+  done
 
   if [[ "$MODE" == "smoke" ]]; then
     cmd+=("--vus" "1" "--iterations" "1")
@@ -209,5 +226,5 @@ echo "Results: $OUT_DIR"
 
 if command -v python3 >/dev/null 2>&1; then
   echo "Refreshing k6 benchmark dashboard manifest..."
-  python3 "$REPO_ROOT/scripts/benchmarks/build-manifests.py" --k6-only --k6-run-dir "$OUT_DIR" || echo "Warning: benchmark manifest refresh failed."
+  python3 "$REPO_ROOT/scripts/benchmarks/build_manifests.py" --k6-only --k6-run-dir "$OUT_DIR" || echo "Warning: benchmark manifest refresh failed."
 fi

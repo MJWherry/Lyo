@@ -1,10 +1,7 @@
-using Lyo.Api.Services.Crud.Create;
 using Lyo.Common.Records;
 using Lyo.Job.Models.Builders;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
-using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,10 +23,8 @@ public class JobServiceAdvancedTests
         var firstReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = idempotencyKey };
         var first = await jobService.CreateJobRun(firstReq, TestContext.Current.CancellationToken);
         Assert.True(first.IsSuccess);
-
         var secondReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = idempotencyKey };
         var second = await jobService.CreateJobRun(secondReq, TestContext.Current.CancellationToken);
-
         Assert.True(second.IsSuccess);
         Assert.Equal(first.Data!.Id, second.Data!.Id);
     }
@@ -39,12 +34,9 @@ public class JobServiceAdvancedTests
     {
         var definitionId = await CreateDefinitionWithMaxRunsPerHourAsync(1);
         var jobService = _fixture.JobService;
-
-        var first = await jobService.CreateJobRun(new JobRunReq(definitionId, "test-user", false), TestContext.Current.CancellationToken);
+        var first = await jobService.CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
         Assert.True(first.IsSuccess);
-
-        var second = await jobService.CreateJobRun(new JobRunReq(definitionId, "test-user", false), TestContext.Current.CancellationToken);
-
+        var second = await jobService.CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
         Assert.False(second.IsSuccess);
         Assert.NotNull(second.Error);
         Assert.Contains("hourly run limit", second.Error!.Detail, StringComparison.OrdinalIgnoreCase);
@@ -57,15 +49,10 @@ public class JobServiceAdvancedTests
         var definitionId = await CreateDefinitionWithMaxRunsPerHourAsync(0);
         var jobService = _fixture.JobService;
         var factory = GetDbContextFactory();
-
-        var result = await jobService.CreateJobRun(
-            new JobRunReq(definitionId, "test-user", false) { DryRun = true },
-            TestContext.Current.CancellationToken);
-
+        var result = await jobService.CreateJobRun(new(definitionId, "test-user", false) { DryRun = true }, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data!.DryRun);
         Assert.Equal(Guid.Empty, result.Data.Id);
-
         await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         Assert.Equal(0, await db.JobRuns.CountAsync(r => r.JobDefinitionId == definitionId, TestContext.Current.CancellationToken));
     }
@@ -75,9 +62,7 @@ public class JobServiceAdvancedTests
     {
         var definitionId = await CreateDefinitionWithScheduleAsync();
         var jobService = _fixture.JobService;
-
-        var nextRuns = await jobService.GetNextRuns(definitionId, count: 5, TestContext.Current.CancellationToken);
-
+        var nextRuns = await jobService.GetNextRuns(definitionId, 5, TestContext.Current.CancellationToken);
         Assert.NotEmpty(nextRuns);
         Assert.True(nextRuns.All(d => d > DateTime.UtcNow));
         Assert.Equal(nextRuns.OrderBy(d => d).ToList(), nextRuns.ToList());
@@ -117,13 +102,7 @@ public class JobServiceAdvancedTests
             Type = "Test",
             WorkerType = ProgrammingLanguageInfo.CSharp.ShortName,
             Enabled = true,
-            CreateSchedules = [
-                new JobScheduleBuilder()
-                    .EveryDay()
-                    .SetTimes("00:00", "06:00", "12:00", "18:00")
-                    .WithDescription("Quarter-day schedule")
-                    .Build()
-            ]
+            CreateSchedules = [new JobScheduleBuilder().EveryDay().SetTimes("00:00", "06:00", "12:00", "18:00").WithDescription("Quarter-day schedule").Build()]
         };
 
         var result = await createService.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
@@ -144,5 +123,4 @@ public class JobServiceAdvancedTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         return scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
     }
-
 }

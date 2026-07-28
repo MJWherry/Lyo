@@ -30,12 +30,12 @@ public static class SetupEndpoints
                 //.BuildDocketGroup()
                 // Match Job test host: open for Gateway workbench (auth can be tightened later).
                 // Stream persisted outputs from this host's keyed FileStorage (matches the AfterRender save hook).
-                .BuildReportingGroup(ReportingApiOptions.WithAuth(
-                    EndpointAuth.Anonymous(),
-                    (ctx, ct) => {
-                        var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
-                        return storage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
-                    }))
+                .BuildReportingGroup(
+                    ReportingApiOptions.WithAuth(
+                        EndpointAuth.Anonymous(), (ctx, ct) => {
+                            var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey);
+                            return storage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
+                        }))
                 .BuildEndatoCeGroup()
                 .BuildEndatoPsGroup()
                 .BuildPersonGroup()
@@ -76,19 +76,12 @@ public static class SetupEndpoints
                 .Build();
 
             var contactReadFeatures = ApiFeatureSet.ReadOnly + ExportApiFeature.Instance;
-            app.CreateReadOnlyBuilder<PeopleDbContext, AddressEntity, AddressEntity>(Constants.Person.Address, "Person")
-                .WithCrud(contactReadFeatures, new())
-                .Build();
-            app.CreateReadOnlyBuilder<PeopleDbContext, PhoneNumberEntity, PhoneNumberEntity>(Constants.Person.PhoneNumber, "Person")
-                .WithCrud(contactReadFeatures, new())
-                .Build();
-            app.CreateReadOnlyBuilder<PeopleDbContext, EmailAddressEntity, EmailAddressEntity>(Constants.Person.Email, "Person")
-                .WithCrud(contactReadFeatures, new())
-                .Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, AddressEntity, AddressEntity>(Constants.Person.Address, "Person").WithCrud(contactReadFeatures, new()).Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, PhoneNumberEntity, PhoneNumberEntity>(Constants.Person.PhoneNumber, "Person").WithCrud(contactReadFeatures, new()).Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, EmailAddressEntity, EmailAddressEntity>(Constants.Person.Email, "Person").WithCrud(contactReadFeatures, new()).Build();
 
             // Typed Person CRUD owns /Person/*; root From/Joins Query is Option A at POST /Query.
             app.MapRootQueryEndpoints<PeopleDbContext>();
-
             app.MapGet(
                     "info/{schema}/{table}/{column}/GetUniqueCounts", async (
                         string schema,
@@ -118,8 +111,7 @@ public static class SetupEndpoints
 
         private WebApplication BuildEndatoPsGroup()
         {
-            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c
-                .WithDefaults(d => {
+            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c.WithDefaults(d => {
                     d.BaseRoute = Constants.EndatoPs.Route;
                     d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
                 })
@@ -130,8 +122,7 @@ public static class SetupEndpoints
 
         private WebApplication BuildEndatoCeGroup()
         {
-            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c
-                .WithDefaults(d => {
+            app.MapDynamicCrudEndpoints<EndatoDbContext>(c => c.WithDefaults(d => {
                     d.BaseRoute = Constants.EndatoCe.Route;
                     d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
                 })

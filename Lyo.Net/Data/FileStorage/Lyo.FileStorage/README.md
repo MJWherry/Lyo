@@ -64,7 +64,8 @@ Grouped by concern (see xmldoc for parameters and exceptions):
 - **Copy** — **`CopyFileAsync`** (new file id)
 - **Move / rename** — **`MoveFileAsync`** (same file id, relocate by **`PathPrefix`**); **`RenameFileAsync`** (metadata **`OriginalFileName`** only)
 - **Key ops** — **`MigrateDeksAsync`**, **`RotateDeksAsync`** (results split **`Skipped`** vs **`Failed`**; missing blobs and short encryption headers fail-fast)
-- **Events** — **`FileSaved`**, **`FileRetrieved`**, **`FileDeleted`**, **`FileMoved`**, **`FileRenamed`**, **`FileMetadataRetrieved`**, **`FileAuditOccurred`**. Payloads carry a redacted **`FileStoreSnapshot`** (
+- **Events** — **`FileSaved`**, **`FileRetrieved`**, **`FileDeleted`**, **`FileMoved`**, **`FileRenamed`**, **`FileMetadataRetrieved`**, **`FileAuditOccurred`**. Payloads carry a
+  redacted **`FileStoreSnapshot`** (
   wrapped DEK and KEK salt omitted)
 - **Health** — **`CheckHealthAsync`** via **`IHealth`** (lightweight vs full via **`HealthCheckMode`**)
 

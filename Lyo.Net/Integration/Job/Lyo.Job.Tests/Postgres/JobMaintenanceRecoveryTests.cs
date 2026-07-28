@@ -11,8 +11,8 @@ using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// Regression tests for the maintenance-service review fixes: dead-job timeouts publish run-finished events (so retries/triggers/circuit breaker fire), stuck
-/// <c>Queued</c> runs are redispatched, and audit timestamps are stamped on async saves.
+/// Regression tests for the maintenance-service review fixes: dead-job timeouts publish run-finished events (so retries/triggers/circuit breaker fire), stuck <c>Queued</c>
+/// runs are redispatched, and audit timestamps are stamped on async saves.
 /// </summary>
 [Trait("Category", "Integration")]
 [Collection(JobMaintenanceCollection.Name)]
@@ -26,14 +26,14 @@ public class JobMaintenanceRecoveryTests
     public async Task DeadJobTimeout_PublishesRunFinishedEvent()
     {
         var definitionId = await CreateDefinitionAsync(d => d.TimeoutMinutes = 5);
-        var runId = await SeedRunAsync(definitionId, JobState.Running, r => {
-            r.StartedTimestamp = DateTime.UtcNow.AddMinutes(-30);
-            r.LastHeartbeatUtc = DateTime.UtcNow.AddMinutes(-30);
-        });
+        var runId = await SeedRunAsync(
+            definitionId, JobState.Running, r => {
+                r.StartedTimestamp = DateTime.UtcNow.AddMinutes(-30);
+                r.LastHeartbeatUtc = DateTime.UtcNow.AddMinutes(-30);
+            });
+
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-
         await InvokeMaintenanceAsync();
-
         await using var db = await CreateDbContextAsync();
         var run = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
         Assert.Equal(JobState.Finished, run.State);
@@ -47,14 +47,14 @@ public class JobMaintenanceRecoveryTests
     public async Task StuckQueuedRun_IsRedispatched()
     {
         var definitionId = await CreateDefinitionAsync();
-        var runId = await SeedRunAsync(definitionId, JobState.Queued, r => {
-            r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
-            r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
-        });
+        var runId = await SeedRunAsync(
+            definitionId, JobState.Queued, r => {
+                r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
+                r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
+            });
+
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-
-        await InvokeMaintenanceAsync(new JobMaintenanceOptions { QueuedRunRedispatchMinutes = 10 });
-
+        await InvokeMaintenanceAsync(new() { QueuedRunRedispatchMinutes = 10 });
         Assert.Contains(_fixture.FakePublisher.Published.Skip(publishCountBefore), e => e.Event == "RunCreated" && e.RunId == runId);
 
         // Redispatch bumps UpdatedTimestamp so the run is retried once per threshold window, not every tick.
@@ -67,16 +67,16 @@ public class JobMaintenanceRecoveryTests
     public async Task DueDelayedRetry_IsDispatchedBySlot()
     {
         var definitionId = await CreateDefinitionAsync();
-        var runId = await SeedRunAsync(definitionId, JobState.Queued, r => {
-            // Delayed retry: created (with dispatch suppressed) before its slot; the slot has now come due.
-            r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-3);
-            r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-3);
-            r.ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(-1);
-        });
+        var runId = await SeedRunAsync(
+            definitionId, JobState.Queued, r => {
+                // Delayed retry: created (with dispatch suppressed) before its slot; the slot has now come due.
+                r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-3);
+                r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-3);
+                r.ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(-1);
+            });
+
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-
-        await InvokeMaintenanceAsync(new JobMaintenanceOptions { QueuedRunRedispatchMinutes = 10 });
-
+        await InvokeMaintenanceAsync(new() { QueuedRunRedispatchMinutes = 10 });
         Assert.Contains(_fixture.FakePublisher.Published.Skip(publishCountBefore), e => e.Event == "RunCreated" && e.RunId == runId);
     }
 
@@ -84,15 +84,15 @@ public class JobMaintenanceRecoveryTests
     public async Task QueuedRunWithFutureSlot_IsNotRedispatched()
     {
         var definitionId = await CreateDefinitionAsync();
-        var runId = await SeedRunAsync(definitionId, JobState.Queued, r => {
-            r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
-            r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
-            r.ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(30);
-        });
+        var runId = await SeedRunAsync(
+            definitionId, JobState.Queued, r => {
+                r.CreatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
+                r.UpdatedTimestamp = DateTime.UtcNow.AddMinutes(-30);
+                r.ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(30);
+            });
+
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-
-        await InvokeMaintenanceAsync(new JobMaintenanceOptions { QueuedRunRedispatchMinutes = 10 });
-
+        await InvokeMaintenanceAsync(new() { QueuedRunRedispatchMinutes = 10 });
         Assert.DoesNotContain(_fixture.FakePublisher.Published.Skip(publishCountBefore), e => e.Event == "RunCreated" && e.RunId == runId);
     }
 
@@ -102,13 +102,15 @@ public class JobMaintenanceRecoveryTests
         var definitionId = LyoGuid.CreateCombPostgres();
         await using (var db = await CreateDbContextAsync()) {
             // CreatedTimestamp deliberately left at default — the SavingChanges hook must stamp it on the async save path.
-            db.JobDefinitions.Add(new JobDefinition {
-                Id = definitionId,
-                Name = $"Stamp-{definitionId:N}"[..24],
-                Type = "Test",
-                WorkerType = "cs",
-                Enabled = true
-            });
+            db.JobDefinitions.Add(
+                new() {
+                    Id = definitionId,
+                    Name = $"Stamp-{definitionId:N}"[..24],
+                    Type = "Test",
+                    WorkerType = "cs",
+                    Enabled = true
+                });
+
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
@@ -144,8 +146,8 @@ public class JobMaintenanceRecoveryTests
             Enabled = true,
             CreatedTimestamp = DateTime.UtcNow
         };
-        configure?.Invoke(definition);
 
+        configure?.Invoke(definition);
         await using var db = await CreateDbContextAsync();
         db.JobDefinitions.Add(definition);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -162,8 +164,8 @@ public class JobMaintenanceRecoveryTests
             CreatedTimestamp = DateTime.UtcNow,
             AllowTriggers = false
         };
-        configure?.Invoke(run);
 
+        configure?.Invoke(run);
         await using var db = await CreateDbContextAsync();
         db.JobRuns.Add(run);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -176,7 +178,6 @@ public class JobMaintenanceRecoveryTests
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<JobMaintenanceService>>();
         var maintenance = new JobMaintenanceService(factory, logger, _fixture.FakePublisher, options);
-
         var method = typeof(JobMaintenanceService).GetMethod("RunMaintenanceAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
         await (Task)method.Invoke(maintenance, [TestContext.Current.CancellationToken])!;
     }

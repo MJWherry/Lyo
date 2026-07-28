@@ -40,7 +40,7 @@ x-runner: &runner
     # Mount the host Docker socket so Testcontainers can spin up sibling
     # Redis/Postgres containers for the Docker-backed suites.
     - /var/run/docker.sock:/var/run/docker.sock
-    # The ONLY host-tree mount: dashboard manifests written by build-manifests.py land here.
+    # The ONLY host-tree mount: dashboard manifests written by build_manifests.py land here.
     # Everything else (source, build output, raw artifacts) stays inside the container.
     - ./docs/benchmarks/data:/src/docs/benchmarks/data
   # Let Testcontainers reach host-published ports when running over the socket.

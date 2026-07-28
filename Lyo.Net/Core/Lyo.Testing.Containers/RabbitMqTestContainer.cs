@@ -3,8 +3,8 @@ using Testcontainers.RabbitMq;
 namespace Lyo.Testing.Containers;
 
 /// <summary>
-/// Owns a Testcontainers RabbitMQ instance (management-enabled image): start once, expose AMQP + management endpoints, dispose async. The management HTTP API
-/// (<see cref="AdminUrl" />) backs peek and queue-statistics operations.
+/// Owns a Testcontainers RabbitMQ instance (management-enabled image): start once, expose AMQP + management endpoints, dispose async. The management HTTP API (
+/// <see cref="AdminUrl" />) backs peek and queue-statistics operations.
 /// </summary>
 public sealed class RabbitMqTestContainer : IAsyncDisposable
 {
@@ -41,11 +41,7 @@ public sealed class RabbitMqTestContainer : IAsyncDisposable
     public RabbitMqTestContainer(RabbitMqContainerOptions? options = null)
     {
         options ??= new();
-        var builder = new RabbitMqBuilder(options.Image)
-            .WithUsername(DefaultUsername)
-            .WithPassword(DefaultPassword)
-            .WithPortBinding(ManagementPort, true);
-
+        var builder = new RabbitMqBuilder(options.Image).WithUsername(DefaultUsername).WithPassword(DefaultPassword).WithPortBinding(ManagementPort, true);
         options.ConfigureBuilder?.Invoke(builder);
         _container = builder.Build();
     }

@@ -3,6 +3,7 @@ using Lyo.Api;
 using Lyo.Cache;
 using Lyo.Common.Identifiers;
 using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres;
@@ -10,6 +11,7 @@ using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -34,16 +36,12 @@ public class JobParameterEncryptionRoundTripTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var definitionId = await CreateEncryptedDefinitionAsync(sp);
-
         var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
-
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var responseParam = Assert.Single(created.Data!.JobRunParameters!, p => p.Key == ParameterKey);
         Assert.Equal("***", responseParam.Value);
-
         await using var db = await CreateDbContextAsync(sp);
-        var stored = await db.JobRunParameters.AsNoTracking()
-            .SingleAsync(p => p.JobRunId == created.Data.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
+        var stored = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == created.Data.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
         Assert.Null(stored.Value);
         Assert.NotNull(stored.EncryptedValue);
         Assert.NotEqual(Plaintext, Encoding.UTF8.GetString(stored.EncryptedValue!));
@@ -58,7 +56,6 @@ public class JobParameterEncryptionRoundTripTests
         var definitionId = await CreateEncryptedDefinitionAsync(sp);
         var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
         Assert.True(created.IsSuccess);
-
         var (started, error) = await jobService.StartedJobRun(created.Data!.Id);
 
         // The worker-trusted path must hand real plaintext to the worker — before the fix it received the literal "***".
@@ -78,15 +75,11 @@ public class JobParameterEncryptionRoundTripTests
         var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
         Assert.True(created.IsSuccess);
         await FinishRunAsync(sp, created.Data!.Id);
-
         var rerun = await jobService.RerunJob(created.Data.Id);
-
         Assert.NotNull(rerun);
         Assert.True(rerun!.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
-
         await using var db = await CreateDbContextAsync(sp);
-        var cloned = await db.JobRunParameters.AsNoTracking()
-            .SingleAsync(p => p.JobRunId == rerun.Data!.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
+        var cloned = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == rerun.Data!.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
 
         // The clone must decrypt back to the original secret — the old response-based clone stored "***" (or double-encrypted bytes).
         Assert.Null(cloned.Value);
@@ -95,7 +88,14 @@ public class JobParameterEncryptionRoundTripTests
 
     private static JobRunReq BuildRunRequest(Guid definitionId)
         => new(definitionId, "test-user", false) {
-            JobRunParameters = { new JobRunParameterReq { Key = ParameterKey, Type = JobParameterType.String, Value = Plaintext, Enabled = true } }
+            JobRunParameters = {
+                new() {
+                    Key = ParameterKey,
+                    Type = JobParameterType.String,
+                    Value = Plaintext,
+                    Enabled = true
+                }
+            }
         };
 
     private ServiceProvider BuildServiceProvider()
@@ -105,7 +105,7 @@ public class JobParameterEncryptionRoundTripTests
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = _fixture.ConnectionString });
-        services.AddSingleton<Models.Events.IJobEventPublisher>(_ => new FakeJobEventPublisher());
+        services.AddSingleton<IJobEventPublisher>(_ => new FakeJobEventPublisher());
         services.AddSingleton<IJobParameterEncryptionService, FakeParameterEncryptionService>();
         services.AddScoped<JobService>();
         return services.BuildServiceProvider();
@@ -115,23 +115,27 @@ public class JobParameterEncryptionRoundTripTests
     {
         var definitionId = LyoGuid.CreateCombPostgres();
         await using var db = await CreateDbContextAsync(sp);
-        db.JobDefinitions.Add(new JobDefinition {
-            Id = definitionId,
-            Name = $"Encrypted-{definitionId:N}"[..32],
-            Type = "Test",
-            WorkerType = "cs",
-            Enabled = true,
-            CreatedTimestamp = DateTime.UtcNow
-        });
-        db.JobParameters.Add(new JobParameter {
-            Id = LyoGuid.CreateCombPostgres(),
-            JobDefinitionId = definitionId,
-            Key = ParameterKey,
-            Type = nameof(JobParameterType.String),
-            Value = null,
-            EncryptedValue = [], // non-null marker => parameter uses encrypted storage
-            CreatedTimestamp = DateTime.UtcNow
-        });
+        db.JobDefinitions.Add(
+            new() {
+                Id = definitionId,
+                Name = $"Encrypted-{definitionId:N}"[..32],
+                Type = "Test",
+                WorkerType = "cs",
+                Enabled = true,
+                CreatedTimestamp = DateTime.UtcNow
+            });
+
+        db.JobParameters.Add(
+            new() {
+                Id = LyoGuid.CreateCombPostgres(),
+                JobDefinitionId = definitionId,
+                Key = ParameterKey,
+                Type = nameof(JobParameterType.String),
+                Value = null,
+                EncryptedValue = [], // non-null marker => parameter uses encrypted storage
+                CreatedTimestamp = DateTime.UtcNow
+            });
+
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         return definitionId;
     }
@@ -141,7 +145,7 @@ public class JobParameterEncryptionRoundTripTests
         await using var db = await CreateDbContextAsync(sp);
         var run = await db.JobRuns.FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
         run.State = JobState.Finished;
-        run.Result = Models.Enums.JobRunResult.Success;
+        run.Result = JobRunResult.Success;
         run.FinishedTimestamp = DateTime.UtcNow;
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }

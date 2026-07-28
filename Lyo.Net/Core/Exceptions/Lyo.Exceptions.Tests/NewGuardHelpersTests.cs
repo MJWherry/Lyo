@@ -93,8 +93,7 @@ public class NewGuardHelpersTests
     }
 
     [Fact]
-    public void ThrowIfDefault_ZeroInt_Throws()
-        => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfDefault(0));
+    public void ThrowIfDefault_ZeroInt_Throws() => Assert.Throws<ArgumentException>(() => ArgumentHelpers.ThrowIfDefault(0));
 
     [Fact]
     public void ThrowIfNotDefined_DefinedValue_DoesNotThrow() => ArgumentHelpers.ThrowIfNotDefined(DayOfWeek.Friday);
@@ -111,8 +110,7 @@ public class NewGuardHelpersTests
     [Theory]
     [InlineData(0, 3)]
     [InlineData(2, 3)]
-    public void ThrowIfIndexOutOfRange_ValidIndex_DoesNotThrow(int index, int count)
-        => ArgumentHelpers.ThrowIfIndexOutOfRange(index, count);
+    public void ThrowIfIndexOutOfRange_ValidIndex_DoesNotThrow(int index, int count) => ArgumentHelpers.ThrowIfIndexOutOfRange(index, count);
 
     [Theory]
     [InlineData(-1, 3)]

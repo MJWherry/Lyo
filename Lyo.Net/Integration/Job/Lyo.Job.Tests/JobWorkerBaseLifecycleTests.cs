@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Common.Records;
@@ -25,7 +24,6 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { StartException = new ApiException(400, "Run not in Queued state") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-
         var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
 
         // Duplicate dispatch delivery: requeueing would be rejected the same way every time, churning the message to the DLQ.
@@ -40,7 +38,6 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { StartException = new HttpRequestException("Connection refused") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-
         var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
 
         // The run is still Queued, so the counted requeue may retry it.
@@ -53,7 +50,6 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { FinishException = new ApiException(400, "Run is not finishable") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-
         var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
 
         // The run was already finalized (typically Timeout via dead-job detection) — retrying or requeueing can never succeed.
@@ -67,9 +63,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { FailFinishTransientCount = 2 };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-
         var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
-
         Assert.True(result.IsSuccess);
         Assert.Equal(3, api.FinishAttempts);
     }
@@ -79,11 +73,12 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient();
         using var hostShutdown = new CancellationTokenSource();
-        var worker = CreateWorker(api, _ => {
-            // Simulate the host stopping while the job is executing.
-            hostShutdown.Cancel();
-            throw new OperationCanceledException(hostShutdown.Token);
-        });
+        var worker = CreateWorker(
+            api, _ => {
+                // Simulate the host stopping while the job is executing.
+                hostShutdown.Cancel();
+                throw new OperationCanceledException(hostShutdown.Token);
+            });
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => worker.InvokeDoWorkAsync(api.RunId, hostShutdown.Token));
 
@@ -97,7 +92,6 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient();
         var worker = CreateWorker(api, ctx => throw new OperationCanceledException(ctx.CancellationToken));
-
         var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
 
         // User cancellation (host token not signalled) still finishes the run as Cancelled — no requeue, no hand-back.
@@ -109,11 +103,8 @@ public class JobWorkerBaseLifecycleTests
     private static TestJobWorker CreateWorker(ControllableJobRunApiClient api, Func<IJobWorkerContext, Task> execute)
         => new(new FakeMqService(), new JobClient(api), new FakeJobEventPublisher(), execute);
 
-    private sealed class TestJobWorker(
-        IMqService mq,
-        IJobClient jobClient,
-        IJobEventPublisher events,
-        Func<IJobWorkerContext, Task> execute) : JobWorkerBase(mq, jobClient, events, "cs", NullLogger.Instance)
+    private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events, Func<IJobWorkerContext, Task> execute)
+        : JobWorkerBase(mq, jobClient, events, "cs", NullLogger.Instance)
     {
         protected override TimeSpan HeartbeatInterval => TimeSpan.FromHours(1);
 
@@ -133,8 +124,7 @@ public class JobWorkerBaseLifecycleTests
 
         public Exception? FinishException { get; set; }
 
-        public int FailFinishTransientCount
-        {
+        public int FailFinishTransientCount {
             set => _remainingTransientFinishFailures = value;
         }
 
@@ -151,7 +141,12 @@ public class JobWorkerBaseLifecycleTests
         public Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => Task.FromResult((TResult?)(object?)BuildRun(JobState.Queued));
 
-        public Task<TResult?> GetAsAsync<TRequest, TResult>(string uri, TRequest? query = default, string? enumerableDelimiter = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult?> GetAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? query = default,
+            string? enumerableDelimiter = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => Task.FromResult(default(TResult));
 
         public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -195,10 +190,12 @@ public class JobWorkerBaseLifecycleTests
         public Task<TResult> PutAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException();
+        public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
-        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(
+            string uri,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<(byte[] Content, FileTypeInfo FileType)> GetFileWithTypeAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -207,13 +204,25 @@ public class JobWorkerBaseLifecycleTests
         public Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult> PostFileAsAsync<TResult>(
+            string uri,
+            Stream stream,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<TResult> PostFileAsAsync<TResult>(
+            string uri,
+            byte[] data,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException();
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -225,8 +234,7 @@ public class JobWorkerBaseLifecycleTests
         public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException();
 
-        public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException();
+        public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
         private JobRunRes BuildRun(JobState state)
             => new() {
@@ -234,7 +242,7 @@ public class JobWorkerBaseLifecycleTests
                 State = state,
                 CreatedTimestamp = DateTime.UtcNow,
                 JobDefinitionId = Guid.NewGuid(),
-                JobDefinition = new JobDefinitionRes(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
+                JobDefinition = new(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
                 JobRunParameters = []
             };
     }

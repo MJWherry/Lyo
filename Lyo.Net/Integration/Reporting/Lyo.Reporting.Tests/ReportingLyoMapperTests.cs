@@ -1,5 +1,6 @@
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Request;
+using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.Reporting.Postgres.Mapping;
@@ -22,7 +23,7 @@ public sealed class ReportingLyoMapperTests
             DefaultFormat = ReportFormat.Csv,
             GenerationProfileKey = "profile-a",
             CreateParameters = [
-                new ReportDefinitionParameterReq {
+                new() {
                     Key = "ClientId",
                     Type = ReportParameterType.Guid,
                     Required = true,
@@ -45,8 +46,7 @@ public sealed class ReportingLyoMapperTests
         Assert.Equal("N", entity.Name);
         Assert.Single(entity.Parameters);
         Assert.Equal("ClientId", entity.Parameters[0].Key);
-
-        var res = _mapper.Map<Lyo.Reporting.Models.Response.ReportDefinitionRes>(entity);
+        var res = _mapper.Map<ReportDefinitionRes>(entity);
         Assert.Equal(entity.Id, res.Id);
         Assert.NotNull(res.Parameters);
         Assert.Single(res.Parameters!);
@@ -61,15 +61,12 @@ public sealed class ReportingLyoMapperTests
             Format = ReportFormat.Csv,
             Status = ReportGenerationStatus.Succeeded,
             CreatedBy = "worker",
-            Parameters = [
-                new ReportGenerationParameterReq("ClientId", ReportParameterType.Guid, Guid.NewGuid().ToString())
-            ]
+            Parameters = [new("ClientId", ReportParameterType.Guid, Guid.NewGuid().ToString())]
         };
 
         var entity = _mapper.Map<ReportGeneration>(req);
         Assert.Equal(nameof(ReportFormat.Csv), entity.Format);
         Assert.Single(entity.Parameters);
-
         entity.Id = Guid.NewGuid();
         entity.CreatedTimestamp = DateTime.UtcNow;
         foreach (var p in entity.Parameters) {
@@ -77,7 +74,7 @@ public sealed class ReportingLyoMapperTests
             p.ReportGenerationId = entity.Id;
         }
 
-        var res = _mapper.Map<Lyo.Reporting.Models.Response.ReportGenerationRes>(entity);
+        var res = _mapper.Map<ReportGenerationRes>(entity);
         Assert.Equal(ReportFormat.Csv, res.Format);
         Assert.NotNull(res.Parameters);
         Assert.Single(res.Parameters!);
@@ -101,10 +98,7 @@ public sealed class ReportingLyoMapperTests
             }
         };
 
-        var merged = ReportService.MergeParameters(
-            defParams,
-            [new ReportGenerationParameterReq("A", ReportParameterType.String, "override-a")]);
-
+        var merged = ReportService.MergeParameters(defParams, [new("A", ReportParameterType.String, "override-a")]);
         Assert.Equal(2, merged.Count);
         Assert.Equal("override-a", merged.First(p => p.Key == "A").Value);
         Assert.Equal("1", merged.First(p => p.Key == "B").Value);

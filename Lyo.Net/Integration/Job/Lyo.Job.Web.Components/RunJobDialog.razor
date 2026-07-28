@@ -33,7 +33,9 @@
 
         @if (_paramModels.Any()) {
             <MudDivider/>
+
             <MudText Typo="Typo.subtitle1">Parameters</MudText>
+
             <MudGrid Spacing="2">
                 @foreach (var p in _paramModels) {
                     <MudItem xs="12" md="@(p.Param.Type is JobParameterType.Json or JobParameterType.Xml ? 12 : 6)">
@@ -109,11 +111,7 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
-                Param = p,
-                Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null
-            })
-            .ToList();
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null }).ToList();
     }
 
     private bool IsValid()

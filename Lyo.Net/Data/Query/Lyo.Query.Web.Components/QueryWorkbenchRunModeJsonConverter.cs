@@ -30,7 +30,7 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
                 return n switch {
                     1 => QueryWorkbenchRunMode.QueryProject,
                     2 => QueryWorkbenchRunMode.RootQuery,
-                    _ => QueryWorkbenchRunMode.Query
+                    var _ => QueryWorkbenchRunMode.Query
                 };
             }
         }
@@ -43,7 +43,7 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
         var name = value switch {
             QueryWorkbenchRunMode.QueryProject => nameof(QueryWorkbenchRunMode.QueryProject),
             QueryWorkbenchRunMode.RootQuery => nameof(QueryWorkbenchRunMode.RootQuery),
-            _ => nameof(QueryWorkbenchRunMode.Query)
+            var _ => nameof(QueryWorkbenchRunMode.Query)
         };
 
         writer.WriteStringValue(name);

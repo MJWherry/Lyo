@@ -15,7 +15,7 @@ internal sealed class ChaCha20Poly1305StreamCryptor : IAeadStreamCryptor
 #if NET10_0_OR_GREATER
     private readonly System.Security.Cryptography.ChaCha20Poly1305 _chacha;
 
-    public ChaCha20Poly1305StreamCryptor(ReadOnlySpan<byte> key) => _chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
+    public ChaCha20Poly1305StreamCryptor(ReadOnlySpan<byte> key) => _chacha = new(key);
 
     public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
         => _chacha.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, ChaCha20Poly1305Helper.TagSize), associatedData);

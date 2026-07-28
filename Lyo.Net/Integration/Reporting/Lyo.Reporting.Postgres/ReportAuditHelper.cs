@@ -25,7 +25,7 @@ public static class ReportAuditHelper
         if (!string.IsNullOrWhiteSpace(name))
             return name.Length > 50 ? name[..50] : name;
 
-        return string.IsNullOrWhiteSpace(fallback) ? "Unknown" : (fallback.Length > 50 ? fallback[..50] : fallback);
+        return string.IsNullOrWhiteSpace(fallback) ? "Unknown" : fallback.Length > 50 ? fallback[..50] : fallback;
     }
 
     public static void RecordCreated(IServiceProvider services, string entityType, Guid entityId, string? message = null)
@@ -44,7 +44,7 @@ public static class ReportAuditHelper
             return;
 
         var actor = GetActor(services);
-        var evt = new AuditEvent(new EntityRef(entityType, entityId.ToString()), eventType, message, actor);
+        var evt = new AuditEvent(new(entityType, entityId.ToString()), eventType, message, actor);
         recorder.RecordEvent(evt);
     }
 }

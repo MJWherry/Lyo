@@ -4,9 +4,8 @@ using Lyo.Reporting.Postgres.Database;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Runs the host <see cref="ReportGenerationHooks.OnCleanupAsync"/> hook for generations whose rows are about to be
-/// removed outside retention (e.g. definition delete cascades). A hook failure propagates so the delete aborts
-/// rather than orphaning the stored output.
+/// Runs the host <see cref="ReportGenerationHooks.OnCleanupAsync" /> hook for generations whose rows are about to be removed outside retention (e.g. definition delete
+/// cascades). A hook failure propagates so the delete aborts rather than orphaning the stored output.
 /// </summary>
 public static class ReportGenerationCleanup
 {
@@ -21,13 +20,12 @@ public static class ReportGenerationCleanup
 
         foreach (var generation in generations.Where(g => g.OutputFileId is not null)) {
             await hooks.OnCleanupAsync(
-                    new ReportCleanupContext {
+                    new() {
                         GenerationId = generation.Id,
                         OutputFileId = generation.OutputFileId,
                         PathPrefix = generation.PathPrefix,
                         Services = services
-                    },
-                    ct)
+                    }, ct)
                 .ConfigureAwait(false);
         }
     }

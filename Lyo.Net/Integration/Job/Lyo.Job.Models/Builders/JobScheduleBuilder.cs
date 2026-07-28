@@ -1,14 +1,13 @@
+#if NET6_0_OR_GREATER
+using TimeOnly = System.TimeOnly;
+#else
+using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
+#endif
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Schedule.Models;
-#if NET6_0_OR_GREATER
-using TimeOnly = System.TimeOnly;
-
-#else
-using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
-#endif
 
 namespace Lyo.Job.Models.Builders;
 
@@ -150,25 +149,38 @@ public class JobScheduleBuilder
     }
 
     /// <summary>Creates and links a new inline blackout calendar when this schedule is persisted.</summary>
-    public JobScheduleBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure)
-        => WithBlackoutCalendar("Blackout", configure);
+    public JobScheduleBuilder WithBlackoutCalendar(Action<JobBlackoutCalendarBuilder> configure) => WithBlackoutCalendar("Blackout", configure);
 
     /// <summary>Adds a do-not-run window to this schedule's inline blackout calendar.</summary>
-    public JobScheduleBuilder AddBlackoutWindow(string name, DayFlags days, string startTime, string endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    public JobScheduleBuilder AddBlackoutWindow(
+        string name,
+        DayFlags days,
+        string startTime,
+        string endTime,
+        JobBlackoutPolicy policy = JobBlackoutPolicy.Skip,
+        bool enabled = true)
         => AddBlackoutWindow(name, days, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, enabled);
 
     /// <summary>Adds a do-not-run window to this schedule's inline blackout calendar.</summary>
-    public JobScheduleBuilder AddBlackoutWindow(string name, DayFlags days, TimeOnly startTime, TimeOnly endTime, JobBlackoutPolicy policy = JobBlackoutPolicy.Skip, bool enabled = true)
+    public JobScheduleBuilder AddBlackoutWindow(
+        string name,
+        DayFlags days,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        JobBlackoutPolicy policy = JobBlackoutPolicy.Skip,
+        bool enabled = true)
     {
         EnsureScheduleBlackoutCalendar();
-        _schedule.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(new() {
-            Name = name,
-            DayFlags = days,
-            StartTime = startTime,
-            EndTime = endTime,
-            Policy = policy,
-            Enabled = enabled
-        });
+        _schedule.CreateBlackoutCalendar!.CreateBlackoutWindows.Add(
+            new() {
+                Name = name,
+                DayFlags = days,
+                StartTime = startTime,
+                EndTime = endTime,
+                Policy = policy,
+                Enabled = enabled
+            });
+
         return this;
     }
 

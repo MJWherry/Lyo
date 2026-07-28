@@ -4,9 +4,9 @@ using Lyo.Reporting.Builders;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
-using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
+using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,20 +19,11 @@ namespace Lyo.Reporting.Tests.Postgres;
 public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClassFixture<ReportingPostgresFixture>
 {
     private static string SampleReportJson()
-        => JsonSerializer.Serialize(
-            ReportBuilder<object>.New()
-                .SetTitle("Sample")
-                .AddSection(s => s.AddGrid("G", g => g.AddColumn("A").AddColumn("B").AddRow("1", "2")))
-                .Build());
+        => JsonSerializer.Serialize(ReportBuilder<object>.New().SetTitle("Sample").AddSection(s => s.AddGrid("G", g => g.AddColumn("A").AddColumn("B").AddRow("1", "2"))).Build());
 
     private ReportService CreateService(IServiceProvider sp, PostgresReportingOptions options)
         => new(
-            sp.GetRequiredService<IDbContextFactory<ReportingContext>>(),
-            sp.GetServices<IReportRenderer>(),
-            [],
-            [],
-            sp,
-            Options.Create(options),
+            sp.GetRequiredService<IDbContextFactory<ReportingContext>>(), sp.GetServices<IReportRenderer>(), [], [], sp, Options.Create(options),
             sp.GetRequiredService<ILogger<ReportService>>());
 
     [Fact]
@@ -40,7 +31,6 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         byte[]? staged = null;
         var hooks = new ReportGenerationHooks {
             AfterRenderAsync = (ctx, _) => {
@@ -50,19 +40,13 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var result = await reportService.GenerateAsync(
-            new GenerateReportReq {
-                ReportDataJson = SampleReportJson(),
-                Format = ReportFormat.Xlsx,
-                FileName = "sample.xlsx"
-            },
-            hooks,
-            TestContext.Current.CancellationToken);
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Xlsx, FileName = "sample.xlsx" }, hooks, TestContext.Current.CancellationToken);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.Equal("sample.xlsx", result.OriginalFileName);
         Assert.NotNull(staged);
-        var xlsx = scope.ServiceProvider.GetRequiredService<Lyo.Xlsx.Models.IXlsxService>();
+        var xlsx = scope.ServiceProvider.GetRequiredService<IXlsxService>();
         // Reader consumes the header row by default, so index 0 is the first data row.
         var parsed = xlsx.Reader.ParseXlsxBytesAsDictionary(staged!);
         Assert.Equal("1", parsed[0][0]);
@@ -74,7 +58,6 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         string? stagedText = null;
         var hooks = new ReportGenerationHooks {
             AfterRenderAsync = (ctx, _) => {
@@ -84,11 +67,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var json = SampleReportJson();
-        var result = await reportService.GenerateAsync(
-            new GenerateReportReq { ReportDataJson = json, Format = ReportFormat.Json },
-            hooks,
-            TestContext.Current.CancellationToken);
-
+        var result = await reportService.GenerateAsync(new() { ReportDataJson = json, Format = ReportFormat.Json }, hooks, TestContext.Current.CancellationToken);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("application/json; charset=utf-8", result.ContentType);
         Assert.Equal(json, stagedText);
@@ -99,14 +78,8 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         var result = await reportService.GenerateAsync(
-            new GenerateReportReq {
-                ReportDataJson = SampleReportJson(),
-                Format = ReportFormat.Csv,
-                FileName = "../../etc/we\0ird.csv"
-            },
-            ct: TestContext.Current.CancellationToken);
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv, FileName = "../../etc/we\0ird.csv" }, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("weird.csv", result.OriginalFileName);
@@ -117,14 +90,11 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new GenerateReportReq { ReportDataJson = "{definitely not json", Format = ReportFormat.Csv },
-            ct: TestContext.Current.CancellationToken));
-        Assert.Contains("not valid JSON", ex.Message, StringComparison.OrdinalIgnoreCase);
+            new() { ReportDataJson = "{definitely not json", Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
 
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>()
-            .CreateDbContextAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("not valid JSON", ex.Message, StringComparison.OrdinalIgnoreCase);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
         Assert.False(
             await db.ReportGenerations.AnyAsync(g => g.ReportDataJson == "{definitely not json", TestContext.Current.CancellationToken),
             "Malformed payloads must fail fast, before a generation row is persisted.");
@@ -136,18 +106,16 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         using var scope = fixture.CreateScope();
         var options = new PostgresReportingOptions { ConnectionString = "unused", AllowAdHocGeneration = false };
         var reportService = CreateService(scope.ServiceProvider, options);
-
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new GenerateReportReq { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv },
-            ct: TestContext.Current.CancellationToken));
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
+
         Assert.Contains("AllowAdHocGeneration", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task Generate_rejects_override_json_on_definition_when_adhoc_disabled()
     {
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>()
-            .CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
         var definition = new ReportDefinition {
             Id = Guid.NewGuid(),
             Name = "NoAdhoc",
@@ -155,33 +123,24 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
             IsActive = true,
             CreatedTimestamp = DateTime.UtcNow
         };
+
         db.ReportDefinitions.Add(definition);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         using var scope = fixture.CreateScope();
         var options = new PostgresReportingOptions { ConnectionString = "unused", AllowAdHocGeneration = false };
         var reportService = CreateService(scope.ServiceProvider, options);
-
         await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new GenerateReportReq {
-                ReportDefinitionId = definition.Id,
-                OverrideReportDataJson = SampleReportJson(),
-                Format = ReportFormat.Csv
-            },
-            ct: TestContext.Current.CancellationToken));
+            new() { ReportDefinitionId = definition.Id, OverrideReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
 
         // Generating from the stored definition JSON is still allowed.
-        var ok = await reportService.GenerateAsync(
-            new GenerateReportReq { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv },
-            ct: TestContext.Current.CancellationToken);
+        var ok = await reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken);
         Assert.Equal(ReportGenerationStatus.Succeeded, ok.Status);
     }
 
     [Fact]
     public async Task Generate_rejects_unknown_parameter_keys_for_definitions()
     {
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>()
-            .CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
         var definition = new ReportDefinition {
             Id = Guid.NewGuid(),
             Name = "StrictKeys",
@@ -189,19 +148,15 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
             IsActive = true,
             CreatedTimestamp = DateTime.UtcNow
         };
+
         db.ReportDefinitions.Add(definition);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new GenerateReportReq {
-                ReportDefinitionId = definition.Id,
-                Format = ReportFormat.Csv,
-                Parameters = [new("NotDeclared", ReportParameterType.String, "x")]
-            },
+            new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv, Parameters = [new("NotDeclared", ReportParameterType.String, "x")] },
             ct: TestContext.Current.CancellationToken));
+
         Assert.Contains("NotDeclared", ex.Message, StringComparison.Ordinal);
     }
 
@@ -210,19 +165,16 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-
         var original = await reportService.GenerateAsync(
-            new GenerateReportReq {
+            new() {
                 ReportDataJson = SampleReportJson(),
                 Format = ReportFormat.Csv,
                 FileName = "snapshot.csv",
                 Parameters = [new("Tag", ReportParameterType.String, "keep-me")],
                 CreatedBy = "original-user"
-            },
-            ct: TestContext.Current.CancellationToken);
+            }, ct: TestContext.Current.CancellationToken);
 
         var rerun = await reportService.RerunAsync(original.Id, "rerun-user", ct: TestContext.Current.CancellationToken);
-
         Assert.NotEqual(original.Id, rerun.Id);
         Assert.Equal(ReportGenerationStatus.Succeeded, rerun.Status);
         Assert.Equal(ReportFormat.Csv, rerun.Format);
@@ -246,17 +198,14 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
         await using var db = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-
         var outputFileId = Guid.NewGuid();
         fixture.FakeFileStorage.Files[outputFileId] = [1, 2, 3];
-
         var oldWithFile = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow.AddDays(-30), outputFileId);
         var oldFailed = NewGeneration(nameof(ReportGenerationStatus.Failed), DateTime.UtcNow.AddDays(-30));
         var oldRunning = NewGeneration(nameof(ReportGenerationStatus.Running), DateTime.UtcNow.AddDays(-30));
         var recent = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow);
         db.ReportGenerations.AddRange(oldWithFile, oldFailed, oldRunning, recent);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         var cleanupCalls = new List<Guid?>();
         var hooks = new ReportGenerationHooks {
             OnCleanupAsync = async (ctx, ct) => {
@@ -267,17 +216,13 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var service = new ReportRetentionService(
-            dbFactory,
-            fixture.ServiceProvider,
-            Options.Create(new PostgresReportingOptions { ConnectionString = "unused", GenerationRetention = TimeSpan.FromDays(7) }),
+            dbFactory, fixture.ServiceProvider, Options.Create(new PostgresReportingOptions { ConnectionString = "unused", GenerationRetention = TimeSpan.FromDays(7) }),
             fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
         var deleted = await service.CleanupAsync(hooks, TestContext.Current.CancellationToken);
-
         Assert.True(deleted >= 2, $"Expected at least the two old terminal rows to be deleted, got {deleted}.");
         Assert.Contains(outputFileId, cleanupCalls);
         Assert.False(fixture.FakeFileStorage.Files.ContainsKey(outputFileId));
-
         await using var verify = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldWithFile.Id, TestContext.Current.CancellationToken));
         Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldFailed.Id, TestContext.Current.CancellationToken));
@@ -290,9 +235,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
         var service = new ReportRetentionService(
-            dbFactory,
-            fixture.ServiceProvider,
-            Options.Create(new PostgresReportingOptions { ConnectionString = "unused" }),
+            dbFactory, fixture.ServiceProvider, Options.Create(new PostgresReportingOptions { ConnectionString = "unused" }),
             fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
         Assert.Equal(0, await service.CleanupAsync(TestContext.Current.CancellationToken));
@@ -304,10 +247,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         // Exercises the host-pluggable contract used by the Download endpoint: factory resolves the blob by OutputFileId.
         var fileId = Guid.NewGuid();
         fixture.FakeFileStorage.Files[fileId] = [9, 8, 7];
-
-        Func<ReportDownloadContext, CancellationToken, Task<Stream?>> factory =
-            (ctx, ct) => fixture.FakeFileStorage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
-
+        Func<ReportDownloadContext, CancellationToken, Task<Stream?>> factory = (ctx, ct) => fixture.FakeFileStorage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
         var context = new ReportDownloadContext {
             GenerationId = Guid.NewGuid(),
             OutputFileId = fileId,
@@ -321,12 +261,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         using var ms = new MemoryStream();
         await stream!.CopyToAsync(ms, TestContext.Current.CancellationToken);
         Assert.Equal([9, 8, 7], ms.ToArray());
-
-        var missingContext = new ReportDownloadContext {
-            GenerationId = Guid.NewGuid(),
-            OutputFileId = Guid.NewGuid(),
-            Services = fixture.ServiceProvider
-        };
+        var missingContext = new ReportDownloadContext { GenerationId = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), Services = fixture.ServiceProvider };
         Assert.Null(await factory(missingContext, TestContext.Current.CancellationToken));
     }
 

@@ -12,8 +12,8 @@ public sealed class JobParameterEncryptionService : IJobParameterEncryptionServi
     private const string MaskedPlaceholder = "***";
 
     private readonly IEncryptionService? _encryptionService;
-    private readonly ILogger<JobParameterEncryptionService> _logger;
     private readonly string? _keyName;
+    private readonly ILogger<JobParameterEncryptionService> _logger;
 
     public JobParameterEncryptionService(IEncryptionService? encryptionService = null, string? keyName = null, ILogger<JobParameterEncryptionService>? logger = null)
     {
@@ -75,6 +75,5 @@ public sealed class JobParameterEncryptionService : IJobParameterEncryptionServi
     }
 
     /// <inheritdoc />
-    public string? MaskValue(string? value, byte[]? encryptedValueMarker)
-        => UsesEncryptedStorage(encryptedValueMarker) ? MaskedPlaceholder : value;
+    public string? MaskValue(string? value, byte[]? encryptedValueMarker) => UsesEncryptedStorage(encryptedValueMarker) ? MaskedPlaceholder : value;
 }

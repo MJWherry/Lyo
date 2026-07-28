@@ -44,26 +44,30 @@ app.BuildReportingGroup(new ReportingApiOptions {
 
 ## Auth matrix
 
-| Surface | Options property | Endpoints |
-|---------|------------------|-----------|
-| Definitions | `DefinitionAuth` | CRUD + Export |
-| Definition parameters | `DefinitionAuth` | CRUD under `Reporting/Definition/Parameter` |
-| Generations | `GenerationAuth` | Query / Get only (read-only; include `Parameters`) |
-| Generate | `GenerateAuth` | `POST Reporting/Generation/Generate` (body `Parameters` list) |
-| Rerun | `GenerateAuth` | `POST Reporting/Generation/{id}/Rerun` |
-| Download | `DownloadAuth` | `GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set) |
+| Surface               | Options property | Endpoints                                                                                  |
+|-----------------------|------------------|--------------------------------------------------------------------------------------------|
+| Definitions           | `DefinitionAuth` | CRUD + Export                                                                              |
+| Definition parameters | `DefinitionAuth` | CRUD under `Reporting/Definition/Parameter`                                                |
+| Generations           | `GenerationAuth` | Query / Get only (read-only; include `Parameters`)                                         |
+| Generate              | `GenerateAuth`   | `POST Reporting/Generation/Generate` (body `Parameters` list)                              |
+| Rerun                 | `GenerateAuth`   | `POST Reporting/Generation/{id}/Rerun`                                                     |
+| Download              | `DownloadAuth`   | `GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set) |
 
 When every surface shares one policy, use `ReportingApiOptions.WithAuth(auth, downloadStreamFactory)` instead of setting all four properties.
 
-All auth surfaces default to `EndpointAuth.RequireAuthorization()` (authenticated user). **Breaking change:** previously the defaults were `null` (endpoint fell through to the builder/host default); anonymous access now requires an explicit `EndpointAuth.Anonymous()` per surface. Setting a property to `null` restores the old fall-through behavior, but prefer explicit values for production Worker/Discord hosts.
+All auth surfaces default to `EndpointAuth.RequireAuthorization()` (authenticated user). **Breaking change:** previously the defaults were `null` (endpoint fell through to the
+builder/host default); anonymous access now requires an explicit `EndpointAuth.Anonymous()` per surface. Setting a property to `null` restores the old fall-through behavior, but
+prefer explicit values for production Worker/Discord hosts.
 
 ## CreatedBy
 
-The authenticated identity always wins: when the caller is authenticated, `GenerateReportReq.CreatedBy` is overwritten with `User.Identity.Name`. Client-supplied `CreatedBy` is only honored for unauthenticated/service callers, falling back to `"Unknown"`.
+The authenticated identity always wins: when the caller is authenticated, `GenerateReportReq.CreatedBy` is overwritten with `User.Identity.Name`. Client-supplied `CreatedBy` is
+only honored for unauthenticated/service callers, falling back to `"Unknown"`.
 
 ## Status codes
 
-- Validation failures (`ReportValidationException`: bad parameters, unknown keys, malformed/oversized JSON, inactive or missing definition, ad-hoc disabled) → **400** ProblemDetails.
+- Validation failures (`ReportValidationException`: bad parameters, unknown keys, malformed/oversized JSON, inactive or missing definition, ad-hoc disabled) → **400**
+  ProblemDetails.
 - Concurrency saturation (`ReportBusyException`, see `PostgresReportingOptions.MaxConcurrentGenerations`) → **503** ProblemDetails.
 - Download: **404** when the generation or blob is missing, **409** when the generation has no downloadable output (not `Succeeded` or no `OutputFileId`).
 
@@ -80,11 +84,14 @@ Failures surface as 400-style CRUD error responses.
 
 ## Sensitive field protection
 
-`QueryProject` and projected `Export` read raw entities and bypass the response mapper's masking, so the reporting surfaces deny selecting `EncryptedValue`/`Value` on parameter paths (including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `QueryConcrete`/`Get` map through the response types, which mask parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned).
+`QueryProject` and projected `Export` read raw entities and bypass the response mapper's masking, so the reporting surfaces deny selecting `EncryptedValue`/`Value` on parameter
+paths (including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `QueryConcrete`/`Get` map through the response types, which
+mask parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned).
 
 ## Definition delete cleanup
 
-Deleting a definition cascades its generation rows. Before the delete, the host `ReportGenerationHooks.OnCleanupAsync` runs for each generation with an `OutputFileId` so the persisted blob can be removed; a hook failure aborts the delete rather than orphaning storage.
+Deleting a definition cascades its generation rows. Before the delete, the host `ReportGenerationHooks.OnCleanupAsync` runs for each generation with an `OutputFileId` so the
+persisted blob can be removed; a hook failure aborts the delete rather than orphaning storage.
 
 ## Worker flow
 

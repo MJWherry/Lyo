@@ -12,12 +12,17 @@ dotnet build Integration/Reporting/Lyo.Reporting.Tests
 
 ## Coverage highlights
 
-- **Validation** (`ReportParameterValidatorTests`): typed value checks per `ReportParameterType`, regex timeout/invalid-pattern/length-cap handling, unknown-key rejection when generating from a definition, required satisfied by `EncryptedValue` alone.
+- **Validation** (`ReportParameterValidatorTests`): typed value checks per `ReportParameterType`, regex timeout/invalid-pattern/length-cap handling, unknown-key rejection when
+  generating from a definition, required satisfied by `EncryptedValue` alone.
 - **Write-time validation** (`ReportDefinitionWriteValidatorTests`): composition JSON parse/size, `DefaultFormat`/`Type` enum checks, regex compile, min/max coherence.
-- **Input hygiene & resilience** (`ReportServiceUnitTests`, `ReportGenerationHardenTests`, `ReportFeatureTests`): filename sanitization (traversal, invalid chars, length cap), malformed `ReportDataJson` fails fast without a persisted row, `AllowAdHocGeneration=false` behavior, Failed-status persistence, multi-value `ParametersJson` arrays.
+- **Input hygiene & resilience** (`ReportServiceUnitTests`, `ReportGenerationHardenTests`, `ReportFeatureTests`): filename sanitization (traversal, invalid chars, length cap),
+  malformed `ReportDataJson` fails fast without a persisted row, `AllowAdHocGeneration=false` behavior, Failed-status persistence, multi-value `ParametersJson` arrays.
 - **Concurrency** (`ReportGenerationThrottleTests`): `MaxConcurrentGenerations` throttle saturation → `ReportBusyException`, release/recover, options validation.
-- **Sensitive fields** (`ReportingApiOptionsTests`): secure-by-default auth surfaces, `DeniedSelectFieldPolicy` blocking `EncryptedValue` selects/templates on QueryProject and Export (incl. nested paths).
-- **Features** (`ReportRendererTests`, `ReportFeatureTests`): Xlsx multi-worksheet round-trips with sheet-name dedupe/truncation, Json renderer verbatim output, `RerunAsync` snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, definition-delete cleanup hooks (`ReportGenerationCleanupTests`).
+- **Sensitive fields** (`ReportingApiOptionsTests`): secure-by-default auth surfaces, `DeniedSelectFieldPolicy` blocking `EncryptedValue` selects/templates on QueryProject and
+  Export (incl. nested paths).
+- **Features** (`ReportRendererTests`, `ReportFeatureTests`): Xlsx multi-worksheet round-trips with sheet-name dedupe/truncation, Json renderer verbatim output, `RerunAsync`
+  snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, definition-delete
+  cleanup hooks (`ReportGenerationCleanupTests`).
 
 ## Worker → API auth smoke (manual)
 

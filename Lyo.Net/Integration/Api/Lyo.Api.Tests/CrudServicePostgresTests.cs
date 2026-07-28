@@ -120,16 +120,12 @@ public class CrudServicePostgresTests
         var defId = await _fixture.SeedJobDefinitionAsync("DeleteAsyncHook");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
-
         var order = new List<string>();
         var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>(
-            [defId],
-            before: _ => order.Add("sync"),
-            beforeAsync: async (ctx, _) => {
+            [defId], _ => order.Add("sync"), async (ctx, _) => {
                 await Task.Yield();
                 order.Add($"async:{ctx.Entity.Id}");
-            },
-            ct: TestContext.Current.CancellationToken);
+            }, ct: TestContext.Current.CancellationToken);
 
         Assert.True(deleteResult.IsSuccess);
         Assert.Equal(["sync", $"async:{defId}"], order);
@@ -142,11 +138,8 @@ public class CrudServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-
         var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>(
-            [defId],
-            beforeAsync: (_, _) => throw new IOException("external cleanup failed"),
-            ct: TestContext.Current.CancellationToken);
+            [defId], beforeAsync: (_, _) => throw new IOException("external cleanup failed"), ct: TestContext.Current.CancellationToken);
 
         Assert.False(deleteResult.IsSuccess);
         var stillThere = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestContext.Current.CancellationToken);

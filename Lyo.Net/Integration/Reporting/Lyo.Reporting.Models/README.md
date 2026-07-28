@@ -16,11 +16,13 @@ Target frameworks: `netstandard2.0;net10.0`.
 ## Formats and routes
 
 - `ReportFormat`: `Html`, `Pdf`, `Csv`, `Xlsx`, `Json`.
-- `Constants.Rest.Reporting` route constants include `GenerationsGenerate` plus the `GenerationsDownloadSuffix` (`Download`) and `GenerationsRerunSuffix` (`Rerun`) segments used under `Reporting/Generation/{id}/…`.
+- `Constants.Rest.Reporting` route constants include `GenerationsGenerate` plus the `GenerationsDownloadSuffix` (`Download`) and `GenerationsRerunSuffix` (`Rerun`) segments used
+  under `Reporting/Generation/{id}/…`.
 - `Constants.Metrics` adds `reporting.generation.cleaned` for retention cleanup.
 
 ## Notes
 
 - `ValueFormatter` delegates on columns are `[JsonIgnore]` and do not survive JSON persistence into `ReportDataJson`.
 - HTML/PDF rendering lives in `Lyo.Reporting.Web`; CSV/XLSX/JSON rendering and orchestration live in `Lyo.Reporting.Postgres`.
-- HTTP endpoints live in `Lyo.Api.Reporting`. Persist staged output in consumer `ReportGenerationHooks` (Reporting does not reference FileStorage); delete persisted output in `OnCleanupAsync` when rows are removed by retention or definition delete.
+- HTTP endpoints live in `Lyo.Api.Reporting`. Persist staged output in consumer `ReportGenerationHooks` (Reporting does not reference FileStorage); delete persisted output in
+  `OnCleanupAsync` when rows are removed by retention or definition delete.

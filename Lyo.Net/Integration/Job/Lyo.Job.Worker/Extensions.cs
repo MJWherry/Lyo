@@ -1,6 +1,7 @@
 using Lyo.Api.Client;
 using Lyo.Exceptions;
 using Lyo.Job.Client;
+using Lyo.Job.Models;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Security;
 using Lyo.MessageQueue;
@@ -15,16 +16,16 @@ namespace Lyo.Job.Worker;
 public static class Extensions
 {
     /// <summary>
-    /// Registers a <typeparamref name="TWorker" /> as a singleton hosted service. Requires <see cref="IMqService" />, <see cref="IJobClient" /> (or
-    /// <see cref="IApiClient" /> plus <paramref name="apiBaseUrl" /> to create one), and <see cref="IJobEventPublisher" /> to be registered.
+    /// Registers a <typeparamref name="TWorker" /> as a singleton hosted service. Requires <see cref="IMqService" />, <see cref="IJobClient" /> (or <see cref="IApiClient" />
+    /// plus <paramref name="apiBaseUrl" /> to create one), and <see cref="IJobEventPublisher" /> to be registered.
     /// </summary>
     /// <typeparam name="TWorker">The concrete worker type (must extend <see cref="JobWorkerBase" />).</typeparam>
     /// <param name="services">The service collection.</param>
     /// <param name="workerType">Worker type string — must match the <c>WorkerType</c> on job definitions.</param>
     /// <param name="apiBaseUrl">Base URL of the Job API — used to register <see cref="IJobClient" /> when not already registered.</param>
     /// <param name="maxRequeueCount">
-    /// Max requeue count before DLQ routing. Null falls back to a registered <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" />, or 5 when no options are registered, so a
-    /// throwing worker can never retry forever by default.
+    /// Max requeue count before DLQ routing. Null falls back to a registered <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" />, or 5 when no options
+    /// are registered, so a throwing worker can never retry forever by default.
     /// </param>
     /// <param name="dlqName">Dead-letter queue name. Null derives <c>job.run.{workerType}.dlq</c> so capped-out messages are preserved instead of dropped.</param>
     public static IServiceCollection AddJobWorker<TWorker>(
@@ -48,10 +49,9 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             var workerOptions = sp.GetService<QueueWorkerOptions>() ?? new QueueWorkerOptions();
             var effectiveMaxRequeue = maxRequeueCount ?? workerOptions.DefaultMaxRequeueCount;
-            var effectiveDlqName = dlqName ?? $"{Models.Constants.Mq.QueueGetJobRunCreated(workerType)}.dlq";
+            var effectiveDlqName = dlqName ?? $"{Constants.Mq.QueueGetJobRunCreated(workerType)}.dlq";
             var worker = (TWorker)Activator.CreateInstance(
-                typeof(TWorker), mqService, jobClient, eventPublisher, workerType, logger, metrics, effectiveMaxRequeue, effectiveDlqName,
-                parameterEncryption)!;
+                typeof(TWorker), mqService, jobClient, eventPublisher, workerType, logger, metrics, effectiveMaxRequeue, effectiveDlqName, parameterEncryption)!;
 
             // Set post-construction (not via ctor) to preserve the QueueWorkerBase constructor signature for binary compatibility.
             worker.RequeueDelay = workerOptions.RequeueDelay;
@@ -63,8 +63,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Registers a <typeparamref name="TWorker" /> like <see cref="AddJobWorker{TWorker}" />, additionally binding <see cref="QueueWorkerOptions" /> from configuration
-    /// (section <see cref="QueueWorkerOptions.SectionName" />) so <c>DefaultMaxRequeueCount</c> is configurable per host.
+    /// Registers a <typeparamref name="TWorker" /> like <see cref="AddJobWorker{TWorker}" />, additionally binding <see cref="QueueWorkerOptions" /> from configuration (section
+    /// <see cref="QueueWorkerOptions.SectionName" />) so <c>DefaultMaxRequeueCount</c> is configurable per host.
     /// </summary>
     public static IServiceCollection AddJobWorkerFromConfiguration<TWorker>(
         this IServiceCollection services,
@@ -96,6 +96,6 @@ public static class Extensions
             return;
 
         var routePrefix = apiBaseUrl.TrimEnd('/');
-        services.AddJobClient(sp => sp.GetRequiredService<IApiClient>(), new JobClientOptions { RoutePrefix = routePrefix });
+        services.AddJobClient(sp => sp.GetRequiredService<IApiClient>(), new() { RoutePrefix = routePrefix });
     }
 }

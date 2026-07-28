@@ -1,509 +1,509 @@
 :root {
-  color-scheme: dark;
-  --bg: #0f1419;
-  --bg-elevated: #171d24;
-  --bg-card: #1c2430;
-  --border: #2a3441;
-  --text: #e7edf4;
-  --text-muted: #94a3b8;
-  --accent: #38bdf8;
-  --accent-soft: rgba(56, 189, 248, 0.12);
-  --good: #34d399;
-  --warn: #fbbf24;
-  --bad: #f87171;
-  --grade-a: #34d399;
-  --grade-b: #86efac;
-  --grade-c: #fbbf24;
-  --grade-d: #fb923c;
-  --grade-f: #f87171;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color-scheme: dark;
+    --bg: #0f1419;
+    --bg-elevated: #171d24;
+    --bg-card: #1c2430;
+    --border: #2a3441;
+    --text: #e7edf4;
+    --text-muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-soft: rgba(56, 189, 248, 0.12);
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --grade-a: #34d399;
+    --grade-b: #86efac;
+    --grade-c: #fbbf24;
+    --grade-d: #fb923c;
+    --grade-f: #f87171;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  background: radial-gradient(circle at top, #17202c 0%, var(--bg) 45%);
-  color: var(--text);
-  line-height: 1.55;
+    margin: 0;
+    background: radial-gradient(circle at top, #17202c 0%, var(--bg) 45%);
+    color: var(--text);
+    line-height: 1.55;
 }
 
 a {
-  color: var(--accent);
-  text-decoration: none;
+    color: var(--accent);
+    text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .page {
-  max-width: min(1680px, 96vw);
-  margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+    max-width: min(1680px, 96vw);
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
 }
 
 .top-nav {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
 }
 
 .hero {
-  margin-bottom: 2rem;
+    margin-bottom: 2rem;
 }
 
 .hero h1 {
-  margin: 0 0 0.35rem;
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
 }
 
 .hero .subtitle {
-  color: var(--text-muted);
-  max-width: 70ch;
+    color: var(--text-muted);
+    max-width: 70ch;
 }
 
 .history-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1rem;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
 }
 
 .history-label {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .history-select {
-  min-width: min(28rem, 100%);
-  max-width: 100%;
-  flex: 1 1 16rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
+    min-width: min(28rem, 100%);
+    max-width: 100%;
+    flex: 1 1 16rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font: inherit;
 }
 
 .history-hint {
-  color: var(--text-muted);
-  font-size: 0.82rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
 }
 
 .meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
 }
 
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .grid {
-  display: grid;
-  gap: 1rem;
+    display: grid;
+    gap: 1rem;
 }
 
 .grid.cards {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.1rem 1.2rem;
-  box-shadow: var(--shadow);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: var(--shadow);
 }
 
 /* Cards stacked within a section (comparison tables, benchmark classes) need breathing room between
    them. The index grid lays cards out with `gap`, so this only applies to in-section stacks. */
 section > .card + .card {
-  margin-top: 1.25rem;
+    margin-top: 1.25rem;
 }
 
 .card h2,
 .card h3,
 section h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.05rem;
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
 }
 
 .card-link {
-  display: block;
-  color: inherit;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+    display: block;
+    color: inherit;
+    transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
 .card-link:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  text-decoration: none;
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    text-decoration: none;
 }
 
 .metric-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 .metric-label {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 section {
-  margin-top: 2rem;
+    margin-top: 2rem;
 }
 
 section > p,
 .callout p {
-  color: var(--text-muted);
+    color: var(--text-muted);
 }
 
 .callout {
-  background: var(--accent-soft);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 12px;
-  padding: 1rem 1.1rem;
-  margin-top: 1rem;
+    background: var(--accent-soft);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    margin-top: 1rem;
 }
 
 .callout.warn {
-  background: rgba(251, 191, 36, 0.08);
-  border-color: rgba(251, 191, 36, 0.25);
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.25);
 }
 
 .table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-elevated);
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-elevated);
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
 }
 
 th,
 td {
-  padding: 0.65rem 0.85rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  white-space: nowrap;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
 }
 
 th {
-  position: sticky;
-  top: 0;
-  background: #121820;
-  color: var(--text-muted);
-  font-weight: 600;
-  z-index: 1;
+    position: sticky;
+    top: 0;
+    background: #121820;
+    color: var(--text-muted);
+    font-weight: 600;
+    z-index: 1;
 }
 
 tr:last-child td {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 .delta-good {
-  color: var(--good);
+    color: var(--good);
 }
 
 .delta-bad {
-  color: var(--bad);
+    color: var(--bad);
 }
 
 .grade {
-  display: inline-block;
-  min-width: 2rem;
-  text-align: center;
-  padding: 0.15rem 0.45rem;
-  border-radius: 8px;
-  font-weight: 700;
+    display: inline-block;
+    min-width: 2rem;
+    text-align: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: 8px;
+    font-weight: 700;
 }
 
 .grade-a,
 .grade-aplus {
-  background: rgba(52, 211, 153, 0.15);
-  color: var(--grade-a);
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--grade-a);
 }
 
 .grade-aminus,
 .grade-bplus {
-  background: rgba(134, 239, 172, 0.12);
-  color: var(--grade-b);
+    background: rgba(134, 239, 172, 0.12);
+    color: var(--grade-b);
 }
 
 .grade-b,
 .grade-bminus {
-  background: rgba(134, 239, 172, 0.1);
-  color: var(--grade-b);
+    background: rgba(134, 239, 172, 0.1);
+    color: var(--grade-b);
 }
 
 .grade-c,
 .grade-cminus {
-  background: rgba(251, 191, 36, 0.12);
-  color: var(--grade-c);
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--grade-c);
 }
 
 .grade-d,
 .grade-dplus {
-  background: rgba(251, 146, 60, 0.12);
-  color: var(--grade-d);
+    background: rgba(251, 146, 60, 0.12);
+    color: var(--grade-d);
 }
 
 .grade-f {
-  background: rgba(248, 113, 113, 0.12);
-  color: var(--grade-f);
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--grade-f);
 }
 
 .badge {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .badge.meets {
-  background: rgba(52, 211, 153, 0.15);
-  color: var(--good);
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--good);
 }
 
 .badge.exceeds {
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent);
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
 }
 
 .badge.miss {
-  background: rgba(248, 113, 113, 0.15);
-  color: var(--bad);
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--bad);
 }
 
 .badge.type-badge {
-  margin-left: 0.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  vertical-align: middle;
+    margin-left: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
 }
 
 .profile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
 }
 
 .empty {
-  color: var(--text-muted);
-  font-style: italic;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 .param-legend {
-  list-style: none;
-  margin: 0 0 1rem;
-  padding: 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
 }
 
 .param-legend li {
-  padding: 0.15rem 0;
+    padding: 0.15rem 0;
 }
 
 .param-legend strong {
-  color: var(--text);
+    color: var(--text);
 }
 
 .muted-sub {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  white-space: normal;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    white-space: normal;
 }
 
 .dataset {
-  margin: 0.5rem 0 1rem;
+    margin: 0.5rem 0 1rem;
 }
 
 .dataset h4 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
 }
 
 .dataset-stat {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-bottom: 0.6rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
 }
 
 /* Report methodology shown as a muted lead/subtitle rather than a heavy callout. */
 .report-lead {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  max-width: 90ch;
-  margin: 0.25rem 0 1.75rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 90ch;
+    margin: 0.25rem 0 1.75rem;
 }
 
 /* Concise, muted card blurbs on the index. */
 .card p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 /* Small explanatory note under a table (e.g. the baseline legend). */
 .table-note {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin: 0.5rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0.5rem 0 0;
 }
 
 /* Method-name cell layout (name beside an optional baseline tag). */
 .method-head {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 /* Small pill marking the baseline method in a measurement table. */
 .baseline-tag {
-  display: inline-block;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+    display: inline-block;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
 }
 
 /* Wrapping table variant for wide, text-heavy grids (query cases, breakdowns). Only the body text
    wraps; short header labels ("Result", "Latest", ...) stay on one line so they don't break mid-word. */
 .table-wrap.wrap td {
-  white-space: normal;
-  word-break: break-word;
-  vertical-align: top;
+    white-space: normal;
+    word-break: break-word;
+    vertical-align: top;
 }
 
 .table-wrap.wrap th {
-  white-space: nowrap;
+    white-space: nowrap;
 }
 
 /* Numeric columns (Latest, Mean, Allocated, Ratio) must stay on one line even inside a wrapping
    table, so values like "142.83 ms (7 MB/s)" don't break across rows. */
 .table-wrap.wrap td.num {
-  white-space: nowrap;
-  word-break: normal;
+    white-space: nowrap;
+    word-break: normal;
 }
 
 /* Identifier cells (e.g. SLA assessment "Area" like BZip2_Compress) must not break mid-token. They
    may still wrap at real spaces (multi-word k6 areas), but never split a single word across lines. */
 .table-wrap.wrap td.no-break {
-  word-break: normal;
-  overflow-wrap: normal;
+    word-break: normal;
+    overflow-wrap: normal;
 }
 
 /* Expandable scenario rows. */
 tr.expandable {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 tr.expandable:hover > td {
-  background: var(--accent-soft);
+    background: var(--accent-soft);
 }
 
 tr.expandable.open > td {
-  background: var(--accent-soft);
-  border-bottom-color: transparent;
+    background: var(--accent-soft);
+    border-bottom-color: transparent;
 }
 
 .toggle-cell {
-  width: 1.5rem;
-  color: var(--text-muted);
-  text-align: center;
-  user-select: none;
+    width: 1.5rem;
+    color: var(--text-muted);
+    text-align: center;
+    user-select: none;
 }
 
 .scenario-name {
-  font-weight: 600;
+    font-weight: 600;
 }
 
 tr.detail-row.hidden {
-  display: none;
+    display: none;
 }
 
 tr.detail-row > td {
-  padding: 0;
-  background: var(--bg);
+    padding: 0;
+    background: var(--bg);
 }
 
 .detail-inner {
-  padding: 0.75rem 1rem 1rem;
+    padding: 0.75rem 1rem 1rem;
 }
 
 .detail-inner h4 {
-  margin: 0 0 0.6rem;
-  font-size: 0.9rem;
-  color: var(--text-muted);
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
 .error-box {
-  background: rgba(248, 113, 113, 0.1);
-  border: 1px solid rgba(248, 113, 113, 0.35);
-  border-radius: 12px;
-  padding: 1rem;
-  color: #fecaca;
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    border-radius: 12px;
+    padding: 1rem;
+    color: #fecaca;
 }
 
 footer {
-  margin-top: 3rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+    margin-top: 3rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 @media (max-width: 720px) {
-  .page {
-    padding-inline: 1rem;
-  }
+    .page {
+        padding-inline: 1rem;
+    }
 
-  th,
-  td {
-    white-space: normal;
-  }
+    th,
+    td {
+        white-space: normal;
+    }
 }

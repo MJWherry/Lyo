@@ -22,7 +22,8 @@
         <div>
             <MudText Typo="Typo.h5">CSV &amp; XLSX</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, split or merge files, convert formats, and download results.
+                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, split or merge files, convert formats, and download
+                results.
             </MudText>
         </div>
 
@@ -122,7 +123,8 @@
             <MudTabPanel Text="Split">
                 <MudStack Spacing="3" Class="mt-3">
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Split a <strong>.csv</strong> or <strong>.xlsx</strong> into parts and download a <strong>.zip</strong>. CSV splits by row count; XLSX splits by worksheet or row count.
+                        Split a <strong>.csv</strong> or <strong>.xlsx</strong> into parts and download a <strong>.zip</strong>. CSV splits by row count; XLSX splits by worksheet
+                        or row count.
                     </MudText>
 
                     <MudPaper Class="pa-3" Outlined="true">
@@ -143,6 +145,7 @@
                                 <MudSelectItem Value="@("sheet")">One file per worksheet</MudSelectItem>
                                 <MudSelectItem Value="@("rows")">By row count (first or named sheet)</MudSelectItem>
                             </MudSelect>
+
                             @if (_splitXlsxMode == "rows") {
                                 <MudTextField T="string"
                                               @bind-Value="_splitSheetName"
@@ -359,7 +362,9 @@
 
     private readonly List<LocalBrowserFile> _multiCombineFiles = [];
     private XlsxMergeMode _xlsxMergeMode = XlsxMergeMode.PreserveSheets;
+
     private bool _multiCombineAllXlsx => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsXlsx(f.FileName));
+
     private bool _multiCombineAllCsv => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsCsv(f.FileName));
 
     private byte[]? _splitBytes;
@@ -637,10 +642,7 @@
             if (_splitIsXlsx) {
                 if (_splitXlsxMode == "sheet") {
                     var parts = XlsxService.SplitXlsxBytesBySheet(_splitBytes);
-                    entries = parts.ToDictionary(
-                        kv => $"{SanitizeZipEntryName(kv.Key)}.xlsx",
-                        kv => kv.Value,
-                        StringComparer.OrdinalIgnoreCase);
+                    entries = parts.ToDictionary(kv => $"{SanitizeZipEntryName(kv.Key)}.xlsx", kv => kv.Value, StringComparer.OrdinalIgnoreCase);
                 }
                 else {
                     var sheetName = string.IsNullOrWhiteSpace(_splitSheetName) ? null : _splitSheetName.Trim();
@@ -824,7 +826,7 @@
     private static byte[] CreateZipArchive(IReadOnlyDictionary<string, byte[]> entries)
     {
         using var zipStream = new MemoryStream();
-        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true)) {
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true)) {
             foreach (var (fileName, content) in entries) {
                 var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
                 using var entryStream = entry.Open();

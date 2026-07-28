@@ -8,9 +8,9 @@ using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Services.Opaque;
 

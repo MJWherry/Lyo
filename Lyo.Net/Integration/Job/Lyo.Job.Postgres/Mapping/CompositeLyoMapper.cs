@@ -2,9 +2,7 @@ using Lyo.Api.Mapping;
 
 namespace Lyo.Job.Postgres.Mapping;
 
-/// <summary>
-/// Tries <paramref name="job" /> first for job types; falls back to <paramref name="fallback" /> for host/domain types.
-/// </summary>
+/// <summary>Tries <paramref name="job" /> first for job types; falls back to <paramref name="fallback" /> for host/domain types.</summary>
 public sealed class CompositeLyoMapper(ILyoMapper job, ILyoMapper? fallback) : ILyoMapper
 {
     public TResult Map<TResult>(object source)

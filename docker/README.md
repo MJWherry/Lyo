@@ -101,7 +101,7 @@ docker logs -f <container-id>
 ## Where results go
 
 The **only** path mounted back to the host is `docs/benchmarks/data/`. After a
-benchmark run, `scripts/benchmarks/build-manifests.py` (invoked automatically)
+benchmark run, `scripts/benchmarks/build_manifests.py` (invoked automatically)
 writes the aggregated dashboard manifests there, and the runner `chown`s them to
 `HOST_UID:HOST_GID` so they aren't root-owned. Open
 `docs/benchmarks/index.html` to view the dashboard.

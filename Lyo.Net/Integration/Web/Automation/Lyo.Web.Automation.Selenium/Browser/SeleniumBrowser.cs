@@ -232,6 +232,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(SeleniumBrowser));
+
         if (Driver != null) {
             Logger.LogDebug("Browser already started");
             return;
@@ -243,6 +244,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                     ct.ThrowIfCancellationRequested();
                     if (_disposed)
                         throw new ObjectDisposedException(nameof(SeleniumBrowser));
+
                     var driver = WebDriverFactory.CreateDriver(Options, ExecutionContext);
                     if (_disposed) {
                         // Session was disposed while the driver process was starting — kill it immediately.

@@ -347,7 +347,7 @@ public partial class QueryRunPanel : IAsyncDisposable
         => Run.RunMode switch {
             QueryWorkbenchRunMode.QueryProject => ProjectionRequest,
             QueryWorkbenchRunMode.RootQuery => RootRequest,
-            _ => EntityRequest
+            var _ => EntityRequest
         };
 
     private int GetRequestSizeBytes()
@@ -377,7 +377,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             return Run.RunMode switch {
                 QueryWorkbenchRunMode.QueryProject => QueryRequestScorer.ScoreDetailed(ProjectionRequest),
                 QueryWorkbenchRunMode.RootQuery => QueryRequestScorer.ScoreDetailed(RootRequest),
-                _ => QueryRequestScorer.ScoreDetailed(EntityRequest)
+                var _ => QueryRequestScorer.ScoreDetailed(EntityRequest)
             };
         }
         catch {
@@ -389,7 +389,7 @@ public partial class QueryRunPanel : IAsyncDisposable
         => Run.RunMode switch {
             QueryWorkbenchRunMode.QueryProject => "QueryProject",
             QueryWorkbenchRunMode.RootQuery => "Query",
-            _ => "QueryConcrete"
+            var _ => "QueryConcrete"
         };
 
     private async Task OnSelectedHostChanged(string? host)
@@ -431,13 +431,10 @@ public partial class QueryRunPanel : IAsyncDisposable
             return entityRoutes;
 
         // Root /Query: dropdown is dynamic CRUD bases (entity type lives in From.EntityType).
-        var bases = entityRoutes
-            .Select(EntityRouteToDynamicBase)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(static b => b, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var bases = entityRoutes.Select(EntityRouteToDynamicBase).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(static b => b, StringComparer.OrdinalIgnoreCase).ToList();
         if (bases.Count == 0)
             bases.Add("");
+
         return bases;
     }
 

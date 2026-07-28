@@ -32,7 +32,6 @@ public class JobRetryBackoffTests
         const int baseSeconds = 20;
         const int attempt = 2;
         const int nominal = baseSeconds * (1 << (attempt - 1));
-
         for (var i = 0; i < 50; i++) {
             var result = JobRetryBackoff.ComputeBackoffSeconds(baseSeconds, attempt, JobRetryBackoffType.Exponential);
             Assert.InRange(result, (int)Math.Round(nominal * 0.75), (int)Math.Round(nominal * 1.25));
@@ -44,7 +43,6 @@ public class JobRetryBackoffTests
     public void ComputeBackoffSeconds_Exponential_FirstAttemptUsesBaseWithJitter()
     {
         const int baseSeconds = 8;
-
         for (var i = 0; i < 50; i++) {
             var result = JobRetryBackoff.ComputeBackoffSeconds(baseSeconds, 1, JobRetryBackoffType.Exponential);
             Assert.InRange(result, (int)Math.Round(baseSeconds * 0.75), (int)Math.Round(baseSeconds * 1.25));

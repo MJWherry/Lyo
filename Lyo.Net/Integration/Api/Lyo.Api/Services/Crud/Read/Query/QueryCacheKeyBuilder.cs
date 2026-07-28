@@ -83,8 +83,8 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryConcreteReq)" /> plus optional
-    /// projection dimensions.
+    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryConcreteReq)" /> plus
+    /// optional projection dimensions.
     /// </summary>
     public static string BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(
         QueryConcreteReq queryRequest,
@@ -128,6 +128,7 @@ public static class QueryCacheKeyBuilder
                 var nested = j.Query?.WhereClause != null ? $":jt={WhereClauseUtils.GetWhereClauseTreeHash(j.Query.WhereClause)}" : "";
                 return $"{j.Type}:{NormalizePathValue(j.EntityType)}:{NormalizePathValue(j.Alias)}:as={NormalizePathValue(j.As ?? j.Alias)}:on={on}{nested}";
             });
+
             keyBuilder.Append($":joins={CompactCacheSegment(string.Join("|", joinParts))}");
         }
 

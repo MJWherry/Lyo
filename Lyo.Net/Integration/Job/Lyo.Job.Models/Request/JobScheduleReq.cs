@@ -1,12 +1,12 @@
-using System.Diagnostics;
-using Lyo.Common.Enums;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
-
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Enums;
+using Lyo.Job.Models.Enums;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Request;
 
@@ -33,7 +33,7 @@ public sealed class JobScheduleReq
     public string? CronExpression { get; set; }
 
     /// <summary>How slots missed while no scheduler was running are handled.</summary>
-    public Enums.JobMisfirePolicy MisfirePolicy { get; set; } = Enums.JobMisfirePolicy.Skip;
+    public JobMisfirePolicy MisfirePolicy { get; set; } = JobMisfirePolicy.Skip;
 
     /// <summary>UTC date before which this schedule never fires. Null = no lower bound.</summary>
     public DateTime? StartDateUtc { get; set; }

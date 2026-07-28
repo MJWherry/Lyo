@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
@@ -9,7 +8,6 @@ using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
-using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -18,11 +16,11 @@ internal sealed class FakeSchedulerApiClient : IApiClient
 {
     private readonly JobDefinitionRes _definition;
 
-    public FakeSchedulerApiClient(JobDefinitionRes definition) => _definition = definition;
-
     public List<JobRunReq> CreatedRunRequests { get; } = [];
 
     public bool Return404ForDefinitionGet { get; set; }
+
+    public FakeSchedulerApiClient(JobDefinitionRes definition) => _definition = definition;
 
     public void Dispose() { }
 
@@ -53,6 +51,7 @@ internal sealed class FakeSchedulerApiClient : IApiClient
                 CreatedTimestamp = DateTime.UtcNow,
                 RetryAttempt = runReq.RetryAttempt
             };
+
             return Task.FromResult((TResult)(object)new CreateResult<JobRunRes>(true, created, null));
         }
 
@@ -77,17 +76,20 @@ internal sealed class FakeSchedulerApiClient : IApiClient
     public Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => Task.FromResult(default(TResult)!);
 
-    public Task<TResult?> GetAsAsync<TRequest, TResult>(string uri, TRequest? query = default, string? enumerableDelimiter = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult?> GetAsAsync<TRequest, TResult>(
+        string uri,
+        TRequest? query = default,
+        string? enumerableDelimiter = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         => Task.FromResult(default(TResult));
 
-    public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException(uri);
+    public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
 
     public Task<TResult> PutAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
     public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
@@ -98,13 +100,25 @@ internal sealed class FakeSchedulerApiClient : IApiClient
     public Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult> PostFileAsAsync<TResult>(
+        string uri,
+        Stream stream,
+        FileTypeInfo fileType,
+        string? fileName = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         => throw new NotImplementedException();
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public Task<TResult> PostFileAsAsync<TResult>(
+        string uri,
+        byte[] data,
+        FileTypeInfo fileType,
+        string? fileName = null,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         => throw new NotImplementedException();
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -116,11 +130,9 @@ internal sealed class FakeSchedulerApiClient : IApiClient
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
-    private static QueryRes<T> BuildQueryRes<T>(IReadOnlyList<T> items)
-        => new(new QueryConcreteReq(), true, items, 0, items.Count, items.Count, false, 0, null);
+    private static QueryRes<T> BuildQueryRes<T>(IReadOnlyList<T> items) => new(new(), true, items, 0, items.Count, items.Count, false, 0, null);
 }
 
 /// <summary>Minimal in-memory event publisher — always connected, records nothing the tests need.</summary>
@@ -192,6 +204,5 @@ internal sealed class RecordingDelayedMqService : IMqService, IDelayedMqService
 
     public string HealthCheckName => "recording-delayed-mq";
 
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?>()));
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?>()));
 }

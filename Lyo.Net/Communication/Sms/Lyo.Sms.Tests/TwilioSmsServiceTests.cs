@@ -149,7 +149,7 @@ public class TwilioSmsServiceTests
     public async Task GetMessagesAsync_NullBuilder_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessagesAsync((TwilioMessageQueryBuilder)null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessagesAsync(null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -166,10 +166,7 @@ public class TwilioSmsServiceTests
     public async Task GetMessagesAsync_BuilderWithInvertedDates_ThrowsArgumentOutOfRangeException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        var builder = TwilioMessageQueryBuilder.New()
-            .WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc))
-            .WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-
+        var builder = TwilioMessageQueryBuilder.New().WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc)).WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
         await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetMessagesAsync(builder, TestContext.Current.CancellationToken));
     }
 

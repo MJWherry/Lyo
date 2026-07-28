@@ -13,16 +13,14 @@ public class FileHelpersTests
     }
 
     [Fact]
-    public void ThrowIfFileNameInvalid_PathTraversal_Throws()
-        => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfFileNameInvalid("../evil.txt"));
+    public void ThrowIfFileNameInvalid_PathTraversal_Throws() => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfFileNameInvalid("../evil.txt"));
 
     [Fact]
     public void ThrowIfFileNameInvalid_AbsolutePath_Throws()
         => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfFileNameInvalid(Path.Combine(Path.GetTempPath(), "file.txt")));
 
     [Fact]
-    public void ThrowIfFileNameInvalid_InvalidCharacter_Throws()
-        => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfFileNameInvalid("bad\0name.txt"));
+    public void ThrowIfFileNameInvalid_InvalidCharacter_Throws() => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfFileNameInvalid("bad\0name.txt"));
 
     [Fact]
     public void GetValidFileName_PlainName_ReturnsIt() => Assert.Equal("document.pdf", FileHelpers.GetValidFileName("document.pdf"));
@@ -31,8 +29,7 @@ public class FileHelpersTests
     public void GetValidFileName_Path_ReturnsFinalSegment() => Assert.Equal("file.txt", FileHelpers.GetValidFileName("some/dir/file.txt"));
 
     [Fact]
-    public void GetValidFileName_Whitespace_Throws()
-        => Assert.Throws<ArgumentException>(() => FileHelpers.GetValidFileName("   "));
+    public void GetValidFileName_Whitespace_Throws() => Assert.Throws<ArgumentException>(() => FileHelpers.GetValidFileName("   "));
 
     [Fact]
     public void TryGetValidFileName_Valid_ReturnsTrueWithName()
@@ -66,8 +63,7 @@ public class FileHelpersTests
     [InlineData("/tenant/alpha/", "tenant/alpha")]
     [InlineData(" /a/b ", "a/b")]
     [InlineData("plain", "plain")]
-    public void NormalizePathPrefix_ReturnsTrimmedPrefix(string? value, string expected)
-        => Assert.Equal(expected, FileHelpers.NormalizePathPrefix(value));
+    public void NormalizePathPrefix_ReturnsTrimmedPrefix(string? value, string expected) => Assert.Equal(expected, FileHelpers.NormalizePathPrefix(value));
 
     [Theory]
     [InlineData(null)]
@@ -81,14 +77,11 @@ public class FileHelpersTests
     [InlineData("a//b")]
     [InlineData("a\\\\b")]
     [InlineData("a\0b")]
-    public void ThrowIfPathPrefixTraversal_Traversal_Throws(string value)
-        => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal(value));
+    public void ThrowIfPathPrefixTraversal_Traversal_Throws(string value) => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal(value));
 
     [Fact]
-    public void NormalizeAndValidatePathPrefix_Valid_ReturnsTrimmed()
-        => Assert.Equal("a/b", FileHelpers.NormalizeAndValidatePathPrefix("/a/b/"));
+    public void NormalizeAndValidatePathPrefix_Valid_ReturnsTrimmed() => Assert.Equal("a/b", FileHelpers.NormalizeAndValidatePathPrefix("/a/b/"));
 
     [Fact]
-    public void NormalizeAndValidatePathPrefix_Traversal_Throws()
-        => Assert.Throws<ArgumentException>(() => FileHelpers.NormalizeAndValidatePathPrefix("/a/../b/"));
+    public void NormalizeAndValidatePathPrefix_Traversal_Throws() => Assert.Throws<ArgumentException>(() => FileHelpers.NormalizeAndValidatePathPrefix("/a/../b/"));
 }

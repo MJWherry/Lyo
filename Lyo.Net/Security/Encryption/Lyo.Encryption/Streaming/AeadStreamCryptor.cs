@@ -19,8 +19,8 @@ public interface IAeadStreamCryptor : IDisposable
 
     /// <summary>
     /// Encrypts <paramref name="plaintext" /> with <paramref name="nonce" /> and writes <c>ciphertext||tag</c> into <paramref name="ciphertextAndTag" />, which must be exactly
-    /// <c>plaintext.Length + TagSize</c> bytes. The tag trails the ciphertext so the output is contiguous. <paramref name="associatedData" /> is authenticated but not encrypted
-    /// (pass <see cref="ReadOnlySpan{T}.Empty" /> for none).
+    /// <c>plaintext.Length + TagSize</c> bytes. The tag trails the ciphertext so the output is contiguous. <paramref name="associatedData" /> is authenticated but not encrypted (pass
+    /// <see cref="ReadOnlySpan{T}.Empty" /> for none).
     /// </summary>
     void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default);
 
@@ -34,8 +34,8 @@ public interface IAeadStreamCryptor : IDisposable
 
 /// <summary>
 /// Encodes/decodes streaming chunk frames into caller-owned buffers with no per-chunk heap allocation. Frame layout:
-/// <c>[lengthAndFinalFlag:uint32 LE][ciphertext][tag:TagSize]</c> — the nonce is derived (per-stream prefix + chunk counter) and never written to the wire; the top bit of the
-/// length prefix marks the final chunk.
+/// <c>[lengthAndFinalFlag:uint32 LE][ciphertext][tag:TagSize]</c> — the nonce is derived (per-stream prefix + chunk counter) and never written to the wire; the top bit of the length
+/// prefix marks the final chunk.
 /// </summary>
 internal static class AeadChunkCodec
 {
@@ -52,7 +52,13 @@ internal static class AeadChunkCodec
     /// Writes one chunk (<c>[lengthAndFinalFlag][ciphertext][tag]</c>) for <paramref name="plaintext" /> into <paramref name="destination" /> and returns the total number of
     /// bytes written. The nonce is supplied by the caller (derived, never written to the wire) and <paramref name="associatedData" /> is authenticated with the chunk.
     /// </summary>
-    public static int Encode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> associatedData, bool isFinal, Span<byte> destination)
+    public static int Encode(
+        IAeadStreamCryptor cryptor,
+        ReadOnlySpan<byte> plaintext,
+        ReadOnlySpan<byte> nonce,
+        ReadOnlySpan<byte> associatedData,
+        bool isFinal,
+        Span<byte> destination)
     {
         var plaintextLength = plaintext.Length;
         var lengthAndFlag = (uint)plaintextLength | (isFinal ? FinalChunkFlag : 0u);
@@ -62,9 +68,9 @@ internal static class AeadChunkCodec
     }
 
     /// <summary>
-    /// Decrypts one chunk body (<c>ciphertext + tag</c>) of length <paramref name="bodyLength" /> held in <paramref name="body" /> at offset 0 into
-    /// <paramref name="plaintext" /> using the caller-derived <paramref name="nonce" /> and <paramref name="associatedData" />; returns the plaintext length. The length prefix must
-    /// already have been consumed by the caller.
+    /// Decrypts one chunk body (<c>ciphertext + tag</c>) of length <paramref name="bodyLength" /> held in <paramref name="body" /> at offset 0 into <paramref name="plaintext" />
+    /// using the caller-derived <paramref name="nonce" /> and <paramref name="associatedData" />; returns the plaintext length. The length prefix must already have been consumed by the
+    /// caller.
     /// </summary>
     public static int Decode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> body, int bodyLength, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> associatedData, Span<byte> plaintext)
     {
@@ -77,7 +83,7 @@ internal static class AeadChunkCodec
     /// Ensures <paramref name="buffer" /> is rented from <see cref="ArrayPool{T}" /> and at least <paramref name="size" /> bytes; grows (return + re-rent) if too small. When
     /// <paramref name="clearOnReturn" /> is true the outgrown buffer is zeroed before returning to the shared pool (use for buffers holding plaintext or key material).
     /// </summary>
-    public static void EnsureCapacity([NotNull]ref byte[]? buffer, int size, bool clearOnReturn = false)
+    public static void EnsureCapacity([NotNull] ref byte[]? buffer, int size, bool clearOnReturn = false)
     {
         if (buffer != null && buffer.Length >= size)
             return;

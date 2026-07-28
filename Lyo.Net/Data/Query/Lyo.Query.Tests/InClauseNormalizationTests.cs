@@ -6,14 +6,13 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Query.Tests;
 
 /// <summary>
-/// Regression tests for In/NotIn values passed as a collection. C# overload resolution picks the
-/// <c>params T[]</c> overload for <c>In(field, someList)</c> (with T inferred as the list type), which
-/// used to wrap the collection in a single-element array and break server-side value conversion.
+/// Regression tests for In/NotIn values passed as a collection. C# overload resolution picks the <c>params T[]</c> overload for <c>In(field, someList)</c> (with T inferred
+/// as the list type), which used to wrap the collection in a single-element array and break server-side value conversion.
 /// </summary>
 public class InClauseNormalizationTests : WhereClauseServiceTests
 {
-    private static IQueryable<Person> People() =>
-        new List<Person> { new PersonBuilder().WithName("Alice").Build(), new PersonBuilder().WithName("Bob").Build(), new PersonBuilder().WithName("Carol").Build() }
+    private static IQueryable<Person> People()
+        => new List<Person> { new PersonBuilder().WithName("Alice").Build(), new PersonBuilder().WithName("Bob").Build(), new PersonBuilder().WithName("Carol").Build() }
             .AsQueryable();
 
     [Fact]

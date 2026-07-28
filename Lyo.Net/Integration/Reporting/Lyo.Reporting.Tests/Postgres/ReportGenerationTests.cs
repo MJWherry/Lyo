@@ -3,7 +3,6 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.Reporting.Builders;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
-using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
@@ -19,19 +18,11 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
     {
         var report = ReportBuilder<object>.New()
             .SetTitle("People")
-            .AddSection(
-                "Data", s => s.AddGrid(
-                    "People", g => g
-                        .AddColumn("Name")
-                        .AddColumn("Age")
-                        .AddRow("Ada", 36)
-                        .AddRow("Grace", 40)))
+            .AddSection("Data", s => s.AddGrid("People", g => g.AddColumn("Name").AddColumn("Age").AddRow("Ada", 36).AddRow("Grace", 40)))
             .Build();
 
         var json = JsonSerializer.Serialize(report);
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>()
-            .CreateDbContextAsync(TestContext.Current.CancellationToken);
-
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
         var definition = new ReportDefinition {
             Id = Guid.NewGuid(),
             Name = "People Report",
@@ -40,33 +31,29 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
             CreatedTimestamp = DateTime.UtcNow,
             UpdatedTimestamp = DateTime.UtcNow
         };
+
         db.ReportDefinitions.Add(definition);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var hooks = new ReportGenerationHooks {
             AfterRenderAsync = async (ctx, ct) => {
                 var storage = ctx.Services.GetRequiredService<IFileStorageService>();
                 var saved = await storage.SaveFileAsync(
-                    ctx.StagedFilePath!,
-                    ctx.FileName,
-                    pathPrefix: ctx.PathPrefix ?? ctx.Request.PathPrefix,
-                    contentType: ctx.ContentType,
-                    ct: ct).ConfigureAwait(false);
+                        ctx.StagedFilePath!, ctx.FileName, pathPrefix: ctx.PathPrefix ?? ctx.Request.PathPrefix, contentType: ctx.ContentType, ct: ct)
+                    .ConfigureAwait(false);
+
                 ctx.OutputFileId = saved.Id;
             }
         };
 
         var result = await reportService.GenerateAsync(
-            new GenerateReportReq {
+            new() {
                 ReportDefinitionId = definition.Id,
                 Format = ReportFormat.Csv,
                 FileName = "people.csv",
                 PathPrefix = "reports/test"
-            },
-            hooks,
-            TestContext.Current.CancellationToken);
+            }, hooks, TestContext.Current.CancellationToken);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.NotNull(result.OutputFileId);
@@ -78,19 +65,11 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
     [Fact]
     public async Task Generate_adhoc_without_hooks_leaves_output_file_id_null()
     {
-        var report = ReportBuilder<object>.New()
-            .SetTitle("Adhoc")
-            .AddSection(s => s.AddGrid("G", g => g.AddColumn("A").AddRow("1")))
-            .Build();
-
+        var report = ReportBuilder<object>.New().SetTitle("Adhoc").AddSection(s => s.AddGrid("G", g => g.AddColumn("A").AddRow("1"))).Build();
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var result = await reportService.GenerateAsync(
-            new GenerateReportReq {
-                ReportDataJson = JsonSerializer.Serialize(report),
-                Format = ReportFormat.Csv
-            },
-            ct: TestContext.Current.CancellationToken);
+            new() { ReportDataJson = JsonSerializer.Serialize(report), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Null(result.OutputFileId);

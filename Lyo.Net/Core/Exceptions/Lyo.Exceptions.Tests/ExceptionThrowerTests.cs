@@ -5,6 +5,8 @@ public class ExceptionThrowerTests : IDisposable
     private readonly string _tempDir;
     private readonly string _tempFile;
 
+    private string MissingPath => Path.Combine(_tempDir, "does-not-exist");
+
     public ExceptionThrowerTests()
     {
         _tempDir = Path.Combine(Path.GetTempPath(), $"lyo-exceptions-tests-{Guid.NewGuid():N}");
@@ -13,9 +15,7 @@ public class ExceptionThrowerTests : IDisposable
         File.WriteAllText(_tempFile, "content");
     }
 
-    public void Dispose() => Directory.Delete(_tempDir, recursive: true);
-
-    private string MissingPath => Path.Combine(_tempDir, "does-not-exist");
+    public void Dispose() => Directory.Delete(_tempDir, true);
 
     [Fact]
     public void ThrowIfDirectoryNotFound_Path_Existing_DoesNotThrow() => ExceptionThrower.ThrowIfDirectoryNotFound(_tempDir);
@@ -35,8 +35,7 @@ public class ExceptionThrowerTests : IDisposable
     }
 
     [Fact]
-    public void ThrowIfDirectoryNotFound_DirectoryInfo_Existing_DoesNotThrow()
-        => ExceptionThrower.ThrowIfDirectoryNotFound(new DirectoryInfo(_tempDir));
+    public void ThrowIfDirectoryNotFound_DirectoryInfo_Existing_DoesNotThrow() => ExceptionThrower.ThrowIfDirectoryNotFound(new DirectoryInfo(_tempDir));
 
     [Fact]
     public void ThrowIfDirectoryNotFound_DirectoryInfo_Missing_Throws()
@@ -72,8 +71,7 @@ public class ExceptionThrowerTests : IDisposable
     }
 
     [Fact]
-    public void ThrowIfFileNotAccessible_FileInfo_Accessible_DoesNotThrow()
-        => ExceptionThrower.ThrowIfFileNotAccessible(new FileInfo(_tempFile));
+    public void ThrowIfFileNotAccessible_FileInfo_Accessible_DoesNotThrow() => ExceptionThrower.ThrowIfFileNotAccessible(new FileInfo(_tempFile));
 
     [Fact]
     public void ThrowIfFileNotAccessible_FileInfo_Null_ThrowsArgumentNull()
@@ -83,12 +81,10 @@ public class ExceptionThrowerTests : IDisposable
     }
 
     [Fact]
-    public void ThrowIfDirectoryNotAccessible_Path_Accessible_DoesNotThrow()
-        => ExceptionThrower.ThrowIfDirectoryNotAccessible(_tempDir);
+    public void ThrowIfDirectoryNotAccessible_Path_Accessible_DoesNotThrow() => ExceptionThrower.ThrowIfDirectoryNotAccessible(_tempDir);
 
     [Fact]
-    public void ThrowIfDirectoryNotAccessible_Path_Missing_DoesNotThrow()
-        => ExceptionThrower.ThrowIfDirectoryNotAccessible(MissingPath);
+    public void ThrowIfDirectoryNotAccessible_Path_Missing_DoesNotThrow() => ExceptionThrower.ThrowIfDirectoryNotAccessible(MissingPath);
 
     [Fact]
     public void ThrowIfDirectoryNotAccessible_Path_Null_ThrowsArgumentNull()
@@ -98,8 +94,7 @@ public class ExceptionThrowerTests : IDisposable
     }
 
     [Fact]
-    public void ThrowIfDirectoryNotAccessible_DirectoryInfo_Accessible_DoesNotThrow()
-        => ExceptionThrower.ThrowIfDirectoryNotAccessible(new DirectoryInfo(_tempDir));
+    public void ThrowIfDirectoryNotAccessible_DirectoryInfo_Accessible_DoesNotThrow() => ExceptionThrower.ThrowIfDirectoryNotAccessible(new DirectoryInfo(_tempDir));
 
     [Fact]
     public void ThrowIfDirectoryNotAccessible_DirectoryInfo_Null_ThrowsArgumentNull()

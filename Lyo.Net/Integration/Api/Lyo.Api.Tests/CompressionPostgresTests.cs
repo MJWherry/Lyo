@@ -49,7 +49,10 @@ public class CompressionPostgresTests : IDisposable
     public async Task Post_WithGzipContentEncoding_ProcessesCompressedRequestBody()
     {
         await _fixture.SeedJobDefinitionAsync("CompressionQueryTarget");
-        var requestBody = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget") };
+        var requestBody = new QueryConcreteReq {
+            Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget")
+        };
+
         var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(requestBody, JsonOptions);
         var gzippedBytes = CompressGzip(jsonBytes);
         using var content = new ByteArrayContent(gzippedBytes);

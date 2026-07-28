@@ -17,7 +17,7 @@ internal sealed class AesGcmStreamCryptor : IAeadStreamCryptor
 #if NET10_0_OR_GREATER
     private readonly System.Security.Cryptography.AesGcm _aes;
 
-    public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _aes = new System.Security.Cryptography.AesGcm(key, AesGcmHelper.TagSize);
+    public AesGcmStreamCryptor(ReadOnlySpan<byte> key) => _aes = new(key, AesGcmHelper.TagSize);
 
     public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
         => _aes.Encrypt(nonce, plaintext, ciphertextAndTag[..plaintext.Length], ciphertextAndTag.Slice(plaintext.Length, AesGcmHelper.TagSize), associatedData);

@@ -165,7 +165,10 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="encryptedData">The encrypted data to decrypt</param>
     /// <param name="keyId">This parameter is ignored. AES-GCM-RSA uses RSA keys from constructor. Provided for interface compliance only.</param>
     /// <param name="key">Optional AES key. Only used if data was encrypted with external key (not embedded).</param>
-    /// <param name="associatedData">Optional associated data that was authenticated during encryption; must match the bytes supplied to <see cref="Encrypt(byte[], string, byte[], byte[])" />.</param>
+    /// <param name="associatedData">
+    /// Optional associated data that was authenticated during encryption; must match the bytes supplied to
+    /// <see cref="Encrypt(byte[], string, byte[], byte[])" />.
+    /// </param>
     /// <returns>Decrypted data</returns>
     /// <exception cref="ArgumentException">Thrown when keyId parameter is provided</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedData is empty (length is less than 1) or too small (below minimum required size)</exception>

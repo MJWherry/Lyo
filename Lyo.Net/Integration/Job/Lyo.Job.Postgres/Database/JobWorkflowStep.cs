@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
 
@@ -22,7 +23,7 @@ public class JobWorkflowStep
     /// <summary>How the workflow proceeds when this step fails. Stored as string.</summary>
     [Required]
     [MaxLength(20)]
-    public string FailurePolicy { get; set; } = nameof(Models.Enums.JobWorkflowFailurePolicy.Stop);
+    public string FailurePolicy { get; set; } = nameof(JobWorkflowFailurePolicy.Stop);
 
     public string? ParametersJson { get; set; }
 

@@ -120,7 +120,14 @@
 
     private void AddParameter()
     {
-        _displayParams.Add(new() { IsNew = true, Key = $"Param{_displayParams.Count + 1}", Type = ReportParameterType.String, Required = true });
+        _displayParams.Add(
+            new() {
+                IsNew = true,
+                Key = $"Param{_displayParams.Count + 1}",
+                Type = ReportParameterType.String,
+                Required = true
+            });
+
         _dirty = true;
     }
 
@@ -134,7 +141,6 @@
     {
         try {
             var existing = (Parameters ?? []).ToDictionary(p => p.Id);
-
             foreach (var removed in existing.Values.Where(e => _displayParams.All(d => d.Id != e.Id)))
                 await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
 
@@ -172,4 +178,5 @@
             Snackbar.Add($"Failed to save parameters: {ex.Message}", Severity.Error);
         }
     }
+
 }
