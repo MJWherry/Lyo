@@ -1,0 +1,129 @@
+/* Optional baseline styles for lyo-query-react. Override via --lyo-qb-* variables. */
+
+.lyo-qb__node {
+  position: relative;
+  border: 1px solid var(--lyo-qb-line, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lyo-qb-radius, 0.4rem);
+  padding: 0.85rem;
+  padding-right: 2.4rem;
+  background: var(--lyo-qb-bg, transparent);
+}
+
+.lyo-qb__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.65rem;
+  padding-right: 0.25rem;
+}
+
+.lyo-qb__remove {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--lyo-qb-line, rgba(0, 0, 0, 0.12));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lyo-qb-muted, #666);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.lyo-qb__remove:hover {
+  border-color: var(--lyo-qb-accent, #6d28d9);
+  color: var(--lyo-qb-accent, #6d28d9);
+}
+
+.lyo-qb__children {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--lyo-qb-accent, #6d28d9);
+  margin-top: 0.5rem;
+}
+
+.lyo-qb__child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lyo-qb__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.lyo-qb__field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.lyo-qb__field--grow {
+  flex: 1 1 12rem;
+}
+
+.lyo-qb__label {
+  color: var(--lyo-qb-muted, #666);
+  font-weight: 600;
+}
+
+.lyo-qb__field input,
+.lyo-qb__field select {
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.3rem;
+  border: 1px solid var(--lyo-qb-line, rgba(0, 0, 0, 0.12));
+  background: var(--lyo-qb-input-bg, #fff);
+  color: var(--lyo-qb-ink, inherit);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  min-width: 7rem;
+}
+
+.lyo-qb__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--lyo-qb-line, rgba(0, 0, 0, 0.12));
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lyo-qb__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lyo-qb__btn:hover:not(:disabled) {
+  border-color: var(--lyo-qb-accent, #6d28d9);
+}
+
+.lyo-qb__badge {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--lyo-qb-soft, rgba(0, 0, 0, 0.06));
+  color: var(--lyo-qb-muted, #666);
+}
+
+.lyo-qb__badge--group {
+  background: color-mix(in srgb, var(--lyo-qb-accent, #6d28d9) 16%, transparent);
+  color: var(--lyo-qb-accent, #6d28d9);
+}

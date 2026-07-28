@@ -23,9 +23,24 @@ export type ApiTransport = (request: {
     headers: Record<string, string>;
 }) => ApiResponse<unknown>;
 
+/** Promise-based transport for Node/Next.js/browsers (`fetch`, axios, undici). */
+export type AsyncApiTransport = (request: {
+    method: HttpMethod;
+    url: string;
+    body?: string;
+    headers: Record<string, string>;
+}) => Promise<ApiResponse<unknown>>;
+
 export interface ApiClientOptions {
     baseUrl: string;
     defaultHeaders?: Record<string, string>;
     token?: string;
     transport: ApiTransport;
+}
+
+export interface AsyncApiClientOptions {
+    baseUrl: string;
+    defaultHeaders?: Record<string, string>;
+    token?: string;
+    transport: AsyncApiTransport;
 }

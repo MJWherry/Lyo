@@ -1,0 +1,576 @@
+[
+  {
+    "id": "Lyo.Audit.Postgres",
+    "name": "Lyo.Audit.Postgres",
+    "area": "Core",
+    "summary": "EF Core audit persistence to PostgreSQL (JSONB)",
+    "readme": "Lyo.Net/Core/Audit/Lyo.Audit.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Audit",
+    "name": "Lyo.Audit",
+    "area": "Core",
+    "summary": "audit changes and events with pluggable `IAuditRecorder`",
+    "readme": "Lyo.Net/Core/Audit/Lyo.Audit/README.md"
+  },
+  {
+    "id": "Lyo.ChangeTracker.Postgres",
+    "name": "Lyo.ChangeTracker.Postgres",
+    "area": "Core",
+    "summary": "PostgreSQL change history for `Lyo.ChangeTracker`",
+    "readme": "Lyo.Net/Core/ChangeTracker/Lyo.ChangeTracker.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.ChangeTracker",
+    "name": "Lyo.ChangeTracker",
+    "area": "Core",
+    "summary": "entity-scoped change history via `EntityRef`",
+    "readme": "Lyo.Net/Core/ChangeTracker/Lyo.ChangeTracker/README.md"
+  },
+  {
+    "id": "Lyo.Cache",
+    "name": "Lyo.Cache",
+    "area": "Core",
+    "summary": "local and Fusion **`ICacheService`**, typed payload codecs, optional query-tag granularity for **`Lyo.Api`**",
+    "readme": "Lyo.Net/Core/Cache/Lyo.Cache/README.md"
+  },
+  {
+    "id": "Lyo.Common",
+    "name": "Lyo.Common",
+    "area": "Core",
+    "summary": "results, errors, JSON helpers, shared primitives",
+    "readme": "Lyo.Net/Core/Common/Lyo.Common/README.md"
+  },
+  {
+    "id": "Lyo.DateAndTime",
+    "name": "Lyo.DateAndTime",
+    "area": "Core",
+    "summary": "time zones, US-state mapping, scheduling utilities",
+    "readme": "Lyo.Net/Core/DateAndTime/Lyo.DateAndTime/README.md"
+  },
+  {
+    "id": "Lyo.Diagnostic",
+    "name": "Lyo.Diagnostic",
+    "area": "Core",
+    "summary": "stack decoding, breadcrumbs, error inbox, trace sanitisation, structured logging enrichers",
+    "readme": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md"
+  },
+  {
+    "id": "Lyo.Diagnostic.AspNetCore",
+    "name": "Lyo.Diagnostic.AspNetCore",
+    "area": "Core",
+    "summary": "ASP.NET Core breadcrumbs per request and exception recording to **`Lyo.Diagnostic`**",
+    "readme": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md"
+  },
+  {
+    "id": "Lyo.Geolocation.Postgres",
+    "name": "Lyo.Geolocation.Postgres",
+    "area": "Core",
+    "summary": "Canonical address and geocode cache persistence",
+    "readme": "Lyo.Net/Core/Geolocation/Lyo.Geolocation.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Google.Geolocation.Client",
+    "name": "Lyo.Google.Geolocation.Client",
+    "area": "Core",
+    "summary": "Google Maps geocoding / routing client",
+    "readme": "Lyo.Net/Integration/Google/Lyo.Google.Geolocation.Client/README.md"
+  },
+  {
+    "id": "Lyo.Health",
+    "name": "Lyo.Health",
+    "area": "Core",
+    "summary": "`IHealth` and `HealthResult` for service health checks",
+    "readme": "Lyo.Net/Core/Health/Lyo.Health/README.md"
+  },
+  {
+    "id": "Lyo.Lock",
+    "name": "Lyo.Lock",
+    "area": "Core",
+    "summary": "in-process locks and keyed semaphores",
+    "readme": "Lyo.Net/Core/Lock/Lyo.Lock/README.md"
+  },
+  {
+    "id": "Lyo.Lock.Redis",
+    "name": "Lyo.Lock.Redis",
+    "area": "Core",
+    "summary": "Redis distributed locks for `Lyo.Lock`",
+    "readme": "Lyo.Net/Core/Lock/Lyo.Lock.Redis/README.md"
+  },
+  {
+    "id": "Lyo.Exceptions",
+    "name": "Lyo.Exceptions",
+    "area": "Core",
+    "summary": "shared exception types and argument validation helpers",
+    "readme": "Lyo.Net/Core/Exceptions/Lyo.Exceptions/README.md"
+  },
+  {
+    "id": "Lyo.Mathematics.Functions",
+    "name": "Lyo.Mathematics.Functions",
+    "area": "Core",
+    "summary": "F# math implementations (algebra, stats, numerics)",
+    "readme": "Lyo.Net/Core/Mathematics/Lyo.Mathematics.Functions/README.md"
+  },
+  {
+    "id": "Lyo.Mathematics",
+    "name": "Lyo.Mathematics",
+    "area": "Core",
+    "summary": "C# math contracts, units, vectors, matrices, registries",
+    "readme": "Lyo.Net/Core/Mathematics/Lyo.Mathematics/README.md"
+  },
+  {
+    "id": "Lyo.Metrics.OpenTelemetry",
+    "name": "Lyo.Metrics.OpenTelemetry",
+    "area": "Core",
+    "summary": "OpenTelemetry backend for `IMetrics`",
+    "readme": "Lyo.Net/Core/Metrics/Lyo.Metrics.OpenTelemetry/README.md"
+  },
+  {
+    "id": "Lyo.Metrics",
+    "name": "Lyo.Metrics",
+    "area": "Core",
+    "summary": "counters, gauges, histograms, timings; pluggable backends",
+    "readme": "Lyo.Net/Core/Metrics/Lyo.Metrics/README.md"
+  },
+  {
+    "id": "Lyo.PackageMetadata",
+    "name": "Lyo.PackageMetadata",
+    "area": "Core",
+    "summary": "**`IPackageMetadataStore`**, **`PackageMetadata`**, digest helpers for diagnostics frame",
+    "readme": "Lyo.Net/Core/PackageMetadata/Lyo.PackageMetadata/README.md"
+  },
+  {
+    "id": "Lyo.People.Models",
+    "name": "Lyo.People.Models",
+    "area": "Core",
+    "summary": "people, contacts, relationships domain models",
+    "readme": "Lyo.Net/Core/People/Lyo.People.Models/README.md"
+  },
+  {
+    "id": "Lyo.People.Postgres",
+    "name": "Lyo.People.Postgres",
+    "area": "Core",
+    "summary": "EF Core PostgreSQL persistence for people data",
+    "readme": "Lyo.Net/Core/People/Lyo.People.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Resilience",
+    "name": "Lyo.Resilience",
+    "area": "Core",
+    "summary": "Polly pipelines from configuration with logging",
+    "readme": "Lyo.Net/Core/Resilience/Lyo.Resilience/README.md"
+  },
+  {
+    "id": "Lyo.Scheduler",
+    "name": "Lyo.Scheduler",
+    "area": "Core",
+    "summary": "in-process scheduled jobs with optional state store",
+    "readme": "Lyo.Net/Core/Scheduler/Lyo.Scheduler/README.md"
+  },
+  {
+    "id": "Lyo.Scientific.Functions",
+    "name": "Lyo.Scientific.Functions",
+    "area": "Core",
+    "summary": "F# scientific/engineering implementations",
+    "readme": "Lyo.Net/Core/Scientific/Lyo.Scientific.Functions/README.md"
+  },
+  {
+    "id": "Lyo.Scientific",
+    "name": "Lyo.Scientific",
+    "area": "Core",
+    "summary": "scientific domain models on top of `Lyo.Mathematics`",
+    "readme": "Lyo.Net/Core/Scientific/Lyo.Scientific/README.md"
+  },
+  {
+    "id": "Lyo.Streams",
+    "name": "Lyo.Streams",
+    "area": "Core",
+    "summary": "hashing, tee, counting, progress, concatenated streams",
+    "readme": "Lyo.Net/Core/Streams/Lyo.Streams/README.md"
+  },
+  {
+    "id": "Lyo.Validation",
+    "name": "Lyo.Validation",
+    "area": "Core",
+    "summary": "fluent validators and structured `Result` failures",
+    "readme": "Lyo.Net/Core/Validation/Lyo.Validation/README.md"
+  },
+  {
+    "id": "Lyo.Webhook.Twilio",
+    "name": "Lyo.Webhook.Twilio",
+    "area": "Core",
+    "summary": "Twilio webhook signature validation for `Lyo.Webhook`",
+    "readme": "Lyo.Net/Core/Webhook/Lyo.Webhook.Twilio/README.md"
+  },
+  {
+    "id": "Lyo.Webhook",
+    "name": "Lyo.Webhook",
+    "area": "Core",
+    "summary": "ASP.NET Core webhook verification pipeline and HMAC helpers",
+    "readme": "Lyo.Net/Core/Webhook/Lyo.Webhook/README.md"
+  },
+  {
+    "id": "Lyo.Compression",
+    "name": "Lyo.Compression",
+    "area": "Data",
+    "summary": "multi-algorithm compression, streams, atomic file",
+    "readme": "Lyo.Net/Data/Compression/Lyo.Compression/README.md"
+  },
+  {
+    "id": "Lyo.Csv",
+    "name": "Lyo.Csv",
+    "area": "Data",
+    "summary": "CSV read/write via CsvHelper",
+    "readme": "Lyo.Net/Data/Csv/Lyo.Csv/README.md"
+  },
+  {
+    "id": "Lyo.FileStorage.Blob",
+    "name": "Lyo.FileStorage.Blob",
+    "area": "Data",
+    "summary": "Azure Blob Storage backend for file storage (`Lyo.FileStorage.Blob`)",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.Blob/README.md"
+  },
+  {
+    "id": "Lyo.FileStorage",
+    "name": "Lyo.FileStorage",
+    "area": "Data",
+    "summary": "file storage abstractions, metadata, compression, encryption",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md"
+  },
+  {
+    "id": "Lyo.FileStorage.S3",
+    "name": "Lyo.FileStorage.S3",
+    "area": "Data",
+    "summary": "S3-compatible storage (AWS, B2, MinIO)",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md"
+  },
+  {
+    "id": "Lyo.FileSystemWatcher",
+    "name": "Lyo.FileSystemWatcher",
+    "area": "Data",
+    "summary": "snapshot-based file watching,",
+    "readme": "Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md"
+  },
+  {
+    "id": "Lyo.Images",
+    "name": "Lyo.Images",
+    "area": "Data",
+    "summary": "image ops with ImageSharp (resize, crop, watermark)",
+    "readme": "Lyo.Net/Data/Images/Lyo.Images/README.md"
+  },
+  {
+    "id": "Lyo.Images.Skia",
+    "name": "Lyo.Images.Skia",
+    "area": "Data",
+    "summary": "SkiaSharp implementation of `IImageService`",
+    "readme": "Lyo.Net/Data/Images/Lyo.Images.Skia/README.md"
+  },
+  {
+    "id": "Lyo.IO.Temp",
+    "name": "Lyo.IO.Temp",
+    "area": "Data",
+    "summary": "temp files/dirs with sessions and naming strategies",
+    "readme": "Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md"
+  },
+  {
+    "id": "Lyo.Pdf",
+    "name": "Lyo.Pdf",
+    "area": "Data",
+    "summary": "`IPdfService` / `PdfService` \u2014 load PDFs, extract text, regions, key\u2013value and tables",
+    "readme": "Lyo.Net/Data/Pdf/Lyo.Pdf/README.md"
+  },
+  {
+    "id": "Lyo.Pdf.Web.Components",
+    "name": "Lyo.Pdf.Web.Components",
+    "area": "Data",
+    "summary": "Blazor **PDF annotator** and related UI (`PdfAnnotator/`; pairs with `GetLinesInBoundingBox`). Former",
+    "readme": "Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/"
+  },
+  {
+    "id": "Lyo.Postgres",
+    "name": "Lyo.Postgres",
+    "area": "Data",
+    "summary": "shared EF Core auto-migration hosted service helpers",
+    "readme": "Lyo.Net/Data/Postgres/Lyo.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Query.Models",
+    "name": "Lyo.Query.Models",
+    "area": "Data",
+    "summary": "query request/projection DTOs and **`WhereClause`** builders shared with **`Lyo.Api`** and Blazor tooling",
+    "readme": "Lyo.Net/Data/Query/Lyo.Query.Models/README.md"
+  },
+  {
+    "id": "Lyo.QRCode",
+    "name": "Lyo.QRCode",
+    "area": "Data",
+    "summary": "QR generation (QRCoder), formats, error correction, icons",
+    "readme": "Lyo.Net/Data/QRCode/Lyo.QRCode/README.md"
+  },
+  {
+    "id": "Lyo.Xlsx",
+    "name": "Lyo.Xlsx",
+    "area": "Data",
+    "summary": "Excel read/write with sheet control and merged-cell spans (streaming OpenXML writer, ClosedXML / ExcelDataReader readers)",
+    "readme": "Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md"
+  },
+  {
+    "id": "Lyo.Email",
+    "name": "Lyo.Email",
+    "area": "Communication",
+    "summary": "SMTP email via MailKit, fluent builder, bulk send, attachments, DI",
+    "readme": "Lyo.Net/Communication/Email/Lyo.Email/README.md"
+  },
+  {
+    "id": "Lyo.Sms",
+    "name": "Lyo.Sms",
+    "area": "Communication",
+    "summary": "SMS abstraction, E.164 validation, bulk messaging, pluggable providers",
+    "readme": "Lyo.Net/Communication/Sms/Lyo.Sms/README.md"
+  },
+  {
+    "id": "Lyo.Sms.Twilio",
+    "name": "Lyo.Sms.Twilio",
+    "area": "Communication",
+    "summary": "Twilio SMS/MMS implementation for Lyo.Sms",
+    "readme": "Lyo.Net/Communication/Sms/Lyo.Sms.Twilio/README.md"
+  },
+  {
+    "id": "Lyo.Tts.AwsPolly",
+    "name": "Lyo.Tts.AwsPolly",
+    "area": "Communication",
+    "summary": "Amazon Polly text-to-speech",
+    "readme": "Lyo.Net/Communication/Speech/Lyo.Tts.AwsPolly/README.md"
+  },
+  {
+    "id": "Lyo.Tts.Typecast",
+    "name": "Lyo.Tts.Typecast",
+    "area": "Communication",
+    "summary": "Typecast API text-to-speech",
+    "readme": "Lyo.Net/Communication/Speech/Lyo.Tts.Typecast/README.md"
+  },
+  {
+    "id": "Lyo.Tts.WindowsSpeech",
+    "name": "Lyo.Tts.WindowsSpeech",
+    "area": "Communication",
+    "summary": "Windows SAPI speech synthesis",
+    "readme": "Lyo.Net/Communication/Speech/Lyo.Tts.WindowsSpeech/README.md"
+  },
+  {
+    "id": "Lyo.ContentThreatScan",
+    "name": "Lyo.ContentThreatScan",
+    "area": "Security",
+    "summary": "heuristic text threat scoring; composes with **`Lyo.FileStorage`** scanning",
+    "readme": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan/README.md"
+  },
+  {
+    "id": "Lyo.ContentThreatScan.Intel",
+    "name": "Lyo.ContentThreatScan.Intel",
+    "area": "Security",
+    "summary": "Malware Bazaar, VirusTotal, and **`clamd`** reputation pipeline",
+    "readme": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md"
+  },
+  {
+    "id": "Lyo.Encryption.Benchmarks",
+    "name": "Lyo.Encryption.Benchmarks",
+    "area": "Security",
+    "summary": "BenchmarkDotNet suite (AES-GCM, ChaCha, CCM, SIV, XChaCha, RSA, hybrid, two-key,",
+    "readme": "Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/README.md"
+  },
+  {
+    "id": "Lyo.Encryption",
+    "name": "Lyo.Encryption",
+    "area": "Security",
+    "summary": "authenticated encryption, envelope/two-key patterns, keystore hooks",
+    "readme": "Lyo.Net/Security/Encryption/README.md"
+  },
+  {
+    "id": "Lyo.Hashing",
+    "name": "Lyo.Hashing",
+    "area": "Security",
+    "summary": "SHA-2/MD5 (non-security), hex helpers, **`IHashingService`**, stream hashing",
+    "readme": "Lyo.Net/Security/Hashing/Lyo.Hashing/README.md"
+  },
+  {
+    "id": "Lyo.Api",
+    "name": "Lyo.Api",
+    "area": "Integration",
+    "summary": "minimal APIs, CRUD, query engine, endpoint builder",
+    "readme": "Lyo.Net/Integration/Api/Lyo.Api/README.md"
+  },
+  {
+    "id": "Lyo.Web.Automation",
+    "name": "Lyo.Web.Automation",
+    "area": "Integration",
+    "summary": "serializable **`AutomationPlan`** steps, shared runner, **Selenium** and **Playwright** drivers",
+    "readme": "Lyo.Net/Integration/Web/Automation/README.md"
+  },
+  {
+    "id": "Lyo.Discord.Bot",
+    "name": "Lyo.Discord.Bot",
+    "area": "Integration",
+    "summary": "DSharpPlus bot syncing guilds to your Lyo API",
+    "readme": "Lyo.Net/Integration/Discord/Lyo.Discord.Bot/README.md"
+  },
+  {
+    "id": "Lyo.Job.Postgres",
+    "name": "Lyo.Job.Postgres",
+    "area": "Integration",
+    "summary": "EF Core job schema and migrations for job management",
+    "readme": "Lyo.Net/Integration/Job/Lyo.Job.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Job.Scheduler",
+    "name": "Lyo.Job.Scheduler",
+    "area": "Integration",
+    "summary": "polls job API, evaluates schedules, RabbitMQ triggers",
+    "readme": "Lyo.Net/Integration/Job/Lyo.Job.Scheduler/README.md"
+  },
+  {
+    "id": "Lyo.Reporting.Models",
+    "name": "Lyo.Reporting.Models",
+    "area": "Integration",
+    "summary": "report composition models, builders, and API contracts",
+    "readme": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Models/README.md"
+  },
+  {
+    "id": "Lyo.Reporting.Postgres",
+    "name": "Lyo.Reporting.Postgres",
+    "area": "Integration",
+    "summary": "PostgreSQL definitions/generations and generate pipeline",
+    "readme": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Api.Reporting",
+    "name": "Lyo.Api.Reporting",
+    "area": "Integration",
+    "summary": "authenticated Reporting HTTP endpoints",
+    "readme": "Lyo.Net/Integration/Api/Lyo.Api.Reporting/README.md"
+  },
+  {
+    "id": "Lyo.Reporting.Web",
+    "name": "Lyo.Reporting.Web",
+    "area": "Integration",
+    "summary": "Blazor report viewer and HTML/PDF rendering",
+    "readme": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Web/README.md"
+  },
+  {
+    "id": "Lyo.Reporting.Web.Components",
+    "name": "Lyo.Reporting.Web.Components",
+    "area": "Integration",
+    "summary": "MudBlazor UI to run/view/download reports",
+    "readme": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Web.Components/README.md"
+  },
+  {
+    "id": "Lyo.Reporting.Client",
+    "name": "Lyo.Reporting.Client",
+    "area": "Integration",
+    "summary": "typed HTTP client for the Reporting API",
+    "readme": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Client/README.md"
+  },
+  {
+    "id": "Lyo.Comment.Postgres",
+    "name": "Lyo.Comment.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL comments with threading and reactions",
+    "readme": "Lyo.Net/Features/Comment/Lyo.Comment.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Config.Postgres",
+    "name": "Lyo.Config.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL storage for typed per-entity config",
+    "readme": "Lyo.Net/Features/Config/Lyo.Config.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Config",
+    "name": "Lyo.Config",
+    "area": "Features",
+    "summary": "typed per-entity configuration definitions and bindings",
+    "readme": "Lyo.Net/Features/Config/Lyo.Config/README.md"
+  },
+  {
+    "id": "Lyo.ContactUs",
+    "name": "Lyo.ContactUs",
+    "area": "Features",
+    "summary": "contact form submissions with pluggable storage",
+    "readme": "Lyo.Net/Features/ContactUs/Lyo.ContactUs/README.md"
+  },
+  {
+    "id": "Lyo.Favorite.Postgres",
+    "name": "Lyo.Favorite.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL favorites by **`EntityRef`** (for/from) with migrations",
+    "readme": "Lyo.Net/Features/Favorite/Lyo.Favorite.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Note.Postgres",
+    "name": "Lyo.Note.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL notes keyed by entity references",
+    "readme": "Lyo.Net/Features/Note/Lyo.Note.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Profanity",
+    "name": "Lyo.Profanity",
+    "area": "Features",
+    "summary": "file-based profanity filter, multi-language, strategies",
+    "readme": "Lyo.Net/Features/Profanity/Lyo.Profanity/README.md"
+  },
+  {
+    "id": "Lyo.Rating.Postgres",
+    "name": "Lyo.Rating.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL ratings, subjects, reactions",
+    "readme": "Lyo.Net/Features/Rating/Lyo.Rating.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.ShortUrl",
+    "name": "Lyo.ShortUrl",
+    "area": "Features",
+    "summary": "URL shortening abstraction and fluent builders",
+    "readme": "Lyo.Net/Features/ShortUrl/Lyo.ShortUrl/README.md"
+  },
+  {
+    "id": "Lyo.Tag.Postgres",
+    "name": "Lyo.Tag.Postgres",
+    "area": "Features",
+    "summary": "PostgreSQL tagging by entity reference",
+    "readme": "Lyo.Net/Features/Tag/Lyo.Tag.Postgres/README.md"
+  },
+  {
+    "id": "Lyo.Config.Api",
+    "name": "Lyo.Config.Api",
+    "area": "Apps",
+    "summary": "HTTP host for centralized typed app config (PostgreSQL + **`Lyo.Config`**), ETags and polling",
+    "readme": "Lyo.Net/Apps/Config/Lyo.Config.Api/README.md"
+  },
+  {
+    "id": "Lyo.Config.Api.Client",
+    "name": "Lyo.Config.Api.Client",
+    "area": "Apps",
+    "summary": "typed HTTP client and **`AddConfigApiClientFromConfiguration`**",
+    "readme": "Lyo.Net/Apps/Config/Lyo.Config.Api.Client/README.md"
+  },
+  {
+    "id": "Lyo.Config.Api.Hosting",
+    "name": "Lyo.Config.Api.Hosting",
+    "area": "Apps",
+    "summary": "polling + **`IOptionsMonitor<T>`** integration for consuming apps",
+    "readme": "Lyo.Net/Apps/Config/Lyo.Config.Api.Hosting/README.md"
+  },
+  {
+    "id": "Lyo.Config.Api.Models",
+    "name": "Lyo.Config.Api.Models",
+    "area": "Apps",
+    "summary": "resolve contracts and DTOs for config API traffic",
+    "readme": "Lyo.Net/Apps/Config/Lyo.Config.Api.Models/README.md"
+  },
+  {
+    "id": "Lyo.Preview",
+    "name": "Lyo.Preview",
+    "area": "Tools",
+    "summary": "open PDFs, images, HTML, and more in the default browser",
+    "readme": "Lyo.Net/Tools/Lyo.Preview/README.md"
+  }
+]

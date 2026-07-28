@@ -1,0 +1,174 @@
+{
+  "generatedAt": "2026-07-28T21:45:45.423Z",
+  "note": "NuGet package (.nupkg) sizes from curated dotnet pack allowlist.",
+  "packages": [
+    {
+      "id": "Lyo.Cache",
+      "name": "Lyo.Cache",
+      "version": "1.0.0",
+      "bytes": 64877,
+      "sha256": "c53a8e5e76d6ead1"
+    },
+    {
+      "id": "Lyo.Lock",
+      "name": "Lyo.Lock",
+      "version": "1.0.0",
+      "bytes": 36425,
+      "sha256": "f97e70574e632ff3"
+    },
+    {
+      "id": "Lyo.Privacy",
+      "name": "Lyo.Privacy",
+      "version": "1.0.0",
+      "bytes": 94220,
+      "sha256": "854c7019cb1153b3"
+    },
+    {
+      "id": "Lyo.Resilience",
+      "name": "Lyo.Resilience",
+      "version": "1.0.0",
+      "bytes": 34486,
+      "sha256": "e944fbff8d458231"
+    },
+    {
+      "id": "Lyo.People.Postgres",
+      "name": "Lyo.People.Postgres",
+      "version": "1.0.0",
+      "bytes": 54324,
+      "sha256": "f6ee32fb94be873f"
+    },
+    {
+      "id": "Lyo.Hashing",
+      "name": "Lyo.Hashing",
+      "version": "1.0.0",
+      "bytes": 38831,
+      "sha256": "2b58139640e2ccec"
+    },
+    {
+      "id": "Lyo.Query",
+      "name": "Lyo.Query",
+      "version": "1.0.0",
+      "bytes": 36375,
+      "sha256": "c5d110ed89cc39d1"
+    },
+    {
+      "id": "Lyo.FileStorage",
+      "name": "Lyo.FileStorage",
+      "version": "1.0.0",
+      "bytes": 240027,
+      "sha256": "dc7c606d3c2a26d8"
+    },
+    {
+      "id": "Lyo.Compression",
+      "name": "Lyo.Compression",
+      "version": "1.0.0",
+      "bytes": 103294,
+      "sha256": "a8bd6abf94bb64fe"
+    },
+    {
+      "id": "Lyo.IO.Temp",
+      "name": "Lyo.IO.Temp",
+      "version": "1.0.0",
+      "bytes": 109967,
+      "sha256": "cef9a96d9ae4825b"
+    },
+    {
+      "id": "Lyo.Csv",
+      "name": "Lyo.Csv",
+      "version": "1.0.0",
+      "bytes": 80363,
+      "sha256": "c71f5e61e17cbacc"
+    },
+    {
+      "id": "Lyo.Xlsx",
+      "name": "Lyo.Xlsx",
+      "version": "1.0.0",
+      "bytes": 83041,
+      "sha256": "b99dd7761fe8ede6"
+    },
+    {
+      "id": "Lyo.MessageQueue",
+      "name": "Lyo.MessageQueue",
+      "version": "1.0.0",
+      "bytes": 44506,
+      "sha256": "6690e1cdba667ab7"
+    },
+    {
+      "id": "Lyo.MessageQueue.RabbitMq",
+      "name": "Lyo.MessageQueue.RabbitMq",
+      "version": "1.0.0",
+      "bytes": 72889,
+      "sha256": "eb037a77b3e738dc"
+    },
+    {
+      "id": "Lyo.Sms",
+      "name": "Lyo.Sms",
+      "version": "1.0.0",
+      "bytes": 40677,
+      "sha256": "8b3950eb04ab823a"
+    },
+    {
+      "id": "Lyo.Email",
+      "name": "Lyo.Email",
+      "version": "1.0.0",
+      "bytes": 62302,
+      "sha256": "322debe7837ea858"
+    },
+    {
+      "id": "Lyo.Encryption",
+      "name": "Lyo.Encryption",
+      "version": "1.0.0",
+      "bytes": 113427,
+      "sha256": "0f5e1d087b5af99b"
+    },
+    {
+      "id": "Lyo.Keystore",
+      "name": "Lyo.Keystore",
+      "version": "1.0.0",
+      "bytes": 31869,
+      "sha256": "994292a790394ee7"
+    },
+    {
+      "id": "Lyo.Authentication",
+      "name": "Lyo.Authentication",
+      "version": "1.0.0",
+      "bytes": 72707,
+      "sha256": "b2ff6b2e103ed9e6"
+    },
+    {
+      "id": "Lyo.Job.Postgres",
+      "name": "Lyo.Job.Postgres",
+      "version": "1.0.0",
+      "bytes": 157051,
+      "sha256": "fb22d28244123cf7"
+    },
+    {
+      "id": "Lyo.Api.Client",
+      "name": "Lyo.Api.Client",
+      "version": "1.0.0",
+      "bytes": 56975,
+      "sha256": "ce8a2c70617e9247"
+    },
+    {
+      "id": "Lyo.Reporting.Postgres",
+      "name": "Lyo.Reporting.Postgres",
+      "version": "1.0.0",
+      "bytes": 67019,
+      "sha256": "23f9f6733429cb32"
+    },
+    {
+      "id": "Lyo.Comic.Postgres",
+      "name": "Lyo.Comic.Postgres",
+      "version": "1.0.0",
+      "bytes": 45543,
+      "sha256": "09ebc2a64802bee3"
+    },
+    {
+      "id": "Lyo.Config.Postgres",
+      "name": "Lyo.Config.Postgres",
+      "version": "1.0.0",
+      "bytes": 41387,
+      "sha256": "0b52a259be79c868"
+    }
+  ]
+}

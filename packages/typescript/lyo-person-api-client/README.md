@@ -12,24 +12,30 @@ Person API client package built on top of `lyo-api-client`.
 ## Usage
 
 ```ts
-import { createApiClient } from "lyo-api-client";
+import { createApiClient, createAsyncApiClient } from "lyo-api-client";
 import {
   baselineQuery,
   createPersonApiClient,
+  createAsyncPersonApiClient,
   isQueryRes,
 } from "lyo-person-api-client";
 
+// Sync (k6):
 const api = createApiClient({
   baseUrl: "http://localhost:5251",
   transport: ({ method, url, body, headers }) => {
-    // Plug in runtime transport implementation.
     throw new Error("Provide a transport implementation.");
   },
 });
-
 const personApi = createPersonApiClient(api);
 const res = personApi.queryPerson(baselineQuery({ start: 0, amount: 10 }));
-if (!isQueryRes(res.data)) {
-  throw new Error("Unexpected response shape.");
-}
+if (!isQueryRes(res.data)) throw new Error("Unexpected response shape.");
+
+// Async (Next.js BFF):
+const asyncApi = createAsyncApiClient({
+  baseUrl: process.env.LYO_API_BASE_URL!,
+  transport: fetchTransport,
+});
+const asyncPersonApi = createAsyncPersonApiClient(asyncApi);
+const page = await asyncPersonApi.queryPerson(baselineQuery({ amount: 10 }));
 ```

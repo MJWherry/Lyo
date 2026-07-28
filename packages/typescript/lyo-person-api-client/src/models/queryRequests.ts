@@ -1,3 +1,12 @@
+import type { WhereClause } from "lyo-query";
+
+export type {
+    ComparisonOperator,
+    ConditionClause,
+    GroupClause,
+    WhereClause,
+} from "lyo-query";
+
 export type QueryTotalCountMode = "None" | "HasMore" | "Exact";
 export type QueryIncludeFilterMode = "Full" | "MatchedOnly";
 
@@ -14,36 +23,6 @@ export interface QueryRequestOptions {
     IncludeFilterMode: QueryIncludeFilterMode;
     ZipSiblingCollectionSelections?: boolean | null;
 }
-
-export type ComparisonOperator =
-    | "Equals"
-    | "NotEquals"
-    | "In"
-    | "NotIn"
-    | "Contains"
-    | "StartsWith"
-    | "EndsWith"
-    | "GreaterThan"
-    | "GreaterThanOrEqual"
-    | "LessThan"
-    | "LessThanOrEqual"
-    | "Regex";
-
-export interface ConditionClause {
-    $type: "condition";
-    Field: string;
-    Comparison: ComparisonOperator;
-    Value: unknown;
-    subClause?: WhereClause;
-}
-
-export interface GroupClause {
-    $type: "group";
-    Operator: "And" | "Or";
-    Children: WhereClause[];
-}
-
-export type WhereClause = ConditionClause | GroupClause;
 
 export interface QueryRequestBase {
     Start?: number;

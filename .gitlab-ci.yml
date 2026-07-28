@@ -1,0 +1,219 @@
+# Lyo portfolio — build TS clients + Next.js + TestApi images, Terraform, deploy via SSM.
+# Required CI/CD variables (masked/protected as appropriate):
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
+#   TF_VAR_postgres_password, TF_VAR_rabbitmq_password
+#   (optional) TF_HTTP_* or configure S3 backend in terraform
+
+stages:
+  - build
+  - image
+  - plan
+  - deploy
+
+variables:
+  AWS_DEFAULT_REGION: us-east-2
+  NODE_VERSION: "22"
+  DOTNET_VERSION: "10.0"
+  PORTFOLIO_TF_DIR: infra/aws/portfolio/environments/prod
+  NAME_PREFIX: lyo-portfolio
+
+default:
+  interruptible: true
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+build-ts:
+  stage: build
+  image: node:${NODE_VERSION}-bookworm
+  script:
+    - cd packages/typescript/lyo-api-client && npm ci --ignore-scripts || npm install
+    - npm run build
+    - cd ../lyo-query && npm ci --ignore-scripts || npm install
+    - npm run build
+    - cd ../lyo-query-react && npm ci --ignore-scripts || npm install
+    - npm run build
+    - cd ../lyo-person-api-client && npm ci --ignore-scripts || npm install
+    - npm run build
+  artifacts:
+    paths:
+      - packages/typescript/lyo-api-client/dist/
+      - packages/typescript/lyo-query/dist/
+      - packages/typescript/lyo-query-react/dist/
+      - packages/typescript/lyo-person-api-client/dist/
+    expire_in: 1 day
+
+build-web:
+  stage: build
+  image: node:${NODE_VERSION}-bookworm
+  needs: [build-ts]
+  script:
+    - cd apps/portfolio
+    - npm ci || npm install
+    - export LYO_API_BASE_URL="${LYO_API_BASE_URL:-http://127.0.0.1:5251}"
+    - npm run build
+  artifacts:
+    paths:
+      - apps/portfolio/.next/
+      - apps/portfolio/public/
+      - apps/portfolio/package.json
+      - apps/portfolio/next.config.ts
+    expire_in: 1 day
+
+measure-package-sizes:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends nodejs
+  script:
+    - node scripts/portfolio/measure-package-sizes.mjs
+  artifacts:
+    paths:
+      - apps/portfolio/content/package-sizes.json
+    expire_in: 1 week
+    when: always
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# ---------------------------------------------------------------------------
+# Images → ECR
+# ---------------------------------------------------------------------------
+
+.ecr_docker_job:
+  image: docker:27-cli
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - apk add --no-cache aws-cli
+    - ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+    - export ECR_REGISTRY="${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+image-api:
+  extends: .ecr_docker_job
+  stage: image
+  needs: []
+  script:
+    - REPO="${ECR_REGISTRY}/${NAME_PREFIX}-testapi"
+    - docker build -f deploy/portfolio/api/Dockerfile -t "${REPO}:${CI_COMMIT_SHORT_SHA}" -t "${REPO}:latest" .
+    - docker push "${REPO}:${CI_COMMIT_SHORT_SHA}"
+    - docker push "${REPO}:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+image-web:
+  extends: .ecr_docker_job
+  stage: image
+  needs: [build-ts]
+  script:
+    - REPO="${ECR_REGISTRY}/${NAME_PREFIX}-web"
+    - docker build -f deploy/portfolio/web/Dockerfile -t "${REPO}:${CI_COMMIT_SHORT_SHA}" -t "${REPO}:latest" .
+    - docker push "${REPO}:${CI_COMMIT_SHORT_SHA}"
+    - docker push "${REPO}:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# ---------------------------------------------------------------------------
+# Terraform
+# ---------------------------------------------------------------------------
+
+terraform-plan:
+  stage: plan
+  image: hashicorp/terraform:1.9
+  script:
+    - cd "$PORTFOLIO_TF_DIR"
+    - terraform init -input=false
+    - terraform plan -input=false -out=tfplan
+  artifacts:
+    paths:
+      - ${PORTFOLIO_TF_DIR}/tfplan
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+terraform-apply:
+  stage: deploy
+  image: hashicorp/terraform:1.9
+  needs: [terraform-plan]
+  script:
+    - cd "$PORTFOLIO_TF_DIR"
+    - terraform init -input=false
+    - terraform apply -input=false -auto-approve tfplan
+  environment:
+    name: portfolio-prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+# ---------------------------------------------------------------------------
+# Deploy compose stacks via SSM
+# ---------------------------------------------------------------------------
+
+.deploy_ssm: &deploy_ssm
+  image: amazon/aws-cli:2.15.39
+  stage: deploy
+  needs: [image-api, image-web]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+deploy-api:
+  <<: *deploy_ssm
+  script:
+    - |
+      ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+      API_INSTANCE=$(aws ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${NAME_PREFIX}-api" "Name=instance-state-name,Values=running" \
+        --query 'Reservations[0].Instances[0].InstanceId' --output text)
+      IMAGE="${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${NAME_PREFIX}-testapi:latest"
+      PG_PARAM="/${NAME_PREFIX}/postgres/password"
+      COMMANDS=$(cat <<EOF
+      [
+        "set -euxo pipefail",
+        "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com",
+        "mkdir -p /opt/lyo/portfolio/api",
+        "cd /opt/lyo/portfolio/api",
+        "export TESTAPI_IMAGE=${IMAGE}",
+        "export POSTGRES_PASSWORD=\$(aws ssm get-parameter --name ${PG_PARAM} --with-decryption --query Parameter.Value --output text)",
+        "docker pull ${IMAGE}",
+        "docker compose -f docker-compose.yml up -d"
+      ]
+      EOF
+      )
+      # Operators should sync compose files to /opt/lyo/portfolio/api once (or via a follow-up artifact sync).
+      aws ssm send-command \
+        --instance-ids "$API_INSTANCE" \
+        --document-name AWS-RunShellScript \
+        --parameters "commands=[\"set -euxo pipefail\",\"aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com\",\"cd /opt/lyo/portfolio/api\",\"export TESTAPI_IMAGE=${IMAGE}\",\"export POSTGRES_PASSWORD=\$(aws ssm get-parameter --name ${PG_PARAM} --with-decryption --query Parameter.Value --output text)\",\"docker pull ${IMAGE}\",\"docker compose up -d\"]" \
+        --output text
+
+deploy-web:
+  <<: *deploy_ssm
+  script:
+    - |
+      ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+      WEB_INSTANCE=$(aws ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${NAME_PREFIX}-web" "Name=instance-state-name,Values=running" \
+        --query 'Reservations[0].Instances[0].InstanceId' --output text)
+      API_IP=$(aws ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${NAME_PREFIX}-api" "Name=instance-state-name,Values=running" \
+        --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text)
+      IMAGE="${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${NAME_PREFIX}-web:latest"
+      aws ssm send-command \
+        --instance-ids "$WEB_INSTANCE" \
+        --document-name AWS-RunShellScript \
+        --parameters "commands=[\"set -euxo pipefail\",\"aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com\",\"cd /opt/lyo/portfolio/web\",\"export PORTFOLIO_WEB_IMAGE=${IMAGE}\",\"export LYO_API_BASE_URL=http://${API_IP}:5251\",\"docker pull ${IMAGE}\",\"docker compose up -d\"]" \
+        --output text

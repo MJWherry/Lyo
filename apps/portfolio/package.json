@@ -1,0 +1,32 @@
+{
+  "name": "lyo-portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "prebuild": "node ../../scripts/portfolio/sync-benchmark-assets.mjs",
+    "build": "next build",
+    "start": "next start --port 3100",
+    "lint": "next lint",
+    "measure-sizes": "node ../../scripts/portfolio/measure-package-sizes.mjs",
+    "sync-benchmarks": "node ../../scripts/portfolio/sync-benchmark-assets.mjs"
+  },
+  "dependencies": {
+    "lyo-api-client": "file:../../packages/typescript/lyo-api-client",
+    "lyo-person-api-client": "file:../../packages/typescript/lyo-person-api-client",
+    "lyo-query": "file:../../packages/typescript/lyo-query",
+    "lyo-query-react": "file:../../packages/typescript/lyo-query-react",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^15.1.0",
+    "typescript": "^5.7.2"
+  }
+}

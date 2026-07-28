@@ -1,0 +1,9 @@
+{
+  "fullName": "Matthew Wherry",
+  "brand": "Lyo",
+  "tagline": "Library for Your Organization.",
+  "subtitle": "A .NET-focused toolkit of libraries and apps for business data: APIs with a rich query model, durable file handling, document parsing, and cross-cutting infrastructure — security, compression, observability, and more.",
+  "location": "Pittsburgh, PA",
+  "resumePath": "/resume",
+  "githubUrl": "https://github.com/MJWherry/Lyo"
+}

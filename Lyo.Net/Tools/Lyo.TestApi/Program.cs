@@ -218,6 +218,9 @@ app.UseResponseCompression();
 app.UseRequestDecompression();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.TestApi" }))
+    .AllowAnonymous()
+    .WithTags("Health");
 app.MapLyoJwks();
 app.MapLyoAuthEndpoints();
 app.MapLyoTokenManagementEndpoints();
