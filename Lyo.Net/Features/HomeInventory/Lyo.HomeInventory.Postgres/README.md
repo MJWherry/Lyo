@@ -16,27 +16,9 @@ backed by PostgreSQL.
   The default configuration section name is `PostgresHomeInventory`
   (`PostgresHomeInventoryOptions.SectionName`).
 
-## DI extensions
+## Examples
 
-Defined in `Extensions.cs` as `IServiceCollection` extensions:
-
-- `AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions>)` /
-  `AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions)` — register
-  only the `IDbContextFactory<HomeInventoryDbContext>` (useful for tooling and
-  migrations).
-- `AddHomeInventoryDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)`
-  — same, bound from configuration.
-- `AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions>)` /
-  `AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions)` — register the
-  DbContext factory **and** the `IHomeInventoryStore` singleton.
-- `AddPostgresHomeInventoryStoreFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)`
-  — register the store using configuration binding.
-
-All paths call `AddPostgresMigrations<HomeInventoryDbContext, PostgresHomeInventoryOptions>`
-from [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md), keeping
-hosted migration startup consistent with the rest of the framework.
-
-## Usage
+### Usage
 
 ```csharp
 services.AddPostgresHomeInventoryStore(new PostgresHomeInventoryOptions {
@@ -45,7 +27,7 @@ services.AddPostgresHomeInventoryStore(new PostgresHomeInventoryOptions {
 });
 ```
 
-Or with configuration:
+### Usage (2)
 
 ```json
 {
@@ -56,17 +38,26 @@ Or with configuration:
 }
 ```
 
+### Usage (3)
+
 ```csharp
 services.AddPostgresHomeInventoryStoreFromConfiguration(configuration);
 ```
 
+## DI extensions
+
+- `AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions>)` / `AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions)` — register only the `IDbContextFactory<HomeInventoryDbContext>` (useful for tooling and migrations).
+- `AddHomeInventoryDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` — same, bound from configuration.
+- `AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions>)` / `AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions)` — register the DbContext factory **and** the `IHomeInventoryStore` singleton.
+- `AddPostgresHomeInventoryStoreFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` — register the store using configuration binding.
+
+## Usage
+
+Or with configuration:
+
 ## Migrations hygiene
 
-Coordinate schema changes with any API adapters — especially when adjusting
-movement uniqueness constraints or the `(ItemId, LocationId)` composite key
-on stock (which must stay aligned with `UpsertStockAsync` semantics). Avoid
-editing historical migrations retroactively unless you intentionally squash,
-because that breaks checksums already deployed in production CI.
+Coordinate schema changes with any API adapters — especially when adjusting movement uniqueness constraints or the `(ItemId, LocationId)` composite key on stock (which must stay aligned with `UpsertStockAsync` semantics). Avoid editing historical migrations retroactively unless you intentionally squash, because that breaks checksums already deployed in production CI.
 
 ## Tenancy
 
@@ -95,21 +86,35 @@ See [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityRef
 
 ## Error model
 
-`Lyo.Exceptions` argument helpers (`ArgumentHelpers.ThrowIfNull`,
-`ThrowIfNullOrWhiteSpace`) guard malformed inputs. Domain-level conflicts use
-`Lyo.Exceptions.OperationHelpers.ThrowIf` / `ThrowIfNull`, so for example:
-
-- Deleting a category fails with an operation exception when child categories
-  or assigned items still exist.
-- Deleting a location fails when child locations, stock rows, or movement
-  history reference it.
-- `AdjustStockAsync` fails when an adjustment would drive `QuantityOnHand`
-  negative, or when called against a non-existent stock row with a
-  non-positive delta.
-- `TransferStockAsync` fails when `quantity <= 0`, the source row is missing,
-  or the source has insufficient on-hand quantity.
+- Deleting a category fails with an operation exception when child categories or assigned items still exist.
+- Deleting a location fails when child locations, stock rows, or movement history reference it.
+- `AdjustStockAsync` fails when an adjustment would drive `QuantityOnHand` negative, or when called against a non-existent stock row with a non-positive delta.
+- `TransferStockAsync` fails when `quantity <= 0`, the source row is missing, or the source has insufficient on-hand quantity.
 
 ## See also
 
-- [`Lyo.HomeInventory`](../Lyo.HomeInventory/README.md) — interface, records,
-  and enum vocabulary.
+- [`Lyo.HomeInventory`](../Lyo.HomeInventory/README.md) — interface, records, and enum vocabulary.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.HomeInventory` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

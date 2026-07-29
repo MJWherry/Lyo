@@ -7,80 +7,45 @@ directly.
 
 ## Service contracts
 
-- `IPdfService` — façade for loading PDFs (`OpenFromFile/Bytes/Stream` plus `…Async`
-  and batch variants), URL loading (`OpenFromUrlAsync` / `OpenFromUrlsAsync` — async
-  only), creating empty / opening for edit (`CreateEmpty`, `OpenForEdit` /
-  `OpenForEditAsync`), and merging (`MergePdfs`, `MergePdfsToFile`,
-  `MergePdfsToStream`, `MergePdfFiles`, `MergePdfBytes`, all sync + async).
-- `IPdfReader` (`IDisposable`, `IAsyncDisposable`) — open PDF: `SourceBytes`
-  (immutable buffer for merges / `OpenForEdit`), `Metrics`,
-  `Text` (`ITextExtractor`), `GetInfo()`, and `GetPageSizePoints(pageNumber1Based)`.
-  Not thread-safe.
-- `IPdfWriter` (`IDisposable`) — PdfSharp-backed editor with `PageCount`,
-  `ImportPagesFrom(IPdfReader)` / `ImportPagesFrom(ReadOnlySpan<byte>)`, `RemovePage`,
-  `InsertBlankPage`, `ReorderPages`, `ToBytes`, `Save` / `SaveAsync`, and
-  `CopyTo` / `CopyToAsync`. Page indices are zero-based; not thread-safe.
-- `ITextExtractor` — composition of `IPdfDocumentText` + `IPdfDocumentSections`,
-  reachable as `IPdfReader.Text`.
-- `IPdfDocumentText` — words / lines (`GetWords`, `GetLines`,
-  `GetWordsBetween`, `GetLinesBetween`), bounding-box and columnar reads
-  (`GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, `GetColumnarText`),
-  key/value extraction (`ExtractKeyValuePairs` with page, word-list, `PdfSection`,
-  and section-name overloads, plus `InferKeyValuePairsFromFormatting`), table
-  extraction (`ExtractTable` / `ExtractDataTable` with the same overload shapes plus
-  `ParseBytesAsDataTable`), and inference helpers
-  (`InferTableHeadersFromFormatting`). Every method has matching sync and async
-  variants.
-- `IPdfDocumentSections` — section slicing: `GetWordsBetweenSections`,
-  `GetLinesBetweenSections` / `GetLinesBetweenSectionsAsync`,
-  `GetSection` / `GetSectionAsync`. Section navigation is anchored by ordered section
-  labels with optional `defaultEndSection`, `startPage`, `endPage`, and `yTolerance`.
+- `IPdfService` — façade for loading PDFs (`OpenFromFile/Bytes/Stream` plus `…Async` and batch variants), URL loading (`OpenFromUrlAsync` / `OpenFromUrlsAsync` — async only), creating empty / opening for edit (`CreateEmpty`, `OpenForEdit` / `OpenForEditAsync`), and merging (`MergePdfs`, `MergePdfsToFile`, `MergePdfsToStream`, `MergePdfFiles`, `MergePdfBytes`, all sync + async).
+- `IPdfReader` (`IDisposable`, `IAsyncDisposable`) — open PDF: `SourceBytes` (immutable buffer for merges / `OpenForEdit`), `Metrics`, `Text` (`ITextExtractor`), `GetInfo()`, and `GetPageSizePoints(pageNumber1Based)`. Not thread-safe.
+- `IPdfWriter` (`IDisposable`) — PdfSharp-backed editor with `PageCount`, `ImportPagesFrom(IPdfReader)` / `ImportPagesFrom(ReadOnlySpan<byte>)`, `RemovePage`, `InsertBlankPage`, `ReorderPages`, `ToBytes`, `Save` / `SaveAsync`, and `CopyTo` / `CopyToAsync`. Page indices are zero-based; not thread-safe.
+- `ITextExtractor` — composition of `IPdfDocumentText` + `IPdfDocumentSections`, reachable as `IPdfReader.Text`.
+- `IPdfDocumentText` — words / lines (`GetWords`, `GetLines`, `GetWordsBetween`, `GetLinesBetween`), bounding-box and columnar reads (`GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, `GetColumnarText`), key/value extraction (`ExtractKeyValuePairs` with page, word-list, `PdfSection`, and section-name overloads, plus `InferKeyValuePairsFromFormatting`), table extraction (`ExtractTable` / `ExtractDataTable` with the same overload shapes plus `ParseBytesAsDataTable`), and inference helpers (`InferTableHeadersFromFormatting`). Every method has matching sync and async variants.
+- `IPdfDocumentSections` — section slicing: `GetWordsBetweenSections`, `GetLinesBetweenSections` / `GetLinesBetweenSectionsAsync`, `GetSection` / `GetSectionAsync`. Section navigation is anchored by ordered section labels with optional `defaultEndSection`, `startPage`, `endPage`, and `yTolerance`.
 
 ## Value types
 
-- `PdfInfo` — `PageCount`, `Title`, `Author`, `Subject`, `Creator`, `Producer`,
-  `FilePath`, `Url`, `CreationDate`, `ModifiedDate`.
-- `PdfWord(Text, BoundingBox, Format?)` and `PdfWordFormat(FontSize?, FontName?,
-  FontBold, FontItalic, FontColor?, FontUnderline)`.
+- `PdfInfo` — `PageCount`, `Title`, `Author`, `Subject`, `Creator`, `Producer`, `FilePath`, `Url`, `CreationDate`, `ModifiedDate`.
+- `PdfWord(Text, BoundingBox, Format?)` and `PdfWordFormat(FontSize?, FontName?, FontBold, FontItalic, FontColor?, FontUnderline)`.
 - `PdfTextLine(Y, Words, Text)` — words on the same visual row.
-- `PdfBoundingBox(Page, Box)` — 1-based page + `Lyo.Common.Records.BoundingBox2D` in
-  PDF points.
+- `PdfBoundingBox(Page, Box)` — 1-based page + `Lyo.Common.Records.BoundingBox2D` in PDF points.
 - `PdfColumnarText(Columns)` with `ToCombinedString(separator)`.
 - `PdfSection(Name, StartPage, EndPage, Lines)` with computed `Words` property.
-- `ColumnHeader(Label, IsKey = false)` — drives table extraction; `IsKey` columns
-  anchor a new row, others let unmatched lines append to the previous row.
+- `ColumnHeader(Label, IsKey = false)` — drives table extraction; `IsKey` columns anchor a new row, others let unmatched lines append to the previous row.
 - `KvColumnResult(ColumnIndex, Values)` with `KvColumnResult.Merge(...)` helper.
-- `PdfKeyValueLayout` — `Horizontal` (value to the right of the key) or `Vertical`
-  (value below the key).
-- `PdfInferFormattingFlags` — `None`, `Bold`, `Semicolon` (punctuation-terminated
-  labels), `Underline`.
+- `PdfKeyValueLayout` — `Horizontal` (value to the right of the key) or `Vertical` (value below the key).
+- `PdfInferFormattingFlags` — `None`, `Bold`, `Semicolon` (punctuation-terminated labels), `Underline`.
 
 ## Options
 
-- `PdfServiceOptions` — knobs registered as a singleton by `AddPdfService(...)`:
-  `DefaultYTolerance` (5.0), `DefaultKeyValueGap` (0.0),
-  `TableHeaderMergeThreshold` (20.0), `TableHeaderMatchThreshold` (0.75),
-  `TableColumnXTolerance` (5.0), `BoundingBoxOverlapThreshold` (0.8),
-  `MaxContinuationYGap` (10.0), `MaxContinuationXDistance` (100.0),
-  `ValueColumnXTolerance` (20.0), `KeyValueStackedMaxFirstGap` (120.0),
-  `MaxPdfSizeBytes` (falls back to `SuggestedMaxPdfSizeBytes = 25 MiB`),
-  `EnableMetrics` (default `false`), and configuration `SectionName =
-  "PdfServiceOptions"`. `MaxTotalLoadedBytes` is `[Obsolete]`; the shared catalog is
-  gone — each `IPdfReader` is caller-owned.
+- `PdfServiceOptions` — knobs registered as a singleton by `AddPdfService(...)`: `DefaultYTolerance` (5.0), `DefaultKeyValueGap` (0.0), `TableHeaderMergeThreshold` (20.0), `TableHeaderMatchThreshold` (0.75), `TableColumnXTolerance` (5.0), `BoundingBoxOverlapThreshold` (0.8), `MaxContinuationYGap` (10.0), `MaxContinuationXDistance` (100.0), `ValueColumnXTolerance` (20.0), `KeyValueStackedMaxFirstGap` (120.0), `MaxPdfSizeBytes` (falls back to `SuggestedMaxPdfSizeBytes = 25 MiB`), `EnableMetrics` (default `false`), and configuration `SectionName = "PdfServiceOptions"`. `MaxTotalLoadedBytes` is `[Obsolete]`; the shared catalog is gone — each `IPdfReader` is caller-owned.
 
 ## Targeting
 
-`netstandard2.0;net10.0`. References `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics`,
-`Lyo.Result`, and `Lyo.DataTable.Models`.
+`netstandard2.0;net10.0`. References `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics`, `Lyo.Result`, and `Lyo.DataTable.Models`.
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Pdf`](../Lyo.Pdf/README.md) — PdfPig + PDFsharp implementation.
-- [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md), [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md),
-  [`Lyo.Pdf.Web.Components`](../Lyo.Pdf.Web.Components/README.md).
-- [`Lyo.DataTable.Models`](../../DataTable/Lyo.DataTable.Models/README.md) — produced
-  by `ExtractDataTable` / `ParseBytesAsDataTable`.
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md),
-  [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md),
-  [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md),
-  [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md).
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.DataTable.Models` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

@@ -6,25 +6,15 @@ Interfaces and value types for the Lyo CSV stack. Defines the contract implement
 
 ## Interfaces
 
-- `ICsvService` — façade with the full read/write/validate/compare/split/combine surface.
-  Exposes `Writer`, `Reader` and `SetEncoding(Encoding)`.
-- `ICsvWriter` — write enumerables, selected `PropertyInfo` columns, custom column-name
-  dictionaries, formatter delegates, row/column dictionaries, and `Lyo.DataTable` snapshots
-  to file, `Stream`, `TextWriter`, string, or byte array. Sync overloads work on all targets;
-  async, progress (`IProgress<CsvProgress>`), and append overloads are gated on
-  `!NETSTANDARD2_0`.
-- `ICsvReader` — parse files, streams, and byte arrays as typed rows, row/column
-  dictionaries, or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`). Async-only
-  surface adds streaming (`IAsyncEnumerable<T>`), `CsvParseOptions` (continue-on-error,
-  row filter, max rows), chunked processing, statistics, schema validation, column-mapping
-  parsing, and file comparison.
+- `ICsvService` — façade with the full read/write/validate/compare/split/combine surface. Exposes `Writer`, `Reader` and `SetEncoding(Encoding)`.
+- `ICsvWriter` — write enumerables, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, row/column dictionaries, and `Lyo.DataTable` snapshots to file, `Stream`, `TextWriter`, string, or byte array. Sync overloads work on all targets; async, progress (`IProgress<CsvProgress>`), and append overloads are gated on `!NETSTANDARD2_0`.
+- `ICsvReader` — parse files, streams, and byte arrays as typed rows, row/column dictionaries, or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`). Async-only surface adds streaming (`IAsyncEnumerable<T>`), `CsvParseOptions` (continue-on-error, row filter, max rows), chunked processing, statistics, schema validation, column-mapping parsing, and file comparison.
 
 ## Models
 
 - `CsvParseOptions` — `ContinueOnError`, `OnError`, `RowFilter`, `MaxRows`.
 - `CsvSchema` + `CsvColumn` — describe expected columns for `ValidateAsync`.
-- `ColumnMapping` — explicit column-name → property mapping for
-  `ParseFileWithMappingAsync` / `ParseStreamWithMappingAsync`.
+- `ColumnMapping` — explicit column-name → property mapping for `ParseFileWithMappingAsync` / `ParseStreamWithMappingAsync`.
 - `CsvParseError` — error metadata surfaced to `CsvParseOptions.OnError`.
 - `CsvParseResult` / `CsvExportResult` — result envelopes used by the higher-level helpers.
 - `CsvStatistics` — row/column counts produced by `GetStatisticsAsync`.
@@ -34,14 +24,16 @@ Interfaces and value types for the Lyo CSV stack. Defines the contract implement
 
 ## Multi-targeting
 
-Targets `net10.0;netstandard2.0`. Async, streaming, and option-based overloads are wrapped
-in `#if !NETSTANDARD2_0` and are only visible on the `net10.0` TFM.
+Targets `net10.0;netstandard2.0`. Async, streaming, and option-based overloads are wrapped in `#if !NETSTANDARD2_0` and are only visible on the `net10.0` TFM.
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Csv`](../Lyo.Csv/README.md) — CsvHelper-backed implementation.
-- [`Lyo.DataTable.Models`](../../DataTable/Lyo.DataTable.Models/README.md) — `DataTable`
-  type produced by the `*AsDataTable` parse methods.
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md) — `Result<T>` envelope for
-  fallible operations.
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.DataTable.Models` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

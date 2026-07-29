@@ -1,0 +1,119 @@
+{
+  "id": "Lyo.Pdf.Rendering",
+  "name": "Lyo.Pdf.Rendering",
+  "area": "Data",
+  "tagline": "Rasterizes PDF pages to PNG via PDFtoImage (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.",
+  "description": "Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage)\n(PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets\n`net10.0`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "services.AddPdfPageRasterizer();\n\npublic sealed class CoverRenderer(IPdfPageRasterizer rasterizer)\n{\n    public async Task<byte[]> RenderAsync(ReadOnlyMemory<byte> pdf, CancellationToken ct)\n        => (await rasterizer.RenderPageToPngAsync(pdf, pageNumber1Based: 1, dpi: 144, cancellationToken: ct))\n            .ValueOrThrow()\n            .PngBytes;\n}"
+    },
+    {
+      "title": "API",
+      "language": "csharp",
+      "code": "public interface IPdfPageRasterizer\n{\n    Task<Result<PdfRasterPage>> RenderPageToPngAsync(\n        ReadOnlyMemory<byte> pdfBytes,\n        int pageNumber1Based,\n        int dpi,\n        string? password = null,\n        CancellationToken cancellationToken = default);\n}\n\npublic sealed record PdfRasterPage(byte[] PngBytes, int WidthPx, int HeightPx);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "API",
+      "body": "`PdfToImagePageRasterizer` is the default implementation: it dispatches the CPU-bound\nPDFium call through `Task.Run`, probes the rendered bytes with `ImageSharp` to read\nthe bitmap dimensions, and logs an elapsed-ms trace on success. Failures surface as\n`Result<PdfRasterPage>.Failure` tagged with:\n\n- `PdfRenderErrorCodes.PageOutOfRange` (`\"PDF_RENDER_PAGE_OUT_OF_RANGE\"`) when\n  `pageNumber1Based > pageCount`.\n- `PdfRenderErrorCodes.RenderFailed` (`\"PDF_RENDER_FAILED\"`) for invalid PDFs,\n  missing/incorrect passwords, or any PDFium error."
+    },
+    {
+      "type": "paragraph",
+      "title": "Usage",
+      "text": "Pass the document `password` argument when the PDF is protected. Pages are 1-based. Prefer [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when you need to combine rasterization with `IOcrEngine` and project bounding boxes back into PDF coordinates."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Pdf/Lyo.Pdf.Rendering/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PDFtoImage",
+      "kind": "package",
+      "version": "5.2.1",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp",
+      "kind": "package",
+      "version": "3.1.12",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

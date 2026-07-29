@@ -3,21 +3,9 @@
 **Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support
 live in companion packages (for example **`Lyo.Barcode.Native`**).
 
-## Public API overview
+## Examples
 
-| Type                                        | Description                                                                                                                        |
-|---------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| **`IBarcodeService`**                       | Generate barcodes (string or **`BarcodeBuilder`**), stream/file output, batch, and **read** barcodes from raster bytes.            |
-| **`BarcodeBuilder`**                        | Fluent configuration of payload, **`BarcodeSymbology`**, **`BarcodeOptions`** (module width, colors, human-readable text, border). |
-| **`BarcodeRequest`**                        | Batch item: **`Data`**, **`Symbology`**, optional **`Options`**, optional **`Id`**.                                                |
-| **`BarcodeOptions`**                        | Raster/SVG dimensions, colors, quiet zone, human-readable caption under bars, optional **border** frame.                           |
-| **`BarcodeServiceOptions`**                 | Host limits and defaults for implementations (see **`SectionName`**).                                                              |
-| **`BarcodeResult`**                         | **`Result<BarcodeRequest>`** carrying **`ImageBytes`**, dimensions, format.                                                        |
-| **`BarcodeImageReadResult`**                | Decoder output: **`Text`**, **`FormatName`**.                                                                                      |
-| **`BarcodeSymbology`**, **`BarcodeFormat`** | Supported symbologies and output formats.                                                                                          |
-| **`BarcodeErrorCodes`**                     | Stable error code strings for failures.                                                                                            |
-
-## Quick start
+### Quick start
 
 ```csharp
 using Lyo.Barcode;
@@ -53,12 +41,6 @@ var (data, sym, opts) = BarcodeBuilder.New()
 await barcodes.GenerateAsync(data, sym, opts);
 ```
 
-### Border (rendering)
-
-When **`BarcodeOptions.ShowBorder`** is true, **`Lyo.Barcode.Native`** expands the output by **`2 × BorderWidthPixels`** on width and height and draws a filled frame in *
-*`BorderColorHex`** around the symbol (inside that inset, the usual background and bars are unchanged). Width is clamped by **`BarcodeServiceOptions.MinBorderWidthPixels`** / *
-*`MaxBorderWidthPixels`** (defaults **1–64**). **`BorderColorHex`** must be **`#RGB`** or **`#RRGGBB`** when the border is enabled.
-
 ### Decode from image bytes
 
 ```csharp
@@ -67,14 +49,38 @@ if (read.IsSuccess && read.Data != null)
     Console.WriteLine(read.Data.Text);
 ```
 
+## Public API overview
+
+| Type | Description |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **`IBarcodeService`** | Generate barcodes (string or **`BarcodeBuilder`**), stream/file output, batch, and **read** barcodes from raster bytes. |
+| **`BarcodeBuilder`** | Fluent configuration of payload, **`BarcodeSymbology`**, **`BarcodeOptions`** (module width, colors, human-readable text, border). |
+| **`BarcodeRequest`** | Batch item: **`Data`**, **`Symbology`**, optional **`Options`**, optional **`Id`**. |
+| **`BarcodeOptions`** | Raster/SVG dimensions, colors, quiet zone, human-readable caption under bars, optional **border** frame. |
+| **`BarcodeServiceOptions`** | Host limits and defaults for implementations (see **`SectionName`**). |
+| **`BarcodeResult`** | **`Result<BarcodeRequest>`** carrying **`ImageBytes`**, dimensions, format. |
+| **`BarcodeImageReadResult`** | Decoder output: **`Text`**, **`FormatName`**. |
+| **`BarcodeSymbology`**, **`BarcodeFormat`** | Supported symbologies and output formats. |
+| **`BarcodeErrorCodes`** | Stable error code strings for failures. |
+
+## Border (rendering)
+
+When **`BarcodeOptions.ShowBorder`** is true, **`Lyo.Barcode.Native`** expands the output by **`2 × BorderWidthPixels`** on width and height and draws a filled frame in * *`BorderColorHex`** around the symbol (inside that inset, the usual background and bars are unchanged). Width is clamped by **`BarcodeServiceOptions.MinBorderWidthPixels`** / * *`MaxBorderWidthPixels`** (defaults **1–64**). **`BorderColorHex`** must be **`#RGB`** or **`#RRGGBB`** when the border is enabled.
+
 ## Configuration binding
 
 Implementations may bind **`BarcodeServiceOptions`** from configuration using section **`BarcodeService`** (see **`BarcodeServiceOptions.SectionName`**).
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Barcode.Native`](../Lyo.Barcode.Native/README.md) — native-backed generator/reader (when present in your solution).
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

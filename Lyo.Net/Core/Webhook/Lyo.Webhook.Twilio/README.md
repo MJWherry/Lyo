@@ -5,9 +5,9 @@ form parameters, matching Twilio’s server-side behavior (including URL variant
 
 Reference: [Twilio — Webhooks security](https://www.twilio.com/docs/usage/webhooks/webhooks-security).
 
-## Usage
+## Examples
 
-1. Use the **`Lyo.Webhook`** fluent pipeline so the body is read once, **`RequestUrl`** is set, and **`Parameters`** are filled for **`application/x-www-form-urlencoded`** posts.
+### Usage
 
 ```csharp
 var authToken = configuration["Twilio:AuthToken"]!;
@@ -22,11 +22,11 @@ app.MapWebhook("/webhooks/twilio/sms")
     });
 ```
 
-2. Ensure **`WebhookVerificationContext.RequestUrl`** matches the URL Twilio called (scheme, host, path, query). The default **`GetPublicRequestUrl()`** helper uses the current
-   request; behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio’s URL.
+## Usage
 
-3. For **form** webhooks, **`Parameters`** must contain all form fields Twilio sends. The core library populates **`Parameters`** when **`Content-Type`** is *
-   *`application/x-www-form-urlencoded`**.
+- Use the **`Lyo.Webhook`** fluent pipeline so the body is read once, **`RequestUrl`** is set, and **`Parameters`** are filled for **`application/x-www-form-urlencoded`** posts.
+- Ensure **`WebhookVerificationContext.RequestUrl`** matches the URL Twilio called (scheme, host, path, query). The default **`GetPublicRequestUrl()`** helper uses the current request; behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio’s URL.
+- For **form** webhooks, **`Parameters`** must contain all form fields Twilio sends. The core library populates **`Parameters`** when **`Content-Type`** is * *`application/x-www-form-urlencoded`**.
 
 ## Types
 
@@ -39,14 +39,10 @@ app.MapWebhook("/webhooks/twilio/sms")
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Webhook.Twilio.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-*None declared in this project file.*
-
-### Project references
-
-- [`Lyo.Webhook`](../Lyo.Webhook/README.md)
+- `Lyo.Webhook` — (direct, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

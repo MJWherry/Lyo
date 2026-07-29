@@ -1,0 +1,427 @@
+{
+  "id": "Lyo.Pdf.Web.Components",
+  "name": "Lyo.Pdf.Web.Components",
+  "area": "Data",
+  "tagline": "Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box…",
+  "description": "Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a\nPDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets\nend-users draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.\n\nTargets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and\n`MudBlazor` 9.3+.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register with DI",
+      "language": "csharp",
+      "code": "services.AddPdfAnnotatorService(); // IPdfAnnotatorService -> BrowserPdfAnnotator\nservices.AddPdfAnnotatorInterop(); // LyoPdfAnnotatorController (scoped)"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Components",
+      "items": [
+        "`HtmlToPdfWorkbench.razor` — paste HTML or upload an `.html` / `.htm` / `.txt` file, then convert it to a PDF via `IWebRendererService`.",
+        "`PdfAnnotationWorkbench.razor` — wraps `LyoPdfAnnotator` and renders a live table of saved annotations and their extracted payloads.",
+        "`PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`) — drawing surface and result list. Exposes `AnnotationsChanged` and `AnnotationsSaved` callbacks."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Annotator services",
+      "items": [
+        "`IPdfAnnotatorService` (`BrowserPdfAnnotator` implementation) — returns `IReadOnlyDictionary<string, PdfBoundingBox>` after the user finishes annotating a PDF supplied as `Stream`, `byte[]`, or file path (`AnnotateAsync` / `AnnotateFileAsync`).",
+        "`LyoPdfAnnotatorController` — scoped controller used by the Blazor components.",
+        "`LyoPdfAnnotationResult` — payload emitted per saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`), `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Dependency injection",
+      "text": "Combine with [`Lyo.Pdf`](../Lyo.Pdf/README.md)'s `AddPdfService(...)` so the annotator can call into `IPdfReader.Text` for bounding-box driven extraction."
+    },
+    {
+      "type": "paragraph",
+      "title": "Static assets",
+      "text": "Browser scripts live under `wwwroot/scripts/`. Reference them from your host page or through the standard Razor class-library `_content/Lyo.Pdf.Web.Components/` path."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Pdf",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Pdf.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.WebRenderer",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.Web",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PDFsharp",
+      "kind": "package",
+      "version": "6.2.4",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "PdfPig",
+      "kind": "package",
+      "version": "0.1.15",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "PuppeteerSharp",
+      "kind": "package",
+      "version": "24.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.0",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

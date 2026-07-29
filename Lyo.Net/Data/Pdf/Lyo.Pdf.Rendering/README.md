@@ -4,7 +4,23 @@ Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFt
 (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets
 `net10.0`.
 
-## API
+## Examples
+
+### Usage
+
+```csharp
+services.AddPdfPageRasterizer();
+
+public sealed class CoverRenderer(IPdfPageRasterizer rasterizer)
+{
+    public async Task<byte[]> RenderAsync(ReadOnlyMemory<byte> pdf, CancellationToken ct)
+        => (await rasterizer.RenderPageToPngAsync(pdf, pageNumber1Based: 1, dpi: 144, cancellationToken: ct))
+            .ValueOrThrow()
+            .PngBytes;
+}
+```
+
+### API
 
 ```csharp
 public interface IPdfPageRasterizer
@@ -20,6 +36,8 @@ public interface IPdfPageRasterizer
 public sealed record PdfRasterPage(byte[] PngBytes, int WidthPx, int HeightPx);
 ```
 
+## API
+
 `PdfToImagePageRasterizer` is the default implementation: it dispatches the CPU-bound
 PDFium call through `Task.Run`, probes the rendered bytes with `ImageSharp` to read
 the bitmap dimensions, and logs an elapsed-ms trace on success. Failures surface as
@@ -32,34 +50,18 @@ the bitmap dimensions, and logs an elapsed-ms trace on success. Failures surface
 
 ## Usage
 
-```csharp
-services.AddPdfPageRasterizer();
-
-public sealed class CoverRenderer(IPdfPageRasterizer rasterizer)
-{
-    public async Task<byte[]> RenderAsync(ReadOnlyMemory<byte> pdf, CancellationToken ct)
-        => (await rasterizer.RenderPageToPngAsync(pdf, pageNumber1Based: 1, dpi: 144, cancellationToken: ct))
-            .ValueOrThrow()
-            .PngBytes;
-}
-```
-
-Pass the document `password` argument when the PDF is protected. Pages are 1-based.
-
-Prefer [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when you need to combine
-rasterization with `IOcrEngine` and project bounding boxes back into PDF coordinates.
+Pass the document `password` argument when the PDF is protected. Pages are 1-based. Prefer [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when you need to combine rasterization with `IOcrEngine` and project bounding boxes back into PDF coordinates.
 
 ## Dependencies
 
-| Package                                                 | Role                         |
-|---------------------------------------------------------|------------------------------|
-| `PDFtoImage`                                            | PDFium-backed rasterization  |
-| `SixLabors.ImageSharp`                                  | Bitmap probe (width/height)  |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | DI registration              |
-| `Microsoft.Extensions.Logging.Abstractions`             | Optional logger              |
-| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Result`            | Shared helpers + `Result<T>` |
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-## Related projects
-
-- [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md), [`Lyo.Pdf`](../Lyo.Pdf/README.md),
-  [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md).
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `PDFtoImage` `5.2.1` — (direct, third-party)
+- `SixLabors.ImageSharp` `3.1.12` — (direct, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

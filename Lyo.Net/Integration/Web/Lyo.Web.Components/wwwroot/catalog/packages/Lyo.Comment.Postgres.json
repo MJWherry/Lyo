@@ -1,0 +1,243 @@
+{
+  "id": "Lyo.Comment.Postgres",
+  "name": "Lyo.Comment.Postgres",
+  "area": "Features",
+  "tagline": "PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists comments to the `comment.comment` table and reactions to `comment.comment_reaction` (schema constant…",
+  "description": "PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists\ncomments to the `comment.comment` table and reactions to\n`comment.comment_reaction` (schema constant:\n`PostgresCommentOptions.Schema = \"comment\"`) with migrations support. Comments\nhave **subject** / **actor** (`for_entity_*` / `from_entity_*`), optional\n**ReplyToCommentId** (parent comment), and cached `LikeCount` / `DislikeCount`\ncounters.\n\n`PostgresCommentStore` implements `ICommentStore` and `Lyo.Health.IHealth`\n(`HealthCheckName = \"comment-postgres\"`), so registering the store also wires\nup a liveness probe.",
+  "features": [
+    "**Subject/actor** — same relation endpoint shape as Rating and Note.",
+    "**Reply threads** — `ReplyToCommentId` points to the parent comment; `GetRepliesAsync(parentId)` returns direct replies; `DeleteAsync(id, deleteReplies: true)` walks the descendant tree and soft-deletes every nested reply (plus their reactions).",
+    "**Reactions (like/dislike)** — tracked per user via the `comment_reaction` table; exactly one reaction per user per comment. Flipping `Like` ↔ `Dislike` mutates the existing row and adjusts the cached counters on the parent comment.",
+    "**IsEdited** — automatically set to `true` by `SaveAsync` whenever an existing row is updated."
+  ],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "services.AddPostgresCommentStore(new PostgresCommentOptions {\n    ConnectionString = \"...\",\n    EnableAutoMigrations = true\n});"
+    },
+    {
+      "title": "Usage (2)",
+      "language": "json",
+      "code": "{\n  \"PostgresComment\": {\n    \"ConnectionString\": \"Host=localhost;Database=comment;...\",\n    \"EnableAutoMigrations\": true\n  }\n}"
+    },
+    {
+      "title": "Usage (3)",
+      "language": "csharp",
+      "code": "services.AddPostgresCommentStoreFromConfiguration(configuration);"
+    },
+    {
+      "title": "Example",
+      "language": "csharp",
+      "code": "await commentStore.SaveAsync(new CommentRecord {\n    SubjectEntityType = \"Docket\",\n    SubjectEntityId = docketId.ToString(),\n    ActorEntityType = \"User\",\n    ActorEntityId = userId.ToString(),\n    Content = \"Great work on this case!\"\n});\n\nawait commentStore.SaveAsync(new CommentRecord {\n    SubjectEntityType = \"Docket\",\n    SubjectEntityId = docketId.ToString(),\n    ActorEntityType = \"User\",\n    ActorEntityId = otherUserId.ToString(),\n    Content = \"I agree!\",\n    ReplyToCommentId = parentCommentId\n});\n\nvar commentRef = CommentRef.ForComment(commentId);\nvar userRef = EntityRef.ForGuid(\"User\", userId);\n\nawait commentStore.AddReactionAsync(commentRef, userRef, CommentReactionType.Like);\nvar reaction = await commentStore.GetReactionAsync(commentRef, userRef);\nawait commentStore.RemoveReactionAsync(commentRef, userRef);"
+    },
+    {
+      "title": "Migrations",
+      "language": "bash",
+      "code": "export COMMENT_CONNECTION_STRING=\"Host=localhost;Database=comment;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Postgres"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "DI extensions",
+      "items": [
+        "`AddCommentDbContextFactory(Action<PostgresCommentOptions>)` / `AddCommentDbContextFactory(PostgresCommentOptions)` — register only the `IDbContextFactory<CommentDbContext>`.",
+        "`AddCommentDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)` — same, bound from configuration (default section: `PostgresComment`).",
+        "`AddPostgresCommentStore(Action<PostgresCommentOptions>)` / `AddPostgresCommentStore(PostgresCommentOptions)` — register the DbContext factory **and** the `ICommentStore` singleton.",
+        "`AddPostgresCommentStoreFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)` — register the store using configuration binding."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Usage",
+      "text": "Or with configuration:"
+    },
+    {
+      "type": "list",
+      "title": "Schema",
+      "items": [
+        "**comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`, `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`, `is_edited`, and `updated_timestamp`.",
+        "**comment.comment_reaction** — `id` (uuid); subject `for_entity_*` (always `\"Comment\"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent comment at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`), `created_timestamp`."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Tenancy",
+      "body": "`PostgresCommentStore` accepts an optional `Guid? tenantId` on every\nread/write method (mirroring `IFavoriteStore`) and resolves it through\n`TenancyResolver` under the policy configured in\n`PostgresCommentOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when\nunset). The comment `tenant_id` column is non-null, so only\n`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is\nrejected at store construction. The store applies a `WhereTenant` filter on\nevery query, and reactions inherit the parent comment's `TenantId` on insert\nso the sub-table stays consistent with the parent. See\n[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)\nfor the full policy matrix and `appsettings.json` snippet.\n\n```json\n{\n  \"PostgresComment\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Features/Comment/Lyo.Comment.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Comment",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

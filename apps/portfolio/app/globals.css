@@ -63,11 +63,14 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 1.05rem;
@@ -121,6 +124,8 @@ code {
 pre {
   margin: 0;
   padding: 1.1rem 1.25rem;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   background: var(--pre-bg);
   border: 1px solid var(--line);
@@ -141,6 +146,8 @@ pre code {
 
 .shell {
   width: min(100% - 2rem, var(--max));
+  max-width: 100%;
+  min-width: 0;
   margin-inline: auto;
 }
 
@@ -215,6 +222,97 @@ pre code {
 
 .site-main {
   padding-bottom: 4rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.code-block {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.65rem 0 0;
+}
+
+.code-block:first-child {
+  margin-top: 0;
+}
+
+/* Adjacent fences should sit tight — no large white “waist” between rounded blocks. */
+.code-stack .code-block + .code-block,
+.code-block + .code-block {
+  margin-top: 0.35rem;
+}
+
+.code-stack .code-block pre,
+.code-block + .code-block pre {
+  border-radius: var(--radius);
+}
+
+.dep-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dep-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+  font-size: 0.92rem;
+}
+
+.dep-list .dep-name {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.dep-list .dep-version {
+  color: var(--ink-faint);
+  font-size: 0.85em;
+}
+
+.dep-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+  background: var(--bg-soft);
+}
+
+.dep-tag[data-tag="direct"] {
+  color: #0b6b3a;
+  border-color: color-mix(in srgb, #0b6b3a 35%, var(--line));
+}
+
+.dep-tag[data-tag="transitive"] {
+  color: #8a5a00;
+  border-color: color-mix(in srgb, #8a5a00 35%, var(--line));
+}
+
+.dep-tag[data-tag="lyo"] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.dep-tag[data-tag="microsoft"] {
+  color: #0b5cab;
+  border-color: color-mix(in srgb, #0b5cab 35%, var(--line));
+}
+
+.dep-tag[data-tag="third-party"] {
+  color: #6b3fa0;
+  border-color: color-mix(in srgb, #6b3fa0 35%, var(--line));
 }
 
 .site-footer {
@@ -385,6 +483,17 @@ pre code {
   border-radius: calc(var(--radius) + 0.15rem);
   padding: 1.25rem 1.35rem;
   box-shadow: var(--shadow);
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.panel > h2 {
+  margin: 0 0 0.45rem;
+}
+
+.panel > .code-block {
+  margin-top: 0;
 }
 
 .panel + .panel {
@@ -394,6 +503,38 @@ pre code {
 .grid-2 {
   display: grid;
   gap: 1rem;
+  max-width: 100%;
+  min-width: 0;
+  align-items: start;
+}
+
+.grid-2 > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Side-by-side panels in a grid should not stack with .panel + .panel margin. */
+.grid-2 > .panel + .panel {
+  margin-top: 0;
+}
+
+.query-demo-split {
+  margin-top: 0.25rem;
+}
+
+.query-demo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.query-demo-panel > h2 {
+  margin: 0;
+}
+
+.query-demo-panel > .code-block,
+.query-demo-panel > .code-stack {
+  margin: 0;
 }
 
 @media (min-width: 860px) {
@@ -421,6 +562,8 @@ pre code {
   color: inherit;
   transition: border-color 0.15s ease, transform 0.15s ease;
   min-height: 8rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 a.card:hover {
@@ -432,6 +575,29 @@ a.card:hover {
 .card strong {
   font-family: var(--font-display);
   font-size: 1.05rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.card .card-blurb {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-search-input {
+  width: 100%;
+  max-width: 32rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: inherit;
+  font: inherit;
 }
 
 .card .card-meta {
@@ -449,6 +615,22 @@ a.card:hover {
 .area-section h2 {
   font-size: 1.35rem;
   margin-bottom: 0.85rem;
+}
+
+.topic-section {
+  margin-bottom: 1.35rem;
+}
+
+.topic-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.65rem;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.topic-section .card-grid {
+  margin-bottom: 0.25rem;
 }
 
 .feature-list {
@@ -489,7 +671,10 @@ a.card:hover {
 }
 
 .table-wrap {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -555,6 +740,17 @@ table.data td.wrap {
 .badge-accent {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.badge-tfm {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink-muted, var(--ink-faint));
+  border: 1px solid var(--line);
 }
 
 .chip-row {

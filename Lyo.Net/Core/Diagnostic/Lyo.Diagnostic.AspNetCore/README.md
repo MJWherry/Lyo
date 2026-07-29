@@ -2,9 +2,9 @@
 
 ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your existing problem-details middleware.
 
-## Installation
+## Examples
 
-Reference this package and call:
+### Installation
 
 ```csharp
 using Lyo.Diagnostic.AspNetCore;
@@ -21,29 +21,7 @@ builder.Services.AddLyoDiagnosticsWeb(o =>
 app.UseDiagnosticExceptionRecording();
 ```
 
-## Pipeline ordering
-
-`UseDiagnosticExceptionRecording` must be registered **after** outer catch-all middleware (e.g. **`UseMiddleware<LoggingMiddleware>()`** registered **first**) so that:
-
-1. This middleware sits **closer to route handlers** and runs **first when an exception unwinds**.
-2. It **records** the failure and calls **`IStructuredLogEnricher`**, then **rethrows**.
-3. Outer middleware can still build **Problem Details** / HTTP error bodies.
-
-If this middleware is registered **before** an outer layer that catches without rethrowing, recording will not run.
-
-## Options (`DiagnosticWebOptions`)
-
-| Property | Purpose |
-|----------|---------|
-| `MinimumSeverity` | Only occurrences at or above this severity are written to the inbox. |
-| `RecordExpectedControlFlow` | When `false`, expected control-flow classifications are skipped. |
-| `BreadcrumbCapacity` | Max breadcrumbs per request (`IBreadcrumbTrail`). |
-| `InMemoryInboxMaxOccurrences` | Cap for the singleton `InMemoryErrorInbox`. |
-| `CorrelationIdHeaders` | Headers tried in order for `RequestMetadata.CorrelationId`; falls back to `TraceIdentifier`. |
-
-## Breadcrumbs in a controller
-
-Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:
+### Breadcrumbs in a controller
 
 ```csharp
 public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
@@ -55,6 +33,26 @@ public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
     }
 }
 ```
+
+## Pipeline ordering
+
+- This middleware sits **closer to route handlers** and runs **first when an exception unwinds**.
+- It **records** the failure and calls **`IStructuredLogEnricher`**, then **rethrows**.
+- Outer middleware can still build **Problem Details** / HTTP error bodies.
+
+## Options (`DiagnosticWebOptions`)
+
+| Property | Purpose |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `MinimumSeverity` | Only occurrences at or above this severity are written to the inbox. |
+| `RecordExpectedControlFlow` | When `false`, expected control-flow classifications are skipped. |
+| `BreadcrumbCapacity` | Max breadcrumbs per request (`IBreadcrumbTrail`). |
+| `InMemoryInboxMaxOccurrences` | Cap for the singleton `InMemoryErrorInbox`. |
+| `CorrelationIdHeaders` | Headers tried in order for `RequestMetadata.CorrelationId`; falls back to `TraceIdentifier`. |
+
+## Breadcrumbs in a controller
+
+Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:
 
 Do **not** put secrets or PII in breadcrumb data. See the **`Lyo.Diagnostic`** README.
 

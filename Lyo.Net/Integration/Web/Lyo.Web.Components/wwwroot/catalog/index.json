@@ -1,0 +1,2227 @@
+{
+  "generatedAt": "2026-07-29T01:14:49.369405+00:00",
+  "packageCount": 211,
+  "packages": [
+    {
+      "id": "Lyo.Email",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email",
+      "tagline": "A production-ready email service library for .NET with SMTP support, built on MailKit.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Email.Models",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email.Models",
+      "tagline": "Shared models, options, error codes, and event arguments for the `Lyo.Email` SMTP service.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Email.Postgres",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email.Postgres",
+      "tagline": "PostgreSQL schema and `EmailDbContext` for logging emails sent by `Lyo.Email`. This package does **not** subscribe to `EmailService` events — consumers handle the mapping and insertion (e.g.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Email.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email.Web.Components",
+      "tagline": "Blazor (MudBlazor) workbench component for sending email through an injected `IEmailService`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.MessageQueue",
+      "area": "Communication",
+      "topic": "Lyo.MessageQueue",
+      "name": "Lyo.MessageQueue",
+      "tagline": "Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.MessageQueue.RabbitMq",
+      "area": "Communication",
+      "topic": "Lyo.MessageQueue",
+      "name": "Lyo.MessageQueue.RabbitMq",
+      "tagline": "Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService` when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.MessageQueue.RabbitMq.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.MessageQueue",
+      "name": "Lyo.MessageQueue.RabbitMq.Web.Components",
+      "tagline": "Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.MessageQueue.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.MessageQueue",
+      "name": "Lyo.MessageQueue.Web.Components",
+      "tagline": "Reusable Blazor components for provider-neutral message queue dashboards and workbenches.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms",
+      "tagline": "A production-ready SMS library for .NET with extensible architecture for multiple providers.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms.Models",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms.Models",
+      "tagline": "Shared **domain types** for `Lyo.Sms`: payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in provider packages (`Lyo.Sms.Twilio`, etc.).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms.Postgres",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms.Postgres",
+      "tagline": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can persist send outcomes…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms.Twilio",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms.Twilio",
+      "tagline": "A production-ready Twilio SMS/MMS service implementation for .NET, built on the extensible `Lyo.Sms` library.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms.Twilio.Postgres",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms.Twilio.Postgres",
+      "tagline": "EF Core PostgreSQL persistence tailored for **Twilio-outbound (+ metadata)** traces: **`TwilioSmsDbContext`** and **`TwilioSmsLogEntity`**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sms.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.Sms",
+      "name": "Lyo.Sms.Web.Components",
+      "tagline": "**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from `Lyo.Web.Components`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Stt",
+      "area": "Communication",
+      "topic": "Lyo.Stt",
+      "name": "Lyo.Stt",
+      "tagline": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Translation",
+      "area": "Communication",
+      "topic": "Lyo.Translation",
+      "name": "Lyo.Translation",
+      "tagline": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`. See package layout.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Translation.Aws",
+      "area": "Communication",
+      "topic": "Lyo.Translation",
+      "name": "Lyo.Translation.Aws",
+      "tagline": "Amazon Translate implementation of `ITranslationService`: translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Translation.Google",
+      "area": "Communication",
+      "topic": "Lyo.Translation",
+      "name": "Lyo.Translation.Google",
+      "tagline": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService` extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Translation.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.Translation",
+      "name": "Lyo.Translation.Web.Components",
+      "tagline": "Blazor (MudBlazor) workbench component for exercising the configured `Lyo.Translation` implementation interactively from a host application.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts",
+      "tagline": "Contracts and shared behaviour for text-to-speech in Lyo: provider-agnostic interfaces, a non-generic façade, and a base service with bulk synthesis, metrics hooks, and lifecycle events.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.AwsPolly",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.AwsPolly",
+      "tagline": "Amazon Polly integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.AwsPolly.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.AwsPolly.Web.Components",
+      "tagline": "Blazor (MudBlazor) workbench component for trying out the `Lyo.Tts.AwsPolly` implementation interactively from a host application.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.Models",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.Models",
+      "tagline": "Shared **requests**, **results**, **options**, and **event payloads** for Lyo text-to-speech. Provider assemblies reference this package instead of coupling to each other.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.Typecast",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.Typecast",
+      "tagline": "Lyo.Typecast.Client–backed synthesis: `TypecastTtsService` resolves audio via `TypecastClient`, supports optional voice catalog loading for validation (`LoadVoicesAsync`), bulk flows from `Lyo.Tts`…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.Typecast.Web.Components",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.Typecast.Web.Components",
+      "tagline": "Blazor (MudBlazor) workbench component for exercising `Lyo.Tts.Typecast` interactively from a host application.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tts.WindowsSpeech",
+      "area": "Communication",
+      "topic": "Lyo.Tts",
+      "name": "Lyo.Tts.WindowsSpeech",
+      "tagline": "Windows Speech Synthesis Text-to-Speech service implementation for the Lyo framework using Windows built-in SAPI (Speech API).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audit",
+      "area": "Core",
+      "topic": "Lyo.Audit",
+      "name": "Lyo.Audit",
+      "tagline": "Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audit.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Audit",
+      "name": "Lyo.Audit.Postgres",
+      "tagline": "PostgreSQL implementation of Lyo.Audit using Entity Framework Core. Persists `AuditChange` and `AuditEvent` records to PostgreSQL with JSONB columns for dictionary data.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Benchmark.Models",
+      "area": "Core",
+      "topic": "Lyo.Benchmark",
+      "name": "Lyo.Benchmark.Models",
+      "tagline": "Consumer-facing models and builders for the **unified Lyo benchmark report schema** (`lyo.bench/v1`).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Benchmarking",
+      "area": "Core",
+      "topic": "Lyo.Benchmarking",
+      "name": "Lyo.Benchmarking",
+      "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Cache",
+      "area": "Core",
+      "topic": "Lyo.Cache",
+      "name": "Lyo.Cache",
+      "tagline": "Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression / encryption on .NET 10+)…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Cache.Fusion",
+      "area": "Core",
+      "topic": "Lyo.Cache",
+      "name": "Lyo.Cache.Fusion",
+      "tagline": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between * *purely in-memory**…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ChangeTracker",
+      "area": "Core",
+      "topic": "Lyo.ChangeTracker",
+      "name": "Lyo.ChangeTracker",
+      "tagline": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ChangeTracker.Postgres",
+      "area": "Core",
+      "topic": "Lyo.ChangeTracker",
+      "name": "Lyo.ChangeTracker.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional actor.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Common",
+      "area": "Core",
+      "topic": "Lyo.Common",
+      "name": "Lyo.Common",
+      "tagline": "Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared `System.Text.Json`…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.DateAndTime",
+      "area": "Core",
+      "topic": "Lyo.DateAndTime",
+      "name": "Lyo.DateAndTime",
+      "tagline": "Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata for .NET. The API is **static** and **thread-safe** (no mutable shared state).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diagnostic",
+      "area": "Core",
+      "topic": "Lyo.Diagnostic",
+      "name": "Lyo.Diagnostic",
+      "tagline": "Diagnostic utilities: stack trace decoding, exception classification, **breadcrumb trails**, an **in-memory error inbox**, sanitisation, and structured logging for observability.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diagnostic.AspNetCore",
+      "area": "Core",
+      "topic": "Lyo.Diagnostic",
+      "name": "Lyo.Diagnostic.AspNetCore",
+      "tagline": "ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diagnostic.Web.Components",
+      "area": "Core",
+      "topic": "Lyo.Diagnostic",
+      "name": "Lyo.Diagnostic.Web.Components",
+      "tagline": "Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with `Lyo.Diagnostic`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diff",
+      "area": "Core",
+      "topic": "Lyo.Diff",
+      "name": "Lyo.Diff",
+      "tagline": "Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.EntityReference.Models",
+      "area": "Core",
+      "topic": "Lyo.EntityReference",
+      "name": "Lyo.EntityReference.Models",
+      "tagline": "Portable primitives for **entity references** in Lyo: a typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), plus helpers for composite keys, JSON, opaque tokens…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.EntityReference.Postgres",
+      "area": "Core",
+      "topic": "Lyo.EntityReference",
+      "name": "Lyo.EntityReference.Postgres",
+      "tagline": "Entity Framework Core building blocks for **relation** rows (subject/actor associations) and **source link** rows (import provenance) on PostgreSQL.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Exceptions",
+      "area": "Core",
+      "topic": "Lyo.Exceptions",
+      "name": "Lyo.Exceptions",
+      "tagline": "Custom exception types and argument validation helpers for the Lyo library suite. Used across all Lyo packages for consistent error handling and validation.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Geolocation",
+      "area": "Core",
+      "topic": "Lyo.Geolocation",
+      "name": "Lyo.Geolocation",
+      "tagline": "Provider-agnostic geospatial operations and persistence contracts.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Geolocation.Models",
+      "area": "Core",
+      "topic": "Lyo.Geolocation",
+      "name": "Lyo.Geolocation.Models",
+      "tagline": "Neutral data contracts for `Lyo.Geolocation` and `Lyo.Geolocation.Postgres`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Geolocation.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Geolocation",
+      "name": "Lyo.Geolocation.Postgres",
+      "tagline": "PostgreSQL persistence for canonical geolocation data using Entity Framework Core.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Health",
+      "area": "Core",
+      "topic": "Lyo.Health",
+      "name": "Lyo.Health",
+      "tagline": "Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Lock",
+      "area": "Core",
+      "topic": "Lyo.Lock",
+      "name": "Lyo.Lock",
+      "tagline": "Key-based **exclusive locks** and **keyed semaphores** (bounded concurrency per key) with a small abstraction layer and in-memory implementations for a single process.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Lock.Redis",
+      "area": "Core",
+      "topic": "Lyo.Lock",
+      "name": "Lyo.Lock.Redis",
+      "tagline": "Distributed implementation of `ILockService` using **Redis** and StackExchange.Redis. Use this when multiple app instances must exclude each other on the same logical key.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Mathematics",
+      "area": "Core",
+      "topic": "Lyo.Mathematics",
+      "name": "Lyo.Mathematics",
+      "tagline": "C# **contracts** for the Lyo math stack: physical quantities as structs, 2D/3D vectors and small matrices, typed inputs/results for formulas, and a small **registry** for discoverability.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Metrics",
+      "area": "Core",
+      "topic": "Lyo.Metrics",
+      "name": "Lyo.Metrics",
+      "tagline": "A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and implementations.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Metrics.OpenTelemetry",
+      "area": "Core",
+      "topic": "Lyo.Metrics",
+      "name": "Lyo.Metrics.OpenTelemetry",
+      "tagline": "OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetry-compatible backends.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Metrics.Statistics",
+      "area": "Core",
+      "topic": "Lyo.Metrics",
+      "name": "Lyo.Metrics.Statistics",
+      "tagline": "Statistical analysis extensions for `Lyo.Metrics` histograms. Provides percentile / quartile / moving-average / anomaly-detection helpers on top of the metrics primitives in `Lyo.Metrics`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Notification",
+      "area": "Core",
+      "topic": "Lyo.Notification",
+      "name": "Lyo.Notification",
+      "tagline": "In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and handler lives in the…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.PackageMetadata",
+      "area": "Core",
+      "topic": "Lyo.PackageMetadata",
+      "name": "Lyo.PackageMetadata",
+      "tagline": "Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace namespaces with…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.PackageMetadata.Postgres",
+      "area": "Core",
+      "topic": "Lyo.PackageMetadata",
+      "name": "Lyo.PackageMetadata.Postgres",
+      "tagline": "EF Core persistence for **`Lyo.PackageMetadata.IPackageMetadataStore`**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.People.Models",
+      "area": "Core",
+      "topic": "Lyo.People",
+      "name": "Lyo.People.Models",
+      "tagline": "People and person-related models for the Lyo library suite.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.People.Postgres",
+      "area": "Core",
+      "topic": "Lyo.People",
+      "name": "Lyo.People.Postgres",
+      "tagline": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Privacy",
+      "area": "Core",
+      "topic": "Lyo.Privacy",
+      "name": "Lyo.Privacy",
+      "tagline": "Redaction and sanitization for **free text**, **JSON**, and **XML**: emails, phones, payment-card-shaped numbers (Luhn) with optional **BIN allow/block lists**, **IBAN** (MOD-97), heuristic…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Privacy.AspNetCore",
+      "area": "Core",
+      "topic": "Lyo.Privacy",
+      "name": "Lyo.Privacy.AspNetCore",
+      "tagline": "ASP.NET Core DI integration for `Lyo.Privacy`: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and supports keyed per-tenant or per-feature…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Privacy.Web.Components",
+      "area": "Core",
+      "topic": "Lyo.Privacy",
+      "name": "Lyo.Privacy.Web.Components",
+      "tagline": "Blazor (Server / Interactive) workbench components for `Lyo.Privacy`. Lets operators preview, compare, and tune redaction policies without round-tripping through a host config edit.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Resilience",
+      "area": "Core",
+      "topic": "Lyo.Resilience",
+      "name": "Lyo.Resilience",
+      "tagline": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Result",
+      "area": "Core",
+      "topic": "Lyo.Result",
+      "name": "Lyo.Result",
+      "tagline": "Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** `Lyo.Common` **`Result`** (different namespace and design); many feature libraries pick…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Schedule.Models",
+      "area": "Core",
+      "topic": "Lyo.Schedule",
+      "name": "Lyo.Schedule.Models",
+      "tagline": "DTO-only assembly that describes a schedule. Used by `Lyo.Scheduler`, `Lyo.Job.Postgres`, and any consumer that needs a transport-friendly representation of \"when does this run\".",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Schedule.Web.Components",
+      "area": "Core",
+      "topic": "Lyo.Schedule",
+      "name": "Lyo.Schedule.Web.Components",
+      "tagline": "Blazor component(s) for building and previewing `Lyo.Schedule.Models.ScheduleDefinition` values interactively.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Scheduler",
+      "area": "Core",
+      "topic": "Lyo.Scheduler",
+      "name": "Lyo.Scheduler",
+      "tagline": "In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging, metrics, and…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Scheduler.Cache",
+      "area": "Core",
+      "topic": "Lyo.Scheduler",
+      "name": "Lyo.Scheduler.Cache",
+      "tagline": "Cache-backed `ISchedulerStateStore` for `Lyo.Scheduler`. Persists each schedule's `LastRunUtc` / `NextRunUtc` / state markers through `Lyo.Cache` so cron/interval/one-shot schedules survive process…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Scientific",
+      "area": "Core",
+      "topic": "Lyo.Scientific",
+      "name": "Lyo.Scientific",
+      "tagline": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on `Lyo.Mathematics`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Streams",
+      "area": "Core",
+      "topic": "Lyo.Streams",
+      "name": "Lyo.Streams",
+      "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: * *`HashingStream`**).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Testing",
+      "area": "Core",
+      "topic": "Lyo.Testing",
+      "name": "Lyo.Testing",
+      "tagline": "Part of the Lyo workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Testing.Containers",
+      "area": "Core",
+      "topic": "Lyo.Testing",
+      "name": "Lyo.Testing.Containers",
+      "tagline": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Validation",
+      "area": "Core",
+      "topic": "Lyo.Validation",
+      "name": "Lyo.Validation",
+      "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Webhook",
+      "area": "Core",
+      "topic": "Lyo.Webhook",
+      "name": "Lyo.Webhook",
+      "tagline": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Webhook.Twilio",
+      "area": "Core",
+      "topic": "Lyo.Webhook",
+      "name": "Lyo.Webhook.Twilio",
+      "tagline": "**Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value** form parameters…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Barcode",
+      "area": "Data",
+      "topic": "Lyo.Barcode",
+      "name": "Lyo.Barcode",
+      "tagline": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Barcode.Native",
+      "area": "Data",
+      "topic": "Lyo.Barcode",
+      "name": "Lyo.Barcode.Native",
+      "tagline": "Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Barcode.TestWorkbench.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Barcode",
+      "name": "Lyo.Barcode.TestWorkbench.Web.Components",
+      "tagline": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from `Lyo.Barcode.Web.Components` inside an `MudContainer` for the Lyo gateway test harness.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Barcode.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Barcode",
+      "name": "Lyo.Barcode.Web.Components",
+      "tagline": "Reusable **Blazor / MudBlazor** components for exercising the **`IBarcodeService`** surface from `Lyo.Barcode`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo Compression Library",
+      "tagline": "A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple algorithms, batch operations, and atomic file operations.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.BZip2",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.BZip2",
+      "tagline": "BZip2 compression addon for `Lyo.Compression`. Registers a BZip2 `ICompressorFactory`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.LZ4",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.LZ4",
+      "tagline": "LZ4 compression addon for `Lyo.Compression`. Registers an `LZ4` `ICompressorFactory` backed by `EasyCompressor.LZ4`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.LZMA",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.LZMA",
+      "tagline": "LZMA compression addon for `Lyo.Compression`. Registers an LZMA `ICompressorFactory`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.Snappier",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.Snappier",
+      "tagline": "Snappy compression addon for `Lyo.Compression`. Registers a Snappier `ICompressorFactory`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.XZ",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.XZ",
+      "tagline": "XZ / LZMA2 compression addon for `Lyo.Compression`. Registers an XZ `ICompressorFactory`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Compression.Zstd",
+      "area": "Data",
+      "topic": "Lyo.Compression",
+      "name": "Lyo.Compression.Zstd",
+      "tagline": "Zstandard compression addon for `Lyo.Compression`. Registers a Zstd `ICompressorFactory`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Csv",
+      "area": "Data",
+      "topic": "Lyo.Csv",
+      "name": "Lyo.Csv",
+      "tagline": "CsvHelper-backed implementation of `Lyo.Csv.Models`. `CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from files, streams, byte arrays, URLs, and `TextWriter`/`TextReader`.",
+      "targetFrameworks": [
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "id": "Lyo.Csv.Models",
+      "area": "Data",
+      "topic": "Lyo.Csv",
+      "name": "Lyo.Csv.Models",
+      "tagline": "Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by `Lyo.Csv` so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without pulling in CsvHelper…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.DataTable",
+      "area": "Data",
+      "topic": "Lyo.DataTable",
+      "name": "Lyo.DataTable",
+      "tagline": "Empty package placeholder reserving the `Lyo.DataTable` name. The runtime types (`DataTable`, `DataTableRow`, `DataTableBuilder`, cell types, HTML renderer) all live in `Lyo.DataTable.Models`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.DataTable.Models",
+      "area": "Data",
+      "topic": "Lyo.DataTable",
+      "name": "Lyo.DataTable.Models",
+      "tagline": "Mutable in-memory data table with sparse columns, headers, footer, per-cell formatting, fluent builders, and an HTML renderer.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ffmpeg",
+      "area": "Data",
+      "topic": "Lyo.Ffmpeg",
+      "name": "Lyo.Ffmpeg",
+      "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.Ffmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ffmpeg.Models",
+      "area": "Data",
+      "topic": "Lyo.Ffmpeg",
+      "name": "Lyo.Ffmpeg.Models",
+      "tagline": "Engine-neutral **contracts and models** for `Lyo.Ffmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileMetadataStore",
+      "area": "Data",
+      "topic": "Lyo.FileMetadataStore",
+      "name": "Lyo.FileMetadataStore",
+      "tagline": "**File identity without bytes.** Large systems split:",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileMetadataStore.Postgres",
+      "area": "Data",
+      "topic": "Lyo.FileMetadataStore",
+      "name": "Lyo.FileMetadataStore.Postgres",
+      "tagline": "OLTP **`IFileMetadataStore`** plus adjunct services used by richer file pipelines:",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileMetadataStore.Sqlite",
+      "area": "Data",
+      "topic": "Lyo.FileMetadataStore",
+      "name": "Lyo.FileMetadataStore.Sqlite",
+      "tagline": "SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with `Lyo.FileMetadataStore.Postgres` for embedded, offline-first, and local-dev scenarios.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileStorage",
+      "area": "Data",
+      "topic": "Lyo.FileStorage",
+      "name": "Lyo.FileStorage",
+      "tagline": "Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ( `Lyo.Compression`), **two-key encryption** (`Lyo.Encryption`), **duplicate…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileStorage.Blob",
+      "area": "Data",
+      "topic": "Lyo.FileStorage",
+      "name": "Lyo.FileStorage.Blob",
+      "tagline": "**Azure Blob Storage** implementation of `IFileStorageService` using **`Azure.Storage.Blobs`**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileStorage.S3",
+      "area": "Data",
+      "topic": "Lyo.FileStorage",
+      "name": "Lyo.FileStorage.S3",
+      "tagline": "S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileStorage.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.FileStorage",
+      "name": "Lyo.FileStorage.Web.Components",
+      "tagline": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileSystemWatcher",
+      "area": "Data",
+      "topic": "Lyo.FileSystemWatcher",
+      "name": "Lyo.FileSystemWatcher",
+      "tagline": "A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Formatter",
+      "area": "Data",
+      "topic": "Lyo.Formatter",
+      "name": "Lyo.Formatter",
+      "tagline": "**SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting.",
+      "targetFrameworks": [
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "id": "Lyo.IO.Temp",
+      "area": "Data",
+      "topic": "Lyo.IO",
+      "name": "Lyo.IO.Temp",
+      "tagline": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images",
+      "tagline": "Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images.Ocr",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images.Ocr",
+      "tagline": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with `BoundingBox2D`), coordinate helpers, and shared…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images.Ocr.Tesseract",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images.Ocr.Tesseract",
+      "tagline": "**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images.OpenCv",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images.OpenCv",
+      "tagline": "OpenCV helpers for .NET via **OpenCvSharp4**, kept separate from higher-level pipelines (e.g. comic overlay) so hosts can reference native OpenCV only where needed.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images.Skia",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images.Skia",
+      "tagline": "**SkiaSharp** implementation of **`IImageService`** from `Lyo.Images`: resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Images.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Images",
+      "name": "Lyo.Images.Web.Components",
+      "tagline": "Reusable **Blazor / MudBlazor** components for exercising `Lyo.Images`: an `IImageService` workbench and a spritesheet animator/extractor built on `ISpriteSheetExportService`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Pdf",
+      "area": "Data",
+      "topic": "Lyo.Pdf",
+      "name": "Lyo.Pdf",
+      "tagline": "PdfPig-backed reading and PDFsharp-backed editing for `Lyo.Pdf.Models`. `PdfService` is the entry point; it returns disposable `IPdfReader` instances for read/extract workflows and `IPdfWriter`…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Pdf.Models",
+      "area": "Data",
+      "topic": "Lyo.Pdf",
+      "name": "Lyo.Pdf.Models",
+      "tagline": "Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by `Lyo.Pdf` so consumers can depend on `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Pdf.Ocr",
+      "area": "Data",
+      "topic": "Lyo.Pdf",
+      "name": "Lyo.Pdf.Ocr",
+      "tagline": "Glues `Lyo.Pdf.Rendering` (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Pdf.Rendering",
+      "area": "Data",
+      "topic": "Lyo.Pdf",
+      "name": "Lyo.Pdf.Rendering",
+      "tagline": "Rasterizes PDF pages to PNG via PDFtoImage (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Pdf.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Pdf",
+      "name": "Lyo.Pdf.Web.Components",
+      "tagline": "Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Postgres",
+      "area": "Data",
+      "topic": "Lyo.Postgres",
+      "name": "Lyo.Postgres",
+      "tagline": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.QRCode",
+      "area": "Data",
+      "topic": "Lyo.QRCode",
+      "name": "Lyo.QRCode",
+      "tagline": "**QR code generation and reading** for Lyo: **`IQRCodeService`**, **`QRCodeBuilder`**, ISO **Model 2** encoding in-box (**`BuiltInQRCodeService`**), optional **QRCoder** adapter package…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.QRCode.QRCoder",
+      "area": "Data",
+      "topic": "Lyo.QRCode",
+      "name": "Lyo.QRCode.QRCoder",
+      "tagline": "**QRCoder**-backed implementation of **`IQRCodeService`** from `Lyo.QRCode`. Pick this when you need **JPEG / Bitmap** output on Windows or want to use QRCoder's mature renderers; pick the built-in…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.QRCode.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.QRCode",
+      "name": "Lyo.QRCode.Web.Components",
+      "tagline": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Query",
+      "area": "Data",
+      "topic": "Lyo.Query",
+      "name": "Lyo.Query",
+      "tagline": "WhereClause AST → LINQ on IQueryable: filter, multi-key sort, in-memory match/explain, with ICache-backed compiled predicates.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Query.Models",
+      "area": "Data",
+      "topic": "Lyo.Query",
+      "name": "Lyo.Query.Models",
+      "tagline": "Filter / sort / projection DTOs and fluent builders (`WhereClause`, QueryConcrete / QueryProject / root Query) shared by Lyo.Query and Lyo.Api.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Query.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Query",
+      "name": "Lyo.Query.Web.Components",
+      "tagline": "Reusable Blazor / MudBlazor components for editing and running `Lyo.Query.Models` requests against any Lyo.Api host.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Sqlite",
+      "area": "Data",
+      "topic": "Lyo.Sqlite",
+      "name": "Lyo.Sqlite",
+      "tagline": "Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Xlsx",
+      "area": "Data",
+      "topic": "Lyo.Xlsx",
+      "name": "Lyo.Xlsx",
+      "tagline": "Implementation of `Lyo.Xlsx.Models`. `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Xlsx.Models",
+      "area": "Data",
+      "topic": "Lyo.Xlsx",
+      "name": "Lyo.Xlsx.Models",
+      "tagline": "Interfaces and value types for the Lyo XLSX stack. Defines the contract implemented by `Lyo.Xlsx` so consumers can depend on `IXlsxService` / `IXlsxReader` / `IXlsxWriter` without pulling in ClosedXML…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic",
+      "area": "Features",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic",
+      "tagline": "Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**, **`ComicAlternateTitle`**), hierarchical organization (**`ComicVolume`**, **`ComicChapter`**, * *`ComicPage`**), cast…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Postgres",
+      "tagline": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and `AddPostgresMigrations<ComicDbContext…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Web.Components",
+      "area": "Features",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Web.Components",
+      "tagline": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comment",
+      "area": "Features",
+      "topic": "Lyo.Comment",
+      "name": "Lyo.Comment",
+      "tagline": "Abstractions for attaching threaded, reactable comments to any entity. Each comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comment.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Comment",
+      "name": "Lyo.Comment.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists comments to the `comment.comment` table and reactions to `comment.comment_reaction` (schema constant…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config",
+      "area": "Features",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config",
+      "tagline": "Typed, definition-driven configuration for **per-entity** values (e.g. a Discord guild, a tenant). The abstract API lives here; **PostgreSQL** persistence is in `Lyo.Config.Postgres`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Postgres",
+      "tagline": "PostgreSQL + EF Core implementation of `Lyo.Config.IConfigStore` for storing typed configuration definitions and per-entity bindings.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ContactUs",
+      "area": "Features",
+      "topic": "Lyo.ContactUs",
+      "name": "Lyo.ContactUs",
+      "tagline": "Core abstractions for contact-form submission. The interface (`IContactUsService`) and a `ContactUsServiceBase` that handles validation, error-code mapping, and logging live here; concrete storage…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ContactUs.Postgres",
+      "area": "Features",
+      "topic": "Lyo.ContactUs",
+      "name": "Lyo.ContactUs.Postgres",
+      "tagline": "PostgreSQL + EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) backed by `ContactUsDbContext`, `PostgresContactUsOptions`, and…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Favorite",
+      "area": "Features",
+      "topic": "Lyo.Favorite",
+      "name": "Lyo.Favorite",
+      "tagline": "Abstractions for \"X favorited Y\" relationships across any two entities. The API accepts `EntityRef` at the boundary (so any feature can produce a favorite); the default Postgres store persists…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Favorite.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Favorite",
+      "name": "Lyo.Favorite.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant: `PostgresFavoriteOptions.Schema = \"favorite\"`) with…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory",
+      "area": "Features",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory",
+      "tagline": "Portable contract for **household inventory** — large purchases (electronics, appliances) with warranty tracking, kitchen consumables stocked across pantries / freezers, and bin locations in garages.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Postgres",
+      "area": "Features",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.Postgres",
+      "tagline": "EF Core implementation of `IHomeInventoryStore` backed by PostgreSQL.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Note",
+      "area": "Features",
+      "topic": "Lyo.Note",
+      "name": "Lyo.Note",
+      "tagline": "Abstractions for storing and retrieving notes attached to arbitrary entities. Each note has a **subject** (what it is about) and an **actor** (who wrote it), expressed as `EntityRef` at the API.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Note.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Note",
+      "name": "Lyo.Note.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists notes to the `note.note` table (schema constant: `PostgresNoteOptions.Schema = \"note\"`) with migrations support.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Profanity",
+      "area": "Features",
+      "topic": "Lyo.Profanity",
+      "name": "Lyo.Profanity",
+      "tagline": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Rating",
+      "area": "Features",
+      "topic": "Lyo.Rating",
+      "name": "Lyo.Rating",
+      "tagline": "Abstractions for rating and reviewing arbitrary entities, plus like/dislike reactions on those ratings.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Rating.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Rating",
+      "name": "Lyo.Rating.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to the `rating.rating` table and reactions to `rating.rating_reaction` (schema constant…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ShortUrl",
+      "area": "Features",
+      "topic": "Lyo.ShortUrl",
+      "name": "Lyo.ShortUrl",
+      "tagline": "Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default `ShortUrlService` that **generates**…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ShortUrl.Postgres",
+      "area": "Features",
+      "topic": "Lyo.ShortUrl",
+      "name": "Lyo.ShortUrl.Postgres",
+      "tagline": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tag",
+      "area": "Features",
+      "topic": "Lyo.Tag",
+      "name": "Lyo.Tag",
+      "tagline": "Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef` (what is tagged) and optionally a second `EntityRef` (who applied the tag), so any feature in the framework can attach…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tag.Postgres",
+      "area": "Features",
+      "topic": "Lyo.Tag",
+      "name": "Lyo.Tag.Postgres",
+      "tagline": "PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = \"tag\"`) with migrations support.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api",
+      "tagline": "Core API library for building RESTful minimal APIs with Entity Framework Core. Provides a fluent `ApiEndpointBuilder` to generate CRUD endpoints with caching, **`ILyoMapper`** -based DTO mapping…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Client",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Client",
+      "tagline": "HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and * *`System.Text.Json`** parity with…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Export",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export",
+      "tagline": "Optional export feature for Lyo.Api. Registers the **Export** CRUD endpoint and `IExportService<TContext>`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Models",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Models",
+      "tagline": "Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from `Lyo.Query.Models` (filter trees + projection DTOs).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Reporting",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Reporting",
+      "tagline": "Authenticated HTTP surface for Lyo Reporting. Postgres stays service-only (`ReportService` + EF); this package owns `BuildReportingGroup`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Tests.Host",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Tests.Host",
+      "tagline": "Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Discord.Bot",
+      "area": "Integration",
+      "topic": "Lyo.Discord",
+      "name": "Lyo.Discord.Bot",
+      "tagline": "Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Discord.Client",
+      "area": "Integration",
+      "topic": "Lyo.Discord",
+      "name": "Lyo.Discord.Client",
+      "tagline": "Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by `Lyo.Discord.Postgres`).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Discord.Models",
+      "area": "Integration",
+      "topic": "Lyo.Discord",
+      "name": "Lyo.Discord.Models",
+      "tagline": "Wire-level DTOs and shared constants for the Discord integration. Used by both `Lyo.Discord.Client` (typed HTTP client) and `Lyo.Discord.Postgres` (API host + persistence) so request/response shapes…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Discord.Postgres",
+      "area": "Integration",
+      "topic": "Lyo.Discord",
+      "name": "Lyo.Discord.Postgres",
+      "tagline": "PostgreSQL persistence and `Lyo.Api` endpoint mappings for Discord entities. Schema name is fixed to `discord` (`PostgresDiscordOptions.Schema`).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Endato.Client",
+      "area": "Integration",
+      "topic": "Lyo.Endato",
+      "name": "Lyo.Endato.Client",
+      "tagline": "Typed HTTP client for the Endato data-enrichment REST API.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Endato.Postgres",
+      "area": "Integration",
+      "topic": "Lyo.Endato",
+      "name": "Lyo.Endato.Postgres",
+      "tagline": "PostgreSQL schema and EF Core context for caching Endato Person Search (PS) and Contact Enrichment (CE) responses. Schema name is `endato`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Espn.Fantasy.Football",
+      "area": "Integration",
+      "topic": "Lyo.Espn",
+      "name": "Lyo.Espn.Fantasy.Football",
+      "tagline": "Typed read-only client for the ESPN fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Google.Geolocation.Client",
+      "area": "Integration",
+      "topic": "Lyo.Google",
+      "name": "Lyo.Google.Geolocation.Client",
+      "tagline": "Google Maps REST client and `IGeolocationService` implementation.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Alerts",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Alerts",
+      "tagline": "Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches them through…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Client",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Client",
+      "tagline": "Typed HTTP client for the Lyo Job API. Wraps `IApiClient` with run lifecycle and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Models",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Models",
+      "tagline": "Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Postgres",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Postgres",
+      "tagline": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Scheduler",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Scheduler",
+      "tagline": "Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (with misfire catch-up, blackout calendars, and per-schedule time zones), creates job runs via `IApiClient`…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.SignalR",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.SignalR",
+      "tagline": "SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Web.Components",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Web.Components",
+      "tagline": "Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA breach** indicators)…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Worker",
+      "area": "Integration",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Worker",
+      "tagline": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled worker-type queue…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Client",
+      "area": "Integration",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Client",
+      "tagline": "Typed HTTP client for the Lyo Reporting API (`netstandard2.0;net10.0`).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Models",
+      "area": "Integration",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Models",
+      "tagline": "Composition models, fluent builders, API contracts, and generation hooks for Lyo Reporting.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Postgres",
+      "area": "Integration",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Postgres",
+      "tagline": "PostgreSQL schema (`reporting`), EF migrations, CSV/XLSX/JSON renderers, `ReportService` generation pipeline, and `ReportRetentionService` cleanup.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Web",
+      "area": "Integration",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Web",
+      "tagline": "Blazor `ReportViewer`, business document templates, and HTML/PDF `IReportRenderer` implementation.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Web.Components",
+      "area": "Integration",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Web.Components",
+      "tagline": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, and view/download generations.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Typecast.Client",
+      "area": "Integration",
+      "topic": "Lyo.Typecast",
+      "name": "Lyo.Typecast.Client",
+      "tagline": "Typecast API client for text-to-speech and voice management. `TypecastClient` extends `Lyo.Api.Client.ApiClient`, configures the `X-API-KEY` header from `TypecastClientOptions`, and exposes two…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation",
+      "tagline": "Shared browser automation models: element locators, JSON automation plans, session abstraction, and plan runners (engine-neutral).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation.Playwright",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.Playwright",
+      "tagline": "Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes the same…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation.Selenium",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.Selenium",
+      "tagline": "Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session isolation, polling…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components",
+      "tagline": "Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff viewer, identifier…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Export",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export",
+      "tagline": "Composable export UI for Lyo data grids. Reference this package (plus optional format packages) and add menu items to `BulkExportControls`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.WebRenderer",
+      "area": "Integration",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.WebRenderer",
+      "tagline": "Server-side rendering of Razor components and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Api",
+      "area": "Apps",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Api",
+      "tagline": "ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Api.Client",
+      "area": "Apps",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Api.Client",
+      "tagline": "Typed **`HttpClient`** for the `Lyo.Comic.Api` service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Api.Models",
+      "area": "Apps",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Api.Models",
+      "tagline": "Request and response DTOs shared between `Lyo.Comic.Api` and `Lyo.Comic.Api.Client`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api",
+      "area": "Apps",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api",
+      "tagline": "HTTP host for central **app** configuration backed by PostgreSQL and `Lyo.Config`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api.Client",
+      "area": "Apps",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api.Client",
+      "tagline": "Typed HTTP client for the central `Lyo.Config.Api` — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an optional **`X-Api-Key`** header, and a single DI extension.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api.Hosting",
+      "area": "Apps",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api.Hosting",
+      "tagline": "Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and * *`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api.Models",
+      "area": "Apps",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api.Models",
+      "tagline": "Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Portfolio",
+      "area": "Apps",
+      "topic": "Lyo.Portfolio",
+      "name": "Portfolio (Lyo.Portfolio)",
+      "tagline": "Blazor WebAssembly showcase for the in-process subset of Lyo: components that work without any backend (cache, locks, scheduler, encryption + compression, CSV/XLSX, text diff, rich text editor, etc.)…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication",
+      "tagline": "Server-side authentication services for Lyo. Two coexisting bearer formats behind a single contract:",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.AspNetCore",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.AspNetCore",
+      "tagline": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Client",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Client",
+      "tagline": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Google",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Google",
+      "tagline": "Google profile for `Lyo.Authentication.OpenIdConnect`. Registers `https://accounts.google.com` as a confidential OIDC client in the BFF login flow.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Keycloak",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Keycloak",
+      "tagline": "Keycloak profile for `Lyo.Authentication.OpenIdConnect`. Wires one or more Keycloak realms as confidential OIDC clients in the BFF login flow.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Models",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Models",
+      "tagline": "Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.OpenIdConnect",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.OpenIdConnect",
+      "tagline": "OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Postgres",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Postgres",
+      "tagline": "PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, and `IExternalIdentityStore`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Web.Components",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Web.Components",
+      "tagline": "Host-agnostic Razor / MudBlazor components for Lyo authentication. Ships the **Login**, **Auth Debug**, and **Profile** pages plus the abstractions that the host adapter (…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Web.Components.Server",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Web.Components.Server",
+      "tagline": "Blazor Server host adapter for `Lyo.Authentication.Web.Components`. Plugs the shared login / debug / profile pages into the BFF-cookie auth runtime in `Lyo.Authentication.Client`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Web.Components.Wasm",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Web.Components.Wasm",
+      "tagline": "Blazor WebAssembly host adapter for `Lyo.Authentication.Web.Components`. Implements the same login / debug / profile pages over a **pure-browser** auth flow — no consumer-side server, no HttpOnly…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ContentThreatScan",
+      "area": "Security",
+      "topic": "Lyo.ContentThreatScan",
+      "name": "Lyo.ContentThreatScan",
+      "tagline": "Heuristic scanning and numeric disposition scoring for **readable text** payloads (scripts, markup, suspicious SQL-ish patterns).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ContentThreatScan.Intel",
+      "area": "Security",
+      "topic": "Lyo.ContentThreatScan",
+      "name": "Lyo.ContentThreatScan.Intel",
+      "tagline": "Optional **`DefaultContentThreatReputationPipeline`** for Malware Bazaar, VirusTotal, and **`clamd` INSTREAM** (TCP).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Encryption",
+      "area": "Security",
+      "topic": "Lyo.Encryption",
+      "name": "Lyo.Encryption",
+      "tagline": "Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and * *AES-GCM + RSA**…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Encryption.AesCcm",
+      "area": "Security",
+      "topic": "Lyo.Encryption",
+      "name": "Lyo.Encryption.AesCcm",
+      "tagline": "AES-CCM authenticated encryption addon for `Lyo.Encryption`. Provides `AesCcmEncryptionService` (BouncyCastle-backed on all targets) and matching DI extensions.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Encryption.AesSiv",
+      "area": "Security",
+      "topic": "Lyo.Encryption",
+      "name": "Lyo.Encryption.AesSiv",
+      "tagline": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and matching DI extensions.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Encryption.XChaCha20Poly1305",
+      "area": "Security",
+      "topic": "Lyo.Encryption",
+      "name": "Lyo.Encryption.XChaCha20Poly1305",
+      "tagline": "XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Hashing",
+      "area": "Security",
+      "topic": "Lyo.Hashing",
+      "name": "Lyo.Hashing",
+      "tagline": "Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (* *`HexEncoding`**)…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Keystore",
+      "area": "Security",
+      "topic": "Lyo.Keystore",
+      "name": "Lyo.Keystore",
+      "tagline": "**Key Encryption Key (KEK)** storage and rotation contracts for `Lyo.Encryption`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Keystore.Aws",
+      "area": "Security",
+      "topic": "Lyo.Keystore",
+      "name": "Lyo.Keystore.Aws",
+      "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Gateway",
+      "area": "Tools",
+      "topic": "Lyo.Gateway",
+      "name": "Lyo.Gateway",
+      "tagline": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page run against either…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Preview",
+      "area": "Tools",
+      "topic": "Lyo.Preview",
+      "name": "Lyo.Preview",
+      "tagline": "Cross-platform preview in the system default browser. The default implementation, `BrowserPreview`, spins up an `HttpListener` on `127.0.0.1` (random free port), registers one byte buffer per call…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.TestApi",
+      "area": "Tools",
+      "topic": "Lyo.TestApi",
+      "name": "Lyo.TestApi",
+      "tagline": "Minimal-API host that backs `Lyo.Gateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.TestConsole",
+      "area": "Tools",
+      "topic": "Lyo.TestConsole",
+      "name": "Lyo.TestConsole",
+      "tagline": "Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tools.Postgres",
+      "area": "Tools",
+      "topic": "Lyo.Tools",
+      "name": "Lyo.Tools.Postgres",
+      "tagline": "Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    }
+  ]
+}

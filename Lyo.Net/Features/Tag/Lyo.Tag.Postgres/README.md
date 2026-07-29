@@ -9,24 +9,9 @@ with migrations support. Tags carry **subject** / optional **actor** (`for_entit
 (`HealthCheckName = "tag-postgres"`), so registering the store also wires up a
 liveness probe.
 
-## DI extensions
+## Examples
 
-Defined in `Extensions.cs` as `IServiceCollection` extensions:
-
-- `AddTagDbContextFactory(Action<PostgresTagOptions>)` /
-  `AddTagDbContextFactory(PostgresTagOptions)` — register only the
-  `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly
-  from migrations or another store).
-- `AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)`
-  — same, but bound from configuration.
-- `AddPostgresTagStore(Action<PostgresTagOptions>)` /
-  `AddPostgresTagStore(PostgresTagOptions)` — register the DbContext factory
-  **and** the `ITagStore` singleton.
-- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)`
-  — register the store using configuration binding. The default section name is
-  `PostgresTag`.
-
-## Usage
+### Usage
 
 ```csharp
 services.AddPostgresTagStore(new PostgresTagOptions {
@@ -35,7 +20,7 @@ services.AddPostgresTagStore(new PostgresTagOptions {
 });
 ```
 
-Or with configuration:
+### Usage (2)
 
 ```json
 {
@@ -46,32 +31,13 @@ Or with configuration:
 }
 ```
 
+### Usage (3)
+
 ```csharp
 services.AddPostgresTagStoreFromConfiguration(configuration);
 ```
 
-## Migrations
-
-```bash
-export TAG_CONNECTION_STRING="Host=localhost;Database=lyo;Username=postgres;Password=postgres"
-dotnet ef migrations add MigrationName --project Features/Tag/Lyo.Tag.Postgres
-```
-
-## Entity Reference
-
-Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:
-
-```csharp
-// Generic: uses typeof(T).FullName, keys joined with ":"
-var forDocket = EntityRef.For<Docket>(docketId);
-var fromUser = EntityRef.For<User>(123);
-
-// String-based
-var forEntity = EntityRef.ForGuid("Docket", docketGuid);
-var fromEntity = EntityRef.ForKey("User", "123");
-```
-
-## Example: Tag a docket as urgent
+### Example: Tag a docket as urgent
 
 ```csharp
 // Add tag (idempotent – no-op if already exists)
@@ -93,10 +59,41 @@ await tagStore.RemoveTagAsync(EntityRef.ForGuid("Docket", docketId), "urgent");
 await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId));
 ```
 
+### Migrations
+
+```bash
+export TAG_CONNECTION_STRING="Host=localhost;Database=lyo;Username=postgres;Password=postgres"
+dotnet ef migrations add MigrationName --project Features/Tag/Lyo.Tag.Postgres
+```
+
+## DI extensions
+
+- `AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` — register only the `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly from migrations or another store).
+- `AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — same, but bound from configuration.
+- `AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` — register the DbContext factory **and** the `ITagStore` singleton.
+- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — register the store using configuration binding. The default section name is `PostgresTag`.
+
+## Usage
+
+Or with configuration:
+
+## Entity Reference
+
+Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:
+
+```csharp
+// Generic: uses typeof(T).FullName, keys joined with ":"
+var forDocket = EntityRef.For<Docket>(docketId);
+var fromUser = EntityRef.For<User>(123);
+
+// String-based
+var forEntity = EntityRef.ForGuid("Docket", docketGuid);
+var fromEntity = EntityRef.ForKey("User", "123");
+```
+
 ## Schema
 
-- **tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`,
-  `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes
+- **tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes
 - Unique index on (for_entity_type, for_entity_id, tag)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
@@ -124,22 +121,24 @@ for the full policy matrix and `appsettings.json` snippet.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Tag.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-
-### Project references
-
-- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
-- [`Lyo.Tag`](../Lyo.Tag/README.md)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Lyo.Tag` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

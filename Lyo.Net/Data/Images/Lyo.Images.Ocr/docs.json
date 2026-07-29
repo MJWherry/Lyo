@@ -1,0 +1,176 @@
+{
+  "id": "Lyo.Images.Ocr",
+  "name": "Lyo.Images.Ocr",
+  "area": "Data",
+  "tagline": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with `BoundingBox2D`), coordinate helpers, and shared…",
+  "description": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with\n[`BoundingBox2D`](../../../Core/Common/Lyo.Common/Records/BoundingBox2D.cs)), coordinate helpers, and shared **`OcrEngineOptions`**.\n\nImplementations (e.g. **`Lyo.Images.Ocr.Tesseract`**) register **`IOcrEngine`**. This package only registers cross-provider options via **`AddOcrEngineOptions`** /\n**`AddOcrEngineOptionsFromConfiguration`**.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Configuration",
+      "language": "json",
+      "code": "{\n  \"OcrEngine\": {\n    \"EnableMetrics\": false,\n    \"DefaultLanguages\": \"eng\",\n    \"DefaultPageSegmentationMode\": \"SparseTextOsd\"\n  }\n}"
+    },
+    {
+      "title": "Configuration (2)",
+      "language": "csharp",
+      "code": "using Lyo.Images.Ocr;\n\nservices.AddOcrEngineOptionsFromConfiguration(builder.Configuration);\n// then register a concrete IOcrEngine (e.g. AddTesseractOcrEngine)."
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Public API",
+      "headers": [
+        "Type",
+        "Description"
+      ],
+      "rows": [
+        [
+          "**`IOcrEngine`**",
+          "`ReadAsync(Stream imageStream, OcrReadRequest?, CancellationToken) → Task<Result<OcrPageResult>>` — runs OCR on an encoded raster stream (PNG/JPEG/etc.)."
+        ],
+        [
+          "**`OcrReadRequest`**",
+          "Optional per-call overrides: `Languages`, `PageSegmentationMode`, `MinimumConfidencePercent`."
+        ],
+        [
+          "**`OcrPageResult`**",
+          "`FullText`, `Words` (with pixel Y-up bounding boxes), `Lines` (grouped), `ImageWidth`, `ImageHeight`."
+        ],
+        [
+          "**`OcrWord`** / **`OcrLine`**",
+          "Word + line records used in `OcrPageResult`. `OcrWord.BoundingBoxPixels` is a `BoundingBox2D` (Y-up)."
+        ],
+        [
+          "**`OcrEngineOptions`**",
+          "`EnableMetrics`, `DefaultLanguages` (default `\"eng\"`), `DefaultPageSegmentationMode` (default `SparseTextOsd`); `SectionName = \"OcrEngine\"`."
+        ],
+        [
+          "**`OcrPageSegmentationMode`**",
+          "Provider-neutral layout modes (`AutoOsd`, `Auto`, `SingleColumn`, `SingleBlock`, `SingleLine`, `SingleWord`, `CircleWord`, `SingleChar`, `SparseTextOsd`, …)."
+        ],
+        [
+          "**`OcrCoordinateTransforms`**",
+          "`FromTopLeftDownwardRect`, `MapPixelBoxToPdfPoints`, and other helpers to convert between raster, Y-up pixel, and PDF point coordinates."
+        ],
+        [
+          "**`OcrLineGrouper`**",
+          "Groups `OcrWord` results into `OcrLine` rows."
+        ],
+        [
+          "**`OcrMetrics`** / **`OcrErrorCodes`**",
+          "Metric name and error code constants for engines to use consistently."
+        ],
+        [
+          "**`OcrServiceCollectionExtensions`**",
+          "DI: `AddOcrEngineOptions(Action<OcrEngineOptions>?)`, `AddOcrEngineOptionsFromConfiguration(IConfiguration, sectionName?)`."
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Bounding boxes",
+      "items": [
+        "**`OcrWord.BoundingBoxPixels`** uses **Y-up** coordinates: origin at the **bottom-left** of the image, so **`Top` &gt; `Bottom`** and **`Height = Top - Bottom`** matches [`BoundingBox2D`](../../../Core/Common/Lyo.Common/Records/BoundingBox2D.cs).",
+        "Use **`OcrCoordinateTransforms.FromTopLeftDownwardRect`** to convert typical top-left raster rects (e.g. Tesseract) into this form.",
+        "For PDF overlay with a rendered page, use **`OcrCoordinateTransforms.MapPixelBoxToPdfPoints`** (see **`Lyo.Pdf.Ocr`**)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Images/Lyo.Images.Ocr/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

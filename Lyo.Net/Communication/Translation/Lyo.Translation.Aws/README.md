@@ -5,7 +5,9 @@ pragmatic **language detection**, and **`ListLanguages`** connection checks.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
-## Registration (dependency injection)
+## Examples
+
+### Registration (dependency injection)
 
 ```csharp
 using Lyo.Translation.Aws;
@@ -26,6 +28,8 @@ services.AddAwsTranslationService(o =>
 services.AddAwsTranslationService(new AwsTranslationOptions { Region = "us-east-1" });
 ```
 
+## Registration (dependency injection)
+
 `AddAwsTranslationService` and `AddAwsTranslationServiceFromConfiguration` register:
 
 - `AwsTranslationOptions` (singleton).
@@ -43,25 +47,37 @@ Ensure `AwsTranslationOptions` (and optionally `IAmazonTranslate`) agree on regi
 
 Inherits everything on [`TranslationServiceOptions`](../Lyo.Translation/README.md). Adds:
 
-| Property          | Type      | Default     | Purpose                                              |
-|-------------------|-----------|-------------|------------------------------------------------------|
-| `AccessKeyId`     | `string?` | `null`      | Static AWS access key id (prefer IAM roles instead). |
-| `SecretAccessKey` | `string?` | `null`      | Static AWS secret key (prefer IAM roles instead).    |
-| `Region`          | `string`  | `us-east-1` | AWS region for the Translate client.                 |
-| `ServiceUrl`      | `string?` | `null`      | Override endpoint (for local testing).               |
+| Property | Type | Default | Purpose |
+| ----------------- | --------- | ----------- | ---------------------------------------------------- |
+| `AccessKeyId` | `string?` | `null` | Static AWS access key id (prefer IAM roles instead). |
+| `SecretAccessKey` | `string?` | `null` | Static AWS secret key (prefer IAM roles instead). |
+| `Region` | `string` | `us-east-1` | AWS region for the Translate client. |
+| `ServiceUrl` | `string?` | `null` | Override endpoint (for local testing). |
 
 Configuration section name: `AwsTranslationOptions.SectionName = "AwsTranslationOptions"`.
 
 ## Behaviour notes
 
-| Feature               | Detail                                                                                                        |
-|-----------------------|---------------------------------------------------------------------------------------------------------------|
-| Language codes        | Target/source are mapped to ISO 639-1 (and BCP-47 prefixes) expected by Translate                             |
-| `DetectLanguageAsync` | Uses `TranslateText` with `auto` source and English target to infer source language                           |
-| Metrics               | Provider keys in `Constants.Metrics` remap the base keys in [`Lyo.Translation`](../Lyo.Translation/README.md) |
+| Feature | Detail |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Language codes | Target/source are mapped to ISO 639-1 (and BCP-47 prefixes) expected by Translate |
+| `DetectLanguageAsync` | Uses `TranslateText` with `auto` source and English target to infer source language |
+| Metrics | Provider keys in `Constants.Metrics` remap the base keys in [`Lyo.Translation`](../Lyo.Translation/README.md) |
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Translation`](../Lyo.Translation/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- NuGet: `AWSSDK.Translate`
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Translation` — (direct, lyo)
+- `AWSSDK.Translate` `4.0.100.3` — (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

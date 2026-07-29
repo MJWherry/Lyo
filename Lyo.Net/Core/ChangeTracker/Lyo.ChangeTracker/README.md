@@ -9,20 +9,9 @@ aggregate.
 - `IChangeTracker` for recording, querying, and deleting change history
 - `NullChangeTracker.Instance` (singleton) when change tracking is optional — all writes/queries are no-ops
 
-## `IChangeTracker` surface
+## Examples
 
-| Method                                                                       | Purpose                                                           |
-|------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| `RecordChange` / `RecordChangeAsync`                                         | Record a single `ChangeRecord`.                                   |
-| `RecordChanges` / `RecordChangesAsync`                                       | Record many records in a single batch (skips empty collections).  |
-| `GetByIdAsync(Guid id, …)`                                                   | Look up a recorded change by its `ChangeRecord.Id`.               |
-| `GetForEntityAsync(EntityRef forEntity, …)`                                  | Returns history for a specific entity, newest first.              |
-| `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | Returns history scoped by entity type, optionally filtered by id. |
-| `DeleteForEntityAsync(EntityRef forEntity, …)`                               | Deletes all history rows recorded against a specific entity.      |
-
-The base abstraction is purely a contract — health/diagnostics are added by adapter packages (see `Lyo.ChangeTracker.Postgres`).
-
-## Quick Start
+### Quick Start
 
 ```csharp
 using Lyo.ChangeTracker;
@@ -44,18 +33,26 @@ await changeTracker.RecordChangeAsync(change);
 var history = await changeTracker.GetForEntityAsync(orderRef);
 ```
 
+## `IChangeTracker` surface
+
+| Method | Purpose |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `RecordChange` / `RecordChangeAsync` | Record a single `ChangeRecord`. |
+| `RecordChanges` / `RecordChangesAsync` | Record many records in a single batch (skips empty collections). |
+| `GetByIdAsync(Guid id, …)` | Look up a recorded change by its `ChangeRecord.Id`. |
+| `GetForEntityAsync(EntityRef forEntity, …)` | Returns history for a specific entity, newest first. |
+| `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | Returns history scoped by entity type, optionally filtered by id. |
+| `DeleteForEntityAsync(EntityRef forEntity, …)` | Deletes all history rows recorded against a specific entity. |
+
+The base abstraction is purely a contract — health/diagnostics are added by adapter packages (see `Lyo.ChangeTracker.Postgres`).
+
 ## Dependencies
 
-*(Synchronized from `Lyo.ChangeTracker.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package            | Version |
-|--------------------|---------|
-| `System.Text.Json` | `[10,)` |
-
-### Project references
-
-- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

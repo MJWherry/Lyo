@@ -31,3 +31,14 @@ class PersonApiClient:
     def query_root(self, request: QueryReq) -> ApiResponse:
         """Root From/Joins query: POST /Query (not under /person)."""
         return self.api_client.request(ApiRequest(method="POST", path="/Query", body=request))
+
+    def get_person(self, person_id: str, include: list[str] | None = None) -> ApiResponse:
+        """GET /person/{id} with optional include navigation paths."""
+        from urllib.parse import quote, urlencode
+
+        path = f"/person/{quote(person_id, safe='')}"
+        if include:
+            qs = urlencode([("include", item) for item in include if item and item.strip()])
+            if qs:
+                path = f"{path}?{qs}"
+        return self.api_client.request(ApiRequest(method="GET", path=path))

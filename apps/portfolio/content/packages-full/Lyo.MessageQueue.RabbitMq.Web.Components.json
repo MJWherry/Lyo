@@ -1,0 +1,193 @@
+{
+  "id": "Lyo.MessageQueue.RabbitMq.Web.Components",
+  "name": "Lyo.MessageQueue.RabbitMq.Web.Components",
+  "area": "Communication",
+  "tagline": "Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.",
+  "description": "Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "RabbitMqWorkbench",
+      "headers": [
+        "Tab",
+        "Operations"
+      ],
+      "rows": [
+        [
+          "**Exchange**",
+          "Create/delete exchanges, bind queues"
+        ],
+        [
+          "**Queue**",
+          "Create (optionally with DLQ + `x-max-priority`), peek, clear, delete; single-queue info via management API"
+        ],
+        [
+          "**Publish**",
+          "Send to queue/exchange (envelope wrap, priority, delayed delivery)"
+        ],
+        [
+          "**Stats**",
+          "All-queue statistics with optional name filter, manual refresh, and auto-refresh polling"
+        ]
+      ],
+      "lead": "`RabbitMqWorkbench.razor` is an internal dashboard for exercising the full `IRabbitMqService` surface:",
+      "trail": "Queue creation supports:\n\n- **`x-max-priority`** — numeric max priority (same pattern as job workers use for `job.run.{workerType}` queues).\n- **DLQ auto-wiring** — `CreateQueueWithDlq` with optional custom DLQ name.\n\nPublishing supports:\n\n- **`SendToQueueWithPriority`** / envelope publish with priority (requires a priority-enabled queue).\n- **`SendToQueueDelayed`** — broker-side delay via TTL + dead-letter wait queues."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.MessageQueue",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue.RabbitMq",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "RabbitMQ.Client",
+      "kind": "package",
+      "version": "7.2.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

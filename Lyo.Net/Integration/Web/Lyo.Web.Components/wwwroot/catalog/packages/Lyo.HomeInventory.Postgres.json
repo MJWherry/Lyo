@@ -1,0 +1,242 @@
+{
+  "id": "Lyo.HomeInventory.Postgres",
+  "name": "Lyo.HomeInventory.Postgres",
+  "area": "Features",
+  "tagline": "EF Core implementation of `IHomeInventoryStore` backed by PostgreSQL.",
+  "description": "EF Core implementation of [`IHomeInventoryStore`](../Lyo.HomeInventory/README.md)\nbacked by PostgreSQL.\n\n- `HomeInventoryDbContext` models items, categories, locations, stock, and the\n  movement ledger (see `Database/*` plus the migrations snapshot for the\n  authoritative FK / cascade story).\n- `PostgresHomeInventoryStore` runs stock adjustments and transfers inside\n  database transactions (`BeginTransactionAsync`) so the stock row and its\n  paired movement row commit atomically.\n- The store also implements `Lyo.Health.IHealth`\n  (`HealthCheckName = \"home-inventory-postgres\"`), so registering the store\n  exposes a database liveness probe.\n- Schema constant: `PostgresHomeInventoryOptions.Schema = \"home_inventory\"`.\n  The default configuration section name is `PostgresHomeInventory`\n  (`PostgresHomeInventoryOptions.SectionName`).",
+  "features": [],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "services.AddPostgresHomeInventoryStore(new PostgresHomeInventoryOptions {\n    ConnectionString = \"...\",\n    EnableAutoMigrations = true\n});"
+    },
+    {
+      "title": "Usage (2)",
+      "language": "json",
+      "code": "{\n  \"PostgresHomeInventory\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"EnableAutoMigrations\": true\n  }\n}"
+    },
+    {
+      "title": "Usage (3)",
+      "language": "csharp",
+      "code": "services.AddPostgresHomeInventoryStoreFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "DI extensions",
+      "items": [
+        "`AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions>)` / `AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions)` — register only the `IDbContextFactory<HomeInventoryDbContext>` (useful for tooling and migrations).",
+        "`AddHomeInventoryDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` — same, bound from configuration.",
+        "`AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions>)` / `AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions)` — register the DbContext factory **and** the `IHomeInventoryStore` singleton.",
+        "`AddPostgresHomeInventoryStoreFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` — register the store using configuration binding."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Usage",
+      "text": "Or with configuration:"
+    },
+    {
+      "type": "paragraph",
+      "title": "Migrations hygiene",
+      "text": "Coordinate schema changes with any API adapters — especially when adjusting movement uniqueness constraints or the `(ItemId, LocationId)` composite key on stock (which must stay aligned with `UpsertStockAsync` semantics). Avoid editing historical migrations retroactively unless you intentionally squash, because that breaks checksums already deployed in production CI."
+    },
+    {
+      "type": "markdown",
+      "title": "Tenancy",
+      "body": "All five entities (`HomeItemEntity`, `HomeCategoryEntity`, `HomeLocationEntity`, `HomeItemStockEntity`, `HomeItemMovementEntity`) carry a nullable `tenant_id` (uuid)\ncolumn with a filtered `ix_home_inv_<entity>_tenant` index. `OwnerEntityType` / `OwnerEntityId` on items still describe which user/household owns the item *within* a\ntenant — they're orthogonal concepts.\n\n`IHomeInventoryStore` accepts an explicit `Guid? tenantId` on every method and runs it through `TenancyResolver.Resolve` using the policy configured in\n`PostgresHomeInventoryOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). Stock and movement transactional methods (`AdjustStockAsync`,\n`TransferStockAsync`) resolve the tenant once and stamp it on every row written in the transaction:\n\n- `SystemOnly` — every row is persisted with `tenant_id = NULL`.\n- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.\n- `MultiTenantStrict` — caller must supply a non-empty `tenantId` or the store throws.\n\nSee [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the full matrix.\n\n```json\n{\n  \"PostgresHomeInventory\": {\n    \"ConnectionString\": \"Host=localhost;Database=home_inventory;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+    },
+    {
+      "type": "list",
+      "title": "Error model",
+      "items": [
+        "Deleting a category fails with an operation exception when child categories or assigned items still exist.",
+        "Deleting a location fails when child locations, stock rows, or movement history reference it.",
+        "`AdjustStockAsync` fails when an adjustment would drive `QuantityOnHand` negative, or when called against a non-existent stock row with a non-positive delta.",
+        "`TransferStockAsync` fails when `quantity <= 0`, the source row is missing, or the source has insufficient on-hand quantity."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "[`Lyo.HomeInventory`](../Lyo.HomeInventory/README.md) — interface, records, and enum vocabulary."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Features/HomeInventory/Lyo.HomeInventory.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

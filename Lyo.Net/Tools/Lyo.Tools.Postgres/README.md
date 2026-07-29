@@ -5,58 +5,46 @@ fresh local database up to the latest schema or stepping a single schema back to
 
 ## Entry point
 
-`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in
-`appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host.
-
-Three scoped services are wired:
-
-- `MigrationRunner` — drives EF migrations on demand for any registered context.
-- `ComicDbSeeder` — Bogus-faked comic series, characters, tags, and authors.
-- `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc.
+`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, characters, tags, and authors. - `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc.
 
 ## Main menu
 
-`Menu.cs` renders a Spectre prompt with three options plus exit:
-
-1. **Seeds** — Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already
-   has rows.
-2. **Migrations** — see below.
-3. **Change Connection String** — accepts a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`).
-
-Errors are caught per menu choice and printed via `WriteError`, then the menu loops.
+- **Seeds** — Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already has rows.
+- **Migrations** — see below.
+- **Change Connection String** — accepts a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`).
 
 ## Migrations menu
 
 `MigrationRunner` (see `MigrationRunner.cs`) knows about 21 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:
 
-| Label             | DbContext                    | Schema           |
-|-------------------|------------------------------|------------------|
-| Audit             | `AuditDbContext`             | `audit`          |
-| ChangeTracker     | `ChangeTrackerDbContext`     | `change_tracker` |
-| Comic             | `ComicDbContext`             | `comic`          |
-| Comment           | `CommentDbContext`           | `comment`        |
-| Config            | `ConfigDbContext`            | `config`         |
-| ContactUs         | `ContactUsDbContext`         | `contact`        |
-| Discord           | `DiscordDbContext`           | `discord`        |
-| Email             | `EmailDbContext`             | `email`          |
-| Endato            | `EndatoDbContext`            | `endato`         |
-| Favorite          | `FavoriteDbContext`          | `favorite`       |
-| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore`      |
-| HomeInventory     | `HomeInventoryDbContext`     | `home_inventory` |
-| Job               | `JobContext`                 | `job`            |
-| Note              | `NoteDbContext`              | `note`           |
-| People            | `PeopleDbContext`            | `people`         |
-| Rating            | `RatingDbContext`            | `rating`         |
-| Reporting         | `ReportingContext`           | `reporting`      |
-| ShortUrl          | `ShortUrlDbContext`          | `url`            |
-| Sms               | `SmsDbContext`               | `sms`            |
-| SmsTwilio         | `TwilioSmsDbContext`         | `sms`            |
-| Tag               | `TagDbContext`               | `tag`            |
+| Label | DbContext | Schema |
+| ----------------- | ---------------------------- | ---------------- |
+| Audit | `AuditDbContext` | `audit` |
+| ChangeTracker | `ChangeTrackerDbContext` | `change_tracker` |
+| Comic | `ComicDbContext` | `comic` |
+| Comment | `CommentDbContext` | `comment` |
+| Config | `ConfigDbContext` | `config` |
+| ContactUs | `ContactUsDbContext` | `contact` |
+| Discord | `DiscordDbContext` | `discord` |
+| Email | `EmailDbContext` | `email` |
+| Endato | `EndatoDbContext` | `endato` |
+| Favorite | `FavoriteDbContext` | `favorite` |
+| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore` |
+| HomeInventory | `HomeInventoryDbContext` | `home_inventory` |
+| Job | `JobContext` | `job` |
+| Note | `NoteDbContext` | `note` |
+| People | `PeopleDbContext` | `people` |
+| Rating | `RatingDbContext` | `rating` |
+| Reporting | `ReportingContext` | `reporting` |
+| ShortUrl | `ShortUrlDbContext` | `url` |
+| Sms | `SmsDbContext` | `sms` |
+| SmsTwilio | `TwilioSmsDbContext` | `sms` |
+| Tag | `TagDbContext` | `tag` |
 
 The menu offers **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:
 
 - **Migrate to Latest** — `MigrateLatestAsync<TContext>` (`context.Database.MigrateAsync`).
-- **Migrate to Target…** — `MigrateToAsync<TContext>(target)` via `IMigrator.MigrateAsync(target)`. The picker lists every migration with `✓ APPLIED` / `· PENDING` status, plus a
+- **Migrate to Target…** — `MigrateToAsync<TContext>(target)` via `IMigrator.MigrateAsync(target)`. The picker lists every migration with ` APPLIED` / `· PENDING` status, plus a
   top "Roll back all" sentinel (passes `"0"` after a confirmation) and a "Cancel" sentinel.
 - **View Status** — Table of all defined migrations with applied/pending state.
 - **View Current Version** — `GetCurrentVersionAsync<TContext>` returns the last applied migration name, or "No migrations applied yet."
@@ -67,8 +55,6 @@ call, so the "Change Connection String" menu option takes effect immediately.
 
 ## `ConnectionStringProvider`
 
-Singleton `string?` holder with three members:
-
 - `ConnectionString` (mutable) — current value.
 - `IsConfigured` — non-empty check.
 - `GetOrThrow()` — throws if no string is set (e.g. you launched without `appsettings.Development.json`).
@@ -76,30 +62,128 @@ Singleton `string?` holder with three members:
 
 ## Configuration
 
-`appsettings.json` only declares `ConnectionString` (empty) and logging defaults. Override locally via `appsettings.Development.json`, environment variables (`ConnectionString=…`),
-or the interactive **Change Connection String** menu.
+`appsettings.json` only declares `ConnectionString` (empty) and logging defaults. Override locally via `appsettings.Development.json`, environment variables (`ConnectionString=…`), or the interactive **Change Connection String** menu.
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Audit.Postgres`](../../Core/Audit/Lyo.Audit.Postgres/README.md)
-- [`Lyo.ChangeTracker.Postgres`](../../Core/ChangeTracker/Lyo.ChangeTracker.Postgres/README.md)
-- [`Lyo.Comic.Postgres`](../../Features/Comic/Lyo.Comic.Postgres/README.md)
-- [`Lyo.Comment.Postgres`](../../Features/Comment/Lyo.Comment.Postgres/README.md)
-- [`Lyo.Config.Postgres`](../../Features/Config/Lyo.Config.Postgres/README.md)
-- [`Lyo.ContactUs.Postgres`](../../Features/ContactUs/Lyo.ContactUs.Postgres/README.md)
-- [`Lyo.Discord.Postgres`](../../Integration/Discord/Lyo.Discord.Postgres/README.md)
-- [`Lyo.Email.Postgres`](../../Communication/Email/Lyo.Email.Postgres/README.md)
-- [`Lyo.Endato.Postgres`](../../Integration/Endato/Lyo.Endato.Postgres/README.md)
-- [`Lyo.Favorite.Postgres`](../../Features/Favorite/Lyo.Favorite.Postgres/README.md)
-- [`Lyo.FileMetadataStore.Postgres`](../../Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/README.md)
-- [`Lyo.HomeInventory.Postgres`](../../Features/HomeInventory/Lyo.HomeInventory.Postgres/README.md)
-- [`Lyo.Job.Postgres`](../../Integration/Job/Lyo.Job.Postgres/README.md)
-- [`Lyo.Note.Postgres`](../../Features/Note/Lyo.Note.Postgres/README.md)
-- [`Lyo.People.Postgres`](../../Core/People/Lyo.People.Postgres/README.md)
-- [`Lyo.Postgres`](../../Data/Postgres/Lyo.Postgres/README.md)
-- [`Lyo.Rating.Postgres`](../../Features/Rating/Lyo.Rating.Postgres/README.md)
-- [`Lyo.ShortUrl.Postgres`](../../Features/ShortUrl/Lyo.ShortUrl.Postgres/README.md)
-- [`Lyo.Sms.Postgres`](../../Communication/Sms/Lyo.Sms.Postgres/README.md)
-- [`Lyo.Sms.Twilio.Postgres`](../../Communication/Sms/Lyo.Sms.Twilio.Postgres/README.md)
-- [`Lyo.Tag.Postgres`](../../Features/Tag/Lyo.Tag.Postgres/README.md)
-- [`Lyo.Reporting.Postgres`](../../Integration/Reporting/Lyo.Reporting.Postgres/README.md)
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Audit.Postgres` — (direct, lyo)
+- `Lyo.ChangeTracker.Postgres` — (direct, lyo)
+- `Lyo.Comic.Postgres` — (direct, lyo)
+- `Lyo.Comment.Postgres` — (direct, lyo)
+- `Lyo.Config.Postgres` — (direct, lyo)
+- `Lyo.ContactUs.Postgres` — (direct, lyo)
+- `Lyo.Discord.Postgres` — (direct, lyo)
+- `Lyo.Email.Postgres` — (direct, lyo)
+- `Lyo.Endato.Postgres` — (direct, lyo)
+- `Lyo.Favorite.Postgres` — (direct, lyo)
+- `Lyo.FileMetadataStore.Postgres` — (direct, lyo)
+- `Lyo.Geolocation.Postgres` — (direct, lyo)
+- `Lyo.HomeInventory.Postgres` — (direct, lyo)
+- `Lyo.Job.Postgres` — (direct, lyo)
+- `Lyo.Note.Postgres` — (direct, lyo)
+- `Lyo.People.Postgres` — (direct, lyo)
+- `Lyo.Rating.Postgres` — (direct, lyo)
+- `Lyo.Reporting.Postgres` — (direct, lyo)
+- `Lyo.ShortUrl.Postgres` — (direct, lyo)
+- `Lyo.Sms.Postgres` — (direct, lyo)
+- `Lyo.Sms.Twilio.Postgres` — (direct, lyo)
+- `Lyo.Tag.Postgres` — (direct, lyo)
+- `Bogus` `35.6.5` — (direct, third-party)
+- `Spectre.Console` `0.57.2` — (direct, third-party)
+- `Lyo.Api` — (transitive, lyo)
+- `Lyo.Api.Export` — (transitive, lyo)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Audit` — (transitive, lyo)
+- `Lyo.Cache` — (transitive, lyo)
+- `Lyo.ChangeTracker` — (transitive, lyo)
+- `Lyo.Comic` — (transitive, lyo)
+- `Lyo.Comment` — (transitive, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Compression` — (transitive, lyo)
+- `Lyo.Config` — (transitive, lyo)
+- `Lyo.ContactUs` — (transitive, lyo)
+- `Lyo.ContentThreatScan` — (transitive, lyo)
+- `Lyo.Csv` — (transitive, lyo)
+- `Lyo.Csv.Models` — (transitive, lyo)
+- `Lyo.DataTable.Models` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Diff` — (transitive, lyo)
+- `Lyo.Discord.Models` — (transitive, lyo)
+- `Lyo.Encryption` — (transitive, lyo)
+- `Lyo.EntityReference.Models` — (transitive, lyo)
+- `Lyo.EntityReference.Postgres` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Favorite` — (transitive, lyo)
+- `Lyo.FileMetadataStore` — (transitive, lyo)
+- `Lyo.FileStorage` — (transitive, lyo)
+- `Lyo.Formatter` — (transitive, lyo)
+- `Lyo.Geolocation` — (transitive, lyo)
+- `Lyo.Geolocation.Models` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Health` — (transitive, lyo)
+- `Lyo.HomeInventory` — (transitive, lyo)
+- `Lyo.IO.Temp` — (transitive, lyo)
+- `Lyo.Job.Models` — (transitive, lyo)
+- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.Lock` — (transitive, lyo)
+- `Lyo.MessageQueue` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.Note` — (transitive, lyo)
+- `Lyo.People.Models` — (transitive, lyo)
+- `Lyo.Postgres` — (transitive, lyo)
+- `Lyo.Query` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Rating` — (transitive, lyo)
+- `Lyo.Reporting.Models` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Lyo.Schedule.Models` — (transitive, lyo)
+- `Lyo.Scheduler` — (transitive, lyo)
+- `Lyo.ShortUrl` — (transitive, lyo)
+- `Lyo.Sms` — (transitive, lyo)
+- `Lyo.Sms.Models` — (transitive, lyo)
+- `Lyo.Sms.Twilio` — (transitive, lyo)
+- `Lyo.Streams` — (transitive, lyo)
+- `Lyo.Tag` — (transitive, lyo)
+- `Lyo.Validation` — (transitive, lyo)
+- `Lyo.Xlsx` — (transitive, lyo)
+- `Lyo.Xlsx.Models` — (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
+- `ClosedXML` `0.105.0` — (transitive, third-party)
+- `CsvHelper` `33.1.0` — (transitive, third-party)
+- `DocumentFormat.OpenXml` `3.1.1` — (transitive, third-party)
+- `EasyCompressor` `2.1.0` — (transitive, third-party)
+- `ExcelDataReader` `3.9.0` — (transitive, third-party)
+- `ExcelDataReader.DataSet` `3.9.0` — (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
+- `Mapster` `10.0.10` — (transitive, third-party)
+- `Microsoft.AspNetCore.Authorization` `10.0.5` — (transitive, microsoft)
+- `Microsoft.AspNetCore.Http.Abstractions` `2.*` — (transitive, microsoft)
+- `Microsoft.AspNetCore.OpenApi` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `SmartFormat.NET` `3.6.1` — (transitive, third-party)
+- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` — (transitive, microsoft)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Twilio` `7.14.9` — (transitive, third-party)

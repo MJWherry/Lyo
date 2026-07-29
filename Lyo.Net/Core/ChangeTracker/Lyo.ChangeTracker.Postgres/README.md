@@ -11,20 +11,9 @@ actor.
 - `DeleteForEntityAsync` to drop all history for a target entity
 - Optional automatic migrations on startup via `EnableAutoMigrations`
 
-## Registration
+## Examples
 
-The package layers registration helpers so hosts can pick the level of integration they need:
-
-| Extension                                                              | What it adds                                                                                                                                            |
-|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`).                                              |
-| `AddChangeTrackerDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresChangeTrackerOptions` from `"PostgresChangeTracker"` (override the section via the optional `configSectionName`) and registers as above. |
-| `AddChangeTrackerDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`.                                      |
-| `AddChangeTrackerDbContext(Action<DbContextOptionsBuilder>)`           | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing).                                                  |
-| `AddPostgresChangeTracker(options)` / `(Action<…>)`                    | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton.                                       |
-| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)`         | Same as the options overload, binding from configuration.                                                                                               |
-
-## Quick Start
+### Quick Start
 
 ```csharp
 services.AddPostgresChangeTracker(new PostgresChangeTrackerOptions {
@@ -35,26 +24,34 @@ services.AddPostgresChangeTracker(new PostgresChangeTrackerOptions {
 services.AddPostgresChangeTrackerFromConfiguration(configuration);
 ```
 
-## Health
-
-`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs
-`Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve
-`IEnumerable<IHealth>`.
-
-## Migrations
-
-Design-time migrations require `CHANGE_TRACKER_CONNECTION_STRING`:
+### Migrations
 
 ```bash
 export CHANGE_TRACKER_CONNECTION_STRING="Host=localhost;Database=change_tracker;Username=postgres;Password=postgres"
 dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTracker.Postgres
 ```
 
+## Registration
+
+The package layers registration helpers so hosts can pick the level of integration they need:
+
+| Extension | What it adds |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)` | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`). |
+| `AddChangeTrackerDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresChangeTrackerOptions` from `"PostgresChangeTracker"` (override the section via the optional `configSectionName`) and registers as above. |
+| `AddChangeTrackerDbContext(connectionString)` | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`. |
+| `AddChangeTrackerDbContext(Action<DbContextOptionsBuilder>)` | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing). |
+| `AddPostgresChangeTracker(options)` / `(Action<…>)` | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton. |
+| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration. |
+
+## Health
+
+`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs `Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve `IEnumerable<IHealth>`.
+
 ## Schema
 
 - All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id`
-  (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
 
 ## Tenancy
 
@@ -79,21 +76,24 @@ The `ix_changes_tenant` index supports per-tenant lookups. Use the
 
 ## Dependencies
 
-*(Synchronized from `Lyo.ChangeTracker.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-
-### Project references
-
-- [`Lyo.ChangeTracker`](../Lyo.ChangeTracker/README.md)
-- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
-- [`Lyo.Health`](../../Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- `Lyo.ChangeTracker` — (direct, lyo)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

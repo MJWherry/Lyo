@@ -28,3 +28,28 @@ or, when working with `EndpointAuth` from `Lyo.Api`:
 ```csharp
 GetAuth = EndpointAuth.RequireAuthorization("scope:people.read")
 ```
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Authentication` — (direct, lyo)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Diagnostic` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Authentication.Models` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)

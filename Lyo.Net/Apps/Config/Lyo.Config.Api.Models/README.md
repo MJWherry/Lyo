@@ -12,3 +12,15 @@ URL segment helpers mapping **`/api/config/{appKind}/{appId}`** to **`EntityRef(
 Hosting integration (**polling + `IOptionsMonitor<T>`**) is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting)**.
 
 HTTP surface is documented under **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)**.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Config` — (direct, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.EntityReference.Models` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

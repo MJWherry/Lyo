@@ -5,6 +5,22 @@ HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/d
 
 Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—resolve via **`IHttpClientFactory`** so lifetimes stay correct in DI).
 
+## Examples
+
+### DI registration
+
+```csharp
+services.AddLyoApiClient(
+    optionsOverride: o => {
+        o.BaseUrl = "https://api.example.com/";
+        o.EnableAutoResponseDecompression = true;
+        o.AcceptEncodings = ["gzip", "br"];
+        o.RequestCompression = ApiRequestCompressionType.Gzip;
+        o.RequestCompressionMinBytes = 4 * 1024;
+    },
+    httpClientBuilderOverride: b => b.AddStandardResilienceHandler());
+```
+
 ## Surface (`IApiClient`)
 
 **Serialization**
@@ -42,50 +58,52 @@ automatically.
 Configuration section: `ApiClientOptions.SectionName = "ApiClient"`. Integration-specific clients (Discord, Endato, ESPN, Typecast, …) subclass this type and shadow `SectionName`
 so all transport flags bind under their own section.
 
-| Property                          | Default                    | Description                                                                                                                                                            |
-|-----------------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `BaseUrl`                         | `null`                     | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it.                                                                  |
-| `EnsureStatusCode`                | `true`                     | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
-| `AcceptEncodings`                 | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase.             |
-| `EnableAutoResponseDecompression` | `true`                     | Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler.                                                 |
-| `RequestCompression`              | `None`                     | `ApiRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly.                                        |
-| `RequestCompressionMinBytes`      | `1024`                     | Minimum serialized payload size before compression kicks in (avoids spending CPU on tiny bodies).                                                                      |
+| Property | Default | Description |
+| --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseUrl` | `null` | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it. |
+| `EnsureStatusCode` | `true` | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
+| `AcceptEncodings` | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase. |
+| `EnableAutoResponseDecompression` | `true` | Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler. |
+| `RequestCompression` | `None` | `ApiRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly. |
+| `RequestCompressionMinBytes` | `1024` | Minimum serialized payload size before compression kicks in (avoids spending CPU on tiny bodies). |
 
 Pair request compression with a host that registers `AddRequestDecompression` (ASP.NET Core 7+) so the server can decode the body.
 
 ## Compression & performance
 
-`AddLyoApiClient` (in [`ServiceCollectionExtensions`](ServiceCollectionExtensions.cs)) wires an `HttpClientFactory` registration that:
-
 - Adds `Accept-Encoding` headers from **`AcceptEncodings`** (duplicates removed, case normalized).
 - Sets **`HttpClientHandler.AutomaticDecompression`** when **`EnableAutoResponseDecompression`** is `true` (maps `gzip`/`deflate`/`br` where the target framework supports Brotli).
 - Returns the underlying `IHttpClientBuilder` so callers can chain resilience, message handlers, or named-client overrides.
 
-For high-throughput ingestion, prefer **streaming** reads + **chunked uploads** instead of buffering large files as `byte[]`.
-
 ## DI registration
 
-```csharp
-services.AddLyoApiClient(
-    optionsOverride: o => {
-        o.BaseUrl = "https://api.example.com/";
-        o.EnableAutoResponseDecompression = true;
-        o.AcceptEncodings = ["gzip", "br"];
-        o.RequestCompression = ApiRequestCompressionType.Gzip;
-        o.RequestCompressionMinBytes = 4 * 1024;
-    },
-    httpClientBuilderOverride: b => b.AddStandardResilienceHandler());
-```
-
-`clientName` defaults to **`nameof(IApiClient)`** for named `HttpClientFactory` resolution. Bind from configuration with the standard
-`services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
+`clientName` defaults to **`nameof(IApiClient)`** for named `HttpClientFactory` resolution. Bind from configuration with the standard `services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
 
 ## Typical integration tests
 
-Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [
-`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
+Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [ `Lyo.Api.Models`](../Lyo.Api.Models/README.md).
 
 ## Related
 
 - [`Lyo.Api.Models`](../Lyo.Api.Models/README.md) — payloads + error contracts.
 - [`Lyo.Api`](../Lyo.Api/README.md) — authoritative server behavior you are mirroring client-side.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Api.Models` — (direct, lyo)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Diagnostic` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)

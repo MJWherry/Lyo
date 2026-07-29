@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyo.local/catalog/section.schema.json",
+  "title": "Lyo catalog section",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["type", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "paragraph" },
+        "title": { "type": "string" },
+        "text": { "type": "string" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "list" },
+        "title": { "type": "string" },
+        "ordered": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "language", "code"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "code" },
+        "title": { "type": "string" },
+        "language": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "headers", "rows"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "table" },
+        "title": { "type": "string" },
+        "headers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "lead": { "type": "string" },
+        "trail": { "type": "string" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "markdown" },
+        "title": { "type": "string" },
+        "body": { "type": "string" }
+      }
+    }
+  ]
+}

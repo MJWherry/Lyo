@@ -8,26 +8,19 @@ parameter — useful for testing and analytics.
 
 ## Data grid (`DataGrid/`)
 
-- **`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility
-  menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via
-  `Blazored.LocalStorage`.
-- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and
-  `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.
+- **`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.
+- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.
 - **`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.
 - **`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid.
 
 ## Query builder UI
 
-- **Query node editor (`QueryNodeEditor/`)** — visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and
-  `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `FilterPropertyType` via the internal `Extensions.GetAvailableComparisonOperators`,
-  with `In` / `NotIn` flagged through `IsMultiValueComparisonOperator`.
-- **Query request builder (`QueryRequestBuilder/`)** — full-form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`,
-  `StartAmountFields`, and `QueryReqForm` plus the umbrella `QueryRequestBuilder` component that renders the live query score.
+- **Query node editor (`QueryNodeEditor/`)** — visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `FilterPropertyType` via the internal `Extensions.GetAvailableComparisonOperators`, with `In` / `NotIn` flagged through `IsMultiValueComparisonOperator`.
+- **Query request builder (`QueryRequestBuilder/`)** — full-form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm` plus the umbrella `QueryRequestBuilder` component that renders the live query score.
 
 ## Forms (`Form/`)
 
-- **`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for
-  collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.
+- **`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.
 - **`LyoFormInput`** — change-tracked single-value input that participates in the cascaded form.
 - **`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker.
 
@@ -62,21 +55,18 @@ Completed chips always render the shortened display name (not the raw full name 
 - **`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).
 - **`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).
 - **`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.
-- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [
-  `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
+- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [ `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
 - **`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component.
 
 ## Identifier workbench (`Identifiers/`)
 
-- **`IdWorkbench`** — interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses
-  `Lyo.Common.Identifiers`.
+- **`IdWorkbench`** — interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Identifiers`.
 - **`IdResultPanel`** + **`IdEntry`** — supporting result display.
 
 ## Other top-level pieces
 
 - **`ClientStore`** — `Blazored.LocalStorage`-backed key/value store used by the grid + form state binders.
-- **`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId`
-  and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).
+- **`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId` and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).
 - **`IJsInterop` / `JsInterop`** — small JS bridge for clipboard / focus operations.
 - **`LyoResultErrorFormatter`** — renders `Lyo.Result` errors consistently across components.
 
@@ -89,34 +79,42 @@ Completed chips always render the shortened display name (not the raw full name 
 
 ## Internal helpers (`Extensions`)
 
-Internal `Extensions` provides shared visual helpers — `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`,
-`GetAvailableComparisonOperators(FilterPropertyType)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. These power the consistent status badges and
-operator menus used across the grid, query editor, and form.
+Internal `Extensions` provides shared visual helpers — `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(FilterPropertyType)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. These power the consistent status badges and operator menus used across the grid, query editor, and form.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Web.Components.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0` (Razor SDK)
-
-### NuGet packages
-
-| Package                 | Version  |
-|-------------------------|----------|
-| `Blazored.LocalStorage` | `4.5.0`  |
-| `MudBlazor`             | `[9.3,)` |
-
-### Project references
-
-- [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.IO.Temp`](../../../Data/IOTemp/Lyo.IO.Temp/README.md)
-- [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
-- [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)
-- [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
-
-### Related / optional packages
-
-- [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md), [`Lyo.Web.Components.Export.Csv`](../Lyo.Web.Components.Export.Csv/README.md), [
-  `Lyo.Web.Components.Export.Xlsx`](../Lyo.Web.Components.Export.Xlsx/README.md) — export UI composables (not direct refs of this assembly)
+- `Lyo.Api.Client` — (direct, lyo)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Encryption` — (direct, lyo)
+- `Lyo.IO.Temp` — (direct, lyo)
+- `Lyo.Query.Models` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Validation` — (direct, lyo)
+- `Blazored.LocalStorage` `4.5.0` — (direct, third-party)
+- `MudBlazor` `9.3` — (direct, third-party)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Diagnostic` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Streams` — (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)

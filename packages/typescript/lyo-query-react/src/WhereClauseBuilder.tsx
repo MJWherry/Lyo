@@ -1,11 +1,16 @@
 import type { ComparisonOperator, WhereClause } from "lyo-query";
 import {
   COMPARISON_OPERATORS,
+  coerceValueForComparison,
   defaultCondition,
   defaultGroup,
+  fromMultiValueStrings,
+  isMultiValueComparison,
   parseConditionValue,
+  toMultiValueStrings,
   valueToInput,
 } from "lyo-query";
+import { ChipInput } from "./ChipInput.js";
 
 export type WhereClauseBuilderProps = {
   value: WhereClause;
@@ -150,7 +155,7 @@ export function WhereClauseBuilder({
     );
   }
 
-  const multi = value.Comparison === "In" || value.Comparison === "NotIn";
+  const multi = isMultiValueComparison(value.Comparison);
   const dateField = looksLikeDateField(value.Field);
 
   return (
@@ -192,12 +197,14 @@ export function WhereClauseBuilder({
           <span className={`${p}__label`}>Comparison</span>
           <select
             value={value.Comparison}
-            onChange={(e) =>
+            onChange={(e) => {
+              const Comparison = e.target.value as ComparisonOperator;
               onChange({
                 ...value,
-                Comparison: e.target.value as ComparisonOperator,
-              })
-            }
+                Comparison,
+                Value: coerceValueForComparison(Comparison, value.Value),
+              });
+            }}
           >
             {COMPARISON_OPERATORS.map((op) => (
               <option key={op} value={op}>
@@ -209,13 +216,24 @@ export function WhereClauseBuilder({
         <label className={`${p}__field ${p}__field--grow`}>
           <span className={`${p}__label`}>
             Value{" "}
-            {dateField
-              ? "(datetime)"
-              : multi
-                ? "(comma-separated)"
+            {multi
+              ? "(chips — Enter to add)"
+              : dateField
+                ? "(datetime)"
                 : "(use null for null)"}
           </span>
-          {dateField && !multi ? (
+          {multi ? (
+            <ChipInput
+              values={toMultiValueStrings(value.Value)}
+              onChange={(next) =>
+                onChange({
+                  ...value,
+                  Value: fromMultiValueStrings(next),
+                })
+              }
+              placeholder="Value + Enter"
+            />
+          ) : dateField ? (
             <input
               type="datetime-local"
               value={toDatetimeLocalValue(value.Value)}

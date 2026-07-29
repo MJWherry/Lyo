@@ -6,11 +6,10 @@ PostgreSQL + EF Core implementation of [`Lyo.Config.IConfigStore`](../Lyo.Config
 
 - `ConfigDbContext` (+ `ConfigDbContextFactory`) under `Database/` with `DbSet<ConfigDefinitionEntity>`, `DbSet<ConfigBindingEntity>`, and `DbSet<ConfigBindingRevisionEntity>`.
 - Fluent-API entity configurations enforcing the uniqueness rules from `Lyo.Config`:
-    - `config_definition` unique on `(ForEntityType, Key)`.
-    - `config_binding` unique on `(DefinitionId, ForEntityType, ForEntityId)` with `ON DELETE CASCADE` from the definition row.
-    - `config_binding_revision` keyed on `(BindingId, Revision)` — monotonic 1-based revision numbers per binding.
-- `PostgresConfigStore`, the singleton `IConfigStore` implementation backed by an `IDbContextFactory<ConfigDbContext>`. It also implements `Lyo.Health.IHealth` so the container
-  can be probed for relational connectivity.
+- `config_definition` unique on `(ForEntityType, Key)`.
+- `config_binding` unique on `(DefinitionId, ForEntityType, ForEntityId)` with `ON DELETE CASCADE` from the definition row.
+- `config_binding_revision` keyed on `(BindingId, Revision)` — monotonic 1-based revision numbers per binding.
+- `PostgresConfigStore`, the singleton `IConfigStore` implementation backed by an `IDbContextFactory<ConfigDbContext>`. It also implements `Lyo.Health.IHealth` so the container can be probed for relational connectivity.
 - `PostgresConfigOptions` (`SectionName = "PostgresConfig"`, `Schema = "config"`, `ConnectionString`, `EnableAutoMigrations`).
 - Migrations under `Migrations/` (`InitialCreate` baseline) using the `config` schema for the EF migrations history table.
 
@@ -18,23 +17,21 @@ PostgreSQL + EF Core implementation of [`Lyo.Config.IConfigStore`](../Lyo.Config
 
 All entry points are exposed as `IServiceCollection` extensions:
 
-| Entry point                                                                                                          | What it does                                                                                                                                                                                                                                                                    |
-|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddConfigDbContextFactory(Action<PostgresConfigOptions>)`                                                           | Registers `IOptions<PostgresConfigOptions>`, `AddPostgresMigrations<ConfigDbContext, PostgresConfigOptions>()`, and `IDbContextFactory<ConfigDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only — does **not** register `IConfigStore`. |
-| `AddConfigDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresConfigOptions.SectionName)` | Same as above; binds from the configuration section (default `"PostgresConfig"`).                                                                                                                                                                                               |
-| `AddConfigDbContextFactory(PostgresConfigOptions options)`                                                           | Same as above with a pre-built options instance.                                                                                                                                                                                                                                |
-| `AddPostgresConfigStore(Action<PostgresConfigOptions>)`                                                              | Calls `AddConfigDbContextFactory(...)` then registers `IConfigStore` → singleton `PostgresConfigStore`.                                                                                                                                                                         |
-| `AddPostgresConfigStoreFromConfiguration(IConfiguration, string sectionName = PostgresConfigOptions.SectionName)`    | Same as above; binds from configuration.                                                                                                                                                                                                                                        |
-| `AddPostgresConfigStore(PostgresConfigOptions options)`                                                              | Same as above with a pre-built options instance — for tests / integration harnesses.                                                                                                                                                                                            |
+| Entry point | What it does |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AddConfigDbContextFactory(Action<PostgresConfigOptions>)` | Registers `IOptions<PostgresConfigOptions>`, `AddPostgresMigrations<ConfigDbContext, PostgresConfigOptions>()`, and `IDbContextFactory<ConfigDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only — does **not** register `IConfigStore`. |
+| `AddConfigDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresConfigOptions.SectionName)` | Same as above; binds from the configuration section (default `"PostgresConfig"`). |
+| `AddConfigDbContextFactory(PostgresConfigOptions options)` | Same as above with a pre-built options instance. |
+| `AddPostgresConfigStore(Action<PostgresConfigOptions>)` | Calls `AddConfigDbContextFactory(...)` then registers `IConfigStore` → singleton `PostgresConfigStore`. |
+| `AddPostgresConfigStoreFromConfiguration(IConfiguration, string sectionName = PostgresConfigOptions.SectionName)` | Same as above; binds from configuration. |
+| `AddPostgresConfigStore(PostgresConfigOptions options)` | Same as above with a pre-built options instance — for tests / integration harnesses. |
 
 `PostgresConfigOptions.ConnectionString` is validated (non-empty) by all entry points. The `EnableAutoMigrations` flag is consumed by `AddPostgresMigrations<>` — see
 [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) — to gate the hosted-startup migration runner.
 
 ## Runtime expectations
 
-`PostgresConfigStore` opens a fresh `ConfigDbContext` per call via the registered `IDbContextFactory<ConfigDbContext>`, so it is safe as a singleton under concurrent load.
-`SaveBindingAsync` writes the current value to `config_binding` **and** appends a new `config_binding_revision` row inside the same `SaveChangesAsync`, so revision history
-stays in lock-step with the latest binding value. The seeded initial migration writes revision `1` from each existing binding so history starts at deploy time.
+`PostgresConfigStore` opens a fresh `ConfigDbContext` per call via the registered `IDbContextFactory<ConfigDbContext>`, so it is safe as a singleton under concurrent load. `SaveBindingAsync` writes the current value to `config_binding` **and** appends a new `config_binding_revision` row inside the same `SaveChangesAsync`, so revision history stays in lock-step with the latest binding value. The seeded initial migration writes revision `1` from each existing binding so history starts at deploy time.
 
 ## Tenancy
 
@@ -62,21 +59,24 @@ See [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityRef
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Config.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-
-### Project references
-
-- [`Lyo.Config`](../Lyo.Config/README.md)
-- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- `Lyo.Config` — (direct, lyo)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

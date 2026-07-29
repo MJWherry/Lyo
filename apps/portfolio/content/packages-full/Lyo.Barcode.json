@@ -1,0 +1,169 @@
+{
+  "id": "Lyo.Barcode",
+  "name": "Lyo.Barcode",
+  "area": "Data",
+  "tagline": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**.",
+  "description": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support\nlive in companion packages (for example **`Lyo.Barcode.Native`**).",
+  "features": [],
+  "examples": [
+    {
+      "title": "Quick start",
+      "language": "csharp",
+      "code": "using Lyo.Barcode;\nusing Lyo.Barcode.Models;\n\n// Assume IBarcodeService is registered (e.g. Native implementation).\nIBarcodeService barcodes = /* ... */;\n\nvar result = await barcodes.GenerateAsync(\n    \"HELLO-128\",\n    BarcodeSymbology.Code128,\n    new BarcodeOptions { Format = BarcodeFormat.Svg, ModuleWidthPixels = 2, BarHeightPixels = 64 });\n\nif (result.IsSuccess && result is BarcodeResult br && br.ImageBytes != null)\n    await File.WriteAllBytesAsync(\"out.svg\", br.ImageBytes);"
+    },
+    {
+      "title": "Fluent builder",
+      "language": "csharp",
+      "code": "var (data, sym, opts) = BarcodeBuilder.New()\n    .WithData(\"SKU-12345\")\n    .WithSymbology(BarcodeSymbology.Code128)\n    .WithFormat(BarcodeFormat.Bmp)\n    .WithModuleWidthPixels(2)\n    .WithBarHeightPixels(96)\n    .WithShowHumanReadableTextBelow(true)\n    .WithShowBorder(true)\n    .WithBorderWidthPixels(4)\n    .WithBorderColorHex(\"#000000\")\n    .Build();\n\nawait barcodes.GenerateAsync(data, sym, opts);"
+    },
+    {
+      "title": "Decode from image bytes",
+      "language": "csharp",
+      "code": "var read = await barcodes.ReadFromImageAsync(pngBytes);\nif (read.IsSuccess && read.Data != null)\n    Console.WriteLine(read.Data.Text);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Public API overview",
+      "headers": [
+        "Type",
+        "Description"
+      ],
+      "rows": [
+        [
+          "**`IBarcodeService`**",
+          "Generate barcodes (string or **`BarcodeBuilder`**), stream/file output, batch, and **read** barcodes from raster bytes."
+        ],
+        [
+          "**`BarcodeBuilder`**",
+          "Fluent configuration of payload, **`BarcodeSymbology`**, **`BarcodeOptions`** (module width, colors, human-readable text, border)."
+        ],
+        [
+          "**`BarcodeRequest`**",
+          "Batch item: **`Data`**, **`Symbology`**, optional **`Options`**, optional **`Id`**."
+        ],
+        [
+          "**`BarcodeOptions`**",
+          "Raster/SVG dimensions, colors, quiet zone, human-readable caption under bars, optional **border** frame."
+        ],
+        [
+          "**`BarcodeServiceOptions`**",
+          "Host limits and defaults for implementations (see **`SectionName`**)."
+        ],
+        [
+          "**`BarcodeResult`**",
+          "**`Result<BarcodeRequest>`** carrying **`ImageBytes`**, dimensions, format."
+        ],
+        [
+          "**`BarcodeImageReadResult`**",
+          "Decoder output: **`Text`**, **`FormatName`**."
+        ],
+        [
+          "**`BarcodeSymbology`**, **`BarcodeFormat`**",
+          "Supported symbologies and output formats."
+        ],
+        [
+          "**`BarcodeErrorCodes`**",
+          "Stable error code strings for failures."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Border (rendering)",
+      "text": "When **`BarcodeOptions.ShowBorder`** is true, **`Lyo.Barcode.Native`** expands the output by **`2 × BorderWidthPixels`** on width and height and draws a filled frame in * *`BorderColorHex`** around the symbol (inside that inset, the usual background and bars are unchanged). Width is clamped by **`BarcodeServiceOptions.MinBorderWidthPixels`** / * *`MaxBorderWidthPixels`** (defaults **1–64**). **`BorderColorHex`** must be **`#RGB`** or **`#RRGGBB`** when the border is enabled."
+    },
+    {
+      "type": "paragraph",
+      "title": "Configuration binding",
+      "text": "Implementations may bind **`BarcodeServiceOptions`** from configuration using section **`BarcodeService`** (see **`BarcodeServiceOptions.SectionName`**)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Barcode/Lyo.Barcode/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

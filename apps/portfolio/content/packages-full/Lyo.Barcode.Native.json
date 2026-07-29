@@ -1,0 +1,186 @@
+{
+  "id": "Lyo.Barcode.Native",
+  "name": "Lyo.Barcode.Native",
+  "area": "Data",
+  "tagline": "Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency.",
+  "description": "Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to *\n*BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net +\nImageSharp) through **`ReadFromImageAsync`**.",
+  "features": [
+    "**Encode:** Code 128 subset B end-to-end (start/checksum/stop computed in `Code128Encoder`); other symbologies return `BARCODE_UNSUPPORTED_SYMBOLOGY`.",
+    "**Render:** **BMP** (`BarcodeFormat.Bmp`) and **SVG** (`BarcodeFormat.Svg`) via `BarcodeImageRenderer`.",
+    "**Quiet zone:** clamped to at least the ISO minimum (10 modules).",
+    "**Caption:** when `BarcodeOptions.ShowHumanReadableTextBelow` is set, BMP output draws the payload below the bars using `BarcodeBmpCaptionRenderer` (`SixLabors.Fonts` / `SixLabors.ImageSharp.Drawing`).",
+    "**Border:** `BarcodeOptions.ShowBorder` + `BorderWidthPixels` + `BorderColorHex` add a frame; output grows by `2 × BorderWidthPixels` on each axis. SVG draws an outer fill plus inner background rect; BMP composites strips. Width is clamped between `BarcodeServiceOptions.MinBorderWidthPixels` and `MaxBorderWidthPixels` (defaults **1–64**). `BorderColorHex` must be `#RGB` or `#RRGGBB`.",
+    "**Decode:** `ReadFromImageAsync(byte[])` delegates to **`BarcodeZxingRead.Decode`** (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).",
+    "**Metrics / logging / cancellation:** when `BarcodeServiceOptions.EnableMetrics` is true and an `IMetrics` is registered, generation timings and success/failure/cancellation counters under `Lyo.Barcode.Constants.Metrics` are emitted."
+  ],
+  "examples": [
+    {
+      "title": "DI registration",
+      "language": "csharp",
+      "code": "using Lyo.Barcode;\nusing Lyo.Barcode.Native;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddNativeBarcodeService(o => {\n    o.DefaultFormat = BarcodeFormat.Svg;\n    o.DefaultModuleWidthPixels = 2;\n    o.DefaultBarHeightPixels = 64;\n    o.EnableMetrics = false;\n});"
+    },
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "var barcodes = sp.GetRequiredService<IBarcodeService>();\n\nvar result = await barcodes.GenerateAsync(\n    \"HELLO-128\",\n    BarcodeSymbology.Code128,\n    new BarcodeOptions {\n        Format = BarcodeFormat.Bmp,\n        ModuleWidthPixels = 2,\n        BarHeightPixels = 80,\n        ShowHumanReadableTextBelow = true,\n        ShowBorder = true,\n        BorderWidthPixels = 6,\n        BorderColorHex = \"#000000\"\n    });\n\nif (result.IsSuccess && result is BarcodeResult br)\n    await File.WriteAllBytesAsync(\"out.bmp\", br.ImageBytes!);\n\nvar read = await barcodes.ReadFromImageAsync(File.ReadAllBytes(\"photo.png\"));"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "DI registration",
+      "items": [
+        "`AddNativeBarcodeService(BarcodeServiceOptions options)` — explicit options instance.",
+        "`AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?)` — binds `BarcodeServiceOptions` from the **`BarcodeService`** section by default (`BarcodeServiceOptions.SectionName`); skipped if the options were already registered."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Barcode/Lyo.Barcode.Native/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Barcode",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SixLabors.Fonts",
+      "kind": "package",
+      "version": "2.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp",
+      "kind": "package",
+      "version": "3.1.12",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp.Drawing",
+      "kind": "package",
+      "version": "2.1.7",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net",
+      "kind": "package",
+      "version": "0.16.11",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net.Bindings.ImageSharp.V3",
+      "kind": "package",
+      "version": "0.16.18",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

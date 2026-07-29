@@ -1,0 +1,251 @@
+{
+  "id": "Lyo.Job.SignalR",
+  "name": "Lyo.Job.SignalR",
+  "area": "Integration",
+  "tagline": "SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all…",
+  "description": "SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`**\nrecords to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register services",
+      "language": "csharp",
+      "code": "services.AddJobSignalR();\n\nvar app = builder.Build();\napp.MapJobHub(); // default path: /hubs/job\napp.MapJobHub(\"/jobs/live\"); // custom path"
+    },
+    {
+      "title": "Client usage",
+      "language": "javascript",
+      "code": "const connection = new signalR.HubConnectionBuilder()\n    .withUrl(\"/hubs/job\")\n    .build();\n\nconnection.on(\"JobEvent\", (evt) => {\n    // evt.eventType: run.created | run.started | run.finished | run.cancelled | alert | definition.updated\n    // evt.runId, evt.definitionId, evt.timestampUtc, evt.message\n});\n\nawait connection.start();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Registration",
+      "text": "Requires `IMqService` (same broker as `AddMqJobEventPublisher`). Register before `MapJobHub`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Client usage",
+      "text": "Connect to the hub and listen for **`JobEvent`**: `JobHub.Ping()` returns `\"pong\"` for connectivity checks."
+    },
+    {
+      "type": "table",
+      "title": "Broadcast events",
+      "headers": [
+        "Routing key",
+        "`JobHubEvent.EventType`",
+        "Payload"
+      ],
+      "rows": [
+        [
+          "`job.notifications.run.created`",
+          "`run.created`",
+          "Run id (Guid)"
+        ],
+        [
+          "`job.notifications.run.started`",
+          "`run.started`",
+          "Run id"
+        ],
+        [
+          "`job.notifications.run.finished`",
+          "`run.finished`",
+          "Run id"
+        ],
+        [
+          "`job.notifications.run.cancelled`",
+          "`run.cancelled`",
+          "Run id"
+        ],
+        [
+          "`job.notifications.alert`",
+          "`alert`",
+          "Alert JSON body"
+        ],
+        [
+          "`job.notifications.definition.updated`",
+          "`definition.updated`",
+          "Definition id"
+        ]
+      ],
+      "lead": "`JobEventBroadcaster` binds per-routing-key queues under `job.signalr.dashboard.*`:",
+      "trail": "`JobHubEvent.WorkerType` is reserved for future filtering; the broadcaster currently passes `null`. Alert events carry the raw JSON alert body in `Message` when the routing-key\npayload is not a run Guid."
+    },
+    {
+      "type": "markdown",
+      "title": "Architecture",
+      "body": "```mermaid\nflowchart TB\n    subgraph producers [Alert / lifecycle publishers]\n        JS[JobService]\n        SCH[JobScheduler]\n        MAINT[JobMaintenanceService]\n    end\n    producers --> EX[job.events exchange]\n    EX --> BC[JobEventBroadcaster]\n    BC --> HUB[JobHub Clients.All]\n    HUB --> UI[Blazor / JS dashboard]\n    UI --> API[Job API CRUD for detail]\n```\n\nPair with [`Lyo.Job.Web.Components`](../Lyo.Job.Web.Components/README.md) for the CRUD shell; use SignalR to invalidate or patch grids when events arrive."
+    },
+    {
+      "type": "paragraph",
+      "title": "Configuration",
+      "text": "This package has no dedicated options type — it uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path."
+    },
+    {
+      "type": "paragraph",
+      "title": "Metrics",
+      "text": "The broadcaster does not emit dedicated metrics. Monitor underlying job metrics (`job.service.*`, `job.scheduler.*`, `job.sla.breach`) and MQ health via `IMqService` / `IHealth`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Job/Lyo.Job.SignalR/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Job.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Diagnostics.DiagnosticSource",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

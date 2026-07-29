@@ -4,22 +4,9 @@ FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via
 **`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream
 inputs (`FfmpegTempHelper`).
 
-## Public API
+## Examples
 
-| Type                       | Description                                                                                                                                                                                                                                  |
-|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`FfmpegAudioPlayer`**    | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`.                                                                                                                                     |
-| **`FfmpegAudioProber`**    | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata).                                         |
-| **`FfmpegAudioConverter`** | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
-| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FfmpegOptions)`, custom args.                             |
-| **`FfmpegProcessRunner`**  | Internal runner that executes the built command line through CliWrap, applying `FfmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`).                                                                           |
-| **`FfmpegTempHelper`**     | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal).                                                                                                                   |
-| **`Extensions`**           | DI: **`AddFfmpegServices()`**, **`AddFfmpegServices(Action<FfmpegOptions>)`**, **`AddFfmpegServicesFromConfiguration(IConfiguration, sectionName?)`**.                                                                                       |
-
-Each `AddFfmpegServices*` overload registers `FfmpegAudioPlayer`/`FfmpegAudioProber`/`FfmpegAudioConverter` as **scoped** services and exposes them through both the concrete
-type and their respective interfaces.
-
-## Usage
+### Usage
 
 ```csharp
 using Lyo.Ffmpeg;
@@ -71,6 +58,8 @@ await converter.ConvertFileToFileAsync(
 }
 ```
 
+### Configuration binding (2)
+
 ```csharp
 services.AddFfmpegServicesFromConfiguration(builder.Configuration);
 ```
@@ -89,6 +78,21 @@ var args = new FFmpegCommandBuilder()
     .Build();
 ```
 
+## Public API
+
+| Type | Description |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`FfmpegAudioPlayer`** | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`. |
+| **`FfmpegAudioProber`** | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata). |
+| **`FfmpegAudioConverter`** | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
+| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FfmpegOptions)`, custom args. |
+| **`FfmpegProcessRunner`** | Internal runner that executes the built command line through CliWrap, applying `FfmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`). |
+| **`FfmpegTempHelper`** | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal). |
+| **`Extensions`** | DI: **`AddFfmpegServices()`**, **`AddFfmpegServices(Action<FfmpegOptions>)`**, **`AddFfmpegServicesFromConfiguration(IConfiguration, sectionName?)`**. |
+
+Each `AddFfmpegServices*` overload registers `FfmpegAudioPlayer`/`FfmpegAudioProber`/`FfmpegAudioConverter` as **scoped** services and exposes them through both the concrete
+type and their respective interfaces.
+
 ## Notes
 
 - Requires `ffmpeg`, `ffprobe`, and (for playback) `ffplay` either on `PATH` or pointed to by `FfmpegOptions.FfmpegPath` / `FfprobePath` / `FfplayPath`.
@@ -97,22 +101,17 @@ var args = new FFmpegCommandBuilder()
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Ffmpeg.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                                 | Version   |
-|---------------------------------------------------------|-----------|
-| `CliWrap`                                               | `[3.10,)` |
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`   |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Ffmpeg.Models`](../Lyo.Ffmpeg.Models/README.md)
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Ffmpeg.Models` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `CliWrap` `3.10.2` — (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

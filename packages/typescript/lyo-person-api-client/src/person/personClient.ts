@@ -1,7 +1,16 @@
-import type {ApiClient, ApiResponse,} from "lyo-api-client";
+import type {ApiClient, ApiResponse} from "lyo-api-client";
 import type {ProjectionQueryReq, QueryConcreteReq, QueryReq} from "../models/queryRequests.js";
 import type {PersonRes} from "../models/person.js";
 import type {ProjectedQueryRes, QueryRes} from "../models/queryResponses.js";
+
+function personGetPath(id: string, include?: readonly string[]): string {
+    const params = new URLSearchParams();
+    for (const path of include ?? []) {
+        if (path.trim()) params.append("include", path.trim());
+    }
+    const qs = params.toString();
+    return `/person/${encodeURIComponent(id)}${qs ? `?${qs}` : ""}`;
+}
 
 export interface PersonApiClient {
     queryPerson(request: QueryConcreteReq): ApiResponse<QueryRes<PersonRes>>;
@@ -12,6 +21,9 @@ export interface PersonApiClient {
 
     /** Root From/Joins query: POST /Query (not under /person). */
     queryRoot<TRow = Record<string, unknown>>(request: QueryReq): ApiResponse<ProjectedQueryRes<TRow>>;
+
+    /** GET /person/{id} with optional include navigation paths. */
+    getPerson(id: string, include?: readonly string[]): ApiResponse<PersonRes>;
 }
 
 export function createPersonApiClient(apiClient: ApiClient): PersonApiClient {
@@ -39,6 +51,13 @@ export function createPersonApiClient(apiClient: ApiClient): PersonApiClient {
                 method: "POST",
                 path: "/Query",
                 body: request,
+            });
+        },
+
+        getPerson(id: string, include?: readonly string[]): ApiResponse<PersonRes> {
+            return apiClient.request<PersonRes>({
+                method: "GET",
+                path: personGetPath(id, include),
             });
         },
     };

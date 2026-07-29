@@ -9,29 +9,42 @@ Minimal dependencies (only `System.Text.Json`); targets `netstandard2.0;net10.0`
 BenchmarkDotNet / Testcontainers baggage — the benchmark-only helpers live in
 [`Lyo.Benchmarking`](../Lyo.Benchmarking/README.md).
 
+## Examples
+
+### Consuming a report
+
+```csharp
+using System.Text.Json;
+using Lyo.Benchmark.Models;
+
+var report = JsonSerializer.Deserialize<BenchmarkReport>(json)!;
+switch (report) {
+    case MicroBenchmarkReport micro:
+        foreach (var group in micro.Groups) { /* render Method x Parameters */ }
+        break;
+    case LoadTestReport load:
+        foreach (var scenario in load.Scenarios) { /* render p95 / throughput */ }
+        break;
+}
+```
+
 ## Polymorphic report tree
 
-| Type                         | Discriminator | Role                                                                                                       |
-|------------------------------|---------------|------------------------------------------------------------------------------------------------------------|
-| `BenchmarkReport` (abstract) | —             | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
-| `MicroBenchmarkReport`       | `micro`       | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`.      |
-| `LoadTestReport`             | `load`        | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`.                                                      |
+| Type | Discriminator | Role |
+| ---------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `BenchmarkReport` (abstract) | — | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
+| `MicroBenchmarkReport` | `micro` | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`. |
+| `LoadTestReport` | `load` | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`. |
 
-### Descriptive context
-
-So a row like `Hash @ 1 MB` or "csv: 10,000 rows" is meaningful on its own, reports carry explicit context:
+## Polymorphic report tree — Descriptive context
 
 - `BenchmarkReport.Description` — suite-level methodology ("what / how", the data set, payload kinds).
 - `BenchmarkGroup.Description` — what a class measures; `BenchmarkMeasurement.Description` — what a single method does.
-- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters` — a list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value (e.g. `DataSize` is
-  bytes, `RowCount` is rows).
-- `BenchmarkGroup.Dataset` — a `DatasetDescriptor` capturing the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of
-  `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. This is what surfaces nested-property complexity (e.g. a CSV/XLSX row type or a mapping entity with
-  a nested child collection) that a row count alone hides.
-- `LoadTestReport.Cases` — a list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's
-  structure (so `query_with_subquery` vs `baseline` is interpretable). `Hotspot.Case` joins to it.
+- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters` — a list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value (e.g. `DataSize` is bytes, `RowCount` is rows).
+- `BenchmarkGroup.Dataset` — a `DatasetDescriptor` capturing the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. This is what surfaces nested-property complexity (e.g. a CSV/XLSX row type or a mapping entity with a nested child collection) that a row count alone hides.
+- `LoadTestReport.Cases` — a list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's structure (so `query_with_subquery` vs `baseline` is interpretable). `Hotspot.Case` joins to it.
 
-### SLAs / business standards (micro)
+## Polymorphic report tree — SLAs / business standards (micro)
 
 Micro reports carry the same SLA assessment k6 reports do. From a `[BenchmarkSla]` budget the exporter sets, per measurement and comparison row:
 
@@ -127,30 +140,15 @@ A `csv` micro report adds a `dataset` per group, capturing the row structure beh
 The base type round-trips polymorphically — deserialize as `BenchmarkReport` and
 pattern-match the concrete type:
 
-```csharp
-using System.Text.Json;
-using Lyo.Benchmark.Models;
-
-var report = JsonSerializer.Deserialize<BenchmarkReport>(json)!;
-switch (report) {
-    case MicroBenchmarkReport micro:
-        foreach (var group in micro.Groups) { /* render Method x Parameters */ }
-        break;
-    case LoadTestReport load:
-        foreach (var scenario in load.Scenarios) { /* render p95 / throughput */ }
-        break;
-}
-```
-
 ## Builders
 
-| Builder                       | Produces               | Notes                                                                                                                                                                                                            |
-|-------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Builder | Produces | Notes |
+| ----------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MicroBenchmarkReportBuilder` | `MicroBenchmarkReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddMeasurement(group, m)`, `DescribeGroup(group, description, parameters, dataset)`, `WithComparison`, `AddSlo`, `AddGrade`. |
-| `LoadTestReportBuilder`       | `LoadTestReport`       | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`.                                                                  |
+| `LoadTestReportBuilder` | `LoadTestReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`. |
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Benchmarking`](../Lyo.Benchmarking/README.md) — BenchmarkDotNet config, entry
-  point, attributes, container/data helpers, and the exporter that emits these models.
-- `docs/benchmarks/` — the static viewer that renders report files by `type`.
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)

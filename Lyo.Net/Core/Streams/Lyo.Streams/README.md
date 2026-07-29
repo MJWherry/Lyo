@@ -12,7 +12,9 @@ Common stream implementations including **TeeStream**, **CountingStream**, **Pro
 - **StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)
 - **StreamChunkSizeHelper** – Determine optimal buffer size for stream operations
 
-## Quick Start
+## Examples
+
+### Quick Start
 
 ```csharp
 using Lyo.Streams;
@@ -40,16 +42,7 @@ await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Streams.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package          | Version | Notes                 |
-|------------------|---------|-----------------------|
-| `System.Buffers` | `4.6.0` | *netstandard2.0 only* |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `System.Buffers` `4.6.0` — (direct, microsoft, netstandard2.0)

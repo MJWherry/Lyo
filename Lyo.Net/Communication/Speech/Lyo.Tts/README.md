@@ -7,10 +7,10 @@ façade, and a base service with bulk synthesis, metrics hooks, and lifecycle ev
 
 ## Contracts at a glance
 
-| Interface                                             | Surface                                                                                                                               |
-|-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `ITtsService`                                         | Non-generic façade — `Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`. |
-| `ITtsService<TRequest>` where `TRequest : TtsRequest` | Full provider surface: string overload, fully typed request, write-to-file, write-to-stream, bulk, `TestConnectionAsync`.             |
+| Interface | Surface |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `ITtsService` | Non-generic façade — `Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`. |
+| `ITtsService<TRequest>` where `TRequest : TtsRequest` | Full provider surface: string overload, fully typed request, write-to-file, write-to-stream, bulk, `TestConnectionAsync`. |
 
 `ITtsService` is intentionally tiny — host code that only needs "string in → audio bytes out" depends on
 it without caring which provider is wired up. Provider packages ship a small `*TtsAppService` adapter
@@ -18,11 +18,11 @@ it without caring which provider is wired up. Provider packages ship a small `*T
 
 ## Provider DI matrix
 
-| Provider package                                              | `ITtsService<TRequest>`             | `ITtsService` (non-generic)                   | App-service adapter     | DI entry points                                                                                                                                                                 |
-|---------------------------------------------------------------|-------------------------------------|-----------------------------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md)           | `ITtsService<AwsPollyTtsRequest>` ✅ | ✅ (via `AwsPollyTtsAppService`)               | `AwsPollyTtsAppService` | `AddAwsPollyTtsService(Action<AwsPollyOptions>)`, `AddAwsPollyTtsServiceFromConfiguration(IConfiguration, string?)`, `AddAmazonPollyFromConfiguration(IConfiguration, string?)` |
-| [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md)           | `ITtsService<TypecastTtsRequest>` ✅ | ✅ (via `TypecastTtsAppService`)               | `TypecastTtsAppService` | `AddTypecastTtsService(Action<TypecastOptions>?)`, `AddTypecastTtsServiceFromConfiguration(IConfiguration, string?)` (requires `TypecastClient` to be registered first)         |
-| [`Lyo.Tts.WindowsSpeech`](../Lyo.Tts.WindowsSpeech/README.md) | `ITtsService<WindowsTtsRequest>` ✅  | ❌ — no `WindowsSpeechTtsAppService` ships yet | (none)                  | `AddWindowsSpeechTtsService(Action<TtsServiceOptions>?)`, `AddWindowsSpeechTtsService(TtsServiceOptions)`                                                                       |
+| Provider package | `ITtsService<TRequest>` | `ITtsService` (non-generic) | App-service adapter | DI entry points |
+| ------------------------------------------------------------- | --------------------------------- | ------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) | `ITtsService<AwsPollyTtsRequest>` | (via `AwsPollyTtsAppService`) | `AwsPollyTtsAppService` | `AddAwsPollyTtsService(Action<AwsPollyOptions>)`, `AddAwsPollyTtsServiceFromConfiguration(IConfiguration, string?)`, `AddAmazonPollyFromConfiguration(IConfiguration, string?)` |
+| [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) | `ITtsService<TypecastTtsRequest>` | (via `TypecastTtsAppService`) | `TypecastTtsAppService` | `AddTypecastTtsService(Action<TypecastOptions>?)`, `AddTypecastTtsServiceFromConfiguration(IConfiguration, string?)` (requires `TypecastClient` to be registered first) |
+| [`Lyo.Tts.WindowsSpeech`](../Lyo.Tts.WindowsSpeech/README.md) | `ITtsService<WindowsTtsRequest>` | — no `WindowsSpeechTtsAppService` ships yet | (none) | `AddWindowsSpeechTtsService(Action<TtsServiceOptions>?)`, `AddWindowsSpeechTtsService(TtsServiceOptions)` |
 
 `AwsPolly` and `Typecast` register **both** `ITtsService<TRequest>` and the non-generic `ITtsService`; the
 non-generic interface is backed by the `*TtsAppService` adapter so the same singleton handles both calls.
@@ -31,57 +31,52 @@ non-generic interface is backed by the `*TtsAppService` adapter so the same sing
 
 ## Request types
 
-Each provider ships its own `TtsRequest` subclass (see `Lyo.Tts.Models.TtsRequest`):
-
 - `AwsPollyTtsRequest` — Polly voice, engine, sample rate, output format, etc.
 - `TypecastTtsRequest` — model id, voice id, language, format, prosody.
-- `WindowsTtsRequest` — voice id, `Volume`, `SpeechRate`, optional `OutputFormat` (WAV output is enforced
-  by SAPI regardless).
+- `WindowsTtsRequest` — voice id, `Volume`, `SpeechRate`, optional `OutputFormat` (WAV output is enforced by SAPI regardless).
 
 ## Base class (`TtsServiceBase<TRequest>`)
-
-Provider services subclass `TtsServiceBase<TRequest>` and implement two abstract members:
 
 - `Task<TtsResult<TRequest>> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`
 - `Task<TtsResult<TRequest>> SynthesizeCoreAsync(TRequest request, CancellationToken ct = default)`
 - `Task<bool> TestConnectionAsync(CancellationToken ct = default)`
 
-The base provides:
-
-- `SynthesizeToFileAsync` / `SynthesizeToStreamAsync` overloads (`string` and `TRequest`).
-- `SynthesizeBulkAsync` with a `SemaphoreSlim` sized by `TtsServiceOptions.BulkTtsConcurrencyLimit` and
-  per-call enforcement of `TtsServiceOptions.MaxBulkTtsLimit`.
-- Synthesis events (`Synthesizing`, `Synthesized`, `BulkSynthesizing`, `BulkSynthesized`).
-- A `MetricNames` `ConcurrentDictionary` providers swap in their constructor to namespace metrics.
-
 ## Error codes (`TtsErrorCodes`)
 
-| Constant             | Value                     |
-|----------------------|---------------------------|
-| `SynthesizeFailed`   | `TTS_SYNTHESIZE_FAILED`   |
+| Constant | Value |
+| -------------------- | ------------------------- |
+| `SynthesizeFailed` | `TTS_SYNTHESIZE_FAILED` |
 | `OperationCancelled` | `TTS_OPERATION_CANCELLED` |
-| `FileWriteFailed`    | `TTS_FILE_WRITE_FAILED`   |
-| `StreamWriteFailed`  | `TTS_STREAM_WRITE_FAILED` |
+| `FileWriteFailed` | `TTS_FILE_WRITE_FAILED` |
+| `StreamWriteFailed` | `TTS_STREAM_WRITE_FAILED` |
 
 ## Default metric keys (`Lyo.Tts.Constants.Metrics`)
 
-| Constant key                   | Metric                                 | Kind    |
-|--------------------------------|----------------------------------------|---------|
-| `SynthesizeDuration`           | `tts.synthesize.duration`              | Timer   |
-| `SynthesizeSuccess`            | `tts.synthesize.success`               | Counter |
-| `SynthesizeFailure`            | `tts.synthesize.failure`               | Counter |
-| `BulkSynthesizeDuration`       | `tts.bulk.synthesize.duration`         | Timer   |
-| `BulkSynthesizeTotal`          | `tts.bulk.synthesize.total`            | Counter |
-| `BulkSynthesizeSuccess`        | `tts.bulk.synthesize.success`          | Counter |
-| `BulkSynthesizeFailure`        | `tts.bulk.synthesize.failure`          | Counter |
-| `BulkSynthesizeLastDurationMs` | `tts.bulk.synthesize.last_duration_ms` | Gauge   |
+| Constant key | Metric | Kind |
+| ------------------------------ | -------------------------------------- | ------- |
+| `SynthesizeDuration` | `tts.synthesize.duration` | Timer |
+| `SynthesizeSuccess` | `tts.synthesize.success` | Counter |
+| `SynthesizeFailure` | `tts.synthesize.failure` | Counter |
+| `BulkSynthesizeDuration` | `tts.bulk.synthesize.duration` | Timer |
+| `BulkSynthesizeTotal` | `tts.bulk.synthesize.total` | Counter |
+| `BulkSynthesizeSuccess` | `tts.bulk.synthesize.success` | Counter |
+| `BulkSynthesizeFailure` | `tts.bulk.synthesize.failure` | Counter |
+| `BulkSynthesizeLastDurationMs` | `tts.bulk.synthesize.last_duration_ms` | Gauge |
 
 Providers typically remap these to a namespaced prefix (`tts.awspolly.*`, `tts.typecast.*`,
 `tts.windowsspeech.*`).
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Tts.Models`](../Lyo.Tts.Models/README.md) — requests, results, options, events
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Tts.Models` — (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

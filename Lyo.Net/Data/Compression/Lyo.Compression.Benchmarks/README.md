@@ -7,23 +7,23 @@ the source of the numbers behind [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md).
 
 ## What ships
 
-| File                                                                   | Suite                                                                                                                                                                                                                                                                     |
+| File | Suite |
 |------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`Program.cs`](Program.cs)                                             | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet.                                                                                                                                     |
-| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs)         | Baseline GZip compression / decompression at three fixed payload sizes (1 KB, 1 MB, 10 MB). Useful for tracking GZip-specific regressions over time.                                                                                                                      |
+| [`Program.cs`](Program.cs) | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet. |
+| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs) | Baseline GZip compression / decompression at three fixed payload sizes (1 KB, 1 MB, 10 MB). Useful for tracking GZip-specific regressions over time. |
 | [`AlgorithmComparisonBenchmarks.cs`](AlgorithmComparisonBenchmarks.cs) | Side-by-side compress + decompress for every algorithm on `Lyo.Compression` (GZip, Deflate, ZstdSharp, Snappier, LZ4, LZMA, BZip2, XZ; plus Brotli and ZLib on non-`netstandard2.0` targets). Parameterized over `DataSize` `[1 KB, 1 MB, 10 MB, 100 MB]` via `[Params]`. |
-| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs)   | Stream-based compression / decompression for GZip and Zstd at 100 MB, 1 GB, and 2 GB. Validates that the streaming API stays memory-bounded — note the 2 GB run requires enough disk space for the temp file.                                                             |
-| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md)                         | Pointer to [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) (auto-generated from CSV).                                                                                                                                                               |
+| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs) | Stream-based compression / decompression for GZip and Zstd at 100 MB, 1 GB, and 2 GB. Validates that the streaming API stays memory-bounded — note the 2 GB run requires enough disk space for the temp file. |
+| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md) | Pointer to [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) (auto-generated from CSV). |
 
 All benchmark types are decorated with `[SimpleJob(RuntimeMoniker.HostProcess)]` and `[MemoryDiagnoser]` so the results include managed allocations and run inside the host process
 for fast iteration.
 
 ## Dependencies
 
-| Package                               | Version  |
+| Package | Version |
 |---------------------------------------|----------|
-| `BenchmarkDotNet`                     | `0.15.8` |
-| `Lyo.Compression` (project reference) | —        |
+| `BenchmarkDotNet` | `0.15.8` |
+| `Lyo.Compression` (project reference) | — |
 
 ## Running the benchmarks
 

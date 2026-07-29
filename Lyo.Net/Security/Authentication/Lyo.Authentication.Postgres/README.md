@@ -12,14 +12,16 @@ Owns the `[user]` schema. Four tables in this lib:
 
 `__EFMigrationsHistory` lives inside the `[user]` schema.
 
-## Registration
+## Examples
+
+### Register services
 
 ```csharp
 services.AddLyoAuthentication();
 services.AddPostgresAuthenticationStoresFromConfiguration(configuration);
 ```
 
-Or each store individually:
+### Register services (2)
 
 ```csharp
 services.AddPostgresApiTokenStoreFromConfiguration(configuration);
@@ -27,7 +29,7 @@ services.AddPostgresUserStoreFromConfiguration(configuration);
 services.AddPostgresExternalIdentityStoreFromConfiguration(configuration);
 ```
 
-`appsettings.json`:
+### Register services (3)
 
 ```json
 {
@@ -37,6 +39,10 @@ services.AddPostgresExternalIdentityStoreFromConfiguration(configuration);
   }
 }
 ```
+
+## Registration
+
+Or each store individually: `appsettings.json`:
 
 ## Tenancy
 
@@ -64,22 +70,31 @@ See [`Lyo.EntityReference.Postgres` — Tenancy](../../../Core/EntityReference/L
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Authentication.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version | Notes                                              |
-|---------------------------------------------|---------|----------------------------------------------------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |                                                    |
-
-### Project references
-
-- [`Lyo.Authentication`](../Lyo.Authentication/README.md)
-- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- `Lyo.Authentication` — (direct, lyo)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Authentication.Models` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Keystore` — (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

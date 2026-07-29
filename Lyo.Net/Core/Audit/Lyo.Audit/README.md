@@ -6,14 +6,12 @@ records—once created they do not change. Both carry an `EntityRef` for the thi
 
 ## Features
 
-- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new
-  value), optional `Actor` (`EntityRef?`)
+- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new value), optional `Actor` (`EntityRef?`)
 - **AuditEvent** (record) – An event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`
-- **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`,
-  `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
+- **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
 - **NullAuditRecorder** – No-op implementation when auditing is not needed
 
-## Quick Start
+## Examples
 
 ### AuditChange (entity changes)
 
@@ -36,8 +34,6 @@ var change = new AuditChange(
 
 auditRecorder.RecordChange(change);
 ```
-
-Decorate domain types with `[EntityRefLogicalType("MyApp.Order")]` to keep the persisted `EntityType` stable across CLR renames.
 
 ### AuditEvent (events to log)
 
@@ -70,6 +66,10 @@ await auditRecorder.RecordEventAsync(evt);
 await auditRecorder.RecordEventsAsync(events, cancellationToken);
 ```
 
+## AuditChange (entity changes)
+
+Decorate domain types with `[EntityRefLogicalType("MyApp.Order")]` to keep the persisted `EntityType` stable across CLR renames.
+
 ## PostgreSQL persistence
 
 Use **Lyo.Audit.Postgres** for PostgreSQL storage with EF Core migrations:
@@ -90,14 +90,11 @@ When `EnableAutoMigrations` is true, migrations run at **host startup** (via `IH
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Audit.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-*None declared in this project file.*
-
-### Project references
-
-- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

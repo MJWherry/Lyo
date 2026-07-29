@@ -1,0 +1,130 @@
+{
+  "id": "Lyo.Translation.Web.Components",
+  "name": "Lyo.Translation.Web.Components",
+  "area": "Communication",
+  "tagline": "Blazor (MudBlazor) workbench component for exercising the configured `Lyo.Translation` implementation interactively from a host application.",
+  "description": "Blazor (MudBlazor) workbench component for exercising the configured [`Lyo.Translation`](../Lyo.Translation/README.md)\nimplementation interactively from a host application.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Components",
+      "items": [
+        "`TranslationWorkbench` — provider-neutral workbench panel for any registered `ITranslationService`:",
+        "Source / target language selectors keyed on `LanguageCodeInfo.Bcp47`, with an \"auto detect\" option for the source.",
+        "Multi-line input area for freeform text.",
+        "**Translate**, **Detect Language**, and **Test Connection** actions backed by the resolved `ITranslationService`.",
+        "A side panel that renders the detected source language, the chosen target, the translated text, and any errors (with `ISnackbar` feedback for transient notifications)."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Target framework",
+      "text": "`net10.0`"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Translation/Lyo.Translation.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Translation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

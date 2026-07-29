@@ -1,0 +1,131 @@
+{
+  "id": "Lyo.Postgres",
+  "name": "Lyo.Postgres",
+  "area": "Data",
+  "tagline": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.).",
+  "description": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). The package is a thin\n**`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer’s options opt in.\n\n> Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer\n> libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "using Lyo.Postgres;\nusing Microsoft.Extensions.DependencyInjection;\n\npublic sealed class AuditDbOptions : IPostgresMigrationConfig\n{\n    public string ConnectionString { get; init; } = \"\";\n    public bool EnableAutoMigrations { get; init; }\n    public string Schema { get; init; } = \"audit\";\n}\n\nservices.Configure<AuditDbOptions>(configuration.GetSection(\"Audit:Postgres\"));\nservices.AddPostgresMigrations<AuditDbContext, AuditDbOptions>();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Public API",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "**`IPostgresMigrationConfig`**",
+          "Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`."
+        ],
+        [
+          "**`PostgresMigrationHostedService<TContext, TOptions>`**",
+          "`IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS \"<Schema>\"`, then `MigrateAsync`."
+        ],
+        [
+          "**`Extensions.AddPostgresMigrations<TContext, TOptions>()`**",
+          "Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`."
+        ]
+      ],
+      "trail": "The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public\nconstructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as\n`\"<schema>\".\"__EFMigrationsHistory\"`.\n\n`StartAsync` short-circuits when `EnableAutoMigrations` is false. If the flag is true, both `ConnectionString` and `Schema` are required (whitespace throws via\n`Lyo.Exceptions.ArgumentHelpers`)."
+    },
+    {
+      "type": "list",
+      "title": "Usage",
+      "items": [
+        "The hosted service resolves `IOptions<AuditDbOptions>`.",
+        "If `EnableAutoMigrations` is false, it returns immediately.",
+        "Otherwise it constructs an `AuditDbContext` with `UseNpgsql(connectionString, opt => opt.MigrationsHistoryTable(\"__EFMigrationsHistory\", schema))`.",
+        "It executes `CREATE SCHEMA IF NOT EXISTS \"<schema>\"` (the schema name is escaped by doubling embedded `\"` characters before interpolation).",
+        "It runs `Database.MigrateAsync(ct)`."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Consumers",
+      "items": [
+        "`Lyo.Audit.Postgres`",
+        "`Lyo.Email.Postgres`",
+        "`Lyo.ChangeTracker.Postgres`",
+        "`Lyo.EntityReference.Postgres`",
+        "`Lyo.FileMetadataStore.Postgres`"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Postgres/Lyo.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

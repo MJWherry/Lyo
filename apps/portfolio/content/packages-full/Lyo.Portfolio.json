@@ -1,0 +1,795 @@
+{
+  "id": "Lyo.Portfolio",
+  "name": "Portfolio (Lyo.Portfolio)",
+  "area": "Apps",
+  "tagline": "Blazor WebAssembly showcase for the in-process subset of Lyo: components that work without any backend (cache, locks, scheduler, encryption + compression, CSV/XLSX, text diff, rich text editor, etc.)…",
+  "description": "Blazor WebAssembly showcase for the in-process subset of Lyo: components that work without any backend (cache, locks, scheduler, encryption + compression, CSV/XLSX, text diff, rich\ntext editor, etc.), plus a couple of pages that talk to a remote Lyo.Api host via `Lyo.Api.Client` for the Query Builder.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Hosting model",
+      "items": [
+        "`RootComponents.Add<App>(\"#app\")` + `<HeadOutlet>(\"head::after\")`.",
+        "`Lyo.Portfolio.csproj` sets `BlazorDisableThrowNavigationException`, `WasmIgnorePdbLoadErrors`, and `InvariantGlobalization` (the dev server cannot serve ICU `.dat` files; invariant culture is fine for a portfolio app).",
+        "The Router (`Components/Routes.razor`) uses `DefaultLayout = typeof(MainLayout)` and renders a MudBlazor 404 view via `LayoutView`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Routed pages",
+      "headers": [
+        "Route",
+        "Page",
+        "Component"
+      ],
+      "rows": [
+        [
+          "`/`",
+          "`IdGeneratorPage`",
+          "`Lyo.Web.Components` `IdWorkbench`"
+        ],
+        [
+          "`/csv-xlsx`",
+          "`CsvXlsxPage`",
+          "`CsvXlsxWorkbench` (in-process `Lyo.Csv` + `Lyo.Xlsx`)"
+        ],
+        [
+          "`/encryption`",
+          "`EncryptionPage`",
+          "`FileTransformWorkbench` → `PortfolioFileTransformer`"
+        ],
+        [
+          "`/text-diff`",
+          "`TextDiffPage`",
+          "`Lyo.Web.Components` `LyoTextDiffViewer`"
+        ],
+        [
+          "`/rich-text-editor`",
+          "`RichTextEditorPage`",
+          "`Lyo.Web.Components` `LyoRichTextEditor`"
+        ],
+        [
+          "`/cache`",
+          "`CachePage`",
+          "`CacheWorkbench` over `Lyo.Cache` local provider"
+        ],
+        [
+          "`/locks`",
+          "`LocksPage`",
+          "`LockWorkbench` + `SemaphoreWorkbench` over `Lyo.Lock` local provider"
+        ],
+        [
+          "`/metrics`",
+          "`MetricsPage`",
+          "`MetricsWorkbench` over `Lyo.Metrics`"
+        ],
+        [
+          "`/schedule`",
+          "`SchedulePage`",
+          "`Lyo.Schedule.Web.Components`"
+        ],
+        [
+          "`/diagnostics`",
+          "`DiagnosticsPage`",
+          "`Lyo.Diagnostic.Web.Components`"
+        ],
+        [
+          "`/privacy-redaction`",
+          "`PrivacyPage`",
+          "`Lyo.Privacy.Web.Components`"
+        ],
+        [
+          "`/query-builder`",
+          "`QueryBuilderPage`",
+          "`Lyo.Query.Web.Components`, calls a remote Portfolio API via `Lyo.Api.Client`"
+        ]
+      ],
+      "lead": "Every page uses a static `@page` directive (no constants). `Lyo.Portfolio.Constants.Page` lists the same routes for use from code, but the pages do not reference it.",
+      "trail": "The workbenches under `Components/Workbenches/` (`LockWorkbench`, `CsvXlsxWorkbench`, `CacheWorkbench`, `DataTablePreview`, `MetricsWorkbench`, `FileTransformWorkbench`,\n`SemaphoreWorkbench`) are local copies tuned for the WASM environment."
+    },
+    {
+      "type": "list",
+      "title": "`PortfolioFileTransformer`",
+      "items": [
+        "**Forward direction** — compress first (if requested), then either single-key encrypt or two-key encrypt (DEK + KEK) over a stream.",
+        "**Reverse direction** — decrypt first, then decompress.",
+        "**Algorithms** — AES-GCM, ChaCha20-Poly1305, AES-CCM, AES-SIV, XChaCha20-Poly1305 (`Lyo.Encryption.*`). AES-GCM/CCM/SIV expose key-size selection; two-key mode picks `TwoKeyEncryptionService<TDek, TKek>` from a 5×5 algorithm matrix in `CreateTwoKeyEncryptionService`.",
+        "**Key material** — `Secret` is hashed (SHA-256/512 depending on cipher) and truncated to the required key length in `DeriveSymmetricKey`; an in-memory `LocalKeyStore` placeholder is supplied to each service so no real key store is touched.",
+        "**Compression** — Gzip, Brotli, XZ, Zstd, LZ4, bzip2, etc. via `Lyo.Compression.CompressionService(new() { DefaultAlgorithm = … })`. Forward returns `(compressed, ratio, spaceSaved%)`; reverse returns `(decompressed, expansionRatio)`.",
+        "**Naming** — `BuildEncryptedName` appends the service's `.FileExtension` (e.g. `.ag`, `.chacha`, `.ccm`, `.xchacha`); `BuildDecryptedName`/`BuildDecompressedName` strip it back, or fall back to `.decrypted`/`.decompressed`.",
+        "**Probe (`ProbeFile`)** — Header-only sniff that does not decrypt. It dispatches on the encryption filename suffix:",
+        "Two-key envelopes → `EncryptionHeader.Read` then `AppendTwoKeyStreamLayoutFromHeader`, which exposes format version, DEK/KEK algorithm ids, key id/version, encrypted DEK length, header size, and the first sealed-chunk length prefix.",
+        "AES-SIV envelopes → enforces 16-byte synthetic IV, reports the key id/version and payload length.",
+        "Other single-key symmetric V1 envelopes (AES-GCM/CCM, ChaCha20-Poly1305, XChaCha20-Poly1305) → `TryAppendSymmetricAuthenticatedEnvelopeDetails` parses format byte + key id length + key version + nonce length + 16-byte tag, and adds a cipher hint based on nonce length (12-byte = AES-GCM/ChaCha-Poly/AES-CCM, 24-byte = XChaCha20-Poly1305).",
+        "RSA / AES-GCM+RSA suffixes — reported as \"different wire format, decrypt with matching service\" because they aren't symmetric V1.",
+        "No encryption extension — runs `DescribeCompressionMagicExtended` on the first bytes and reports gzip / zlib / Brotli / xz / zstd / lz4 / bzip2 / Snappy magic."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Service registration (`Program.cs`)",
+      "items": [
+        "**Lyo infra** — `AddCsvService`, `AddXlsxService`, `AddCompressionService`, `AddLyoMetrics`, `AddScheduler`, `AddLocalCacheFromConfiguration(Configuration)`, `AddLocalLock(enableMetrics)`, `AddLocalKeyedSemaphore(enableMetrics)`.",
+        "**Encryption workbench** — `AddScoped<PortfolioFileTransformer>()`.",
+        "**API client** — `Configure<ApiClientOptions>(Configuration.GetSection(ApiClientOptions.SectionName))` + transient `ApiClientOptions` projection + `AddLyoApiClient()`. JSON serializer options come from `LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()` with `WriteIndented = true`.",
+        "**Web shell** — `AddScoped<IJsInterop, JsInterop>()`, a second `LyoJsonSerializerOptions` singleton (indented), `AddHttpClient`, `AddBlazoredLocalStorage`, `AddScoped<ClientStore>()`.",
+        "**MudBlazor** — `AddMudServices(config => …)` with `PopoverOptions.ModalOverlay = true`, bottom-right snackbar (filled variant, 5 s, bug-report icon for errors), and a few transition tweaks."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Configuration",
+      "text": "`appsettings.json` only declares logging defaults, `AllowedHosts`, `CacheOptions` (`Enabled`, `EnableMetrics`), and empty `QRCodeOptions` / `BarcodeOptions` / `ImageSharpOptions` placeholders. The Query Builder page expects an `ApiClient:BaseUrl` to be added when you wire it to a Portfolio API."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Portfolio/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.BZip2",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.LZ4",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.LZMA",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.Snappier",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.XZ",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.Zstd",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.AesCcm",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.AesSiv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.XChaCha20Poly1305",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Lock",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Privacy.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Scheduler",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.WebAssembly",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Privacy",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "ClosedXML",
+      "kind": "package",
+      "version": "0.105.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "CsvHelper",
+      "kind": "package",
+      "version": "33.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DocumentFormat.OpenXml",
+      "kind": "package",
+      "version": "3.1.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Dorssel.Security.Cryptography.AesExtra",
+      "kind": "package",
+      "version": "2.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.LZ4",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.LZMA",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.Snappier",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.ZstdSharp",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader.DataSet",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Joveler.Compression.XZ",
+      "kind": "package",
+      "version": "5.0.2",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SharpZipLib",
+      "kind": "package",
+      "version": "1.4.2",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.0",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Collections.Immutable",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -5,18 +5,9 @@ host startup when the consumer's options opt in.
 
 > Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders live in consumer libraries when needed.
 
-## Public API
+## Examples
 
-| Type                                                       | Role                                             |
-|------------------------------------------------------------|--------------------------------------------------|
-| **`ISqliteMigrationConfig`**                               | `ConnectionString`, `EnableAutoMigrations`       |
-| **`SqliteMigrationHostedService<TContext, TOptions>`**     | Runs `MigrateAsync` on `StartAsync` when enabled |
-| **`Extensions.AddSqliteMigrations<TContext, TOptions>()`** | Registers the hosted service                     |
-
-The hosted service constructs `TContext` via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public constructor that
-takes a single `DbContextOptions<TContext>`**.
-
-## Usage
+### Usage
 
 ```csharp
 using Lyo.Sqlite;
@@ -32,11 +23,24 @@ services.Configure<FileStoreSqliteOptions>(configuration.GetSection("SqliteFileM
 services.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, FileStoreSqliteOptions>();
 ```
 
+## Public API
+
+| Type | Role |
+| ---------------------------------------------------------- | ------------------------------------------------ |
+| **`ISqliteMigrationConfig`** | `ConnectionString`, `EnableAutoMigrations` |
+| **`SqliteMigrationHostedService<TContext, TOptions>`** | Runs `MigrateAsync` on `StartAsync` when enabled |
+| **`Extensions.AddSqliteMigrations<TContext, TOptions>()`** | Registers the hosted service |
+
+The hosted service constructs `TContext` via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public constructor that
+takes a single `DbContextOptions<TContext>`**.
+
 ## Dependencies
 
-**Target framework:** `net10.0`
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Microsoft.EntityFrameworkCore.Sqlite`
-- `Microsoft.Extensions.Hosting.Abstractions`
-- `Microsoft.Extensions.Options`
-- [`Lyo.Exceptions`](../../Core/Exceptions/Lyo.Exceptions/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Sqlite` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)

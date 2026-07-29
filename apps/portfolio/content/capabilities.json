@@ -1,0 +1,470 @@
+{
+  "$schema": "./schema/capabilities.schema.json",
+  "capabilities": [
+    {
+      "id": "query",
+      "title": "API & query",
+      "kicker": "Lyo.Api · Lyo.Query",
+      "summary": "Minimal APIs and CRUD on Entity Framework Core — typed and dynamic builders, result caching with auto-invalidation, nested WhereClause filters, projection, property-level patch, bulk with per-item fallback, and CSV/XLSX/JSON export.",
+      "packages": [
+        "Lyo.Api",
+        "Lyo.Query.Models"
+      ],
+      "sections": [
+        {
+          "type": "list",
+          "title": "What you get",
+          "items": [
+            "**EF-backed CRUD** — `AddLyoQueryServices` / `AddLyoCrudServices` + `ApiEndpointBuilder` (typed) or `MapDynamicCrudEndpoints`",
+            "**Query engine** — nested And/Or `whereClause`, 16 comparators, includes, multi-sort, keys, `TotalCountMode`, optional in-memory `subClause`",
+            "**Projection** — sparse `QueryProject`, wildcards, SQL-level project when possible, computed SmartFormat columns",
+            "**Caching built in** — FusionCache / Lyo.Cache on Query + QueryProject; invalidate on Create/Update/Patch/Delete/Upsert",
+            "**Partial patch & bulk** — property-level Patch; bulk batch with individual fallback and partial success",
+            "**Delete / Upsert / Export** — delete by keys or WhereClause; upsert; CSV, XLSX, JSON export"
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Host registration",
+          "language": "csharp",
+          "code": "builder.Services.AddLocalCache(); // or AddFusionCache()\nbuilder.Services.AddLyoQueryServices();\nbuilder.Services.AddLyoCrudServices<MyDbContext>();\nbuilder.Services.AddDbContextFactory<MyDbContext>(...);\nbuilder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();\n\napp.CreateBuilder<Person, PersonReq, PersonRes>(\"Person\")\n    .WithCrud(ApiFeatureSet.All)\n    .Map();"
+        },
+        {
+          "type": "code",
+          "title": "Concrete query",
+          "language": "csharp",
+          "code": "var req = new QueryConcreteReqBuilder()\n    .Start(0).Amount(25)\n    .Options(o => o.TotalCountMode = TotalCountMode.Exact)\n    .Where(w => w\n        .And(a => a\n            .NotNull(\"FirstName\")\n            .NotNull(\"LastName\")))\n    .Sort(\"LastName\")\n    .Build();\n\nvar page = await personApi.QueryConcreteAsync(req, ct);"
+        },
+        {
+          "type": "code",
+          "title": "Projection",
+          "language": "csharp",
+          "code": "var proj = new ProjectionQueryReqBuilder()\n    .Start(0).Amount(50)\n    .Select(\"Id\", \"FirstName\", \"LastName\", \"SourceEntityType\")\n    .Computed(\"DisplayName\", \"{FirstName} {LastName}\")\n    .Build();\n\nvar rows = await personApi.QueryProjectAsync(proj, ct);"
+        },
+        {
+          "type": "code",
+          "title": "Root From/Joins",
+          "language": "csharp",
+          "code": "var root = new QueryReqBuilder()\n    .From(\"p\", \"Person\")\n    .LeftJoin(\"c\", \"Contact\", on => on.From(\"p.Id\").To(\"c.PersonId\"))\n    .Select(\"p.Id\", \"p.LastName\", \"c.Email\")\n    .Amount(100)\n    .Build();"
+        },
+        {
+          "type": "code",
+          "title": "Patch + bulk",
+          "language": "csharp",
+          "code": "await personApi.PatchAsync(new PatchRequest\n{\n    Keys = [[id]],\n    Properties = new() { [\"LastName\"] = \"Updated\" },\n}, ct);\n\nvar bulk = await personApi.BulkCreateAsync(items, ct);"
+        },
+        {
+          "type": "code",
+          "title": "TypeScript BFF",
+          "language": "typescript",
+          "code": "import { createAsyncApiClient } from \"lyo-api-client\";\nimport { createAsyncPersonApiClient, baselineQuery } from \"lyo-person-api-client\";\n\nconst api = createAsyncApiClient({\n  baseUrl: process.env.LYO_API_BASE_URL!,\n  transport: fetchTransport,\n});\nconst personApi = createAsyncPersonApiClient(api);\nconst res = await personApi.queryPerson(baselineQuery({ amount: 10 }));"
+        }
+      ]
+    },
+    {
+      "id": "jobs",
+      "title": "Jobs",
+      "kicker": "Lyo.Job",
+      "summary": "A full job platform: PostgreSQL persistence, schedule evaluation, RabbitMQ-triggered workers, retries/SLA, alerts, SignalR fan-out, and MudBlazor management UI.",
+      "packages": [
+        "Lyo.Job.Postgres",
+        "Lyo.Job.Scheduler"
+      ],
+      "sections": [
+        {
+          "type": "list",
+          "title": "End-to-end pipeline",
+          "ordered": true,
+          "items": [
+            "**Definition** — `JobDefinitionBuilder`: worker type, parameters, retries, SLA, alerts, blackout calendar",
+            "**Schedule** — cron / interval / one-shot via `JobScheduleBuilder`, misfire policies, workflows",
+            "**Scheduler** — polls definitions, creates `JobRun` rows (`Queued`), publishes MQ triggers",
+            "**Worker** — `JobWorkerBase` claims run → heartbeat/progress → `ExecuteAsync` → `Finished`",
+            "**Events** — `IJobEventPublisher` on `job.events`",
+            "**Alerts & UI** — webhook/notification consumers + SignalR `JobHub` + `JobManagement` grids"
+          ]
+        },
+        {
+          "type": "code",
+          "title": "API host registration",
+          "language": "csharp",
+          "code": "services.AddPostgresJobManagement(o =>\n{\n    o.ConnectionString = connStr;\n    o.EnableAutoMigrations = true;\n});\nservices.AddMqJobEventPublisher();\nservices.AddJobMaintenanceServiceFromConfiguration(configuration);"
+        },
+        {
+          "type": "code",
+          "title": "Definition + schedule",
+          "language": "csharp",
+          "code": "var def = JobDefinitionBuilder.New(\"Nightly Sync\")\n    .ForCSharpWorker()\n    .SetType(\"Import\")\n    .AddJobParameter(\"BatchSize\", JobParameterType.Int, 500)\n    .WithRetry(maxAttempts: 3, backoff: JobRetryBackoff.Exponential)\n    .WithSla(TimeSpan.FromMinutes(30))\n    .Build();\n\nvar schedule = JobScheduleBuilder.EveryDay()\n    .SetTimes(2, 0)\n    .WithMisfirePolicy(JobMisfirePolicy.RunOnce)\n    .Build();"
+        },
+        {
+          "type": "code",
+          "title": "Scheduler host",
+          "language": "csharp",
+          "code": "services.AddJobClient(sp => sp.GetRequiredService<IApiClient>());\nservices.AddMqJobEventPublisherFromConfiguration(configuration);\nservices.AddJobScheduler();"
+        },
+        {
+          "type": "code",
+          "title": "Worker",
+          "language": "csharp",
+          "code": "public sealed class ImportWorker : JobWorkerBase\n{\n    protected override async Task ExecuteAsync(IJobWorkerContext ctx, CancellationToken ct)\n    {\n        await ctx.ReportProgressAsync(10, \"Starting\", ct);\n        var batch = ctx.Run.JobRunParameters.GetInt(\"BatchSize\") ?? 100;\n        ctx.Results.AddCreateCount(batch);\n        await ctx.ReportProgressAsync(100, \"Done\", ct);\n    }\n}"
+        },
+        {
+          "type": "code",
+          "title": "SignalR live events",
+          "language": "csharp",
+          "code": "services.AddJobSignalR();\napp.MapJobHub(); // /hubs/job → JobEvent"
+        },
+        {
+          "type": "code",
+          "title": "Alerts",
+          "language": "csharp",
+          "code": "services.AddJobAlerts(o =>\n{\n    o.WebhookUrl = configuration[\"JobAlerts:Webhook\"];\n});"
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "title": "Reporting",
+      "kicker": "Lyo.Reporting",
+      "summary": "Composable report models, PostgreSQL persistence, multi-format generation (HTML/PDF/CSV/XLSX/JSON), concurrency throttling, retention cleanup, and MudBlazor management.",
+      "packages": [
+        "Lyo.Reporting.Models",
+        "Lyo.Reporting.Postgres",
+        "Lyo.Api.Reporting",
+        "Lyo.Reporting.Web",
+        "Lyo.Reporting.Web.Components",
+        "Lyo.Reporting.Client"
+      ],
+      "sections": [
+        {
+          "type": "list",
+          "title": "Pipeline",
+          "ordered": true,
+          "items": [
+            "**Definition** — saved composition + parameters (`ReportDefinition`)",
+            "**Generate** — merge params, optional data provider, render via `IReportRenderer`",
+            "**Hooks** — persist staged files in `AfterRenderAsync`; delete on `OnCleanupAsync`",
+            "**Hardening** — ad-hoc generate gate, max concurrent generations (`ReportBusyException` → 503), retention",
+            "**API + UI** — `BuildReportingGroup` + Blazor reporting components"
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Host registration",
+          "language": "csharp",
+          "code": "services.AddLyoQueryServices();\nservices.AddLocalCache();\nservices.AddIOTempService();\nservices.AddPostgresReportingManagement(o =>\n{\n    o.ConnectionString = cs;\n    o.EnableAutoMigrations = true;\n    o.AllowAdHocGeneration = true;\n    o.MaxConcurrentGenerations = 4;\n    o.GenerationRetention = TimeSpan.FromDays(90);\n});\nservices.AddReportingWebRenderer();\nservices.AddLyoApiReporting();\napp.BuildReportingGroup(new ReportingApiOptions { /* auth */ });"
+        },
+        {
+          "type": "code",
+          "title": "Generate + hooks",
+          "language": "csharp",
+          "code": "services.AddReportingGenerationHooks(new ReportGenerationHooks\n{\n    AfterRenderAsync = async (ctx, ct) =>\n    {\n        var saved = await storage.SaveFileAsync(\n            ctx.StagedFilePath!, ctx.FileName,\n            pathPrefix: ctx.PathPrefix, contentType: ctx.ContentType, ct: ct);\n        ctx.OutputFileId = saved.Id;\n    },\n    OnCleanupAsync = async (ctx, ct) =>\n    {\n        if (ctx.OutputFileId is Guid id)\n            await storage.DeleteFileAsync(id, ct: ct);\n    },\n});"
+        }
+      ]
+    },
+    {
+      "id": "file-storage",
+      "title": "File storage",
+      "kicker": "Lyo.FileStorage",
+      "summary": "Local, S3, and Azure Blob providers share save/stream/copy/download, staged upload, multipart, duplicate detection, and an optional compress+encrypt pipeline.",
+      "packages": [
+        "Lyo.FileStorage",
+        "Lyo.FileStorage.S3",
+        "Lyo.FileStorage.Blob"
+      ],
+      "sections": [
+        {
+          "type": "paragraph",
+          "title": "Workbench surface",
+          "text": "TestApi exposes Workbench/FileStorage/*: save, stream, download, presign, DEK migrate/rotate, direct-upload, stage, multipart, keys, diagnostics, plus FileMetadata Query."
+        },
+        {
+          "type": "code",
+          "title": "Save with compress + encrypt",
+          "language": "csharp",
+          "code": "await fileStorage.SaveFileAsync(new SaveFileRequest\n{\n    Key = \"reports/q1.bin\",\n    Content = stream,\n    ContentType = \"application/octet-stream\",\n    Compress = true,\n    Encrypt = true,\n}, ct);"
+        },
+        {
+          "type": "code",
+          "title": "Staged upload",
+          "language": "csharp",
+          "code": "var stage = await staged.BeginAsync(new BeginStageRequest\n{\n    Key = \"uploads/big.bin\",\n    ContentType = \"application/octet-stream\",\n}, ct);\nawait stage.WriteAsync(chunk, ct);\nawait staged.CompleteAsync(stage.SessionId, ct);"
+        }
+      ]
+    },
+    {
+      "id": "file-system-watcher",
+      "title": "File system watcher",
+      "kicker": "Lyo.FileSystemWatcher",
+      "summary": "Snapshot-based monitoring with debouncing and hash-based move/rename detection — more dependable than raw OS FileSystemWatcher events alone.",
+      "packages": [
+        "Lyo.FileSystemWatcher"
+      ],
+      "sections": [
+        {
+          "type": "list",
+          "title": "Why it exists",
+          "items": [
+            "Snapshot diffs catch missed or coalesced OS events",
+            "Debounce batches rapid create/write storms",
+            "Content hashing detects moves/renames when the FS does not",
+            "Separate file vs directory events; thread-safe; cancelable"
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Basic watch",
+          "language": "csharp",
+          "code": "using var watcher = new FileSystemWatcher(@\"C:\\ingest\");\nwatcher.FileCreated += (_, e) => Console.WriteLine($\"created {e.NewPath}\");\nwatcher.FileMoved   += (_, e) => Console.WriteLine($\"{e.OldPath} -> {e.NewPath}\");\nwatcher.OnAnyChange += (_, e) => Console.WriteLine($\"{e.ChangeType}: {e.NewPath ?? e.OldPath}\");"
+        },
+        {
+          "type": "code",
+          "title": "Options + metrics",
+          "language": "csharp",
+          "code": "var options = new FileSystemWatcherOptions\n{\n    IncludeSubdirectories = true,\n    DebounceTimerDelay = 500,\n    EnableFileHashing = true,\n    EnableMetrics = true,\n};\nusing var watcher = new FileSystemWatcher(path, options, logger, metrics);"
+        }
+      ]
+    },
+    {
+      "id": "encryption",
+      "title": "Encryption",
+      "kicker": "Lyo.Encryption",
+      "summary": "Authenticated encryption (AES-GCM, ChaCha, CCM, SIV, XChaCha), RSA/hybrid, envelope/two-key, keystore integration.",
+      "packages": [
+        "Lyo.Encryption"
+      ],
+      "links": [
+        {
+          "label": "benchmark summary",
+          "href": "Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md"
+        }
+      ],
+      "sections": [
+        {
+          "type": "code",
+          "title": "Keyed two-key (DI)",
+          "language": "csharp",
+          "code": "const string keyName = \"primary\";\nservices.AddKeyedLocalKeyStore(keyName, store =>\n    store.UpdateKeyFromString(\"default-key\", config[\"Encryption:KekSecret\"]!));\nservices.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);\n\nvar envelope = sp.GetRequiredKeyedService<ITwoKeyEncryptionService>(keyName);"
+        },
+        {
+          "type": "code",
+          "title": "Single-key AES-GCM",
+          "language": "csharp",
+          "code": "var enc = new AesGcmEncryptionService(keyStore);\nawait using var sealed = await enc.EncryptAsync(plain, ct);"
+        },
+        {
+          "type": "code",
+          "title": "Two-key envelope",
+          "language": "csharp",
+          "code": "var twoKey = new TwoKeyEncryptionService<AesGcm, AesGcm>(dekStore, kekStore);\nawait using var envelope = await twoKey.EncryptAsync(plain, ct);"
+        },
+        {
+          "type": "code",
+          "title": "RSA / hybrid",
+          "language": "csharp",
+          "code": "services.AddRsaEncryption(publicPemPath: \"keys/public.pem\", privatePemPath: \"keys/private.pem\");\nservices.AddAesGcmRsaEncryption(publicPemPath: \"keys/public.pem\", privatePemPath: \"keys/private.pem\");"
+        }
+      ]
+    },
+    {
+      "id": "compression",
+      "title": "Compression",
+      "kicker": "Lyo.Compression",
+      "summary": "Ten codecs (LZ4, Zstd, Brotli, GZip, …), streams/files, size limits and bomb protections.",
+      "packages": [
+        "Lyo.Compression"
+      ],
+      "links": [
+        {
+          "label": "benchmark summary",
+          "href": "Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md"
+        }
+      ],
+      "sections": [
+        {
+          "type": "code",
+          "title": "Service registration",
+          "language": "csharp",
+          "code": "services.AddCompressionService(o => o.DefaultAlgorithm = CompressionAlgorithm.Zstd);\nvar result = await compression.CompressAsync(input, ct);"
+        },
+        {
+          "type": "code",
+          "title": "Bytes + ratio",
+          "language": "csharp",
+          "code": "var service = new CompressionService();\nvar compressInfo = service.Compress(payload, out var compressed);\nConsole.WriteLine($\"ratio={compressInfo.CompressionRatio:P2}\");"
+        },
+        {
+          "type": "code",
+          "title": "Bounded stream compress",
+          "language": "csharp",
+          "code": "await using var limited = new MaxLengthStream(output, maxBytes: 50_000_000);\nawait compression.CompressAsync(\n    input,\n    limited,\n    algorithm: CompressionAlgorithm.LZ4,\n    ct);"
+        },
+        {
+          "type": "code",
+          "title": "Resolver (per-algorithm)",
+          "language": "csharp",
+          "code": "var resolver = compression.Resolver;\nawait resolver.CompressAsync(CompressionAlgorithm.Zstd, input, output, ct);\nawait resolver.DecompressAsync(CompressionAlgorithm.Zstd, input, output, ct);"
+        }
+      ]
+    },
+    {
+      "id": "temp-io",
+      "title": "Temp IO",
+      "kicker": "Lyo.IO.Temp",
+      "summary": "Session-scoped scratch files with cleanup policies.",
+      "packages": [
+        "Lyo.IO.Temp"
+      ],
+      "sections": [
+        {
+          "type": "paragraph",
+          "title": "Why it exists",
+          "text": "Avoid ad-hoc Path.GetTempFileName leaks. Sessions enforce naming, track bytes, overflow policies, and clean up on dispose — with optional auto-cleanup hosted service and in-memory storage for tests/WASM."
+        },
+        {
+          "type": "code",
+          "title": "Session lifecycle",
+          "language": "csharp",
+          "code": "services.AddIOTempService();\nawait using var session = temp.CreateSession();\nvar path = await session.CreateFileAsync(chunkBytes);\nawait File.WriteAllBytesAsync(session.GetFilePath(\"report.pdf\"), reportBytes, ct);"
+        },
+        {
+          "type": "code",
+          "title": "File generator",
+          "language": "csharp",
+          "code": "var file = session.Generator.CreateRandomFile(FileSizeUnitInfo.Megabyte, 1);\nvar csv  = session.Generator.CreateCsvFile(rows: 500, columns: 10);\nvar json = session.Generator.CreateJsonFile(depth: 3, keysPerObject: 5);\nvar zip  = session.Generator.CreateZipFile(TempDirectorySpec.Flat(10, 1024));"
+        },
+        {
+          "type": "code",
+          "title": "Options + auto-cleanup",
+          "language": "csharp",
+          "code": "services.AddIOTempService(o =>\n{\n    o.DirectoryName = \"my-app-temp\";\n    o.MaxTotalSizeBytes = 500 * 1024 * 1024;\n    o.OverflowHandling = OverflowHandling.DeleteOldest;\n});\nservices.AddIOTempServiceWithAutoCleanup(\n    cleanupInterval: TimeSpan.FromHours(1),\n    initialDelay: TimeSpan.FromMinutes(5));"
+        },
+        {
+          "type": "code",
+          "title": "Directory specs",
+          "language": "csharp",
+          "code": "var spec = TempDirectorySpec.Builder()\n    .WithFiles(5, FileSizeUnitInfo.Kilobyte, 4)\n    .WithSubdirectory(sub => sub.WithFiles(3, 256))\n    .Build();\nvar dir = session.Generator.SimulateDirectory(spec);"
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "title": "Platform",
+      "kicker": "Cross-cutting",
+      "summary": "Cache, locks, privacy, resilience, diagnostics, MQ, auth.",
+      "packages": [
+        "Lyo.Cache",
+        "Lyo.Lock",
+        "Lyo.Resilience",
+        "Lyo.Diagnostic"
+      ],
+      "sections": [
+        {
+          "type": "list",
+          "title": "Surfaces",
+          "items": [
+            "**Cache** — Local and Fusion-backed ICacheService, typed byte payloads, query cache tags",
+            "**Locks** — Local and Redis locks plus keyed semaphores",
+            "**Privacy** — Redaction presets for text/JSON before logs leave the process",
+            "**Resilience** — Configuration-driven Polly pipelines",
+            "**Diagnostics** — Stack decoding, breadcrumbs, error inbox",
+            "**Message queue** — IMqService with RabbitMQ, delayed/priority helpers",
+            "**Auth** — JWKS, token endpoints, optional OIDC BFF"
+          ]
+        },
+        {
+          "type": "code",
+          "title": "Cache",
+          "language": "csharp",
+          "code": "var value = await cache.GetOrSetAsync(\n    \"person:stats\",\n    () => LoadStatsAsync(ct),\n    new CacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) },\n    ct);"
+        },
+        {
+          "type": "code",
+          "title": "Locks",
+          "language": "csharp",
+          "code": "await using (await locks.AcquireAsync(\"report:generate\", ct))\n{\n    await GenerateReportAsync(ct);\n}"
+        },
+        {
+          "type": "code",
+          "title": "Privacy",
+          "language": "csharp",
+          "code": "var redactor = privacy.CreateRedactor(PrivacyPreset.PiiStrict);\nvar safe = redactor.RedactText(logLine);"
+        },
+        {
+          "type": "code",
+          "title": "Resilience",
+          "language": "csharp",
+          "code": "services.AddLyoResilienceFromConfiguration(configuration);\nbuilder.Services.AddHttpClient(\"vendor\")\n    .AddResilienceHandler(\"vendor-default\");"
+        }
+      ]
+    },
+    {
+      "id": "query-client-ui",
+      "title": "Query client UI",
+      "summary": "Blazor components (e.g. data grid) that speak the same query shapes as the API.",
+      "packages": [
+        "Lyo.Api"
+      ],
+      "sections": []
+    },
+    {
+      "id": "cloud-blob",
+      "title": "Cloud blob backends",
+      "summary": "AWS S3–compatible and Azure Blob Storage implementations for the file storage abstractions.",
+      "packages": [
+        "Lyo.FileStorage.S3",
+        "Lyo.FileStorage.Blob"
+      ],
+      "sections": []
+    },
+    {
+      "id": "pdf",
+      "title": "PDF",
+      "summary": "Load PDFs and extract text via IPdfService: words/lines, bounding boxes, key–value and table-style extraction, merges. Blazor PDF annotator in Lyo.Pdf.Web.Components.",
+      "packages": [
+        "Lyo.Pdf",
+        "Lyo.Pdf.Web.Components"
+      ],
+      "sections": []
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "summary": "Stack decoding, exception classification, breadcrumbs, in-memory error inbox, trace sanitisation—optional IPackageMetadataStore for namespace→package enrichment.",
+      "packages": [
+        "Lyo.Diagnostic",
+        "Lyo.Diagnostic.AspNetCore",
+        "Lyo.PackageMetadata"
+      ],
+      "sections": []
+    },
+    {
+      "id": "content-threat",
+      "title": "Content threat scan",
+      "summary": "Heuristic scoring for readable text; optional Malware Bazaar, VirusTotal, and clamd reputation; composes with Lyo.FileStorage malware scanning.",
+      "packages": [
+        "Lyo.ContentThreatScan",
+        "Lyo.ContentThreatScan.Intel"
+      ],
+      "sections": []
+    },
+    {
+      "id": "hashing",
+      "title": "Hashing",
+      "summary": "SHA-2 digests, MD5 for non-security fingerprints, hex helpers, stream hashing, DI-friendly IHashingService.",
+      "packages": [
+        "Lyo.Hashing"
+      ],
+      "sections": []
+    },
+    {
+      "id": "caching",
+      "title": "Caching",
+      "summary": "Local and Fusion-backed ICacheService, typed byte payloads, query cache tags for invalidation (with Lyo.Api).",
+      "packages": [
+        "Lyo.Cache"
+      ],
+      "sections": []
+    }
+  ]
+}

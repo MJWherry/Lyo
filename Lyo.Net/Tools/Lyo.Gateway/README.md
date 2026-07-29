@@ -5,78 +5,52 @@ run against either the Test API (`Lyo.TestApi`) or against in-process services r
 
 ## Hosting model
 
-`Program.cs` wires a single ASP.NET Core Blazor Server host:
-
 - Logging, `IHttpContextAccessor`, anti-forgery, HTTPS redirect, status-code re-execution to `/not-found`.
 - `MapStaticAssets()` + `MapRazorComponents<App>().AddInteractiveServerRenderMode()` for the Blazor app.
 - A SignalR hub with `MaximumReceiveMessageSize = 32 MiB` so the PDF annotator can round-trip large iframe HTML through JS interop.
 - Two server-side minimal-API routes (see [Proxy routes](#proxy-routes)) registered before the Blazor app.
 
-The MudBlazor shell (`Components/Layout/MainLayout.razor`) shows a `MudDrawer` nav menu with grouped sections — Communication, Documents & Files, Infrastructure — plus a dark-mode
-toggle persisted in browser local storage via `ClientStore` / `Blazored.LocalStorage`.
-
 ## Routed pages
 
 Every workbench page lives under `Components/Pages/` and uses `@attribute [Route("/" + Constants.Page.X)]` so route strings come from `Lyo.Gateway.Constants.Page`. Highlights:
 
-| Route                                                                                                   | Page                                   | Backed by                                                                                                                                                                                                  |
-|---------------------------------------------------------------------------------------------------------|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `/`                                                                                                     | `Home`                                 | `AuthorizedPage` placeholder                                                                                                                                                                               |
-| `/PeopleManagement`                                                                                     | `People/PeopleManagement`              | `Lyo.Api.Client` against the Test API `Person` CRUD                                                                                                                                                        |
-| `/comics`, `/comics/series/{id}`, `/comics/volume/{id}`, `/comics/read/{id}`                            | `Comics*Page`                          | `Lyo.Comic.Api.Client`                                                                                                                                                                                     |
-| `/query-builder`                                                                                        | `QueryBuilderExample`                  | `Lyo.Query.Web.Components`                                                                                                                                                                                 |
-| `/id-generator`                                                                                         | `IdGeneratorTest`                      | `Lyo.Web.Components`                                                                                                                                                                                       |
-| `/messaging`, `/translation`, `/tts`, `/profanity`                                                      | Sms/Email, Translate, TTS, Profanity   | `Lyo.Email`, `Lyo.Sms.Twilio`, `Lyo.Translation.Aws`, `Lyo.Tts.Typecast`, `Lyo.Profanity`                                                                                                                  |
-| `/csv-xlsx` (legacy `/csv`, `/xlsx`)                                                                    | `CsvTest` (single workbench, two tabs) | `Lyo.Csv`, `Lyo.Xlsx`                                                                                                                                                                                      |
-| `/file-service`                                                                                         | `FileToolsTest`                        | In-process compression + encryption demos                                                                                                                                                                  |
-| `/filestorage-workbench`                                                                                | `FileStorageWorkbenchPage`             | Test API workbench routes via `TestApi*` proxy services (see below)                                                                                                                                        |
-| `/html-to-pdf`                                                                                          | `HtmlToPdfTest`                        | `Lyo.Web.WebRenderer` + `Lyo.Pdf`                                                                                                                                                                          |
-| `/pdf-annotator`                                                                                        | `PdfAnnotationTest`                    | `Lyo.Pdf.Web.Components.PdfAnnotator`                                                                                                                                                                      |
-| `/qr-code-generator`, `/barcode-generator`                                                              | `QrCodeTest`, `BarcodeTest`            | `Lyo.QRCode`, `Lyo.Barcode.Native`                                                                                                                                                                         |
-| `/spritesheet-animator`                                                                                 | `SpriteSheetTest`                      | `Lyo.Images` sprite sheet export                                                                                                                                                                           |
-| `/image-workbench`                                                                                      | `ImageTest`                            | `Lyo.Images` (ImageSharp)                                                                                                                                                                                  |
-| `/text-diff`                                                                                            | `TextDiffTest`                         | `Lyo.Web.Components` diff viewer                                                                                                                                                                           |
-| `/rich-text-editor`                                                                                     | `RichTextEditorTest`                   | `Lyo.Web.Components` editor                                                                                                                                                                                |
-| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/privacy-redaction` | Infrastructure workbenches             | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Privacy.Web.Components` |
+| Route | Page | Backed by |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/` | `Home` | `AuthorizedPage` placeholder |
+| `/PeopleManagement` | `People/PeopleManagement` | `Lyo.Api.Client` against the Test API `Person` CRUD |
+| `/comics`, `/comics/series/{id}`, `/comics/volume/{id}`, `/comics/read/{id}` | `Comics*Page` | `Lyo.Comic.Api.Client` |
+| `/query-builder` | `QueryBuilderExample` | `Lyo.Query.Web.Components` |
+| `/id-generator` | `IdGeneratorTest` | `Lyo.Web.Components` |
+| `/messaging`, `/translation`, `/tts`, `/profanity` | Sms/Email, Translate, TTS, Profanity | `Lyo.Email`, `Lyo.Sms.Twilio`, `Lyo.Translation.Aws`, `Lyo.Tts.Typecast`, `Lyo.Profanity` |
+| `/csv-xlsx` (legacy `/csv`, `/xlsx`) | `CsvTest` (single workbench, two tabs) | `Lyo.Csv`, `Lyo.Xlsx` |
+| `/file-service` | `FileToolsTest` | In-process compression + encryption demos |
+| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Test API workbench routes via `TestApi*` proxy services (see below) |
+| `/html-to-pdf` | `HtmlToPdfTest` | `Lyo.Web.WebRenderer` + `Lyo.Pdf` |
+| `/pdf-annotator` | `PdfAnnotationTest` | `Lyo.Pdf.Web.Components.PdfAnnotator` |
+| `/qr-code-generator`, `/barcode-generator` | `QrCodeTest`, `BarcodeTest` | `Lyo.QRCode`, `Lyo.Barcode.Native` |
+| `/spritesheet-animator` | `SpriteSheetTest` | `Lyo.Images` sprite sheet export |
+| `/image-workbench` | `ImageTest` | `Lyo.Images` (ImageSharp) |
+| `/text-diff` | `TextDiffTest` | `Lyo.Web.Components` diff viewer |
+| `/rich-text-editor` | `RichTextEditorTest` | `Lyo.Web.Components` editor |
+| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/privacy-redaction` | Infrastructure workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Privacy.Web.Components` |
 
 Constants are defined in `Lyo.Gateway.Constants.Page` (workbench routes) and `Lyo.Gateway.Models.Constants` (Person/FileStorageWorkbench API routes).
 
 ## Proxy routes
 
-Two minimal-API endpoints sit in front of the Blazor app:
-
-- `GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseTestApiServices=true`. Asks the
-  Test API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it
-  streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.
-- `GET /comic-files/{id:guid}` — Calls `IComicApiClient.GetFileWithTypeAsync($"files/{id}")` and returns the bytes with the Comic API's content type. Used so a phone on the LAN can
-  load images even though the Comic API only listens on `localhost`.
+- `GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseTestApiServices=true`. Asks the Test API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.
+- `GET /comic-files/{id:guid}` — Calls `IComicApiClient.GetFileWithTypeAsync($"files/{id}")` and returns the bytes with the Comic API's content type. Used so a phone on the LAN can load images even though the Comic API only listens on `localhost`.
 
 ## File Storage Workbench wiring
 
-`AddFileStorageWorkbenchSupport(IConfiguration)` (in `Services/FileStorageWorkbenchExtensions.cs`) is the switch between the two hosting modes for `/filestorage-workbench`. It
-binds `FileStorageWorkbenchOptions` from `FileStorageWorkbench` and:
-
-- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed *
-  *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` →
-  `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by
-  `ApiRoutePrefix` (default `Workbench/FileStorage`).
-- **In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`),
-  Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the
-  same workbench page binds to a real backend.
-
-Service keys default to `gateway-filestorage` (and `gateway-filestorage-metadata`).
+- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
+- **In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend.
 
 ## Other services in `Program.cs`
 
-A single `WebApplication` builder registers the entire surface used across workbenches:
-
-- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetrics`,
-  `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`,
-  `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.
-- Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`,
-  `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.
-- Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer`
-  for the file-tools workbench.
+- Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetrics`, `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`, `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.
+- Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.
+- Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer` for the file-tools workbench.
 - API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.
 - Comic: `AddComicApiClientFromConfiguration`.
 - File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`.
@@ -85,76 +59,189 @@ A single `WebApplication` builder registers the entire surface used across workb
 
 `appsettings.json` ships placeholders for every section the host binds:
 
-| Section                                                            | Used by                                                  |
-|--------------------------------------------------------------------|----------------------------------------------------------|
-| `ApiClient`                                                        | `Lyo.Api.Client` (talking to `Lyo.TestApi`)              |
-| `FileStorageWorkbench`                                             | `AddFileStorageWorkbenchSupport`                         |
+| Section | Used by |
+| ------------------------------------------------------------------ | -------------------------------------------------------- |
+| `ApiClient` | `Lyo.Api.Client` (talking to `Lyo.TestApi`) |
+| `FileStorageWorkbench` | `AddFileStorageWorkbenchSupport` |
 | `AwsKeyStore`, `S3FileStorageOptions`, `PostgresFileMetadataStore` | In-process S3 + metadata when `UseTestApiServices=false` |
-| `AwsTranslationOptions`                                            | `AddAwsTranslationServiceFromConfiguration`              |
-| `TypecastClient`, `TypecastOptions`                                | Typecast TTS workbench                                   |
-| `EmailServiceOptions`                                              | SMTP-based `Lyo.Email`                                   |
-| `TwilioOptions`                                                    | `Lyo.Sms.Twilio`                                         |
-| `RabbitMqOptions`                                                  | `Lyo.MessageQueue.RabbitMq`                              |
-| `WebRenderOptions`                                                 | `Lyo.Web.WebRenderer` (HTML → PDF)                       |
-| `CacheOptions`                                                     | `AddLocalCacheFromConfiguration`                         |
-| `JobDashboard`                                                     | `Lyo.Job.Web.Components` Jobs page                       |
-| `ComicApi`                                                         | `IComicApiClient` (also used by `/comic-files/{id}`)     |
+| `AwsTranslationOptions` | `AddAwsTranslationServiceFromConfiguration` |
+| `TypecastClient`, `TypecastOptions` | Typecast TTS workbench |
+| `EmailServiceOptions` | SMTP-based `Lyo.Email` |
+| `TwilioOptions` | `Lyo.Sms.Twilio` |
+| `RabbitMqOptions` | `Lyo.MessageQueue.RabbitMq` |
+| `WebRenderOptions` | `Lyo.Web.WebRenderer` (HTML → PDF) |
+| `CacheOptions` | `AddLocalCacheFromConfiguration` |
+| `JobDashboard` | `Lyo.Job.Web.Components` Jobs page |
+| `ComicApi` | `IComicApiClient` (also used by `/comic-files/{id}`) |
 
-## Related projects
+## Dependencies
 
-- [`Lyo.Api.Client`](../../Integration/Api/Lyo.Api.Client/README.md)
-- [`Lyo.Barcode.Native`](../../Data/Barcode/Lyo.Barcode.Native/README.md)
-- [`Lyo.Barcode.TestWorkbench.Web.Components`](../../Data/Barcode/Lyo.Barcode.TestWorkbench.Web.Components/README.md)
-- [`Lyo.Cache`](../../Core/Cache/Lyo.Cache/README.md)
-- [`Lyo.Comic.Api.Client`](../../Apps/Comic/Lyo.Comic.Api.Client/README.md)
-- [`Lyo.Comic.Api.Models`](../../Apps/Comic/Lyo.Comic.Api.Models/README.md)
-- [`Lyo.Comic.Postgres`](../../Features/Comic/Lyo.Comic.Postgres/README.md)
-- [`Lyo.Comic.Web.Components`](../../Features/Comic/Lyo.Comic.Web.Components/README.md)
-- [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md)
-- [`Lyo.Csv`](../../Data/Csv/Lyo.Csv/README.md)
-- [`Lyo.Diagnostic.Web.Components`](../../Core/Diagnostic/Lyo.Diagnostic.Web.Components/README.md)
-- [`Lyo.Email.Web.Components`](../../Communication/Email/Lyo.Email.Web.Components/README.md)
-- [`Lyo.Email`](../../Communication/Email/Lyo.Email/README.md)
-- [`Lyo.Encryption`](../../Security/Encryption/Lyo.Encryption/README.md)
-- [`Lyo.FileMetadataStore.Postgres`](../../Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/README.md)
-- [`Lyo.FileMetadataStore`](../../Data/FileMetadataStore/Lyo.FileMetadataStore/README.md)
-- [`Lyo.FileStorage.Blob`](../../Data/FileStorage/Lyo.FileStorage.Blob/README.md)
-- [`Lyo.FileStorage.S3`](../../Data/FileStorage/Lyo.FileStorage.S3/README.md)
-- [`Lyo.FileStorage.Web.Components`](../../Data/FileStorage/Lyo.FileStorage.Web.Components/README.md)
-- [`Lyo.FileStorage`](../../Data/FileStorage/Lyo.FileStorage/README.md)
-- [`Lyo.Hashing`](../../Security/Hashing/Lyo.Hashing/README.md)
-- [`Lyo.IO.Temp`](../../Data/IOTemp/Lyo.IO.Temp/README.md)
-- [`Lyo.Images.Web.Components`](../../Data/Images/Lyo.Images.Web.Components/README.md)
-- [`Lyo.Images`](../../Data/Images/Lyo.Images/README.md)
-- [`Lyo.Job.Web.Components`](../../Integration/Job/Lyo.Job.Web.Components/README.md)
-- [`Lyo.Keystore.Aws`](../../Security/Encryption/Lyo.Keystore.Aws/README.md)
-- [`Lyo.Keystore`](../../Security/Encryption/Lyo.Keystore/README.md)
-- [`Lyo.Lock`](../../Core/Lock/Lyo.Lock/README.md)
-- [`Lyo.MessageQueue.RabbitMq.Web.Components`](../../Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Web.Components/README.md)
-- [`Lyo.MessageQueue.RabbitMq`](../../Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/README.md)
-- [`Lyo.MessageQueue.Web.Components`](../../Communication/MessageQueue/Lyo.MessageQueue.Web.Components/README.md)
-- [`Lyo.MessageQueue`](../../Communication/MessageQueue/Lyo.MessageQueue/README.md)
-- [`Lyo.Metrics`](../../Core/Metrics/Lyo.Metrics/README.md)
-- [`Lyo.Pdf.Web.Components`](../../Data/Pdf/Lyo.Pdf.Web.Components/README.md)
-- [`Lyo.Pdf`](../../Data/Pdf/Lyo.Pdf/README.md)
-- [`Lyo.People.Models`](../../Core/People/Lyo.People.Models/README.md)
-- [`Lyo.Privacy.Web.Components`](../../Core/Privacy/Lyo.Privacy.Web.Components/README.md)
-- [`Lyo.Profanity`](../../Features/Profanity/Lyo.Profanity/README.md)
-- [`Lyo.QRCode.Web.Components`](../../Data/QRCode/Lyo.QRCode.Web.Components/README.md)
-- [`Lyo.QRCode`](../../Data/QRCode/Lyo.QRCode/README.md)
-- [`Lyo.Query.Web.Components`](../../Data/Query/Lyo.Query.Web.Components/README.md)
-- [`Lyo.Result`](../../Core/Result/Lyo.Result/README.md)
-- [`Lyo.Schedule.Web.Components`](../../Core/Schedule/Lyo.Schedule.Web.Components/README.md)
-- [`Lyo.Scheduler`](../../Core/Scheduler/Lyo.Scheduler/README.md)
-- [`Lyo.Sms.Twilio`](../../Communication/Sms/Lyo.Sms.Twilio/README.md)
-- [`Lyo.Sms.Web.Components`](../../Communication/Sms/Lyo.Sms.Web.Components/README.md)
-- [`Lyo.Tag`](../../Features/Tag/Lyo.Tag/README.md)
-- [`Lyo.Translation.Aws`](../../Communication/Translation/Lyo.Translation.Aws/README.md)
-- [`Lyo.Translation.Web.Components`](../../Communication/Translation/Lyo.Translation.Web.Components/README.md)
-- [`Lyo.Tts.AwsPolly.Web.Components`](../../Communication/Speech/Lyo.Tts.AwsPolly.Web.Components/README.md)
-- [`Lyo.Tts.Typecast.Web.Components`](../../Communication/Speech/Lyo.Tts.Typecast.Web.Components/README.md)
-- [`Lyo.Tts.Typecast`](../../Communication/Speech/Lyo.Tts.Typecast/README.md)
-- [`Lyo.Web.Components`](../../Integration/Web/Lyo.Web.Components/README.md)
-- [`Lyo.Web.WebRenderer`](../../Integration/Web/Renderer/Lyo.Web.WebRenderer/README.md)
-- [`Lyo.Xlsx`](../../Data/Xlsx/Lyo.Xlsx/README.md)
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Api.Client` — (direct, lyo)
+- `Lyo.Authentication.Client` — (direct, lyo)
+- `Lyo.Authentication.Web.Components` — (direct, lyo)
+- `Lyo.Authentication.Web.Components.Server` — (direct, lyo)
+- `Lyo.Barcode.Native` — (direct, lyo)
+- `Lyo.Barcode.TestWorkbench.Web.Components` — (direct, lyo)
+- `Lyo.Cache` — (direct, lyo)
+- `Lyo.Comic.Api.Client` — (direct, lyo)
+- `Lyo.Comic.Api.Models` — (direct, lyo)
+- `Lyo.Comic.Postgres` — (direct, lyo)
+- `Lyo.Comic.Web.Components` — (direct, lyo)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Compression` — (direct, lyo)
+- `Lyo.Compression.BZip2` — (direct, lyo)
+- `Lyo.Compression.LZ4` — (direct, lyo)
+- `Lyo.Compression.LZMA` — (direct, lyo)
+- `Lyo.Compression.Snappier` — (direct, lyo)
+- `Lyo.Compression.XZ` — (direct, lyo)
+- `Lyo.Compression.Zstd` — (direct, lyo)
+- `Lyo.Csv` — (direct, lyo)
+- `Lyo.Diagnostic.Web.Components` — (direct, lyo)
+- `Lyo.Email` — (direct, lyo)
+- `Lyo.Email.Web.Components` — (direct, lyo)
+- `Lyo.Encryption` — (direct, lyo)
+- `Lyo.Encryption.AesCcm` — (direct, lyo)
+- `Lyo.Encryption.AesSiv` — (direct, lyo)
+- `Lyo.Encryption.XChaCha20Poly1305` — (direct, lyo)
+- `Lyo.Endato.Client` — (direct, lyo)
+- `Lyo.Endato.Web.Components` — (direct, lyo)
+- `Lyo.FileMetadataStore` — (direct, lyo)
+- `Lyo.FileMetadataStore.Postgres` — (direct, lyo)
+- `Lyo.FileStorage` — (direct, lyo)
+- `Lyo.FileStorage.S3` — (direct, lyo)
+- `Lyo.FileStorage.Web.Components` — (direct, lyo)
+- `Lyo.Hashing` — (direct, lyo)
+- `Lyo.IO.Temp` — (direct, lyo)
+- `Lyo.Images` — (direct, lyo)
+- `Lyo.Images.Web.Components` — (direct, lyo)
+- `Lyo.Job.Web.Components` — (direct, lyo)
+- `Lyo.Keystore` — (direct, lyo)
+- `Lyo.Keystore.Aws` — (direct, lyo)
+- `Lyo.Lock` — (direct, lyo)
+- `Lyo.MessageQueue` — (direct, lyo)
+- `Lyo.MessageQueue.RabbitMq` — (direct, lyo)
+- `Lyo.MessageQueue.RabbitMq.Web.Components` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Pdf` — (direct, lyo)
+- `Lyo.Pdf.Web.Components` — (direct, lyo)
+- `Lyo.People.Models` — (direct, lyo)
+- `Lyo.Privacy.Web.Components` — (direct, lyo)
+- `Lyo.Profanity` — (direct, lyo)
+- `Lyo.QRCode` — (direct, lyo)
+- `Lyo.QRCode.Web.Components` — (direct, lyo)
+- `Lyo.Query.Web.Components` — (direct, lyo)
+- `Lyo.Reporting.Web.Components` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Schedule.Web.Components` — (direct, lyo)
+- `Lyo.Scheduler` — (direct, lyo)
+- `Lyo.Sms.Twilio` — (direct, lyo)
+- `Lyo.Sms.Web.Components` — (direct, lyo)
+- `Lyo.Tag` — (direct, lyo)
+- `Lyo.Translation.Aws` — (direct, lyo)
+- `Lyo.Translation.Web.Components` — (direct, lyo)
+- `Lyo.Tts.AwsPolly.Web.Components` — (direct, lyo)
+- `Lyo.Tts.Typecast` — (direct, lyo)
+- `Lyo.Tts.Typecast.Web.Components` — (direct, lyo)
+- `Lyo.Web.Components` — (direct, lyo)
+- `Lyo.Web.Components.Export` — (direct, lyo)
+- `Lyo.Web.Components.Export.Csv` — (direct, lyo)
+- `Lyo.Web.Components.Export.Xlsx` — (direct, lyo)
+- `Lyo.Web.WebRenderer` — (direct, lyo)
+- `Lyo.Xlsx` — (direct, lyo)
+- `Blazored.LocalStorage` `4.5.0` — (direct, third-party)
+- `MudBlazor` `9.3` — (direct, third-party)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Authentication.Models` — (transitive, lyo)
+- `Lyo.Barcode` — (transitive, lyo)
+- `Lyo.Barcode.Web.Components` — (transitive, lyo)
+- `Lyo.Comic` — (transitive, lyo)
+- `Lyo.ContentThreatScan` — (transitive, lyo)
+- `Lyo.Csv.Models` — (transitive, lyo)
+- `Lyo.DataTable.Models` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Diagnostic` — (transitive, lyo)
+- `Lyo.Email.Models` — (transitive, lyo)
+- `Lyo.EntityReference.Models` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Geolocation.Models` — (transitive, lyo)
+- `Lyo.Health` — (transitive, lyo)
+- `Lyo.Job.Models` — (transitive, lyo)
+- `Lyo.MessageQueue.Web.Components` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Pdf.Models` — (transitive, lyo)
+- `Lyo.Postgres` — (transitive, lyo)
+- `Lyo.Privacy` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Reporting.Client` — (transitive, lyo)
+- `Lyo.Reporting.Models` — (transitive, lyo)
+- `Lyo.Schedule.Models` — (transitive, lyo)
+- `Lyo.Sms` — (transitive, lyo)
+- `Lyo.Sms.Models` — (transitive, lyo)
+- `Lyo.Streams` — (transitive, lyo)
+- `Lyo.Translation` — (transitive, lyo)
+- `Lyo.Tts` — (transitive, lyo)
+- `Lyo.Tts.AwsPolly` — (transitive, lyo)
+- `Lyo.Tts.Models` — (transitive, lyo)
+- `Lyo.Typecast.Client` — (transitive, lyo)
+- `Lyo.Validation` — (transitive, lyo)
+- `Lyo.Xlsx.Models` — (transitive, lyo)
+- `AWSSDK.Core` `4.0.100.4` — (transitive, third-party)
+- `AWSSDK.Polly` `4.0.100.3` — (transitive, third-party)
+- `AWSSDK.S3` `4.0.101` — (transitive, third-party)
+- `AWSSDK.SecretsManager` `4.0.100.3` — (transitive, third-party)
+- `AWSSDK.Translate` `4.0.100.3` — (transitive, third-party)
+- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
+- `ClosedXML` `0.105.0` — (transitive, third-party)
+- `CsvHelper` `33.1.0` — (transitive, third-party)
+- `DocumentFormat.OpenXml` `3.1.1` — (transitive, third-party)
+- `Dorssel.Security.Cryptography.AesExtra` `2.0.0` — (transitive, third-party)
+- `EasyCompressor` `2.1.0` — (transitive, third-party)
+- `EasyCompressor.LZ4` `2.1.0` — (transitive, third-party)
+- `EasyCompressor.LZMA` `2.1.0` — (transitive, third-party)
+- `EasyCompressor.Snappier` `2.1.0` — (transitive, third-party)
+- `EasyCompressor.ZstdSharp` `2.1.0` — (transitive, third-party)
+- `ExcelDataReader` `3.9.0` — (transitive, third-party)
+- `ExcelDataReader.DataSet` `3.9.0` — (transitive, third-party)
+- `Joveler.Compression.XZ` `5.0.2` — (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
+- `MailKit` `4.17.0` — (transitive, third-party)
+- `Microsoft.AspNetCore.Components.Authorization` `10.0.5` — (transitive, microsoft)
+- `Microsoft.AspNetCore.Components.Web` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Configuration` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `PDFsharp` `6.2.4` — (transitive, third-party)
+- `PdfPig` `0.1.15` — (transitive, third-party)
+- `PuppeteerSharp` `24.0.0` — (transitive, third-party)
+- `RabbitMQ.Client` `7.2.1` — (transitive, third-party)
+- `SharpZipLib` `1.4.2` — (transitive, third-party)
+- `SixLabors.Fonts` `2.1.3` — (transitive, third-party)
+- `SixLabors.ImageSharp` `3.1.12` — (transitive, third-party)
+- `SixLabors.ImageSharp.Drawing` `2.1.7` — (transitive, third-party)
+- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Collections.Immutable` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` — (transitive, microsoft)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Twilio` `7.14.9` — (transitive, third-party)
+- `ZXing.Net` `0.16.11` — (transitive, third-party)
+- `ZXing.Net.Bindings.ImageSharp.V3` `0.16.18` — (transitive, third-party)

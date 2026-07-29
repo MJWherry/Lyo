@@ -14,22 +14,9 @@ back onto the parent rating.
 (`HealthCheckName = "rating-postgres"`), so registering the store also wires up
 a liveness probe.
 
-## DI extensions
+## Examples
 
-Defined in `Extensions.cs` as `IServiceCollection` extensions:
-
-- `AddRatingDbContextFactory(Action<PostgresRatingOptions>)` /
-  `AddRatingDbContextFactory(PostgresRatingOptions)` — register only the
-  `IDbContextFactory<RatingDbContext>`.
-- `AddRatingDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)`
-  — same, bound from configuration (default section: `PostgresRating`).
-- `AddPostgresRatingStore(Action<PostgresRatingOptions>)` /
-  `AddPostgresRatingStore(PostgresRatingOptions)` — register the DbContext
-  factory **and** the `IRatingStore` singleton.
-- `AddPostgresRatingStoreFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)`
-  — register the store using configuration binding.
-
-## Usage
+### Usage
 
 ```csharp
 services.AddPostgresRatingStore(new PostgresRatingOptions {
@@ -38,7 +25,7 @@ services.AddPostgresRatingStore(new PostgresRatingOptions {
 });
 ```
 
-Or with configuration:
+### Usage (2)
 
 ```json
 {
@@ -49,33 +36,13 @@ Or with configuration:
 }
 ```
 
+### Usage (3)
+
 ```csharp
 services.AddPostgresRatingStoreFromConfiguration(configuration);
 ```
 
-## Migrations
-
-```bash
-export RATING_CONNECTION_STRING="Host=localhost;Database=rating;Username=postgres;Password=postgres"
-dotnet ef migrations add MigrationName --project Features/Rating/Lyo.Rating.Postgres
-```
-
-## Entity Reference
-
-Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:
-
-```csharp
-// Generic: uses typeof(T).FullName, keys joined with ":"
-var forDocket = EntityRef.For<Docket>(docketId);
-var fromUser = EntityRef.For<User>(123);
-var composite = EntityRef.For<Order>("ord-1", "line-2");
-
-// String-based
-var forEntity = EntityRef.ForGuid("Docket", docketGuid);
-var fromEntity = EntityRef.ForKey("User", "123");
-```
-
-## Example: a user rates a movie (general + subject-specific)
+### Example: a user rates a movie (general + subject-specific)
 
 ```csharp
 await ratingStore.SaveAsync(new RatingRecord {
@@ -110,7 +77,7 @@ await ratingStore.SaveAsync(new RatingRecord {
 });
 ```
 
-## Example: like / dislike a rating
+### Example: like / dislike a rating
 
 ```csharp
 var ratingRef = RatingRef.ForRating(ratingId);
@@ -120,19 +87,43 @@ await ratingStore.AddReactionAsync(ratingRef, actor, RatingReactionType.Like);
 await ratingStore.RemoveReactionAsync(ratingRef, actor);
 ```
 
+### Migrations
+
+```bash
+export RATING_CONNECTION_STRING="Host=localhost;Database=rating;Username=postgres;Password=postgres"
+dotnet ef migrations add MigrationName --project Features/Rating/Lyo.Rating.Postgres
+```
+
+## DI extensions
+
+- `AddRatingDbContextFactory(Action<PostgresRatingOptions>)` / `AddRatingDbContextFactory(PostgresRatingOptions)` — register only the `IDbContextFactory<RatingDbContext>`.
+- `AddRatingDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` — same, bound from configuration (default section: `PostgresRating`).
+- `AddPostgresRatingStore(Action<PostgresRatingOptions>)` / `AddPostgresRatingStore(PostgresRatingOptions)` — register the DbContext factory **and** the `IRatingStore` singleton.
+- `AddPostgresRatingStoreFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` — register the store using configuration binding.
+
+## Usage
+
+Or with configuration:
+
+## Entity Reference
+
+Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:
+
+```csharp
+// Generic: uses typeof(T).FullName, keys joined with ":"
+var forDocket = EntityRef.For<Docket>(docketId);
+var fromUser = EntityRef.For<User>(123);
+var composite = EntityRef.For<Order>("ord-1", "line-2");
+
+// String-based
+var forEntity = EntityRef.ForGuid("Docket", docketGuid);
+var fromEntity = EntityRef.ForKey("User", "123");
+```
+
 ## Schema
 
-Schema name: `rating` (`PostgresRatingOptions.Schema`).
-
-- **rating.rating** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable
-  varchar 128/256), `tenant_id`, `context`, `visibility`,
-  `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
-  `deleted_by_id`, `metadata` (jsonb), plus rating-specific `subject` (nullable),
-  `title` (nullable), `value` (nullable `decimal`), `message`,
-  `like_count`, `dislike_count`, and `updated_timestamp`.
-- **rating.rating_reaction** — `id` (uuid); subject `for_entity_*` (always `"Rating"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent
-  rating at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
-  `created_timestamp`.
+- **rating.rating** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus rating-specific `subject` (nullable), `title` (nullable), `value` (nullable `decimal`), `message`, `like_count`, `dislike_count`, and `updated_timestamp`.
+- **rating.rating_reaction** — `id` (uuid); subject `for_entity_*` (always `"Rating"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent rating at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`), `created_timestamp`.
 
 ## Tenancy
 
@@ -157,22 +148,24 @@ for the full policy matrix and `appsettings.json` snippet.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Rating.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-
-### Project references
-
-- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
-- [`Lyo.Rating`](../Lyo.Rating/README.md)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Lyo.Rating` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

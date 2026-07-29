@@ -8,9 +8,4 @@ If you need the data-table API, reference `Lyo.DataTable.Models` directly.
 
 ## Targeting
 
-`netstandard2.0;net10.0`. No source files, no project references, no NuGet
-dependencies.
-
-## Related projects
-
-- [`Lyo.DataTable.Models`](../Lyo.DataTable.Models/README.md) — actual implementation.
+`netstandard2.0;net10.0`. No source files, no project references, no NuGet dependencies.

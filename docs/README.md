@@ -8,6 +8,26 @@ guides that do not belong to a single package.
 > The root [`README.md`](../README.md) is the canonical project overview and
 > package index. Start there if you are new to the repo.
 
+## Package docs (source of truth)
+
+Each library owns a `docs.json` beside its `README.md`. That JSON drives:
+
+| Consumer | Path |
+|----------|------|
+| Package README | `{project}/README.md` (generated) |
+| Root package index | Marked region in [`/README.md`](../README.md) |
+| React portfolio | `apps/portfolio/content/packages.json` + `packages-full/` |
+| Blazor | `Lyo.Net/Integration/Web/Lyo.Web.Components/wwwroot/catalog/` |
+
+Shared schemas live under [`catalog/schema/`](catalog/schema/). See [`catalog/README.md`](catalog/README.md).
+
+```bash
+python3 scripts/docs/project-docs.py render
+# or from apps/portfolio: npm run sync-docs
+```
+
+Edit `docs.json`, then `render`. README is generated output — never the source of truth.
+
 ## Guides
 
 | Document                              | What it covers                                                                           |

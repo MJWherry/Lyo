@@ -1,0 +1,205 @@
+{
+  "id": "Lyo.Csv",
+  "name": "Lyo.Csv",
+  "area": "Data",
+  "tagline": "CsvHelper-backed implementation of `Lyo.Csv.Models`. `CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from files, streams, byte arrays, URLs, and `TextWriter`/`TextReader`.",
+  "description": "CsvHelper-backed implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md).\n`CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from\nfiles, streams, byte arrays, URLs, and `TextWriter`/`TextReader`. Multi-targets\n`net10.0;netstandard2.0`; async, streaming, and option-based overloads are only\navailable on `net10.0`.",
+  "features": [
+    "Strongly-typed read/write via `IEnumerable<T>` / `List<T>`.",
+    "Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.",
+    "`Lyo.DataTable.Models.DataTable` round-trip (`ParseFileAsDataTable`, `ExportToCsvFromDataTable`, plus an HTML helper `ExportToHtmlTable`).",
+    "Selected-property export (`IReadOnlyList<PropertyInfo>`), custom-header export (`IReadOnlyDictionary<string, PropertyInfo>`), and formatter export (`IReadOnlyDictionary<string, Func<T, string>>`).",
+    "URL download helpers (`ParseFromUrl*`) that share an optional injected `HttpClient`.",
+    "Append, combine, and split file operations (async, `net10.0` only).",
+    "Streaming reads (`IAsyncEnumerable<T>`), chunked processing, statistics, schema validation, column-mapping parses, and CSV-to-CSV comparison.",
+    "Custom `ClassMap` registration and `CsvConfiguration` overrides.",
+    "Encoding configuration via `SetEncoding`; `CodePagesEncodingProvider` is registered in the service constructor so legacy encodings work out of the box.",
+    "Bundled `ITypeConverter` implementations: `DecimalCsvConverter`, `Int32CsvConverter`, `Int64CsvConverter`, `YesNoBoolCsvConverter`.",
+    "`CsvErrorCodes` constants (`CSV_EXPORT_FAILED`, `CSV_PARSE_FAILED`, `CSV_OPERATION_CANCELLED`, `CSV_FILE_OPERATION_FAILED`, `CSV_VALIDATION_FAILED`) used when wrapping failures in `Result<T>`."
+  ],
+  "examples": [
+    {
+      "title": "Register with DI",
+      "language": "csharp",
+      "code": "using Lyo.Csv;\n\nservices.AddCsvService();\n\nservices.AddCsvService(config => {\n    config.Delimiter = \";\";\n    config.HasHeaderRecord = true;\n    config.IgnoreBlankLines = true;\n});\n\nservices.AddCsvService(() => new CsvConfiguration(CultureInfo.InvariantCulture) {\n    Delimiter = \",\",\n    HasHeaderRecord = true,\n});\n\nservices.AddCsvService((provider, config) => {\n    var feature = provider.GetRequiredService<IFeatureFlags>();\n    config.Delimiter = feature.UseSemicolons ? \";\" : \",\";\n});"
+    },
+    {
+      "title": "Quick start",
+      "language": "csharp",
+      "code": "public sealed class ReportingService(ICsvService csv)\n{\n    public async Task ExportAsync(IEnumerable<Person> rows, Stream output, CancellationToken ct)\n        => await csv.ExportToCsvStreamAsync(rows, output, ct);\n\n    public async Task<List<Person>> ImportAsync(string path, CancellationToken ct)\n        => await csv.ParseFileAsync<Person>(path, ct);\n}\n\npublic sealed record Person(int Id, string Name, int Age);"
+    },
+    {
+      "title": "Custom configuration and class maps",
+      "language": "csharp",
+      "code": "csv.SetEncoding(new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));\ncsv.SetCsvConfiguration(new CsvConfiguration(CultureInfo.InvariantCulture) {\n    Delimiter = \";\",\n    TrimOptions = TrimOptions.Trim,\n    IgnoreBlankLines = true,\n});\n\npublic sealed class PersonMap : ClassMap<Person>\n{\n    public PersonMap()\n    {\n        Map(p => p.Id).Name(\"Id\").Ignore();\n        Map(p => p.Name).Name(\"Full Name\");\n        Map(p => p.Age).Name(\"Years Old\");\n    }\n}\n\ncsv.RegisterClassMap<PersonMap>();"
+    },
+    {
+      "title": "Column shaping",
+      "language": "csharp",
+      "code": "IReadOnlyList<PropertyInfo> selected = [\n    typeof(Person).GetProperty(nameof(Person.Name))!,\n    typeof(Person).GetProperty(nameof(Person.Age))!,\n];\ncsv.ExportToCsv(rows, selected, \"out.csv\");\n\nIReadOnlyDictionary<string, PropertyInfo> namedColumns = new Dictionary<string, PropertyInfo> {\n    [\"Full Name\"] = typeof(Person).GetProperty(nameof(Person.Name))!,\n    [\"Years\"] = typeof(Person).GetProperty(nameof(Person.Age))!,\n};\nawait csv.ExportToCsvStreamAsync(rows, namedColumns, stream, ct);\n\nIReadOnlyDictionary<string, Func<Person, string>> formatters = new Dictionary<string, Func<Person, string>> {\n    [\"Display\"] = p => $\"{p.Name} ({p.Age})\",\n    [\"Id\"] = p => p.Id.ToString(\"D6\"),\n};\nawait csv.ExportToCsvStreamAsync(rows, formatters, stream, ct);"
+    },
+    {
+      "title": "DataTable, dictionary, and HTML helpers",
+      "language": "csharp",
+      "code": "Result<DataTable> parsed = csv.ParseFileAsDataTable(\"in.csv\", hasHeaderRow: true);\ncsv.ExportToCsvFromDataTable(parsed.ValueOrThrow(), \"out.csv\");\n\nvar grid = csv.ParseFileAsDictionary(\"in.csv\");\ncsv.ExportToCsvFromDictionary(grid, \"out.csv\");\n\nstring html = csv.ExportToHtmlTable(File.ReadAllBytes(\"in.csv\"));"
+    },
+    {
+      "title": "Streaming, options, statistics, validation, comparison",
+      "language": "csharp",
+      "code": "await foreach (var row in csv.ParseFileStreamingAsync<Person>(\"big.csv\", new CsvParseOptions {\n    ContinueOnError = true,\n    OnError = err => log.LogWarning(\"Row {Row}: {Message}\", err.RowNumber, err.Message),\n    RowFilter = cells => cells[\"Status\"] == \"active\",\n    MaxRows = 100_000,\n}, ct)) {\n    // process row\n}\n\nCsvStatistics stats = await csv.GetStatisticsAsync(\"big.csv\", ct);\n\nawait csv.ProcessFileInChunksAsync<Person>(\n    \"big.csv\",\n    chunkSize: 1_000,\n    processChunk: async batch => await sink.WriteAsync(batch),\n    ct: ct);\n\nValidationResult validation = await csv.ValidateAsync(\"in.csv\", new CsvSchema {\n    RequireAllColumns = true,\n    AllowExtraColumns = false,\n    Columns = [\n        new CsvColumn { Name = \"Id\", IsRequired = true },\n        new CsvColumn { Name = \"Name\", IsRequired = true },\n    ],\n}, ct);\n\nCsvComparisonResult diff = await csv.CompareFilesAsync(\"v1.csv\", \"v2.csv\", keyColumn: \"Id\", ct);"
+    },
+    {
+      "title": "Append / combine / split (net10.0)",
+      "language": "csharp",
+      "code": "await csv.AppendToCsvAsync(rows, \"log.csv\", includeHeaderIfMissing: true, ct);\nawait csv.CombineCsvFilesAsync(parts, \"merged.csv\", includeHeaders: true, ct);\nawait csv.SplitCsvFileAsync(\"merged.csv\", rowsPerFile: 10_000, outputDirectory: \"chunks\", ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Dependency injection",
+      "text": "All four overloads register the same singleton: `CsvService`, plus `ICsvService`, `ICsvWriter`, and `ICsvReader` resolving to the same instance."
+    },
+    {
+      "type": "markdown",
+      "title": "Output targets",
+      "body": "Each export path is available as file / stream / `TextWriter` / string / byte array\noverloads, in sync (all TFMs) and async (`net10.0`) flavors:\n\n```csharp\ncsv.ExportToCsv(rows, \"out.csv\");\ncsv.ExportToCsvStream(rows, stream);\ncsv.ExportToCsv(rows, textWriter);\nstring text = csv.ExportToCsvString(rows);\nbyte[] bytes = csv.ExportToCsvBytes(rows);\n\nawait csv.ExportToCsvAsync(rows, \"out.csv\", ct);\nawait csv.ExportToCsvStreamAsync(rows, stream, ct);\nstring textAsync = await csv.ExportToCsvStringAsync(rows, ct);\nbyte[] bytesAsync = await csv.ExportToCsvBytesAsync(rows, ct);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "URL and batch",
+      "body": "```csharp\nResult<DataTable> table = await csv.ParseFromUrlAsDataTableAsync(url, hasHeaderRow: true, ct);\nList<Person> rows = await csv.ParseFromUrlAsync<Person>(url, ct);\n\nIReadOnlyList<Result<DataTable>> results =\n    await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, ct);\n```\n\nIf you do not supply an `HttpClient` to the constructor, a fresh one is created per URL\ncall and disposed afterward; production callers should inject one via DI."
+    },
+    {
+      "type": "paragraph",
+      "title": "Custom configuration and class maps",
+      "text": "The default `CsvConfiguration` used by `CsvService` enables `IgnoreBlankLines`, trims fields, normalizes header matching, disables constructor-parameter mapping, and logs `BadDataFound` warnings via `ILogger<CsvService>`. <!-- LYO_README_SYNC:BEGIN -->"
+    },
+    {
+      "type": "list",
+      "title": "Public API (generated)",
+      "items": [
+        "`CsvErrorCodes`",
+        "`CsvService`",
+        "`DecimalCsvConverter`",
+        "`Extensions`",
+        "`Int32CsvConverter`",
+        "`Int64CsvConverter`",
+        "`IsExternalInit`",
+        "`YesNoBoolCsvConverter`"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "License",
+      "text": "Copyright © Lyo"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Csv/Lyo.Csv/README.md",
+  "benchmarks": {
+    "suite": "csv"
+  },
+  "dependencies": [
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "CsvHelper",
+      "kind": "package",
+      "version": "33.1.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0",
+    "netstandard2.0"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "name": "lyo-query-react",
   "version": "0.1.0",
-  "description": "React components for building Lyo.Query where clauses.",
+  "description": "React components for building Lyo.Query where clauses and full query requests.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,0 +1,77 @@
+{
+  "id": "Lyo.Diagnostic.AspNetCore",
+  "name": "Lyo.Diagnostic.AspNetCore",
+  "area": "Core",
+  "tagline": "ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your…",
+  "description": "ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your existing problem-details middleware.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Installation",
+      "language": "csharp",
+      "code": "using Lyo.Diagnostic.AspNetCore;\n\nbuilder.Services.AddLyoDiagnosticsWeb(o =>\n{\n    o.MinimumSeverity = Lyo.Diagnostic.Classification.ExceptionSeverity.Low;\n    o.BreadcrumbCapacity = 100;\n    o.InMemoryInboxMaxOccurrences = 5_000;\n    o.CorrelationIdHeaders = [\"X-Correlation-Id\", \"X-Request-Id\"];\n});\n\n// After outer middleware that catches and formats errors (e.g. LoggingMiddleware):\napp.UseDiagnosticExceptionRecording();"
+    },
+    {
+      "title": "Breadcrumbs in a controller",
+      "language": "csharp",
+      "code": "public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)\n{\n    public async Task<IActionResult> Get(string id)\n    {\n        breadcrumbs.Add(\"orders\", \"Loading order\", new Dictionary<string, string> { [\"id\"] = id });\n        // ...\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Pipeline ordering",
+      "items": [
+        "This middleware sits **closer to route handlers** and runs **first when an exception unwinds**.",
+        "It **records** the failure and calls **`IStructuredLogEnricher`**, then **rethrows**.",
+        "Outer middleware can still build **Problem Details** / HTTP error bodies."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Options (`DiagnosticWebOptions`)",
+      "headers": [
+        "Property",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`MinimumSeverity`",
+          "Only occurrences at or above this severity are written to the inbox."
+        ],
+        [
+          "`RecordExpectedControlFlow`",
+          "When `false`, expected control-flow classifications are skipped."
+        ],
+        [
+          "`BreadcrumbCapacity`",
+          "Max breadcrumbs per request (`IBreadcrumbTrail`)."
+        ],
+        [
+          "`InMemoryInboxMaxOccurrences`",
+          "Cap for the singleton `InMemoryErrorInbox`."
+        ],
+        [
+          "`CorrelationIdHeaders`",
+          "Headers tried in order for `RequestMetadata.CorrelationId`; falls back to `TraceIdentifier`."
+        ]
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Breadcrumbs in a controller",
+      "body": "Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:\n\n\n\nDo **not** put secrets or PII in breadcrumb data. See the **`Lyo.Diagnostic`** README."
+    },
+    {
+      "type": "paragraph",
+      "title": "Lyo.Api",
+      "text": "`Lyo.Api` exposes **`AddLyoApiDiagnosticRecording`** as a convenience wrapper around **`AddLyoDiagnosticsWeb`**."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

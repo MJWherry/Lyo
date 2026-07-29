@@ -5,7 +5,9 @@ synthesis, metrics, and DI helpers.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
-## Quick start (code)
+## Examples
+
+### Quick start (code)
 
 ```csharp
 using Lyo.Common.Enums;
@@ -29,9 +31,7 @@ if (result.IsSuccess && result.AudioData is { Length: > 0 })
 }
 ```
 
-Prefer **IAM roles**, environment credentials, or the shared credentials file instead of embedding `AccessKeyId` / `SecretAccessKey`.
-
-## Dependency injection
+### Register with DI
 
 ```csharp
 using Lyo.Tts.AwsPolly;
@@ -52,40 +52,41 @@ services.AddAwsPollyTtsService(options =>
 services.AddAmazonPollyFromConfiguration(configuration);
 ```
 
-`AddAwsPollyTtsService` and `AddAwsPollyTtsServiceFromConfiguration` both register:
+## Quick start (code)
+
+Prefer **IAM roles**, environment credentials, or the shared credentials file instead of embedding `AccessKeyId` / `SecretAccessKey`.
+
+## Dependency injection
 
 - `AwsPollyTtsService` (the singleton implementation, subclass of `TtsServiceBase<AwsPollyTtsRequest>`).
 - `ITtsService<AwsPollyTtsRequest>` resolved from the singleton above.
-- `AwsPollyTtsAppService` — a thin adapter that converts `TtsResult<AwsPollyTtsRequest>` into
-  `TtsSynthesisResult`.
-- `ITtsService` (non-generic) backed by `AwsPollyTtsAppService`, so callers that only need the simple
-  contract can resolve it directly without referencing the Polly-specific types.
-
-Example `appsettings.json` snippets appear in XML documentation on `AddAwsPollyTtsServiceFromConfiguration`.
+- `AwsPollyTtsAppService` — a thin adapter that converts `TtsResult<AwsPollyTtsRequest>` into `TtsSynthesisResult`.
+- `ITtsService` (non-generic) backed by `AwsPollyTtsAppService`, so callers that only need the simple contract can resolve it directly without referencing the Polly-specific types.
 
 ## Behaviour notes
 
-| Area     | Detail                                                                                                                                                                       |
-|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Voices   | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values                                                               |
-| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language                                                              |
-| Metrics  | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md))                                                                             |
-| Adapter  | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success |
+| Area | Detail |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Voices | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values |
+| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language |
+| Metrics | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md)) |
+| Adapter | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success |
 
 ## Dependencies
 
-*(Aligned with [`Lyo.Tts.AwsPolly.csproj`](Lyo.Tts.AwsPolly.csproj).)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-### NuGet packages
-
-| Package                                     | Version  |
-|---------------------------------------------|----------|
-| `AWSSDK.Polly`                              | `[4.0,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)`  |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)`  |
-| `Microsoft.Extensions.Options`              | `[10,)`  |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Tts`](../Lyo.Tts/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Tts` — (direct, lyo)
+- `AWSSDK.Polly` `4.0.100.3` — (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Lyo.Tts.Models` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

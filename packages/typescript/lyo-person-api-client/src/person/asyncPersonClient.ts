@@ -3,6 +3,15 @@ import type {ProjectionQueryReq, QueryConcreteReq, QueryReq} from "../models/que
 import type {PersonRes} from "../models/person.js";
 import type {ProjectedQueryRes, QueryRes} from "../models/queryResponses.js";
 
+function personGetPath(id: string, include?: readonly string[]): string {
+    const params = new URLSearchParams();
+    for (const path of include ?? []) {
+        if (path.trim()) params.append("include", path.trim());
+    }
+    const qs = params.toString();
+    return `/person/${encodeURIComponent(id)}${qs ? `?${qs}` : ""}`;
+}
+
 /** Async Person API client for Promise-based transports. */
 export interface AsyncPersonApiClient {
     queryPerson(request: QueryConcreteReq): Promise<ApiResponse<QueryRes<PersonRes>>>;
@@ -15,6 +24,9 @@ export interface AsyncPersonApiClient {
     queryRoot<TRow = Record<string, unknown>>(
         request: QueryReq
     ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
+
+    /** GET /person/{id} with optional include navigation paths. */
+    getPerson(id: string, include?: readonly string[]): Promise<ApiResponse<PersonRes>>;
 }
 
 /**
@@ -48,6 +60,13 @@ export function createAsyncPersonApiClient(apiClient: AsyncApiClient): AsyncPers
                 method: "POST",
                 path: "/Query",
                 body: request,
+            });
+        },
+
+        getPerson(id: string, include?: readonly string[]): Promise<ApiResponse<PersonRes>> {
+            return apiClient.request<PersonRes>({
+                method: "GET",
+                path: personGetPath(id, include),
             });
         },
     };

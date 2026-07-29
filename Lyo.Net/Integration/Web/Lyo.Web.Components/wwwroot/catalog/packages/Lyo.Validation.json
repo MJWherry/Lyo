@@ -1,0 +1,108 @@
+{
+  "id": "Lyo.Validation",
+  "name": "Lyo.Validation",
+  "area": "Core",
+  "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures.",
+  "description": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are\npopulated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Typical usage",
+      "language": "csharp",
+      "code": "using Lyo.Validation;\n\nvar validator = ValidatorBuilder<CreateUserRequest>.Create()\n    .RuleFor(x => x.Name)\n    .NotWhiteSpace()\n    .Length(2, 50)\n    .RuleFor(x => x.Email)\n    .Email()\n    .RuleFor(x => x.Age)\n    .InclusiveBetween(18, 120)\n    .Build();\n\nvar result = validator.Validate(new CreateUserRequest { Name = \"Matt\", Email = \"matt@example.com\", Age = 33 });"
+    },
+    {
+      "title": "Attribute-based validation",
+      "language": "csharp",
+      "code": "public sealed class CreateUserRequest {\n    [NotWhiteSpace]\n    [Length(2, 50)]\n    public string Name { get; init; } = string.Empty;\n\n    [Email]\n    public string Email { get; init; } = string.Empty;\n\n    [Range(18, 120)]\n    public int Age { get; init; }\n}\n\nResult<CreateUserRequest> result = new CreateUserRequest { /* ... */ }.ValidateWithAttributes();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "What lives here",
+      "items": [
+        "Fluent validator composition via `ValidatorBuilder<T>` and `PropertyValidatorBuilder<T, TProperty>`.",
+        "Attribute-based validation through built-in attributes such as `Required`, `NotEmpty`, `NotWhiteSpace`, `Length`, `Regex`, `Email`, `Phone`, `Uri`, and `Range` (in `Lyo.Validation.Attributes`).",
+        "`AttributeValidator<T>` for reflection-driven validation across both Lyo's `ValidationAttributeBase` and `System.ComponentModel.DataAnnotations` (including `IValidatableObject`).",
+        "Structured property metadata via `ValidationMetadataKeys` (`PropertyName`, `AttemptedValue`) attached to each failing `Error.Metadata`.",
+        "Stable error codes via `Lyo.Result.ValidationErrorCodes` (e.g. `NullValue`, `EmptyValue`, `InvalidLength`, `InvalidEmail`, `OutOfRange`, `ValidationFailed`)."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Attribute-based validation",
+      "body": "`AttributeValidator<T>` reads validation attributes from `T`'s public, instance-readable properties (compiled property getters are cached statically per `T`). It composes Lyo's own\n`ValidationAttributeBase` attributes with `System.ComponentModel.DataAnnotations.ValidationAttribute`, and — when `T` implements `IValidatableObject` — also runs\n`Validate(ValidationContext)`. `AttributeValidator<T>.Shared` exposes a cached singleton; convenience extension `value.ValidateWithAttributes()` calls it.\n\n\n\nDataAnnotations error codes are mapped onto `Lyo.Result.ValidationErrorCodes` (e.g. `RequiredAttribute` → `RequiredValue`, `EmailAddressAttribute` → `InvalidEmail`,\n`RangeAttribute` → `OutOfRange`); anything not mapped falls back to `ValidationFailed`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Validation/Lyo.Validation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -15,37 +15,20 @@ sample of the leading rows rather than a full-workbook auto-fit pass.
 ## Features
 
 - Strongly-typed read/write via `IEnumerable<T>`.
-- Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet
-  name → rows).
-- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or
-  zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` overloads),
-  or parse every sheet at once (`ParseXlsx*AsAllSheets`).
-- Incremental multi-sheet writing sessions via `CreateDocumentWriter` /
-  `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or
-  row/column dictionary per sheet; dispose finalizes the workbook).
-- Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX
-  merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
-- Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`,
-  custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter
-  (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
-- Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`)
-  read and write.
-- `Lyo.DataTable.Models.DataTable` round-trip and HTML table export
-  (`ExportToHtmlTable`).
-- XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with
-  optional `Encoding`.
-- Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one
-  `Result<DataTable>` per input path.
-- `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`,
-  `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`,
-  `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
+- Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet name → rows).
+- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` overloads), or parse every sheet at once (`ParseXlsx*AsAllSheets`).
+- Incremental multi-sheet writing sessions via `CreateDocumentWriter` / `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or row/column dictionary per sheet; dispose finalizes the workbook).
+- Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
+- Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
+- Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
+- `Lyo.DataTable.Models.DataTable` round-trip and HTML table export (`ExportToHtmlTable`).
+- XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with optional `Encoding`.
+- Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one `Result<DataTable>` per input path.
+- `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
 
-The OpenXML write path and ClosedXML read path are synchronous, so the async overloads
-dispatch CPU-bound work through `Task.Run` and observe the cancellation token at safe
-checkpoints (including per row while streaming). Treat single-call invocations as
-thread-safe; mutating the underlying configuration concurrently with calls is not.
+## Examples
 
-## Dependency injection
+### Register with DI
 
 ```csharp
 using Lyo.Xlsx;
@@ -53,10 +36,7 @@ using Lyo.Xlsx;
 services.AddXlsxService();
 ```
 
-`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`,
-`IXlsxWriter`, and `IXlsxReader` to the same instance.
-
-## Quick start
+### Quick start
 
 ```csharp
 public sealed class ReportingService(IXlsxService xlsx)
@@ -71,7 +51,7 @@ public sealed class ReportingService(IXlsxService xlsx)
 public sealed record Person(int Id, string Name, int Age);
 ```
 
-## Export targets
+### Export targets
 
 ```csharp
 xlsx.ExportToXlsx(rows, "out.xlsx");
@@ -83,7 +63,7 @@ await xlsx.ExportToXlsxAsync(rows, stream, worksheetName: "Data", ct: ct);
 byte[] bytesAsync = await xlsx.ExportToXlsxBytesAsync(rows, "Data", ct);
 ```
 
-## Column shaping
+### Column shaping
 
 ```csharp
 IReadOnlyList<PropertyInfo> selected = [
@@ -94,22 +74,63 @@ xlsx.ExportToXlsx(rows, selected, "out.xlsx");
 
 IReadOnlyDictionary<string, PropertyInfo> namedColumns = new Dictionary<string, PropertyInfo> {
     ["Full Name"] = typeof(Person).GetProperty(nameof(Person.Name))!,
-    ["Years"]     = typeof(Person).GetProperty(nameof(Person.Age))!,
+    ["Years"] = typeof(Person).GetProperty(nameof(Person.Age))!,
 };
 await xlsx.ExportToXlsxAsync(rows, namedColumns, stream, ct: ct);
 
 IReadOnlyDictionary<string, Func<Person, string>> formatters = new Dictionary<string, Func<Person, string>> {
     ["Display"] = p => $"{p.Name} ({p.Age})",
-    ["Id"]      = p => p.Id.ToString("D6"),
+    ["Id"] = p => p.Id.ToString("D6"),
 };
 await xlsx.ExportToXlsxAsync(rows, formatters, stream, ct: ct);
 ```
+
+### DataTable, dictionary, and HTML helpers
+
+```csharp
+Result<DataTable> parsed = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
+xlsx.ExportToXlsxFromDataTable(parsed.ValueOrThrow(), "out.xlsx");
+
+var grid = xlsx.ParseXlsxFileAsDictionary("in.xlsx");
+xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true);
+
+string html = xlsx.ExportToHtmlTable(File.ReadAllBytes("in.xlsx"), useHeaderRow: true);
+```
+
+### XLSX ↔ CSV
+
+```csharp
+xlsx.ConvertXlsxToCsv("in.xlsx", "out.csv");
+xlsx.ConvertXlsxToCsv(inputStream, outputStream, Encoding.UTF8);
+byte[] csv = xlsx.ConvertXlsxToCsvBytes(File.ReadAllBytes("in.xlsx"));
+
+await xlsx.ConvertXlsxToCsvAsync("in.xlsx", "out.csv", Encoding.UTF8, ct);
+byte[] csvAsync = await xlsx.ConvertXlsxToCsvBytesAsync(inputStream, Encoding.UTF8, ct);
+```
+
+### Batch parses
+
+```csharp
+IReadOnlyList<Result<DataTable>> sync =
+    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true);
+
+IReadOnlyList<Result<DataTable>> async =
+    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, ct);
+```
+
+## Benchmarks
+
+- Portfolio suite: `xlsx`
+
+## Dependency injection
+
+`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`, `IXlsxWriter`, and `IXlsxReader` to the same instance.
 
 ## Multi-sheet workbooks
 
 ```csharp
 var workbook = new Dictionary<string, IEnumerable<Person>> {
-    ["Active"]   = activePeople,
+    ["Active"] = activePeople,
     ["Archived"] = archivedPeople,
 };
 xlsx.ExportToXlsx(workbook, "people.xlsx");
@@ -123,9 +144,9 @@ disposing the session finalizes the workbook:
 ```csharp
 using (var doc = xlsx.CreateDocumentWriter("report.xlsx"))
 {
-    doc.AddSheet("People", people);                          // typed rows
-    doc.AddSheet("Names", people, selectedProps);            // selected properties
-    doc.AddSheetFromDataTable("Summary", summaryTable);      // Lyo DataTable
+    doc.AddSheet("People", people); // typed rows
+    doc.AddSheet("Names", people, selectedProps); // selected properties
+    doc.AddSheetFromDataTable("Summary", summaryTable); // Lyo DataTable
     doc.AddSheetFromDictionary("Raw", grid, useHeaderRow: true);
 }
 ```
@@ -150,75 +171,30 @@ IReadOnlyDictionary<string, DataTable> all = xlsx.ParseXlsxStreamAsAllSheets(str
 The no-arg parse methods keep their first-sheet behavior. Async variants of all
 sheet-control methods are available on `net10.0`.
 
-## DataTable, dictionary, and HTML helpers
-
-```csharp
-Result<DataTable> parsed = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
-xlsx.ExportToXlsxFromDataTable(parsed.ValueOrThrow(), "out.xlsx");
-
-var grid = xlsx.ParseXlsxFileAsDictionary("in.xlsx");
-xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true);
-
-string html = xlsx.ExportToHtmlTable(File.ReadAllBytes("in.xlsx"), useHeaderRow: true);
-```
-
-## XLSX ↔ CSV
-
-```csharp
-xlsx.ConvertXlsxToCsv("in.xlsx", "out.csv");
-xlsx.ConvertXlsxToCsv(inputStream, outputStream, Encoding.UTF8);
-byte[] csv = xlsx.ConvertXlsxToCsvBytes(File.ReadAllBytes("in.xlsx"));
-
-await xlsx.ConvertXlsxToCsvAsync("in.xlsx", "out.csv", Encoding.UTF8, ct);
-byte[] csvAsync = await xlsx.ConvertXlsxToCsvBytesAsync(inputStream, Encoding.UTF8, ct);
-```
-
-## Batch parses
-
-```csharp
-IReadOnlyList<Result<DataTable>> sync =
-    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true);
-
-IReadOnlyList<Result<DataTable>> async =
-    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, ct);
-```
-
-<!-- LYO_README_SYNC:BEGIN -->
-
-## Dependencies
-
-*(Synchronized from `Lyo.Xlsx.csproj`.)*
-
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package                                                 | Version    |
-|---------------------------------------------------------|------------|
-| `ClosedXML`                                             | `[0.100,)` |
-| `DocumentFormat.OpenXml`                                | `[2.16,)`  |
-| `ExcelDataReader`                                       | `[3.8,)`   |
-| `ExcelDataReader.DataSet`                               | `[3.8,)`   |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`    |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`    |
-
-### Project references
-
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
-- [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md)
-
 ## Public API (generated)
-
-Top-level `public` types in `*.cs` (*3*). Nested types and file-scoped namespaces may omit some entries.
 
 - `Extensions`
 - `XlsxErrorCodes`
 - `XlsxService`
 
-<!-- LYO_README_SYNC:END -->
-
 ## License
 
 Copyright © Lyo
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Xlsx.Models` — (direct, lyo)
+- `ClosedXML` `0.105.0` — (direct, third-party)
+- `DocumentFormat.OpenXml` `3.1.1` — (direct, third-party)
+- `ExcelDataReader` `3.9.0` — (direct, third-party)
+- `ExcelDataReader.DataSet` `3.9.0` — (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.DataTable.Models` — (transitive, lyo)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

@@ -1,0 +1,181 @@
+{
+  "id": "Lyo.Reporting.Client",
+  "name": "Lyo.Reporting.Client",
+  "area": "Integration",
+  "tagline": "Typed HTTP client for the Lyo Reporting API (`netstandard2.0;net10.0`).",
+  "description": "Typed HTTP client for the Lyo Reporting API (`netstandard2.0;net10.0`).\n\nWorkers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) — do **not** host\n`ReportService` in the worker.\n\n```csharp\nservices.AddReportingClient<MyApiClient>();\n// or\nservices.AddReportingClient(sp => sp.GetRequiredService<IApiClient>());\n```\n\n```csharp\nawait reporting.Definitions.CreateAsync(req);\nawait reporting.DefinitionParameters.CreateAsync(new ReportDefinitionParameterReq {\n    ReportDefinitionId = id,\n    Key = \"ClientId\",\n    Type = ReportParameterType.Guid,\n    Required = true\n});\nawait reporting.Generations.GenerateAsync(new GenerateReportReq {\n    ReportDefinitionId = id,\n    Parameters = [new ReportGenerationParameterReq(\"ClientId\", ReportParameterType.Guid, clientId.ToString())],\n    Format = ReportFormat.Csv // optional; else definition/profile default\n});\n\n// Re-run a past generation from its stored snapshot (new generation row):\nvar rerun = await reporting.Generations.RerunAsync(generationId);\n\n// Stream a generation's persisted output (requires the API host to configure\n// ReportingApiOptions.DownloadStreamFactory):\nvar (content, fileName, contentLength) = await reporting.Generations.DownloadAsync(rerun.Id);\n```\n\nAuth is on the underlying `IApiClient` / `HttpClient` (same bearer as other API calls). Output persistence (FileStorage, etc.) is configured on the API host via\n`ReportGenerationHooks`.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Reporting/Lyo.Reporting.Client/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

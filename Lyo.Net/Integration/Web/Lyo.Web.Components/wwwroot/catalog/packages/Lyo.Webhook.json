@@ -1,0 +1,92 @@
+{
+  "id": "Lyo.Webhook",
+  "name": "Lyo.Webhook",
+  "area": "Core",
+  "tagline": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and…",
+  "description": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and\ncounters**, and **structured logging** via `Microsoft.Extensions.Logging`.\n\nProvider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.",
+  "features": [
+    "**Abstractions**: `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`",
+    "**Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)",
+    "**ASP.NET Core**: read raw body, header dictionary, public URL, optional **form-urlencoded** parameters for signed form posts",
+    "**Fluent routes**: `MapWebhook(\"/path\").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`",
+    "**Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors",
+    "**Logging**: category **`Lyo.Webhook`** (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)"
+  ],
+  "examples": [
+    {
+      "title": "Register services",
+      "language": "csharp",
+      "code": "services.AddLyoMetrics();\n// logging: AddLogging(), etc."
+    },
+    {
+      "title": "Fluent mapping",
+      "language": "csharp",
+      "code": "app.MapWebhook(\"/webhooks/example\")\n    .Verify(myVerifier)\n    .Handle(async ctx =>\n    {\n        // ctx.Body is verified; ctx.HttpContext.Response...\n    })\n    .WithName(\"ExampleWebhook\");\n\napp.MapWebhook(\"/webhooks/json-example\")\n    .Verify(myVerifier)\n    .HandleJson<MyPayload>(async ctx =>\n    {\n        var payload = ctx.Request;\n    });"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Registration",
+      "text": "Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used."
+    },
+    {
+      "type": "markdown",
+      "title": "Fluent mapping",
+      "body": "- Failed signature → **401**\n- Invalid JSON (when using `HandleJson`) → **400**\n- Metric tag **`route`** = route pattern string (keep cardinality low)"
+    },
+    {
+      "type": "paragraph",
+      "title": "Manual verification (no fluent API)",
+      "text": "Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBodyAsync`, `ToWebhookHeaderDictionary`, `GetPublicRequestUrl`) to build a `WebhookVerificationContext` and call your `IWebhookSignatureVerifier` directly."
+    },
+    {
+      "type": "list",
+      "title": "Target framework",
+      "items": [
+        "**net10.0** only (same line as the rest of this solution)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Webhook/Lyo.Webhook/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

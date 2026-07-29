@@ -1,0 +1,217 @@
+{
+  "id": "Lyo.Encryption.AesSiv",
+  "name": "Lyo.Encryption.AesSiv",
+  "area": "Security",
+  "tagline": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and matching DI extensions.",
+  "description": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and\nmatching DI extensions.\n\nInstall this addon only when you actually use AES-SIV — the core `Lyo.Encryption` package no longer pulls `Dorssel.Security.Cryptography.AesExtra`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Unkeyed",
+      "language": "csharp",
+      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesSiv;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.Aes.AesSiv;\nusing Lyo.Keystore;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLocalKeyStore(ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddAesSivEncryption(AesSivKeySizeBits.Bits256); // or Bits384 / Bits512\nservices.AddDefaultEncryptionService<AesSivEncryptionService>();"
+    },
+    {
+      "title": "Keyed two-key",
+      "language": "csharp",
+      "code": "services.AddKeyedLocalKeyStore(\"ks\", ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddAesSivEncryptionServiceKeyed(\"primary\", \"ks\", AesSivKeySizeBits.Bits384);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Dependency injection",
+      "text": "Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.Keystore`](../Lyo.Keystore/README.md))."
+    },
+    {
+      "type": "paragraph",
+      "title": "Keyed two-key",
+      "text": "See [`Lyo.Encryption`](../Lyo.Encryption/README.md) for the full registration table and core `AddEncryptionServiceKeyed` overloads."
+    },
+    {
+      "type": "paragraph",
+      "title": "Performance",
+      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **17.0 ms encrypt / 16.4 ms decrypt @ 1 MB** (~25× slower than AES-GCM). Deterministic SIV mode; choose for nonce-misuse resistance, not peak throughput. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Encryption/Lyo.Encryption.AesSiv/README.md",
+  "benchmarks": {
+    "items": [
+      {
+        "label": "Benchmark summary",
+        "href": "Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Dorssel.Security.Cryptography.AesExtra",
+      "kind": "package",
+      "version": "2.0.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.0",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

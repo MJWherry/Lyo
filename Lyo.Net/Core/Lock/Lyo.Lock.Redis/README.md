@@ -14,7 +14,7 @@ must exclude each other on the same logical key.
 - **TTL** — `DefaultLockDuration` / per-call `lockDuration` so crashed processes do not hold keys forever.
 - **Shared multiplexer** — use the same `IConnectionMultiplexer` as caching or other Redis consumers.
 
-## Quick start
+## Examples
 
 ### Existing `IConnectionMultiplexer`
 
@@ -33,8 +33,6 @@ services.AddRedisLock(options =>
 
 ### Connection string
 
-Registers `IConnectionMultiplexer` with `TryAddSingleton` if missing, then the lock service:
-
 ```csharp
 services.AddRedisLock("localhost:6379", options =>
 {
@@ -44,21 +42,17 @@ services.AddRedisLock("localhost:6379", options =>
 
 ### Configuration
 
-Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`):
-
 ```csharp
 services.AddRedisLockFromConfiguration(configuration);
 ```
 
-Custom Redis section name:
+### Configuration (2)
 
 ```csharp
 services.AddRedisLockFromConfiguration(configuration, redisSectionName: "RedisCluster");
 ```
 
-Throws `ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved.
-
-Example `appsettings.json`:
+### Configuration (3)
 
 ```json
 {
@@ -78,48 +72,47 @@ Example `appsettings.json`:
 }
 ```
 
+## Connection string
+
+Registers `IConnectionMultiplexer` with `TryAddSingleton` if missing, then the lock service:
+
 ## Configuration
 
-### `RedisLockOptions` (extends `LockOptions`)
+Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`): Custom Redis section name: Throws `ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved. Example `appsettings.json`:
 
-| Property                  | Default | Description                                                                                                     |
-|---------------------------|---------|-----------------------------------------------------------------------------------------------------------------|
-| `AcquirePollInterval`     | 10 ms   | Delay between retries when `UsePubSubForAcquireWait` is `false`.                                                |
-| `UsePubSubForAcquireWait` | `true`  | Subscribe to a per-key notify channel while waiting; publisher runs on successful Lua delete in `ReleaseAsync`. |
+## `RedisLockOptions` (extends `LockOptions`)
+
+| Property | Default | Description |
+| ------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `AcquirePollInterval` | 10 ms | Delay between retries when `UsePubSubForAcquireWait` is `false`. |
+| `UsePubSubForAcquireWait` | `true` | Subscribe to a per-key notify channel while waiting; publisher runs on successful Lua delete in `ReleaseAsync`. |
 
 Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `KeyPrefix`, `EnableMetrics`, `SkipKeyNormalization`.
 
 ## How it works
 
-1. **Redis key** — `KeyPrefix` + normalized logical key (unless normalization is skipped).
-2. **Acquire loop** — try `SET` with `NX` and expiry; on failure, either wait on pub/sub with bounded deadline or `Task.Delay(AcquirePollInterval)`.
-3. **Notify channel** — separate Redis channel derived from the same prefix and key so waiters can retry promptly after a legitimate release.
-4. **Release** — Lua compares stored token to holder’s token; if equal, `DEL` and publish to the notify channel.
+- **Redis key** — `KeyPrefix` + normalized logical key (unless normalization is skipped).
+- **Acquire loop** — try `SET` with `NX` and expiry; on failure, either wait on pub/sub with bounded deadline or `Task.Delay(AcquirePollInterval)`.
+- **Notify channel** — separate Redis channel derived from the same prefix and key so waiters can retry promptly after a legitimate release.
+- **Release** — Lua compares stored token to holder’s token; if equal, `DEL` and publish to the notify channel.
 
 ## Operational notes
 
-- **TTL vs work duration** — if your critical section can run longer than `lockDuration`, the key may expire and another instance can acquire. Size `DefaultLockDuration` / per-call
-  `lockDuration` above worst-case runtime, or shorten the guarded work.
+- **TTL vs work duration** — if your critical section can run longer than `lockDuration`, the key may expire and another instance can acquire. Size `DefaultLockDuration` / per-call `lockDuration` above worst-case runtime, or shorten the guarded work.
 - **Clocks** — acquire timeout uses `DateTime.UtcNow` on the client for deadline calculation; Redis handles key TTL independently.
 - **Fairness** — Redis locks are not strictly FIFO; under contention, which waiter wins is nondeterministic.
 - **Metrics** — same names as `Lyo.Lock.Constants.Metrics` when `EnableMetrics` is true (see [`Lyo.Lock` README](../Lyo.Lock/README.md#metrics-constants)).
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Lock.Redis.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package                                     | Version     |
-|---------------------------------------------|-------------|
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)`     |
-| `Microsoft.Extensions.DependencyInjection`  | `[10,)`     |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
-| `StackExchange.Redis`                       | `[2.12,)`   |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
-- [`Lyo.Lock`](../Lyo.Lock/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Lock` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `StackExchange.Redis` `2.12.0` — (direct, third-party)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

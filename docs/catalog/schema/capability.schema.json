@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyo.local/catalog/capability.schema.json",
+  "title": "Lyo capability / deep-dive entry",
+  "type": "object",
+  "required": ["id", "title", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "kicker": { "type": "string" },
+    "packages": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "href"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "href": { "type": "string" }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "section.schema.json" }
+    }
+  }
+}

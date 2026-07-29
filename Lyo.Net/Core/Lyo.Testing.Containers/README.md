@@ -5,28 +5,9 @@ xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin
 
 > **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
 
-## Dependencies
+## Examples
 
-| Package                       | Version  | Purpose                                                                     |
-|-------------------------------|----------|-----------------------------------------------------------------------------|
-| `Testcontainers.PostgreSql`   | `4.10.0` | Spins up the PostgreSQL Docker container.                                   |
-| `Testcontainers.RabbitMq`     | `4.10.0` | Spins up the RabbitMQ Docker container.                                     |
-| `xunit.v3.extensibility.core` | `3.2.2`  | Provides `IAsyncLifetime` + `TestContext.Current` used by the fixture base. |
-
-Docker (or a compatible runtime) must be available on the host running the tests.
-
-## Public surface
-
-| Type                               | Role                                                                                                                                                                                                                                                                                                        |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`PostgresTestContainer`**        | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`.                                                                                   |
-| **`PostgresContainerOptions`**     | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc.                                                                                                                                                     |
-| **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
-| **`RabbitMqTestContainer`**        | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`.                                                                                           |
-| **`RabbitMqContainerOptions`**     | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook.                                                                                                                             |
-| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown.                                                                   |
-
-## Quick start — xUnit v3 class fixture
+### Quick start — xUnit v3 class fixture
 
 ```csharp
 using Lyo.Testing.Containers;
@@ -56,15 +37,7 @@ public sealed class MyFeatureTests(MyFeatureFixture fixture) : IClassFixture<MyF
 }
 ```
 
-## Sharing one container across an assembly
-
-```csharp
-[assembly: AssemblyFixture(typeof(MyFeatureFixture))]
-```
-
-`PostgresContainerFixtureBase` is safe to reuse as an assembly fixture because `OnContainerStartedAsync` runs exactly once and `OnContainerDisposingAsync` runs once at teardown.
-
-## Customizing the container
+### Customizing the container
 
 ```csharp
 public sealed class TrgmFixture() : PostgresContainerFixtureBase(new PostgresContainerOptions {
@@ -74,6 +47,37 @@ public sealed class TrgmFixture() : PostgresContainerFixtureBase(new PostgresCon
         .WithCommand("postgres", "-c", "shared_preload_libraries=pg_trgm"),
 });
 ```
+
+### Standalone use (no fixture)
+
+```csharp
+await using var container = new PostgresTestContainer();
+await container.StartAsync(ct);
+var connectionString = container.ConnectionString;
+
+await using var broker = new RabbitMqTestContainer();
+await broker.StartAsync(ct);
+var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
+```
+
+## Public surface
+
+| Type | Role |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`PostgresTestContainer`** | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
+| **`PostgresContainerOptions`** | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc. |
+| **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
+| **`RabbitMqTestContainer`** | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`. |
+| **`RabbitMqContainerOptions`** | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook. |
+| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown. |
+
+## Sharing one container across an assembly
+
+```csharp
+[assembly: AssemblyFixture(typeof(MyFeatureFixture))]
+```
+
+`PostgresContainerFixtureBase` is safe to reuse as an assembly fixture because `OnContainerStartedAsync` runs exactly once and `OnContainerDisposingAsync` runs once at teardown.
 
 ## RabbitMQ fixture
 
@@ -97,21 +101,15 @@ public sealed class RabbitMqBrokerFixture : RabbitMqContainerFixtureBase
 
 The management HTTP API (`AdminUrl`) is exposed so peek and queue-statistics operations work in tests.
 
-## Standalone use (no fixture)
-
-For ad-hoc scripts or non-xUnit harnesses, the containers are usable directly:
-
-```csharp
-await using var container = new PostgresTestContainer();
-await container.StartAsync(ct);
-var connectionString = container.ConnectionString;
-
-await using var broker = new RabbitMqTestContainer();
-await broker.StartAsync(ct);
-var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
-```
-
 ## See also
 
 - **`Lyo.Testing`** — shared assertion / fake / time-control helpers used by tests across the solution.
 - **Testcontainers for .NET** documentation — for advanced builder configuration (volumes, networks, wait strategies).
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Testcontainers.PostgreSql` `4.13.0` — (direct, third-party)
+- `Testcontainers.RabbitMq` `4.13.0` — (direct, third-party)
+- `xunit.v3.extensibility.core` `3.2.2` — (direct, third-party)

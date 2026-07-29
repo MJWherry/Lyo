@@ -1,0 +1,409 @@
+{
+  "id": "Lyo.Web.Components",
+  "name": "Lyo.Web.Components",
+  "area": "Integration",
+  "tagline": "Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff viewer, identifier…",
+  "description": "Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff\nviewer, identifier workbench, and several smaller inputs. Targets `net10.0` (Razor SDK) and depends on `Blazored.LocalStorage` and `MudBlazor >= 9.3`.\n\nEvery visual component participates in the `LyoElementRoot` element-id scheme, so each rendered control gets a deterministic DOM id derived from the component's `ElementId`\nparameter — useful for testing and analytics.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Data grid (`DataGrid/`)",
+      "items": [
+        "**`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.",
+        "**`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.",
+        "**`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.",
+        "**`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Query builder UI",
+      "items": [
+        "**Query node editor (`QueryNodeEditor/`)** — visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `FilterPropertyType` via the internal `Extensions.GetAvailableComparisonOperators`, with `In` / `NotIn` flagged through `IsMultiValueComparisonOperator`.",
+        "**Query request builder (`QueryRequestBuilder/`)** — full-form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm` plus the umbrella `QueryRequestBuilder` component that renders the live query score."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Forms (`Form/`)",
+      "items": [
+        "**`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.",
+        "**`LyoFormInput`** — change-tracked single-value input that participates in the cascaded form.",
+        "**`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Rich text editor (`RichTextEditor/`)",
+      "items": [
+        "**`LyoRichTextEditor`** — MudBlazor-styled rich-text editor (Quill-derived) with full toolbar.",
+        "**`LyoRichTextEditorController`** — controller object for programmatic interactions (get/set HTML, focus, format).",
+        "**`LyoRichTextEditorToolbarState`** — toolbar state model for synchronising buttons."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "JSON editor (`JsonEditor/`)",
+      "items": [
+        "**`JsonEditor`** — read/write JSON editor with JS interop (`JsonEditorJsInterop`).",
+        "**`JsonTreeView`** — collapsible tree viewer for inspecting JSON payloads."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Text diff viewer (`TextDiff/`)",
+      "items": [
+        "**`LyoTextDiffViewer`** — side-by-side / unified text diff with theming-aware styling."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "File upload (`FileUpload/`)",
+      "body": "**`LyoFileUpload`** wraps **`MudFileUpload`** with optional drag-and-drop, progress chips, and temp-file streaming via `Lyo.IO.Temp`. Internal state lives in `LyoFileUploadState`;\nthe chip vs. list layout is selected by `ClientFileDisplayMode`. For long file names in tight layouts:\n\n- **`ChipFileNameMaxLength`** — Short label inside each completed chip (`prefix…ext`); full name in a tooltip when truncated.\n- **`ChipMaxWidthCss`** — Optional CSS `max-width` on the chip (e.g. `100%` or `min(100%,12rem)`) so chips stay inside narrow columns; combine with **`ChipFileNameMaxLength`**.\n\nCompleted chips always render the shortened display name (not the raw full name when under the max length), so truncation stays consistent in both chip layouts."
+    },
+    {
+      "type": "list",
+      "title": "Inputs",
+      "items": [
+        "**`CheckSelect/LyoCheckSelect`** — multi-select dropdown backed by `LyoSelectOption`.",
+        "**`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).",
+        "**`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).",
+        "**`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.",
+        "**`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [ `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
+        "**`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Identifier workbench (`Identifiers/`)",
+      "items": [
+        "**`IdWorkbench`** — interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Identifiers`.",
+        "**`IdResultPanel`** + **`IdEntry`** — supporting result display."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Other top-level pieces",
+      "items": [
+        "**`ClientStore`** — `Blazored.LocalStorage`-backed key/value store used by the grid + form state binders.",
+        "**`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId` and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).",
+        "**`IJsInterop` / `JsInterop`** — small JS bridge for clipboard / focus operations.",
+        "**`LyoResultErrorFormatter`** — renders `Lyo.Result` errors consistently across components."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Models (`Models/`)",
+      "items": [
+        "**`FilterPropertyDefinition`** + **`FilterPropertyType`** — describe a queryable column (`String`, `Number`, `Enum`, `DateTime`, `Bool`, …) for the query builder and grid.",
+        "**`TimestampFormatEnum`** — display format used by grid cells.",
+        "**`BlazorUserInfo`** — current-user info shared via cascading values.",
+        "**`LocalBrowserFile`** / **`LocalBrowserFilePath`** — abstractions over uploaded browser files for the file upload component."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Internal helpers (`Extensions`)",
+      "text": "Internal `Extensions` provides shared visual helpers — `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(FilterPropertyType)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. These power the consistent status badges and operator menus used across the grid, query editor, and form."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Web/Lyo.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.0",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

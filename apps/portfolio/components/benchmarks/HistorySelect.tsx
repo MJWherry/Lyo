@@ -8,6 +8,14 @@ function label(entry: HistoryEntry): string {
   if (entry.runId) parts.push(entry.runId);
   const when = formatTimestamp(entry.runEnded || entry.runStarted || entry.generatedAt);
   if (when) parts.push(when);
+  if (entry.measurementCount != null) parts.push(`${entry.measurementCount} meas`);
+  if (entry.scenarioCount != null) parts.push(`${entry.scenarioCount} scenarios`);
+  if (entry.medianMeanNs != null) {
+    parts.push(`med ${(entry.medianMeanNs / 1e6).toFixed(2)} ms`);
+  }
+  if (entry.medianP95Ms != null) {
+    parts.push(`p95 ${entry.medianP95Ms.toFixed(1)} ms`);
+  }
   if (entry.isCurrent) parts.push("latest");
   return parts.join(" · ") || entry.file || "snapshot";
 }

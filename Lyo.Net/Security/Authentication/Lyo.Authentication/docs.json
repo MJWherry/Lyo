@@ -1,0 +1,304 @@
+{
+  "id": "Lyo.Authentication",
+  "name": "Lyo.Authentication",
+  "area": "Security",
+  "tagline": "Server-side authentication services for Lyo. Two coexisting bearer formats behind a single contract:",
+  "description": "Server-side authentication services for Lyo. Two coexisting bearer formats behind a single contract:\n\n- **Format B opaque API tokens** — `lyo_<kind>_<ring>_<id>_<secret>` (e.g. `lyo_pat_live_01hxy8k2qf9_4f3b...`). Store-backed, validated by DB lookup + constant-time SHA-256\n  comparison. For CLIs, services, integrations, webhooks, and refresh tokens.\n- **Lyo-signed JWTs** — `Authorization: Bearer ey...` (EdDSA / Ed25519). Short-lived, locally validated via JWKS. Issued by the Lyo API after a successful external OIDC login. For\n  browser/mobile frontends and direct API callers.\n\nThis package has zero ASP.NET, EF, or HTTP dependencies — but it **does** depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle for key/hash operations. Reserve it for the\nAPI/auth-server host. **Do not reference it from consumer-side libraries or Blazor WebAssembly clients** — use `Lyo.Authentication.Models` instead for wire-shape DTOs / format\nhelpers / JWT parsing.\n\nIt owns:\n\n- `ApiTokenCodec` — mint + hash for Format-B tokens (parse-only helpers live in `Lyo.Authentication.Models`)\n- `IApiTokenIssuer` / `IApiTokenValidator` — opaque token lifecycle\n- `ILyoJwtIssuer` / `ILyoJwtValidator` — Ed25519 JWT lifecycle (backed by `Lyo.Keystore` for the signing key)\n- `IUserStore` / `IExternalIdentityStore` — Lyo user + linked-identity persistence\n- `IScopeRegistry` — fine-grained scope contract (`{resource}.{action}`)\n- `IApiTokenStore` — token persistence (in-memory fallback included)\n- `Ed25519KeyBootstrapper` — `IHostedService` that auto-provisions a signing key on first run\n- `IAuthAuditRecorder` / `IAuthAuditContextAccessor` / `AuthAuditExtensions` — server-side audit recorder plumbing (the event records + enum taxonomy live in\n  `Lyo.Authentication.Models`)",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register services",
+      "language": "csharp",
+      "code": "services.AddLyoAuthentication(configuration.GetSection(AuthenticationOptions.SectionName));\nservices.AddLyoJwtIssuer(); // uses IKeyStore for the signing key\nservices.AddInMemoryAuthenticationStores(); // swap for .Postgres in production\nservices.AddScope(\"people.read\", \"Read people\");\nservices.AddScope(\"people.write\", \"Modify people records\", implies: \"people.read\");"
+    },
+    {
+      "title": "Configuration cheatsheet",
+      "language": "json",
+      "code": "{\n  \"LyoAuthentication\": { \"Ring\": \"live\" },\n  \"LyoJwt\": { \"Issuer\": \"https://auth.lyo\", \"Audience\": \"lyo-api\", \"SigningKeyId\": \"lyo-sig\" },\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  },\n  \"PostgresUser\": { \"ConnectionString\": \"...\", \"EnableAutoMigrations\": true }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Package layering",
+      "headers": [
+        "Package",
+        "What's in it",
+        "Safe to reference from a WASM client?"
+      ],
+      "rows": [
+        [
+          "**`Lyo.Authentication.Models`**",
+          "Wire records (`LyoUser`, `LinkedIdentity`, `IssuedLyoJwt`, `IssuedApiToken`, `ApiTokenRecord`, `ApiTokenPrincipal`, `ApiTokenIssueRequest`), JWT claim-name constants, `LyoJwtClaimsParser`, format helpers (`Base64Url`, `Base32Crockford`, `ApiToken`, `ApiTokenKind`, `ApiTokenRing`), audit-event taxonomy (`AuthAuditEvent`, `AuthAuditEventKind`), `Scope` record. Only depends on `Lyo.Exceptions` + `System.Text.Json`.",
+          "**Yes**"
+        ],
+        [
+          "**`Lyo.Authentication`** *(this package)*",
+          "`Services/Jwt/*`, `Services/Opaque/*`, `Services/Refresh/*`, `Services/Users/*`, `ScopeRegistry`, `IAuthAuditRecorder` + impls, `ApiTokenCodec.Mint`/`ComputeSecretHash`, all `Options`, `AddLyoAuthentication` DI. Pulls in `Lyo.Keystore`, `Lyo.Hashing`, BouncyCastle.",
+          "**No**"
+        ],
+        [
+          "`Lyo.Authentication.Client`",
+          "Consumer-side BFF runtime (handoff exchange, server-side session store, delegating handler, cookie auth handler). References `Models` only.",
+          "Yes (server-side host)"
+        ],
+        [
+          "`Lyo.Authentication.Web.Components`",
+          "Host-agnostic Razor pages (login, debug, profile). References `Models` only.",
+          "Yes"
+        ],
+        [
+          "`Lyo.Authentication.Web.Components.Server`",
+          "Blazor Server host adapter — wires the shared pages to `Lyo.Authentication.Client`.",
+          "n/a (server-only)"
+        ],
+        [
+          "`Lyo.Authentication.Web.Components.Wasm`",
+          "Blazor WebAssembly host adapter — pure-browser token flow. References `Models` only.",
+          "n/a (it *is* the WASM client)"
+        ]
+      ],
+      "lead": "The auth stack is split so consumer-side libraries (including Blazor WebAssembly clients) cannot see server-only types:",
+      "trail": "ASP.NET wiring lives in `Lyo.Authentication.AspNetCore`. Postgres persistence and the Postgres audit recorder live in `Lyo.Authentication.Postgres`. OIDC flow lives in\n`Lyo.Authentication.OpenIdConnect` with provider profiles `Lyo.Authentication.Google` and `Lyo.Authentication.Keycloak`. The consumer-side BFF runtime lives in\n`Lyo.Authentication.Client`."
+    },
+    {
+      "type": "markdown",
+      "title": "Full stack — typical host wiring (API/auth server)",
+      "body": "A web host that issues both opaque tokens and JWTs, persists users + tokens + audit events to Postgres, and runs OIDC login through Google and Keycloak:\n\n```csharp\nservices.AddLyoAuthentication(builder.Configuration);\nservices.AddPostgresAuthenticationStoresFromConfiguration(builder.Configuration);\nservices.AddLyoApiTokenAuthentication(); // ASP.NET schemes + LyoBearer policy scheme\nservices.AddAuthorization();\nservices.AddLyoOpenIdConnect(builder.Configuration);\nservices.AddGoogleProviderFromConfiguration(builder.Configuration);\nservices.AddKeycloakProviderFromConfiguration(builder.Configuration);\n\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapLyoJwks(); // /.well-known/jwks.json\napp.MapLyoAuthEndpoints(); // /auth/login/{provider}, /auth/callback/{provider}, /auth/handoff/exchange, /auth/token, /auth/refresh, /auth/logout, /auth/me\napp.MapLyoTokenManagementEndpoints(); // /tokens (PAT lifecycle)\n```"
+    },
+    {
+      "type": "list",
+      "title": "BFF flow — browser consumer (handoff)",
+      "items": [
+        "Browser hits `GET /auth/sign-in/{provider}?returnUrl=/dashboard` on the **consumer** (powered by `Lyo.Authentication.Client`). The consumer 302-redirects to `GET https://api/auth/login/{provider}?returnUrl=https://consumer/auth/handoff&mode=browser`.",
+        "API seals PKCE+state+nonce in the HttpOnly `lyo_oidc_state` cookie and 302s to the IdP authorize endpoint.",
+        "IdP redirects back to `GET https://api/auth/callback/{provider}?code=...&state=...`. The API unseals the cookie, exchanges the code for an `id_token`, validates signature/issuer/audience/nonce, runs the provider's claim mapper, looks up or JIT-provisions the `LyoUser`, links the external identity, mints a Lyo JWT + a rotating refresh token, stores them under a one-time **handoff code** (`lyoh_…`, TTL 30s), and 302-redirects to `https://consumer/auth/handoff?lyo_handoff=lyoh_...`.",
+        "Consumer's handoff endpoint POSTs `{ code: \"lyoh_...\" }` to `https://api/auth/handoff/exchange` server-to-server with `Origin: https://consumer`. API verifies the origin matches the one the code was issued to, marks the code consumed, and returns `{ access_token, refresh_token, expires_in, token_type }`.",
+        "Consumer stashes the tokens in its server-side `LyoAuthSessionStore` and sets an HttpOnly `lyo_session` cookie containing only the data-protected session id. The browser sees nothing else.",
+        "Outbound calls from the consumer to the API go through `LyoAuthDelegatingHandler`, which attaches `Authorization: Bearer <access_token>` and transparently calls `/auth/refresh` (server-to-server) on `401` or near-expiry.",
+        "`GET /auth/sign-out` on the consumer POSTs the refresh token to `/auth/logout`, then clears the local session cookie."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "API-client flow (no browser)",
+      "items": [
+        "Hit `GET https://api/auth/login/{provider}?mode=api&returnUrl=...` from a controllable browser or system-browser webview. The callback returns JSON `{ access_token, refresh_token, expires_in, token_type }` instead of a handoff redirect.",
+        "Use `Authorization: Bearer <access_token>` against the API.",
+        "When the access token nears expiry, `POST /auth/refresh` with body `{ \"refresh_token\": \"lyo_rfr_live_...\" }`. The response is a rotated pair.",
+        "`POST /auth/logout` with body `{ \"refresh_token\": \"...\" }` to invalidate the family."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Per-provider knobs",
+      "items": [
+        "**Google** — see [`Lyo.Authentication.Google/README.md`](../Lyo.Authentication.Google/README.md) (includes a full Google Cloud + `Lyo.TestApi` + `Lyo.Gateway` local walkthrough).",
+        "**Keycloak** — see [`Lyo.Authentication.Keycloak/README.md`](../Lyo.Authentication.Keycloak/README.md) (includes a Docker-based local Keycloak walkthrough and the peer-vs-broker discussion).",
+        "**Custom** — implement `IOpenIdConnectProvider` and register it as a singleton; `DefaultExternalLoginCoordinator` will pick it up by name."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Auditing",
+      "headers": [
+        "Kind",
+        "Source"
+      ],
+      "rows": [
+        [
+          "`UserProvisioned`, `IdentityLinked`, `IdentityUnlinked`",
+          "`DefaultExternalLoginCoordinator` / admin tools"
+        ],
+        [
+          "`ExternalLoginSucceeded`, `ExternalLoginRejected`",
+          "`DefaultExternalLoginCoordinator.HandleCallbackAsync`"
+        ],
+        [
+          "`HandoffCodeIssued`, `HandoffCodeConsumed`, `HandoffCodeRejected`",
+          "`AuthEndpointsMapper`"
+        ],
+        [
+          "`JwtIssued`",
+          "`Ed25519LyoJwtIssuer`"
+        ],
+        [
+          "`TokenIssued`, `TokenRejected`, `TokenRevoked`, `TokenValidated`",
+          "`DefaultApiTokenIssuer` / `DefaultApiTokenValidator`"
+        ],
+        [
+          "`RefreshSucceeded`, `RefreshRejected`",
+          "`DefaultLyoRefreshTokenExchange`"
+        ],
+        [
+          "`SignedOut`, `UserDisabled`, `UserEnabled`",
+          "`AuthEndpointsMapper` / admin tools"
+        ],
+        [
+          "`SigningKeyBootstrapped`, `SigningKeyRotated`",
+          "`Ed25519KeyBootstrapper`"
+        ]
+      ],
+      "lead": "Every meaningful auth state change emits an `AuthAuditEvent` through `IAuthAuditRecorder`. The default `NullAuthAuditRecorder` discards events; `Lyo.Authentication.Postgres` ships\n`PostgresAuthAuditRecorder` which persists into the `[user].[event]` table (the `kind` column stores the enum's string name, e.g. `JwtIssued`). Ambient context (IP, User-Agent,\ncorrelation id) is pulled from the registered `IAuthAuditContextAccessor` — defaults to `NullAuthAuditContextAccessor`;\n`Lyo.Authentication.AspNetCore.AddLyoApiTokenAuthentication()` automatically swaps in `HttpAuthAuditContextAccessor` so rows carry the inbound caller's IP / User-Agent / trace id.\n\nClosed taxonomy lives in `AuthAuditEventKind`:",
+      "trail": "Only append new members at the end of the enum — its integer values are part of the on-disk schema."
+    },
+    {
+      "type": "paragraph",
+      "title": "Configuration cheatsheet",
+      "text": "This package and its host-side siblings (`Lyo.Authentication.OpenIdConnect`, `Lyo.Authentication.Postgres`) own these sections: Provider-specific sections (`GoogleAuth`, `KeycloakAuth`, …) and full local-development walkthroughs (Google Cloud OAuth client, Keycloak Docker setup, environment promotion) live alongside the provider implementations themselves — see [`Lyo.Authentication.Google/README.md`](../Lyo.Authentication.Google/README.md) and [ `Lyo.Authentication.Keycloak/README.md`](../Lyo.Authentication.Keycloak/README.md)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Authentication/Lyo.Authentication/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

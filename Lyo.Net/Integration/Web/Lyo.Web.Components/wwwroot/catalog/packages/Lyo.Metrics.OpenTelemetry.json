@@ -1,0 +1,140 @@
+{
+  "id": "Lyo.Metrics.OpenTelemetry",
+  "name": "Lyo.Metrics.OpenTelemetry",
+  "area": "Core",
+  "tagline": "OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetry-compatible backends.",
+  "description": "OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetry-compatible backends.",
+  "features": [
+    "Full `IMetrics` interface implementation",
+    "Automatic metric name sanitization for OpenTelemetry conventions",
+    "Tag/attribute conversion",
+    "Thread-safe metric recording",
+    "Support for multiple exporters (Console, Prometheus, OTLP, etc.)"
+  ],
+  "examples": [
+    {
+      "title": "Basic Setup (Console Exporter)",
+      "language": "csharp",
+      "code": "using Lyo.Metrics.OpenTelemetry;\n\nservices.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\");"
+    },
+    {
+      "title": "With Prometheus Exporter",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddPrometheusExporter(options =>\n    {\n        options.ScrapeEndpointPath = \"/metrics\";\n    });\n});"
+    },
+    {
+      "title": "With OTLP Exporter (for Jaeger, Tempo, etc.)",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddOtlpExporter(options =>\n    {\n        options.Endpoint = new Uri(\"http://localhost:4317\");\n    });\n});"
+    },
+    {
+      "title": "With Multiple Exporters",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    // Console for development\n    builder.AddConsoleExporter();\n    \n    // Prometheus for scraping\n    builder.AddPrometheusExporter();\n    \n    // OTLP for centralized collection\n    builder.AddOtlpExporter(options =>\n    {\n        options.Endpoint = new Uri(\"https://otel-collector:4317\");\n    });\n});"
+    },
+    {
+      "title": "Example",
+      "language": "csharp",
+      "code": "// Register OpenTelemetry metrics\nservices.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\");\n\n// Use IMetrics as normal\nvar metrics = serviceProvider.GetRequiredService<IMetrics>();\n\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\"), (\"status\", \"200\")]);\n\nusing (metrics.StartTimer(\"operation.duration\"))\n{\n    // Your operation here\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Metric Type Mapping",
+      "items": [
+        "**Counters**: `IncrementCounter` → OpenTelemetry `Counter<long>`",
+        "**Gauges**: `RecordGauge` → OpenTelemetry `Histogram<double>` (push-based)",
+        "**Histograms/Timings**: `RecordHistogram`/`RecordTiming` → OpenTelemetry `Histogram<double>`",
+        "**Errors**: `RecordError` → OpenTelemetry `Counter<long>` with error attributes",
+        "**Events**: `RecordEvent` → OpenTelemetry `Counter<long>`"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Metric Name Sanitization",
+      "items": [
+        "Dots (`.`) are replaced with underscores (`_`)",
+        "Hyphens (`-`) are replaced with underscores (`_`)",
+        "Names starting with digits are prefixed with `_`"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Tag/Attribute Conversion",
+      "items": [
+        "Tag keys are sanitized (dots/hyphens → underscores)",
+        "Tag values are preserved as-is"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Metrics/Lyo.Metrics.OpenTelemetry/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "OpenTelemetry",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenTelemetry.Exporter.Console",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenTelemetry.Extensions.Hosting",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

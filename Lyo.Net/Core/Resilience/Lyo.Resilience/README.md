@@ -14,15 +14,7 @@ pipelines are defined entirely via configuration.
 - **Resilience for HttpClient** – `AddLyoResilienceHandler()` uses default; or pass pipeline name
 - Integrates with `Polly.Extensions` and `ResiliencePipelineProvider<string>` for DI
 
-## Configuration
-
-Pipelines can be loaded from either:
-
-1. **Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use
-   `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
-2. **Standalone section** – use `AddLyoResiliencePipelines("Lyo:ResiliencePipelines")` or any custom section path.
-
-Each child key under the resilience section is a pipeline name.
+## Examples
 
 ### Nested under service options (recommended)
 
@@ -50,6 +42,8 @@ Each child key under the resilience section is a pipeline name.
 }
 ```
 
+### Nested under service options (recommended) (2)
+
 ```csharp
 services.AddLyoResiliencePipelinesFromOptions(builder.Configuration, "TwilioOptions");
 // Loads from TwilioOptions:Resilience
@@ -70,48 +64,12 @@ services.AddLyoResiliencePipelinesFromOptions(builder.Configuration, "TwilioOpti
 }
 ```
 
+### Standalone section example (2)
+
 ```csharp
-services.AddLyoResiliencePipelines(builder.Configuration);  // default: Lyo:ResiliencePipelines
+services.AddLyoResiliencePipelines(builder.Configuration); // default: Lyo:ResiliencePipelines
 // Or: services.AddLyoResiliencePipelines(builder.Configuration, "CustomSection:Path");
 ```
-
-### Strategy subsections
-
-**Retry** – binds to `Polly.Retry.RetryStrategyOptions`:
-
-- `MaxRetryAttempts` (int, default 3)
-- `Delay` (TimeSpan, e.g. "00:00:02")
-- `MaxDelay` (TimeSpan)
-- `BackoffType` ("Constant" | "Linear" | "Exponential")
-- `UseJitter` (bool)
-
-If `ShouldHandle` is not configurable, the library applies a default that handles `SocketException`, `TimeoutException`, `HttpRequestException`, `IOException`,
-`RetryableResultException` (for result-based retry), and any `Lyo.Exceptions.Models.HttpException` whose `IsTransient` is `true` (429/503/504 exception types, plus
-`Lyo.Api.Client.ApiException` for transient response status codes). Non-transient HTTP exceptions (404, 409, …) are never retried.
-
-**Timeout** – binds to `Polly.Timeout.TimeoutStrategyOptions`:
-
-- `Timeout` (TimeSpan)
-
-**CircuitBreaker** – binds to `Polly.CircuitBreaker.CircuitBreakerStrategyOptions`:
-
-- `FailureRatio` (double)
-- `MinimumThroughput` (int)
-- `BreakDuration` (TimeSpan)
-
-## Usage
-
-### Choosing resilience: actions vs HttpClient
-
-Apply resilience at **one level only** to avoid exponential retries:
-
-| Use case                         | Use this                                    | Do NOT                                                     |
-|----------------------------------|---------------------------------------------|------------------------------------------------------------|
-| **HTTP calls**                   | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
-| **Non-HTTP** (DB, SDK, file I/O) | `IResilientExecutor`                        | —                                                          |
-
-Wrapping HttpClient-using code with `IResilientExecutor` when that HttpClient already has `AddLyoResilienceHandler` causes nested resilience: each outer retry can trigger multiple
-inner retries, leading to exponential retry counts.
 
 ### Default pipelines (quick start)
 
@@ -124,8 +82,6 @@ builder.Services.AddResilientExecutor();
 ```
 
 ### Resilience for actions
-
-Use `IResilientExecutor` for work that does **not** go through HttpClient (e.g. database calls, SDKs, file I/O):
 
 ```csharp
 // Uses default pipeline (lyo-basic)
@@ -156,7 +112,7 @@ public class MyService
 }
 ```
 
-Or use `ResiliencePipelineProvider<string>` directly:
+### Resilience for actions (2)
 
 ```csharp
 public MyService(ResiliencePipelineProvider<string> pipelineProvider)
@@ -167,8 +123,6 @@ public MyService(ResiliencePipelineProvider<string> pipelineProvider)
 ```
 
 ### Resilience for HttpClient
-
-Use `AddLyoResilienceHandler` so resilience is applied at the HttpClient level. Call the client directly; do not wrap those calls with `IResilientExecutor`:
 
 ```csharp
 // Default pipeline (lyo-http)
@@ -183,7 +137,7 @@ builder.Services.AddLyoResiliencePipelines(builder.Configuration);
 builder.Services.AddHttpClient<MyApiClient>(/* ... */).AddLyoResilienceHandler("my-pipeline");
 ```
 
-The pipeline applies retry, timeout, and circuit breaker to each HTTP request (exception-based; retries on `HttpRequestException`, `TimeoutException`, etc.).
+### Resilience for HttpClient (2)
 
 ```csharp
 // In your service - call HttpClient directly; resilience is already on the client
@@ -194,54 +148,76 @@ public class MyService
     public MyService(MyApiClient apiClient) => _apiClient = apiClient;
 
     public async Task<Data> GetDataAsync(CancellationToken ct) =>
-        await _apiClient.GetAsync("/data", ct);  // No IResilientExecutor here
+        await _apiClient.GetAsync("/data", ct); // No IResilientExecutor here
 }
 ```
+
+## Configuration
+
+- **Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
+- **Standalone section** – use `AddLyoResiliencePipelines("Lyo:ResiliencePipelines")` or any custom section path.
+
+## Strategy subsections
+
+- `MaxRetryAttempts` (int, default 3)
+- `Delay` (TimeSpan, e.g. "00:00:02")
+- `MaxDelay` (TimeSpan)
+- `BackoffType` ("Constant" | "Linear" | "Exponential")
+- `UseJitter` (bool)
+
+## Choosing resilience: actions vs HttpClient
+
+Apply resilience at **one level only** to avoid exponential retries:
+
+| Use case | Use this | Do NOT |
+| -------------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
+| **HTTP calls** | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
+| **Non-HTTP** (DB, SDK, file I/O) | `IResilientExecutor` | — |
+
+Wrapping HttpClient-using code with `IResilientExecutor` when that HttpClient already has `AddLyoResilienceHandler` causes nested resilience: each outer retry can trigger multiple
+inner retries, leading to exponential retry counts.
+
+## Resilience for actions
+
+Use `IResilientExecutor` for work that does **not** go through HttpClient (e.g. database calls, SDKs, file I/O): Or use `ResiliencePipelineProvider<string>` directly:
+
+## Resilience for HttpClient
+
+Use `AddLyoResilienceHandler` so resilience is applied at the HttpClient level. Call the client directly; do not wrap those calls with `IResilientExecutor`: The pipeline applies retry, timeout, and circuit breaker to each HTTP request (exception-based; retries on `HttpRequestException`, `TimeoutException`, etc.).
 
 ## Metrics
 
 When `IMetrics` is registered (e.g. via `AddLyoMetrics`), the library records:
 
-| Metric                                       | Type    | Description                          |
-|----------------------------------------------|---------|--------------------------------------|
-| `lyo.resilience.retry`                       | Counter | Each retry attempt (tag: `pipeline`) |
-| `lyo.resilience.timeout`                     | Counter | Each timeout                         |
-| `lyo.resilience.circuit_breaker.opened`      | Counter | Circuit breaker opened               |
-| `lyo.resilience.circuit_breaker.closed`      | Counter | Circuit breaker closed               |
-| `lyo.resilience.circuit_breaker.half_opened` | Counter | Circuit breaker half-opened          |
-| `lyo.resilience.execution.duration`          | Timing  | Execution duration                   |
-| `lyo.resilience.execution.success`           | Counter | Successful executions                |
-| `lyo.resilience.execution.failure`           | Counter | Failed executions                    |
-| `lyo.resilience.execution.error`             | Error   | Exceptions                           |
+| Metric | Type | Description |
+| -------------------------------------------- | ------- | ------------------------------------ |
+| `lyo.resilience.retry` | Counter | Each retry attempt (tag: `pipeline`) |
+| `lyo.resilience.timeout` | Counter | Each timeout |
+| `lyo.resilience.circuit_breaker.opened` | Counter | Circuit breaker opened |
+| `lyo.resilience.circuit_breaker.closed` | Counter | Circuit breaker closed |
+| `lyo.resilience.circuit_breaker.half_opened` | Counter | Circuit breaker half-opened |
+| `lyo.resilience.execution.duration` | Timing | Execution duration |
+| `lyo.resilience.execution.success` | Counter | Successful executions |
+| `lyo.resilience.execution.failure` | Counter | Failed executions |
+| `lyo.resilience.execution.error` | Error | Exceptions |
 
 All metrics include a `pipeline` tag with the pipeline name.
 
 ## Logging
 
-When `ILoggerFactory` is registered, the library logs:
-
 - **Retry**: Warning on each retry with attempt number and delay
 - **Timeout**: Warning when an operation times out
 - **CircuitBreaker**: Warning when opened; Info when closed or half-opened
 
-Logger category: `Lyo.Resilience.{PipelineName}`
-
 ## Dependencies
 
-*(Synchronized from `Lyo.Resilience.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.Http`                 | `[10,)` |
-| `Polly`                                     | `8.*`   |
-| `Polly.Extensions`                          | `8.*`   |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
+- `Polly` `8.7.0` — (direct, third-party)
+- `Polly.Extensions` `8.7.0` — (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

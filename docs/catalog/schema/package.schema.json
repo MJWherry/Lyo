@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyo.local/catalog/package.schema.json",
+  "title": "Lyo package catalog entry",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "area",
+    "tagline",
+    "description",
+    "features",
+    "examples",
+    "sections",
+    "links",
+    "readmePath"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "area": {
+      "type": "string",
+      "enum": [
+        "Core",
+        "Data",
+        "Communication",
+        "Security",
+        "Integration",
+        "Features",
+        "Apps",
+        "Tools",
+        "Other"
+      ]
+    },
+    "tagline": {
+      "type": "string",
+      "description": "One-line summary for root README bullets and portfolio cards."
+    },
+    "description": {
+      "type": "string",
+      "description": "Intro prose under the H1."
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "language", "code"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string" },
+          "language": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    },
+    "benchmarks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headline": { "type": "string" },
+        "suite": {
+          "type": "string",
+          "description": "Portfolio benchmark suite id (e.g. compression)."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "href"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "type": "string" },
+              "href": { "type": "string" },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "section.schema.json" }
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Generated from ProjectReference / PackageReference (project graph model).",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "tags"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["lyo", "package"] },
+          "version": { "type": ["string", "null"] },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "direct|transitive, lyo|microsoft|third-party, plus TFMs like net10.0 / netstandard2.0"
+          }
+        }
+      }
+    },
+    "targetFrameworks": {
+      "type": "array",
+      "description": "TargetFramework / TargetFrameworks from the project csproj.",
+      "items": { "type": "string" }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "href"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "href": { "type": "string" }
+        }
+      }
+    },
+    "readmePath": { "type": "string" }
+  }
+}

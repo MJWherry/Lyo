@@ -83,13 +83,15 @@ async function runQuery(queryReq: QueryConcreteReq) {
     });
   } catch (err) {
     if (err instanceof ApiClientError) {
+      const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 502;
       return NextResponse.json(
         {
           error: err.message,
-          details: err.details,
+          details: err.details ?? { status, title: err.message },
+          status,
           elapsedMs: performance.now() - started,
         },
-        { status: err.status && err.status >= 400 && err.status < 600 ? err.status : 502 }
+        { status }
       );
     }
     if (err instanceof Error && err.message.includes("LYO_API_BASE_URL")) {

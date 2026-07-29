@@ -5,11 +5,11 @@
 list/switch/open/close tabs via opaque keys), cookies, and optional extra headers—the same instance exposes **`Navigator`**, **`CurrentPage`**, and **`Tabs`** for narrower
 dependencies.
 
-| Project                         | Role                                                                                         |
+| Project | Role |
 |---------------------------------|----------------------------------------------------------------------------------------------|
-| `Lyo.Web.Automation`            | Plan types, `AutomationPlanBuilder`, `IAutomationPlanRunner`, interpolation, hooks / metrics |
-| `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                                |
-| `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                                |
+| `Lyo.Web.Automation` | Plan types, `AutomationPlanBuilder`, `IAutomationPlanRunner`, interpolation, hooks / metrics |
+| `Lyo.Web.Automation.Selenium` | Selenium-backed session and `SeleniumBrowser` |
+| `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter |
 
 Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on
 elements, extract text or attributes into **string variables**,
@@ -60,26 +60,26 @@ You can still call navigation and page methods directly on `IWebAutomationBrowse
 
 During a run, the engine maintains:
 
-| Binding                   | Meaning                                                 |
+| Binding | Meaning |
 |---------------------------|---------------------------------------------------------|
-| **Element refs**          | Named `IWebAutomationElement` instances from find steps |
-| **Element list refs**     | Named lists from `findElementsChain`                    |
-| **String variables**      | From extract / store / page URL / title steps           |
-| **String list variables** | From list extract steps                                 |
+| **Element refs** | Named `IWebAutomationElement` instances from find steps |
+| **Element list refs** | Named lists from `findElementsChain` |
+| **String variables** | From extract / store / page URL / title steps |
+| **String list variables** | From list extract steps |
 
 **Interpolation** (`AutomationPlanInterpolation.ExpandAsync` during a run): templates in navigate URLs, store steps, element actions, file paths, etc. resolve against **live
 bindings** — the same information you see later in **`AutomationPlanBindings`** / **`Context.Overall`**, not only pre-stored string variables. Optional *
 *`AutomationPlanRuntimeOptions.Formatter`** (**`Lyo.Formatter.IFormatterService`**) validates the template with SmartFormat (same engine as **`FormatterService`**) before
 resolution.
 
-| Form                                     | Meaning                                                                                         |
+| Form | Meaning |
 |------------------------------------------|-------------------------------------------------------------------------------------------------|
-| `{name}` or `{{name}}`                   | String variable `name` (legacy double braces are normalized to single). Same as `strings.name`. |
-| `{strings.x}` / `{str.x}`                | String variable `x`.                                                                            |
-| `{lists.x}` / `{list.x}`                 | String-list variable `x`, lines joined with newlines.                                           |
-| `{page.url}`, `{page.title}`             | Current document URL / title (live from the browser).                                           |
-| `{elements.ref.text}` or `{el.ref.text}` | Visible text of element ref `ref`.                                                              |
-| `{elements.ref.attr.href}`               | Attribute on element ref `ref`.                                                                 |
+| `{name}` or `{{name}}` | String variable `name` (legacy double braces are normalized to single). Same as `strings.name`. |
+| `{strings.x}` / `{str.x}` | String variable `x`. |
+| `{lists.x}` / `{list.x}` | String-list variable `x`, lines joined with newlines. |
+| `{page.url}`, `{page.title}` | Current document URL / title (live from the browser). |
+| `{elements.ref.text}` or `{el.ref.text}` | Visible text of element ref `ref`. |
+| `{elements.ref.attr.href}` | Attribute on element ref `ref`. |
 
 If the entire selector matches a string variable key (including keys with dots), that value is used first. A SmartFormat format specifier after `:` is ignored for resolution (only
 the part before `:` is used as the selector). Legacy synchronous **`Expand`** only supports simple `{{name}}` from a string dictionary (for callers outside the runner).
@@ -104,16 +104,16 @@ Frame index **`i`** is state **after** `plan.Steps[i]` completed (zero-based).
 
 **`AutomationPlanRuntimeOptions`** is **not** part of the serialized plan. Pass it to **`RunWithResultAsync`** when needed:
 
-| Property                     | Use                                                                                                                                                                                                                                                                                                                               |
+| Property | Use |
 |------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`DownloadFileNamePrefix`** | Default file name prefix when a step does not set one (runner default is `download`).                                                                                                                                                                                                                                             |
-| **`PlanTimeout`**            | Optional ceiling for the **entire** run (combined with the run `CancellationToken`).                                                                                                                                                                                                                                              |
-| **`DefaultStepTimeout`**     | Optional default per-step limit; a step can override with **`AutomationStepDefinition.StepTimeout`**.                                                                                                                                                                                                                             |
-| **`Hooks`**                  | **`BeforeStepAsync`**, **`AfterStepAsync`**, **`OnFailureAsync`** (`AutomationPlanHooks`).                                                                                                                                                                                                                                        |
-| **`Instrumentation`**        | Optional **`IAutomationPlanInstrumentation`** for metrics / tracing (run and step lifecycle).                                                                                                                                                                                                                                     |
-| **`PlanRunDirectory`**       | Optional **`AutomationPlanRunDirectoryOptions`**: per-run folder under **`RootDirectory`** (see layout below). Set **`WriteRunLogFile`**, **`WriteSnapshots`**, and **`WriteVariables`** to **`false`** to reserve only the directory (or disable each category independently). When **`null`**, no run-scoped files are written. |
-| **`Formatter`**              | Optional **`Lyo.Formatter.IFormatterService`**: validates step templates with SmartFormat before placeholders are resolved. Use single-brace placeholders (e.g. `{page.url}`) or legacy `{{page.url}}` (normalized to single braces). Register **`FormatterService`** from DI if you use this.                                    |
-| **`LinkResolutionBaseUri`**  | Optional base URL used to resolve relative links extracted from pages (for example image `src`/`srcset` values).                                                                                                                                                                                                                  |
+| **`DownloadFileNamePrefix`** | Default file name prefix when a step does not set one (runner default is `download`). |
+| **`PlanTimeout`** | Optional ceiling for the **entire** run (combined with the run `CancellationToken`). |
+| **`DefaultStepTimeout`** | Optional default per-step limit; a step can override with **`AutomationStepDefinition.StepTimeout`**. |
+| **`Hooks`** | **`BeforeStepAsync`**, **`AfterStepAsync`**, **`OnFailureAsync`** (`AutomationPlanHooks`). |
+| **`Instrumentation`** | Optional **`IAutomationPlanInstrumentation`** for metrics / tracing (run and step lifecycle). |
+| **`PlanRunDirectory`** | Optional **`AutomationPlanRunDirectoryOptions`**: per-run folder under **`RootDirectory`** (see layout below). Set **`WriteRunLogFile`**, **`WriteSnapshots`**, and **`WriteVariables`** to **`false`** to reserve only the directory (or disable each category independently). When **`null`**, no run-scoped files are written. |
+| **`Formatter`** | Optional **`Lyo.Formatter.IFormatterService`**: validates step templates with SmartFormat before placeholders are resolved. Use single-brace placeholders (e.g. `{page.url}`) or legacy `{{page.url}}` (normalized to single braces). Register **`FormatterService`** from DI if you use this. |
+| **`LinkResolutionBaseUri`** | Optional base URL used to resolve relative links extracted from pages (for example image `src`/`srcset` values). |
 
 ### Plan run directory layout
 
@@ -121,10 +121,10 @@ When **`PlanRunDirectory`** is set and **`NestRunUnderRoot`** is **`true`** (def
 
 `{RootDirectory}/{RunFolderName or run id}/`
 
-| Subdirectory     | Content                                                                                                                                                                                                                |
+| Subdirectory | Content |
 |------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`logs/`**      | UTF-8 **`run.log`** (or **`RunLogFileName`**) — UTC timestamp and tab-separated lines: **`RUN_STARTED`**, **`STEP_START`**, **`STEP_COMPLETE`**, **`STEP_FAILED`**, **`RUN_COMPLETED`** / **`RUN_END`**.               |
-| **`snapshots/`** | Viewport PNGs: **`{stepIndex:000}_{stepExecutionId}_{before\|after\|failed}.png`** when **`WriteSnapshots`** and the corresponding timing flags are enabled.                                                           |
+| **`logs/`** | UTF-8 **`run.log`** (or **`RunLogFileName`**) — UTC timestamp and tab-separated lines: **`RUN_STARTED`**, **`STEP_START`**, **`STEP_COMPLETE`**, **`STEP_FAILED`**, **`RUN_COMPLETED`** / **`RUN_END`**. |
+| **`snapshots/`** | Viewport PNGs: **`{stepIndex:000}_{stepExecutionId}_{before\|after\|failed}.png`** when **`WriteSnapshots`** and the corresponding timing flags are enabled. |
 | **`variables/`** | JSON dumps of string / string-list variables (not element refs): **`step_{index:000}_after.json`**, **`step_{index:000}_failed.json`**, and **`final.json`** (or **`FinalVariablesFileName`**) on completion or fault. |
 
 With **`NestRunUnderRoot`** = **`false`**, **`RootDirectory`** is the run root (same relative names for **`LogsSubdirectory`**, **`SnapshotsSubdirectory`**, *
@@ -132,19 +132,19 @@ With **`NestRunUnderRoot`** = **`false`**, **`RootDirectory`** is the run root (
 
 **`AutomationPlanRunDirectoryOptions`** controls each category independently:
 
-| Property                               | Default        | Effect                                                   |
+| Property | Default | Effect |
 |----------------------------------------|----------------|----------------------------------------------------------|
-| **`WriteRunLogFile`**                  | `true`         | Write `logs/run.log` transcript.                         |
-| **`RunLogFileName`**                   | `"run.log"`    | File name inside `LogsSubdirectory`.                     |
-| **`WriteSnapshots`**                   | `true`         | Master switch for PNG capture.                           |
-| **`SnapshotBeforeEachStep`**           | `false`        | Capture before each step body (after `BeforeStepAsync`). |
-| **`SnapshotAfterEachSuccessfulStep`**  | `true`         | Capture after each successful step.                      |
-| **`SnapshotOnStepFailure`**            | `true`         | Capture when a step throws.                              |
-| **`WriteVariables`**                   | `true`         | Master switch for variable JSON dumps.                   |
-| **`VariablesAfterEachSuccessfulStep`** | `true`         | Write `step_{index:000}_after.json` after each success.  |
-| **`VariablesOnStepFailure`**           | `true`         | Write `step_{index:000}_failed.json` when a step throws. |
-| **`VariablesOnRunEnd`**                | `true`         | Write `final.json` on completion or fault (best-effort). |
-| **`FinalVariablesFileName`**           | `"final.json"` | File name for the end-of-run variable dump.              |
+| **`WriteRunLogFile`** | `true` | Write `logs/run.log` transcript. |
+| **`RunLogFileName`** | `"run.log"` | File name inside `LogsSubdirectory`. |
+| **`WriteSnapshots`** | `true` | Master switch for PNG capture. |
+| **`SnapshotBeforeEachStep`** | `false` | Capture before each step body (after `BeforeStepAsync`). |
+| **`SnapshotAfterEachSuccessfulStep`** | `true` | Capture after each successful step. |
+| **`SnapshotOnStepFailure`** | `true` | Capture when a step throws. |
+| **`WriteVariables`** | `true` | Master switch for variable JSON dumps. |
+| **`VariablesAfterEachSuccessfulStep`** | `true` | Write `step_{index:000}_after.json` after each success. |
+| **`VariablesOnStepFailure`** | `true` | Write `step_{index:000}_failed.json` when a step throws. |
+| **`VariablesOnRunEnd`** | `true` | Write `final.json` on completion or fault (best-effort). |
+| **`FinalVariablesFileName`** | `"final.json"` | File name for the end-of-run variable dump. |
 
 Set all three master switches to **`false`** to reserve only the directory (useful when the directory itself is needed but file writes are not).
 
@@ -162,12 +162,12 @@ Artifact write failures are logged as warnings and do not fail the run (except i
 **`IWebAutomationBrowser.CookieJar`** exposes **`IBrowserCookies`** when the engine supports it (Playwright; `null` for Selenium). Call the `Try*` extension methods from *
 *`WebAutomationBrowserExtensions`** for graceful degradation:
 
-| Extension method                    | Behaviour when `CookieJar` is `null` |
+| Extension method | Behaviour when `CookieJar` is `null` |
 |-------------------------------------|--------------------------------------|
-| `TryGetCookiesAsync(url?, ct)`      | Returns empty list                   |
-| `TryGetCookieHeaderAsync(url?, ct)` | Returns `null`                       |
-| `TryAddCookiesAsync(cookies, ct)`   | No-op                                |
-| `TryClearCookiesAsync(ct)`          | No-op                                |
+| `TryGetCookiesAsync(url?, ct)` | Returns empty list |
+| `TryGetCookieHeaderAsync(url?, ct)` | Returns `null` |
+| `TryAddCookiesAsync(cookies, ct)` | No-op |
+| `TryClearCookiesAsync(ct)` | No-op |
 
 **`BrowserCookie`** carries `Name`, `Value`, `Domain`, `Path`, `Secure`, `HttpOnly`, and `Expiry`.
 
@@ -185,10 +185,10 @@ await session.Browser.TryAddCookiesAsync([
 
 **`IWebAutomationBrowser.ExtraHeaders`** exposes **`IBrowserHeaders`** when supported (Playwright). Headers are sent with every subsequent request:
 
-| Extension method                       | Behaviour when `ExtraHeaders` is `null` |
+| Extension method | Behaviour when `ExtraHeaders` is `null` |
 |----------------------------------------|-----------------------------------------|
-| `TrySetExtraHeadersAsync(headers, ct)` | No-op                                   |
-| `TryClearExtraHeadersAsync(ct)`        | No-op                                   |
+| `TrySetExtraHeadersAsync(headers, ct)` | No-op |
+| `TryClearExtraHeadersAsync(ct)` | No-op |
 
 ```csharp
 await session.Browser.TrySetExtraHeadersAsync(
@@ -214,11 +214,11 @@ await session.Browser.NavigateAsync(
 
 ### Page source and snapshots
 
-| Member                                                        | Returns                                  |
+| Member | Returns |
 |---------------------------------------------------------------|------------------------------------------|
 | `IWebAutomationPage.GetPageSourceAsync(ct)` (also on browser) | Full HTML source of the current document |
-| `IWebAutomationPage.TakeViewportSnapshotPngAsync(ct)`         | Visible viewport as a PNG byte array     |
-| `IWebAutomationElement.TakeSnapshotPngAsync(ct)`              | Element bounding box as a PNG byte array |
+| `IWebAutomationPage.TakeViewportSnapshotPngAsync(ct)` | Visible viewport as a PNG byte array |
+| `IWebAutomationElement.TakeSnapshotPngAsync(ct)` | Element bounding box as a PNG byte array |
 
 These are also used internally by the runner when `WriteSnapshots` is enabled.
 
@@ -317,32 +317,32 @@ await runner.RunWithResultAsync(
 
 ## Step reference (builder ↔ JSON `type`)
 
-| Builder method                 | JSON `type`                                               | Notes                                                                                                                    |
+| Builder method | JSON `type` | Notes |
 |--------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `Navigate`                     | `navigate`                                                | URL supports `{{vars}}`                                                                                                  |
-| `Reload`                       | `reload`                                                  | Full document reload                                                                                                     |
-| `Delay`                        | `delay`                                                   | Milliseconds                                                                                                             |
-| `FindElement`                  | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref**                                                                                                   |
-| `FindDescendant`               | `findDescendant`                                          | Polls **under a stored parent ref** (`PollForDescendantAsync`); locator `value` supports `{{vars}}`                      |
-| `FindElements`                 | `findElementsChain`                                       | Stores **element list ref**                                                                                              |
-| `ElementAction`                | `elementAction`                                           | Click, input, select, …                                                                                                  |
-| `FindAndAct`                   | `findAndAct`                                              | Single locator                                                                                                           |
-| `FindAndActChain`              | `findAndActChain`                                         | Chain                                                                                                                    |
-| `ExtractElementData`           | `extractElementData`                                      | Text or attribute → string var                                                                                           |
-| `ExtractElementsListData`      | `extractElementsListData`                                 | Per element → string list var                                                                                            |
-| `StoreLiteral`                 | `storeLiteral`                                            | Value may contain `{{vars}}`                                                                                             |
-| `StoreTemplate`                | `storeTemplate`                                           | Template → string var                                                                                                    |
-| `StoreStringListFromTemplate`  | `storeStringListFromTemplate`                             | Map source list items through an item template                                                                           |
-| `StorePageUrl`                 | `storePageUrl`                                            |                                                                                                                          |
-| `StorePageTitle`               | `storePageTitle`                                          |                                                                                                                          |
-| `WriteStringListToFile`        | `writeStringListToFile`                                   | UTF-8; path may use `{{vars}}`                                                                                           |
-| `DownloadUrlsToDirectory`      | `downloadUrlsToDirectory`                                 | Uses runner HTTP dependency; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index)          |
-| `HttpRequest`                  | `httpRequest`                                             | Uses runner HTTP dependency; supports templated URL/headers/body and response capture                                    |
-| `DownloadFile`                 | `downloadFile`                                            | Uses runner HTTP dependency; downloads one URL to one file                                                               |
-| `ExtractSources`               | `extractSources`                                          | Extracts source/link attributes into list variable (configure attrs for video/CSV/etc.)                                  |
-| `UpsertJsonRecords`            | `upsertJsonRecords`                                       | Uses runner data sink dependency; upserts JSON payload from a string variable                                            |
-| `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage`                            | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs                    |
-| `InvokeDiMethod`               | `invokeDiMethod`                                          | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
+| `Navigate` | `navigate` | URL supports `{{vars}}` |
+| `Reload` | `reload` | Full document reload |
+| `Delay` | `delay` | Milliseconds |
+| `FindElement` | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref** |
+| `FindDescendant` | `findDescendant` | Polls **under a stored parent ref** (`PollForDescendantAsync`); locator `value` supports `{{vars}}` |
+| `FindElements` | `findElementsChain` | Stores **element list ref** |
+| `ElementAction` | `elementAction` | Click, input, select, … |
+| `FindAndAct` | `findAndAct` | Single locator |
+| `FindAndActChain` | `findAndActChain` | Chain |
+| `ExtractElementData` | `extractElementData` | Text or attribute → string var |
+| `ExtractElementsListData` | `extractElementsListData` | Per element → string list var |
+| `StoreLiteral` | `storeLiteral` | Value may contain `{{vars}}` |
+| `StoreTemplate` | `storeTemplate` | Template → string var |
+| `StoreStringListFromTemplate` | `storeStringListFromTemplate` | Map source list items through an item template |
+| `StorePageUrl` | `storePageUrl` | |
+| `StorePageTitle` | `storePageTitle` | |
+| `WriteStringListToFile` | `writeStringListToFile` | UTF-8; path may use `{{vars}}` |
+| `DownloadUrlsToDirectory` | `downloadUrlsToDirectory` | Uses runner HTTP dependency; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index) |
+| `HttpRequest` | `httpRequest` | Uses runner HTTP dependency; supports templated URL/headers/body and response capture |
+| `DownloadFile` | `downloadFile` | Uses runner HTTP dependency; downloads one URL to one file |
+| `ExtractSources` | `extractSources` | Extracts source/link attributes into list variable (configure attrs for video/CSV/etc.) |
+| `UpsertJsonRecords` | `upsertJsonRecords` | Uses runner data sink dependency; upserts JSON payload from a string variable |
+| `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage` | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs |
+| `InvokeDiMethod` | `invokeDiMethod` | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
 
 **`ElementAction`** JSON uses nested **`type`**: `click`, `inputText`, `sendKeys`, `clear`, `submit`, `selectByText`, `selectByValue`, `selectByIndex`, `dropdown`.
 

@@ -5,9 +5,9 @@ and exposes two managers (`TextToSpeech`, `Voices`) for the underlying REST endp
 
 Multi-targets `netstandard2.0` and `net10.0`.
 
-## Registration
+## Examples
 
-Three DI extensions are available on `IServiceCollection`:
+### Register services
 
 ```csharp
 // 1. Configuration-bound (defaults to the "TypecastClient" section)
@@ -23,9 +23,7 @@ services.AddTypecastClient(o => {
 services.AddTypecastClient(new TypecastClientOptions { ApiKey = "your-api-key" });
 ```
 
-All variants register `TypecastClient` as a singleton. `ILoggerFactory` and `HttpClient` are pulled from the container if available; otherwise sensible defaults are used.
-
-Example `appsettings.json`:
+### Register services (2)
 
 ```json
 {
@@ -36,44 +34,45 @@ Example `appsettings.json`:
 }
 ```
 
-## `TypecastClientOptions`
-
-Extends `ApiClientOptions`, so it inherits the standard HTTP transport knobs (`BaseUrl`, timeouts, retry, etc.).
-
-| Property      | Notes                                                                                    |
-|---------------|------------------------------------------------------------------------------------------|
-| `ApiKey`      | Required. Sent as `X-API-KEY`.                                                           |
-| `BaseUrl`     | Defaults to `https://api.typecast.ai`.                                                   |
-| `SectionName` | `"TypecastClient"`. Used by `AddTypecastClientFromConfiguration` as the default section. |
-
-JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore — matching Typecast's API.
-
-## `TypecastClient`
-
-Exposes two manager fields:
+### `TypecastClient`
 
 ```csharp
 public readonly TextToSpeechManager TextToSpeech;
 public readonly VoiceManager Voices;
 ```
 
-### `TextToSpeechManager`
+## Registration
 
-| Method                                                      | Endpoint                  | Returns                      |
-|-------------------------------------------------------------|---------------------------|------------------------------|
+Three DI extensions are available on `IServiceCollection`: All variants register `TypecastClient` as a singleton. `ILoggerFactory` and `HttpClient` are pulled from the container if available; otherwise sensible defaults are used. Example `appsettings.json`:
+
+## `TypecastClientOptions`
+
+Extends `ApiClientOptions`, so it inherits the standard HTTP transport knobs (`BaseUrl`, timeouts, retry, etc.).
+
+| Property | Notes |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| `ApiKey` | Required. Sent as `X-API-KEY`. |
+| `BaseUrl` | Defaults to `https://api.typecast.ai`. |
+| `SectionName` | `"TypecastClient"`. Used by `AddTypecastClientFromConfiguration` as the default section. |
+
+JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore — matching Typecast's API.
+
+## `TypecastClient` — `TextToSpeechManager`
+
+| Method | Endpoint | Returns |
+| ----------------------------------------------------------- | ------------------------- | ---------------------------- |
 | `SynthesizeAsync(TypecastTtsRequest request, ct = default)` | `POST /v1/text-to-speech` | `byte[]` (WAV or MP3 audio). |
 
-### `VoiceManager`
+## `TypecastClient` — `VoiceManager`
 
-| Method                                                        | Endpoint                   | Returns                            |
-|---------------------------------------------------------------|----------------------------|------------------------------------|
-| `ListVoicesAsync(VoiceListReq? request = null, ct = default)` | `GET /v2/voices`           | `List<Voice>` (empty when absent). |
-| `GetVoiceAsync(string voiceId, ct = default)`                 | `GET /v2/voices/{voiceId}` | `Voice?`                           |
+| Method | Endpoint | Returns |
+| ------------------------------------------------------------- | -------------------------- | ---------------------------------- |
+| `ListVoicesAsync(VoiceListReq? request = null, ct = default)` | `GET /v2/voices` | `List<Voice>` (empty when absent). |
+| `GetVoiceAsync(string voiceId, ct = default)` | `GET /v2/voices/{voiceId}` | `Voice?` |
 
 ## Request models
 
-- `TypecastTtsRequest` (extends `Lyo.Tts.Models.TtsRequest`) — `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialised as ISO
-  639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
+- `TypecastTtsRequest` (extends `Lyo.Tts.Models.TtsRequest`) — `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialised as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
 - `Prompt` — emotion / style settings (including the `"smart"` mode with optional `previous_text` / `next_text` context).
 - `OutputSettings` — volume / pitch / tempo / audio format.
 - `VoiceListReq` — optional `Model`, `Gender`, `Age`, `UseCases` filters.
@@ -88,7 +87,7 @@ Fluent builder for assembling a valid TTS request. Validates `VoiceId` and `Text
 var request = TypecastTtsRequestBuilder
     .Create("tc_60e5426de8b95f1d3000d7b5", "Hello, world!")
     .WithModel("ssfm-v30")
-    .WithLanguage("eng")                 // accepts ISO 639-3 or ISO 639-1
+    .WithLanguage("eng") // accepts ISO 639-3 or ISO 639-1
     .WithSmartPrompt(previousText: "Welcome.", nextText: "How are you?")
     .WithOutput(o => {
         o.AudioFormat = "mp3";
@@ -99,33 +98,38 @@ var request = TypecastTtsRequestBuilder
 var audio = await client.TextToSpeech.SynthesizeAsync(request, ct);
 ```
 
-| Method                                                              | Sets                                                                           |
-|---------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| `New()` / `Create(voiceId, text)`                                   | Static factory methods.                                                        |
-| `WithVoiceId(string)` / `WithText(string)`                          | Required fields.                                                               |
-| `WithModel(string)`                                                 | e.g. `"ssfm-v30"`, `"ssfm-v21"`.                                               |
-| `WithLanguage(string)`                                              | Parses ISO 639-3 first then ISO 639-1; falls back to no language when unknown. |
-| `WithPrompt(Prompt)` / `WithPrompt(Action<Prompt>)`                 | Set or configure inline.                                                       |
-| `WithSmartPrompt(previousText?, nextText?)`                         | Convenience for `"smart"` emotion mode.                                        |
-| `WithOutput(OutputSettings)` / `WithOutput(Action<OutputSettings>)` | Set or configure inline.                                                       |
-| `WithSeed(int)`                                                     | Deterministic generation.                                                      |
-| `Build()`                                                           | Validates required fields and returns the `TypecastTtsRequest`.                |
+| Method | Sets |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `New()` / `Create(voiceId, text)` | Static factory methods. |
+| `WithVoiceId(string)` / `WithText(string)` | Required fields. |
+| `WithModel(string)` | e.g. `"ssfm-v30"`, `"ssfm-v21"`. |
+| `WithLanguage(string)` | Parses ISO 639-3 first then ISO 639-1; falls back to no language when unknown. |
+| `WithPrompt(Prompt)` / `WithPrompt(Action<Prompt>)` | Set or configure inline. |
+| `WithSmartPrompt(previousText?, nextText?)` | Convenience for `"smart"` emotion mode. |
+| `WithOutput(OutputSettings)` / `WithOutput(Action<OutputSettings>)` | Set or configure inline. |
+| `WithSeed(int)` | Deterministic generation. |
+| `Build()` | Validates required fields and returns the `TypecastTtsRequest`. |
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Typecast.Client.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target frameworks:** `netstandard2.0`, `net10.0`
-
-### NuGet packages
-
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
-
-### Project references
-
-- [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
-- [`Lyo.Tts.Models`](../../../Communication/Speech/Lyo.Tts.Models/README.md)
+- `Lyo.Api.Client` — (direct, lyo)
+- `Lyo.Tts.Models` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Diagnostic` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)

@@ -1,0 +1,79 @@
+{
+  "id": "Lyo.Config.Api.Models",
+  "name": "Lyo.Config.Api.Models",
+  "area": "Apps",
+  "tagline": "Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.",
+  "description": "Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.\n\n- **`ResolvedConfigRecord`** payloads use shared types from **`Lyo.Config`**.\n- **`IConfigApiClient`**, **`ConfigPolling`**, and DI registration **`AddConfigApiClientFromConfiguration`** live in **[`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client)** ([\n  `README`](../Lyo.Config.Api.Client/README.md)).\n\nURL segment helpers mapping **`/api/config/{appKind}/{appId}`** to **`EntityRef(\"App\", \"kind:id\")`** are on **`AppConfigEntity`** in *\n*[`Lyo.Config/AppConfigEntity.cs`](../../../Features/Config/Lyo.Config/AppConfigEntity.cs)** (feature assembly, not tied to HTTP client packages).\n\nHosting integration (**polling + `IOptionsMonitor<T>`**) is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting)**.\n\nHTTP surface is documented under **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)**.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Config/Lyo.Config.Api.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Config",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

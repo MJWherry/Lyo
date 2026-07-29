@@ -14,13 +14,9 @@ Windows Speech Synthesis Text-to-Speech service implementation for the Lyo frame
 - **Thread-Safe**: Safe for concurrent use
 - **Async Support**: Full async/await support with cancellation token support
 
-## Platform Support
+## Examples
 
-**Windows Only**: This library only builds and runs on Windows platforms. It requires the `System.Speech` package which is Windows-specific.
-
-## Quick Start
-
-### Basic Usage
+### Subscribe to events
 
 ```csharp
 using Lyo.Tts;
@@ -65,6 +61,10 @@ var ok = await ttsService.TestConnectionAsync();
 // TestConnectionAsync logs every installed SAPI voice via the registered ILogger.
 ```
 
+## Platform Support
+
+**Windows Only**: This library only builds and runs on Windows platforms. It requires the `System.Speech` package which is Windows-specific.
+
 ## Registered services
 
 `AddWindowsSpeechTtsService` (`Action<TtsServiceOptions>?` or `TtsServiceOptions`) registers:
@@ -93,19 +93,17 @@ register both interfaces because they ship an `*TtsAppService` adapter.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Tts.WindowsSpeech.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0` *(Windows only)*
-
-### NuGet packages
-
-| Package         | Version  |
-|-----------------|----------|
-| `System.Speech` | `10.0.2` |
-
-### Project references
-
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Tts`](../Lyo.Tts/README.md)
-- [`Lyo.Tts.Models`](../Lyo.Tts.Models/README.md)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Tts` — (direct, lyo)
+- `Lyo.Tts.Models` — (direct, lyo)
+- `System.Speech` `10.0.5` — (direct, microsoft, $([MSBuild]::IsOSPlatform('Windows')))
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

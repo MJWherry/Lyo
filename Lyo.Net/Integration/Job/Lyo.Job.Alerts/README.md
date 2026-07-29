@@ -6,7 +6,9 @@ them through **`INotificationPublisher`** (in-process handlers) and/or an option
 Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via
 `IJobEventPublisher.PublishAlertAsync`.
 
-## Registration
+## Examples
+
+### Register services
 
 ```csharp
 services.AddJobAlerts(configuration);
@@ -17,16 +19,7 @@ services.AddJobAlerts(o => {
 });
 ```
 
-Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional — when absent, only the webhook path runs (if configured).
-
-## Configuration (`JobAlertsOptions.SectionName` = `"JobAlerts"`)
-
-| Property          | Default | Notes                                               |
-|-------------------|---------|-----------------------------------------------------|
-| `AlertWebhookUrl` | `null`  | When set, each alert is POSTed as JSON to this URL. |
-
-Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer` — only `JobAlertsOptions.AlertWebhookUrl` (or
-`INotificationPublisher` handlers) dispatch alerts from this package.
+### Configuration (`JobAlertsOptions.SectionName` = `"JobAlerts"`)
 
 ```json
 {
@@ -36,14 +29,27 @@ Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom inte
 }
 ```
 
+## Registration
+
+Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional — when absent, only the webhook path runs (if configured).
+
+## Configuration (`JobAlertsOptions.SectionName` = `"JobAlerts"`)
+
+| Property | Default | Notes |
+| ----------------- | ------- | --------------------------------------------------- |
+| `AlertWebhookUrl` | `null` | When set, each alert is POSTed as JSON to this URL. |
+
+Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer` — only `JobAlertsOptions.AlertWebhookUrl` (or
+`INotificationPublisher` handlers) dispatch alerts from this package.
+
 ## Alert types (`JobAlertType`)
 
-| Type                    | Typical source                                             |
-|-------------------------|------------------------------------------------------------|
-| `Failure`               | Scheduler after consecutive failures (`AlertOnFailure`)    |
-| `CircuitBreakerTripped` | Scheduler disables definition                              |
-| `DeadJob`               | Maintenance timeout (no heartbeat)                         |
-| `SlaBreach`             | `JobService` start/finish SLA checks; maintenance SLA scan |
+| Type | Typical source |
+| ----------------------- | ---------------------------------------------------------- |
+| `Failure` | Scheduler after consecutive failures (`AlertOnFailure`) |
+| `CircuitBreakerTripped` | Scheduler disables definition |
+| `DeadJob` | Maintenance timeout (no heartbeat) |
+| `SlaBreach` | `JobService` start/finish SLA checks; maintenance SLA scan |
 
 ## `JobAlertEvent` payload
 
@@ -73,33 +79,32 @@ Transient dispatch failures requeue the message (`HandleMessageAsync` returns `t
 
 ## Metrics
 
-Alert emission is counted indirectly via downstream systems. Related job metrics:
-
 - `job.scheduler.circuit_breaker.tripped`
 - `job.sla.breach` (`Constants.Metrics.Sla.Breach`)
 - `job.maintenance.dead_jobs.failed`
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Job.Alerts.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                                | Version |
-|--------------------------------------------------------|---------|
-| `Microsoft.Extensions.Hosting.Abstractions`            | `[10,)` |
-| `Microsoft.Extensions.Http`                            | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
-
-### Project references
-
-- [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
-- [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)
-- [`Lyo.Notification`](../../../Core/Notification/Lyo.Notification/README.md)
-
-### Related packages
-
-- [`Lyo.Job.Postgres`](../Lyo.Job.Postgres/README.md) — publishes alerts via `MqJobEventPublisher`
-- [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) — also listens for alert routing key on the dashboard
+- `Lyo.Job.Models` — (direct, lyo)
+- `Lyo.MessageQueue` — (direct, lyo)
+- `Lyo.Notification` — (direct, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Health` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Lyo.Schedule.Models` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

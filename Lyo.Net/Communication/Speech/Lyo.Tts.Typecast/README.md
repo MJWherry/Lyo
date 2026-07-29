@@ -5,12 +5,9 @@ voice catalog loading for validation (`LoadVoicesAsync`), bulk flows from [`Lyo.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
-## Prerequisites
+## Examples
 
-1. Configure API access with [`AddTypecastClientFromConfiguration`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md) (section `TypecastClient` by default).
-2. Add TTS options and the service (`TypecastOptions` section defaults to `TypecastOptions`).
-
-## Dependency injection
+### Register with DI
 
 ```csharp
 using Lyo.Tts.Typecast;
@@ -21,6 +18,13 @@ services.AddTypecastTtsServiceFromConfiguration(configuration);
 // Or with an inline configurator:
 // services.AddTypecastTtsService(opts => { opts.DefaultVoiceId = "..."; });
 ```
+
+## Prerequisites
+
+- Configure API access with [`AddTypecastClientFromConfiguration`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md) (section `TypecastClient` by default).
+- Add TTS options and the service (`TypecastOptions` section defaults to `TypecastOptions`).
+
+## Dependency injection
 
 Both `AddTypecastTtsService` and `AddTypecastTtsServiceFromConfiguration` register:
 
@@ -38,29 +42,37 @@ requires a registered `TypecastClient` — register it first via `AddTypecastCli
 
 ## Voices and validation
 
-Call `await typecastService.LoadVoicesAsync()` during startup so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; if voices are not loaded,
-validation is skipped (see logging in `TypecastTtsService`).
+Call `await typecastService.LoadVoicesAsync()` during startup so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; if voices are not loaded, validation is skipped (see logging in `TypecastTtsService`).
 
 ## Builder overload caveat
 
-There is an overload named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that **does not write to disk**—it only builds a request and returns audio
-bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file.
+There is an overload named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that **does not write to disk**—it only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file.
 
 ## Dependencies
 
-*(Aligned with [`Lyo.Tts.Typecast.csproj`](Lyo.Tts.Typecast.csproj).)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-### NuGet packages
-
-| Package                                     | Version | Notes                 |
-|---------------------------------------------|---------|-----------------------|
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |                       |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |                       |
-| `Microsoft.Extensions.Options`              | `[10,)` |                       |
-| `System.Text.Json`                          | `[10,)` | *netstandard2.0 only* |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Tts`](../Lyo.Tts/README.md)
-- [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Tts` — (direct, lyo)
+- `Lyo.Typecast.Client` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
+- `Lyo.Api.Client` — (transitive, lyo)
+- `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.DateAndTime` — (transitive, lyo)
+- `Lyo.Diagnostic` — (transitive, lyo)
+- `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
+- `Lyo.Tts.Models` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)

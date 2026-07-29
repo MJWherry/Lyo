@@ -11,23 +11,19 @@ Provider-specific algorithms (e.g. Twilio) live in separate packages such as **L
 - **Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)
 - **ASP.NET Core**: read raw body, header dictionary, public URL, optional **form-urlencoded** parameters for signed form posts
 - **Fluent routes**: `MapWebhook("/path").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`
-- **Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON
-  parse failures, handler errors
+- **Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors
 - **Logging**: category **`Lyo.Webhook`** (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)
 
-## Registration
+## Examples
 
-Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services):
+### Register services
 
 ```csharp
 services.AddLyoMetrics();
 // logging: AddLogging(), etc.
 ```
 
-At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if
-**`ILoggerFactory`** is missing, **`NullLogger`** is used.
-
-## Fluent mapping
+### Fluent mapping
 
 ```csharp
 app.MapWebhook("/webhooks/example")
@@ -46,33 +42,29 @@ app.MapWebhook("/webhooks/json-example")
     });
 ```
 
+## Registration
+
+Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used.
+
+## Fluent mapping
+
 - Failed signature → **401**
 - Invalid JSON (when using `HandleJson`) → **400**
 - Metric tag **`route`** = route pattern string (keep cardinality low)
 
 ## Manual verification (no fluent API)
 
-Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBodyAsync`, `ToWebhookHeaderDictionary`, `GetPublicRequestUrl`) to build a `WebhookVerificationContext`
-and call your `IWebhookSignatureVerifier` directly.
+Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBodyAsync`, `ToWebhookHeaderDictionary`, `GetPublicRequestUrl`) to build a `WebhookVerificationContext` and call your `IWebhookSignatureVerifier` directly.
 
 ## Target framework
 
 - **net10.0** only (same line as the rest of this solution).
 
-## Related packages
-
-- **Lyo.Webhook.Twilio** — Twilio `X-Twilio-Signature` validation
-
 ## Dependencies
 
-*(Synchronized from `Lyo.Webhook.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-*None declared in this project file.*
-
-### Project references
-
-- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

@@ -6,24 +6,9 @@ Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Co
 > Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer
 > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.
 
-## Public API
+## Examples
 
-| Type                                                         | Role                                                                                                                                                                         |
-|--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`IPostgresMigrationConfig`**                               | Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`.                      |
-| **`PostgresMigrationHostedService<TContext, TOptions>`**     | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`. |
-| **`Extensions.AddPostgresMigrations<TContext, TOptions>()`** | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`.                                    |
-
-The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public
-constructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as
-`"<schema>"."__EFMigrationsHistory"`.
-
-`StartAsync` short-circuits when `EnableAutoMigrations` is false. If the flag is true, both `ConnectionString` and `Schema` are required (whitespace throws via
-`Lyo.Exceptions.ArgumentHelpers`).
-
-## Usage
-
-Consumer libraries (Audit, Email, etc.) typically own their own DbContext + options pair, then call this extension during their own DI registration:
+### Usage
 
 ```csharp
 using Lyo.Postgres;
@@ -40,41 +25,45 @@ services.Configure<AuditDbOptions>(configuration.GetSection("Audit:Postgres"));
 services.AddPostgresMigrations<AuditDbContext, AuditDbOptions>();
 ```
 
-When the host starts:
+## Public API
 
-1. The hosted service resolves `IOptions<AuditDbOptions>`.
-2. If `EnableAutoMigrations` is false, it returns immediately.
-3. Otherwise it constructs an `AuditDbContext` with `UseNpgsql(connectionString, opt => opt.MigrationsHistoryTable("__EFMigrationsHistory", schema))`.
-4. It executes `CREATE SCHEMA IF NOT EXISTS "<schema>"` (the schema name is escaped by doubling embedded `"` characters before interpolation).
-5. It runs `Database.MigrateAsync(ct)`.
+| Type | Role |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`IPostgresMigrationConfig`** | Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`. |
+| **`PostgresMigrationHostedService<TContext, TOptions>`** | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`. |
+| **`Extensions.AddPostgresMigrations<TContext, TOptions>()`** | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`. |
 
-The host must be started — typically `Host.CreateDefaultBuilder()` (worker / console) or `WebApplication.CreateBuilder()` (ASP.NET Core).
+The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public
+constructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as
+`"<schema>"."__EFMigrationsHistory"`.
 
-## Dependencies
+`StartAsync` short-circuits when `EnableAutoMigrations` is false. If the flag is true, both `ConnectionString` and `Schema` are required (whitespace throws via
+`Lyo.Exceptions.ArgumentHelpers`).
 
-*(Synchronized from `Lyo.Postgres.csproj`.)*
+## Usage
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version | Notes                                              |
-|---------------------------------------------|---------|----------------------------------------------------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
-| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |                                                    |
-| `Microsoft.Extensions.Options`              | `[10,)` |                                                    |
-| `Npgsql.EntityFrameworkCore.PostgreSQL`     | `[10,)` |                                                    |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
+- The hosted service resolves `IOptions<AuditDbOptions>`.
+- If `EnableAutoMigrations` is false, it returns immediately.
+- Otherwise it constructs an `AuditDbContext` with `UseNpgsql(connectionString, opt => opt.MigrationsHistoryTable("__EFMigrationsHistory", schema))`.
+- It executes `CREATE SCHEMA IF NOT EXISTS "<schema>"` (the schema name is escaped by doubling embedded `"` characters before interpolation).
+- It runs `Database.MigrateAsync(ct)`.
 
 ## Consumers
-
-Examples of libraries that wire their own options + context into this hosted service:
 
 - `Lyo.Audit.Postgres`
 - `Lyo.Email.Postgres`
 - `Lyo.ChangeTracker.Postgres`
 - `Lyo.EntityReference.Postgres`
 - `Lyo.FileMetadataStore.Postgres`
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (direct, third-party)

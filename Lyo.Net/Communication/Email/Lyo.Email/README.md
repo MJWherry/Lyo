@@ -4,24 +4,22 @@ A production-ready email service library for .NET with SMTP support, built on Ma
 
 ## Features
 
-- ✅ **Clean API** - Fluent builder pattern for constructing emails
-- ✅ **SMTP Support** - Full SMTP support via MailKit
-- ✅ **Bulk Sending** - Sequential bulk send over a single SMTP connection with per-message results
-- ✅ **Attachments** - File attachments and a `ZipFileBuilder` for bundling multiple files into a single ZIP attachment
-- ✅ **HTML & Text** - Support for both HTML and plain text email bodies
-- ✅ **Error Handling** - Comprehensive error handling with detailed results
-- ✅ **Logging** - Built-in logging support via Microsoft.Extensions.Logging
-- ✅ **Metrics** - Optional metrics collection for monitoring email operations
-- ✅ **Dependency Injection** - Full support for .NET dependency injection
-- ✅ **Async/Await** - Fully asynchronous API with cancellation token support
-- ✅ **Events** - Events for email sent, bulk completed, and connection tested
-- ✅ **Validation** - Automatic validation of required configuration options
+- **Clean API** - Fluent builder pattern for constructing emails
+- **SMTP Support** - Full SMTP support via MailKit
+- **Bulk Sending** - Sequential bulk send over a single SMTP connection with per-message results
+- **Attachments** - File attachments and a `ZipFileBuilder` for bundling multiple files into a single ZIP attachment
+- **HTML & Text** - Support for both HTML and plain text email bodies
+- **Error Handling** - Comprehensive error handling with detailed results
+- **Logging** - Built-in logging support via Microsoft.Extensions.Logging
+- **Metrics** - Optional metrics collection for monitoring email operations
+- **Dependency Injection** - Full support for .NET dependency injection
+- **Async/Await** - Fully asynchronous API with cancellation token support
+- **Events** - Events for email sent, bulk completed, and connection tested
+- **Validation** - Automatic validation of required configuration options
 
-## Quick Start
+## Examples
 
 ### 1. Configure Email Options
-
-#### Using Configuration File (appsettings.json)
 
 ```json
 {
@@ -38,7 +36,7 @@ A production-ready email service library for .NET with SMTP support, built on Ma
 }
 ```
 
-#### Using Code
+### 1. Configure Email Options (2)
 
 ```csharp
 var options = new EmailServiceOptions
@@ -56,8 +54,6 @@ var options = new EmailServiceOptions
 
 ### 2. Register Services
 
-#### Using Configuration Binding
-
 ```csharp
 // In ConfigureServices(context, services):
 services.AddEmailServiceFromConfiguration(context.Configuration);
@@ -65,7 +61,7 @@ services.AddEmailServiceFromConfiguration(context.Configuration);
 // services.AddEmailServiceFromConfiguration(context.Configuration, "MySection");
 ```
 
-#### Using Action
+### 2. Register Services (2)
 
 ```csharp
 services.AddEmailService(options =>
@@ -80,7 +76,7 @@ services.AddEmailService(options =>
 });
 ```
 
-#### Using Service Provider
+### 2. Register Services (3)
 
 ```csharp
 services.AddEmailService(provider =>
@@ -99,7 +95,7 @@ services.AddEmailService(provider =>
 });
 ```
 
-#### Using Action (minimal)
+### 2. Register Services (4)
 
 ```csharp
 services.AddEmailService(options => {
@@ -144,8 +140,6 @@ public class MyService
 }
 ```
 
-## Usage Examples
-
 ### Basic Email
 
 ```csharp
@@ -183,14 +177,12 @@ var result = await _emailService.SendEmailAsync(builder);
 
 ### Multiple Attachments as ZIP
 
-`ZipFileBuilder` packages multiple files into a single ZIP byte array that can be attached like any other file:
-
 ```csharp
 var zipBytes = ZipFileBuilder.New()
     .AddFile("file1.txt", Encoding.UTF8.GetBytes("Content 1"))
-    .AddFile("file2.txt", "Content 2")          // text overload (UTF-8 by default)
-    .AddFileFromPath("/path/to/report.pdf")     // from disk; entry name defaults to file name
-    .AddDirectory("/path/to/docs", "docs/")     // recurse a directory under a prefix
+    .AddFile("file2.txt", "Content 2") // text overload (UTF-8 by default)
+    .AddFileFromPath("/path/to/report.pdf") // from disk; entry name defaults to file name
+    .AddDirectory("/path/to/docs", "docs/") // recurse a directory under a prefix
     .Build();
 
 var builder = EmailRequestBuilder.New()
@@ -201,9 +193,6 @@ var builder = EmailRequestBuilder.New()
 
 var result = await _emailService.SendEmailAsync(builder);
 ```
-
-`ZipFileBuilder` is a one-shot builder. After calling `Build()`/`BuildToFile()`/`BuildToStream()` the
-archive is closed and the instance cannot be reused.
 
 ### Custom From Address
 
@@ -296,18 +285,6 @@ _emailService.ConnectionTested += (sender, args) =>
 };
 ```
 
-## Resilience
-
-The library does not include built-in retry or timeout logic. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience)
-or Polly) by wrapping calls to `IEmailService`:
-
-```csharp
-// Example: wrap email sends with IResilientExecutor
-await _resilientExecutor.ExecuteAsync("email-pipeline", ct => _emailService.SendEmailAsync(builder, ct), cancellationToken);
-```
-
-## Configuration
-
 ### EmailServiceOptions
 
 ```csharp
@@ -348,21 +325,118 @@ public class EmailServiceOptions
 }
 ```
 
+### EmailSending Event
+
+```csharp
+_emailService.EmailSending += (sender, args) =>
+{
+    var request = args.EmailRequest;
+    Console.WriteLine($"Sending email to {string.Join(", ", request.ToAddresses ?? [])}: {request.Subject}");
+};
+```
+
+### EmailSent Event
+
+```csharp
+_emailService.EmailSent += (sender, args) =>
+{
+    var result = args.EmailResult;
+    if (result.IsSuccess)
+    {
+        Console.WriteLine($"Email sent successfully: {(result as EmailResult)?.MessageId}");
+    }
+    else
+    {
+        Console.WriteLine($"Email failed: {result.Errors?.FirstOrDefault()?.Message}");
+    }
+};
+```
+
+### BulkSending Event
+
+```csharp
+_emailService.BulkSending += (sender, args) =>
+{
+    Console.WriteLine($"Starting bulk send for {args.BulkEmailMessage.Count} emails");
+};
+```
+
+### BulkEmailSent Event
+
+```csharp
+_emailService.BulkEmailSent += (sender, args) =>
+{
+    var bulkResult = args.BulkEmailResult;
+    Console.WriteLine($"Bulk send completed:");
+    Console.WriteLine($" Total: {bulkResult.TotalCount}");
+    Console.WriteLine($" Success: {bulkResult.SuccessCount}");
+    Console.WriteLine($" Failure: {bulkResult.FailureCount}");
+};
+```
+
+### ConnectionTested Event
+
+```csharp
+_emailService.ConnectionTested += (sender, args) =>
+{
+    if (args.IsSuccess)
+    {
+        Console.WriteLine($"Connection test successful in {args.ElapsedTime}");
+    }
+    else
+    {
+        Console.WriteLine($"Connection test failed: {args.Exception?.Message}");
+    }
+};
+```
+
+### Testing
+
+```bash
+dotnet test
+```
+
+## 1. Configure Email Options
+
+#### Using Configuration File (appsettings.json)
+
+#### Using Code
+
+## 2. Register Services
+
+#### Using Configuration Binding
+
+#### Using Action
+
+#### Using Service Provider
+
+#### Using Action (minimal)
+
+## Multiple Attachments as ZIP
+
+`ZipFileBuilder` packages multiple files into a single ZIP byte array that can be attached like any other file: `ZipFileBuilder` is a one-shot builder. After calling `Build()`/`BuildToFile()`/`BuildToStream()` the archive is closed and the instance cannot be reused.
+
+## Resilience
+
+The library does not include built-in retry or timeout logic. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience)
+or Polly) by wrapping calls to `IEmailService`:
+
+```csharp
+// Example: wrap email sends with IResilientExecutor
+await _resilientExecutor.ExecuteAsync("email-pipeline", ct => _emailService.SendEmailAsync(builder, ct), cancellationToken);
+```
+
+## EmailServiceOptions
+
 The configuration section name defaults to `EmailServiceOptions` (exposed as `EmailServiceOptions.SectionName`).
 
-### Validation
-
-The library automatically validates required options via `EmailServiceOptionsValidator`:
+## Validation
 
 - `Host` must not be null or empty
 - `Port` must be between 1 and 65535
 - `DefaultFromAddress` must not be null or empty
 - `DefaultFromName` must not be null or empty
 - `MaxAttachmentCountPerEmail` must be greater than 0
-
-Invalid options throw at startup: `AddEmailServiceFromConfiguration()` registers a validator and calls
-`ValidateOnStart()`, which surfaces an `OptionsValidationException`; the action/factory overloads of
-`AddEmailService()` validate inside the singleton factory and throw an exception when the options are first resolved.
 
 ## Error Handling
 
@@ -392,7 +466,7 @@ else
 }
 ```
 
-### Result<EmailRequest> / EmailResult Properties
+## Error Handling — Result<EmailRequest> / EmailResult Properties
 
 - `IsSuccess` - Whether the operation succeeded
 - `Data` - The EmailRequest (recipients, subject, etc.)
@@ -405,80 +479,25 @@ else
 
 The email service provides events for monitoring email operations:
 
-### EmailSending Event
+## EmailSending Event
 
 Fired before each email is sent (including during bulk operations):
 
-```csharp
-_emailService.EmailSending += (sender, args) =>
-{
-    var request = args.EmailRequest;
-    Console.WriteLine($"Sending email to {string.Join(", ", request.ToAddresses ?? [])}: {request.Subject}");
-};
-```
-
-### EmailSent Event
+## EmailSent Event
 
 Fired after each email is sent (success or failure):
 
-```csharp
-_emailService.EmailSent += (sender, args) =>
-{
-    var result = args.EmailResult;
-    if (result.IsSuccess)
-    {
-        Console.WriteLine($"Email sent successfully: {(result as EmailResult)?.MessageId}");
-    }
-    else
-    {
-        Console.WriteLine($"Email failed: {result.Errors?.FirstOrDefault()?.Message}");
-    }
-};
-```
-
-### BulkSending Event
+## BulkSending Event
 
 Fired before a bulk email operation starts:
 
-```csharp
-_emailService.BulkSending += (sender, args) =>
-{
-    Console.WriteLine($"Starting bulk send for {args.BulkEmailMessage.Count} emails");
-};
-```
-
-### BulkEmailSent Event
+## BulkEmailSent Event
 
 Fired after a bulk email operation completes:
 
-```csharp
-_emailService.BulkEmailSent += (sender, args) =>
-{
-    var bulkResult = args.BulkEmailResult;
-    Console.WriteLine($"Bulk send completed:");
-    Console.WriteLine($"  Total: {bulkResult.TotalCount}");
-    Console.WriteLine($"  Success: {bulkResult.SuccessCount}");
-    Console.WriteLine($"  Failure: {bulkResult.FailureCount}");
-};
-```
-
-### ConnectionTested Event
+## ConnectionTested Event
 
 Fired when a connection test completes:
-
-```csharp
-_emailService.ConnectionTested += (sender, args) =>
-{
-    if (args.IsSuccess)
-    {
-        Console.WriteLine($"Connection test successful in {args.ElapsedTime}");
-    }
-    else
-    {
-        Console.WriteLine($"Connection test failed: {args.Exception?.Message}");
-    }
-};
-```
 
 ## Logging
 
@@ -501,8 +520,6 @@ Log levels:
 
 ## Metrics
 
-When `EnableMetrics` is set to `true` and an `IMetrics` service is registered, the library collects:
-
 - `email.send.duration` - Duration timer for send operations
 - `email.send.success` - Counter for successful sends
 - `email.send.failure` - Counter for failed sends
@@ -519,32 +536,16 @@ When `EnableMetrics` is set to `true` and an `IMetrics` service is registered, t
 - `email.test_connection.success` - Counter for successful connection tests
 - `email.test_connection.failure` - Counter for failed connection tests
 
-## Testing
+## API Reference — IEmailService
 
-The library includes comprehensive unit tests. To run tests:
-
-```bash
-dotnet test
-```
-
-## API Reference
-
-### IEmailService
-
-- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)` - Send email with
-  custom from address
-
+- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)` - Send email with custom from address
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, CancellationToken ct = default)` - Send email with default from address
-
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequest request, CancellationToken ct = default)` - Send email using EmailRequest object
-
 - `Task<IReadOnlyList<Result<EmailRequest>>> SendBulkEmailAsync(IEnumerable<EmailRequestBuilder> builders, CancellationToken ct = default)` - Send multiple emails sequentially
-
 - `Task<BulkResult<EmailRequest>> SendBulkEmailAsync(BulkEmailRequestBuilder bulkRequestBuilder, CancellationToken ct = default)` - Send bulk emails using BulkEmailRequestBuilder
-
 - `Task<bool> TestConnectionAsync(CancellationToken ct = default)` - Test SMTP connection
 
-### EmailRequestBuilder
+## API Reference — EmailRequestBuilder
 
 - `AddTo(...)` - Add To recipients
 - `AddCc(...)` - Add Cc recipients
@@ -562,9 +563,7 @@ dotnet test
 - `ClearTo()` / `ClearCc()` / `ClearBcc()` / `ClearAttachments()` - Clear collections
 - `Build()` - Build the MimeMessage
 
-### ZipFileBuilder
-
-Helper for assembling a ZIP archive in memory that can be attached via `AddAttachment(name, zipBytes)`:
+## API Reference — ZipFileBuilder
 
 - `AddFile(name, byte[] | Stream | string)` - Add a single entry; the `string` overload uses UTF-8 by default
 - `AddFiles(Dictionary<string, byte[]>)` / `AddFiles(params string[] filePaths)` - Add multiple entries
@@ -572,7 +571,7 @@ Helper for assembling a ZIP archive in memory that can be attached via `AddAttac
 - `AddDirectory(path, entryPrefix = "")` - Recursively add an entire directory tree
 - `Build()` / `BuildToFile(path)` / `BuildToStream()` - Materialise the archive (one-shot — the instance cannot be reused after building)
 
-### BulkEmailRequestBuilder
+## API Reference — BulkEmailRequestBuilder
 
 Use for bulk sends with a shared default sender:
 
@@ -602,31 +601,19 @@ services.AddSingleton<IEmailService, EmailService>();
 
 Multiple threads can safely use the same instance concurrently.
 
-## Important Notes
+## Important Notes — From Address Priority
 
-### From Address Priority
+- If `fromAddress` parameter is provided to `SendEmailAsync`, it overrides any From address in the builder
+- If builder has a From address and no parameter is provided, the builder's From address is used
+- If neither has a From address, the default From address from `EmailServiceOptions.DefaultFromAddress` and `EmailServiceOptions.DefaultFromName` is used
 
-1. If `fromAddress` parameter is provided to `SendEmailAsync`, it overrides any From address in the builder
-2. If builder has a From address and no parameter is provided, the builder's From address is used
-3. If neither has a From address, the default From address from `EmailServiceOptions.DefaultFromAddress` and
-   `EmailServiceOptions.DefaultFromName` is used
+## Important Notes — Bulk Email Processing
 
-### Bulk Email Processing
-
-Bulk emails are sent **sequentially over a single SMTP connection**. The service opens one connection,
-sends each message one after another, then disconnects. If cancellation is requested, processing stops
-and partial results are returned.
-
-Limits enforced by `EmailServiceOptions`:
-
-- `MaxBulkEmailLimit` (default `1000`) — `SendBulkEmailAsync` throws `ArgumentOutsideRangeException` if the input
-  exceeds this count.
+- `MaxBulkEmailLimit` (default `1000`) — `SendBulkEmailAsync` throws `ArgumentOutsideRangeException` if the input exceeds this count.
 - `MaxAttachmentCountPerEmail` (default `20`) — enforced per request on both single and bulk sends.
-- `BulkEmailConcurrencyLimit` (default `10`) — a soft cap used by callers planning concurrent bulk batches.
-  The current implementation processes messages sequentially within a single bulk call, so this value does
-  not change the in-call behaviour.
+- `BulkEmailConcurrencyLimit` (default `10`) — a soft cap used by callers planning concurrent bulk batches. The current implementation processes messages sequentially within a single bulk call, so this value does not change the in-call behaviour.
 
-### Cancellation
+## Important Notes — Cancellation
 
 - `SendEmailAsync` operations return a failure result if cancelled
 - `TestConnectionAsync` throws `OperationCanceledException` if cancelled
@@ -634,35 +621,17 @@ Limits enforced by `EmailServiceOptions`:
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Email.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package                                                | Version   |
-|--------------------------------------------------------|-----------|
-| `MailKit`                                              | `[4.15,)` |
-| `Microsoft.Extensions.Logging.Abstractions`            | `[10,)`   |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)`   |
-
-### Project references
-
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Email.Models`](../Lyo.Email.Models/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
-
----
-
-**Production Ready:** This library has been reviewed for production use and includes:
-
-- ✅ Thread-safe operations
-- ✅ Comprehensive error handling
-- ✅ Consumer-applied resilience (retry, timeout, etc.)
-- ✅ Input validation and configuration validation
-- ✅ Extensive test coverage
-- ✅ Logging and metrics support
-- ✅ Cancellation token support
-- ✅ Event notifications for monitoring
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Email.Models` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `MailKit` `4.17.0` — (direct, third-party)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

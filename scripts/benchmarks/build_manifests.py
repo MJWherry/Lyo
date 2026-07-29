@@ -435,11 +435,16 @@ def _report_richness(report: dict[str, Any]) -> int:
     return sum(len(group.get("measurements") or []) for group in report.get("groups") or [])
 
 
-def _report_rank(report: dict[str, Any]) -> tuple[float, int, int]:
-    """Higher is better: newest timestamp, then joined, then measurement count."""
+def _report_rank(report: dict[str, Any]) -> tuple[int, int, float]:
+    """Higher is better: joined full runs, then richness, then newest timestamp.
+
+    Richness before time so a partial/ceiling load run (few scenarios) cannot
+    displace a fuller matrix just because it finished later. Equal-richness
+    micro runs still resolve to the newest timestamp.
+    """
     ts = _parse_report_timestamp(report)
     joined = 1 if "joined" in str(report.get("runId", "")).lower() else 0
-    return (ts, joined, _report_richness(report))
+    return (joined, _report_richness(report), ts)
 
 
 def _collect_report_candidates(name: str) -> list[dict[str, Any]]:
@@ -820,11 +825,11 @@ def find_lyobench_json(name: str, *artifact_dirs: Path) -> Path | None:
     return max(candidates, key=_lyobench_rank)
 
 
-def _lyobench_rank(path: Path) -> tuple[float, int, int, float]:
-    """Rank candidates: newest timestamp first, then joined, then fuller reports."""
+def _lyobench_rank(path: Path) -> tuple[int, int, float, float]:
+    """Rank candidates: joined, then richness, then newest timestamp, then mtime."""
     report = _load_snapshot(path) or {}
     joined = 1 if "joined" in str(report.get("runId", "")).lower() else 0
-    return (_parse_report_timestamp(report), joined, _report_richness(report), path.stat().st_mtime)
+    return (joined, _report_richness(report), _parse_report_timestamp(report), path.stat().st_mtime)
 
 
 def artifact_dirs_for(category: dict[str, Any]) -> list[Path]:
@@ -1303,13 +1308,41 @@ def build_k6(run_dir: Path | None) -> bool:
     return True
 
 
+def republish_from_history() -> None:
+    """Re-pick each suite's latest from data + history using current ranking rules."""
+    names: set[str] = set()
+    if DATA_DIR.is_dir():
+        names.update(p.stem for p in DATA_DIR.glob("*.json"))
+    history_root = REPO_ROOT / "docs" / "benchmarks" / "history"
+    if history_root.is_dir():
+        names.update(p.name for p in history_root.iterdir() if p.is_dir())
+
+    for name in sorted(names):
+        candidates = _collect_report_candidates(name)
+        if not candidates:
+            continue
+        best = max(candidates, key=_report_rank)
+        print(f"{name}: selecting {best.get('runId')} (richness={_report_richness(best)})")
+        publish_report(best)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Aggregate benchmark reports into the unified schema.")
     parser.add_argument("--k6-only", action="store_true")
     parser.add_argument("--k6-run-dir", type=Path, default=None, help="Explicit k6 results directory")
+    parser.add_argument(
+        "--republish-history",
+        action="store_true",
+        help="Re-select latest per suite from archived history (no new artifact ingest).",
+    )
     for category in BDN_CATEGORIES:
         parser.add_argument(f"--{category['name']}-only", action="store_true")
     args = parser.parse_args()
+
+    if args.republish_history:
+        republish_from_history()
+        write_registry()
+        return
 
     category_flags = {c["name"]: getattr(args, f"{c['name']}_only") for c in BDN_CATEGORIES}
     run_all = not (args.k6_only or any(category_flags.values()))

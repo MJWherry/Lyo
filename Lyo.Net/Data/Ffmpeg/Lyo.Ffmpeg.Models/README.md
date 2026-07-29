@@ -8,28 +8,24 @@ This package has **no DI surface** — registration lives in `Lyo.Ffmpeg`. Refer
 
 ## Public API
 
-| Type                          | Description                                                                                                                                                                                                                                                                                               |
-|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`IAudioPlayer`**            | `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)` — each returns `Task<Result<bool>>`.                                                                                                                                                                                            |
-| **`IAudioProber`**            | `ProbeAsync(filePath)`, `ProbeStreamAsync(stream)`, `ProbeBytesAsync(bytes)` → `Task<Result<AudioProbeResult>>`.                                                                                                                                                                                          |
-| **`IAudioConverter`**         | Full file/stream/byte conversion matrix plus a request-shaped `ConvertAsync(AudioConversionRequest)`.                                                                                                                                                                                                     |
-| **`AudioConversionRequest`**  | `InputPath`, `OutputPath`, `Codec` (default `pcm_s16le`), `SampleRate` (44100), `Channels` (2), `Format` (`wav`), `Overwrite` (true), `NoVideo` (true).                                                                                                                                                   |
-| **`AudioConversionOptions`**  | Stream/byte-mode equivalent (no paths) — same fields, nullable defaults.                                                                                                                                                                                                                                  |
-| **`AudioProbeResult`**        | `FilePath`, `DurationSeconds`, `Format`, `SampleRate`, `Channels`, `Codec`, `BitRate`, `FileSizeBytes`, `HasVideo`, `HasAudio`, `RawMetadata` (raw ffprobe key/value).                                                                                                                                    |
-| **`FfmpegOptions`**           | Executable paths (`FfmpegPath`, `FfprobePath`, `FfplayPath`), defaults (`DefaultCodec`, `DefaultSampleRate`, `DefaultChannels`, `DefaultFormat`, `DefaultOverwrite`, `DefaultNoVideo`), `GlobalArguments`, `EnableMetrics`, `SuppressFfplayOutput`, `ProcessOutputMode`. `SectionName = "FfmpegOptions"`. |
-| **`FfmpegProcessOutputMode`** | `Suppress` (default — capture stdout/stderr internally) or `Passthrough` (echo to console for debugging).                                                                                                                                                                                                 |
+| Type | Description |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`IAudioPlayer`** | `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)` — each returns `Task<Result<bool>>`. |
+| **`IAudioProber`** | `ProbeAsync(filePath)`, `ProbeStreamAsync(stream)`, `ProbeBytesAsync(bytes)` → `Task<Result<AudioProbeResult>>`. |
+| **`IAudioConverter`** | Full file/stream/byte conversion matrix plus a request-shaped `ConvertAsync(AudioConversionRequest)`. |
+| **`AudioConversionRequest`** | `InputPath`, `OutputPath`, `Codec` (default `pcm_s16le`), `SampleRate` (44100), `Channels` (2), `Format` (`wav`), `Overwrite` (true), `NoVideo` (true). |
+| **`AudioConversionOptions`** | Stream/byte-mode equivalent (no paths) — same fields, nullable defaults. |
+| **`AudioProbeResult`** | `FilePath`, `DurationSeconds`, `Format`, `SampleRate`, `Channels`, `Codec`, `BitRate`, `FileSizeBytes`, `HasVideo`, `HasAudio`, `RawMetadata` (raw ffprobe key/value). |
+| **`FfmpegOptions`** | Executable paths (`FfmpegPath`, `FfprobePath`, `FfplayPath`), defaults (`DefaultCodec`, `DefaultSampleRate`, `DefaultChannels`, `DefaultFormat`, `DefaultOverwrite`, `DefaultNoVideo`), `GlobalArguments`, `EnableMetrics`, `SuppressFfplayOutput`, `ProcessOutputMode`. `SectionName = "FfmpegOptions"`. |
+| **`FfmpegProcessOutputMode`** | `Suppress` (default — capture stdout/stderr internally) or `Passthrough` (echo to console for debugging). |
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Ffmpeg.Models.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### Project references
-
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
-
-## Related projects
-
-- [`Lyo.Ffmpeg`](../Lyo.Ffmpeg/README.md) — concrete implementations and DI extensions.
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

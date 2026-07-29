@@ -7,50 +7,8 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 
 ## Contract highlights (`IMqService`)
 
-**Lifecycle**
-
 - **`ConnectAsync` / `DisconnectAsync`** establish sessions.
 - **`IsConnected`** — synchronous snapshot for guards.
-
-**Queues**
-
-- **`CreateQueue`** — durability / exclusivity / auto-delete plus broker-specific **`arguments`** bag (TTL, quorum queues, classic policies—whatever the plug-in forwards).
-- **`DeleteQueue`** — optional **if-unused / if-empty** guards mirror broker semantics.
-- **`ClearQueue`** purge without destroying topology.
-
-**Consumption**
-
-- **`PeekQueueMessages`** non-destructive reads for diagnostics/back-pressure introspection (**`QueuePeekMessage`** payloads).
-- **`SubscribeToQueue(queueName, Func<byte[], Task<bool>> handler, CancellationToken)`** —
-    - Handler returns **`true`** ⇒ **requeue/nack-with-requeue** semantics (broker-specific mapping).
-    - **`false`** ⇒ acknowledge / remove.
-    - **Cancellation** tears down the subscription loop cooperatively.
-
-**Publishing**
-
-- **`SendToQueue`** sends raw **`byte[]`** payloads—serialization policy lives in your worker (`System.Text.Json`, protobuf, compressed blobs, …).
-- **
-  `QueueMessageExtensions.SendToQueueWithEnvelopeAsync<T>(this IMqService, string queueName, T payload, JsonSerializerOptions?, string? messageId, DateTime? enqueuedAt, string? traceId)`
-  **
-  is a typed publish helper that wraps `payload` in a fresh `QueueMessageEnvelope<T>` (requeue count `0`,
-  generated `MessageId`, `EnqueuedAt = UtcNow`) and forwards the JSON bytes to `SendToQueue`. Use it when
-  publishing to queues consumed by `QueueWorkerBase` so requeue tracking starts on the first hop.
-- **
-  `QueueMessageExtensions.SubscribeToQueueAsync<T>(this IMqService, string queueName, Func<T, QueueMessageEnvelope<T>?, Task<bool>> handler, JsonSerializerOptions?, CancellationToken)`
-  **
-  is the typed consuming counterpart: it deserializes each message with the same autocorrect ladder used by
-  `QueueWorkerBase` (full envelope → payload-only → bare legacy `T`), passes the payload plus envelope
-  (null for legacy messages) to your handler, and **acks unparseable messages** instead of letting them
-  redeliver forever. Use it for lightweight non-worker consumers (event subscriptions, cancellation
-  listeners) that don't need the full hosted-worker machinery.
-- **`IDelayedMqService`** is an optional capability interface for transports that support delayed delivery
-  (`SendToQueueDelayed(queueName, data, delay, ct)`). The RabbitMQ implementation uses TTL + dead-letter
-  wait queues; `QueueWorkerBase` type-checks for it to space out retries with broker-side delays.
-
-**Topics / exchanges**
-
-- **`BindQueueToExchange`** + **`SendToExchange`** expose AMQP-shaped routing (`routingKey`). Non-Rabbit backends may approximate via topic subscriptions—the interface comment
-  documents that expectation.
 
 ## Messaging envelopes (`QueueMessageEnvelope<T>`)
 
@@ -68,23 +26,14 @@ message handlers are mapped to ack/nack/requeue semantics.
 
 ## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`)
 
-Subclass for **typed JSON consumers**:
-
-- Implements `IHostedService` + `IDisposable` + `IHealth` — `StartAsync` connects (if needed) and calls
-  `SubscribeToQueue`; `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight
-  messages before returning.
+- Implements `IHostedService` + `IDisposable` + `IHealth` — `StartAsync` connects (if needed) and calls `SubscribeToQueue`; `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight messages before returning.
 - Parses messages via the envelope-aware `DeserializeMessage` helper.
 - Executes your abstract `DoWorkAsync(TRequest, CancellationToken) → Task<TResult>`.
-- Applies requeue heuristics: an optional `Metadata["requeue"]` bool on the result overrides the default
-  `!IsSuccess` requeue.
-- Supports `maxRequeueCount` + optional DLQ publish (`dlqName`); when the count is exceeded, the original
-  message bytes are forwarded to the DLQ if configured, otherwise the message is dropped at Error level.
-- Optional retry backoff via the public `RequeueDelay` property: when set and the transport implements
-  `IDelayedMqService`, each counted requeue is republished with a broker-side delay of
-  `RequeueDelay × attempt` (linear backoff), so a failing message cannot burn through its retry budget in
-  milliseconds. Transports without delay support republish immediately.
+- Applies requeue heuristics: an optional `Metadata["requeue"]` bool on the result overrides the default `!IsSuccess` requeue.
+- Supports `maxRequeueCount` + optional DLQ publish (`dlqName`); when the count is exceeded, the original message bytes are forwarded to the DLQ if configured, otherwise the message is dropped at Error level.
+- Optional retry backoff via the public `RequeueDelay` property: when set and the transport implements `IDelayedMqService`, each counted requeue is republished with a broker-side delay of `RequeueDelay × attempt` (linear backoff), so a failing message cannot burn through its retry budget in milliseconds. Transports without delay support republish immediately.
 
-### Envelope retry flow
+## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Envelope retry flow
 
 Every failure path acks the original delivery and republishes a counted copy — a bad message or a
 repeatedly-throwing `DoWorkAsync` can never spin in an infinite broker redelivery loop:
@@ -101,15 +50,15 @@ flowchart LR
     cap -->|no| dlq[Ack + route to DLQ or drop]
 ```
 
-### `QueueWorkerOptions`
+## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — `QueueWorkerOptions`
 
 Shared defaults resolved by DI registration paths (e.g. `AddJobWorker` / `AddJobWorkerFromConfiguration`,
 section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signature stays unchanged:
 
-| Property                 | Type        | Default | Purpose                                                                                                          |
-|--------------------------|-------------|---------|------------------------------------------------------------------------------------------------------------------|
-| `DefaultMaxRequeueCount` | `int?`      | `5`     | Requeue cap applied when a worker doesn't pass an explicit `maxRequeueCount`. `null` = unlimited retries.        |
-| `RequeueDelay`           | `TimeSpan?` | `2s`    | Base retry delay (linear backoff by attempt). Requires an `IDelayedMqService` transport; `null`/zero = no delay. |
+| Property | Type | Default | Purpose |
+| ------------------------ | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `DefaultMaxRequeueCount` | `int?` | `5` | Requeue cap applied when a worker doesn't pass an explicit `maxRequeueCount`. `null` = unlimited retries. |
+| `RequeueDelay` | `TimeSpan?` | `2s` | Base retry delay (linear backoff by attempt). Requires an `IDelayedMqService` transport; `null`/zero = no delay. |
 
 - Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and
   emits metrics via the injected `IMetrics`:
@@ -121,10 +70,7 @@ section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signa
 
 This is the **production-grade** path for long-running consumers in Lyo’s own job/email stacks.
 
-### Health and diagnostics surface
-
-`IMqService` itself extends `IHealth` (broker reachability). Implementations also publish broker-level
-diagnostics through these neutral record types so dashboards can render the same shape across providers:
+## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Health and diagnostics surface
 
 - `MqServiceHealth` — `Queues` and `Connections` collections.
 - `MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)` — generic per-queue snapshot.
@@ -139,13 +85,29 @@ diagnostics through these neutral record types so dashboards can render the same
 
 ## Implementations & UI
 
-| Package                                                               | Role                                                         |
-|-----------------------------------------------------------------------|--------------------------------------------------------------|
-| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | Production **`RabbitMQ.Client`** driver + DI helpers.        |
-| **`Lyo.MessageQueue.Web.Components`**                                 | Blazor UX for queue inspection/management in internal tools. |
-| **`Lyo.MessageQueue.RabbitMq.Web.Components`**                        | Rabbit-specific components + wiring.                         |
+| Package | Role |
+| --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | Production **`RabbitMQ.Client`** driver + DI helpers. |
+| **`Lyo.MessageQueue.Web.Components`** | Blazor UX for queue inspection/management in internal tools. |
+| **`Lyo.MessageQueue.RabbitMq.Web.Components`** | Rabbit-specific components + wiring. |
 
 ## Related
 
 - [`Lyo.Job.Scheduler`](../../../Integration/Job/Lyo.Job.Scheduler/README.md) — often pairs with queues for fan-out triggers.
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md) — uniform health reporting.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

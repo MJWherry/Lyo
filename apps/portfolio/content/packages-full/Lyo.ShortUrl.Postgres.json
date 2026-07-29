@@ -1,0 +1,237 @@
+{
+  "id": "Lyo.ShortUrl.Postgres",
+  "name": "Lyo.ShortUrl.Postgres",
+  "area": "Features",
+  "tagline": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.",
+  "description": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.\n\n> **Heads up — there is no `PostgresShortUrlService` / `PostgresShortUrlStore` in this package.** It deliberately ships only the database surface (DbContext, entities,\n> migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, plug your own implementation on top of `ShortUrlDbContext` (or\n> use the in-box `Lyo.ShortUrl.ShortUrlService` for id-only generation; it does **not** persist anything).",
+  "features": [],
+  "examples": [
+    {
+      "title": "DI registration (`Extensions`)",
+      "language": "csharp",
+      "code": "services.AddShortUrlDbContextFactoryFromConfiguration(configuration);\n\nservices.AddSingleton<IShortUrlService, MyEfBackedShortUrlService>();\n// where MyEfBackedShortUrlService takes IDbContextFactory<ShortUrlDbContext>\n// and IShortUrlGenerator (services.AddShortUrlGenerator())."
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "What ships",
+      "items": [
+        "`ShortUrlDbContext` + `ShortUrlDbContextFactory` under `Database/`, with `DbSet<ShortUrlEntity>` and `DbSet<UrlClickEntity>`. The default schema is `\"url\"`.",
+        "`ShortUrlEntity` — the canonical short-link row: string-keyed `Id` (max 100 chars) used as the short code, `LongUrl` (≤ 1024), optional `CustomAlias`, `CreatedTimestamp` / `UpdatedTimestamp` / `ExpirationDate` / `LastAccessedDate`, `ClickCount`, `IsActive`, and a `Clicks` navigation. Includes a `FromShortenRequest(...)` factory and a `BuildShortUrl(baseUrl)` helper that mirrors `Lyo.ShortUrl.ShortUrlService`’s `BaseUrl` behaviour.",
+        "`UrlClickEntity` — append-only click log row (`ShortUrlId` FK, `ClickedAt`, optional `IpAddress` / `UserAgent` / `Referrer`).",
+        "`*EntityConfiguration` Fluent API mappings under the same folder.",
+        "`PostgresShortUrlOptions` (`SectionName = \"PostgresShortUrl\"`, `Schema = \"url\"`, `ConnectionString`, `EnableAutoMigrations`).",
+        "`Constants.Metrics` names (`urlshortener.postgres.statistics.duration`, `.delete.duration`, `.update.duration`) — reserved for downstream service implementations.",
+        "`InitialCreate` migration under `Migrations/`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "DI registration (`Extensions`)",
+      "headers": [
+        "Entry point",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`AddShortUrlDbContext(string connectionString)`",
+          "Registers the DbContext factory plus a scoped `ShortUrlDbContext` resolved from the factory."
+        ],
+        [
+          "`AddShortUrlDbContext(Action<DbContextOptionsBuilder>)`",
+          "Bare `AddDbContext<ShortUrlDbContext>(...)` — bring your own provider configuration."
+        ],
+        [
+          "`AddShortUrlDbContextFactory(Action<PostgresShortUrlOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*",
+          "Registers `IOptions<PostgresShortUrlOptions>`, `AddPostgresMigrations<ShortUrlDbContext, PostgresShortUrlOptions>()`, and `IDbContextFactory<ShortUrlDbContext>` (`UseNpgsql` + migrations history under the `url` schema)."
+        ]
+      ],
+      "trail": "There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService` — see the note at the top of this README. Wire your own service on top of the factory, for\nexample:"
+    },
+    {
+      "type": "table",
+      "title": "Schema",
+      "headers": [
+        "Table",
+        "Notable columns"
+      ],
+      "rows": [
+        [
+          "`url.short_urls`",
+          "`Id` (PK, string ≤ 100), `LongUrl` (≤ 1024), `CustomAlias?` (≤ 100), `CreatedTimestamp`, `UpdatedTimestamp?`, `ExpirationDate?`, `LastAccessedDate?`, `ClickCount`, `IsActive`."
+        ],
+        [
+          "`url.url_clicks`",
+          "`Id` (PK, `long`), `ShortUrlId` (FK → `short_urls.Id`), `ClickedAt`, optional `IpAddress` (≤ 45), `UserAgent` (≤ 500), `Referrer` (≤ 512)."
+        ]
+      ],
+      "trail": "(Exact table / column names follow the EF defaults plus the configurations under `Database/`. The migrations history is tracked in `__EFMigrationsHistory` under the same\n`url` schema.)"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Features/ShortUrl/Lyo.ShortUrl.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.ShortUrl",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

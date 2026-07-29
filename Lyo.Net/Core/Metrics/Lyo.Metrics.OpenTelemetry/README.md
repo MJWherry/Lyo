@@ -10,7 +10,7 @@ OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetr
 - Thread-safe metric recording
 - Support for multiple exporters (Console, Prometheus, OTLP, etc.)
 
-## Usage
+## Examples
 
 ### Basic Setup (Console Exporter)
 
@@ -63,32 +63,7 @@ services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider:
 });
 ```
 
-## Metric Type Mapping
-
-- **Counters**: `IncrementCounter` → OpenTelemetry `Counter<long>`
-- **Gauges**: `RecordGauge` → OpenTelemetry `Histogram<double>` (push-based)
-- **Histograms/Timings**: `RecordHistogram`/`RecordTiming` → OpenTelemetry `Histogram<double>`
-- **Errors**: `RecordError` → OpenTelemetry `Counter<long>` with error attributes
-- **Events**: `RecordEvent` → OpenTelemetry `Counter<long>`
-
-## Metric Name Sanitization
-
-Metric names are automatically sanitized to follow OpenTelemetry naming conventions:
-
-- Dots (`.`) are replaced with underscores (`_`)
-- Hyphens (`-`) are replaced with underscores (`_`)
-- Names starting with digits are prefixed with `_`
-
-Example: `email.send.duration` → `email_send_duration`
-
-## Tag/Attribute Conversion
-
-Tags are converted to OpenTelemetry attributes:
-
-- Tag keys are sanitized (dots/hyphens → underscores)
-- Tag values are preserved as-is
-
-## Example
+### Example
 
 ```csharp
 // Register OpenTelemetry metrics
@@ -105,21 +80,33 @@ using (metrics.StartTimer("operation.duration"))
 }
 ```
 
+## Metric Type Mapping
+
+- **Counters**: `IncrementCounter` → OpenTelemetry `Counter<long>`
+- **Gauges**: `RecordGauge` → OpenTelemetry `Histogram<double>` (push-based)
+- **Histograms/Timings**: `RecordHistogram`/`RecordTiming` → OpenTelemetry `Histogram<double>`
+- **Errors**: `RecordError` → OpenTelemetry `Counter<long>` with error attributes
+- **Events**: `RecordEvent` → OpenTelemetry `Counter<long>`
+
+## Metric Name Sanitization
+
+- Dots (`.`) are replaced with underscores (`_`)
+- Hyphens (`-`) are replaced with underscores (`_`)
+- Names starting with digits are prefixed with `_`
+
+## Tag/Attribute Conversion
+
+- Tag keys are sanitized (dots/hyphens → underscores)
+- Tag values are preserved as-is
+
 ## Dependencies
 
-*(Synchronized from `Lyo.Metrics.OpenTelemetry.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-| Package                            | Version |
-|------------------------------------|---------|
-| `OpenTelemetry`                    | `1.*`   |
-| `OpenTelemetry.Exporter.Console`   | `1.*`   |
-| `OpenTelemetry.Extensions.Hosting` | `1.*`   |
-
-### Project references
-
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../Lyo.Metrics/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `OpenTelemetry` `1.16.0` — (direct, third-party)
+- `OpenTelemetry.Exporter.Console` `1.16.0` — (direct, third-party)
+- `OpenTelemetry.Extensions.Hosting` `1.16.0` — (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

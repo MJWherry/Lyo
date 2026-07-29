@@ -1,0 +1,435 @@
+{
+  "id": "Lyo.Job.Worker",
+  "name": "Lyo.Job.Worker",
+  "area": "Integration",
+  "tagline": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled worker-type queue…",
+  "description": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled\nworker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the full run lifecycle (fetch, start, heartbeat, progress, finish), registers in the **worker registry\n**, decrypts encrypted parameters, supports **batch child runs**, subscribes to cancellation messages, links **distributed traces** from queue envelopes, and reports results back\nto the Job API.\n\n`JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, inheriting ack / requeue / DLQ semantics and `queue.worker.*` metrics.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register services",
+      "language": "csharp",
+      "code": "// IMqService (RabbitMQ) + Job.Client publisher — not Lyo.Job.Postgres\nservices.AddMqJobEventPublisher(); // Lyo.Job.Client — IMqService + Job.Client, not Postgres/Scheduler\n\nservices.AddJobWorker<MyImportWorker>(\n    workerType: \"csharp\",\n    apiBaseUrl: \"https://api.example.com\",\n    maxRequeueCount: 5,\n    dlqName: \"job.run.csharp.dlq\");\n\n// Bind QueueWorkerOptions (section QueueWorkerOptions) for DefaultMaxRequeueCount / RequeueDelay:\nservices.AddJobWorkerFromConfiguration<MyImportWorker>(\n    configuration, workerType: \"csharp\", apiBaseUrl: \"https://api.example.com\");"
+    },
+    {
+      "title": "Example worker",
+      "language": "csharp",
+      "code": "public sealed class MyImportWorker : JobWorkerBase\n{\n    public MyImportWorker(\n        IMqService mq, IApiClient api, IJobEventPublisher events,\n        string workerType, string apiBaseUrl,\n        ILogger<MyImportWorker>? logger = null, IMetrics? metrics = null,\n        int? maxRequeueCount = null, string? dlqName = null,\n        IJobParameterEncryptionService? parameterEncryption = null)\n        : base(mq, api, events, workerType, apiBaseUrl, logger, metrics,\n               maxRequeueCount, dlqName, parameterEncryption) { }\n\n    protected override async Task ExecuteAsync(IJobWorkerContext ctx)\n    {\n        await ctx.ReportProgressAsync(10, \"Starting import\");\n        var batch = ctx.Run.JobRunParameters.GetInt(\"BatchSize\") ?? 100;\n        ctx.Results.AddCreateCount(batch);\n        await ctx.ReportProgressAsync(100, \"Complete\");\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Registration",
+      "text": "Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client) — do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`. When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`."
+    },
+    {
+      "type": "table",
+      "title": "Configuration (`QueueWorkerOptions.SectionName` = `\"QueueWorkerOptions\"`)",
+      "headers": [
+        "Property",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`DefaultMaxRequeueCount`",
+          "`5`",
+          "Cap before DLQ routing"
+        ],
+        [
+          "`RequeueDelay`",
+          "`2s`",
+          "Linear retry delay (requires `IDelayedMqService`)"
+        ]
+      ],
+      "lead": "Shared with `Lyo.MessageQueue.QueueWorkerBase` (see [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)):"
+    },
+    {
+      "type": "table",
+      "title": "Metrics (`job.worker.*`)",
+      "headers": [
+        "Metric",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`job.worker.run.executed`",
+          "Execute completed (tag `outcome`)"
+        ],
+        [
+          "`job.worker.run.duration`",
+          "Execute phase wall time"
+        ],
+        [
+          "`job.worker.heartbeat.sent`",
+          "Run heartbeat PATCH success"
+        ],
+        [
+          "`job.worker.heartbeat.failed`",
+          "Run heartbeat PATCH failure"
+        ],
+        [
+          "`job.worker.cancellation.honored`",
+          "Run cancelled via MQ signal"
+        ],
+        [
+          "`job.worker.progress.reported`",
+          "`ReportProgressAsync` calls"
+        ],
+        [
+          "`job.worker.start.rejected`",
+          "`Started` rejected by the API CAS guard (duplicate delivery / cancelled run) — message dropped, not requeued"
+        ],
+        [
+          "`job.worker.shutdown.requeued`",
+          "Run handed back to `Queued` during graceful host shutdown"
+        ],
+        [
+          "`job.worker.late_finish.dropped`",
+          "`Finished` report rejected as terminal (run already finalized, e.g. timed out by maintenance) — dropped cleanly"
+        ]
+      ],
+      "trail": "Also emits inherited `queue.worker.*` metrics from the message-queue worker base."
+    },
+    {
+      "type": "table",
+      "title": "Production features",
+      "headers": [
+        "Feature",
+        "Implementation"
+      ],
+      "rows": [
+        [
+          "**Priority queues**",
+          "Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`."
+        ],
+        [
+          "**Worker registry**",
+          "`POST Job/WorkerInstance` on start (soft-fail if the Job API is down); periodic PATCH with `InFlightCount`; re-register on missing id / heartbeat `404`; `Stopped` on shutdown."
+        ],
+        [
+          "**Progress**",
+          "Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`."
+        ],
+        [
+          "**Batch jobs**",
+          "`ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`."
+        ],
+        [
+          "**Encryption**",
+          "Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered."
+        ],
+        [
+          "**Tracing**",
+          "`JobTracing.StartWorkerExecution` links to envelope `TraceId`."
+        ],
+        [
+          "**Cancellation**",
+          "Per-run CTS + `SubscribeToRunCancellationsAsync`."
+        ],
+        [
+          "**Dry run**",
+          "Not applicable — dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them."
+        ]
+      ],
+      "trail": "Override `HeartbeatInterval` (default 30 s) in a subclass to tune heartbeat/progress PATCH cadence for long-running jobs."
+    },
+    {
+      "type": "paragraph",
+      "title": "Production features — Cancellation topology",
+      "text": "Cancellations are broadcast, not competed for: each worker instance binds its **own exclusive auto-delete queue** (`job.run.{workerType}.cancel.{instanceId}`) to the `job.events` exchange on the `job.notifications.run.cancelled` routing key. Every instance of a scaled-out worker type therefore sees every cancel message; instances not executing that run simply ignore it. (A single shared cancel queue would deliver each cancel to only one competing consumer and silently lose cancellations for scaled-out workers.) The queues are auto-deleted when the instance disconnects."
+    },
+    {
+      "type": "list",
+      "title": "Production features — Shutdown and rejection semantics",
+      "items": [
+        "**Graceful host shutdown** — a run interrupted by host shutdown (not by a user cancel) is handed back via `POST Job/Run/{id}/Requeue`, which CAS-transitions it `Running -> Queued` for redelivery on restart instead of terminally cancelling it. If the requeue fails (API down, or the run is `Cancelling` because a user cancel is pending), the run is left for the maintenance dead-job watchdog.",
+        "**`Started` rejected (400)** — the API's CAS guard rejects starts for non-`Queued` runs (duplicate dispatch delivery, run cancelled while queued). The worker drops the message without requeueing — retrying can never succeed.",
+        "**`Finished` rejected (400)** — the run was already finalized (e.g. timed out by maintenance while the worker was still executing). The worker logs and drops the report as terminal instead of churning it through requeue/DLQ. Transient finish failures (network, 5xx) are retried before giving up."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Worker lifecycle",
+      "body": "```mermaid\nsequenceDiagram\n    participant Q as job.run.workerType\n    participant W as JobWorkerBase\n    participant API as Job API\n    Q->>W: runId message\n    W->>API: GET run\n    W->>API: POST Started\n    W->>API: PATCH heartbeat / progress\n    W->>W: ExecuteAsync(ctx)\n    W->>API: POST Finished\n    Note over W,API: Registry PATCH in parallel\n```\n\n1. **Fetch** — `GET Job/Run/{id}` with full includes.\n2. **Start** — `POST Job/Run/{id}/Started`; decrypt parameters.\n3. **Heartbeat loop** — PATCH `LastHeartbeatUtc` + progress fields every `HeartbeatInterval` (default 30 s).\n4. **`ExecuteAsync(ctx)`** — subclass work; use `ctx.ReportProgressAsync`, `ctx.CreateChildRunsAsync`, `ctx.CancellationToken`.\n5. **Finish** — `POST Job/Run/{id}/Finished` with `JobWorkerResultBuilder` results.\n\n`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed\n`POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every\n`HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration."
+    },
+    {
+      "type": "table",
+      "title": "`IJobWorkerContext`",
+      "headers": [
+        "Member",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`Run`",
+          "Fully loaded `JobRunRes`"
+        ],
+        [
+          "`Logger`",
+          "Scoped structured logger"
+        ],
+        [
+          "`CancellationToken`",
+          "Host shutdown + MQ cancel"
+        ],
+        [
+          "`Results`",
+          "`JobWorkerResultBuilder`"
+        ],
+        [
+          "`ReportProgressAsync(percent, message?)`",
+          "Immediate progress PATCH"
+        ],
+        [
+          "`CreateChildRunsAsync(request)`",
+          "Batch fan-out child runs"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "`JobWorkerResultBuilder`",
+      "text": "Fluent builder for finish results. `Build()` appends the `Result` key. Helpers: `SetOutcome`, `Fail`, `Cancel`, counter helpers, `AddError`, `AddFailedItem`, `AddApiCallTime`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Job/Lyo.Job.Worker/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Job.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Job.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Diagnostics.DiagnosticSource",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

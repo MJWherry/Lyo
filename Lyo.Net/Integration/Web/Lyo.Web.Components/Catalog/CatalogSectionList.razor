@@ -1,0 +1,59 @@
+@namespace Lyo.Web.Components.Catalog
+
+@if (Sections is { Count: > 0 })
+{
+    @foreach (var sec in Sections)
+    {
+        @if (!string.IsNullOrWhiteSpace(sec.Title))
+        {
+            <MudText Typo="Typo.h6" Class="mt-4 mb-2">@sec.Title</MudText>
+        }
+
+        @switch (sec.Type)
+        {
+            case "paragraph":
+                <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="white-space: pre-wrap;">@sec.Text</MudText>
+                break;
+            case "list":
+                @if (sec.Ordered == true)
+                {
+                    <ol class="lyo-catalog-list">
+                        @foreach (var item in sec.Items ?? [])
+                        {
+                            <li>@((MarkupString)FormatInline(item))</li>
+                        }
+                    </ol>
+                }
+                else
+                {
+                    <ul class="lyo-catalog-list">
+                        @foreach (var item in sec.Items ?? [])
+                        {
+                            <li>@((MarkupString)FormatInline(item))</li>
+                        }
+                    </ul>
+                }
+                break;
+            case "code":
+                <MudPaper Class="pa-3 mb-3 mud-background-gray" Elevation="0" Outlined="true">
+                    <pre style="margin:0; overflow:auto; font-size:0.85rem;"><code>@sec.Code</code></pre>
+                </MudPaper>
+                break;
+            case "markdown":
+                <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="white-space: pre-wrap;">@sec.Body</MudText>
+                break;
+        }
+    }
+}
+
+@code {
+    /// <summary>Catalog sections to render.</summary>
+    [Parameter]
+    public IReadOnlyList<CatalogSection>? Sections { get; set; }
+
+    private static string FormatInline(string text)
+    {
+        return System.Net.WebUtility.HtmlEncode(text)
+            .Replace("\n", "<br/>", StringComparison.Ordinal);
+    }
+}

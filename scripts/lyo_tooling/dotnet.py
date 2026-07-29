@@ -96,6 +96,35 @@ def tfm_condition_applies(condition: str | None, tfm: str) -> bool:
     return True
 
 
+def read_target_frameworks(csproj: Path) -> list[str]:
+    """Return TargetFramework / TargetFrameworks from a csproj (stable order)."""
+    if not csproj.is_file():
+        return []
+    try:
+        root = parse_msbuild_xml(csproj)
+    except ET.ParseError:
+        return []
+    for tag in ("TargetFrameworks", "TargetFramework"):
+        for el in root.iter(tag):
+            text = (el.text or "").strip()
+            if not text:
+                continue
+            # Prefer first non-empty PropertyGroup declaration.
+            frameworks = [t.strip() for t in text.split(";") if t.strip()]
+            if frameworks:
+                # De-dupe preserving order
+                seen: set[str] = set()
+                out: list[str] = []
+                for fw in frameworks:
+                    key = fw.casefold()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    out.append(fw)
+                return out
+    return []
+
+
 def find_project_csproj(project_dir: Path) -> Path | None:
     """Locate a project's csproj, preferring `<dirname>.csproj`."""
     preferred = project_dir / f"{project_dir.name}.csproj"

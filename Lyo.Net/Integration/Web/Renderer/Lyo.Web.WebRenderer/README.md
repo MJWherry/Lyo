@@ -3,47 +3,54 @@
 Server-side rendering of Razor components and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by
 **PuppeteerSharp** against a locally-installed Chromium/Chrome browser.
 
+## Examples
+
+### DI registration ([`Extensions.cs`](Extensions.cs))
+
+```csharp
+services.AddWebRendererServiceFromConfiguration(builder.Configuration);
+```
+
 ## Surface ([`IWebRendererService`](IWebRendererService.cs))
 
 The service exposes three families of operations plus three observability events.
 
-### Render Razor components
+## Surface ([`IWebRendererService`](IWebRendererService.cs)) — Render Razor components
 
-| Method (sync + `Async` overloads)                 | Result                                                                          |
-|---------------------------------------------------|---------------------------------------------------------------------------------|
-| `RenderToHtml<T>(parameterDictionary?)`           | HTML string for component `T : IComponent`.                                     |
-| `RenderToHtml<T, TOptions>(options)`              | HTML string passing a strongly-typed options object as the `Options` parameter. |
-| `RenderToHtmlBytes<T>(parameterDictionary?)`      | UTF-8 bytes (records size metric).                                              |
-| `RenderToHtmlBytes<T, TOptions>(options)`         | Same, with typed options.                                                       |
-| `RenderToFile<T>(filePath, parameterDictionary?)` | Writes HTML to disk at `filePath`.                                              |
-| `RenderToFile<T, TOptions>(filePath, options)`    | Same, with typed options.                                                       |
+| Method (sync + `Async` overloads) | Result |
+| ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `RenderToHtml<T>(parameterDictionary?)` | HTML string for component `T : IComponent`. |
+| `RenderToHtml<T, TOptions>(options)` | HTML string passing a strongly-typed options object as the `Options` parameter. |
+| `RenderToHtmlBytes<T>(parameterDictionary?)` | UTF-8 bytes (records size metric). |
+| `RenderToHtmlBytes<T, TOptions>(options)` | Same, with typed options. |
+| `RenderToFile<T>(filePath, parameterDictionary?)` | Writes HTML to disk at `filePath`. |
+| `RenderToFile<T, TOptions>(filePath, options)` | Same, with typed options. |
 
-### HTML → PDF conversion
+## Surface ([`IWebRendererService`](IWebRendererService.cs)) — HTML → PDF conversion
 
-| Method (sync + `Async` overloads)                                           | Result                                                                        |
-|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| `ConvertHtmlToPdf(string htmlContent)`                                      | PDF bytes from an HTML string.                                                |
-| `ConvertHtmlToPdf(byte[] htmlBytes)`                                        | PDF bytes from already-encoded HTML.                                          |
-| `ConvertHtmlToPdfFromFile(string htmlFilePath)`                             | PDF bytes from an HTML file on disk.                                          |
-| `ConvertHtmlToPdfFile(string htmlContent, string pdfFilePath)`              | Writes PDF to `pdfFilePath`.                                                  |
-| `ConvertHtmlToPdfFile(byte[] htmlBytes, string pdfFilePath)`                | Same, from bytes.                                                             |
+| Method (sync + `Async` overloads) | Result |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `ConvertHtmlToPdf(string htmlContent)` | PDF bytes from an HTML string. |
+| `ConvertHtmlToPdf(byte[] htmlBytes)` | PDF bytes from already-encoded HTML. |
+| `ConvertHtmlToPdfFromFile(string htmlFilePath)` | PDF bytes from an HTML file on disk. |
+| `ConvertHtmlToPdfFile(string htmlContent, string pdfFilePath)` | Writes PDF to `pdfFilePath`. |
+| `ConvertHtmlToPdfFile(byte[] htmlBytes, string pdfFilePath)` | Same, from bytes. |
 | `ConvertHtmlFileToPdfFile(string htmlFilePath, string? pdfFilePath = null)` | End-to-end file → file (PDF path defaults to `<htmlFilePath>.pdf` when null). |
 
 > The current interface only exposes Razor render and HTML→PDF; there is no in-process screenshot API. For raw screenshots, use PuppeteerSharp directly through `BrowserExePath`.
 
-### Events
+## Surface ([`IWebRendererService`](IWebRendererService.cs)) — Events
 
-`ComponentRendered`, `ComponentRenderedToBytes`, `ComponentSavedToFile` fire after the corresponding render operations and carry the resulting payload plus parameter and
-options snapshots — useful for downstream archival or diffing.
+`ComponentRendered`, `ComponentRenderedToBytes`, `ComponentSavedToFile` fire after the corresponding render operations and carry the resulting payload plus parameter and options snapshots — useful for downstream archival or diffing.
 
 ## Options ([`WebRenderOptions`](WebRenderOptions.cs))
 
 Configuration section: `WebRenderOptions`.
 
-| Property         | Default                                                | Description                                                                              |
-|------------------|--------------------------------------------------------|------------------------------------------------------------------------------------------|
-| `BrowserExePath` | `Utilities.DetectBrowserPath(SupportedBrowser.Chrome)` | Path to the Chromium/Chrome executable used by PuppeteerSharp for HTML→PDF.              |
-| `EnableMetrics`  | `false`                                                | When `true` and an `IMetrics` is registered, records timers/counters/gauges (see below). |
+| Property | Default | Description |
+| ---------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `BrowserExePath` | `Utilities.DetectBrowserPath(SupportedBrowser.Chrome)` | Path to the Chromium/Chrome executable used by PuppeteerSharp for HTML→PDF. |
+| `EnableMetrics` | `false` | When `true` and an `IMetrics` is registered, records timers/counters/gauges (see below). |
 
 When `EnableMetrics` is `false` (default) the service uses `NullMetrics.Instance`, so registering `IMetrics` is optional.
 
@@ -52,19 +59,18 @@ Metrics emitted (see [`Constants.cs`](Constants.cs)) include `webrenderer.render
 
 ## DI registration ([`Extensions.cs`](Extensions.cs))
 
-```csharp
-services.AddWebRendererServiceFromConfiguration(builder.Configuration);
-```
+This binds `WebRenderOptions` from `WebRenderOptions` (default section name) and registers: - A scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (resolved with the host’s `IServiceProvider` and `ILoggerFactory`). - A scoped `IWebRendererService` → `WebRendererService`, optionally consuming registered `ILogger<WebRendererService>` and `IMetrics`. Pass `configSectionName` to the extension if you need a non-default section name. There is currently no inline-options overload — register `WebRenderOptions` yourself before calling the extension if you need to bypass configuration.
 
-This binds `WebRenderOptions` from `WebRenderOptions` (default section name) and registers:
+## Dependencies
 
-- A scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (resolved with the host’s `IServiceProvider` and `ILoggerFactory`).
-- A scoped `IWebRendererService` → `WebRendererService`, optionally consuming registered `ILogger<WebRendererService>` and `IMetrics`.
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-Pass `configSectionName` to the extension if you need a non-default section name. There is currently no inline-options overload — register `WebRenderOptions` yourself before
-calling the extension if you need to bypass configuration.
-
-## Related projects
-
-- [`Lyo.Exceptions`](../../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../../../Core/Metrics/Lyo.Metrics/README.md)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Microsoft.AspNetCore.Components.Web` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `PuppeteerSharp` `24.0.0` — (direct, third-party)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)

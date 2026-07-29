@@ -1,0 +1,154 @@
+{
+  "id": "Lyo.Endato.Postgres",
+  "name": "Lyo.Endato.Postgres",
+  "area": "Integration",
+  "tagline": "PostgreSQL schema and EF Core context for caching Endato Person Search (PS) and Contact Enrichment (CE) responses. Schema name is `endato`.",
+  "description": "PostgreSQL schema and EF Core context for caching Endato Person Search (PS) and Contact Enrichment (CE) responses. Schema name is `endato`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Quick start",
+      "language": "csharp",
+      "code": "services.AddEndatoDbContextFactoryFromConfiguration(builder.Configuration);\n\n// or inline:\nservices.AddEndatoDbContextFactory(o => {\n    o.ConnectionString = \"Host=localhost;Database=lyo;Username=postgres;Password=postgres\";\n    o.EnableAutoMigrations = true;\n});"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "What ships",
+      "headers": [
+        "Group",
+        "Entities"
+      ],
+      "rows": [
+        [
+          "**Person Search (`Ps`)**",
+          "`EndatoPsQueryEntity`, `EndatoPsPersonEntity`, `EndatoPsAddressEntity`, `EndatoPsEmailAddressEntity`, `EndatoPsPhoneNumberEntity` (+ matching `*Configuration` classes)."
+        ],
+        [
+          "**Contact Enrichment (`Ce`)**",
+          "`EndatoCeQueryEntity`, `EndatoCePersonEntity`, `EndatoCeAddressEntity`, `EndatoCeEmailAddressEntity`, `EndatoCePhoneNumberEntity` (+ matching `*Configuration` classes)."
+        ]
+      ],
+      "lead": "- **`EndatoDbContext`** ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.\n- **`PostgresEndatoOptions`** ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)) — `IPostgresMigrationConfig`. Section `\"PostgresEndato\"`. Properties: `ConnectionString`,\n  `EnableAutoMigrations` (default `false`); `Schema = \"endato\"` is constant.\n- **Migrations** under [`Migrations/`](Migrations).\n\nThe two domains (Person Search and Contact Enrichment) are intentionally split into separate entity groups so caching either source is independent:",
+      "trail": "`OnModelCreating` sets `HasDefaultSchema(\"endato\")` and applies each entity configuration; the migrations history table is also written to the `endato` schema."
+    },
+    {
+      "type": "table",
+      "title": "DI surface ([`Extensions.cs`](Extensions.cs))",
+      "headers": [
+        "Method",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`AddEndatoDbContext(string connectionString)`",
+          "Convenience: registers the factory plus a scoped `EndatoDbContext` resolved from the factory."
+        ],
+        [
+          "`AddEndatoDbContext(Action<DbContextOptionsBuilder>)`",
+          "Standard EF `AddDbContext` overload."
+        ],
+        [
+          "`AddEndatoDbContextFactory(Action<PostgresEndatoOptions>)`",
+          "Builds options inline."
+        ],
+        [
+          "`AddEndatoDbContextFactoryFromConfiguration(config, sectionName?)`",
+          "Binds options from configuration (default section `\"PostgresEndato\"`)."
+        ],
+        [
+          "`AddEndatoDbContextFactory(PostgresEndatoOptions)`",
+          "Registers `IDbContextFactory<EndatoDbContext>` (Npgsql provider), wires `AddPostgresMigrations<EndatoDbContext, …>`, and sets the migrations history table to the `endato` schema."
+        ]
+      ],
+      "lead": "All registrations are extension methods on `IServiceCollection` (declared inside `extension(IServiceCollection services)` blocks):"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Endato/Lyo.Endato.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

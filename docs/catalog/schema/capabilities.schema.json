@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyo.local/catalog/capabilities.schema.json",
+  "title": "Lyo capabilities catalog",
+  "type": "object",
+  "required": ["capabilities"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "capability.schema.json" }
+    }
+  }
+}

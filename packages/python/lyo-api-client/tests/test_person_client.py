@@ -45,3 +45,15 @@ def test_query_root_posts_to_root_query(stub_transport):
     assert payload["From"] == {"Alias": "p", "EntityType": "Person"}
     assert payload["Select"] == ["p.Id"]
     assert "Joins" not in payload
+
+
+def test_get_person_gets_by_id_with_includes(stub_transport):
+    make_client(stub_transport).get_person(
+        "abc-123",
+        include=["contactaddresses.address", "contactemailaddresses.emailaddress"],
+    )
+    sent = stub_transport.last
+    assert sent.method == "GET"
+    assert sent.url.startswith("http://x/person/abc-123?")
+    assert "include=contactaddresses.address" in sent.url
+    assert "include=contactemailaddresses.emailaddress" in sent.url

@@ -1,0 +1,254 @@
+{
+  "id": "Lyo.ChangeTracker.Postgres",
+  "name": "Lyo.ChangeTracker.Postgres",
+  "area": "Core",
+  "tagline": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional actor.",
+  "description": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional\nactor.",
+  "features": [
+    "`PostgresChangeTracker` implementing both `IChangeTracker` and `Lyo.Health.IHealth`",
+    "EF Core migrations in the `change_tracker` schema (`PostgresChangeTrackerOptions.Schema`)",
+    "Queryable history by entity, entity type, or change id (newest first)",
+    "`DeleteForEntityAsync` to drop all history for a target entity",
+    "Optional automatic migrations on startup via `EnableAutoMigrations`"
+  ],
+  "examples": [
+    {
+      "title": "Quick Start",
+      "language": "csharp",
+      "code": "services.AddPostgresChangeTracker(new PostgresChangeTrackerOptions {\n    ConnectionString = configuration.GetConnectionString(\"ChangeTracker\")!,\n    EnableAutoMigrations = true\n});\n\nservices.AddPostgresChangeTrackerFromConfiguration(configuration);"
+    },
+    {
+      "title": "Migrations",
+      "language": "bash",
+      "code": "export CHANGE_TRACKER_CONNECTION_STRING=\"Host=localhost;Database=change_tracker;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTracker.Postgres"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Registration",
+      "headers": [
+        "Extension",
+        "What it adds"
+      ],
+      "rows": [
+        [
+          "`AddChangeTrackerDbContextFactory(options)` / `(Action<…>)`",
+          "Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`)."
+        ],
+        [
+          "`AddChangeTrackerDbContextFactoryFromConfiguration(IConfiguration, …)`",
+          "Binds `PostgresChangeTrackerOptions` from `\"PostgresChangeTracker\"` (override the section via the optional `configSectionName`) and registers as above."
+        ],
+        [
+          "`AddChangeTrackerDbContext(connectionString)`",
+          "Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`."
+        ],
+        [
+          "`AddChangeTrackerDbContext(Action<DbContextOptionsBuilder>)`",
+          "Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing)."
+        ],
+        [
+          "`AddPostgresChangeTracker(options)` / `(Action<…>)`",
+          "Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton."
+        ],
+        [
+          "`AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)`",
+          "Same as the options overload, binding from configuration."
+        ]
+      ],
+      "lead": "The package layers registration helpers so hosts can pick the level of integration they need:"
+    },
+    {
+      "type": "paragraph",
+      "title": "Health",
+      "text": "`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = \"change-tracker-postgres\"`. The probe opens a `ChangeTrackerDbContext` and runs `Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve `IEnumerable<IHealth>`."
+    },
+    {
+      "type": "list",
+      "title": "Schema",
+      "items": [
+        "All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).",
+        "`change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Tenancy",
+      "body": "`ChangeRecord` carries an optional `TenantId`; `null` denotes a system / untenanted row. `PostgresChangeTracker` runs every record through `TenancyResolver.Resolve` using the\npolicy configured in `PostgresChangeTrackerOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:\n\n- `SystemOnly` — caller `TenantId` is ignored; the row stores `null`.\n- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.\n- `MultiTenantStrict` — caller must supply a non-empty `TenantId` or persistence throws.\n\nThe `ix_changes_tenant` index supports per-tenant lookups. Use the\n`WhereTenant` / `WhereTenantOrSystem` helpers from [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) to query the table.\n\n```json\n{\n  \"PostgresChangeTracker\": {\n    \"ConnectionString\": \"Host=localhost;Database=change_tracker;...\",\n    \"Tenancy\": { \"Mode\": \"SystemOnly\" }\n  }\n}\n```"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/ChangeTracker/Lyo.ChangeTracker.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.ChangeTracker",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

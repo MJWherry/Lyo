@@ -10,20 +10,9 @@ strategies.
 - **Replacement strategies** – `Remove`, `ReplaceWithChar`, `ReplaceWithWord`, `Mask`, `PreserveBoundary`, `DetectOnly`
 - **Per-language** – Load different word lists by BCP 47 / ISO 639-1 / ISO 639-3
 
-## DI registration
+## Examples
 
-`Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection` — pick exactly one when wiring up the host:
-
-| Entry point                                                                                                                                      | Behaviour                                                                                                                                                                                   |
-|--------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `services.AddProfanityFilterService()`                                                                                                           | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface. |
-| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)`                                                               | Same registration, with an inline options callback.                                                                                                                                         |
-| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | Same registration, binding options from the configuration section (default `"ProfanityFilter"`).                                                                                            |
-
-`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an
-optional `HttpClient` (used when `WordsUrl` is configured).
-
-## Usage
+### Usage
 
 ```csharp
 services.AddProfanityFilterService(options =>
@@ -40,17 +29,7 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 // result.FilteredText, result.HasProfanity, result.Matches
 ```
 
-## `IProfanityFilterService` surface
-
-- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult`
-  (`FilteredText`, `HasProfanity`, `Matches`).
-- `FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` — same as above, async.
-- `ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` — fast boolean check, no replacement.
-- `ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` — async variants.
-- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source
-  doesn't support refresh.
-
-## Configuration (appsettings.json)
+### Configuration (appsettings.json)
 
 ```json
 {
@@ -68,6 +47,27 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 }
 ```
 
+## DI registration
+
+`Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection` — pick exactly one when wiring up the host:
+
+| Entry point | Behaviour |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services.AddProfanityFilterService()` | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface. |
+| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)` | Same registration, with an inline options callback. |
+| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | Same registration, binding options from the configuration section (default `"ProfanityFilter"`). |
+
+`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an
+optional `HttpClient` (used when `WordsUrl` is configured).
+
+## `IProfanityFilterService` surface
+
+- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult` (`FilteredText`, `HasProfanity`, `Matches`).
+- `FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` — same as above, async.
+- `ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` — fast boolean check, no replacement.
+- `ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` — async variants.
+- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't support refresh.
+
 ## Word list formats
 
 - **Plain JSON array** — `["word1", "word2"]` becomes default entries (`id == match == word`, `tags = []`, `severity = 1`, `exceptions = []`).
@@ -76,34 +76,26 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 ## Replacement strategies
 
-| Strategy         | Example (input → output)    |
-|------------------|-----------------------------|
-| Remove           | "bad" → ""                  |
-| ReplaceWithChar  | "bad" → "***"               |
-| ReplaceWithWord  | "bad" → "***"               |
-| Mask             | "bad" → "***"               |
-| PreserveBoundary | "bad" → "b*d"               |
-| DetectOnly       | No replacement; only detect |
+| Strategy | Example (input → output) |
+| ---------------- | --------------------------- |
+| Remove | "bad" → "" |
+| ReplaceWithChar | "bad" → "***" |
+| ReplaceWithWord | "bad" → "***" |
+| Mask | "bad" → "***" |
+| PreserveBoundary | "bad" → "b*d" |
+| DetectOnly | No replacement; only detect |
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Profanity.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target frameworks:** `netstandard2.0`, `net10.0`
-
-### NuGet packages
-
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
-| `Microsoft.Extensions.Options`                          | `[10,)` |
-
-`System.Text.Json` `[10,)` is referenced only for the `netstandard2.0` target.
-
-### Project references
-
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Metrics` — (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

@@ -12,22 +12,16 @@ counters.
 (`HealthCheckName = "comment-postgres"`), so registering the store also wires
 up a liveness probe.
 
-## DI extensions
+## Features
 
-Defined in `Extensions.cs` as `IServiceCollection` extensions:
+- **Subject/actor** — same relation endpoint shape as Rating and Note.
+- **Reply threads** — `ReplyToCommentId` points to the parent comment; `GetRepliesAsync(parentId)` returns direct replies; `DeleteAsync(id, deleteReplies: true)` walks the descendant tree and soft-deletes every nested reply (plus their reactions).
+- **Reactions (like/dislike)** — tracked per user via the `comment_reaction` table; exactly one reaction per user per comment. Flipping `Like` ↔ `Dislike` mutates the existing row and adjusts the cached counters on the parent comment.
+- **IsEdited** — automatically set to `true` by `SaveAsync` whenever an existing row is updated.
 
-- `AddCommentDbContextFactory(Action<PostgresCommentOptions>)` /
-  `AddCommentDbContextFactory(PostgresCommentOptions)` — register only the
-  `IDbContextFactory<CommentDbContext>`.
-- `AddCommentDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)`
-  — same, bound from configuration (default section: `PostgresComment`).
-- `AddPostgresCommentStore(Action<PostgresCommentOptions>)` /
-  `AddPostgresCommentStore(PostgresCommentOptions)` — register the DbContext
-  factory **and** the `ICommentStore` singleton.
-- `AddPostgresCommentStoreFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)`
-  — register the store using configuration binding.
+## Examples
 
-## Usage
+### Usage
 
 ```csharp
 services.AddPostgresCommentStore(new PostgresCommentOptions {
@@ -36,7 +30,7 @@ services.AddPostgresCommentStore(new PostgresCommentOptions {
 });
 ```
 
-Or with configuration:
+### Usage (2)
 
 ```json
 {
@@ -47,32 +41,13 @@ Or with configuration:
 }
 ```
 
+### Usage (3)
+
 ```csharp
 services.AddPostgresCommentStoreFromConfiguration(configuration);
 ```
 
-## Migrations
-
-```bash
-export COMMENT_CONNECTION_STRING="Host=localhost;Database=comment;Username=postgres;Password=postgres"
-dotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Postgres
-```
-
-## Features
-
-- **Subject/actor** — same relation endpoint shape as Rating and Note.
-- **Reply threads** — `ReplyToCommentId` points to the parent comment;
-  `GetRepliesAsync(parentId)` returns direct replies; `DeleteAsync(id,
-  deleteReplies: true)` walks the descendant tree and soft-deletes every
-  nested reply (plus their reactions).
-- **Reactions (like/dislike)** — tracked per user via the `comment_reaction`
-  table; exactly one reaction per user per comment. Flipping `Like` ↔ `Dislike`
-  mutates the existing row and adjusts the cached counters on the parent
-  comment.
-- **IsEdited** — automatically set to `true` by `SaveAsync` whenever an
-  existing row is updated.
-
-## Example
+### Example
 
 ```csharp
 await commentStore.SaveAsync(new CommentRecord {
@@ -100,19 +75,28 @@ var reaction = await commentStore.GetReactionAsync(commentRef, userRef);
 await commentStore.RemoveReactionAsync(commentRef, userRef);
 ```
 
+### Migrations
+
+```bash
+export COMMENT_CONNECTION_STRING="Host=localhost;Database=comment;Username=postgres;Password=postgres"
+dotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Postgres
+```
+
+## DI extensions
+
+- `AddCommentDbContextFactory(Action<PostgresCommentOptions>)` / `AddCommentDbContextFactory(PostgresCommentOptions)` — register only the `IDbContextFactory<CommentDbContext>`.
+- `AddCommentDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)` — same, bound from configuration (default section: `PostgresComment`).
+- `AddPostgresCommentStore(Action<PostgresCommentOptions>)` / `AddPostgresCommentStore(PostgresCommentOptions)` — register the DbContext factory **and** the `ICommentStore` singleton.
+- `AddPostgresCommentStoreFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)` — register the store using configuration binding.
+
+## Usage
+
+Or with configuration:
+
 ## Schema
 
-Schema name: `comment` (`PostgresCommentOptions.Schema`).
-
-- **comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable
-  varchar 128/256), `tenant_id`, `context`, `visibility`,
-  `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
-  `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`,
-  `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`,
-  `is_edited`, and `updated_timestamp`.
-- **comment.comment_reaction** — `id` (uuid); subject `for_entity_*` (always `"Comment"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent
-  comment at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
-  `created_timestamp`.
+- **comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`, `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`, `is_edited`, and `updated_timestamp`.
+- **comment.comment_reaction** — `id` (uuid); subject `for_entity_*` (always `"Comment"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent comment at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`), `created_timestamp`.
 
 ## Tenancy
 
@@ -139,22 +123,24 @@ for the full policy matrix and `appsettings.json` snippet.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Comment.Postgres.csproj`.)*
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-**Target framework:** `net10.0`
-
-### NuGet packages
-
-| Package                                     | Version |
-|---------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-
-### Project references
-
-- [`Lyo.Comment`](../Lyo.Comment/README.md)
-- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
-- [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md)
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
-- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- `Lyo.Comment` — (direct, lyo)
+- `Lyo.EntityReference.Models` — (direct, lyo)
+- `Lyo.EntityReference.Postgres` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Health` — (direct, lyo)
+- `Lyo.Postgres` — (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
+- `Lyo.Common` — (transitive, lyo)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

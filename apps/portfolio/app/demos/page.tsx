@@ -17,13 +17,13 @@ export default function DemosPage() {
       <section className="section shell">
         <div className="card-grid">
           <Link href="/demos/query" className="card">
-            <strong>Person Query</strong>
+            <strong>Person query builder</strong>
             <span className="muted">
-              Where-clause builder + QueryConcrete against seeded people data.
+              Concrete, Projection, root Query, and Get — chip values for In/NotIn, BFF-fixed routes.
             </span>
             <div className="card-meta">
               <span className="badge badge-accent">Live</span>
-              <span className="badge">lyo-person-api-client</span>
+              <span className="badge">lyo-query-react</span>
             </div>
           </Link>
         </div>
