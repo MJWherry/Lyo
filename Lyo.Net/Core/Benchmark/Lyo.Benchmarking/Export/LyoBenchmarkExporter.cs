@@ -476,7 +476,13 @@ public sealed class LyoBenchmarkExporter : IExporter
         if (parameters.TryGetValue("DataSize", out var dataSize) && long.TryParse(dataSize, out var bytes))
             return FormatDataSize(bytes);
 
+        if (parameters.TryGetValue("RowCount", out var rowCount) && long.TryParse(rowCount, out var rows))
+            return rows.ToString("N0");
+
         var first = parameters.OrderBy(p => p.Key, StringComparer.Ordinal).First();
+        if (first.Key.Equals("RowsPerFile", StringComparison.OrdinalIgnoreCase) && long.TryParse(first.Value, out var perFile))
+            return perFile.ToString("N0");
+
         return first.Value;
     }
 

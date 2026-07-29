@@ -415,7 +415,18 @@
   "readmePath": "Lyo.Net/Data/Compression/Lyo.Compression/README.md",
   "benchmarks": {
     "suite": "compression",
+    "headline": "Zstd compresses 100 MB in tens of milliseconds at multi‑GB/s throughput.",
     "items": [
+      {
+        "label": "Zstd compress",
+        "href": "/benchmarks/compression",
+        "featured": true,
+        "method": "Zstd_Compress",
+        "params": {
+          "DataSize": "104857600"
+        },
+        "primary": "throughput"
+      },
       {
         "label": "Benchmark summary",
         "href": "Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md"

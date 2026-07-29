@@ -105,113 +105,113 @@
         {
           "method": "Local_GetOrSet_Hit",
           "parameters": {},
-          "meanNs": 94.72733714750835,
-          "stdDevNs": 0.9422098267300485,
+          "meanNs": 94.57261992692948,
+          "stdDevNs": 1.5672785912382645,
           "allocatedBytes": 192,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": 2.8555750749986695,
+          "deltaMeanPct": -0.16332900853947802,
           "deltaAllocPct": 0.0
         },
         {
           "method": "Fusion_GetOrSet_Hit",
           "parameters": {},
-          "meanNs": 235.12581411997476,
-          "stdDevNs": 4.269349172362679,
-          "allocatedBytes": 576,
-          "ratioToBaseline": 2.482132626127128,
+          "meanNs": 209.68205897013345,
+          "stdDevNs": 3.5528544746263306,
+          "allocatedBytes": 592,
+          "ratioToBaseline": 2.217153962025606,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": 6.537934186639855,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": -10.821336332240591,
+          "deltaAllocPct": 2.7777777777777777
         },
         {
           "method": "Local_GetOrSetAsync_Hit",
           "parameters": {},
-          "meanNs": 118.64582296212514,
-          "stdDevNs": 1.889386315310522,
+          "meanNs": 108.00588279504042,
+          "stdDevNs": 1.001566340318807,
           "allocatedBytes": 192,
-          "ratioToBaseline": 1.252498238996956,
+          "ratioToBaseline": 1.1420417757115116,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": 5.833373943432784,
+          "deltaMeanPct": -8.967816903660625,
           "deltaAllocPct": 0.0
         },
         {
           "method": "Fusion_GetOrSetAsync_Hit",
           "parameters": {},
-          "meanNs": 312.91883754730225,
-          "stdDevNs": 4.56623092850754,
-          "allocatedBytes": 576,
-          "ratioToBaseline": 3.3033636009426566,
+          "meanNs": 308.45174317889746,
+          "stdDevNs": 7.874529643035806,
+          "allocatedBytes": 592,
+          "ratioToBaseline": 3.261533236757313,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": 3.6421003976320336,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": -1.4275568717493783,
+          "deltaAllocPct": 2.7777777777777777
         },
         {
           "method": "Local_Set",
           "parameters": {},
-          "meanNs": 1057.0225720469157,
-          "stdDevNs": 53.510062270101685,
-          "allocatedBytes": 865,
-          "ratioToBaseline": 11.15858002427464,
+          "meanNs": 1045.6914289547847,
+          "stdDevNs": 42.78339095507892,
+          "allocatedBytes": 867,
+          "ratioToBaseline": 11.057020835023149,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": 4.276024508807842,
-          "deltaAllocPct": -0.11547344110854503
+          "deltaMeanPct": -1.07198686118768,
+          "deltaAllocPct": 0.23121387283236997
         },
         {
           "method": "Fusion_Set",
           "parameters": {},
-          "meanNs": 733.0824991861979,
-          "stdDevNs": 126.85936752820746,
-          "allocatedBytes": 866,
-          "ratioToBaseline": 7.738869488589656,
+          "meanNs": 900.6908560562134,
+          "stdDevNs": 128.7413454279986,
+          "allocatedBytes": 867,
+          "ratioToBaseline": 9.523801463384673,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": -6.932899328481701,
-          "deltaAllocPct": -0.6880733944954129
+          "deltaMeanPct": 22.863505411202592,
+          "deltaAllocPct": 0.11547344110854503
         },
         {
           "method": "Local_TryGetValue",
           "parameters": {},
-          "meanNs": 38.90184975067775,
-          "stdDevNs": 0.6711847653221454,
+          "meanNs": 39.40507177331231,
+          "stdDevNs": 1.1868741305802817,
           "allocatedBytes": 0,
-          "ratioToBaseline": 0.4106718390077853,
+          "ratioToBaseline": 0.4166646943244061,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": -0.41923815973779877,
+          "deltaMeanPct": 1.2935683672105924,
           "deltaAllocPct": null
         },
         {
           "method": "Fusion_TryGetValue",
           "parameters": {},
-          "meanNs": 101.94733711847893,
-          "stdDevNs": 0.7945107812028621,
+          "meanNs": 106.86802022797721,
+          "stdDevNs": 2.5168971424049893,
           "allocatedBytes": 0,
-          "ratioToBaseline": 1.0762187578410198,
+          "ratioToBaseline": 1.1300101478688827,
           "isBaseline": false,
           "slaTarget": "<= 5 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-          "deltaMeanPct": -0.6935172912378811,
+          "deltaMeanPct": 4.826691160927207,
           "deltaAllocPct": null
         }
       ]
@@ -247,32 +247,32 @@
         {
           "method": "Fusion_Redis_GetOrSet_Hit",
           "parameters": {},
-          "meanNs": 233.30453866322836,
-          "stdDevNs": 3.004385127425069,
-          "allocatedBytes": 576,
+          "meanNs": 243.4488746523857,
+          "stdDevNs": 4.592365990684596,
+          "allocatedBytes": 592,
           "isBaseline": false,
-          "deltaMeanPct": 0.3037831549543782,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 4.348109148361042,
+          "deltaAllocPct": 2.7777777777777777
         },
         {
           "method": "Fusion_Redis_Set",
           "parameters": {},
-          "meanNs": 718.112831809304,
-          "stdDevNs": 134.66124186458845,
-          "allocatedBytes": 870,
+          "meanNs": 888.7671321522106,
+          "stdDevNs": 163.59259456775825,
+          "allocatedBytes": 872,
           "isBaseline": false,
-          "deltaMeanPct": -4.069540792412215,
-          "deltaAllocPct": -0.22935779816513763
+          "deltaMeanPct": 23.764273911237407,
+          "deltaAllocPct": 0.22988505747126436
         },
         {
           "method": "Fusion_Redis_InvalidateByTag",
           "parameters": {},
-          "meanNs": 56765.099365234375,
-          "stdDevNs": 1429.1676316508874,
+          "meanNs": 54972.775370279945,
+          "stdDevNs": 362.1071010768768,
           "allocatedBytes": 4784,
           "isBaseline": false,
-          "deltaMeanPct": 7.793371422119068,
-          "deltaAllocPct": 0.02090738030524775
+          "deltaMeanPct": -3.157440073208316,
+          "deltaAllocPct": 0.0
         }
       ]
     },
@@ -389,15 +389,15 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 2622.6960757119314,
-          "stdDevNs": 40.868546848836345,
+          "meanNs": 2831.2819878150676,
+          "stdDevNs": 146.04278316878978,
           "allocatedBytes": 6224,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": -2.9335799839047727,
+          "deltaMeanPct": 7.953110314031166,
           "deltaAllocPct": 0.0
         },
         {
@@ -406,16 +406,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 6546.234447733561,
-          "stdDevNs": 79.28025579666331,
+          "meanNs": 6962.3154299809385,
+          "stdDevNs": 186.77149781957502,
           "allocatedBytes": 9344,
-          "ratioToBaseline": 2.4959942969970643,
+          "ratioToBaseline": 2.459068174750702,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": -3.538887775537279,
-          "deltaAllocPct": 3.6379769299023956
+          "deltaMeanPct": 6.356035451669978,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Payload_NoCompress_Set",
@@ -423,16 +423,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 1157.3105496653804,
-          "stdDevNs": 32.35301877464906,
-          "allocatedBytes": 4068,
-          "ratioToBaseline": 0.4412675034606243,
+          "meanNs": 1227.074298511852,
+          "stdDevNs": 38.74288292947107,
+          "allocatedBytes": 4069,
+          "ratioToBaseline": 0.4333988291497588,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": -2.6547454629947635,
-          "deltaAllocPct": -0.02457606291472106
+          "deltaMeanPct": 6.02809236178161,
+          "deltaAllocPct": 0.024582104228121928
         },
         {
           "method": "Payload_Compress_Set",
@@ -440,16 +440,16 @@
           "parameters": {
             "DataSize": "1024"
           },
-          "meanNs": 11533.18622080485,
-          "stdDevNs": 270.3995647255155,
+          "meanNs": 12337.648950873481,
+          "stdDevNs": 464.12736320391053,
           "allocatedBytes": 4984,
-          "ratioToBaseline": 4.397454332436961,
+          "ratioToBaseline": 4.35761927069461,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 0.3566293772367172,
-          "deltaAllocPct": -1.2678288431061806
+          "deltaMeanPct": 6.975199347925656,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Payload_NoCompress_Hit",
@@ -457,15 +457,15 @@
           "parameters": {
             "DataSize": "65536"
           },
-          "meanNs": 52707.74076281096,
-          "stdDevNs": 1135.058421979077,
+          "meanNs": 53835.09126790365,
+          "stdDevNs": 1488.5440700691756,
           "allocatedBytes": 199814,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 3.9417796964856837,
+          "deltaMeanPct": 2.1388708542182786,
           "deltaAllocPct": 0.0
         },
         {
@@ -474,16 +474,16 @@
           "parameters": {
             "DataSize": "65536"
           },
-          "meanNs": 112970.94326602711,
-          "stdDevNs": 1868.2772708060575,
+          "meanNs": 114476.16323242188,
+          "stdDevNs": 1671.5777576000662,
           "allocatedBytes": 267455,
-          "ratioToBaseline": 2.1433463402350212,
+          "ratioToBaseline": 2.126422757653469,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 3.6499794051850096,
-          "deltaAllocPct": 0.12278803715086832
+          "deltaMeanPct": 1.3323956788164855,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Payload_NoCompress_Set",
@@ -491,16 +491,16 @@
           "parameters": {
             "DataSize": "65536"
           },
-          "meanNs": 16922.660868326824,
-          "stdDevNs": 891.0211167131788,
-          "allocatedBytes": 197607,
-          "ratioToBaseline": 0.3210659501510442,
+          "meanNs": 18778.242332935333,
+          "stdDevNs": 868.3281800684423,
+          "allocatedBytes": 197608,
+          "ratioToBaseline": 0.34881044855088555,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": -2.546561842801074,
-          "deltaAllocPct": -0.0005060523865430549
+          "deltaMeanPct": 10.965069140406252,
+          "deltaAllocPct": 0.0005060549474461937
         },
         {
           "method": "Payload_Compress_Set",
@@ -508,16 +508,16 @@
           "parameters": {
             "DataSize": "65536"
           },
-          "meanNs": 35226.39991590712,
-          "stdDevNs": 1156.04395780997,
+          "meanNs": 35586.383542953,
+          "stdDevNs": 2005.8258974978935,
           "allocatedBytes": 134029,
-          "ratioToBaseline": 0.6683344686396013,
+          "ratioToBaseline": 0.6610257864310433,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 1.1618849120813255,
-          "deltaAllocPct": -0.047728069325020696
+          "deltaMeanPct": 1.0219143253504215,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Payload_NoCompress_Hit",
@@ -525,16 +525,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 835183.9938761393,
-          "stdDevNs": 64710.41014684909,
-          "allocatedBytes": 3149497,
+          "meanNs": 773412.0356152344,
+          "stdDevNs": 55367.21502978151,
+          "allocatedBytes": 3149400,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 12.844532872020242,
-          "deltaAllocPct": 0.006160093201575078
+          "deltaMeanPct": -7.396209543506395,
+          "deltaAllocPct": -0.003079856878733334
         },
         {
           "method": "Payload_Compress_Hit",
@@ -542,16 +542,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 2584981.521484375,
-          "stdDevNs": 66405.77547929005,
-          "allocatedBytes": 7214520,
-          "ratioToBaseline": 3.0951042410275607,
+          "meanNs": 2388149.22390625,
+          "stdDevNs": 167637.72866530492,
+          "allocatedBytes": 7214894,
+          "ratioToBaseline": 3.087809749439086,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 11.39553157298076,
-          "deltaAllocPct": 0.0018296770287375727
+          "deltaMeanPct": -7.6144566582858095,
+          "deltaAllocPct": 0.005183990064481074
         },
         {
           "method": "Payload_NoCompress_Set",
@@ -559,16 +559,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 838641.327208227,
-          "stdDevNs": 107401.1230383314,
-          "allocatedBytes": 3148463,
-          "ratioToBaseline": 1.0041396067901662,
+          "meanNs": 859549.0723632813,
+          "stdDevNs": 99495.35801353102,
+          "allocatedBytes": 3147401,
+          "ratioToBaseline": 1.1113727648154925,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 5.082865338890627,
-          "deltaAllocPct": 0.04089380447741086
+          "deltaMeanPct": 2.493049707513765,
+          "deltaAllocPct": -0.03373074417580896
         },
         {
           "method": "Payload_Compress_Set",
@@ -576,16 +576,16 @@
           "parameters": {
             "DataSize": "1048576"
           },
-          "meanNs": 1723865.667689732,
-          "stdDevNs": 35209.73477897161,
-          "allocatedBytes": 2101180,
-          "ratioToBaseline": 2.0640549631335334,
+          "meanNs": 1515779.040736607,
+          "stdDevNs": 20726.81076216238,
+          "allocatedBytes": 2100695,
+          "ratioToBaseline": 1.9598596491077798,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 15.516268681221531,
-          "deltaAllocPct": 0.027182593238437046
+          "deltaMeanPct": -12.070930516993,
+          "deltaAllocPct": -0.023082268058900235
         },
         {
           "method": "Payload_NoCompress_Hit",
@@ -593,16 +593,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 9324084.83234375,
-          "stdDevNs": 841482.0437264738,
-          "allocatedBytes": 31461048,
+          "meanNs": 9582409.386924341,
+          "stdDevNs": 206427.57081341516,
+          "allocatedBytes": 31460849,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 8.388317178592333,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 2.7705084115548297,
+          "deltaAllocPct": -0.0006325281980434981
         },
         {
           "method": "Payload_Compress_Hit",
@@ -610,16 +610,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 24162568.394467212,
-          "stdDevNs": 1074560.2394030392,
+          "meanNs": 23001927.584375,
+          "stdDevNs": 668580.6104293539,
           "allocatedBytes": 64886895,
-          "ratioToBaseline": 2.591414474335449,
+          "ratioToBaseline": 2.4004325692619894,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 6.40574041421645,
-          "deltaAllocPct": 0.0005178268121753844
+          "deltaMeanPct": -4.803466217432318,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "Payload_NoCompress_Set",
@@ -627,15 +627,15 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 9172280.446875,
-          "stdDevNs": 144849.7703114048,
+          "meanNs": 8509745.981770834,
+          "stdDevNs": 218056.22015032635,
           "allocatedBytes": 31458578,
-          "ratioToBaseline": 0.9837191115054891,
+          "ratioToBaseline": 0.8880591131268919,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 7.240446402072799,
+          "deltaMeanPct": -7.2232251176957005,
           "deltaAllocPct": 0.0
         },
         {
@@ -644,16 +644,16 @@
           "parameters": {
             "DataSize": "10485760"
           },
-          "meanNs": 18307134.38125,
-          "stdDevNs": 413044.1571132843,
+          "meanNs": 16845725.170833334,
+          "stdDevNs": 158740.03117673754,
           "allocatedBytes": 20974782,
-          "ratioToBaseline": 1.9634242620514883,
+          "ratioToBaseline": 1.7579842908632286,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-          "deltaMeanPct": 10.4494490789043,
-          "deltaAllocPct": -0.00030512738925472923
+          "deltaMeanPct": -7.982730557292621,
+          "deltaAllocPct": 0.0
         }
       ]
     }
@@ -662,73 +662,73 @@
     {
       "area": "Fusion_GetOrSetAsync_Hit",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "312.92 ns",
+      "latest": "308.45 ns",
       "result": "Exceeds"
     },
     {
       "area": "Fusion_GetOrSet_Hit",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "235.13 ns",
+      "latest": "209.68 ns",
       "result": "Exceeds"
     },
     {
       "area": "Fusion_Set",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "733.08 ns",
+      "latest": "900.69 ns",
       "result": "Exceeds"
     },
     {
       "area": "Fusion_TryGetValue",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "101.95 ns",
+      "latest": "106.87 ns",
       "result": "Exceeds"
     },
     {
       "area": "Local_GetOrSetAsync_Hit",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "118.65 ns",
+      "latest": "108.01 ns",
       "result": "Exceeds"
     },
     {
       "area": "Local_GetOrSet_Hit",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "94.73 ns",
+      "latest": "94.57 ns",
       "result": "Exceeds"
     },
     {
       "area": "Local_Set",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "1.06 \u00b5s",
+      "latest": "1.05 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Local_TryGetValue",
       "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
-      "latest": "38.9 ns",
+      "latest": "39.41 ns",
       "result": "Exceeds"
     },
     {
       "area": "Payload_Compress_Hit",
       "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-      "latest": "6.55 \u00b5s",
+      "latest": "6.96 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Payload_Compress_Set",
       "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-      "latest": "11.53 \u00b5s",
+      "latest": "12.34 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Payload_NoCompress_Hit",
       "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-      "latest": "2.62 \u00b5s",
+      "latest": "2.83 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Payload_NoCompress_Set",
       "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
-      "latest": "1.16 \u00b5s",
+      "latest": "1.23 \u00b5s",
       "result": "Exceeds"
     }
   ],
@@ -748,11 +748,11 @@
   "name": "cache",
   "title": "Caching",
   "description": "Cache hot-path costs for Lyo.Cache: local IMemoryCache vs FusionCache for object get/set, the serialized byte-payload path (JSON +/- compression framing) across payload sizes, and FusionCache with a Redis backplane (Docker). Object cases use a small CachePayload; payload cases vary DataSize (the length of a compressible string body) to show framing/serialization cost.",
-  "runId": "BenchmarkRun-joined-2026-07-08-00-56-40",
-  "generatedAt": "2026-07-08T00:56:40.9077292+00:00",
-  "runStarted": "2026-07-08T00:44:03.4710512+00:00",
-  "runEnded": "2026-07-08T00:56:40.9077292+00:00",
-  "durationSeconds": 757.436678,
+  "runId": "BenchmarkRun-joined-2026-07-29-02-33-18",
+  "generatedAt": "2026-07-29T02:33:18.1845463+00:00",
+  "runStarted": "2026-07-29T02:17:23.6086957+00:00",
+  "runEnded": "2026-07-29T02:33:18.1845463+00:00",
+  "durationSeconds": 954.5758506,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
@@ -765,7 +765,22 @@
     "memoryBytes": 6442450944,
     "gcMode": "Workstation",
     "configuration": "Release",
-    "dotnetSdkVersion": "10.0.100"
+    "dotnetSdkVersion": "10.0.100",
+    "dependencies": {
+      "BenchmarkDotNet": "0.15.8",
+      "EasyCompressor": "2.1.0",
+      "Konscious.Security.Cryptography.Argon2": "1.3.1",
+      "Microsoft.Extensions.Caching.Memory": "10.0.5",
+      "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+      "System.IO.Hashing": "10.0.5",
+      "Testcontainers.Redis": "4.13.0",
+      "ZiggyCreatures.FusionCache": "2.6.0",
+      "ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis": "2.6.0"
+    }
   },
   "notes": [],
   "history": [
@@ -795,15 +810,25 @@
       "runStarted": "2026-07-08T00:44:03.4710512+00:00",
       "runEnded": "2026-07-08T00:56:40.9077292+00:00",
       "generatedAt": "2026-07-08T00:56:40.9077292+00:00",
-      "isCurrent": true,
+      "isCurrent": false,
       "measurementCount": 27,
       "medianMeanNs": 11533.18622080485
+    },
+    {
+      "file": "20260729T023318Z_BenchmarkRun-joined-2026-07-29-02-33-18.json",
+      "runId": "BenchmarkRun-joined-2026-07-29-02-33-18",
+      "runStarted": "2026-07-29T02:17:23.6086957+00:00",
+      "runEnded": "2026-07-29T02:33:18.1845463+00:00",
+      "generatedAt": "2026-07-29T02:33:18.1845463+00:00",
+      "isCurrent": true,
+      "measurementCount": 27,
+      "medianMeanNs": 12337.648950873481
     }
   ],
   "deltaBaseline": {
     "kind": "previousRun",
-    "runId": "BenchmarkRun-joined-2026-07-04-03-27-32",
-    "runStarted": "2026-07-04T03:12:14.8332495+00:00",
-    "runEnded": "2026-07-04T03:27:33.1341343+00:00"
+    "runId": "BenchmarkRun-joined-2026-07-08-00-56-40",
+    "runStarted": "2026-07-08T00:44:03.4710512+00:00",
+    "runEnded": "2026-07-08T00:56:40.9077292+00:00"
   }
 }

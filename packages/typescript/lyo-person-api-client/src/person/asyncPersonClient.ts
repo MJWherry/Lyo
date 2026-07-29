@@ -32,6 +32,9 @@ export interface AsyncPersonApiClient {
 /**
  * Wraps an {@link AsyncApiClient} with typed Person Query endpoints.
  * Pair with {@link createAsyncApiClient} and a fetch transport in Next.js/Node.
+ *
+ * For `GET {base}/Metadata`, use {@link AsyncApiClient.getMetadata} on the base
+ * client (e.g. `api.getMetadata("person")`).
  */
 export function createAsyncPersonApiClient(apiClient: AsyncApiClient): AsyncPersonApiClient {
     return {

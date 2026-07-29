@@ -4,7 +4,17 @@ import json
 
 import pytest
 
-from lyo_api_client import ApiClient, ApiClientError, ApiRequest, ApiResponse, build_url, with_bearer_token
+from lyo_api_client import (
+    ApiClient,
+    ApiClientError,
+    ApiRequest,
+    ApiResponse,
+    build_url,
+    entity_metadata_path,
+    metadata_path,
+    normalize_route_prefix,
+    with_bearer_token,
+)
 
 from conftest import StubTransport
 
@@ -72,6 +82,37 @@ class TestApiClientRequest:
         client = ApiClient("http://x", transport=stub_transport)
         res = client.request(ApiRequest(method="GET", path="/p"))
         assert res.data == {"ok": 1}
+
+
+class TestMetadataPaths:
+    def test_normalize_route_prefix(self):
+        assert normalize_route_prefix("person") == "/person"
+        assert normalize_route_prefix("/person/") == "/person"
+        assert normalize_route_prefix("") == ""
+
+    def test_metadata_path(self):
+        assert metadata_path("person") == "/person/Metadata"
+        assert metadata_path("") == "/Metadata"
+
+    def test_entity_metadata_path(self):
+        assert entity_metadata_path("Twilio", "SmsLog") == "/Twilio/SmsLog/Metadata"
+
+
+class TestMetadataClient:
+    def test_get_metadata(self, stub_transport):
+        stub_transport.response = ApiResponse(
+            status=200, ok=True, data={"keyPropertyName": "Id", "keyType": "Guid"}
+        )
+        client = ApiClient("http://x", transport=stub_transport)
+        res = client.get_metadata("person")
+        assert stub_transport.last.url == "http://x/person/Metadata"
+        assert res.data["keyPropertyName"] == "Id"
+
+    def test_get_entity_metadata(self, stub_transport):
+        stub_transport.response = ApiResponse(status=200, ok=True, data={"entityType": "JobDefinition"})
+        client = ApiClient("http://x", transport=stub_transport)
+        client.get_entity_metadata("api/Job", "JobDefinition")
+        assert stub_transport.last.url == "http://x/api/Job/JobDefinition/Metadata"
 
 
 class TestErrorNormalization:

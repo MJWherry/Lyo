@@ -21,6 +21,7 @@ public sealed class CsvService : ICsvService
     private readonly List<Type> _classMapTypes = [];
     private readonly HttpClient? _httpClient;
     private readonly ILogger<CsvService> _logger;
+    private readonly CsvOptions _options;
     private readonly CsvReader _reader;
     private readonly CsvWriter _writer;
 
@@ -30,10 +31,17 @@ public sealed class CsvService : ICsvService
     /// <param name="logger">Optional logger instance. If null, a null logger will be used.</param>
     /// <param name="csvConfiguration">Optional CSV configuration. If null, default configuration will be used.</param>
     /// <param name="httpClient">Optional HttpClient for ParseFromUrl. If null, a new HttpClient is used per request (not recommended for production).</param>
-    public CsvService(ILogger<CsvService>? logger = null, CsvConfiguration? csvConfiguration = null, HttpClient? httpClient = null)
+    /// <param name="options">Optional service options (DataTable pooling). Defaults disable CSV value pooling.</param>
+    public CsvService(
+        ILogger<CsvService>? logger = null,
+        CsvConfiguration? csvConfiguration = null,
+        HttpClient? httpClient = null,
+        CsvOptions? options = null)
     {
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<CsvService>();
         _httpClient = httpClient;
+        _options = options ?? new CsvOptions();
+        _options.Validate();
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         _csvConfiguration = csvConfiguration ?? new CsvConfiguration(CultureInfo.InvariantCulture) {
             MissingFieldFound = null,
@@ -47,23 +55,30 @@ public sealed class CsvService : ICsvService
         };
 
         _writer = new(() => _csvConfiguration, _classMapTypes, _logger);
-        _reader = new(() => _csvConfiguration, _classMapTypes, _logger);
+        _reader = new(() => _csvConfiguration, _classMapTypes, _logger, () => _options.Pooling);
     }
 
     /// <summary>Initializes a new instance of the <see cref="CsvService" /> class with a configuration builder.</summary>
     /// <param name="logger">Optional logger instance. If null, a null logger will be used.</param>
     /// <param name="configBuilder">Function that builds the CSV configuration. Must not be null.</param>
     /// <param name="httpClient">Optional HttpClient for ParseFromUrl.</param>
+    /// <param name="options">Optional service options (DataTable pooling). Defaults disable CSV value pooling.</param>
     /// <exception cref="ArgumentNullException">Thrown when configBuilder is null.</exception>
-    public CsvService(ILogger<CsvService>? logger, Func<CsvConfiguration> configBuilder, HttpClient? httpClient = null)
+    public CsvService(
+        ILogger<CsvService>? logger,
+        Func<CsvConfiguration> configBuilder,
+        HttpClient? httpClient = null,
+        CsvOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(configBuilder);
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<CsvService>();
         _httpClient = httpClient;
+        _options = options ?? new CsvOptions();
+        _options.Validate();
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         _csvConfiguration = configBuilder.Invoke();
         _writer = new(() => _csvConfiguration, _classMapTypes, _logger);
-        _reader = new(() => _csvConfiguration, _classMapTypes, _logger);
+        _reader = new(() => _csvConfiguration, _classMapTypes, _logger, () => _options.Pooling);
     }
 
     /// <inheritdoc cref='P:Lyo.Csv.Models.ICsvService.Writer' />

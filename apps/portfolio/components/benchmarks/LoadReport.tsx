@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   formatDeltaPct,
   formatMs,
+  formatTimestamp,
   slaBadgeClass,
 } from "@/lib/benchmarks/format";
 import type { BenchReport, LoadCase, LoadScenario } from "@/lib/benchmarks/types";
@@ -143,6 +144,19 @@ export function LoadReport({ report }: { report: BenchReport }) {
     <>
       <ReportMeta report={report} />
       {report.description ? <p className="muted">{report.description}</p> : null}
+      {report.deltaBaseline?.runId ? (
+        <p className="faint" style={{ fontSize: "0.88rem" }}>
+          Δ vs {report.deltaBaseline.kind === "previousRun" ? "prior run" : "selected run"}:{" "}
+          {report.deltaBaseline.runId}
+          {report.deltaBaseline.runEnded || report.deltaBaseline.runStarted
+            ? ` (${formatTimestamp(report.deltaBaseline.runEnded || report.deltaBaseline.runStarted)})`
+            : ""}
+        </p>
+      ) : (report.history?.length ?? 0) > 1 ? (
+        <p className="faint" style={{ fontSize: "0.88rem" }}>
+          Δ columns hidden — pick a run under Compare against.
+        </p>
+      ) : null}
 
       <section className="section" style={{ paddingTop: 0 }}>
         <h2 style={{ fontSize: "1.35rem" }}>Scenarios</h2>

@@ -11,6 +11,7 @@ available on `net10.0`.
 - Strongly-typed read/write via `IEnumerable<T>` / `List<T>`.
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
 - `Lyo.DataTable.Models.DataTable` round-trip (`ParseFileAsDataTable`, `ExportToCsvFromDataTable`, plus an HTML helper `ExportToHtmlTable`).
+- CSV → DataTable pooling via `CsvOptions.Pooling` / `CsvParseOptions.Pooling` (defaults `PoolValues=false`; estimate is `cols × (rows+1)` after the full CSV is buffered).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`), custom-header export (`IReadOnlyDictionary<string, PropertyInfo>`), and formatter export (`IReadOnlyDictionary<string, Func<T, string>>`).
 - URL download helpers (`ParseFromUrl*`) that share an optional injected `HttpClient`.
 - Append, combine, and split file operations (async, `net10.0` only).
@@ -28,6 +29,10 @@ available on `net10.0`.
 using Lyo.Csv;
 
 services.AddCsvService();
+services.AddCsvService(o => {
+    o.Pooling.PoolValues = true; // opt in for high-duplication grids
+    o.Pooling.PoolingCellThreshold = 512;
+});
 
 services.AddCsvService(config => {
     config.Delimiter = ";";
@@ -160,11 +165,14 @@ await csv.SplitCsvFileAsync("merged.csv", rowsPerFile: 10_000, outputDirectory: 
 
 ## Benchmarks
 
+UTF-8 export of 100,000 sample rows in tens of milliseconds.
+
 - Portfolio suite: `csv`
+- [CSV UTF-8 export](/benchmarks/csv)
 
 ## Dependency injection
 
-All four overloads register the same singleton: `CsvService`, plus `ICsvService`, `ICsvWriter`, and `ICsvReader` resolving to the same instance.
+`AddCsvService` registers a singleton `CsvService` and routes `ICsvService`, `ICsvWriter`, and `ICsvReader` to the same instance. Overloads accept `Action<CsvOptions>`, an options instance, `AddCsvServiceFromConfiguration` (binds `Csv` and optional `DataTablePooling` sections), or the existing `CsvConfiguration` / builder overloads (default CSV pooling remains off).
 
 ## Output targets
 
@@ -225,8 +233,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Result` — (direct, lyo)
 - `CsvHelper` `33.1.0` — (direct, third-party)
+- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
 - `System.Text.Encoding.CodePages` `10.0.5` — (direct, microsoft)
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

@@ -2,49 +2,16 @@ using System.Diagnostics;
 
 namespace Lyo.DataTable.Models;
 
-/// <summary>Cell value with optional formatting for data tables.</summary>
+/// <summary>
+/// Cell value with optional merge spans for data tables.
+/// Formatting is stored sparsely on <see cref="DataTable" />, not on this type.
+/// </summary>
 /// <param name="Value">The typed value of the cell.</param>
-/// <param name="FontSize">Font size in points, if set.</param>
-/// <param name="FontName">Font family name, if set.</param>
-/// <param name="FontBold">Whether font is bold, if set.</param>
-/// <param name="FontItalic">Whether font is italic, if set.</param>
-/// <param name="FontUnderline">Whether font is underlined, if set.</param>
-/// <param name="FontStrikethrough">Whether font has strikethrough, if set.</param>
-/// <param name="FontColor">Font color as hex (e.g. #FF0000), if set.</param>
-/// <param name="BackgroundColor">Background/fill color as hex, if set.</param>
-/// <param name="HorizontalAlignment">Horizontal alignment (Left, Center, Right, etc.), if set.</param>
-/// <param name="VerticalAlignment">Vertical alignment (Top, Center, Bottom, etc.), if set.</param>
-/// <param name="NumberFormat">Number format code (e.g. 0.00, m/d/yy), if set.</param>
-/// <param name="TextRotation">Text rotation angle (-90 to 90, or 255 for vertical), if set.</param>
-/// <param name="WrapText">Whether text wraps, if set.</param>
-/// <param name="BorderTop">Top border style, if set.</param>
-/// <param name="BorderBottom">Bottom border style, if set.</param>
-/// <param name="BorderLeft">Left border style, if set.</param>
-/// <param name="BorderRight">Right border style, if set.</param>
-/// <param name="BorderColor">Border color as hex (when borders are set), if set.</param>
 /// <param name="ColSpan">Number of columns this cell spans (1 = no spanning).</param>
 /// <param name="RowSpan">Number of rows this cell spans (1 = no spanning).</param>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DataTableCell<T>(
     T? Value,
-    double? FontSize = null,
-    string? FontName = null,
-    bool? FontBold = null,
-    bool? FontItalic = null,
-    bool? FontUnderline = null,
-    bool? FontStrikethrough = null,
-    string? FontColor = null,
-    string? BackgroundColor = null,
-    string? HorizontalAlignment = null,
-    string? VerticalAlignment = null,
-    string? NumberFormat = null,
-    int? TextRotation = null,
-    bool? WrapText = null,
-    string? BorderTop = null,
-    string? BorderBottom = null,
-    string? BorderLeft = null,
-    string? BorderRight = null,
-    string? BorderColor = null,
     int ColSpan = 1,
     int RowSpan = 1) : IDataTableCell
 {
@@ -54,7 +21,7 @@ public sealed record DataTableCell<T>(
     /// <summary>The display string for the cell (Value?.ToString() ?? "").</summary>
     public string DisplayValue => Value?.ToString() ?? "";
 
-    /// <summary>Creates a cell with only a value (no formatting).</summary>
+    /// <summary>Creates a cell with only a value (no formatting; formatting is table-scoped).</summary>
     public static DataTableCell<T> FromValue(T? value) => new(value);
 
     public override string ToString() => $"({typeof(T).Name}) {DisplayValue})";
@@ -68,4 +35,8 @@ public static class DataTableCell
 
     /// <summary>Creates a string cell with no formatting.</summary>
     public static IDataTableCell FromValue(string? value) => DataTableCell<string>.FromValue(value ?? "");
+
+    /// <summary>Creates a string cell with the given merge spans.</summary>
+    public static IDataTableCell FromValue(string? value, int colSpan, int rowSpan)
+        => new DataTableCell<string>(value ?? "", colSpan < 1 ? 1 : colSpan, rowSpan < 1 ? 1 : rowSpan);
 }

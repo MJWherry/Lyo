@@ -12,7 +12,8 @@ Interfaces and value types for the Lyo CSV stack. Defines the contract implement
 
 ## Models
 
-- `CsvParseOptions` — `ContinueOnError`, `OnError`, `RowFilter`, `MaxRows`.
+- `CsvOptions` — service-level options; nested `Pooling` defaults to `PoolValues=false` / `PoolFormats=false` (unique-heavy CSV grids). Section name `Csv`.
+- `CsvParseOptions` — `ContinueOnError`, `OnError`, `RowFilter`, `MaxRows`, and `Pooling` (same CSV defaults as `CsvOptions.CreateDefaultPooling`).
 - `CsvSchema` + `CsvColumn` — describe expected columns for `ValidateAsync`.
 - `ColumnMapping` — explicit column-name → property mapping for `ParseFileWithMappingAsync` / `ParseStreamWithMappingAsync`.
 - `CsvParseError` — error metadata surfaced to `CsvParseOptions.OnError`.

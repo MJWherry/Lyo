@@ -12,8 +12,11 @@
         <PackageReference Include="DocumentFormat.OpenXml"/>
         <PackageReference Include="ExcelDataReader"/>
         <PackageReference Include="ExcelDataReader.DataSet"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -26,5 +29,9 @@
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Xlsx.Tests"/>
     </ItemGroup>
 </Project>

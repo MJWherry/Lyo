@@ -70,7 +70,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal("Id", dt.Headers[0].DisplayValue);
         Assert.Equal("Name", dt.Headers[1].DisplayValue);
         Assert.Equal("Age", dt.Headers[2].DisplayValue);
-        Assert.True(dt.Headers[0].FontBold == true);
+        Assert.False(dt.HasFormats);
         Assert.Equal(2, dt.Rows.Count);
         Assert.Equal("1", dt.Rows[0][0].DisplayValue);
         Assert.Equal("Alice", dt.Rows[0][1].DisplayValue);
@@ -78,6 +78,50 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal("2", dt.Rows[1][0].DisplayValue);
         Assert.Equal("Bob", dt.Rows[1][1].DisplayValue);
         Assert.Equal("25", dt.Rows[1][2].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxStreamAsDataTableWithFormatting_CapturesBoldHeader()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var result = svc.ParseXlsxStreamAsDataTableWithFormatting(ms);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.True(dt.GetFormat(-1, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTableWithFormatting_UnstyledSheet_HasNoFormats()
+    {
+        EnsureCodePages();
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var ws = workbook.AddWorksheet("Sheet1");
+        ws.Cell(1, 1).Value = "A";
+        ws.Cell(1, 2).Value = "B";
+        ws.Cell(2, 1).Value = "1";
+        ws.Cell(2, 2).Value = "2";
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        var bytes = ms.ToArray();
+
+        var svc = new XlsxService(_logger);
+        var result = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, useHeaderRow: true);
+        Assert.True(result.IsSuccess);
+        Assert.False(result.ValueOrThrow().HasFormats);
+    }
+
+    [Fact]
+    public void BuildFromDataTable_thin_skips_headerFormats()
+    {
+        var table = new Lyo.DataTable.Models.DataTable();
+        table.SetHeader(0, "H");
+        table.AddRow().SetCell(0, "v");
+        var (_, _, headerFormats) = XlsxWriter.BuildFromDataTable(table);
+        Assert.Null(headerFormats);
     }
 
     [Fact]

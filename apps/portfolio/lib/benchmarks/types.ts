@@ -40,6 +40,7 @@ export type BenchMeasurement = {
   meanNs?: number;
   stdDevNs?: number;
   allocatedBytes?: number;
+  throughputMbps?: number;
   ratioToBaseline?: number;
   isBaseline?: boolean;
   slaTarget?: string;
@@ -67,10 +68,12 @@ export type ComparisonGroup = {
   axis?: string;
   rows: Array<{
     algorithm: string;
+    parameters?: Record<string, string>;
     paramLabel?: string;
     meanNs?: number;
     allocatedBytes?: number;
     deltaMeanPct?: number;
+    deltaAllocPct?: number;
   }>;
 };
 
@@ -178,7 +181,8 @@ export type BenchReport = {
   notes?: string[];
   history?: HistoryEntry[];
   deltaBaseline?: {
-    kind?: string;
+    /** previousRun = publisher default; selectedRun = viewer Compare against. */
+    kind?: "previousRun" | "selectedRun" | "historicalAverage" | string;
     runId?: string;
     runStarted?: string;
     runEnded?: string;

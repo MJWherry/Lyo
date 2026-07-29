@@ -1,18 +1,36 @@
 """Core, reusable API client foundation for Lyo Python consumers.
 
-This module intentionally has no domain-specific endpoints; see
-lyo_person_api_client for the Person API surface built on top of it.
+Domain-specific Person endpoints live in ``lyo_person_api_client``. Generic
+Lyo.Api metadata helpers (``get_metadata`` / ``get_crud_metadata`` /
+``get_entity_metadata``) are on this client.
 """
 
 from __future__ import annotations
 
 import json
 from typing import Any, Mapping
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from .errors import to_api_client_error
 from .models import ApiRequest, ApiResponse, TransportRequest
 from .transport import Transport, UrllibTransport
+
+
+def normalize_route_prefix(base_route: str) -> str:
+    """Trim slashes; empty string means host root."""
+    trimmed = (base_route or "").strip().strip("/")
+    return f"/{trimmed}" if trimmed else ""
+
+
+def metadata_path(base_route: str) -> str:
+    """Path for ``GET {baseRoute}/Metadata`` (typed or dynamic collection)."""
+    return f"{normalize_route_prefix(base_route)}/Metadata"
+
+
+def entity_metadata_path(base_route: str, entity_type: str) -> str:
+    """Path for ``GET {baseRoute}/{entityType}/Metadata``."""
+    encoded = quote((entity_type or "").strip(), safe="")
+    return f"{normalize_route_prefix(base_route)}/{encoded}/Metadata"
 
 
 def build_url(
@@ -97,3 +115,15 @@ class ApiClient:
             raise to_api_client_error(response.status, response.data if response.data is not None else response.raw_body)
 
         return response
+
+    def get_metadata(self, base_route: str) -> ApiResponse:
+        """Typed CreateBuilder metadata: ``GET {baseRoute}/Metadata`` → EndpointMetadataResponse."""
+        return self.request(ApiRequest(method="GET", path=metadata_path(base_route)))
+
+    def get_crud_metadata(self, base_route: str) -> ApiResponse:
+        """Dynamic CRUD registry metadata: ``GET {baseRoute}/Metadata`` → CrudMetadataResponse."""
+        return self.request(ApiRequest(method="GET", path=metadata_path(base_route)))
+
+    def get_entity_metadata(self, base_route: str, entity_type: str) -> ApiResponse:
+        """Dynamic CRUD per-entity metadata: ``GET {baseRoute}/{entityType}/Metadata``."""
+        return self.request(ApiRequest(method="GET", path=entity_metadata_path(base_route, entity_type)))

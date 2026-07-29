@@ -4,7 +4,7 @@ Showcase site for the Lyo monorepo: feature explainers, full `lyo.bench/v1` view
 
 ## Nav
 
-Home · Features · Benchmarks · Demos
+Home · Features · Benchmarks · Demos · About
 
 ## Architecture
 
@@ -14,6 +14,47 @@ Home · Features · Benchmarks · Demos
 - Theme: purple / gray / white with light default + dark invert (`lyo-theme` in localStorage)
 
 Blazor WASM Portfolio under `Lyo.Net/Apps/Portfolio` is unchanged.
+
+## Featured home benchmarks
+
+Docs select *which* measurement/scenario to feature; the portfolio resolves
+metric/detail from `docs/benchmarks/data/{suite}.json` at render time. Do **not**
+hardcode timings or allocation in `docs.json`.
+
+```json
+{
+  "suite": "csv",
+  "items": [
+    {
+      "label": "CSV UTF-8 export",
+      "href": "/benchmarks/csv",
+      "featured": true,
+      "method": "Utf8_Export",
+      "params": { "RowCount": "100000" },
+      "primary": "mean"
+    }
+  ]
+}
+```
+
+Load (k6) suites use `scenario` instead of `method`/`params`:
+
+```json
+{
+  "suite": "query-api",
+  "items": [
+    {
+      "label": "QueryConcrete load",
+      "href": "/benchmarks/query-api",
+      "featured": true,
+      "scenario": "query_load",
+      "primary": "p95"
+    }
+  ]
+}
+```
+
+Run `npm run sync-docs` after editing docs. Schema: `docs/catalog/schema/package.schema.json`.
 
 ## Local development
 

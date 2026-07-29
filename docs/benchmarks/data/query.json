@@ -75,15 +75,15 @@
           "parameters": {
             "ChildCount": "0"
           },
-          "meanNs": 38.136045570884434,
-          "stdDevNs": 0.4849352017054044,
+          "meanNs": 40.878602348841156,
+          "stdDevNs": 1.1846216272029744,
           "allocatedBytes": 88,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": -3.679543728236211,
+          "deltaMeanPct": 7.191508025810023,
           "deltaAllocPct": 0.0
         },
         {
@@ -92,15 +92,15 @@
           "parameters": {
             "ChildCount": "0"
           },
-          "meanNs": 3126.121634539436,
-          "stdDevNs": 62.45136949491275,
+          "meanNs": 3439.893640942044,
+          "stdDevNs": 71.90957901596164,
           "allocatedBytes": 9656,
-          "ratioToBaseline": 81.97288386203637,
+          "ratioToBaseline": 84.14900322636788,
           "isBaseline": false,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": 0.35199590023250565,
+          "deltaMeanPct": 10.037101657717015,
           "deltaAllocPct": 0.0
         },
         {
@@ -109,15 +109,15 @@
           "parameters": {
             "ChildCount": "5"
           },
-          "meanNs": 129.24372353553773,
-          "stdDevNs": 1.5991974135450389,
+          "meanNs": 131.50490539073945,
+          "stdDevNs": 1.9017748329097095,
           "allocatedBytes": 392,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": 3.0525031168301684,
+          "deltaMeanPct": 1.7495486769846715,
           "deltaAllocPct": 0.0
         },
         {
@@ -126,15 +126,15 @@
           "parameters": {
             "ChildCount": "5"
           },
-          "meanNs": 11851.292711385091,
-          "stdDevNs": 213.42785923393245,
+          "meanNs": 12758.246458943684,
+          "stdDevNs": 238.72094952358145,
           "allocatedBytes": 40056,
-          "ratioToBaseline": 91.69723981316879,
+          "ratioToBaseline": 97.01726655013522,
           "isBaseline": false,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": -1.193964205072081,
+          "deltaMeanPct": 7.652783284032101,
           "deltaAllocPct": 0.0
         },
         {
@@ -143,15 +143,15 @@
           "parameters": {
             "ChildCount": "25"
           },
-          "meanNs": 463.06402079264325,
-          "stdDevNs": 7.134013499395996,
+          "meanNs": 488.86785371486957,
+          "stdDevNs": 5.97861080647023,
           "allocatedBytes": 1512,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": -1.0184437315880468,
+          "deltaMeanPct": 5.572411537838111,
           "deltaAllocPct": 0.0
         },
         {
@@ -160,15 +160,15 @@
           "parameters": {
             "ChildCount": "25"
           },
-          "meanNs": 47869.161466471356,
-          "stdDevNs": 580.6367901733355,
+          "meanNs": 52299.145067850746,
+          "stdDevNs": 1304.8524057177574,
           "allocatedBytes": 152056,
-          "ratioToBaseline": 103.37482360329356,
+          "ratioToBaseline": 106.98012698203314,
           "isBaseline": false,
           "slaTarget": "<= 5 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-          "deltaMeanPct": -5.878033011971526,
+          "deltaMeanPct": 9.254358057811919,
           "deltaAllocPct": 0.0
         }
       ]
@@ -267,14 +267,14 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 316.1201252596719,
-          "stdDevNs": 4.848122889762545,
+          "meanNs": 334.7134997367859,
+          "stdDevNs": 5.982838761640307,
           "allocatedBytes": 1296,
           "isBaseline": false,
           "slaTarget": "<= 50 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Resolving a handful of field specs is metadata-only and should be tens of microseconds at most.",
-          "deltaMeanPct": -3.4811684740986517,
+          "deltaMeanPct": 5.8817433600093425,
           "deltaAllocPct": 0.0
         },
         {
@@ -283,15 +283,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1207.1885557174683,
-          "stdDevNs": 20.242290549617,
-          "allocatedBytes": 3432,
+          "meanNs": 1244.8856887817383,
+          "stdDevNs": 53.14110545391273,
+          "allocatedBytes": 3304,
           "isBaseline": false,
           "slaTarget": "<= 200 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Building a projection expression is a build-time step and should stay well under a millisecond.",
-          "deltaMeanPct": 5.60156996127542,
-          "deltaAllocPct": 3.87409200968523
+          "deltaMeanPct": 3.1227212091872,
+          "deltaAllocPct": -3.7296037296037294
         },
         {
           "method": "ProjectEntities",
@@ -299,14 +299,14 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 303143.86983816966,
-          "stdDevNs": 4653.7999030347855,
+          "meanNs": 313803.345703125,
+          "stdDevNs": 2520.014100677345,
           "allocatedBytes": 992128,
           "isBaseline": false,
           "slaTarget": "<= 150 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Reflection-based in-memory projection should stay around 1-1.5 us/row; up to 100k rows within ~150 ms.",
-          "deltaMeanPct": -1.4662418474825225,
+          "deltaMeanPct": 3.5163092265879548,
           "deltaAllocPct": 0.0
         },
         {
@@ -315,14 +315,14 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 550421.38203125,
-          "stdDevNs": 7598.40795417119,
+          "meanNs": 577661.3536132813,
+          "stdDevNs": 8288.040388324256,
           "allocatedBytes": 1776128,
           "isBaseline": false,
           "slaTarget": "<= 200 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Nested-path projection walks object/collection members per row; up to 100k rows within ~200 ms (~2 us/row).",
-          "deltaMeanPct": 0.29600428323286604,
+          "deltaMeanPct": 4.948930486949122,
           "deltaAllocPct": 0.0
         },
         {
@@ -331,14 +331,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 330.8815012296041,
-          "stdDevNs": 3.7670718918962938,
+          "meanNs": 336.93770643870033,
+          "stdDevNs": 3.6289088474568514,
           "allocatedBytes": 1296,
           "isBaseline": false,
           "slaTarget": "<= 50 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Resolving a handful of field specs is metadata-only and should be tens of microseconds at most.",
-          "deltaMeanPct": 2.5561094390490346,
+          "deltaMeanPct": 1.8303245078949637,
           "deltaAllocPct": 0.0
         },
         {
@@ -347,14 +347,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1147.7067961011614,
-          "stdDevNs": 14.450522132253248,
+          "meanNs": 1228.917723033739,
+          "stdDevNs": 30.33559640197207,
           "allocatedBytes": 3304,
           "isBaseline": false,
           "slaTarget": "<= 200 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Building a projection expression is a build-time step and should stay well under a millisecond.",
-          "deltaMeanPct": -3.3698897682424276,
+          "deltaMeanPct": 7.075929776529749,
           "deltaAllocPct": 0.0
         },
         {
@@ -363,15 +363,15 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 84419055.4375,
-          "stdDevNs": 1587879.204124853,
-          "allocatedBytes": 99200249,
+          "meanNs": 88012601.16666667,
+          "stdDevNs": 1681272.1711944614,
+          "allocatedBytes": 99200245,
           "isBaseline": false,
           "slaTarget": "<= 150 ms",
           "slaResult": "Meets",
           "slaStandard": "Reflection-based in-memory projection should stay around 1-1.5 us/row; up to 100k rows within ~150 ms.",
-          "deltaMeanPct": -0.7651218597491874,
-          "deltaAllocPct": -1.1088680614345163e-05
+          "deltaMeanPct": 4.256794524107378,
+          "deltaAllocPct": -4.03224794324861e-06
         },
         {
           "method": "ProjectEntities_Nested",
@@ -379,17 +379,29 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 122941214.55999999,
-          "stdDevNs": 2022405.395848913,
-          "allocatedBytes": 177600286,
+          "meanNs": 130926301.04761907,
+          "stdDevNs": 2950256.9410698866,
+          "allocatedBytes": 177600285,
           "isBaseline": false,
           "slaTarget": "<= 200 ms",
           "slaResult": "Meets",
           "slaStandard": "Nested-path projection walks object/collection members per row; up to 100k rows within ~200 ms (~2 us/row).",
-          "deltaMeanPct": -1.4374222935939485,
-          "deltaAllocPct": 9.00899531290127e-06
+          "deltaMeanPct": 6.495044413053249,
+          "deltaAllocPct": -5.630621563300861e-07
         }
       ]
+    },
+    {
+      "name": "RootQueryBenchmarks",
+      "description": "Root From/Joins Query against PostgreSQL: flat select, left join with fan-out collapse, and From-side paging with exact count. Seeds JobDefinition + JobRun rows.",
+      "parameters": [
+        {
+          "name": "Amount",
+          "unit": "rows",
+          "description": "From-side page size (10 or 50)."
+        }
+      ],
+      "measurements": []
     },
     {
       "name": "SortBenchmarks",
@@ -484,16 +496,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 250781.3472254136,
-          "stdDevNs": 4848.357507311856,
-          "allocatedBytes": 12459,
+          "meanNs": 260505.50555419922,
+          "stdDevNs": 5106.8578886309315,
+          "allocatedBytes": 12308,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": 0.32412116626068577,
-          "deltaAllocPct": 1.2268443288917776
+          "deltaMeanPct": 3.8775444969777224,
+          "deltaAllocPct": -1.2119752789148408
         },
         {
           "method": "ApplyOrdering_TwoKeys",
@@ -501,15 +513,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 348850.49798177084,
-          "stdDevNs": 6274.400604353724,
+          "meanNs": 363381.71742466517,
+          "stdDevNs": 5164.878679913583,
           "allocatedBytes": 20442,
-          "ratioToBaseline": 1.3910544059252072,
+          "ratioToBaseline": 1.394909933483391,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": -1.1480830958203057,
+          "deltaMeanPct": 4.1654575604629525,
           "deltaAllocPct": 0.0
         },
         {
@@ -518,16 +530,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 438747.88579963235,
-          "stdDevNs": 6822.008437299681,
-          "allocatedBytes": 27998,
-          "ratioToBaseline": 1.7495236015510593,
+          "meanNs": 451178.5162434896,
+          "stdDevNs": 7366.438200245742,
+          "allocatedBytes": 27838,
+          "ratioToBaseline": 1.731934667882173,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": -1.6565519131210567,
-          "deltaAllocPct": -0.4621729237770193
+          "deltaMeanPct": 2.8332057762972456,
+          "deltaAllocPct": -0.5714693906707622
         },
         {
           "method": "SortByProperty_Single",
@@ -535,15 +547,15 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 251277.26733398438,
-          "stdDevNs": 3057.3117225430883,
+          "meanNs": 257675.41782226562,
+          "stdDevNs": 4129.276980560523,
           "allocatedBytes": 12308,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": -0.9275025249115934,
+          "deltaMeanPct": 2.5462512212762816,
           "deltaAllocPct": 0.0
         },
         {
@@ -552,16 +564,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 351938.510672433,
-          "stdDevNs": 4129.403564706634,
+          "meanNs": 374083.38872070314,
+          "stdDevNs": 5834.721527864722,
           "allocatedBytes": 20442,
-          "ratioToBaseline": 1.4005982889198452,
+          "ratioToBaseline": 1.4517620341212802,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": -2.0280790334872933,
-          "deltaAllocPct": -0.7332588743747875
+          "deltaMeanPct": 6.29225770318767,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ApplyOrdering_ThreeKeys",
@@ -569,15 +581,15 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 437777.81233723956,
-          "stdDevNs": 5929.457349336493,
+          "meanNs": 468486.37514361215,
+          "stdDevNs": 9619.982192040517,
           "allocatedBytes": 27837,
-          "ratioToBaseline": 1.742210176758125,
+          "ratioToBaseline": 1.818125993946212,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-          "deltaMeanPct": -0.41679426930144325,
+          "deltaMeanPct": 7.014645772572052,
           "deltaAllocPct": 0.0
         }
       ]
@@ -676,14 +688,14 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 506.24229017893475,
-          "stdDevNs": 8.492218389489826,
+          "meanNs": 564.354161494487,
+          "stdDevNs": 18.322337019374963,
           "allocatedBytes": 1544,
           "isBaseline": false,
           "slaTarget": "<= 100 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a where-clause expression tree is a build-time step and should stay well under a millisecond.",
-          "deltaMeanPct": -4.878275420817825,
+          "deltaMeanPct": 11.479062978917117,
           "deltaAllocPct": 0.0
         },
         {
@@ -692,15 +704,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1897.1623085021972,
-          "stdDevNs": 23.286243168456373,
+          "meanNs": 2052.0670997340503,
+          "stdDevNs": 73.29192470303892,
           "allocatedBytes": 4985,
           "isBaseline": false,
           "slaTarget": "<= 150 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a nested where-clause expression tree should stay well under a millisecond.",
-          "deltaMeanPct": -6.4424172959237165,
-          "deltaAllocPct": -1.5794669299111548
+          "deltaMeanPct": 8.165078472076006,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "BuildExpression_NestedPath",
@@ -708,15 +720,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1353.6814686701848,
-          "stdDevNs": 17.968432868318683,
+          "meanNs": 1450.8373791694642,
+          "stdDevNs": 33.085102400392024,
           "allocatedBytes": 2977,
           "isBaseline": false,
           "slaTarget": "<= 200 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a nested-path where-clause (object + collection traversal) should stay well under a millisecond.",
-          "deltaMeanPct": -12.134660226522657,
-          "deltaAllocPct": -8.14563406356063
+          "deltaMeanPct": 7.177161891321622,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ApplyWhereClause_Simple",
@@ -724,15 +736,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 337947.8858173077,
-          "stdDevNs": 4107.9738523388105,
-          "allocatedBytes": 13617,
+          "meanNs": 344551.9045410156,
+          "stdDevNs": 3560.8727690343258,
+          "allocatedBytes": 13603,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows should complete within tens of milliseconds.",
-          "deltaMeanPct": 0.44549551882567706,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 1.9541529924758945,
+          "deltaAllocPct": -0.10281266064478226
         },
         {
           "method": "ApplyWhereClause_Nested",
@@ -740,15 +752,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 606378.2080775669,
-          "stdDevNs": 6801.273534357784,
-          "allocatedBytes": 41157,
+          "meanNs": 617855.7193359375,
+          "stdDevNs": 6726.718758028472,
+          "allocatedBytes": 41309,
           "isBaseline": false,
           "slaTarget": "<= 75 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows with a nested clause should complete within tens of milliseconds.",
-          "deltaMeanPct": -2.2489776929991088,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 1.892797449756375,
+          "deltaAllocPct": 0.36931749155672183
         },
         {
           "method": "ApplyWhereClause_NestedPath",
@@ -756,15 +768,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 624118.199641927,
-          "stdDevNs": 7882.423638450444,
-          "allocatedBytes": 59621,
+          "meanNs": 650604.20078125,
+          "stdDevNs": 7123.2916153983615,
+          "allocatedBytes": 59477,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows with nested-path traversal should complete within ~100 ms.",
-          "deltaMeanPct": -0.6739802236310019,
-          "deltaAllocPct": 0.10746008025924744
+          "deltaMeanPct": 4.243747603341596,
+          "deltaAllocPct": -0.24152563694000437
         },
         {
           "method": "MatchesWhereClause_Nested",
@@ -772,15 +784,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 512.8605447549087,
-          "stdDevNs": 3.564712987365426,
-          "allocatedBytes": 1873,
+          "meanNs": 531.612861919403,
+          "stdDevNs": 9.599292558250992,
+          "allocatedBytes": 1857,
           "isBaseline": false,
           "slaTarget": "<= 20 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Matching a single entity against a clause should be a few microseconds at most.",
-          "deltaMeanPct": -1.3250390987104397,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 3.656416418903096,
+          "deltaAllocPct": -0.8542445274959957
         },
         {
           "method": "BuildExpression_Simple",
@@ -788,14 +800,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 514.0619816098895,
-          "stdDevNs": 4.485585098095898,
+          "meanNs": 555.0558013153076,
+          "stdDevNs": 14.600934758241044,
           "allocatedBytes": 1544,
           "isBaseline": false,
           "slaTarget": "<= 100 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a where-clause expression tree is a build-time step and should stay well under a millisecond.",
-          "deltaMeanPct": -5.239787311059552,
+          "deltaMeanPct": 7.974489686445521,
           "deltaAllocPct": 0.0
         },
         {
@@ -804,14 +816,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1916.9200944166917,
-          "stdDevNs": 17.820201708041104,
+          "meanNs": 2067.4947187105813,
+          "stdDevNs": 52.8212450750357,
           "allocatedBytes": 4985,
           "isBaseline": false,
           "slaTarget": "<= 150 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a nested where-clause expression tree should stay well under a millisecond.",
-          "deltaMeanPct": -0.5995958193962092,
+          "deltaMeanPct": 7.855028737632838,
           "deltaAllocPct": 0.0
         },
         {
@@ -820,14 +832,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1328.5782740275065,
-          "stdDevNs": 16.772240428878053,
+          "meanNs": 1465.7992013692856,
+          "stdDevNs": 28.420249915294672,
           "allocatedBytes": 2977,
           "isBaseline": false,
           "slaTarget": "<= 200 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Compiling a nested-path where-clause (object + collection traversal) should stay well under a millisecond.",
-          "deltaMeanPct": -2.6055680275817577,
+          "deltaMeanPct": 10.3284036796569,
           "deltaAllocPct": 0.0
         },
         {
@@ -836,14 +848,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 1000127.8467447917,
-          "stdDevNs": 11416.060277073759,
+          "meanNs": 1001372.4016927084,
+          "stdDevNs": 12721.716280387021,
           "allocatedBytes": 13605,
           "isBaseline": false,
           "slaTarget": "<= 50 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows should complete within tens of milliseconds.",
-          "deltaMeanPct": 1.764106985269009,
+          "deltaMeanPct": 0.12443958559572348,
           "deltaAllocPct": 0.0
         },
         {
@@ -852,15 +864,15 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 2966320.907858456,
-          "stdDevNs": 57176.667358809005,
-          "allocatedBytes": 2510779,
+          "meanNs": 3021769.7874177634,
+          "stdDevNs": 65932.5737316712,
+          "allocatedBytes": 2510589,
           "isBaseline": false,
           "slaTarget": "<= 75 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows with a nested clause should complete within tens of milliseconds.",
-          "deltaMeanPct": 1.7517090613652415,
-          "deltaAllocPct": 0.006372930341083214
+          "deltaMeanPct": 1.8692812167561075,
+          "deltaAllocPct": -0.00756737251665718
         },
         {
           "method": "ApplyWhereClause_NestedPath",
@@ -868,15 +880,15 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 5418875.946428572,
-          "stdDevNs": 94914.02361308038,
-          "allocatedBytes": 4417184,
+          "meanNs": 5633964.987664473,
+          "stdDevNs": 120263.30956673232,
+          "allocatedBytes": 4417195,
           "isBaseline": false,
           "slaTarget": "<= 100 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Filtering up to 100k in-memory rows with nested-path traversal should complete within ~100 ms.",
-          "deltaMeanPct": 1.1422218066633767,
-          "deltaAllocPct": -0.0002490268145282244
+          "deltaMeanPct": 3.969255678895187,
+          "deltaAllocPct": 0.00024902743467331224
         },
         {
           "method": "MatchesWhereClause_Nested",
@@ -884,14 +896,14 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 522.5859076976776,
-          "stdDevNs": 10.070939888961549,
+          "meanNs": 557.987160474062,
+          "stdDevNs": 17.343069005730435,
           "allocatedBytes": 1857,
           "isBaseline": false,
           "slaTarget": "<= 20 \u00b5s",
           "slaResult": "Exceeds",
           "slaStandard": "Matching a single entity against a clause should be a few microseconds at most.",
-          "deltaMeanPct": -2.1957966092373,
+          "deltaMeanPct": 6.7742455843000675,
           "deltaAllocPct": 0.0
         }
       ]
@@ -901,97 +913,97 @@
     {
       "area": "ApplyOrdering_ThreeKeys",
       "target": "<= 100 ms \u2014 Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-      "latest": "438.75 \u00b5s",
+      "latest": "451.18 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ApplyOrdering_TwoKeys",
       "target": "<= 100 ms \u2014 Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-      "latest": "348.85 \u00b5s",
+      "latest": "363.38 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ApplyWhereClause_Nested",
       "target": "<= 75 ms \u2014 Filtering up to 100k in-memory rows with a nested clause should complete within tens of milliseconds.",
-      "latest": "606.38 \u00b5s",
+      "latest": "617.86 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ApplyWhereClause_NestedPath",
       "target": "<= 100 ms \u2014 Filtering up to 100k in-memory rows with nested-path traversal should complete within ~100 ms.",
-      "latest": "624.12 \u00b5s",
+      "latest": "650.6 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ApplyWhereClause_Simple",
       "target": "<= 50 ms \u2014 Filtering up to 100k in-memory rows should complete within tens of milliseconds.",
-      "latest": "337.95 \u00b5s",
+      "latest": "344.55 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "BuildExpression_Nested",
       "target": "<= 150 \u00b5s \u2014 Compiling a nested where-clause expression tree should stay well under a millisecond.",
-      "latest": "1.9 \u00b5s",
+      "latest": "2.05 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "BuildExpression_NestedPath",
       "target": "<= 200 \u00b5s \u2014 Compiling a nested-path where-clause (object + collection traversal) should stay well under a millisecond.",
-      "latest": "1.35 \u00b5s",
+      "latest": "1.45 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "BuildExpression_Simple",
       "target": "<= 100 \u00b5s \u2014 Compiling a where-clause expression tree is a build-time step and should stay well under a millisecond.",
-      "latest": "506.24 ns",
+      "latest": "564.35 ns",
       "result": "Exceeds"
     },
     {
       "area": "Map_List",
       "target": "<= 5 ms \u2014 Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-      "latest": "3.13 \u00b5s",
+      "latest": "3.44 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "Map_Single",
       "target": "<= 5 ms \u2014 Object-to-DTO mapping of a single entity or a 100-entity list with nested children should be a low single-digit milliseconds at most.",
-      "latest": "38.14 ns",
+      "latest": "40.88 ns",
       "result": "Exceeds"
     },
     {
       "area": "MatchesWhereClause_Nested",
       "target": "<= 20 \u00b5s \u2014 Matching a single entity against a clause should be a few microseconds at most.",
-      "latest": "512.86 ns",
+      "latest": "531.61 ns",
       "result": "Exceeds"
     },
     {
       "area": "ProjectEntities",
       "target": "<= 150 ms \u2014 Reflection-based in-memory projection should stay around 1-1.5 us/row; up to 100k rows within ~150 ms.",
-      "latest": "84.42 ms",
+      "latest": "88.01 ms",
       "result": "Meets"
     },
     {
       "area": "ProjectEntities_Nested",
       "target": "<= 200 ms \u2014 Nested-path projection walks object/collection members per row; up to 100k rows within ~200 ms (~2 us/row).",
-      "latest": "122.94 ms",
+      "latest": "130.93 ms",
       "result": "Meets"
     },
     {
       "area": "ResolveProjectedFields",
       "target": "<= 50 \u00b5s \u2014 Resolving a handful of field specs is metadata-only and should be tens of microseconds at most.",
-      "latest": "316.12 ns",
+      "latest": "334.71 ns",
       "result": "Exceeds"
     },
     {
       "area": "SortByProperty_Single",
       "target": "<= 100 ms \u2014 Ordering up to 100k in-memory rows should complete within ~100 ms (comparable to an in-memory LINQ OrderBy).",
-      "latest": "250.78 \u00b5s",
+      "latest": "260.51 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "TryBuildSqlProjectionExpression",
       "target": "<= 200 \u00b5s \u2014 Building a projection expression is a build-time step and should stay well under a millisecond.",
-      "latest": "1.21 \u00b5s",
+      "latest": "1.24 \u00b5s",
       "result": "Exceeds"
     }
   ],
@@ -1020,12 +1032,12 @@
   "schema": "lyo.bench/v1",
   "name": "query",
   "title": "Query & CRUD",
-  "description": "Lyo.Query engine internals plus end-to-end CRUD. In-memory suites run the where-clause engine (expression build, filtering, single-entity match), ordering, object-to-DTO mapping, and the projection pipeline over generated BenchPerson rows (RowCount). The CRUD suite runs Query/Get/Patch/Create/Delete against a real PostgreSQL database (Testcontainers, Docker) paging Amount rows. Each class's data shape captures the entity/model structure being exercised, including nested collections.",
-  "runId": "BenchmarkRun-joined-2026-07-08-05-53-32",
-  "generatedAt": "2026-07-08T05:53:32.7785834+00:00",
-  "runStarted": "2026-07-08T05:42:06.8829668+00:00",
-  "runEnded": "2026-07-08T05:53:32.7785834+00:00",
-  "durationSeconds": 685.8956166,
+  "description": "Lyo.Query engine internals plus end-to-end CRUD. In-memory suites run the where-clause engine (expression build, filtering, single-entity match), ordering, object-to-DTO mapping, and the projection pipeline over generated BenchPerson rows (RowCount). The CRUD suite runs Query/Get/Patch/Create/Delete against a real PostgreSQL database (Testcontainers, Docker) paging Amount rows. RootQueryBenchmarks exercises From/Joins root /Query (flat select, left-join fan-out collapse, exact count). Each class's data shape captures the entity/model structure being exercised, including nested collections.",
+  "runId": "BenchmarkRun-joined-2026-07-29-06-45-13",
+  "generatedAt": "2026-07-29T06:45:13.5278909+00:00",
+  "runStarted": "2026-07-29T06:31:22.2938109+00:00",
+  "runEnded": "2026-07-29T06:45:13.5278909+00:00",
+  "durationSeconds": 831.23408,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
@@ -1038,7 +1050,38 @@
     "memoryBytes": 6442450944,
     "gcMode": "Workstation",
     "configuration": "Release",
-    "dotnetSdkVersion": "10.0.100"
+    "dotnetSdkVersion": "10.0.100",
+    "dependencies": {
+      "BenchmarkDotNet": "0.15.8",
+      "EasyCompressor": "2.1.0",
+      "Konscious.Security.Cryptography.Argon2": "1.3.1",
+      "Mapster": "10.0.10",
+      "Mapster.DependencyInjection": "10.0.10",
+      "Microsoft.AspNetCore.Authorization": "10.0.5",
+      "Microsoft.AspNetCore.Http.Abstractions": "2.*",
+      "Microsoft.AspNetCore.OpenApi": "10.0.5",
+      "Microsoft.EntityFrameworkCore": "10.0.5",
+      "Microsoft.EntityFrameworkCore.Analyzers": "10.0.5",
+      "Microsoft.EntityFrameworkCore.Design": "10.0.5",
+      "Microsoft.EntityFrameworkCore.Relational": "10.0.5",
+      "Microsoft.Extensions.Caching.Memory": "10.0.5",
+      "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Options": "10.0.5",
+      "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+      "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.3",
+      "SmartFormat.NET": "3.6.1",
+      "System.ComponentModel.Annotations": "5.0.0",
+      "System.IO.Hashing": "10.0.5",
+      "System.Threading.Tasks.Extensions": "4.6.3",
+      "Testcontainers.PostgreSql": "4.13.0",
+      "Testcontainers.RabbitMq": "4.13.0",
+      "Testcontainers.Redis": "4.13.0",
+      "xunit.v3.extensibility.core": "3.2.2"
+    }
   },
   "notes": [],
   "history": [
@@ -1068,15 +1111,25 @@
       "runStarted": "2026-07-08T05:42:06.8829668+00:00",
       "runEnded": "2026-07-08T05:53:32.7785834+00:00",
       "generatedAt": "2026-07-08T05:53:32.7785834+00:00",
-      "isCurrent": true,
+      "isCurrent": false,
       "measurementCount": 34,
       "medianMeanNs": 47869.161466471356
+    },
+    {
+      "file": "20260729T064513Z_BenchmarkRun-joined-2026-07-29-06-45-13.json",
+      "runId": "BenchmarkRun-joined-2026-07-29-06-45-13",
+      "runStarted": "2026-07-29T06:31:22.2938109+00:00",
+      "runEnded": "2026-07-29T06:45:13.5278909+00:00",
+      "generatedAt": "2026-07-29T06:45:13.5278909+00:00",
+      "isCurrent": true,
+      "measurementCount": 34,
+      "medianMeanNs": 52299.145067850746
     }
   ],
   "deltaBaseline": {
     "kind": "previousRun",
-    "runId": "BenchmarkRun-joined-2026-07-04-07-29-30",
-    "runStarted": "2026-07-04T07:17:53.7373804+00:00",
-    "runEnded": "2026-07-04T07:29:31.0459815+00:00"
+    "runId": "BenchmarkRun-joined-2026-07-08-05-53-32",
+    "runStarted": "2026-07-08T05:42:06.8829668+00:00",
+    "runEnded": "2026-07-08T05:53:32.7785834+00:00"
   }
 }

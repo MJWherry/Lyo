@@ -1,4 +1,5 @@
 using System.Reflection;
+using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
@@ -48,8 +49,8 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     public void AddSheetFromDataTable(string sheetName, DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows) = XlsxWriter.BuildFromDataTable(dataTable);
-        WriteSheet(sheetName, headers, rows, ct);
+        var (headers, rows, headerFormats) = XlsxWriter.BuildFromDataTable(dataTable);
+        WriteSheet(sheetName, headers, rows, ct, headerFormats);
     }
 
     /// <inheritdoc
@@ -71,7 +72,12 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
         _ownedStream?.Dispose();
     }
 
-    private void WriteSheet(string sheetName, IReadOnlyList<string> headers, IEnumerable<XlsxCell[]> rows, CancellationToken ct)
+    private void WriteSheet(
+        string sheetName,
+        IReadOnlyList<string> headers,
+        IEnumerable<XlsxCell[]> rows,
+        CancellationToken ct,
+        IReadOnlyList<DataTableCellFormat?>? headerFormats = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sheetName);
         if (_disposed)
@@ -81,6 +87,6 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
             throw new ArgumentException($"A sheet named '{sheetName}' has already been added to this document.", nameof(sheetName));
 
         _logger.LogDebug("Streaming worksheet {XlsxSheetName} into document session", sheetName);
-        _writer.WriteSheet(sheetName, headers, rows, ct);
+        _writer.WriteSheet(sheetName, headers, rows, headerFormats, ct);
     }
 }

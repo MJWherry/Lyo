@@ -5,6 +5,7 @@ using CsvHelper;
 using Lyo.Csv.Converters;
 using Lyo.Csv.Models;
 using Lyo.Csv.Tests.TestModels;
+using Lyo.DataTable.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
@@ -171,6 +172,16 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal("20", dt.Rows[0][1].DisplayValue);
         Assert.Equal("30", dt.Rows[1][0].DisplayValue);
         Assert.Equal("40", dt.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseBytesAsDataTable_with_pooling_shares_duplicate_values()
+    {
+        var csv = "V\ndup\ndup\n";
+        var options = new CsvOptions { Pooling = new DataTablePoolingOptions { PoolValues = true, PoolingCellThreshold = 0 } };
+        var svc = new CsvService(_logger, options: options);
+        var dt = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv)).ValueOrThrow();
+        Assert.Same(dt.Rows[0][0].DisplayValue, dt.Rows[1][0].DisplayValue);
     }
 
     [Fact]

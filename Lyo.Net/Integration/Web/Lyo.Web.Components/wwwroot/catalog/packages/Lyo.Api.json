@@ -376,7 +376,38 @@
   "links": [],
   "readmePath": "Lyo.Net/Integration/Api/Lyo.Api/README.md",
   "benchmarks": {
-    "suite": "query"
+    "suite": "query-api",
+    "headline": "k6 load / spike / soak / stress against Person QueryConcrete, QueryProject, and root Query.",
+    "items": [
+      {
+        "label": "QueryConcrete load",
+        "href": "/benchmarks/query-api",
+        "featured": true,
+        "scenario": "query_load",
+        "primary": "p95"
+      },
+      {
+        "label": "QueryConcrete spike",
+        "href": "/benchmarks/query-api",
+        "featured": true,
+        "scenario": "query_spike",
+        "primary": "p95"
+      },
+      {
+        "label": "QueryConcrete soak",
+        "href": "/benchmarks/query-api",
+        "featured": true,
+        "scenario": "query_soak",
+        "primary": "p95"
+      },
+      {
+        "label": "QueryProject load",
+        "href": "/benchmarks/query-api",
+        "featured": true,
+        "scenario": "queryproject_load",
+        "primary": "p95"
+      }
+    ]
   },
   "dependencies": [
     {

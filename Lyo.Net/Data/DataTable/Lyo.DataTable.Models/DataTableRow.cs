@@ -27,5 +27,12 @@ public sealed class DataTableRow
     /// <summary>Sets the cell at the given column with a value-only cell.</summary>
     public DataTableRow SetCell(int col, string value) => SetCell(col, DataTableCell.FromValue(value));
 
+    /// <summary>Removes the cell at the given column if present.</summary>
+    public DataTableRow ClearCell(int col)
+    {
+        _cells.Remove(col);
+        return this;
+    }
+
     public override string ToString() => $"DataTableRow(Cells: {string.Join(", ", _cells.Select(kv => $"[{kv.Key}: {kv.Value.DisplayValue}]"))})";
 }

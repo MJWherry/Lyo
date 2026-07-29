@@ -1,7 +1,9 @@
 import {
+  displayParamLabel,
   formatBytes,
   formatDeltaPct,
   formatNs,
+  formatTimestamp,
   paramLabel,
   slaBadgeClass,
 } from "@/lib/benchmarks/format";
@@ -15,7 +17,15 @@ export function MicroReport({ report }: { report: BenchReport }) {
       {report.description ? <p className="muted">{report.description}</p> : null}
       {report.deltaBaseline?.runId ? (
         <p className="faint" style={{ fontSize: "0.88rem" }}>
-          Δ vs prior run: {report.deltaBaseline.runId}
+          Δ vs {report.deltaBaseline.kind === "previousRun" ? "prior run" : "selected run"}:{" "}
+          {report.deltaBaseline.runId}
+          {report.deltaBaseline.runEnded || report.deltaBaseline.runStarted
+            ? ` (${formatTimestamp(report.deltaBaseline.runEnded || report.deltaBaseline.runStarted)})`
+            : ""}
+        </p>
+      ) : (report.history?.length ?? 0) > 1 ? (
+        <p className="faint" style={{ fontSize: "0.88rem" }}>
+          Δ columns hidden — pick a run under Compare against.
         </p>
       ) : null}
 
@@ -37,18 +47,21 @@ export function MicroReport({ report }: { report: BenchReport }) {
                       <th>Mean</th>
                       <th>Alloc</th>
                       <th>Δ mean</th>
+                      <th>Δ alloc</th>
                     </tr>
                   </thead>
                   <tbody>
                     {g.rows.map((row, ri) => {
-                      const delta = formatDeltaPct(row.deltaMeanPct);
+                      const deltaMean = formatDeltaPct(row.deltaMeanPct);
+                      const deltaAlloc = formatDeltaPct(row.deltaAllocPct);
                       return (
                         <tr key={`${row.algorithm}-${ri}`}>
                           <td>{row.algorithm}</td>
-                          <td>{row.paramLabel ?? "—"}</td>
+                          <td>{displayParamLabel(row.parameters, row.paramLabel)}</td>
                           <td>{formatNs(row.meanNs)}</td>
                           <td>{formatBytes(row.allocatedBytes)}</td>
-                          <td className={delta.className}>{delta.text}</td>
+                          <td className={deltaMean.className}>{deltaMean.text}</td>
+                          <td className={deltaAlloc.className}>{deltaAlloc.text}</td>
                         </tr>
                       );
                     })}
@@ -86,19 +99,21 @@ export function MicroReport({ report }: { report: BenchReport }) {
                     <th>Mean</th>
                     <th>Alloc</th>
                     <th>Δ mean</th>
+                    <th>Δ alloc</th>
                     <th>SLA</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(group.measurements ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="muted">
+                      <td colSpan={7} className="muted">
                         No measurements in this group.
                       </td>
                     </tr>
                   ) : (
                     (group.measurements ?? []).map((m, i) => {
-                      const delta = formatDeltaPct(m.deltaMeanPct);
+                      const deltaMean = formatDeltaPct(m.deltaMeanPct);
+                      const deltaAlloc = formatDeltaPct(m.deltaAllocPct);
                       return (
                         <tr key={`${m.method}-${i}`}>
                           <td className="wrap">
@@ -117,7 +132,8 @@ export function MicroReport({ report }: { report: BenchReport }) {
                           <td>{paramLabel(m.parameters)}</td>
                           <td>{formatNs(m.meanNs)}</td>
                           <td>{formatBytes(m.allocatedBytes)}</td>
-                          <td className={delta.className}>{delta.text}</td>
+                          <td className={deltaMean.className}>{deltaMean.text}</td>
+                          <td className={deltaAlloc.className}>{deltaAlloc.text}</td>
                           <td>
                             <span className={slaBadgeClass(m.slaResult)} title={m.slaTarget}>
                               {m.slaResult ?? "—"}

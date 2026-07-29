@@ -2,14 +2,19 @@ import { CodeBlock } from "./CodeBlock";
 import { inlineFormat } from "@/lib/catalog/inlineFormat";
 import type { DocSection } from "@/lib/catalog/types";
 
+type MdBlock =
+  | { type: "table"; content: string }
+  | { type: "code"; language: string; code: string }
+  | { type: "pre"; content: string };
+
+type MdGroup =
+  | { type: "single"; block: MdBlock }
+  | { type: "codes"; items: Array<Extract<MdBlock, { type: "code" }>> };
+
 function MarkdownBlock({ body }: { body: string }) {
   // Render tables, fenced code, and prose in document order.
   const lines = body.replace(/\r\n/g, "\n").split("\n");
-  const blocks: Array<
-    | { type: "table"; content: string }
-    | { type: "code"; language: string; code: string }
-    | { type: "pre"; content: string }
-  > = [];
+  const blocks: MdBlock[] = [];
   let i = 0;
   while (i < lines.length) {
     const fence = lines[i].match(/^```([^\n`]*)\s*$/);
@@ -48,11 +53,11 @@ function MarkdownBlock({ body }: { body: string }) {
   }
 
   // Group consecutive code fences so CSS can tighten the gap between them.
-  const grouped: Array<typeof blocks | { type: "codes"; items: typeof blocks }> = [];
-  let codeRun: typeof blocks = [];
+  const grouped: MdGroup[] = [];
+  let codeRun: Array<Extract<MdBlock, { type: "code" }>> = [];
   const flushCodes = () => {
     if (!codeRun.length) return;
-    if (codeRun.length === 1) grouped.push(codeRun);
+    if (codeRun.length === 1) grouped.push({ type: "single", block: codeRun[0] });
     else grouped.push({ type: "codes", items: [...codeRun] });
     codeRun = [];
   };
@@ -62,25 +67,23 @@ function MarkdownBlock({ body }: { body: string }) {
       continue;
     }
     flushCodes();
-    grouped.push([b]);
+    grouped.push({ type: "single", block: b });
   }
   flushCodes();
 
   return (
     <>
       {grouped.map((group, gidx) => {
-        if ("type" in group && group.type === "codes") {
+        if (group.type === "codes") {
           return (
             <div key={gidx} className="code-stack" style={{ marginBottom: "0.85rem" }}>
-              {group.items.map((b, idx) =>
-                b.type === "code" ? (
-                  <CodeBlock key={idx} code={b.code} language={b.language} />
-                ) : null
-              )}
+              {group.items.map((b, idx) => (
+                <CodeBlock key={idx} code={b.code} language={b.language} />
+              ))}
             </div>
           );
         }
-        const b = group[0];
+        const b = group.block;
         if (b.type === "code") {
           return (
             <div key={gidx} style={{ marginBottom: "0.85rem" }}>
@@ -91,20 +94,20 @@ function MarkdownBlock({ body }: { body: string }) {
         if (b.type === "table") {
           const rows = b.content
             .split("\n")
-            .filter((l) => l.trim() && !/^\|[\s-:|]+\|$/.test(l.trim()));
+            .filter((l: string) => l.trim() && !/^\|[\s-:|]+\|$/.test(l.trim()));
           return (
             <div key={gidx} className="table-wrap" style={{ marginBottom: "1rem" }}>
               <table className="data">
                 <tbody>
-                  {rows.map((row, ri) => {
+                  {rows.map((row: string, ri: number) => {
                     const cells = row
                       .split("|")
                       .slice(1, -1)
-                      .map((c) => c.trim());
+                      .map((c: string) => c.trim());
                     const Tag = ri === 0 ? "th" : "td";
                     return (
                       <tr key={ri}>
-                        {cells.map((cell, ci) => (
+                        {cells.map((cell: string, ci: number) => (
                           <Tag
                             key={ci}
                             className="wrap"

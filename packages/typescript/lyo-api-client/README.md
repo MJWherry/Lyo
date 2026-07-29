@@ -8,8 +8,9 @@ Core, reusable API client foundation for Lyo TypeScript consumers.
 - Shared auth header helpers
 - Request execution abstraction via transport adapters
 - Normalized API errors
+- Lyo.Api metadata helpers (`getMetadata` / `getCrudMetadata` / `getEntityMetadata`)
 
-This package intentionally has no domain-specific endpoints.
+Domain-specific Person endpoints live in `lyo-person-api-client`.
 
 ## Usage
 
@@ -37,4 +38,11 @@ const asyncClient = createAsyncApiClient({
     return { status: res.status, ok: res.ok, data, rawBody };
   },
 });
+
+// Typed CreateBuilder metadata (e.g. Person):
+const meta = await asyncClient.getMetadata("person");
+// Dynamic CRUD registry / per-entity:
+// await asyncClient.getCrudMetadata("Twilio");
+// await asyncClient.getEntityMetadata("Twilio", "TwilioSmsLogEntity");
 ```
+

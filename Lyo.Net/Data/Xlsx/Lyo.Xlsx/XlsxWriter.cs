@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using ClosedXML.Excel;
 using ClosedXML.Graphics;
+using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
@@ -154,8 +155,8 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting data table to {XlsxExportPath}", xlsxFilePath);
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        WriteToFile(xlsxFilePath, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, ct));
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        WriteToFile(xlsxFilePath, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, ct));
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxFromDataTable(Lyo.DataTable.Models.DataTable,System.IO.Stream)' />
@@ -165,16 +166,16 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting data table to xlsx stream");
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        WriteToStream(xlsxStream, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, ct));
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        WriteToStream(xlsxStream, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, ct));
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxBytesFromDataTable(Lyo.DataTable.Models.DataTable)' />
     public byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        return WriteToBytes((writer, ct) => writer.WriteSheet("Sheet1", headers, rows, ct));
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        return WriteToBytes((writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, ct));
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.CreateDocumentWriter(System.IO.Stream)' />
@@ -296,18 +297,22 @@ internal sealed class XlsxWriter : IXlsxWriter
         return (headers, rows);
     }
 
-    internal static (List<string> Headers, List<XlsxCell[]> Rows) BuildFromDataTable(DataTable.Models.DataTable dataTable)
+    internal static (List<string> Headers, List<XlsxCell[]> Rows, List<DataTableCellFormat?>? HeaderFormats) BuildFromDataTable(DataTable.Models.DataTable dataTable)
     {
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
         var headers = new List<string>(maxCol);
+        var hasFormats = dataTable.HasFormats;
+        List<DataTableCellFormat?>? headerFormats = hasFormats ? new List<DataTableCellFormat?>(maxCol) : null;
         for (var c = 0; c < maxCol; c++) {
             var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
             headers.Add(header?.DisplayValue ?? "");
+            headerFormats?.Add(dataTable.GetFormat(-1, c));
         }
 
         var rows = new List<XlsxCell[]>();
-        foreach (var row in dataTable.Rows) {
+        for (var rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++) {
+            var row = dataTable.Rows[rowIndex];
             var cells = new XlsxCell[maxCol];
             for (var c = 0; c < maxCol; c++) {
                 var cell = row.Cells.TryGetValue(c, out var cellValue) ? cellValue : null;
@@ -315,13 +320,19 @@ internal sealed class XlsxWriter : IXlsxWriter
                 if (cell != null && (cell.ColSpan > 1 || cell.RowSpan > 1))
                     xlsxCell = xlsxCell.WithSpan(cell.ColSpan, cell.RowSpan);
 
+                if (hasFormats) {
+                    var format = dataTable.GetFormat(rowIndex, c);
+                    if (format != null)
+                        xlsxCell = xlsxCell.WithFormat(format);
+                }
+
                 cells[c] = xlsxCell;
             }
 
             rows.Add(cells);
         }
 
-        return (headers, rows);
+        return (headers, rows, headerFormats);
     }
 
 #if !NETSTANDARD2_0
@@ -551,8 +562,8 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        await GuardAsync(() => RunToFileAsync(xlsxFilePath, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, token), ct)).ConfigureAwait(false);
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        await GuardAsync(() => RunToFileAsync(xlsxFilePath, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, token), ct)).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.IO.Stream,System.Threading.CancellationToken)' />
@@ -560,16 +571,16 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNull(xlsxStream);
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        await GuardAsync(() => RunToStreamAsync(xlsxStream, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, token), ct)).ConfigureAwait(false);
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        await GuardAsync(() => RunToStreamAsync(xlsxStream, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, token), ct)).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxBytesFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToXlsxBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows) = BuildFromDataTable(dataTable);
-        return await GuardAsync(() => RunToBytesAsync((writer, token) => writer.WriteSheet("Sheet1", headers, rows, token), ct)).ConfigureAwait(false);
+        var (headers, rows, headerFormats) = BuildFromDataTable(dataTable);
+        return await GuardAsync(() => RunToBytesAsync((writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, token), ct)).ConfigureAwait(false);
     }
 
     // Throw synchronously so an already-cancelled token surfaces the exact OperationCanceledException (not a derived TaskCanceledException).

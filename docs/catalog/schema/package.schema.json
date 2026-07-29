@@ -76,8 +76,36 @@
             "additionalProperties": false,
             "properties": {
               "label": { "type": "string" },
-              "href": { "type": "string" },
-              "note": { "type": "string" }
+              "href": {
+                "type": "string",
+                "description": "Portfolio path (e.g. /benchmarks/csv) or relative docs path."
+              },
+              "note": {
+                "type": "string",
+                "description": "Optional human note (docs link text). Featured highlights generate a note from the resolved measurement."
+              },
+              "featured": {
+                "type": "boolean",
+                "description": "When true, the item appears on the portfolio home page. Metric/detail are resolved from docs/benchmarks/data/{suite}.json — do not hardcode figures."
+              },
+              "method": {
+                "type": "string",
+                "description": "Micro suite: BenchmarkDotNet method name to resolve (requires suite)."
+              },
+              "params": {
+                "type": "object",
+                "additionalProperties": { "type": "string" },
+                "description": "Micro suite: [Params] key/values that must match the measurement (e.g. {\"RowCount\":\"100000\"})."
+              },
+              "scenario": {
+                "type": "string",
+                "description": "Load (k6) suite: scenario name to resolve (e.g. query_load)."
+              },
+              "primary": {
+                "type": "string",
+                "enum": ["mean", "throughput", "p95", "checks"],
+                "description": "Which live figure is the hero number. Defaults: throughput|mean (micro), p95 (load)."
+              }
             }
           }
         }

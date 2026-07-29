@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CodeBlock } from "./CodeBlock";
 import { DocSections } from "./DocSections";
+import { resolveFeaturedMetrics } from "@/lib/benchmarks/resolveFeatured";
 import { inlineFormat } from "@/lib/catalog/inlineFormat";
 import type { CatalogDependency, CatalogPackage } from "@/lib/catalog/types";
 
@@ -114,15 +115,32 @@ export function PackageDocView({ pkg }: { pkg: CatalogPackage }) {
             </p>
           ) : null}
           <ul className="muted" style={{ paddingLeft: "1.2rem", margin: 0 }}>
-            {(pkg.benchmarks.items ?? []).map((item) => (
-              <li key={item.href}>
-                <span>{item.label}</span>
-                {item.note ? ` — ${item.note}` : ""}
-                <span className="faint" style={{ display: "block", fontSize: "0.8rem" }}>
-                  {item.href}
-                </span>
-              </li>
-            ))}
+            {(pkg.benchmarks.items ?? []).map((item) => {
+              const resolved = item.featured
+                ? resolveFeaturedMetrics(pkg.benchmarks?.suite, item)
+                : null;
+              return (
+                <li key={`${item.label}-${item.href}`}>
+                  <span>{item.label}</span>
+                  {resolved?.metric ? (
+                    <strong style={{ marginLeft: "0.35rem" }}>{resolved.metric}</strong>
+                  ) : null}
+                  {resolved?.detail
+                    ? ` — ${resolved.detail}`
+                    : item.note
+                      ? ` — ${item.note}`
+                      : ""}
+                  {item.featured ? (
+                    <span className="badge badge-accent" style={{ marginLeft: "0.4rem" }}>
+                      featured
+                    </span>
+                  ) : null}
+                  <span className="faint" style={{ display: "block", fontSize: "0.8rem" }}>
+                    {resolved?.note ?? item.href}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

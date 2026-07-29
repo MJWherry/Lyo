@@ -58,11 +58,53 @@ export function formatDeltaPct(pct: number | undefined | null, lowerIsBetter = t
   return { text, className: worse ? "delta-up" : "delta-down" };
 }
 
+/** Humanize a single `[Params]` value (RowCount → 10,000; DataSize → 1 MB). */
+export function formatParamValue(key: string, value: string | undefined | null): string {
+  if (value == null || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+
+  const k = key.toLowerCase();
+  if (
+    k === "datasize" ||
+    k.endsWith("size") ||
+    k.endsWith("bytes") ||
+    k.includes("payload")
+  ) {
+    return formatBytes(n);
+  }
+
+  if (
+    Number.isInteger(n) &&
+    (k === "rowcount" ||
+      k === "rowsperfile" ||
+      k.endsWith("count") ||
+      k.endsWith("rows") ||
+      k.includes("row"))
+  ) {
+    return n.toLocaleString("en-US");
+  }
+
+  return value;
+}
+
 export function paramLabel(parameters: Record<string, string> | undefined | null): string {
   if (!parameters) return "—";
   const keys = Object.keys(parameters);
   if (!keys.length) return "—";
-  return keys.map((k) => `${k}=${parameters[k]}`).join(", ");
+  return keys.map((k) => `${k}=${formatParamValue(k, parameters[k])}`).join(", ");
+}
+
+/** Prefer formatting from `parameters`; fall back to a stored paramLabel string. */
+export function displayParamLabel(
+  parameters: Record<string, string> | undefined | null,
+  fallback?: string | null
+): string {
+  if (parameters && Object.keys(parameters).length) return paramLabel(parameters);
+  if (!fallback) return "—";
+  // Bare numeric labels (legacy RowCount paramLabel) get thousands separators.
+  if (/^\d+$/.test(fallback)) return Number(fallback).toLocaleString("en-US");
+  return fallback;
 }
 
 export function slaBadgeClass(result: string | undefined | null): string {

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createAsyncApiClient } from "lyo-api-client";
+import { createAsyncApiClient, type AsyncApiClient } from "lyo-api-client";
 import { createAsyncPersonApiClient } from "lyo-person-api-client";
 import { fetchTransport } from "./fetchTransport";
 
@@ -14,14 +14,18 @@ function requireApiBaseUrl(): string {
   return baseUrl.replace(/\/+$/, "");
 }
 
-/** Server-only Person API client. Never import from Client Components. */
-export function getPersonApi() {
-  const api = createAsyncApiClient({
+/** Server-only base Lyo API client (metadata, health helpers, etc.). */
+export function getApi(): AsyncApiClient {
+  return createAsyncApiClient({
     baseUrl: requireApiBaseUrl(),
     token: process.env.LYO_API_TOKEN?.trim() || undefined,
     transport: fetchTransport,
   });
-  return createAsyncPersonApiClient(api);
+}
+
+/** Server-only Person API client. Never import from Client Components. */
+export function getPersonApi() {
+  return createAsyncPersonApiClient(getApi());
 }
 
 /** Raw fetch against the internal API for health / non-Person routes. */

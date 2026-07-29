@@ -416,7 +416,10 @@ var result = await service.CompressFilesAsync(files); // Processes files in para
 
 ## Benchmarks
 
+Zstd compresses 100 MB in tens of milliseconds at multi‑GB/s throughput.
+
 - Portfolio suite: `compression`
+- [Zstd compress](/benchmarks/compression)
 - [Benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)
 
 ## 4. File Compression

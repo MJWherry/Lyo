@@ -10,6 +10,7 @@ const links = [
   { href: "/features", label: "Features", match: (p: string) => p.startsWith("/features") },
   { href: "/benchmarks", label: "Benchmarks", match: (p: string) => p.startsWith("/benchmarks") },
   { href: "/demos", label: "Demos", match: (p: string) => p.startsWith("/demos") },
+  { href: "/about", label: "About", match: (p: string) => p.startsWith("/about") },
 ];
 
 export function SiteHeader() {
@@ -18,14 +19,9 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
-        <div style={{ display: "flex", alignItems: "baseline", gap: "0.85rem", flexWrap: "wrap" }}>
-          <Link href="/" className="brand">
-            Lyo<span>.</span>
-          </Link>
-          <span className="faint" style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem" }}>
-            Matthew Wherry
-          </span>
-        </div>
+        <Link href="/" className="brand">
+          Lyo<span>.</span>
+        </Link>
         <nav className="nav" aria-label="Primary">
           {links.map((link) => (
             <Link
@@ -36,9 +32,6 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          <Link href={site.resumePath} aria-current={pathname === "/resume" ? "page" : undefined}>
-            Resume
-          </Link>
           <a href={site.githubUrl} target="_blank" rel="noreferrer">
             GitHub
           </a>

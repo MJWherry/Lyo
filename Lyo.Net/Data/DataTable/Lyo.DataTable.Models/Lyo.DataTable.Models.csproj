@@ -5,7 +5,7 @@
         <RootNamespace>Lyo.DataTable.Models</RootNamespace>
         <AssemblyName>Lyo.DataTable.Models</AssemblyName>
         <PackageId>Lyo.DataTable.Models</PackageId>
-        <Description>Mutable data table with headers, rows, footer, and per-cell formatting. Used for CSV, XLSX, PDF data and programmatic table construction.</Description>
+        <Description>Mutable data table with headers, rows, footer, thin cells, and a sparse optional format map. Used for CSV, XLSX, PDF data and programmatic table construction.</Description>
         <PackageTags>datatable csv xlsx</PackageTags>
     </PropertyGroup>
 

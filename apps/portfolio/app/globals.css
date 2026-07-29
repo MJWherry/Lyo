@@ -144,6 +144,95 @@ pre code {
   font-size: inherit;
 }
 
+/*
+ * Shiki: site code fences always use a dark --pre-bg (light and dark page themes),
+ * so always apply github-dark token colors (--shiki-dark), never --shiki-light.
+ */
+.code-block--shiki .shiki {
+  margin: 0;
+  padding: 1.1rem 1.25rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  background: var(--pre-bg) !important;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--pre-ink);
+}
+
+.code-block--shiki .shiki code {
+  display: block;
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.code-block--shiki .shiki,
+.code-block--shiki .shiki span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+
+/* highlight.js token colors tuned for --pre-bg (demos). */
+.code-block--hljs .hljs-keyword,
+.code-block--hljs .hljs-selector-tag,
+.code-block--hljs .hljs-literal,
+.code-block--hljs .hljs-section,
+.code-block--hljs .hljs-link {
+  color: #c792ea;
+}
+
+.code-block--hljs .hljs-string,
+.code-block--hljs .hljs-attr,
+.code-block--hljs .hljs-attribute {
+  color: #c3e88d;
+}
+
+.code-block--hljs .hljs-number,
+.code-block--hljs .hljs-bullet {
+  color: #f78c6c;
+}
+
+.code-block--hljs .hljs-built_in,
+.code-block--hljs .hljs-type,
+.code-block--hljs .hljs-class .hljs-title,
+.code-block--hljs .hljs-title.class_ {
+  color: #ffcb6b;
+}
+
+.code-block--hljs .hljs-comment,
+.code-block--hljs .hljs-quote {
+  color: #697098;
+  font-style: italic;
+}
+
+.code-block--hljs .hljs-meta,
+.code-block--hljs .hljs-doctag {
+  color: #89ddff;
+}
+
+.code-block--hljs .hljs-title,
+.code-block--hljs .hljs-title.function_,
+.code-block--hljs .hljs-name {
+  color: #82aaff;
+}
+
+.code-block--hljs .hljs-variable,
+.code-block--hljs .hljs-template-variable,
+.code-block--hljs .hljs-params {
+  color: #f07178;
+}
+
+.code-block--hljs .hljs-punctuation,
+.code-block--hljs .hljs-operator {
+  color: #89ddff;
+}
+
 .shell {
   width: min(100% - 2rem, var(--max));
   max-width: 100%;
@@ -246,7 +335,9 @@ pre code {
 }
 
 .code-stack .code-block pre,
-.code-block + .code-block pre {
+.code-block + .code-block pre,
+.code-stack .code-block--shiki .shiki,
+.code-block + .code-block .shiki {
   border-radius: var(--radius);
 }
 
@@ -863,6 +954,115 @@ table.data td.wrap {
     opacity: 1;
     transform: none;
   }
+}
+
+.featured-benchmarks {
+  padding-bottom: 3rem;
+}
+
+.featured-bench-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+}
+
+.featured-bench-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 0.1rem);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.featured-bench-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  transform: translateY(-1px);
+  color: inherit;
+}
+
+.featured-bench-label {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.featured-bench-metric {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.featured-bench-detail {
+  font-size: 0.88rem;
+  color: var(--ink-muted);
+}
+
+.featured-bench-detail-em {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.featured-bench-note {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.schema-toggle {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.schema-toggle:hover {
+  color: var(--accent);
+}
+
+.schema-entity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.schema-entity-chips code {
+  font-size: 0.75rem;
+}
+
+.schema-meta-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .schema-meta-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.about-panel p:last-of-type {
+  margin-bottom: 0;
 }
 
 @media (max-width: 720px) {

@@ -242,6 +242,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Configuration` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)

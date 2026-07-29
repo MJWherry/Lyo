@@ -16,12 +16,14 @@ sample of the leading rows rather than a full-workbook auto-fit pass.
 
 - Strongly-typed read/write via `IEnumerable<T>`.
 - Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet name → rows).
-- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` overloads), or parse every sheet at once (`ParseXlsx*AsAllSheets`).
+- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` / `ParseXlsx*AsDataTableWithFormatting`), or parse every sheet at once (`ParseXlsx*AsAllSheets` / `…WithFormatting`).
+- Thin vs formatted DataTable import: `AsDataTable` skips ClosedXML style reads (values + spans only); `AsDataTableWithFormatting` populates the sparse `(row,col) → DataTableCellFormat` map (absent key = no format; default black/white/theme colors and font size/name are stripped so unstyled sheets stay empty). Export writes styles for mapped cells (unique custom styles capped at 512). Skipping style reads does not remove ClosedXML workbook-load cost.
+- Configurable parse-scoped value/format pooling via `XlsxOptions.Pooling` (`PoolValues`, `PoolFormats`, `PoolingCellThreshold` default 512; one `DataTableValueInterner` per parse).
 - Incremental multi-sheet writing sessions via `CreateDocumentWriter` / `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or row/column dictionary per sheet; dispose finalizes the workbook).
 - Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
-- `Lyo.DataTable.Models.DataTable` round-trip and HTML table export (`ExportToHtmlTable`).
+- `Lyo.DataTable.Models.DataTable` round-trip (values always; formats when present on the map) and HTML table export (`ExportToHtmlTable`).
 - XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with optional `Encoding`.
 - Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one `Result<DataTable>` per input path.
 - `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
@@ -34,6 +36,11 @@ sample of the leading rows rather than a full-workbook auto-fit pass.
 using Lyo.Xlsx;
 
 services.AddXlsxService();
+services.AddXlsxService(o => {
+    o.Pooling.PoolValues = true;
+    o.Pooling.PoolFormats = true;
+    o.Pooling.PoolingCellThreshold = 512; // 0 = always when enabled
+});
 ```
 
 ### Quick start
@@ -88,8 +95,9 @@ await xlsx.ExportToXlsxAsync(rows, formatters, stream, ct: ct);
 ### DataTable, dictionary, and HTML helpers
 
 ```csharp
-Result<DataTable> parsed = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
-xlsx.ExportToXlsxFromDataTable(parsed.ValueOrThrow(), "out.xlsx");
+Result<DataTable> thin = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
+Result<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting("in.xlsx", useHeaderRow: true);
+xlsx.ExportToXlsxFromDataTable(styled.ValueOrThrow(), "out.xlsx"); // writes formats when HasFormats
 
 var grid = xlsx.ParseXlsxFileAsDictionary("in.xlsx");
 xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true);
@@ -120,11 +128,14 @@ IReadOnlyList<Result<DataTable>> async =
 
 ## Benchmarks
 
+Workbook export for 100,000 rows under a second on the async path.
+
 - Portfolio suite: `xlsx`
+- [XLSX async export](/benchmarks/xlsx)
 
 ## Dependency injection
 
-`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`, `IXlsxWriter`, and `IXlsxReader` to the same instance.
+`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`, `IXlsxWriter`, and `IXlsxReader` to the same instance. Overloads accept `Action<XlsxOptions>`, an options instance, or `AddXlsxServiceFromConfiguration` (binds `Xlsx` and optional `DataTablePooling` sections).
 
 ## Multi-sheet workbooks
 
@@ -163,13 +174,17 @@ IReadOnlyList<string> names = xlsx.ListSheetNames("in.xlsx");
 // Select a sheet by name or zero-based index.
 var dict = xlsx.ParseXlsxBytesAsDictionary(bytes, "Archived");
 Result<DataTable> dt = xlsx.ParseXlsxFileAsDataTable("in.xlsx", 1, useHeaderRow: true);
+Result<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting("in.xlsx", 1, useHeaderRow: true);
 
 // Or parse everything, keyed by sheet name in workbook order.
 IReadOnlyDictionary<string, DataTable> all = xlsx.ParseXlsxStreamAsAllSheets(stream);
 ```
 
-The no-arg parse methods keep their first-sheet behavior. Async variants of all
-sheet-control methods are available on `net10.0`.
+The no-arg parse methods keep their first-sheet behavior. `AsDataTable` is thin (no styles); use `AsDataTableWithFormatting` when you need the sparse format map. Async variants of all sheet-control methods are available on `net10.0`.
+
+## Style export limits
+
+Dynamic OpenXML styles cover the fields on `DataTableCellFormat` (RGB colors, common borders/align/numFmt). Theme colors are not round-tripped on import (`TryGetColorHex` returns null for theme). Unique custom cell formats are capped at 512 per workbook; further formats fall back to the default style. FontSize/FontName are intentionally not imported (ClosedXML defaults would fill the sparse map).
 
 ## Public API (generated)
 
@@ -193,8 +208,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `DocumentFormat.OpenXml` `3.1.1` — (direct, third-party)
 - `ExcelDataReader` `3.9.0` — (direct, third-party)
 - `ExcelDataReader.DataSet` `3.9.0` — (direct, third-party)
+- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

@@ -30,10 +30,30 @@ export type QueryBuilderProps = {
   defaultField?: string;
   includePresets?: readonly string[];
   selectPresets?: readonly string[];
+  /** Suggested EntityType values for root Query From/Joins. */
+  entityTypePresets?: readonly string[];
   classPrefix?: string;
   /** Modes to show (default all four). */
   modes?: readonly QueryBuilderMode[];
 };
+
+/** Root Query Select only accepts alias.property on registry CLR props (no nested nav paths). */
+function toRootQuerySelect(select: readonly string[], fromAlias: string): string[] {
+  return select
+    .filter((f) => {
+      const trimmed = f.trim();
+      if (!trimmed) return false;
+      // Drop nested projection paths (contactaddresses.address.city) — invalid for /Query.
+      if (trimmed.includes(".") && !trimmed.startsWith(`${fromAlias}.`)) {
+        const parts = trimmed.split(".");
+        if (parts.length !== 2) return false;
+      }
+      if (!trimmed.includes(".")) return true;
+      const [, prop] = trimmed.split(".", 2);
+      return Boolean(prop) && !prop.includes(".");
+    })
+    .map((f) => (f.includes(".") ? f : `${fromAlias}.${f}`));
+}
 
 const MODE_LABELS: Record<QueryBuilderMode, string> = {
   concrete: "Concrete",
@@ -67,6 +87,8 @@ export function createDefaultQueryBuilderValue(options?: {
     whereClause: where as WhereClause,
   };
 
+  const fromAlias = "p";
+
   return {
     mode: "concrete",
     concrete: {
@@ -84,9 +106,9 @@ export function createDefaultQueryBuilderValue(options?: {
       Options: { ...opts },
       ...shared,
       Include: [],
-      From: { Alias: "p", EntityType: entityType },
+      From: { Alias: fromAlias, EntityType: entityType },
       Joins: [],
-      Select: select.map((f) => (f.includes(".") ? f : `p.${f}`)),
+      Select: toRootQuerySelect(select, fromAlias),
     },
     get: {
       id: "",
@@ -141,6 +163,7 @@ export function QueryBuilder({
   defaultField = "FirstName",
   includePresets = [],
   selectPresets = [],
+  entityTypePresets = [],
   classPrefix = "lyo-qbuilder",
   modes = ALL_MODES,
 }: QueryBuilderProps) {
@@ -295,7 +318,9 @@ export function QueryBuilder({
             <section className={`${p}__section`}>
               <h3 className={`${p}__section-title`}>Select</h3>
               <p className={`${p}__hint`}>
-                Projection paths (Enter to add).
+                {mode === "query"
+                  ? "Root Query requires alias.property (e.g. p.FirstName, ca.PersonId)."
+                  : "Projection paths (Enter to add)."}
                 {selectPresets.length
                   ? ` e.g. ${selectPresets.slice(0, 3).join(", ")}`
                   : ""}
@@ -309,13 +334,17 @@ export function QueryBuilder({
                       project: { ...value.project, Select },
                     });
                   } else {
+                    const alias = value.query.From.Alias || "p";
                     onChange({
                       ...value,
-                      query: { ...value.query, Select },
+                      query: {
+                        ...value.query,
+                        Select: toRootQuerySelect(Select, alias),
+                      },
                     });
                   }
                 }}
-                placeholder="FirstName"
+                placeholder={mode === "query" ? "p.FirstName" : "FirstName"}
               />
             </section>
           ) : null}
@@ -324,6 +353,7 @@ export function QueryBuilder({
             <RootFromJoinsForm
               classPrefix={p}
               value={value.query}
+              entityTypePresets={entityTypePresets}
               onChange={(query) => onChange({ ...value, query })}
             />
           ) : null}
@@ -479,16 +509,29 @@ function SortByEditor({
   );
 }
 
+const DEFAULT_JOIN_ENTITY = "ContactAddressEntity";
+
+function nextJoinAlias(existing: readonly JoinClause[]): string {
+  const used = new Set(existing.map((j) => j.Alias.toLowerCase()));
+  if (!used.has("ca")) return "ca";
+  let i = 2;
+  while (used.has(`j${i}`)) i += 1;
+  return `j${i}`;
+}
+
 function RootFromJoinsForm({
   classPrefix: p,
   value,
   onChange,
+  entityTypePresets,
 }: {
   classPrefix: string;
   value: QueryReq;
   onChange: (next: QueryReq) => void;
+  entityTypePresets: readonly string[];
 }) {
   const joins = value.Joins ?? [];
+  const entityListId = `${p}-entity-types`;
 
   return (
     <>
@@ -511,6 +554,7 @@ function RootFromJoinsForm({
             <span className={`${p}__label`}>EntityType</span>
             <input
               value={value.From.EntityType}
+              list={entityTypePresets.length ? entityListId : undefined}
               onChange={(e) =>
                 onChange({
                   ...value,
@@ -532,20 +576,29 @@ function RootFromJoinsForm({
             type="button"
             className="lyo-qb__btn"
             onClick={() => {
+              const alias = nextJoinAlias(joins);
+              const fromAlias = value.From.Alias || "p";
               const join: JoinClause = {
-                Alias: "j",
-                EntityType: "",
+                Alias: alias,
+                EntityType: DEFAULT_JOIN_ENTITY,
                 Type: "Left",
-                On: [{ From: `${value.From.Alias}.Id`, To: "j.Id" }],
+                On: [{ From: `${fromAlias}.Id`, To: `${alias}.PersonId` }],
               };
-              onChange({ ...value, Joins: [...joins, join] });
+              const select = [...(value.Select ?? [])];
+              for (const path of [`${alias}.Id`, `${alias}.PersonId`]) {
+                if (!select.includes(path)) select.push(path);
+              }
+              onChange({ ...value, Joins: [...joins, join], Select: select });
             }}
           >
             + Join
           </button>
         </div>
         {joins.length === 0 ? (
-          <p className={`${p}__hint`}>No joins — Select from the From alias only.</p>
+          <p className={`${p}__hint`}>
+            No joins — Select from the From alias only. + Join defaults to{" "}
+            {DEFAULT_JOIN_ENTITY} on PersonId.
+          </p>
         ) : null}
         <div className={`${p}__join-list`}>
           {joins.map((join, index) => (
@@ -566,6 +619,7 @@ function RootFromJoinsForm({
                   <span className={`${p}__label`}>EntityType</span>
                   <input
                     value={join.EntityType}
+                    list={entityTypePresets.length ? entityListId : undefined}
                     onChange={(e) => {
                       const Joins = joins.slice();
                       Joins[index] = { ...join, EntityType: e.target.value };
@@ -634,6 +688,13 @@ function RootFromJoinsForm({
             </div>
           ))}
         </div>
+        {entityTypePresets.length ? (
+          <datalist id={entityListId}>
+            {entityTypePresets.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
+        ) : null}
       </section>
     </>
   );

@@ -2,11 +2,12 @@ using Lyo.Exceptions;
 
 namespace Lyo.DataTable.Models;
 
-/// <summary>Fluent builder for DataTableRow.</summary>
+/// <summary>Fluent builder for DataTableRow. Optional formats are collected for application on the parent <see cref="DataTable" /> map.</summary>
 public sealed class DataTableRowBuilder
 {
     private readonly Dictionary<int, IDataTableCell> _cells = new();
     private readonly IReadOnlyDictionary<int, DataTableColumnBuilder> _columnDefs;
+    private readonly Dictionary<int, DataTableCellFormat> _formats = new();
     private readonly DataTableBuilder? _parentBuilder;
 
     /// <summary>Creates a row builder with optional column definitions for FormatWhen.</summary>
@@ -15,6 +16,9 @@ public sealed class DataTableRowBuilder
         _columnDefs = columnDefs ?? new Dictionary<int, DataTableColumnBuilder>();
         _parentBuilder = parentBuilder;
     }
+
+    /// <summary>Formats collected for this row (column → format). Applied to the table when the row is added.</summary>
+    internal IReadOnlyDictionary<int, DataTableCellFormat> Formats => _formats;
 
     /// <summary>Sets a cell with a typed value. Column FormatWhen rules are applied when defined for this column. Use this (not AddCell) for typed values when FormatWhen is configured.</summary>
     public DataTableRowBuilder SetCell<T>(int col, T value)
@@ -27,9 +31,16 @@ public sealed class DataTableRowBuilder
             }
 
             _cells[col] = builder.Build<T>();
+            var format = builder.BuildFormat();
+            if (format != null)
+                _formats[col] = format;
+            else
+                _formats.Remove(col);
         }
-        else
+        else {
             _cells[col] = DataTableCell<T>.FromValue(value);
+            _formats.Remove(col);
+        }
 
         return this;
     }
@@ -38,6 +49,7 @@ public sealed class DataTableRowBuilder
     public DataTableRowBuilder AddCell(int col, string value)
     {
         _cells[col] = DataTableCell.FromValue(value);
+        _formats.Remove(col);
         return this;
     }
 
@@ -48,18 +60,26 @@ public sealed class DataTableRowBuilder
         return this;
     }
 
-    /// <summary>Adds a cell at the given column using a builder.</summary>
+    /// <summary>Adds a cell at the given column using a builder. Format is stored for the parent table map.</summary>
     public DataTableRowBuilder AddCell(int col, DataTableCellBuilder builder)
     {
         _cells[col] = builder.Build();
+        var format = builder.BuildFormat();
+        if (format != null)
+            _formats[col] = format;
+        else
+            _formats.Remove(col);
+
         return this;
     }
 
     /// <summary>Adds cells for columns 0, 1, 2, ... from the given values.</summary>
     public DataTableRowBuilder AddCells(params string[] values)
     {
-        for (var i = 0; i < values.Length; i++)
+        for (var i = 0; i < values.Length; i++) {
             _cells[i] = DataTableCell.FromValue(values[i]);
+            _formats.Remove(i);
+        }
 
         return this;
     }
@@ -73,7 +93,7 @@ public sealed class DataTableRowBuilder
         return this;
     }
 
-    /// <summary>Builds the DataTableRow.</summary>
+    /// <summary>Builds the DataTableRow (cells only; formats are applied by DataTableBuilder when adding the row).</summary>
     public DataTableRow Build()
     {
         var row = new DataTableRow();
@@ -83,11 +103,11 @@ public sealed class DataTableRowBuilder
         return row;
     }
 
-    /// <summary>Builds the row, adds it to the table, and returns the DataTableBuilder for further chaining. Use when building rows via AddRow().</summary>
+    /// <summary>Builds the row, adds it to the table (including formats), and returns the DataTableBuilder for further chaining.</summary>
     public DataTableBuilder BuildAndAdd()
     {
         OperationHelpers.ThrowIfNull(_parentBuilder, "BuildAndAdd requires this builder to be created from DataTableBuilder.AddRow().");
-        _parentBuilder.AddRow(Build());
+        _parentBuilder.AddRow(this);
         return _parentBuilder;
     }
 }

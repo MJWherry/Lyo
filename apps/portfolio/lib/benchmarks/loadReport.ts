@@ -13,15 +13,15 @@ import query from "../../../../docs/benchmarks/data/query.json";
 import xlsx from "../../../../docs/benchmarks/data/xlsx.json";
 
 const latestByName: Record<string, BenchReport> = {
-  "query-api": queryApi as BenchReport,
-  csv: csv as BenchReport,
-  cache: cache as BenchReport,
-  compression: compression as BenchReport,
-  encryption: encryption as BenchReport,
-  hashing: hashing as BenchReport,
-  lock: lock as BenchReport,
-  query: query as BenchReport,
-  xlsx: xlsx as BenchReport,
+  "query-api": queryApi as unknown as BenchReport,
+  csv: csv as unknown as BenchReport,
+  cache: cache as unknown as BenchReport,
+  compression: compression as unknown as BenchReport,
+  encryption: encryption as unknown as BenchReport,
+  hashing: hashing as unknown as BenchReport,
+  lock: lock as unknown as BenchReport,
+  query: query as unknown as BenchReport,
+  xlsx: xlsx as unknown as BenchReport,
 };
 
 function historyJsonPath(suite: string, file: string): string {
@@ -51,15 +51,22 @@ export function loadHistoryReport(name: string, file: string): BenchReport | nul
 
 export function resolveReport(name: string, snapshotFile?: string | null): BenchReport | null {
   const latest = loadLatestReport(name);
-  if (snapshotFile) {
-    const hist = loadHistoryReport(name, snapshotFile);
-    if (hist) {
-      // History snapshots often omit the index; keep the latest suite's history for the picker.
-      return {
-        ...hist,
-        history: hist.history?.length ? hist.history : latest?.history,
-      };
-    }
+  if (!snapshotFile) return latest;
+
+  // The history index marks isCurrent, but that file is often only published as data/<name>.json.
+  const isCurrent =
+    latest?.history?.some((h) => h.isCurrent && h.file === snapshotFile) ||
+    (latest?.runId != null && snapshotFile.includes(latest.runId));
+  if (isCurrent) return latest;
+
+  const hist = loadHistoryReport(name, snapshotFile);
+  if (hist) {
+    // History snapshots often omit the index; keep the latest suite's history for the picker.
+    return {
+      ...hist,
+      history: hist.history?.length ? hist.history : latest?.history,
+    };
   }
-  return latest;
+
+  return null;
 }

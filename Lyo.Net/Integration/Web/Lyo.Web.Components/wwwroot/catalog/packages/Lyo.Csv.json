@@ -8,6 +8,7 @@
     "Strongly-typed read/write via `IEnumerable<T>` / `List<T>`.",
     "Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.",
     "`Lyo.DataTable.Models.DataTable` round-trip (`ParseFileAsDataTable`, `ExportToCsvFromDataTable`, plus an HTML helper `ExportToHtmlTable`).",
+    "CSV → DataTable pooling via `CsvOptions.Pooling` / `CsvParseOptions.Pooling` (defaults `PoolValues=false`; estimate is `cols × (rows+1)` after the full CSV is buffered).",
     "Selected-property export (`IReadOnlyList<PropertyInfo>`), custom-header export (`IReadOnlyDictionary<string, PropertyInfo>`), and formatter export (`IReadOnlyDictionary<string, Func<T, string>>`).",
     "URL download helpers (`ParseFromUrl*`) that share an optional injected `HttpClient`.",
     "Append, combine, and split file operations (async, `net10.0` only).",
@@ -21,7 +22,7 @@
     {
       "title": "Register with DI",
       "language": "csharp",
-      "code": "using Lyo.Csv;\n\nservices.AddCsvService();\n\nservices.AddCsvService(config => {\n    config.Delimiter = \";\";\n    config.HasHeaderRecord = true;\n    config.IgnoreBlankLines = true;\n});\n\nservices.AddCsvService(() => new CsvConfiguration(CultureInfo.InvariantCulture) {\n    Delimiter = \",\",\n    HasHeaderRecord = true,\n});\n\nservices.AddCsvService((provider, config) => {\n    var feature = provider.GetRequiredService<IFeatureFlags>();\n    config.Delimiter = feature.UseSemicolons ? \";\" : \",\";\n});"
+      "code": "using Lyo.Csv;\n\nservices.AddCsvService();\nservices.AddCsvService(o => {\n    o.Pooling.PoolValues = true; // opt in for high-duplication grids\n    o.Pooling.PoolingCellThreshold = 512;\n});\n\nservices.AddCsvService(config => {\n    config.Delimiter = \";\";\n    config.HasHeaderRecord = true;\n    config.IgnoreBlankLines = true;\n});\n\nservices.AddCsvService(() => new CsvConfiguration(CultureInfo.InvariantCulture) {\n    Delimiter = \",\",\n    HasHeaderRecord = true,\n});\n\nservices.AddCsvService((provider, config) => {\n    var feature = provider.GetRequiredService<IFeatureFlags>();\n    config.Delimiter = feature.UseSemicolons ? \";\" : \",\";\n});"
     },
     {
       "title": "Quick start",
@@ -58,7 +59,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "All four overloads register the same singleton: `CsvService`, plus `ICsvService`, `ICsvWriter`, and `ICsvReader` resolving to the same instance."
+      "text": "`AddCsvService` registers a singleton `CsvService` and routes `ICsvService`, `ICsvWriter`, and `ICsvReader` to the same instance. Overloads accept `Action<CsvOptions>`, an options instance, `AddCsvServiceFromConfiguration` (binds `Csv` and optional `DataTablePooling` sections), or the existing `CsvConfiguration` / builder overloads (default CSV pooling remains off)."
     },
     {
       "type": "markdown",
@@ -98,7 +99,20 @@
   "links": [],
   "readmePath": "Lyo.Net/Data/Csv/Lyo.Csv/README.md",
   "benchmarks": {
-    "suite": "csv"
+    "suite": "csv",
+    "headline": "UTF-8 export of 100,000 sample rows in tens of milliseconds.",
+    "items": [
+      {
+        "label": "CSV UTF-8 export",
+        "href": "/benchmarks/csv",
+        "featured": true,
+        "method": "Utf8_Export",
+        "params": {
+          "RowCount": "100000"
+        },
+        "primary": "mean"
+      }
+    ]
   },
   "dependencies": [
     {
@@ -143,6 +157,24 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
       "kind": "package",
       "version": "10.0.5",
@@ -153,6 +185,15 @@
     },
     {
       "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

@@ -17,15 +17,18 @@ internal sealed class CsvReader : ICsvReader
 {
     private readonly List<Type> _classMapTypes;
     private readonly Func<CsvConfiguration> _getConfig;
+    private readonly Func<DataTablePoolingOptions> _getPooling;
     private readonly ILogger _logger;
 
     private CsvConfiguration Config => _getConfig();
+    private DataTablePoolingOptions Pooling => _getPooling();
 
-    internal CsvReader(Func<CsvConfiguration> getConfig, List<Type> classMapTypes, ILogger logger)
+    internal CsvReader(Func<CsvConfiguration> getConfig, List<Type> classMapTypes, ILogger logger, Func<DataTablePoolingOptions>? getPooling = null)
     {
         _getConfig = getConfig;
         _classMapTypes = classMapTypes;
         _logger = logger;
+        _getPooling = getPooling ?? CsvOptions.CreateDefaultPooling;
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFile``1(System.String)' />
@@ -147,14 +150,21 @@ internal sealed class CsvReader : ICsvReader
         return result;
     }
 
-    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(TextReader reader, bool? hasHeaderRow)
+    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(TextReader reader, bool? hasHeaderRow, DataTablePoolingOptions? pooling = null)
     {
         var dict = ParseReaderAsDictionary(reader);
-        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord);
+        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord, pooling);
         return Result<DataTable.Models.DataTable>.Success(dt);
     }
 
-    private static DataTable.Models.DataTable DictToDataTable(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> dict, bool useFirstRowAsHeader)
+    /// <summary>
+    /// Builds a DataTable from a row/column dictionary.
+    /// Cell-count estimate is <c>cols × (rows + 1)</c> after the full CSV has been buffered (no mid-parse pooling flip).
+    /// </summary>
+    private DataTable.Models.DataTable DictToDataTable(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> dict,
+        bool useFirstRowAsHeader,
+        DataTablePoolingOptions? pooling = null)
     {
         IReadOnlyDictionary<int, string> headers;
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> rows;
@@ -176,14 +186,17 @@ internal sealed class CsvReader : ICsvReader
             rows = rowsDict;
         }
 
+        var colCount = headers.Count > 0 ? headers.Keys.Max() + 1 : 0;
+        var estimatedCells = Math.Max(colCount, 1) * (rows.Count + 1);
+        var interner = new DataTableValueInterner(pooling ?? Pooling, estimatedCells);
         var dt = new DataTable.Models.DataTable();
         foreach (var kv in headers)
-            dt.SetHeader(kv.Key, DataTableCell.FromValue(kv.Value));
+            dt.SetHeader(kv.Key, DataTableCell.FromValue(interner.Intern(kv.Value)));
 
         foreach (var rowKv in rows.OrderBy(r => r.Key)) {
             var dataRow = dt.AddRow();
             foreach (var colKv in rowKv.Value)
-                dataRow.SetCell(colKv.Key, DataTableCell.FromValue(colKv.Value));
+                dataRow.SetCell(colKv.Key, DataTableCell.FromValue(interner.Intern(colKv.Value)));
         }
 
         return dt;

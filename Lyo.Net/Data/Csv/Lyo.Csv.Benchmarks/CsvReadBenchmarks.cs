@@ -74,7 +74,8 @@ public class CsvReadBenchmarks
     }
 
     [Benchmark]
-    [BenchmarkDescription("Parse the CSV into a dynamic DataTable (no typed mapping) and count rows.")]
+    [BenchmarkDescription(
+        "Parse the CSV into a dynamic DataTable (no typed mapping) and count rows. Default CsvOptions leave PoolValues=false (unique-heavy SampleRecords); enable pooling via CsvOptions when measuring intern regressions.")]
     public int ParseBytesAsDataTable() => _csv.ParseBytesAsDataTable(_bytes).ValueOrThrow().Rows.Count;
 
     [Benchmark]

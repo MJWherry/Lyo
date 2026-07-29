@@ -227,7 +227,18 @@
   "readmePath": "Lyo.Net/Security/Encryption/Lyo.Encryption/README.md",
   "benchmarks": {
     "suite": "encryption",
+    "headline": "AES-GCM encrypts 10 MB in ~5 ms with gigabyte-class throughput.",
     "items": [
+      {
+        "label": "AES-GCM encrypt",
+        "href": "/benchmarks/encryption",
+        "featured": true,
+        "method": "AesGcm_Encrypt",
+        "params": {
+          "DataSize": "10485760"
+        },
+        "primary": "throughput"
+      },
       {
         "label": "Benchmark summary",
         "href": "Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md"

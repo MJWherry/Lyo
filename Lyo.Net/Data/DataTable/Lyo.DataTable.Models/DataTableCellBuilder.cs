@@ -1,6 +1,9 @@
 namespace Lyo.DataTable.Models;
 
-/// <summary>Fluent builder for DataTableCell.</summary>
+/// <summary>
+/// Fluent builder for a thin <see cref="IDataTableCell" /> plus optional <see cref="DataTableCellFormat" />.
+/// Call <see cref="Build" /> for the cell and <see cref="BuildFormat" /> / <see cref="Format" /> for formatting to apply on the table map.
+/// </summary>
 public sealed class DataTableCellBuilder
 {
     private string? _backgroundColor;
@@ -27,6 +30,9 @@ public sealed class DataTableCellBuilder
 
     /// <summary>Creates a cell builder with the given value.</summary>
     public DataTableCellBuilder(object? value) => _value = value;
+
+    /// <summary>The accumulated format, or null when no formatting fields were set.</summary>
+    public DataTableCellFormat? Format => BuildFormat();
 
     /// <summary>Sets the value.</summary>
     public DataTableCellBuilder WithValue(object? value)
@@ -182,12 +188,18 @@ public sealed class DataTableCellBuilder
         return this;
     }
 
-    /// <summary>Builds the DataTableCell.</summary>
-    public DataTableCell<T> Build<T>()
-        => new(
-            (T?)_value, _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment, _verticalAlignment,
-            _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor, _colSpan, _rowSpan);
+    /// <summary>Builds the thin DataTableCell (value + spans only).</summary>
+    public DataTableCell<T> Build<T>() => new((T?)_value, _colSpan, _rowSpan);
 
     /// <summary>Builds the DataTableCell as IDataTableCell. For value types this boxes to DataTableCell&lt;object?&gt;.</summary>
     public IDataTableCell Build() => Build<object?>();
+
+    /// <summary>Builds the format record, or null when no formatting fields were set.</summary>
+    public DataTableCellFormat? BuildFormat()
+    {
+        var format = new DataTableCellFormat(
+            _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment, _verticalAlignment,
+            _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor);
+        return format.HasAny() ? format : null;
+    }
 }

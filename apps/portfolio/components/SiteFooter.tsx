@@ -16,7 +16,10 @@ export function SiteFooter() {
         }}
       >
         <p style={{ margin: 0 }}>
-          {site.fullName} · {site.brand} — {site.tagline} ·{" "}
+          <Link href="/about">{site.fullName}</Link>
+          {" · "}
+          {site.brand} — {site.tagline}
+          {" · "}
           <Link href={site.resumePath}>Resume</Link>
           {" · "}
           <a href={site.githubUrl} target="_blank" rel="noreferrer">

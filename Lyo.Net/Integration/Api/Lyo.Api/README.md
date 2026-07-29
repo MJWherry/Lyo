@@ -306,7 +306,13 @@ var patchReq = PatchRequestBuilder.New()
 
 ## Benchmarks
 
-- Portfolio suite: `query`
+k6 load / spike / soak / stress against Person QueryConcrete, QueryProject, and root Query.
+
+- Portfolio suite: `query-api`
+- [QueryConcrete load](/benchmarks/query-api)
+- [QueryConcrete spike](/benchmarks/query-api)
+- [QueryConcrete soak](/benchmarks/query-api)
+- [QueryProject load](/benchmarks/query-api)
 
 ## Setup
 

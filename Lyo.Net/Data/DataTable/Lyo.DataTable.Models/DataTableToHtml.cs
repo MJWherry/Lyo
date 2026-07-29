@@ -13,11 +13,14 @@ public static class DataTableToHtml
     public static string ToHtmlDocument(DataTable data)
     {
         ArgumentHelpers.ThrowIfNull(data);
-        return BuildHtml(data.Headers, data.Rows, data.Footer);
+        return BuildHtml(data);
     }
 
-    internal static string BuildHtml(IReadOnlyDictionary<int, IDataTableCell> headers, IReadOnlyList<DataTableRow> rows, IReadOnlyDictionary<int, IDataTableCell> footer)
+    internal static string BuildHtml(DataTable data)
     {
+        var headers = data.Headers;
+        var rows = data.Rows;
+        var footer = data.Footer;
         if (headers.Count == 0 && rows.Count == 0 && footer.Count == 0)
             return WrapInHtmlDocument("<p>No data</p>");
 
@@ -31,7 +34,7 @@ public static class DataTableToHtml
         sb.Append("th{background:#eee}tfoot td{background:#f5f5f5;font-weight:bold}</style></head><body><table>");
         if (headers.Count > 0) {
             sb.Append("<thead><tr>");
-            AppendSingleRow(sb, headers, maxCol, "th");
+            AppendSingleRow(sb, data, headers, maxCol, "th", -1);
             sb.Append("</tr></thead>");
         }
 
@@ -39,7 +42,8 @@ public static class DataTableToHtml
             sb.Append("<tbody>");
             // pendingRows[col] > 0 means the column is covered by a rowspan from a previous row.
             var pendingRows = new int[maxCol + 1];
-            foreach (var row in rows) {
+            for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++) {
+                var row = rows[rowIndex];
                 sb.Append("<tr>");
                 var coveredInRow = new HashSet<int>();
                 for (var col = 0; col <= maxCol; col++) {
@@ -54,7 +58,7 @@ public static class DataTableToHtml
                     var cell = row.Cells.TryGetValue(col, out var v) ? v : DataTableCell.Empty;
                     var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
                     var rowSpan = cell.RowSpan < 1 ? 1 : cell.RowSpan;
-                    sb.Append($"<td{GetSpanAttr(colSpan, rowSpan)}{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</td>");
+                    sb.Append($"<td{GetSpanAttr(colSpan, rowSpan)}{GetCellStyleAttr(data.GetFormat(rowIndex, col))}>{WebUtility.HtmlEncode(cell.DisplayValue)}</td>");
                     for (var k = col; k < col + colSpan; k++) {
                         if (k > col)
                             coveredInRow.Add(k);
@@ -72,7 +76,7 @@ public static class DataTableToHtml
 
         if (footer.Count > 0) {
             sb.Append("<tfoot><tr>");
-            AppendSingleRow(sb, footer, maxCol, "td");
+            AppendSingleRow(sb, data, footer, maxCol, "td", -2);
             sb.Append("</tr></tfoot>");
         }
 
@@ -81,13 +85,14 @@ public static class DataTableToHtml
     }
 
     /// <summary>Renders a single header/footer row honoring ColSpan (RowSpan is ignored: the section is one row tall).</summary>
-    private static void AppendSingleRow(StringBuilder sb, IReadOnlyDictionary<int, IDataTableCell> cells, int maxCol, string tag)
+    private static void AppendSingleRow(
+        StringBuilder sb, DataTable data, IReadOnlyDictionary<int, IDataTableCell> cells, int maxCol, string tag, int formatRow)
     {
         var col = 0;
         while (col <= maxCol) {
             var cell = cells.TryGetValue(col, out var c) ? c : DataTableCell.Empty;
             var colSpan = ClampSpan(cell.ColSpan, maxCol - col + 1);
-            sb.Append($"<{tag}{GetSpanAttr(colSpan, 1)}{GetCellStyleAttr(cell)}>{WebUtility.HtmlEncode(cell.DisplayValue)}</{tag}>");
+            sb.Append($"<{tag}{GetSpanAttr(colSpan, 1)}{GetCellStyleAttr(data.GetFormat(formatRow, col))}>{WebUtility.HtmlEncode(cell.DisplayValue)}</{tag}>");
             col += colSpan;
         }
     }
@@ -115,42 +120,45 @@ public static class DataTableToHtml
         return sb.ToString();
     }
 
-    private static string GetCellStyleAttr(IDataTableCell cell)
+    private static string GetCellStyleAttr(DataTableCellFormat? format)
     {
+        if (format == null)
+            return "";
+
         var parts = new List<string>();
-        if (cell.FontSize.HasValue)
-            parts.Add($"font-size:{cell.FontSize}pt");
+        if (format.FontSize.HasValue)
+            parts.Add($"font-size:{format.FontSize}pt");
 
-        if (!string.IsNullOrEmpty(cell.FontName))
-            parts.Add($"font-family:{cell.FontName}");
+        if (!string.IsNullOrEmpty(format.FontName))
+            parts.Add($"font-family:{format.FontName}");
 
-        if (cell.FontBold == true)
+        if (format.FontBold == true)
             parts.Add("font-weight:bold");
 
-        if (cell.FontItalic == true)
+        if (format.FontItalic == true)
             parts.Add("font-style:italic");
 
-        if (cell.FontUnderline == true || cell.FontStrikethrough == true) {
+        if (format.FontUnderline == true || format.FontStrikethrough == true) {
             var deco = new List<string>();
-            if (cell.FontUnderline == true)
+            if (format.FontUnderline == true)
                 deco.Add("underline");
 
-            if (cell.FontStrikethrough == true)
+            if (format.FontStrikethrough == true)
                 deco.Add("line-through");
 
             parts.Add($"text-decoration:{string.Join(" ", deco)}");
         }
 
-        if (!string.IsNullOrEmpty(cell.FontColor))
-            parts.Add($"color:{cell.FontColor}");
+        if (!string.IsNullOrEmpty(format.FontColor))
+            parts.Add($"color:{format.FontColor}");
 
-        if (!string.IsNullOrEmpty(cell.BackgroundColor))
-            parts.Add($"background-color:{cell.BackgroundColor}");
+        if (!string.IsNullOrEmpty(format.BackgroundColor))
+            parts.Add($"background-color:{format.BackgroundColor}");
 
-        if (!string.IsNullOrEmpty(cell.HorizontalAlignment))
-            parts.Add($"text-align:{cell.HorizontalAlignment!.ToLowerInvariant()}");
+        if (!string.IsNullOrEmpty(format.HorizontalAlignment))
+            parts.Add($"text-align:{format.HorizontalAlignment!.ToLowerInvariant()}");
 
-        if (cell.WrapText == true)
+        if (format.WrapText == true)
             parts.Add("white-space:normal");
 
         if (parts.Count == 0)

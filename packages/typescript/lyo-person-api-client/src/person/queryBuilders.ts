@@ -15,6 +15,29 @@ export const DEFAULT_PERSON_SELECT_FIELDS = [
     "contactaddresses.address.city",
 ];
 
+/** Scalar Person fields safe for root `/Query` Select (alias.property after prefixing). */
+export const DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS = [
+    "Id",
+    "FirstName",
+    "LastName",
+    "SourceEntityType",
+];
+
+/** Common PeopleDbContext entity types for root Query From/Joins. */
+export const PERSON_ROOT_QUERY_ENTITY_TYPES = [
+    "PersonEntity",
+    "ContactAddressEntity",
+    "ContactEmailAddressEntity",
+    "ContactPhoneNumberEntity",
+    "AddressEntity",
+    "EmailAddressEntity",
+    "PhoneNumberEntity",
+    "EmploymentEntity",
+    "IdentificationEntity",
+    "SocialMediaProfileEntity",
+    "PersonRelationshipEntity",
+] as const;
+
 export const QUERY_FIELD_SOURCE = "SourceEntityType";
 
 export function buildOptions(

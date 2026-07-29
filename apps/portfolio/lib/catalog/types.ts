@@ -18,10 +18,32 @@ export type CatalogExample = {
   code: string;
 };
 
+export type CatalogBenchmarkItem = {
+  label: string;
+  href: string;
+  note?: string;
+  /** When true, surfaced on the portfolio home page. */
+  featured?: boolean;
+  /**
+   * Micro suite: BenchmarkDotNet method name to resolve from
+   * `docs/benchmarks/data/{suite}.json`.
+   */
+  method?: string;
+  /** Micro suite: `[Params]` values that must match the measurement. */
+  params?: Record<string, string>;
+  /** Load (k6) suite: scenario name (e.g. `query_load`). */
+  scenario?: string;
+  /**
+   * Which live figure is the hero number. Defaults to throughput (when present)
+   * / mean for micro, p95 for load.
+   */
+  primary?: "mean" | "throughput" | "p95" | "checks";
+};
+
 export type CatalogBenchmarks = {
   headline?: string;
   suite?: string;
-  items?: Array<{ label: string; href: string; note?: string }>;
+  items?: CatalogBenchmarkItem[];
 };
 
 export type CatalogPackageIndex = {

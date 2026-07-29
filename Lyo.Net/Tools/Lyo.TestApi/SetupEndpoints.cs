@@ -71,7 +71,7 @@ public static class SetupEndpoints
                         ctx.Entity.SourceEntityId = ctx.Entity.Id.ToString();
                         ctx.Entity.ImportedAt = DateTime.UtcNow;
                     }))
-                .WithMetadata()
+                .WithMetadata(m => m.IncludeEntityMetadata())
                 .WithProjectionComputedFields()
                 .Build();
 

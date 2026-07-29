@@ -10,9 +10,12 @@ import {
 import "lyo-query-react/styles.css";
 import {
   DEFAULT_PERSON_INCLUDES,
+  DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS,
   DEFAULT_PERSON_SELECT_FIELDS,
+  PERSON_ROOT_QUERY_ENTITY_TYPES,
 } from "lyo-person-api-client";
-import { CodeBlock } from "@/components/CodeBlock";
+import { ClientCodeBlock } from "@/components/ClientCodeBlock";
+import { PersonSchemaPanel } from "./PersonSchemaPanel";
 
 const PERSON_FIELDS = [
   "FirstName",
@@ -39,16 +42,21 @@ type RunPayload = {
   elapsedMs?: number;
 };
 
+function createPersonBuilder(): QueryBuilderValue {
+  const builder = createDefaultQueryBuilderValue({
+    defaultField: "FirstName",
+    entityType: "PersonEntity",
+    select: [...DEFAULT_PERSON_SELECT_FIELDS],
+    include: [],
+    amount: 10,
+  });
+  // Root Query cannot use nested projection paths — keep a clean scalar Select.
+  builder.query.Select = DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS.map((f) => `p.${f}`);
+  return builder;
+}
+
 export function QueryDemo() {
-  const [builder, setBuilder] = useState<QueryBuilderValue>(() =>
-    createDefaultQueryBuilderValue({
-      defaultField: "FirstName",
-      entityType: "PersonEntity",
-      select: [...DEFAULT_PERSON_SELECT_FIELDS],
-      include: [],
-      amount: 10,
-    })
-  );
+  const [builder, setBuilder] = useState<QueryBuilderValue>(createPersonBuilder);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RunPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +67,15 @@ export function QueryDemo() {
     () => JSON.stringify(activeRequestPreview(builder), null, 2),
     [builder]
   );
+
+  const activeAmount =
+    builder.mode === "concrete"
+      ? builder.concrete.Amount
+      : builder.mode === "project"
+        ? builder.project.Amount
+        : builder.mode === "query"
+          ? builder.query.Amount
+          : null;
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -84,7 +101,6 @@ export function QueryDemo() {
       setStatusCode(res.status);
       if (!res.ok) {
         setError(json.error ?? `Request failed (${res.status})`);
-        // Prefer upstream ProblemDetails; fall back to the whole BFF body.
         setProblemDetails(json.details ?? json);
         setData(null);
         return;
@@ -115,13 +131,22 @@ export function QueryDemo() {
         ? problemDetails
         : JSON.stringify(problemDetails, null, 2);
 
+  const selectPresets =
+    builder.mode === "query"
+      ? DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS.map((f) => `p.${f}`)
+      : DEFAULT_PERSON_SELECT_FIELDS;
+
   return (
     <div className="where-builder">
+      <PersonSchemaPanel />
+
       <div className="panel">
         <h2 style={{ fontSize: "1.2rem" }}>Query builder</h2>
         <p className="muted" style={{ fontSize: "0.92rem" }}>
           Concrete, Projection, root Query, and Get — fixed Person routes via the BFF (no
-          endpoint picker). In/NotIn values use chip input (Enter to add).
+          endpoint picker). In/NotIn values use chip input (Enter to add). Root Query Select
+          must be <code>alias.property</code>; +Join defaults to ContactAddressEntity on{" "}
+          <code>PersonId</code>.
         </p>
         <QueryBuilder
           value={builder}
@@ -129,7 +154,8 @@ export function QueryDemo() {
           defaultField="FirstName"
           fieldPresets={PERSON_FIELDS}
           includePresets={DEFAULT_PERSON_INCLUDES}
-          selectPresets={DEFAULT_PERSON_SELECT_FIELDS}
+          selectPresets={selectPresets}
+          entityTypePresets={PERSON_ROOT_QUERY_ENTITY_TYPES}
         />
         <div className="field-row" style={{ marginTop: "1rem" }}>
           <button className="btn btn-primary" type="button" onClick={run} disabled={loading}>
@@ -137,9 +163,7 @@ export function QueryDemo() {
           </button>
           <span className="faint" style={{ fontSize: "0.85rem" }}>
             Mode: {builder.mode}
-            {builder.mode !== "get"
-              ? ` · page ≤ ${builder.concrete.Amount ?? 10}`
-              : ""}
+            {activeAmount != null ? ` · page ≤ ${activeAmount}` : ""}
           </span>
         </div>
       </div>
@@ -147,7 +171,7 @@ export function QueryDemo() {
       <div className="grid-2 query-demo-split">
         <div className="panel query-demo-panel">
           <h2 style={{ fontSize: "1.15rem" }}>Request JSON</h2>
-          <CodeBlock code={requestPreview} language="json" />
+          <ClientCodeBlock code={requestPreview} language="json" />
         </div>
         <div className="panel query-demo-panel">
           <h2 style={{ fontSize: "1.15rem" }}>Results</h2>
@@ -159,7 +183,7 @@ export function QueryDemo() {
           {problemJson ? (
             <>
               <h3 style={{ fontSize: "0.95rem", margin: "0 0 0.4rem" }}>Problem details</h3>
-              <CodeBlock code={problemJson} language="json" />
+              <ClientCodeBlock code={problemJson} language="json" />
             </>
           ) : null}
           {!error && !data ? (
@@ -191,7 +215,7 @@ export function QueryDemo() {
                 ) : null}
               </div>
               {builder.mode === "get" && data.item ? (
-                <CodeBlock code={JSON.stringify(data.item, null, 2)} language="json" />
+                <ClientCodeBlock code={JSON.stringify(data.item, null, 2)} language="json" />
               ) : (
                 <ResultsTable items={data.items ?? []} mode={builder.mode} />
               )}

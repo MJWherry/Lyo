@@ -86,7 +86,10 @@ services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath
 
 ## Benchmarks
 
+AES-GCM encrypts 10 MB in ~5 ms with gigabyte-class throughput.
+
 - Portfolio suite: `encryption`
+- [AES-GCM encrypt](/benchmarks/encryption)
 - [Benchmark summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)
 
 ## Service matrix

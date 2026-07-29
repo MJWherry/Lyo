@@ -576,7 +576,10 @@ public sealed class PdfTextExtractor : ITextExtractor
         var dt = new DataTable.Models.DataTable();
         for (var i = 0; i < headers.Length; i++) {
             var headerCell = formattedHeaderCells != null && i < formattedHeaderCells.Count ? formattedHeaderCells[i] : DataTableCell.FromValue(headers[i].Label);
-            dt.SetHeader(i, headerCell);
+            if (headerCell is PdfFormattedCell pdfHeader)
+                dt.SetHeader(i, DataTableCell.FromValue(pdfHeader.DisplayValue), pdfHeader.Format);
+            else
+                dt.SetHeader(i, headerCell);
         }
 
         for (var r = 0; r < formattedRows.Count; r++) {
@@ -584,7 +587,13 @@ public sealed class PdfTextExtractor : ITextExtractor
             var dataRow = dt.AddRow();
             for (var c = 0; c < headers.Length; c++) {
                 var cell = row.TryGetValue(headers[c].Label, out var v) ? v : DataTableCell.FromValue("");
-                dataRow.SetCell(c, cell);
+                if (cell is PdfFormattedCell pdfCell) {
+                    dataRow.SetCell(c, DataTableCell.FromValue(pdfCell.DisplayValue));
+                    if (pdfCell.Format != null)
+                        dt.SetFormat(r, c, pdfCell.Format);
+                }
+                else
+                    dataRow.SetCell(c, cell);
             }
         }
 
@@ -1940,9 +1949,14 @@ public sealed class PdfTextExtractor : ITextExtractor
         if (firstWithFormat == null)
             return DataTableCell.FromValue(text);
 
-        return new DataTableCell<string>(
-            text, firstWithFormat.FontSize, firstWithFormat.FontName, firstWithFormat.FontBold, firstWithFormat.FontItalic, firstWithFormat.FontUnderline, null,
-            firstWithFormat.FontColor);
+        var format = new DataTableCellFormat(
+            FontSize: firstWithFormat.FontSize,
+            FontName: firstWithFormat.FontName,
+            FontBold: firstWithFormat.FontBold ? true : null,
+            FontItalic: firstWithFormat.FontItalic ? true : null,
+            FontUnderline: firstWithFormat.FontUnderline ? true : null,
+            FontColor: firstWithFormat.FontColor);
+        return new PdfFormattedCell(text, format.HasAny() ? format : null);
     }
 
     private static IDataTableCell CombineCells(IDataTableCell? a, IDataTableCell b)
@@ -1954,7 +1968,20 @@ public sealed class PdfTextExtractor : ITextExtractor
             return a;
 
         var value = a.DisplayValue + " " + b.DisplayValue;
-        return new DataTableCell<string>(value, a.FontSize, a.FontName, a.FontBold, a.FontItalic, a.FontUnderline, a.FontStrikethrough, a.FontColor);
+        var format = (a as PdfFormattedCell)?.Format ?? (b as PdfFormattedCell)?.Format;
+        return format != null ? new PdfFormattedCell(value, format) : DataTableCell.FromValue(value);
+    }
+
+    /// <summary>Carries optional format through PDF table extraction until applied on the DataTable map.</summary>
+    private sealed class PdfFormattedCell(string value, DataTableCellFormat? format) : IDataTableCell
+    {
+        public string DisplayValue { get; } = value;
+
+        public int ColSpan => 1;
+
+        public int RowSpan => 1;
+
+        public DataTableCellFormat? Format { get; } = format;
     }
 
     private static bool IsHeaderEchoRowFormatted(Dictionary<string, IDataTableCell> row, ColumnHeader[] headers)

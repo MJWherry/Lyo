@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T01:14:49.369405+00:00",
+  "generatedAt": "2026-07-29T19:46:41.035097+00:00",
   "packageCount": 211,
   "packages": [
     {
@@ -945,7 +945,7 @@
       "area": "Data",
       "topic": "Lyo.DataTable",
       "name": "Lyo.DataTable.Models",
-      "tagline": "Mutable in-memory data table with sparse columns, headers, footer, per-cell formatting, fluent builders, and an HTML renderer.",
+      "tagline": "Mutable in-memory data table with sparse columns, thin cells, an optional format map, fluent builders, and an HTML renderer.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"

@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Lyo.DataTable.Models;
 
-/// <summary>Fluent builder for DataTable.</summary>
+/// <summary>Fluent builder for DataTable. Conditional formatting (FormatWhen) is applied to the table's sparse format map.</summary>
 public sealed class DataTableBuilder
 {
     private readonly Dictionary<int, DataTableColumnBuilder> _columnDefs = new();
@@ -31,10 +31,10 @@ public sealed class DataTableBuilder
         return this;
     }
 
-    /// <summary>Adds a header at the given column using a builder.</summary>
+    /// <summary>Adds a header at the given column using a builder. Format goes on the table map.</summary>
     public DataTableBuilder AddHeader(int col, DataTableCellBuilder builder)
     {
-        _table.SetHeader(col, builder.Build());
+        _table.SetHeader(col, builder.Build(), builder.BuildFormat());
         return this;
     }
 
@@ -47,7 +47,7 @@ public sealed class DataTableBuilder
         return this;
     }
 
-    /// <summary>Adds a row.</summary>
+    /// <summary>Adds a row (cells only; no formats).</summary>
     public DataTableBuilder AddRow(DataTableRow row)
     {
         var newRow = _table.AddRow();
@@ -57,10 +57,14 @@ public sealed class DataTableBuilder
         return this;
     }
 
-    /// <summary>Adds a row from a builder.</summary>
+    /// <summary>Adds a row from a builder, applying any collected formats to the table map.</summary>
     public DataTableBuilder AddRow(DataTableRowBuilder builder)
     {
+        var rowIndex = _table.Rows.Count;
         AddRow(builder.Build());
+        foreach (var kv in builder.Formats)
+            _table.SetFormat(rowIndex, kv.Key, kv.Value);
+
         return this;
     }
 
@@ -69,7 +73,7 @@ public sealed class DataTableBuilder
     {
         var rowBuilder = new DataTableRowBuilder(_columnDefs);
         configure(rowBuilder);
-        AddRow(rowBuilder.Build());
+        AddRow(rowBuilder);
         return this;
     }
 
@@ -90,10 +94,10 @@ public sealed class DataTableBuilder
         return this;
     }
 
-    /// <summary>Adds a footer at the given column using a builder.</summary>
+    /// <summary>Adds a footer at the given column using a builder. Format goes on the table map.</summary>
     public DataTableBuilder AddFooter(int col, DataTableCellBuilder builder)
     {
-        _table.SetFooter(col, builder.Build());
+        _table.SetFooter(col, builder.Build(), builder.BuildFormat());
         return this;
     }
 

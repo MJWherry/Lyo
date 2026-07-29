@@ -51,7 +51,7 @@ public sealed class DataTableBuilderTests
             .Build();
 
         Assert.Equal(2, table.Rows.Count);
-        Assert.Equal("#FF0000", table.Rows[0].Cells[1].FontColor);
-        Assert.Null(table.Rows[1].Cells[1].FontColor);
+        Assert.Equal("#FF0000", table.GetFormat(0, 1)?.FontColor);
+        Assert.Null(table.GetFormat(1, 1)?.FontColor);
     }
 }
