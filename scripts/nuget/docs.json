@@ -1,0 +1,30 @@
+{
+  "id": "scripts.nuget",
+  "name": "NuGet pack tooling",
+  "tagline": "Discover, build, and pack Lyo.* packages with git change detection.",
+  "description": "SDK-style `dotnet pack` for libraries under Lyo.Net. Fingerprints each project directory so unchanged packages are skipped. Refreshes tooling READMEs via tooling-docs before packing.",
+  "commands": [
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py",
+      "blurb": "Pack all Lyo.* packages (skips unchanged)"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py -v 2.0.0",
+      "blurb": "Pack all packages at a specific version"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py Lyo.Encryption",
+      "blurb": "Pack one package and its Lyo ProjectReference deps"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py -f Lyo.Encryption",
+      "blurb": "Force rebuild ignoring change detection"
+    }
+  ],
+  "notes": [
+    "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
+    "BUILD_CONFIG defaults to Release",
+    "Directory.Build.targets runs tooling-docs on Pack when python3 is available"
+  ],
+  "readmePath": "scripts/nuget/README.md"
+}

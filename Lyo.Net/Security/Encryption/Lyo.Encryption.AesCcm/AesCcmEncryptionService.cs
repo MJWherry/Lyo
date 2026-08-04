@@ -9,7 +9,10 @@ using Lyo.Keystore;
 
 namespace Lyo.Encryption.AesCcm;
 
-/// <summary>AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.</summary>
+/// <summary>
+/// AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.
+/// Single-shot buffer encrypt is capped at <see cref="AesCcmHelper.MaxPlaintextLength"/> (~16 MiB); use streaming APIs for larger payloads.
+/// </summary>
 public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     public AesCcmEncryptionService(IKeyStore keyStore)
@@ -43,6 +46,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
+        AesCcmHelper.ValidatePlaintextLength(plaintext.Length);
         if (key != null)
             AesCcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
 
@@ -91,6 +95,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
+        AesCcmHelper.ValidatePlaintextLength(bytes.Length);
         if (key != null)
             AesCcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
 

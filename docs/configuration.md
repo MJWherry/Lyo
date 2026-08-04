@@ -34,7 +34,7 @@ cp .env.example .env
 | `TEST_FILTER`                  | Optional xUnit `--filter` expression applied to every selected test project.                                                                | (empty)                |
 | `TESTCONTAINERS_HOST_OVERRIDE` | Host that Testcontainers advertises to sibling containers reached over the mounted Docker socket.                                           | `host.docker.internal` |
 
-The wrapper script [`scripts/docker/run.sh`](../scripts/docker/run.sh) sets
+The wrapper script [`scripts/docker/run.py`](../scripts/docker/run.py) sets
 `TARGET` and a per-target `RUN_IMAGE` for you, so prefer it over editing those
 two by hand. To set ownership to your user in one step:
 
@@ -45,9 +45,9 @@ echo "HOST_UID=$(id -u)" >> .env && echo "HOST_GID=$(id -g)" >> .env
 ## Caveats
 
 - The source is baked into the image at build time, so **code changes require a
-  rebuild** (`scripts/docker/run.sh --build-only <target>` or
-  `docker compose build run`). Only `docs/benchmarks/data` is mounted back to the
-  host.
+  rebuild** (`python3 scripts/docker/run.py --build-only <target>` or
+  `docker compose build run`). `docs/benchmarks/data` and `docs/benchmarks/history`
+  are mounted back to the host.
 - Containers that Testcontainers spawns via the mounted Docker socket run on the
   **host** and are **not** limited by `CPU_LIMIT` / `MEM_LIMIT` (those bound only
   the runner container).

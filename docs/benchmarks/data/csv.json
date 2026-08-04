@@ -61,16 +61,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6976566.748516614,
-          "stdDevNs": 357836.19446876575,
-          "allocatedBytes": 5607374,
+          "meanNs": 6898877.9599609375,
+          "stdDevNs": 126517.31971219601,
+          "allocatedBytes": 5607580,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 3.6646765697587527,
-          "deltaAllocPct": -0.0012661738099972448
+          "deltaMeanPct": -1.1135676236767122,
+          "deltaAllocPct": 0.003673733908242967
         },
         {
           "method": "Utf16_Export",
@@ -78,16 +78,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 7696470.184659091,
-          "stdDevNs": 236705.13139075483,
-          "allocatedBytes": 8474169,
-          "ratioToBaseline": 1.1031887835510992,
+          "meanNs": 7410116.538541666,
+          "stdDevNs": 131831.65976717367,
+          "allocatedBytes": 8473950,
+          "ratioToBaseline": 1.0741045981024462,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 1.6514778416034808,
-          "deltaAllocPct": 0.004932880373756557
+          "deltaMeanPct": -3.720584102153686,
+          "deltaAllocPct": -0.0025843241974522813
         },
         {
           "method": "Utf32_Export",
@@ -95,16 +95,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 10712998.247767856,
-          "stdDevNs": 216908.53592680374,
-          "allocatedBytes": 14212699,
-          "ratioToBaseline": 1.535568802526787,
+          "meanNs": 10621367.776041666,
+          "stdDevNs": 252678.37057596297,
+          "allocatedBytes": 14212489,
+          "ratioToBaseline": 1.5395790210647249,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": -1.147134640730556,
-          "deltaAllocPct": 0.005080222125324295
+          "deltaMeanPct": -0.8553205144533863,
+          "deltaAllocPct": -0.0014775518710415242
         },
         {
           "method": "Utf8_Parse",
@@ -112,16 +112,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 13443345.29017857,
-          "stdDevNs": 236877.68822037562,
-          "allocatedBytes": 5609719,
-          "ratioToBaseline": 1.9269284986110038,
+          "meanNs": 13034343.888541667,
+          "stdDevNs": 124509.97686280058,
+          "allocatedBytes": 5609616,
+          "ratioToBaseline": 1.8893425806615471,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 1.6038785140621217,
-          "deltaAllocPct": -0.0014795531107871544
+          "deltaMeanPct": -3.0424079186280517,
+          "deltaAllocPct": -0.0018360990987249092
         },
         {
           "method": "Utf16_Parse",
@@ -129,16 +129,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 13469536.622767856,
-          "stdDevNs": 203864.85813981213,
-          "allocatedBytes": 5608716,
-          "ratioToBaseline": 1.930682685094614,
+          "meanNs": 13210853.982421875,
+          "stdDevNs": 259158.54762075923,
+          "allocatedBytes": 5608567,
+          "ratioToBaseline": 1.9149279142338498,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 0.1864898533322736,
-          "deltaAllocPct": -0.0010875811250830618
+          "deltaMeanPct": -1.920501406920891,
+          "deltaAllocPct": -0.002656579509463485
         },
         {
           "method": "Utf32_Parse",
@@ -146,16 +146,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 17291138.294354837,
-          "stdDevNs": 1394757.899482594,
-          "allocatedBytes": 5608944,
-          "ratioToBaseline": 2.4784595228063075,
+          "meanNs": 16110437.6625,
+          "stdDevNs": 152572.46094867884,
+          "allocatedBytes": 5609260,
+          "ratioToBaseline": 2.3352257796123155,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 6.654958265720086,
-          "deltaAllocPct": 0.0028170088857018254
+          "deltaMeanPct": -6.8283568829029,
+          "deltaAllocPct": 0.00563385906509318
         },
         {
           "method": "Utf8_Export",
@@ -163,16 +163,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 48784615.28138528,
-          "stdDevNs": 975137.6463006996,
-          "allocatedBytes": 51426409,
+          "meanNs": 47768004.95454545,
+          "stdDevNs": 636254.3922159674,
+          "allocatedBytes": 51426405,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 0.8383882115523942,
-          "deltaAllocPct": 0.0011006139461826614
+          "deltaMeanPct": -2.083874846559945,
+          "deltaAllocPct": -7.778104825479842e-06
         },
         {
           "method": "Utf16_Export",
@@ -180,16 +180,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 51994994.53333333,
-          "stdDevNs": 931705.0544337231,
-          "allocatedBytes": 76290012,
-          "ratioToBaseline": 1.0658072065021087,
+          "meanNs": 50884250.066666655,
+          "stdDevNs": 588880.4498667263,
+          "allocatedBytes": 76289646,
+          "ratioToBaseline": 1.065237078983862,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 1.138587061156902,
-          "deltaAllocPct": 0.0001953077304647932
+          "deltaMeanPct": -2.1362526847744774,
+          "deltaAllocPct": -0.0004797482532837981
         },
         {
           "method": "Utf32_Export",
@@ -197,16 +197,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 83732367.61111113,
-          "stdDevNs": 2152299.5112955235,
-          "allocatedBytes": 126091240,
-          "ratioToBaseline": 1.7163683084954213,
+          "meanNs": 80390496.64814813,
+          "stdDevNs": 1667175.0059422385,
+          "allocatedBytes": 126092395,
+          "ratioToBaseline": 1.6829360306055325,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": -2.164465594769867,
-          "deltaAllocPct": -0.00027916215063729225
+          "deltaMeanPct": -3.9911339644473873,
+          "deltaAllocPct": 0.0009160033639133059
         },
         {
           "method": "Utf8_Parse",
@@ -214,16 +214,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 128713877,
-          "stdDevNs": 4722277.058905465,
-          "allocatedBytes": 54972688,
-          "ratioToBaseline": 2.638411233902121,
+          "meanNs": 125694976.26785715,
+          "stdDevNs": 1597521.9746655782,
+          "allocatedBytes": 54972440,
+          "ratioToBaseline": 2.6313633233681117,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 1.479727808356562,
-          "deltaAllocPct": 0.00196828886534623
+          "deltaMeanPct": -2.345435319412258,
+          "deltaAllocPct": -0.0004511331154117841
         },
         {
           "method": "Utf16_Parse",
@@ -231,16 +231,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 129283934.27,
-          "stdDevNs": 3357579.6359652015,
-          "allocatedBytes": 54970438,
-          "ratioToBaseline": 2.6500964192153997,
+          "meanNs": 125924904.15,
+          "stdDevNs": 1727575.777528524,
+          "allocatedBytes": 54970440,
+          "ratioToBaseline": 2.6361767519875747,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": -0.13124063583617362,
-          "deltaAllocPct": -0.0034963025054772978
+          "deltaMeanPct": -2.5981806161505747,
+          "deltaAllocPct": 3.638319199857931e-06
         },
         {
           "method": "Utf32_Parse",
@@ -248,16 +248,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 160820403.23214287,
-          "stdDevNs": 2121518.5983030535,
-          "allocatedBytes": 54971484,
-          "ratioToBaseline": 3.2965393352913663,
+          "meanNs": 158456371.05,
+          "stdDevNs": 1665863.6062124514,
+          "allocatedBytes": 54970522,
+          "ratioToBaseline": 3.317207222717008,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-          "deltaMeanPct": 2.0898239222478256,
-          "deltaAllocPct": -0.0010750913077230576
+          "deltaMeanPct": -1.46998274760597,
+          "deltaAllocPct": -0.0017499982354487649
         }
       ]
     },
@@ -335,16 +335,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 2418492.0231584823,
-          "stdDevNs": 32423.71974486631,
-          "allocatedBytes": 512994,
+          "meanNs": 2391245.380859375,
+          "stdDevNs": 22057.51551991049,
+          "allocatedBytes": 512914,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 200 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
-          "deltaMeanPct": 1.863888842769422,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": -1.1265963268931494,
+          "deltaAllocPct": -0.015594724304767696
         },
         {
           "method": "ParseNestedBytes",
@@ -352,16 +352,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1642227.950892857,
-          "stdDevNs": 51026.55103270253,
-          "allocatedBytes": 695546,
-          "ratioToBaseline": 0.6790297156937296,
+          "meanNs": 1636499.5361328125,
+          "stdDevNs": 17492.857977423515,
+          "allocatedBytes": 695418,
+          "ratioToBaseline": 0.6843712273245169,
           "isBaseline": false,
           "slaTarget": "<= 200 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
-          "deltaMeanPct": -2.8525463680708953,
-          "deltaAllocPct": -0.184835986762988
+          "deltaMeanPct": -0.3488197090379616,
+          "deltaAllocPct": -0.018402808728682215
         },
         {
           "method": "ExportNestedBytes",
@@ -369,16 +369,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 8039189.818181818,
-          "stdDevNs": 194852.18967279175,
-          "allocatedBytes": 5055408,
+          "meanNs": 7715565.4375,
+          "stdDevNs": 96360.14633686852,
+          "allocatedBytes": 5055325,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 200 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
-          "deltaMeanPct": 3.326878591791797,
-          "deltaAllocPct": -0.003956002917947752
+          "deltaMeanPct": -4.025584517856437,
+          "deltaAllocPct": -0.0016418061608479476
         },
         {
           "method": "ParseNestedBytes",
@@ -386,16 +386,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 13640151.584375,
-          "stdDevNs": 176694.74058294177,
-          "allocatedBytes": 6331569,
-          "ratioToBaseline": 1.6967072420066232,
+          "meanNs": 13514923.75,
+          "stdDevNs": 264013.97985189356,
+          "allocatedBytes": 6331444,
+          "ratioToBaseline": 1.7516439798842676,
           "isBaseline": false,
           "slaTarget": "<= 200 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
-          "deltaMeanPct": 0.720416056951203,
-          "deltaAllocPct": -0.001263493917619249
+          "deltaMeanPct": -0.9180824245270853,
+          "deltaAllocPct": -0.0019742341906089944
         }
       ]
     },
@@ -459,16 +459,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 873208.5610894097,
-          "stdDevNs": 17375.97098410466,
+          "meanNs": 885161.7776041667,
+          "stdDevNs": 16553.294158103585,
           "allocatedBytes": 125197,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 2.3028665935479653,
-          "deltaAllocPct": -0.26606973576248094
+          "deltaMeanPct": 1.3688844850357562,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ParseStream",
@@ -476,16 +476,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 862984.1011962891,
-          "stdDevNs": 16885.57871093671,
-          "allocatedBytes": 125422,
-          "ratioToBaseline": 0.9882909303129545,
+          "meanNs": 861268.2921316965,
+          "stdDevNs": 11085.176246861416,
+          "allocatedBytes": 125197,
+          "ratioToBaseline": 0.9730066457036343,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 15.507358206618871,
-          "deltaAllocPct": 0.21173406201810524
+          "deltaMeanPct": -0.19882278969150052,
+          "deltaAllocPct": -0.17939436462502592
         },
         {
           "method": "ParseFile",
@@ -493,16 +493,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 903630.3882533482,
-          "stdDevNs": 14336.536375925058,
-          "allocatedBytes": 129627,
-          "ratioToBaseline": 1.0348391306722695,
+          "meanNs": 875846.7200270433,
+          "stdDevNs": 5517.278740943536,
+          "allocatedBytes": 129553,
+          "ratioToBaseline": 0.9894764349152806,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 14.89790437044568,
-          "deltaAllocPct": 0.037043039381381246
+          "deltaMeanPct": -3.0746717449386294,
+          "deltaAllocPct": -0.05708687233369591
         },
         {
           "method": "ParseStreamStreaming",
@@ -510,15 +510,15 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 877616.5320172991,
-          "stdDevNs": 25076.178347933856,
+          "meanNs": 870134.64140625,
+          "stdDevNs": 15637.361003239352,
           "allocatedBytes": 122605,
-          "ratioToBaseline": 1.0050480161605264,
+          "ratioToBaseline": 0.983023288422383,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 12.701061177410075,
+          "deltaMeanPct": -0.8525238914826707,
           "deltaAllocPct": 0.0
         },
         {
@@ -527,16 +527,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 881480.7372323496,
-          "stdDevNs": 24454.749042791867,
-          "allocatedBytes": 124925,
-          "ratioToBaseline": 1.0094733108578546,
+          "meanNs": 865559.2385416667,
+          "stdDevNs": 14171.765301968613,
+          "allocatedBytes": 124761,
+          "ratioToBaseline": 0.9778542865739668,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 12.386638551767524,
-          "deltaAllocPct": 0.06728558726700362
+          "deltaMeanPct": -1.8062219647218654,
+          "deltaAllocPct": -0.13127876726035623
         },
         {
           "method": "ParseStreamWithOptions",
@@ -544,16 +544,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 875404.431640625,
-          "stdDevNs": 17607.60175495623,
-          "allocatedBytes": 124686,
-          "ratioToBaseline": 1.0025147148677467,
+          "meanNs": 860579.1449869792,
+          "stdDevNs": 12263.65154754702,
+          "allocatedBytes": 124753,
+          "ratioToBaseline": 0.9722280906844799,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 9.209831423122289,
-          "deltaAllocPct": 0.09553091910377548
+          "deltaMeanPct": -1.6935357096446533,
+          "deltaAllocPct": 0.053734982275476
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -561,16 +561,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 77762.36820475261,
-          "stdDevNs": 1172.1397858300309,
+          "meanNs": 79265.76490071615,
+          "stdDevNs": 817.9414272787392,
           "allocatedBytes": 204728,
-          "ratioToBaseline": 0.08905360262127612,
+          "ratioToBaseline": 0.0895494664435938,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": -24.352055796915277,
-          "deltaAllocPct": -23.10858722432546
+          "deltaMeanPct": 1.9333216447382582,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -578,15 +578,15 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 55168.110121506914,
-          "stdDevNs": 855.3219164932786,
+          "meanNs": 55808.2801554362,
+          "stdDevNs": 828.4062784743445,
           "allocatedBytes": 111904,
-          "ratioToBaseline": 0.06317861800699653,
+          "ratioToBaseline": 0.063048678295272,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 9.01091581378878,
+          "deltaMeanPct": 1.1603987022925433,
           "deltaAllocPct": 0.0
         },
         {
@@ -595,33 +595,33 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1653038.4208096592,
-          "stdDevNs": 38425.95309855306,
-          "allocatedBytes": 608070,
-          "ratioToBaseline": 1,
-          "isBaseline": true,
-          "slaTarget": "<= 500 ms",
-          "slaResult": "Exceeds",
-          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 10.240188931142447,
-          "deltaAllocPct": 0.0
-        },
-        {
-          "method": "ParseStream",
-          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
-          "parameters": {
-            "RowCount": "1000"
-          },
-          "meanNs": 1664501.7228860294,
-          "stdDevNs": 53348.15598066067,
+          "meanNs": 1646446.5561899038,
+          "stdDevNs": 21777.680341631898,
           "allocatedBytes": 608150,
-          "ratioToBaseline": 1.0069346858076993,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
+          "deltaMeanPct": -0.3987726199689128,
+          "deltaAllocPct": 0.013156380022036937
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 1652583.5348011365,
+          "stdDevNs": 40464.21667131504,
+          "allocatedBytes": 608230,
+          "ratioToBaseline": 1.003727408331695,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 10.336764545809668,
-          "deltaAllocPct": -0.007892166695714225
+          "deltaMeanPct": -0.7160213727041592,
+          "deltaAllocPct": 0.013154649346378361
         },
         {
           "method": "ParseFile",
@@ -629,16 +629,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1705021.5854166667,
-          "stdDevNs": 24375.510585323234,
-          "allocatedBytes": 612928,
-          "ratioToBaseline": 1.0314470395561322,
+          "meanNs": 1706390.8567708333,
+          "stdDevNs": 19325.403660160915,
+          "allocatedBytes": 612740,
+          "ratioToBaseline": 1.0364082881133103,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 8.506031088884331,
-          "deltaAllocPct": 0.05811561742946136
+          "deltaMeanPct": 0.08030815362562936,
+          "deltaAllocPct": -0.030672444398036965
         },
         {
           "method": "ParseStreamStreaming",
@@ -646,16 +646,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1653664.9029447115,
-          "stdDevNs": 25579.689125914465,
-          "allocatedBytes": 584849,
-          "ratioToBaseline": 1.000378988248044,
+          "meanNs": 1687202.1362847222,
+          "stdDevNs": 34748.758663079,
+          "allocatedBytes": 584737,
+          "ratioToBaseline": 1.024753661114353,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 5.997683614774193,
-          "deltaAllocPct": -0.04426533221217279
+          "deltaMeanPct": 2.0280549753635317,
+          "deltaAllocPct": -0.01915024219926853
         },
         {
           "method": "ParseBytesAsync",
@@ -663,16 +663,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1703620.939670139,
-          "stdDevNs": 64292.92035442684,
-          "allocatedBytes": 602362,
-          "ratioToBaseline": 1.0305997236505273,
+          "meanNs": 1689834.6410590278,
+          "stdDevNs": 46707.095123465384,
+          "allocatedBytes": 601694,
+          "ratioToBaseline": 1.0263525619498575,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 9.489592219224063,
-          "deltaAllocPct": 0.06811174312902026
+          "deltaMeanPct": -0.8092350997857887,
+          "deltaAllocPct": -0.11089676971654917
         },
         {
           "method": "ParseStreamWithOptions",
@@ -680,16 +680,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1710993.2608506945,
-          "stdDevNs": 57065.490085301084,
-          "allocatedBytes": 601526,
-          "ratioToBaseline": 1.0350595844061803,
+          "meanNs": 1693288.8519176135,
+          "stdDevNs": 41249.57874049253,
+          "allocatedBytes": 601614,
+          "ratioToBaseline": 1.0284505412894234,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 7.734593071190797,
-          "deltaAllocPct": -0.005319520312255842
+          "deltaMeanPct": -1.0347445158421285,
+          "deltaAllocPct": 0.014629459075750674
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -697,16 +697,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 883396.583036535,
-          "stdDevNs": 17594.66547521783,
+          "meanNs": 891499.8909737723,
+          "stdDevNs": 13509.355111586181,
           "allocatedBytes": 1814384,
-          "ratioToBaseline": 0.5344077741422651,
+          "ratioToBaseline": 0.5414690732730624,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": -63.292805291739704,
-          "deltaAllocPct": -33.2875931625063
+          "deltaMeanPct": 0.9172899344237317,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -714,15 +714,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 573058.8898111979,
-          "stdDevNs": 7090.7409570442605,
+          "meanNs": 577046.3740985577,
+          "stdDevNs": 3660.4494698187887,
           "allocatedBytes": 902328,
-          "ratioToBaseline": 0.34667003658058554,
+          "ratioToBaseline": 0.35047986946744253,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 6.246029951776701,
+          "deltaMeanPct": 0.6958245231434416,
           "deltaAllocPct": 0.0
         },
         {
@@ -731,16 +731,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 11799503.026041666,
-          "stdDevNs": 189166.34353591152,
-          "allocatedBytes": 5609298,
+          "meanNs": 11254934.327083332,
+          "stdDevNs": 104195.29614540674,
+          "allocatedBytes": 5609410,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 8.77610780066897,
-          "deltaAllocPct": -0.0014261830812614161
+          "deltaMeanPct": -4.615183349302619,
+          "deltaAllocPct": 0.001996684790146646
         },
         {
           "method": "ParseStream",
@@ -748,16 +748,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 11716543.345052084,
-          "stdDevNs": 143592.23165826587,
-          "allocatedBytes": 5609982,
-          "ratioToBaseline": 0.9929692224489041,
+          "meanNs": 11385009.915039062,
+          "stdDevNs": 208107.3774419154,
+          "allocatedBytes": 5609298,
+          "ratioToBaseline": 1.0115572054154702,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 10.196486617475838,
-          "deltaAllocPct": 0.00987622980453622
+          "deltaMeanPct": -2.829618089989217,
+          "deltaAllocPct": -0.012192552489473228
         },
         {
           "method": "ParseFile",
@@ -765,16 +765,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 12271568.03794643,
-          "stdDevNs": 310741.9147679085,
-          "allocatedBytes": 5614419,
-          "ratioToBaseline": 1.0400071944439446,
+          "meanNs": 11726958.47235577,
+          "stdDevNs": 162853.33665972963,
+          "allocatedBytes": 5614686,
+          "ratioToBaseline": 1.041939306934611,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 12.057455338847278,
-          "deltaAllocPct": 0.0026539514487190674
+          "deltaMeanPct": -4.437978617782217,
+          "deltaAllocPct": 0.004755612290425777
         },
         {
           "method": "ParseStreamStreaming",
@@ -782,16 +782,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 9747815.633413462,
-          "stdDevNs": 107158.71880980249,
+          "meanNs": 9646265.340625,
+          "stdDevNs": 52446.57921905782,
           "allocatedBytes": 5279377,
-          "ratioToBaseline": 0.8261208638956995,
+          "ratioToBaseline": 0.8570698913287028,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 3.0033424275556935,
-          "deltaAllocPct": -0.002121417432634105
+          "deltaMeanPct": -1.0417748612352666,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ParseBytesAsync",
@@ -799,16 +799,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 12096974.24888393,
-          "stdDevNs": 119122.05634875022,
-          "allocatedBytes": 5543562,
-          "ratioToBaseline": 1.0252104874405084,
+          "meanNs": 11811381.959375,
+          "stdDevNs": 170046.7084733359,
+          "allocatedBytes": 5543434,
+          "ratioToBaseline": 1.0494403268931263,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 6.2454609861967,
-          "deltaAllocPct": 0.003752240971801548
+          "deltaMeanPct": -2.3608572163016577,
+          "deltaAllocPct": -0.0023089847285914723
         },
         {
           "method": "ParseStreamWithOptions",
@@ -816,16 +816,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 12238176.207589285,
-          "stdDevNs": 148235.27587293342,
-          "allocatedBytes": 5543146,
-          "ratioToBaseline": 1.0371772591251904,
+          "meanNs": 11982954.359375,
+          "stdDevNs": 207871.30310320508,
+          "allocatedBytes": 5543106,
+          "ratioToBaseline": 1.064684520685278,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 6.985238137837388,
-          "deltaAllocPct": -0.003030678038444151
+          "deltaMeanPct": -2.0854565572933503,
+          "deltaAllocPct": -0.0007216118788861055
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -833,16 +833,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 27579207.308035713,
-          "stdDevNs": 386053.9720851458,
-          "allocatedBytes": 17924365,
-          "ratioToBaseline": 2.337319397873624,
+          "meanNs": 26146350.41875,
+          "stdDevNs": 445869.10052395373,
+          "allocatedBytes": 17924328,
+          "ratioToBaseline": 2.323101109158201,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": -32.4906585517557,
-          "deltaAllocPct": -22.605072140241383
+          "deltaMeanPct": -5.1954244851273295,
+          "deltaAllocPct": -0.00020642293325314452
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -850,16 +850,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 13438907.511029411,
-          "stdDevNs": 259966.01184838594,
-          "allocatedBytes": 8798318,
-          "ratioToBaseline": 1.1389384350654055,
+          "meanNs": 12940498.778846154,
+          "stdDevNs": 163703.42531110105,
+          "allocatedBytes": 8798280,
+          "ratioToBaseline": 1.1497622645124423,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 8.952939520615976,
-          "deltaAllocPct": -0.002341301791073139
+          "deltaMeanPct": -3.7086997717203527,
+          "deltaAllocPct": -0.0004319007337538834
         },
         {
           "method": "ParseBytes",
@@ -867,16 +867,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 126822503.7638889,
-          "stdDevNs": 2713540.6528394283,
-          "allocatedBytes": 54974454,
+          "meanNs": 126221286.83333333,
+          "stdDevNs": 1753604.893936092,
+          "allocatedBytes": 54974116,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 6.033865951950848,
-          "deltaAllocPct": 0.0008804166772019557
+          "deltaMeanPct": -0.47406171043183276,
+          "deltaAllocPct": -0.0006148310267892793
         },
         {
           "method": "ParseStream",
@@ -884,16 +884,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 125014962.0595238,
-          "stdDevNs": 2942372.7465515905,
-          "allocatedBytes": 54971654,
-          "ratioToBaseline": 0.9857474687005843,
+          "meanNs": 123687124.8,
+          "stdDevNs": 1880772.386591399,
+          "allocatedBytes": 54976690,
+          "ratioToBaseline": 0.9799228632751976,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 4.9301644353842455,
-          "deltaAllocPct": -0.003734512573438062
+          "deltaMeanPct": -1.0621426728838914,
+          "deltaAllocPct": 0.009161085093055413
         },
         {
           "method": "ParseFile",
@@ -901,16 +901,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 129107126.9659091,
-          "stdDevNs": 3053049.115355322,
-          "allocatedBytes": 54980026,
-          "ratioToBaseline": 1.0180143360540617,
+          "meanNs": 125268686.98333333,
+          "stdDevNs": 2115222.8929314325,
+          "allocatedBytes": 54978120,
+          "ratioToBaseline": 0.9924529382174828,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 4.54938460926713,
-          "deltaAllocPct": 0.005344044413556425
+          "deltaMeanPct": -2.9730659126117063,
+          "deltaAllocPct": -0.0034667135297462392
         },
         {
           "method": "ParseStreamStreaming",
@@ -918,16 +918,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 87228142.1875,
-          "stdDevNs": 1599039.2448663707,
-          "allocatedBytes": 52209565,
-          "ratioToBaseline": 0.6877970360047182,
+          "meanNs": 89749869.38095237,
+          "stdDevNs": 1263538.3646486301,
+          "allocatedBytes": 52210440,
+          "ratioToBaseline": 0.7110517697340624,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 1.471251032294289,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 2.8909559807336382,
+          "deltaAllocPct": 0.001675938115937185
         },
         {
           "method": "ParseBytesAsync",
@@ -935,16 +935,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 129998971.325,
-          "stdDevNs": 2993136.9745845245,
-          "allocatedBytes": 54317276,
-          "ratioToBaseline": 1.0250465608771206,
+          "meanNs": 125176356.05,
+          "stdDevNs": 1972201.873925341,
+          "allocatedBytes": 54318578,
+          "ratioToBaseline": 0.9917214377261651,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 6.573278931097794,
-          "deltaAllocPct": -0.0005872866793899841
+          "deltaMeanPct": -3.7097334123847583,
+          "deltaAllocPct": 0.002397027420889074
         },
         {
           "method": "ParseStreamWithOptions",
@@ -952,16 +952,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 130330328.81578948,
-          "stdDevNs": 2812244.9219402988,
-          "allocatedBytes": 54316984,
-          "ratioToBaseline": 1.027659326600516,
+          "meanNs": 126747129,
+          "stdDevNs": 2231541.278276883,
+          "allocatedBytes": 54317004,
+          "ratioToBaseline": 1.0041660339540113,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 5.916360111452104,
-          "deltaAllocPct": 0.0002172437562947759
+          "deltaMeanPct": -2.7493215495941974,
+          "deltaAllocPct": 3.682089565208555e-05
         },
         {
           "method": "ParseBytesAsDataTable",
@@ -969,16 +969,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 310999772.9270833,
-          "stdDevNs": 12110619.995061234,
-          "allocatedBytes": 176620372,
-          "ratioToBaseline": 2.4522443864228185,
+          "meanNs": 275823480,
+          "stdDevNs": 5875368.307278674,
+          "allocatedBytes": 176620712,
+          "ratioToBaseline": 2.1852374264271783,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Meets",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": -37.27869835347566,
-          "deltaAllocPct": -23.6568738580109
+          "deltaMeanPct": -11.310713379630252,
+          "deltaAllocPct": 0.0001925032747637968
         },
         {
           "method": "ParseBytesAsDictionary",
@@ -986,16 +986,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 153929217.00000003,
-          "stdDevNs": 2655160.6445582416,
-          "allocatedBytes": 86869232,
-          "ratioToBaseline": 1.2137374080437404,
+          "meanNs": 146137994.80555555,
+          "stdDevNs": 3042055.185485933,
+          "allocatedBytes": 86869072,
+          "ratioToBaseline": 1.1577919895438944,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-          "deltaMeanPct": 7.508109937084124,
-          "deltaAllocPct": 8.058095460849501e-05
+          "deltaMeanPct": -5.061561636115173,
+          "deltaAllocPct": -0.0001841848906871883
         }
       ]
     },
@@ -1065,15 +1065,15 @@
             "RowCount": "1000",
             "RowsPerFile": "500"
           },
-          "meanNs": 664285.3391113281,
-          "stdDevNs": 13005.460194738862,
+          "meanNs": 692120.6731770834,
+          "stdDevNs": 9060.29739184124,
           "allocatedBytes": 710632,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 0.23819803224604158,
+          "deltaMeanPct": 4.1902677098056955,
           "deltaAllocPct": 0.0
         },
         {
@@ -1083,16 +1083,16 @@
             "RowCount": "1000",
             "RowsPerFile": "500"
           },
-          "meanNs": 1182955.9932577056,
-          "stdDevNs": 58898.36880703537,
-          "allocatedBytes": 410862,
-          "ratioToBaseline": 1.7807949740999072,
+          "meanNs": 915367.8490600586,
+          "stdDevNs": 27787.67433136825,
+          "allocatedBytes": 411277,
+          "ratioToBaseline": 1.3225552776197107,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 31.75893073153192,
-          "deltaAllocPct": -0.023360051392113064
+          "deltaMeanPct": -22.620295744116767,
+          "deltaAllocPct": 0.10100715081949657
         },
         {
           "method": "CombineCsvBytes",
@@ -1101,15 +1101,15 @@
             "RowCount": "1000",
             "RowsPerFile": "500"
           },
-          "meanNs": 696589.6499023438,
-          "stdDevNs": 10601.63189801711,
+          "meanNs": 698907.797014509,
+          "stdDevNs": 6464.863387122034,
           "allocatedBytes": 716554,
-          "ratioToBaseline": 1.0486301727420808,
+          "ratioToBaseline": 1.0098062723748307,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 0.1673742138799985,
+          "deltaMeanPct": 0.33278517883379605,
           "deltaAllocPct": 0.0
         },
         {
@@ -1119,16 +1119,16 @@
             "RowCount": "1000",
             "RowsPerFile": "500"
           },
-          "meanNs": 1171664.6338848039,
-          "stdDevNs": 47693.05942471488,
-          "allocatedBytes": 417196,
-          "ratioToBaseline": 1.7637972192073978,
+          "meanNs": 987850.4152275219,
+          "stdDevNs": 42137.11050262503,
+          "allocatedBytes": 416349,
+          "ratioToBaseline": 1.4272806080086184,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 20.79973885077798,
-          "deltaAllocPct": 0.25038807749054437
+          "deltaMeanPct": -15.688296236084417,
+          "deltaAllocPct": -0.20302208074861697
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1137,16 +1137,16 @@
             "RowCount": "1000",
             "RowsPerFile": "500"
           },
-          "meanNs": 3242626.361689815,
-          "stdDevNs": 86256.60742214325,
-          "allocatedBytes": 2028469,
-          "ratioToBaseline": 4.88137577449437,
+          "meanNs": 3225115.9561298075,
+          "stdDevNs": 34865.274284003106,
+          "allocatedBytes": 2028422,
+          "ratioToBaseline": 4.659759607129437,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 0.1227672917386215,
-          "deltaAllocPct": -0.0222778511336814
+          "deltaMeanPct": -0.540006883521486,
+          "deltaAllocPct": -0.0023170184015629523
         },
         {
           "method": "SplitCsvBytes",
@@ -1155,15 +1155,15 @@
             "RowCount": "1000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 724141.3189453125,
-          "stdDevNs": 10127.389430538302,
+          "meanNs": 722092.7733723958,
+          "stdDevNs": 8650.498717585511,
           "allocatedBytes": 692226,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 1.4018921884069937,
+          "deltaMeanPct": -0.28289306511336515,
           "deltaAllocPct": 0.0
         },
         {
@@ -1173,16 +1173,16 @@
             "RowCount": "1000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 1108190.9615478516,
-          "stdDevNs": 48869.97048377923,
-          "allocatedBytes": 387829,
-          "ratioToBaseline": 1.530351787081967,
+          "meanNs": 945211.6208333333,
+          "stdDevNs": 17355.433817022196,
+          "allocatedBytes": 387478,
+          "ratioToBaseline": 1.3089891710436372,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 17.47405042015197,
-          "deltaAllocPct": 0.1652939520492576
+          "deltaMeanPct": -14.706792093564713,
+          "deltaAllocPct": -0.09050380451178225
         },
         {
           "method": "CombineCsvBytes",
@@ -1191,15 +1191,15 @@
             "RowCount": "1000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 698064.2717507102,
-          "stdDevNs": 16307.368748166155,
+          "meanNs": 730069.5325753348,
+          "stdDevNs": 9728.077506182368,
           "allocatedBytes": 692178,
-          "ratioToBaseline": 0.9639890080673995,
+          "ratioToBaseline": 1.011046723491893,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": -2.9064973905196183,
+          "deltaMeanPct": 4.58485874722638,
           "deltaAllocPct": 0.0
         },
         {
@@ -1209,16 +1209,16 @@
             "RowCount": "1000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 1266644.03359375,
-          "stdDevNs": 152053.9684441227,
-          "allocatedBytes": 387902,
-          "ratioToBaseline": 1.7491669104568905,
+          "meanNs": 977799.630859375,
+          "stdDevNs": 19170.17277771157,
+          "allocatedBytes": 387090,
+          "ratioToBaseline": 1.354119120030449,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 32.56579676198037,
-          "deltaAllocPct": 0.16215909149594343
+          "deltaMeanPct": -22.80391294425944,
+          "deltaAllocPct": -0.20933122283463348
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1227,16 +1227,16 @@
             "RowCount": "1000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 3262019.589583333,
-          "stdDevNs": 56938.53746479447,
-          "allocatedBytes": 1986135,
-          "ratioToBaseline": 4.504672643641375,
+          "meanNs": 3291744.7005208335,
+          "stdDevNs": 53110.2948117385,
+          "allocatedBytes": 1985959,
+          "ratioToBaseline": 4.558617426881828,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 0.779313685850669,
-          "deltaAllocPct": 0.006445093093830989
+          "deltaMeanPct": 0.9112486949012236,
+          "deltaAllocPct": -0.008861431876483724
         },
         {
           "method": "SplitCsvBytes",
@@ -1245,15 +1245,15 @@
             "RowCount": "10000",
             "RowsPerFile": "500"
           },
-          "meanNs": 7118157.621354166,
-          "stdDevNs": 104389.72300482931,
+          "meanNs": 7389273.541294643,
+          "stdDevNs": 100157.7317777403,
           "allocatedBytes": 6999540,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 2.4095795238102595,
+          "deltaMeanPct": 3.808793431704016,
           "deltaAllocPct": 0.0
         },
         {
@@ -1263,16 +1263,16 @@
             "RowCount": "10000",
             "RowsPerFile": "500"
           },
-          "meanNs": 11276320.9275,
-          "stdDevNs": 258928.98360903814,
-          "allocatedBytes": 3939016,
-          "ratioToBaseline": 1.5841628588936445,
+          "meanNs": 9095467.256433824,
+          "stdDevNs": 179151.82524753458,
+          "allocatedBytes": 3929029,
+          "ratioToBaseline": 1.2309014148148922,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 24.196802319934815,
-          "deltaAllocPct": 0.16065306819898198
+          "deltaMeanPct": -19.34011709215941,
+          "deltaAllocPct": -0.2535404781295633
         },
         {
           "method": "CombineCsvBytes",
@@ -1281,16 +1281,16 @@
             "RowCount": "10000",
             "RowsPerFile": "500"
           },
-          "meanNs": 7384909.241145833,
-          "stdDevNs": 113986.18408246546,
-          "allocatedBytes": 6585443,
-          "ratioToBaseline": 1.0374748121608637,
+          "meanNs": 7548716.810416667,
+          "stdDevNs": 101096.37558913852,
+          "allocatedBytes": 6585475,
+          "ratioToBaseline": 1.0215776650073898,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": -3.3433323829922554,
-          "deltaAllocPct": 0.00018222041958984917
+          "deltaMeanPct": 2.2181392339686656,
+          "deltaAllocPct": 0.0004859202334603762
         },
         {
           "method": "CombineCsvFiles",
@@ -1299,16 +1299,16 @@
             "RowCount": "10000",
             "RowsPerFile": "500"
           },
-          "meanNs": 11580130.10658482,
-          "stdDevNs": 331689.8290857583,
-          "allocatedBytes": 4044442,
-          "ratioToBaseline": 1.6268437315640396,
+          "meanNs": 9469472.197916666,
+          "stdDevNs": 150427.15004314657,
+          "allocatedBytes": 4035432,
+          "ratioToBaseline": 1.281515990035681,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 22.22564335208679,
-          "deltaAllocPct": 0.2520155418259787
+          "deltaMeanPct": -18.22654745017044,
+          "deltaAllocPct": -0.22277485991887136
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1317,16 +1317,16 @@
             "RowCount": "10000",
             "RowsPerFile": "500"
           },
-          "meanNs": 28268603.43125,
-          "stdDevNs": 479520.6720644523,
-          "allocatedBytes": 19120282,
-          "ratioToBaseline": 3.9713370980217415,
+          "meanNs": 28438361.00625,
+          "stdDevNs": 310323.61609018483,
+          "allocatedBytes": 19120959,
+          "ratioToBaseline": 3.848600386401102,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 1.5703801393400336,
-          "deltaAllocPct": -0.0029392008009688276
+          "deltaMeanPct": 0.6005163127809194,
+          "deltaAllocPct": 0.0035407427568275402
         },
         {
           "method": "SplitCsvBytes",
@@ -1335,16 +1335,16 @@
             "RowCount": "10000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 7516548.683238637,
-          "stdDevNs": 182462.5132066758,
-          "allocatedBytes": 6141678,
+          "meanNs": 7616983.935267857,
+          "stdDevNs": 100171.06454719715,
+          "allocatedBytes": 6141650,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 0.5719254389517805,
-          "deltaAllocPct": 0.000635009644819567
+          "deltaMeanPct": 1.3361884058994251,
+          "deltaAllocPct": -0.00045590146536500286
         },
         {
           "method": "SplitCsvFile",
@@ -1353,16 +1353,16 @@
             "RowCount": "10000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 10866269.026830807,
-          "stdDevNs": 886154.532230878,
-          "allocatedBytes": 3516546,
-          "ratioToBaseline": 1.445646065069971,
+          "meanNs": 8415787.125,
+          "stdDevNs": 147651.35262819476,
+          "allocatedBytes": 3511992,
+          "ratioToBaseline": 1.1048713239414298,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 29.944638281001613,
-          "deltaAllocPct": 0.2725129733797283
+          "deltaMeanPct": -22.551272159562025,
+          "deltaAllocPct": -0.12950207391002422
         },
         {
           "method": "CombineCsvBytes",
@@ -1371,16 +1371,16 @@
             "RowCount": "10000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 7534173.793269231,
-          "stdDevNs": 76319.64317182805,
-          "allocatedBytes": 6147462,
-          "ratioToBaseline": 1.0023448408003925,
+          "meanNs": 7504116.703125,
+          "stdDevNs": 81152.85718445298,
+          "allocatedBytes": 6147460,
+          "ratioToBaseline": 0.985182162244,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 3.28304371142746,
-          "deltaAllocPct": 0.00030907159285576135
+          "deltaMeanPct": -0.3989434139557936,
+          "deltaAllocPct": -3.253375132697038e-05
         },
         {
           "method": "CombineCsvFiles",
@@ -1389,16 +1389,16 @@
             "RowCount": "10000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 11337217.6015625,
-          "stdDevNs": 409775.36155017745,
-          "allocatedBytes": 3517314,
-          "ratioToBaseline": 1.50830096089761,
+          "meanNs": 9350281.340856481,
+          "stdDevNs": 261234.94185171,
+          "allocatedBytes": 3513070,
+          "ratioToBaseline": 1.2275569202086904,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 14.86688214577146,
-          "deltaAllocPct": 0.22562287071621442
+          "deltaMeanPct": -17.525783931607506,
+          "deltaAllocPct": -0.12066025381868095
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1407,16 +1407,16 @@
             "RowCount": "10000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 27380390,
-          "stdDevNs": 499561.89995445503,
-          "allocatedBytes": 17824402,
-          "ratioToBaseline": 3.6426811231937206,
+          "meanNs": 27617189.58482143,
+          "stdDevNs": 335832.3242974376,
+          "allocatedBytes": 17824415,
+          "ratioToBaseline": 3.6257381950025405,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 4.891914746819664,
-          "deltaAllocPct": 0.0011445115230430004
+          "deltaMeanPct": 0.8648510295924533,
+          "deltaAllocPct": 7.293372310611038e-05
         },
         {
           "method": "SplitCsvBytes",
@@ -1425,16 +1425,16 @@
             "RowCount": "100000",
             "RowsPerFile": "500"
           },
-          "meanNs": 80706316.64285715,
-          "stdDevNs": 1351739.1574119485,
-          "allocatedBytes": 70251415,
+          "meanNs": 80391084.12380953,
+          "stdDevNs": 1228894.9420221404,
+          "allocatedBytes": 70251440,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 3.4253280051851847,
-          "deltaAllocPct": -0.00044981098045826084
+          "deltaMeanPct": -0.39059212730843584,
+          "deltaAllocPct": 3.558647181697337e-05
         },
         {
           "method": "SplitCsvFile",
@@ -1443,16 +1443,16 @@
             "RowCount": "100000",
             "RowsPerFile": "500"
           },
-          "meanNs": 116116436.88095239,
-          "stdDevNs": 1625853.2765230157,
-          "allocatedBytes": 39250936,
-          "ratioToBaseline": 1.4387527731539609,
+          "meanNs": 93059210.29807693,
+          "stdDevNs": 2527638.9581955518,
+          "allocatedBytes": 39148160,
+          "ratioToBaseline": 1.157581233196922,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 24.28434324686617,
-          "deltaAllocPct": 0.10399345475764445
+          "deltaMeanPct": -19.856987694614443,
+          "deltaAllocPct": -0.26184343731318915
         },
         {
           "method": "CombineCsvBytes",
@@ -1461,16 +1461,16 @@
             "RowCount": "100000",
             "RowsPerFile": "500"
           },
-          "meanNs": 71083860.5904762,
-          "stdDevNs": 1122026.7986292602,
-          "allocatedBytes": 61961198,
-          "ratioToBaseline": 0.8807719587183939,
+          "meanNs": 72830926.04761906,
+          "stdDevNs": 719998.1296890297,
+          "allocatedBytes": 61961193,
+          "ratioToBaseline": 0.9059577544128259,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": -4.910508218813536,
-          "deltaAllocPct": -0.00016139106704962831
+          "deltaMeanPct": 2.4577526355918424,
+          "deltaAllocPct": -8.069566376040695e-06
         },
         {
           "method": "CombineCsvFiles",
@@ -1479,16 +1479,16 @@
             "RowCount": "100000",
             "RowsPerFile": "500"
           },
-          "meanNs": 104990500.8611111,
-          "stdDevNs": 1049596.6054740727,
-          "allocatedBytes": 40399517,
-          "ratioToBaseline": 1.3008957071565626,
+          "meanNs": 90891346.09375,
+          "stdDevNs": 2818805.1908652787,
+          "allocatedBytes": 40346931,
+          "ratioToBaseline": 1.1306147576486107,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 16.766697340876092,
-          "deltaAllocPct": 0.29752225415120026
+          "deltaMeanPct": -13.4289813380474,
+          "deltaAllocPct": -0.13016492251627662
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1497,16 +1497,16 @@
             "RowCount": "100000",
             "RowsPerFile": "500"
           },
-          "meanNs": 273626903.15384614,
-          "stdDevNs": 7280162.773082121,
-          "allocatedBytes": 186383496,
-          "ratioToBaseline": 3.3904025674310496,
+          "meanNs": 286612451.5555556,
+          "stdDevNs": 6102963.636326046,
+          "allocatedBytes": 186383480,
+          "ratioToBaseline": 3.5652268492131105,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 3.0855157827458237,
-          "deltaAllocPct": -2.5753346550809227e-05
+          "deltaMeanPct": 4.745713324251724,
+          "deltaAllocPct": -8.584451061053174e-06
         },
         {
           "method": "SplitCsvBytes",
@@ -1515,16 +1515,16 @@
             "RowCount": "100000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 77498834.06666666,
-          "stdDevNs": 1152968.7434232181,
-          "allocatedBytes": 61669909,
+          "meanNs": 80236159.62962963,
+          "stdDevNs": 2233013.4814210613,
+          "allocatedBytes": 61669912,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 1.2663251528903166,
-          "deltaAllocPct": -1.6215363375753264e-06
+          "deltaMeanPct": 3.532086122235388,
+          "deltaAllocPct": 4.864609091607384e-06
         },
         {
           "method": "SplitCsvFile",
@@ -1533,16 +1533,16 @@
             "RowCount": "100000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 111235120.04402515,
-          "stdDevNs": 4626409.600027058,
-          "allocatedBytes": 35139411,
-          "ratioToBaseline": 1.4353134648237107,
+          "meanNs": 87992719.57692307,
+          "stdDevNs": 2366431.7567053214,
+          "allocatedBytes": 34974540,
+          "ratioToBaseline": 1.0966716251512754,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 16.15371722232516,
-          "deltaAllocPct": 0.4238936739488452
+          "deltaMeanPct": -20.89484009897512,
+          "deltaAllocPct": -0.4691911312913014
         },
         {
           "method": "CombineCsvBytes",
@@ -1551,16 +1551,16 @@
             "RowCount": "100000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 76006612.2244898,
-          "stdDevNs": 705828.2748568227,
-          "allocatedBytes": 57574014,
-          "ratioToBaseline": 0.98074523494259,
+          "meanNs": 76162208.7142857,
+          "stdDevNs": 846304.1640940844,
+          "allocatedBytes": 57574015,
+          "ratioToBaseline": 0.9492254996481724,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 5.900323586047745,
-          "deltaAllocPct": 6.600204231161662e-05
+          "deltaMeanPct": 0.20471441265707957,
+          "deltaAllocPct": 1.7368947039197232e-06
         },
         {
           "method": "CombineCsvFiles",
@@ -1569,16 +1569,16 @@
             "RowCount": "100000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 104333776.72727273,
-          "stdDevNs": 2509945.7455933443,
-          "allocatedBytes": 35225008,
-          "ratioToBaseline": 1.3462625339307932,
+          "meanNs": 86302872.75362319,
+          "stdDevNs": 2105226.224273993,
+          "allocatedBytes": 35092040,
+          "ratioToBaseline": 1.0756107115793867,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 23.032777463382605,
-          "deltaAllocPct": 0.34854624545679
+          "deltaMeanPct": -17.281943143668727,
+          "deltaAllocPct": -0.3774818163277635
         },
         {
           "method": "SplitThenCombineBytes",
@@ -1587,16 +1587,16 @@
             "RowCount": "100000",
             "RowsPerFile": "5000"
           },
-          "meanNs": 277884189.1333333,
-          "stdDevNs": 5016045.4002963025,
-          "allocatedBytes": 173415272,
-          "ratioToBaseline": 3.5856563841243028,
+          "meanNs": 273574845.5625,
+          "stdDevNs": 5113855.136395829,
+          "allocatedBytes": 173415216,
+          "ratioToBaseline": 3.409620385937243,
           "isBaseline": false,
           "slaTarget": "<= 2000 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-          "deltaMeanPct": 1.6888287365508001,
-          "deltaAllocPct": -0.0001014903816412019
+          "deltaMeanPct": -1.5507696153110866,
+          "deltaAllocPct": -3.229242693227157e-05
         }
       ]
     },
@@ -1660,16 +1660,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1585147.424977022,
-          "stdDevNs": 47147.75955906538,
-          "allocatedBytes": 144070,
+          "meanNs": 1593471.4486860796,
+          "stdDevNs": 49419.12231790816,
+          "allocatedBytes": 143990,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": 2.1291044349664308,
-          "deltaAllocPct": -0.7166976776238715
+          "deltaMeanPct": 0.5251261540659703,
+          "deltaAllocPct": -0.05552856250433817
         },
         {
           "method": "ExportToCsvString",
@@ -1677,16 +1677,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1579765.942578125,
-          "stdDevNs": 35119.257543162996,
-          "allocatedBytes": 145110,
-          "ratioToBaseline": 0.9966050587383221,
+          "meanNs": 1548235.9696691176,
+          "stdDevNs": 30041.483820653,
+          "allocatedBytes": 145030,
+          "ratioToBaseline": 0.9716119927631828,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": 1.7556959611124756,
-          "deltaAllocPct": 0.05516100117217127
+          "deltaMeanPct": -1.9958635680898142,
+          "deltaAllocPct": -0.055130590586451665
         },
         {
           "method": "ExportToCsvStream",
@@ -1694,15 +1694,15 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1609992.1965332031,
-          "stdDevNs": 49060.542503980454,
+          "meanNs": 1561682.0267857143,
+          "stdDevNs": 26969.941876627217,
           "allocatedBytes": 136870,
-          "ratioToBaseline": 1.0156734769048634,
+          "ratioToBaseline": 0.98005020929206,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": 6.025383269088212,
+          "deltaMeanPct": -3.0006462050881435,
           "deltaAllocPct": 0.0
         },
         {
@@ -1711,16 +1711,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1732762.9699948488,
-          "stdDevNs": 193047.0769990152,
-          "allocatedBytes": 125449,
-          "ratioToBaseline": 1.0931241742514686,
+          "meanNs": 1741244.0708550347,
+          "stdDevNs": 53328.70848238795,
+          "allocatedBytes": 125473,
+          "ratioToBaseline": 1.0927362848520463,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": 0.6777547204768389,
-          "deltaAllocPct": 0.044659590248259474
+          "deltaMeanPct": 0.4894553384997103,
+          "deltaAllocPct": 0.019131280440657157
         },
         {
           "method": "ExportToCsvBytesAsync",
@@ -1728,16 +1728,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 1440726.67109375,
-          "stdDevNs": 15789.820470755358,
-          "allocatedBytes": 144187,
-          "ratioToBaseline": 0.9088912793802978,
+          "meanNs": 1595681.89125,
+          "stdDevNs": 41883.07412562429,
+          "allocatedBytes": 144166,
+          "ratioToBaseline": 1.0013871868025894,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -7.077323680148073,
-          "deltaAllocPct": -0.04090234737878347
+          "deltaMeanPct": 10.755351675319053,
+          "deltaAllocPct": -0.014564419815933476
         },
         {
           "method": "ExportToCsvBytesSelected",
@@ -1745,15 +1745,15 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 23732.493033854167,
-          "stdDevNs": 210.03488458232445,
+          "meanNs": 25550.127969039113,
+          "stdDevNs": 554.0452989155633,
           "allocatedBytes": 44152,
-          "ratioToBaseline": 0.014971789159735845,
+          "ratioToBaseline": 0.016034255267081722,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -9.39901599591209,
+          "deltaMeanPct": 7.658845333240412,
           "deltaAllocPct": 0.0
         },
         {
@@ -1762,16 +1762,16 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 32412.37489100865,
-          "stdDevNs": 267.12825603273404,
+          "meanNs": 36222.65237426758,
+          "stdDevNs": 638.986807333156,
           "allocatedBytes": 66016,
-          "ratioToBaseline": 0.02044754600126767,
+          "ratioToBaseline": 0.022731911766687443,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -8.892791905863563,
-          "deltaAllocPct": -0.06055468087683178
+          "deltaMeanPct": 11.75562573267631,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ExportToCsvBytesFromDictionary",
@@ -1779,15 +1779,15 @@
           "parameters": {
             "RowCount": "100"
           },
-          "meanNs": 24470.799094063896,
-          "stdDevNs": 288.77214285630816,
+          "meanNs": 27272.79617192195,
+          "stdDevNs": 322.2948797901285,
           "allocatedBytes": 67024,
-          "ratioToBaseline": 0.01543755407760803,
+          "ratioToBaseline": 0.01711533406789945,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -9.26903253297538,
+          "deltaMeanPct": 11.450370161952577,
           "deltaAllocPct": 0.0
         },
         {
@@ -1796,16 +1796,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1929639.65234375,
-          "stdDevNs": 11706.45841634303,
+          "meanNs": 2117084.073958333,
+          "stdDevNs": 35254.72963805783,
           "allocatedBytes": 688634,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -6.730625399700763,
-          "deltaAllocPct": -0.0042110582389354445
+          "deltaMeanPct": 9.713959877789211,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ExportToCsvString",
@@ -1813,16 +1813,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1963815.36640625,
-          "stdDevNs": 11594.028358749789,
-          "allocatedBytes": 652475,
-          "ratioToBaseline": 1.0177109306501813,
+          "meanNs": 2132298.986886161,
+          "stdDevNs": 21985.52874643332,
+          "allocatedBytes": 652395,
+          "ratioToBaseline": 1.0071867306145195,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -6.260948196654481,
-          "deltaAllocPct": 0.012262509675886542
+          "deltaMeanPct": 8.579402288120045,
+          "deltaAllocPct": -0.01226100616881873
         },
         {
           "method": "ExportToCsvStream",
@@ -1830,15 +1830,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1934840.5734375,
-          "stdDevNs": 11457.111096752074,
+          "meanNs": 2159870.8069196427,
+          "stdDevNs": 29677.574717107258,
           "allocatedBytes": 615144,
-          "ratioToBaseline": 1.0026952810010061,
+          "ratioToBaseline": 1.0202102190874787,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -8.2074434399429,
+          "deltaMeanPct": 11.63042767303286,
           "deltaAllocPct": 0.0
         },
         {
@@ -1847,16 +1847,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 2064674.8203125,
-          "stdDevNs": 32139.575715869494,
-          "allocatedBytes": 356880,
-          "ratioToBaseline": 1.0699794740457036,
+          "meanNs": 2297106.7846679688,
+          "stdDevNs": 71415.77945536493,
+          "allocatedBytes": 356892,
+          "ratioToBaseline": 1.0850333309498879,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -6.6528189292695075,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 11.257557949018281,
+          "deltaAllocPct": 0.0033624747814391394
         },
         {
           "method": "ExportToCsvBytesAsync",
@@ -1864,16 +1864,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 1971899.4458333333,
-          "stdDevNs": 22038.447463244695,
-          "allocatedBytes": 688810,
-          "ratioToBaseline": 1.0219003550420693,
+          "meanNs": 2211455.51796875,
+          "stdDevNs": 47968.45297995407,
+          "allocatedBytes": 689130,
+          "ratioToBaseline": 1.04457614374944,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -7.225156112434473,
-          "deltaAllocPct": -0.004209982303557145
+          "deltaMeanPct": 12.148493303834737,
+          "deltaAllocPct": 0.0464569329713564
         },
         {
           "method": "ExportToCsvBytesSelected",
@@ -1881,15 +1881,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 216284.27586146764,
-          "stdDevNs": 2685.689428843906,
+          "meanNs": 250543.9112659801,
+          "stdDevNs": 6140.552194632114,
           "allocatedBytes": 339288,
-          "ratioToBaseline": 0.11208531893442782,
+          "ratioToBaseline": 0.11834386472783562,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -12.53912798828996,
+          "deltaMeanPct": 15.840095294979333,
           "deltaAllocPct": 0.0
         },
         {
@@ -1898,16 +1898,16 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 385357.79659598216,
-          "stdDevNs": 2319.5078165165983,
-          "allocatedBytes": 712758,
-          "ratioToBaseline": 0.19970453868312907,
+          "meanNs": 433206.8877704327,
+          "stdDevNs": 4447.3274713730025,
+          "allocatedBytes": 712798,
+          "ratioToBaseline": 0.20462431941139753,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -7.737418719970353,
-          "deltaAllocPct": 0.0
+          "deltaMeanPct": 12.4167959224182,
+          "deltaAllocPct": 0.005612002951913553
         },
         {
           "method": "ExportToCsvBytesFromDictionary",
@@ -1915,15 +1915,15 @@
           "parameters": {
             "RowCount": "1000"
           },
-          "meanNs": 323888.2545689174,
-          "stdDevNs": 4376.061337678165,
+          "meanNs": 352284.5460379464,
+          "stdDevNs": 4464.489290644945,
           "allocatedBytes": 728166,
-          "ratioToBaseline": 0.16784908735448148,
+          "ratioToBaseline": 0.16640082950474258,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -5.987663167690431,
+          "deltaMeanPct": 8.767311277410595,
           "deltaAllocPct": 0.0
         },
         {
@@ -1932,16 +1932,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6101656.432528409,
-          "stdDevNs": 135668.27064496136,
-          "allocatedBytes": 5605505,
+          "meanNs": 6878338.7,
+          "stdDevNs": 93168.89053188382,
+          "allocatedBytes": 5605709,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -9.09119189397041,
-          "deltaAllocPct": -0.009364915992244066
+          "deltaMeanPct": 12.729039664230141,
+          "deltaAllocPct": 0.003639279601035054
         },
         {
           "method": "ExportToCsvString",
@@ -1949,16 +1949,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6264967.709517046,
-          "stdDevNs": 147096.38968295322,
-          "allocatedBytes": 5826777,
-          "ratioToBaseline": 1.026765072533093,
+          "meanNs": 7035489.046875,
+          "stdDevNs": 122550.93526597011,
+          "allocatedBytes": 5826943,
+          "ratioToBaseline": 1.0228471370383374,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -10.191943529565208,
-          "deltaAllocPct": 0.0024027582291465902
+          "deltaMeanPct": 12.298887609388046,
+          "deltaAllocPct": 0.002848916304845715
         },
         {
           "method": "ExportToCsvStream",
@@ -1966,16 +1966,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6152220.552309782,
-          "stdDevNs": 150578.86220676108,
-          "allocatedBytes": 4834601,
-          "ratioToBaseline": 1.0082869496735036,
+          "meanNs": 6733212.352796053,
+          "stdDevNs": 138508.08089676435,
+          "allocatedBytes": 4834541,
+          "ratioToBaseline": 0.9789009594418565,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -7.38761024956106,
-          "deltaAllocPct": -0.0028129761763669874
+          "deltaMeanPct": 9.443611384642955,
+          "deltaAllocPct": -0.001241053811886441
         },
         {
           "method": "ExportToCsvFile",
@@ -1983,16 +1983,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6642463.2819602275,
-          "stdDevNs": 157894.43472901118,
+          "meanNs": 7532849.329241072,
+          "stdDevNs": 177008.79660554012,
           "allocatedBytes": 2734646,
-          "ratioToBaseline": 1.0886327926542594,
+          "ratioToBaseline": 1.095155335872174,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -9.466531260185436,
-          "deltaAllocPct": 0.002413533339671906
+          "deltaMeanPct": 13.404455688885442,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ExportToCsvBytesAsync",
@@ -2000,16 +2000,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 6493826.064797794,
-          "stdDevNs": 125516.95589130626,
-          "allocatedBytes": 5605809,
-          "ratioToBaseline": 1.064272650649207,
+          "meanNs": 7264287.597098215,
+          "stdDevNs": 100145.17137391421,
+          "allocatedBytes": 5605565,
+          "ratioToBaseline": 1.0561107723727263,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -12.724293757675193,
-          "deltaAllocPct": -0.008722333347246258
+          "deltaMeanPct": 11.864523697008057,
+          "deltaAllocPct": -0.00435262778307288
         },
         {
           "method": "ExportToCsvBytesSelected",
@@ -2017,16 +2017,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 2593305.005078125,
-          "stdDevNs": 29743.850839779967,
+          "meanNs": 2881690.7529947916,
+          "stdDevNs": 39062.12274774178,
           "allocatedBytes": 3068573,
-          "ratioToBaseline": 0.4250165563654178,
+          "ratioToBaseline": 0.41895156355048224,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -8.34860805342508,
-          "deltaAllocPct": 3.258844830755153e-05
+          "deltaMeanPct": 11.12039452945023,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ExportToCsvBytesFromDataTable",
@@ -2034,16 +2034,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 3388081.4915364585,
-          "stdDevNs": 33718.452129897414,
-          "allocatedBytes": 5789846,
-          "ratioToBaseline": 0.5552724131556032,
+          "meanNs": 3782520.7918526786,
+          "stdDevNs": 52335.26544297836,
+          "allocatedBytes": 5789845,
+          "ratioToBaseline": 0.5499177863766259,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -8.453891965320071,
-          "deltaAllocPct": -0.0002936166192533398
+          "deltaMeanPct": 11.641966148144393,
+          "deltaAllocPct": -1.7271616550768364e-05
         },
         {
           "method": "ExportToCsvBytesFromDictionary",
@@ -2051,16 +2051,16 @@
           "parameters": {
             "RowCount": "10000"
           },
-          "meanNs": 3916282.9375,
-          "stdDevNs": 69592.57071900826,
-          "allocatedBytes": 6749251,
-          "ratioToBaseline": 0.6418393072120528,
+          "meanNs": 4317644.959635417,
+          "stdDevNs": 112160.21594483724,
+          "allocatedBytes": 6749254,
+          "ratioToBaseline": 0.6277162477671268,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -3.0553455661175093,
-          "deltaAllocPct": -0.0007704499264590729
+          "deltaMeanPct": 10.248545075541212,
+          "deltaAllocPct": 4.44493766789826e-05
         },
         {
           "method": "ExportToCsvBytes",
@@ -2068,16 +2068,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 43296639.11309523,
-          "stdDevNs": 554484.4986590021,
-          "allocatedBytes": 51424520,
+          "meanNs": 48410750.830508485,
+          "stdDevNs": 2128266.599306711,
+          "allocatedBytes": 51425931,
           "ratioToBaseline": 1,
           "isBaseline": true,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -7.844870054570061,
-          "deltaAllocPct": -0.00018668102451168523
+          "deltaMeanPct": 11.81179838013448,
+          "deltaAllocPct": 0.0027438272637255534
         },
         {
           "method": "ExportToCsvString",
@@ -2085,16 +2085,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 45726831.48076923,
-          "stdDevNs": 552669.1361457016,
+          "meanNs": 54045399.24561404,
+          "stdDevNs": 1821417.3048618836,
           "allocatedBytes": 59001240,
-          "ratioToBaseline": 1.0561288916981775,
+          "ratioToBaseline": 1.1163925020463552,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -10.590119491837747,
-          "deltaAllocPct": -0.002211769000811745
+          "deltaMeanPct": 18.19187443228653,
+          "deltaAllocPct": 0.0
         },
         {
           "method": "ExportToCsvStream",
@@ -2102,16 +2102,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 43163047.18333333,
-          "stdDevNs": 492214.2455016836,
-          "allocatedBytes": 43319347,
-          "ratioToBaseline": 0.996914496540645,
+          "meanNs": 48533165.150943406,
+          "stdDevNs": 2020239.8956003673,
+          "allocatedBytes": 43319931,
+          "ratioToBaseline": 1.0025286598190453,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -8.939258983240698,
-          "deltaAllocPct": 0.00029317240707473494
+          "deltaMeanPct": 12.441470929521525,
+          "deltaAllocPct": 0.0013481274313761008
         },
         {
           "method": "ExportToCsvFile",
@@ -2119,16 +2119,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 48654498.86639117,
-          "stdDevNs": 2077237.5105879589,
-          "allocatedBytes": 26497092,
-          "ratioToBaseline": 1.123747705666037,
+          "meanNs": 56620686.25793653,
+          "stdDevNs": 1615008.5493350795,
+          "allocatedBytes": 26497479,
+          "ratioToBaseline": 1.169589095120048,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -9.218093723202415,
-          "deltaAllocPct": -0.005249357104706711
+          "deltaMeanPct": 16.37297182614315,
+          "deltaAllocPct": 0.0014605376318276738
         },
         {
           "method": "ExportToCsvBytesAsync",
@@ -2136,16 +2136,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 44298237.382716045,
-          "stdDevNs": 1234070.215749998,
-          "allocatedBytes": 51426107,
-          "ratioToBaseline": 1.0231333953428703,
+          "meanNs": 52943310.66363636,
+          "stdDevNs": 1271757.903857472,
+          "allocatedBytes": 51425154,
+          "ratioToBaseline": 1.0936271335471923,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -15.385389868427088,
-          "deltaAllocPct": 0.0021098678382675267
+          "deltaMeanPct": 19.51561459710219,
+          "deltaAllocPct": -0.0018531443572036281
         },
         {
           "method": "ExportToCsvBytesSelected",
@@ -2153,16 +2153,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 27490914.979166668,
-          "stdDevNs": 329727.5161547571,
-          "allocatedBytes": 37203390,
-          "ratioToBaseline": 0.6349433938130301,
+          "meanNs": 31613861.916666668,
+          "stdDevNs": 510916.56197529606,
+          "allocatedBytes": 37203393,
+          "ratioToBaseline": 0.6530339103260425,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -2.6590834622629207,
-          "deltaAllocPct": -1.0751707223271081e-05
+          "deltaMeanPct": 14.997488954530894,
+          "deltaAllocPct": 8.063781284447466e-06
         },
         {
           "method": "ExportToCsvBytesFromDataTable",
@@ -2170,16 +2170,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 38510718.55029586,
-          "stdDevNs": 419942.70364881674,
-          "allocatedBytes": 54038865,
-          "ratioToBaseline": 0.8894620769455556,
+          "meanNs": 42295779.70588235,
+          "stdDevNs": 857748.4870952681,
+          "allocatedBytes": 54038862,
+          "ratioToBaseline": 0.8736856789097251,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": 4.280178043403381,
-          "deltaAllocPct": -6.106712242725601e-05
+          "deltaMeanPct": 9.828591358645033,
+          "deltaAllocPct": -5.551559974473927e-06
         },
         {
           "method": "ExportToCsvBytesFromDictionary",
@@ -2187,16 +2187,16 @@
           "parameters": {
             "RowCount": "100000"
           },
-          "meanNs": 39556618.88717949,
-          "stdDevNs": 539089.3174370244,
+          "meanNs": 43148767.5,
+          "stdDevNs": 535393.5068742458,
           "allocatedBytes": 63638289,
-          "ratioToBaseline": 0.9136186941405213,
+          "ratioToBaseline": 0.891305479873029,
           "isBaseline": false,
           "slaTarget": "<= 500 ms",
           "slaResult": "Exceeds",
           "slaStandard": "Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-          "deltaMeanPct": -2.092196726253714,
-          "deltaAllocPct": -4.714140862205992e-05
+          "deltaMeanPct": 9.081030466900568,
+          "deltaAllocPct": 0.0
         }
       ]
     }
@@ -2221,13 +2221,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 6976566.748516614,
-            "allocatedBytes": 5607374,
+            "meanNs": 6898877.9599609375,
+            "allocatedBytes": 5607580,
             "ratioToBaseline": 1,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 3.6646765697587527,
-            "deltaAllocPct": -0.0012661738099972448
+            "deltaMeanPct": -1.1135676236767122,
+            "deltaAllocPct": 0.003673733908242967
           },
           {
             "algorithm": "Utf16",
@@ -2235,13 +2235,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 7696470.184659091,
-            "allocatedBytes": 8474169,
-            "ratioToBaseline": 1.1031887835510992,
+            "meanNs": 7410116.538541666,
+            "allocatedBytes": 8473950,
+            "ratioToBaseline": 1.0741045981024462,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 1.6514778416034808,
-            "deltaAllocPct": 0.004932880373756557
+            "deltaMeanPct": -3.720584102153686,
+            "deltaAllocPct": -0.0025843241974522813
           },
           {
             "algorithm": "Utf32",
@@ -2249,13 +2249,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 10712998.247767856,
-            "allocatedBytes": 14212699,
-            "ratioToBaseline": 1.535568802526787,
+            "meanNs": 10621367.776041666,
+            "allocatedBytes": 14212489,
+            "ratioToBaseline": 1.5395790210647249,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -1.147134640730556,
-            "deltaAllocPct": 0.005080222125324295
+            "deltaMeanPct": -0.8553205144533863,
+            "deltaAllocPct": -0.0014775518710415242
           },
           {
             "algorithm": "Utf8",
@@ -2263,13 +2263,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 48784615.28138528,
-            "allocatedBytes": 51426409,
+            "meanNs": 47768004.95454545,
+            "allocatedBytes": 51426405,
             "ratioToBaseline": 1,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 0.8383882115523942,
-            "deltaAllocPct": 0.0011006139461826614
+            "deltaMeanPct": -2.083874846559945,
+            "deltaAllocPct": -7.778104825479842e-06
           },
           {
             "algorithm": "Utf16",
@@ -2277,13 +2277,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 51994994.53333333,
-            "allocatedBytes": 76290012,
-            "ratioToBaseline": 1.0658072065021087,
+            "meanNs": 50884250.066666655,
+            "allocatedBytes": 76289646,
+            "ratioToBaseline": 1.065237078983862,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 1.138587061156902,
-            "deltaAllocPct": 0.0001953077304647932
+            "deltaMeanPct": -2.1362526847744774,
+            "deltaAllocPct": -0.0004797482532837981
           },
           {
             "algorithm": "Utf32",
@@ -2291,13 +2291,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 83732367.61111113,
-            "allocatedBytes": 126091240,
-            "ratioToBaseline": 1.7163683084954213,
+            "meanNs": 80390496.64814813,
+            "allocatedBytes": 126092395,
+            "ratioToBaseline": 1.6829360306055325,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -2.164465594769867,
-            "deltaAllocPct": -0.00027916215063729225
+            "deltaMeanPct": -3.9911339644473873,
+            "deltaAllocPct": 0.0009160033639133059
           }
         ]
       },
@@ -2310,13 +2310,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 13443345.29017857,
-            "allocatedBytes": 5609719,
+            "meanNs": 13034343.888541667,
+            "allocatedBytes": 5609616,
             "ratioToBaseline": 1,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 1.6038785140621217,
-            "deltaAllocPct": -0.0014795531107871544
+            "deltaMeanPct": -3.0424079186280517,
+            "deltaAllocPct": -0.0018360990987249092
           },
           {
             "algorithm": "Utf16",
@@ -2324,13 +2324,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 13469536.622767856,
-            "allocatedBytes": 5608716,
-            "ratioToBaseline": 1.0019482749288915,
+            "meanNs": 13210853.982421875,
+            "allocatedBytes": 5608567,
+            "ratioToBaseline": 1.0135419239656072,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 0.1864898533322736,
-            "deltaAllocPct": -0.0010875811250830618
+            "deltaMeanPct": -1.920501406920891,
+            "deltaAllocPct": -0.002656579509463485
           },
           {
             "algorithm": "Utf32",
@@ -2338,13 +2338,13 @@
               "RowCount": "10000"
             },
             "paramLabel": "10,000",
-            "meanNs": 17291138.294354837,
-            "allocatedBytes": 5608944,
-            "ratioToBaseline": 1.286222879880009,
+            "meanNs": 16110437.6625,
+            "allocatedBytes": 5609260,
+            "ratioToBaseline": 1.2359991266351726,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 6.654958265720086,
-            "deltaAllocPct": 0.0028170088857018254
+            "deltaMeanPct": -6.8283568829029,
+            "deltaAllocPct": 0.00563385906509318
           },
           {
             "algorithm": "Utf8",
@@ -2352,13 +2352,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 128713877,
-            "allocatedBytes": 54972688,
+            "meanNs": 125694976.26785715,
+            "allocatedBytes": 54972440,
             "ratioToBaseline": 1,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 1.479727808356562,
-            "deltaAllocPct": 0.00196828886534623
+            "deltaMeanPct": -2.345435319412258,
+            "deltaAllocPct": -0.0004511331154117841
           },
           {
             "algorithm": "Utf16",
@@ -2366,13 +2366,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 129283934.27,
-            "allocatedBytes": 54970438,
-            "ratioToBaseline": 1.0044288718768062,
+            "meanNs": 125924904.15,
+            "allocatedBytes": 54970440,
+            "ratioToBaseline": 1.001829252759099,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": -0.13124063583617362,
-            "deltaAllocPct": -0.0034963025054772978
+            "deltaMeanPct": -2.5981806161505747,
+            "deltaAllocPct": 3.638319199857931e-06
           },
           {
             "algorithm": "Utf32",
@@ -2380,13 +2380,13 @@
               "RowCount": "100000"
             },
             "paramLabel": "100,000",
-            "meanNs": 160820403.23214287,
-            "allocatedBytes": 54971484,
-            "ratioToBaseline": 1.249441062459356,
+            "meanNs": 158456371.05,
+            "allocatedBytes": 54970522,
+            "ratioToBaseline": 1.2606420380105567,
             "slaTarget": "<= 500 ms",
             "slaResult": "Exceeds",
-            "deltaMeanPct": 2.0898239222478256,
-            "deltaAllocPct": -0.0010750913077230576
+            "deltaMeanPct": -1.46998274760597,
+            "deltaAllocPct": -0.0017499982354487649
           }
         ]
       }
@@ -2396,19 +2396,19 @@
     {
       "area": "CombineCsvBytes",
       "target": "<= 2000 ms \u2014 Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-      "latest": "696.59 \u00b5s",
+      "latest": "698.91 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "CombineCsvFiles",
       "target": "<= 2000 ms \u2014 Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-      "latest": "1.17 ms",
+      "latest": "987.85 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportNestedBytes",
       "target": "<= 200 ms \u2014 Round-tripping up to 10k nested records through CSV should complete within a couple hundred milliseconds.",
-      "latest": "2.42 ms",
+      "latest": "2.39 ms",
       "result": "Exceeds"
     },
     {
@@ -2420,73 +2420,73 @@
     {
       "area": "ExportToCsvBytesAsync",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "1.44 ms",
+      "latest": "1.6 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvBytesFromDataTable",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "32.41 \u00b5s",
+      "latest": "36.22 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvBytesFromDictionary",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "24.47 \u00b5s",
+      "latest": "27.27 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvBytesSelected",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "23.73 \u00b5s",
+      "latest": "25.55 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvFile",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "1.73 ms",
+      "latest": "1.74 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvStream",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "1.61 ms",
+      "latest": "1.56 ms",
       "result": "Exceeds"
     },
     {
       "area": "ExportToCsvString",
       "target": "<= 500 ms \u2014 Serializing up to 100k typed rows to CSV should complete within a few hundred milliseconds (target >= 200k rows/sec on the hot byte path).",
-      "latest": "1.58 ms",
+      "latest": "1.55 ms",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytes",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "873.21 \u00b5s",
+      "latest": "885.16 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsDataTable",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "311 ms",
+      "latest": "275.82 ms",
       "result": "Meets"
     },
     {
       "area": "ParseBytesAsDictionary",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "55.17 \u00b5s",
+      "latest": "55.81 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseBytesAsync",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "881.48 \u00b5s",
+      "latest": "865.56 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseFile",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "903.63 \u00b5s",
+      "latest": "875.85 \u00b5s",
       "result": "Exceeds"
     },
     {
@@ -2498,73 +2498,73 @@
     {
       "area": "ParseStream",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "862.98 \u00b5s",
+      "latest": "861.27 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamStreaming",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "877.62 \u00b5s",
+      "latest": "870.13 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "ParseStreamWithOptions",
       "target": "<= 500 ms \u2014 Parsing up to 100k rows of CSV should complete within a few hundred milliseconds (target >= 100k rows/sec on the typed buffered path).",
-      "latest": "875.4 \u00b5s",
+      "latest": "860.58 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "SplitCsvBytes",
       "target": "<= 2000 ms \u2014 Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-      "latest": "664.29 \u00b5s",
+      "latest": "692.12 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "SplitCsvFile",
       "target": "<= 2000 ms \u2014 Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-      "latest": "1.18 ms",
+      "latest": "915.37 \u00b5s",
       "result": "Exceeds"
     },
     {
       "area": "SplitThenCombineBytes",
       "target": "<= 2000 ms \u2014 Splitting or merging up to 100k CSV rows should complete within a couple of seconds.",
-      "latest": "3.24 ms",
+      "latest": "3.23 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf16_Export",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "7.7 ms",
+      "latest": "7.41 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf16_Parse",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "13.47 ms",
+      "latest": "13.21 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf32_Export",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "10.71 ms",
+      "latest": "10.62 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf32_Parse",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "17.29 ms",
+      "latest": "16.11 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf8_Export",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "6.98 ms",
+      "latest": "6.9 ms",
       "result": "Exceeds"
     },
     {
       "area": "Utf8_Parse",
       "target": "<= 500 ms \u2014 Encoding choice should not blow the CSV (de)serialization budget; round-trips of up to 100k rows should stay within a few hundred milliseconds regardless of encoding.",
-      "latest": "13.44 ms",
+      "latest": "13.03 ms",
       "result": "Exceeds"
     }
   ],
@@ -2599,11 +2599,11 @@
   "name": "csv",
   "title": "CSV",
   "description": "CSV write, read, split, and merge paths for Lyo.Csv over a flat 7-column SampleRecord (int/string/decimal/bool/DateTime). Covers typed object lists (bytes and string), streaming parse, DataTable round-trips, row-based split/combine (bytes and files), and multi-part merge. RowCount is the number of records; the data structure (columns and types) is captured in each class's data shape. The SampleRecord here is flat - nested objects/collections would add per-row flattening cost not represented by row count alone.",
-  "runId": "BenchmarkRun-joined-2026-07-29-20-34-25",
-  "generatedAt": "2026-07-29T20:34:25.7857239+00:00",
-  "runStarted": "2026-07-29T19:53:04.4044012+00:00",
-  "runEnded": "2026-07-29T20:34:25.7857239+00:00",
-  "durationSeconds": 2481.3813227,
+  "runId": "BenchmarkRun-joined-2026-08-01-14-42-28",
+  "generatedAt": "2026-08-01T14:42:29.2133811+00:00",
+  "runStarted": "2026-08-01T14:07:35.9254733+00:00",
+  "runEnded": "2026-08-01T14:42:29.2133811+00:00",
+  "durationSeconds": 2093.2879078,
   "environment": {
     "tool": "BenchmarkDotNet",
     "toolVersion": "0.15.8",
@@ -2623,8 +2623,10 @@
       "Microsoft.Extensions.Configuration": "10.0.5",
       "Microsoft.Extensions.Configuration.Binder": "10.0.5",
       "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
       "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
       "Microsoft.Extensions.Options": "10.0.5",
+      "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
       "System.Text.Encoding.CodePages": "10.0.5",
       "Testcontainers.Redis": "4.13.0"
     }
@@ -2677,15 +2679,25 @@
       "runStarted": "2026-07-29T19:53:04.4044012+00:00",
       "runEnded": "2026-07-29T20:34:25.7857239+00:00",
       "generatedAt": "2026-07-29T20:34:25.7857239+00:00",
-      "isCurrent": true,
+      "isCurrent": false,
       "measurementCount": 110,
       "medianMeanNs": 7516548.683238637
+    },
+    {
+      "file": "20260801T144229Z_BenchmarkRun-joined-2026-08-01-14-42-28.json",
+      "runId": "BenchmarkRun-joined-2026-08-01-14-42-28",
+      "runStarted": "2026-08-01T14:07:35.9254733+00:00",
+      "runEnded": "2026-08-01T14:42:29.2133811+00:00",
+      "generatedAt": "2026-08-01T14:42:29.2133811+00:00",
+      "isCurrent": true,
+      "measurementCount": 110,
+      "medianMeanNs": 7532849.329241072
     }
   ],
   "deltaBaseline": {
     "kind": "previousRun",
-    "runId": "BenchmarkRun-joined-2026-07-29-16-05-24",
-    "runStarted": "2026-07-29T15:29:42.6680354+00:00",
-    "runEnded": "2026-07-29T16:05:24.7349267+00:00"
+    "runId": "BenchmarkRun-joined-2026-07-29-20-34-25",
+    "runStarted": "2026-07-29T19:53:04.4044012+00:00",
+    "runEnded": "2026-07-29T20:34:25.7857239+00:00"
   }
 }

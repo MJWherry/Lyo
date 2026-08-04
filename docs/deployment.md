@@ -17,13 +17,13 @@ production application stack. A single `run` service:
 - bakes the source into the image (the host tree is never mounted for building);
 - mounts the host Docker socket so Testcontainers can spin up sibling
   Redis/Postgres containers;
-- mounts only `docs/benchmarks/data` back to the host for dashboard manifests.
+- mounts `docs/benchmarks/data` and `docs/benchmarks/history` back to the host for dashboard manifests.
 
 Run it via the wrapper (see [Testing](testing.md)):
 
 ```bash
-scripts/docker/run.sh benchmarks      # or: tests / all / <project> / '<glob>'
-docker compose logs -f                # follow progress
+python3 scripts/docker/run.py benchmarks      # or: tests / all / <project> / '<glob>'
+docker compose logs -f                        # follow progress
 ```
 
 Resource limits and other knobs come from `.env`; see [Configuration](configuration.md)

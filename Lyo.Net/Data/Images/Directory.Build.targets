@@ -4,9 +4,9 @@
             AfterTargets="Build"
             Condition="'$(PrepareTesseractLinuxNativeLibs)' == 'true' AND $([MSBuild]::IsOSPlatform('Linux'))">
         <PropertyGroup>
-            <_TesseractSetupScript>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'Lyo.Images.Ocr.Tesseract', 'scripts', 'setup-linux-tesseract-nuget-libs.sh'))))</_TesseractSetupScript>
+            <_TesseractSetupScript>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'Lyo.Images.Ocr.Tesseract', 'scripts', 'setup_linux_tesseract_nuget_libs.py'))))</_TesseractSetupScript>
             <_TesseractOutDir>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutputPath)'))))</_TesseractOutDir>
         </PropertyGroup>
-        <Exec Command="bash &quot;$(_TesseractSetupScript)&quot; &quot;$(_TesseractOutDir)&quot;"/>
+        <Exec Command="python3 &quot;$(_TesseractSetupScript)&quot; &quot;$(_TesseractOutDir)&quot;"/>
     </Target>
 </Project>

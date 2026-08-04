@@ -1,0 +1,34 @@
+{
+  "id": "scripts.benchmarks",
+  "name": "Benchmark tooling",
+  "tagline": "Run BenchmarkDotNet suites and export static + portfolio manifests.",
+  "description": "Host runners for Lyo microbenchmarks. After each suite finishes, manifests refresh on-the-fly (docs/benchmarks/data and apps/portfolio/public/benchmarks/history).",
+  "commands": [
+    {
+      "cmd": "python3 scripts/benchmarks/run_dotnet.py [categories...]",
+      "blurb": "Run BDN suites in Release; rebuild category manifests after each suite"
+    },
+    {
+      "cmd": "python3 scripts/benchmarks/run_dotnet.py --no-sync-portfolio encryption",
+      "blurb": "Run one category without copying history into the portfolio app"
+    },
+    {
+      "cmd": "python3 scripts/benchmarks/build_manifests.py",
+      "blurb": "Rebuild all static hub data + portfolio history from artifacts/history"
+    },
+    {
+      "cmd": "python3 scripts/benchmarks/build_manifests.py --encryption-only",
+      "blurb": "Refresh a single category (used by run_dotnet after each suite)"
+    },
+    {
+      "cmd": "python3 scripts/benchmarks/build_manifests.py --k6-only --k6-run-dir PATH",
+      "blurb": "Refresh load-test dashboard data from a k6 results directory"
+    }
+  ],
+  "notes": [
+    "Categories: encryption compression hashing cache query csv xlsx lock filestorage",
+    "Prefer Python entry points under scripts/; do not add shell wrappers",
+    "Docker path: python3 scripts/docker/run.py (see scripts/docker/docs.json)"
+  ],
+  "readmePath": "scripts/benchmarks/README.md"
+}

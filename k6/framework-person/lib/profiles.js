@@ -87,7 +87,7 @@ function parseDurationSeconds(value, fallbackSeconds) {
  * server saturates. Each step is its own scenario so the summary export carries per-step
  * latency and dropped-iteration submetrics — the knee is read straight from the summary JSON.
  * No pass/fail thresholds: saturation intentionally blows past every SLO, and a threshold
- * failure exit code would abort run_all.sh. The listed thresholds are tautologies whose only
+ * failure exit code would abort run_all.py. The listed thresholds are tautologies whose only
  * purpose is to force k6 to export the per-step submetrics.
  */
 export function ceilingOptions(extra = {}) {

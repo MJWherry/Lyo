@@ -43,4 +43,18 @@ public class AesCcmEncryptionServiceTests
         var svc = new AesCcmEncryptionService(ks);
         Assert.Equal(EncryptionAlgorithm.AesCcm, EncryptionServiceExtensions.DetermineAlgorithm(svc));
     }
+
+    [Fact]
+    public void Encrypt_PlaintextAboveCcmPacketLimit_Throws()
+    {
+        var ks = new LocalKeyStore();
+        ks.UpdateKeyFromString("k", "pw");
+        var svc = new AesCcmEncryptionService(ks, AesGcmKeySizeBits.Bits256);
+        var key = Key32("raw");
+        // 12-byte nonce → q=3 → max packet 2^24-1; 16 MiB must fail one-shot encrypt.
+        var tooBig = new byte[16 * 1024 * 1024];
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => svc.Encrypt(tooBig, key: key));
+        Assert.Contains("AES-CCM", ex.Message, StringComparison.Ordinal);
+    }
 }

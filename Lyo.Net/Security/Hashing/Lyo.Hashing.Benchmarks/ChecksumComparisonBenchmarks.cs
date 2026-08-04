@@ -1,13 +1,13 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 
 namespace Lyo.Hashing.Benchmarks;
 
 /// <summary>Benchmarks comparing the non-cryptographic checksum algorithms exposed by <see cref="Checksummer" />.</summary>
 [ComparisonSuite(Baseline = "Crc32")]
-[BenchmarkDescription("Checksums the same random byte buffer with CRC-32, CRC-32C, CRC-64/ECMA-182 and Adler-32 to compare non-cryptographic throughput at each payload size.")]
-[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer being checksummed (1 KB, 1 MB, 10 MB).")]
+[BenchmarkDescription("Checksums the same seeded deterministic byte buffer with CRC-32, CRC-32C, CRC-64/ECMA-182 and Adler-32 to compare non-cryptographic throughput at each payload size.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the seeded input buffer being checksummed (1 KB, 1 MB, 10 MB).")]
 [BenchmarkSla(
     MinThroughputMbps = 300, SizeParam = "DataSize",
     Standard =
@@ -16,15 +16,11 @@ public class ChecksumComparisonBenchmarks
 {
     private byte[] _data = null!;
 
-    [Params(1024, 1024 * 1024, 10 * 1024 * 1024)] // 1 KB, 1 MB, 10 MB
+    [Params(1024, BenchmarkData.MiB, 10 * BenchmarkData.MiB)]
     public int DataSize { get; set; }
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _data = new byte[DataSize];
-        RandomNumberGenerator.Fill(_data);
-    }
+    public void Setup() => _data = BenchmarkData.DeterministicBytes(DataSize);
 
     [Benchmark(Baseline = true)]
     [ComparisonAxis("Checksum")]

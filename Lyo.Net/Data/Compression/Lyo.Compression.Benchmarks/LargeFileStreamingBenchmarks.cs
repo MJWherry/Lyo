@@ -1,245 +1,114 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 using Lyo.Compression.Zstd;
-
-// ReSharper disable InconsistentNaming
+using Lyo.Streams;
 
 namespace Lyo.Compression.Benchmarks;
 
-/// <summary>Benchmarks for large file compression/decompression using streaming APIs</summary>
+/// <summary>Large-payload compress/decompress benchmarks for stream and file APIs.</summary>
 [BenchmarkDescription(
-    "Streaming compress/decompress of 100 MB / 1 GB / 2 GB random (incompressible) data with GZip and Zstd; large sizes stream through temp files. Measures streaming throughput, not compression ratio. Method names encode algorithm and size.")]
-public class LargeFileStreamingBenchmarks
+    "Compress/decompress at 100 MiB–2 GiB with GZip and Zstd. Stream methods use DeterministicPayloadStream input and NullingStream output; file methods use IOTemp paths. Decompress setup reuses pre-compressed IOTemp files.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Input size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB.")]
+public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
 {
-    private Stream _compressed100MBGZip = null!;
-    private Stream _compressed100MBZstd = null!;
-    private Stream _compressed1GBGZip = null!;
-    private Stream _compressed1GBZstd = null!;
-    private Stream _compressed2GBGZip = null!;
-    private Stream _compressed2GBZstd = null!;
-    private Stream _data100MB = null!;
-    private Stream _data1GB = null!;
-    private Stream _data2GB = null!;
+    private string _compressedGZipPath = null!;
+    private string _compressedZstdPath = null!;
     private CompressionService _gzipService = null!;
+    private string _plaintextPath = null!;
     private CompressionService _zstdService = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    [Params(
+        BenchmarkData.StreamingSize100MiB,
+        BenchmarkData.StreamingSize250MiB,
+        BenchmarkData.StreamingSize500MiB,
+        BenchmarkData.StreamingSize750MiB,
+        BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB,
+        BenchmarkData.StreamingSize2GiB)]
+    public long DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
         ICompressorFactory[] factories = [new GZipCompressorFactory(), new ZstdCompressorFactory()];
-        var gzipOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false };
-        _gzipService = new(factories, options: gzipOptions);
-        var zstdOptions = new CompressionServiceOptions { DefaultAlgorithm = ZstdCompressionAlgorithm.Instance, EnableMetrics = false };
-        _zstdService = new(factories, options: zstdOptions);
+        _gzipService = new(factories, options: new() { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
+        _zstdService = new(factories, options: new() { DefaultAlgorithm = ZstdCompressionAlgorithm.Instance, EnableMetrics = false });
 
-        // Create test data streams (using FileStream for very large files to avoid memory issues)
-        _data100MB = CreateTestDataStream(100 * 1024 * 1024); // 100 MB
-        _data1GB = CreateTestDataStream(1024 * 1024 * 1024); // 1 GB
-        _data2GB = CreateTestDataStream(2L * 1024 * 1024 * 1024); // 2 GB
-
-        // Pre-compress data for decompression benchmarks
-        // Use FileStream for large compressed files (1GB+) to avoid MemoryStream size limits
-        _compressed100MBGZip = new MemoryStream();
-        _compressed1GBGZip = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _compressed2GBGZip = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _compressed100MBZstd = new MemoryStream();
-        _compressed1GBZstd = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _compressed2GBZstd = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _data100MB.Position = 0;
-        _gzipService.CompressAsync(_data100MB, _compressed100MBGZip).Wait();
-        _data1GB.Position = 0;
-        _gzipService.CompressAsync(_data1GB, _compressed1GBGZip).Wait();
-        _data2GB.Position = 0;
-        _gzipService.CompressAsync(_data2GB, _compressed2GBGZip).Wait();
-        _data100MB.Position = 0;
-        _zstdService.CompressAsync(_data100MB, _compressed100MBZstd).Wait();
-        _data1GB.Position = 0;
-        _zstdService.CompressAsync(_data1GB, _compressed1GBZstd).Wait();
-        _data2GB.Position = 0;
-        _zstdService.CompressAsync(_data2GB, _compressed2GBZstd).Wait();
+        _plaintextPath = CreateSeededFilePath(DataSize);
     }
 
-    [GlobalCleanup]
-    public void Cleanup()
+    [GlobalSetup(Targets = [nameof(DecompressStream_GZip), nameof(DecompressFile_GZip)])]
+    public void SetupGZipDecompress()
     {
-        _data100MB.Dispose();
-        _data1GB.Dispose();
-        _data2GB.Dispose();
-        _compressed100MBGZip.Dispose();
-        _compressed1GBGZip.Dispose();
-        _compressed2GBGZip.Dispose();
-        _compressed100MBZstd.Dispose();
-        _compressed1GBZstd.Dispose();
-        _compressed2GBZstd.Dispose();
+        EnsureGlobalSetup();
+        var gzipInfo = _gzipService.CompressFile(_plaintextPath, CreateTempOutputPath());
+_compressedGZipPath = gzipInfo.OutputFilePath;
     }
 
-    private Stream CreateTestDataStream(long size)
+    [GlobalSetup(Targets = [nameof(DecompressStream_Zstd), nameof(DecompressFile_Zstd)])]
+    public void SetupZstdDecompress()
     {
-        // For very large files (1GB+), use a FileStream to avoid memory issues
-        if (size >= 1024 * 1024 * 1024) // 1 GB or larger
-        {
-            var tempFile = Path.GetTempFileName();
-            using (var fileStream = File.Create(tempFile)) {
-                var buffer = new byte[1024 * 1024]; // 1 MB buffer
-                var rng = RandomNumberGenerator.Create();
-                var remaining = size;
-                while (remaining > 0) {
-                    var toWrite = (int)Math.Min(remaining, buffer.Length);
-                    rng.GetBytes(buffer, 0, toWrite);
-                    fileStream.Write(buffer, 0, toWrite);
-                    remaining -= toWrite;
-                }
-            }
-
-            return new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.DeleteOnClose);
-        }
-
-        // For smaller files, use MemoryStream
-        var data = new byte[size];
-        RandomNumberGenerator.Fill(data);
-        return new MemoryStream(data);
-    }
-
-    // GZip Compression Benchmarks
-    [Benchmark]
-    public async Task Compress_GZip_100MB()
-    {
-        _data100MB.Position = 0;
-        var output = new MemoryStream();
-        await _gzipService.CompressAsync(_data100MB, output);
+        EnsureGlobalSetup();
+        var zstdInfo = _zstdService.CompressFile(_plaintextPath, CreateTempOutputPath());
+_compressedZstdPath = zstdInfo.OutputFilePath;
     }
 
     [Benchmark]
-    public async Task Compress_GZip_1GB()
+    [BenchmarkCategory("Stream")]
+    public async Task CompressStream_GZip()
     {
-        _data1GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _gzipService.CompressAsync(_data1GB, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
+        await using var input = new DeterministicPayloadStream(DataSize, BenchmarkData.PayloadSeed);
+        await using var output = new NullingStream();
+        await _gzipService.CompressAsync(input, output);
     }
 
     [Benchmark]
-    public async Task Compress_GZip_2GB()
+    [BenchmarkCategory("Stream")]
+    public async Task DecompressStream_GZip()
     {
-        _data2GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _gzipService.CompressAsync(_data2GB, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
-
-    // GZip Decompression Benchmarks
-    [Benchmark]
-    public async Task Decompress_GZip_100MB()
-    {
-        _compressed100MBGZip.Position = 0;
-        var output = new MemoryStream();
-        await _gzipService.DecompressAsync(_compressed100MBGZip, output);
+        await using var input = File.OpenRead(_compressedGZipPath);
+        await using var output = new NullingStream();
+        await _gzipService.DecompressAsync(input, output);
     }
 
     [Benchmark]
-    public async Task Decompress_GZip_1GB()
+    [BenchmarkCategory("File")]
+    public async Task CompressFile_GZip()
+        => await _gzipService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
+
+    [Benchmark]
+    [BenchmarkCategory("File")]
+    public async Task DecompressFile_GZip()
+        => await _gzipService.DecompressFileAsync(_compressedGZipPath, CreateIterationOutputPath());
+
+    [Benchmark]
+    [BenchmarkCategory("Stream")]
+    public async Task CompressStream_Zstd()
     {
-        _compressed1GBGZip.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _gzipService.DecompressAsync(_compressed1GBGZip, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
+        await using var input = new DeterministicPayloadStream(DataSize, BenchmarkData.PayloadSeed);
+        await using var output = new NullingStream();
+        await _zstdService.CompressAsync(input, output);
     }
 
     [Benchmark]
-    public async Task Decompress_GZip_2GB()
+    [BenchmarkCategory("Stream")]
+    public async Task DecompressStream_Zstd()
     {
-        _compressed2GBGZip.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _gzipService.DecompressAsync(_compressed2GBGZip, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
-
-    // Zstd Compression Benchmarks
-    [Benchmark]
-    public async Task Compress_Zstd_100MB()
-    {
-        _data100MB.Position = 0;
-        var output = new MemoryStream();
-        await _zstdService.CompressAsync(_data100MB, output);
+        await using var input = File.OpenRead(_compressedZstdPath);
+        await using var output = new NullingStream();
+        await _zstdService.DecompressAsync(input, output);
     }
 
     [Benchmark]
-    public async Task Compress_Zstd_1GB()
-    {
-        _data1GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _zstdService.CompressAsync(_data1GB, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
+    [BenchmarkCategory("File")]
+    public async Task CompressFile_Zstd()
+        => await _zstdService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
 
     [Benchmark]
-    public async Task Compress_Zstd_2GB()
-    {
-        _data2GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _zstdService.CompressAsync(_data2GB, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
-
-    // Zstd Decompression Benchmarks
-    [Benchmark]
-    public async Task Decompress_Zstd_100MB()
-    {
-        _compressed100MBZstd.Position = 0;
-        var output = new MemoryStream();
-        await _zstdService.DecompressAsync(_compressed100MBZstd, output);
-    }
-
-    [Benchmark]
-    public async Task Decompress_Zstd_1GB()
-    {
-        _compressed1GBZstd.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _zstdService.DecompressAsync(_compressed1GBZstd, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
-
-    [Benchmark]
-    public async Task Decompress_Zstd_2GB()
-    {
-        _compressed2GBZstd.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _zstdService.DecompressAsync(_compressed2GBZstd, output);
-        }
-        finally {
-            await output.DisposeAsync();
-        }
-    }
+    [BenchmarkCategory("File")]
+    public async Task DecompressFile_Zstd()
+        => await _zstdService.DecompressFileAsync(_compressedZstdPath, CreateIterationOutputPath());
 }

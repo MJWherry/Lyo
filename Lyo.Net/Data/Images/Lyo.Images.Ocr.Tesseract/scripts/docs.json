@@ -1,0 +1,22 @@
+{
+  "id": "scripts.tesseract-linux-libs",
+  "name": "Tesseract Linux native libs",
+  "tagline": "Symlink distro Leptonica/Tesseract/libdl names for charlesw/Tesseract NuGet.",
+  "description": "InteropDotNet looks under $(OutputPath)x64/ for versioned .so names. This script creates those symlinks (and libdl.so beside the TFM output) from system libraries.",
+  "commands": [
+    {
+      "cmd": "python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py \"$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0\"",
+      "blurb": "Link libs into a TFM output folder after dotnet build"
+    },
+    {
+      "cmd": "python3 .../setup_linux_tesseract_nuget_libs.py .../net10.0 --also-system",
+      "blurb": "Also install symlinks under /usr/local/lib (sudo)"
+    }
+  ],
+  "notes": [
+    "Apt: libtesseract5 + libleptonica-dev (or libleptonica6) + tesseract-ocr-eng for eng.traineddata",
+    "MSBuild opt-in: PrepareTesseractLinuxNativeLibs=true runs this script after Build on Linux",
+    "Pass the TFM folder (.../net10.0), not .../x64"
+  ],
+  "readmePath": "Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/README.md"
+}

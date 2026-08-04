@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Encryption.Rsa;
 
@@ -8,8 +9,8 @@ namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>RSA-only benchmarks (2048-bit OAEP-SHA256). Large payloads use automatic chunking.</summary>
 [BenchmarkDescription(
-    "RSA-only encrypt/decrypt (2048-bit, OAEP-SHA256) of fixed 1 KB / 64 KB / 1 MB random buffers; payloads beyond one RSA block use automatic chunking, so this measures asymmetric-only cost.")]
-public class RsaEncryptionBenchmarks
+    "RSA-only encrypt/decrypt (2048-bit, OAEP-SHA256) of fixed 1 KB / 64 KB / 1 MB seeded buffers; payloads beyond one RSA block use automatic chunking, so this measures asymmetric-only cost. PEM keys live under the suite IOTemp session.")]
+public class RsaEncryptionBenchmarks : LyoBenchmarkBase
 {
     private RsaDecryptor _decryptor = null!;
     private byte[] _encryptedLarge = null!;
@@ -18,33 +19,45 @@ public class RsaEncryptionBenchmarks
     private RsaEncryptor _encryptor = null!;
     private byte[] _largeData = null!;
     private byte[] _mediumData = null!;
-    private string _privatePath = null!;
-    private string _publicPath = null!;
     private byte[] _smallData = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
-        (_publicPath, _privatePath) = EncryptionBenchmarkSupport.CreateRsaPemFiles();
-        _encryptor = new(_publicPath, padding: RSAEncryptionPadding.OaepSHA256);
-        _decryptor = new(_privatePath, padding: RSAEncryptionPadding.OaepSHA256);
-        _smallData = new byte[1024];
-        _mediumData = new byte[64 * 1024];
-        _largeData = new byte[1024 * 1024];
-        RandomNumberGenerator.Fill(_smallData);
-        RandomNumberGenerator.Fill(_mediumData);
-        RandomNumberGenerator.Fill(_largeData);
+        var (publicPath, privatePath) = EncryptionBenchmarkSupport.CreateRsaPemFiles(Temp);
+        _encryptor = new(publicPath, padding: RSAEncryptionPadding.OaepSHA256);
+        _decryptor = new(privatePath, padding: RSAEncryptionPadding.OaepSHA256);
+        _smallData = BenchmarkData.DeterministicBytes(1024);
+        _mediumData = BenchmarkData.DeterministicBytes(64 * 1024);
+        _largeData = BenchmarkData.DeterministicBytes(BenchmarkData.MiB);
+    }
+
+    [GlobalSetup(Target = nameof(Decrypt_1KB))]
+    public void SetupDecrypt1Kb()
+    {
+        EnsureGlobalSetup();
         _encryptedSmall = _encryptor.Encrypt(_smallData);
+    }
+
+    [GlobalSetup(Target = nameof(Decrypt_64KB))]
+    public void SetupDecrypt64Kb()
+    {
+        EnsureGlobalSetup();
         _encryptedMedium = _encryptor.Encrypt(_mediumData);
+    }
+
+    [GlobalSetup(Target = nameof(Decrypt_1MB))]
+    public void SetupDecrypt1Mb()
+    {
+        EnsureGlobalSetup();
         _encryptedLarge = _encryptor.Encrypt(_largeData);
     }
 
-    [GlobalCleanup]
-    public void Cleanup()
+    /// <inheritdoc />
+    protected override void OnGlobalCleanup()
     {
-        _encryptor.Dispose();
-        _decryptor.Dispose();
-        EncryptionBenchmarkSupport.TryDelete(_publicPath, _privatePath);
+        _encryptor?.Dispose();
+        _decryptor?.Dispose();
     }
 
     [Benchmark]
@@ -67,57 +80,38 @@ public class RsaEncryptionBenchmarks
 }
 
 [BenchmarkDescription(
-    "Hybrid AES-GCM + RSA envelope encrypt/decrypt of fixed 1 KB / 1 MB / 10 MB random buffers: RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload.")]
-public class AesGcmRsaEncryptionBenchmarks
+    "Hybrid AES-GCM + RSA envelope encrypt/decrypt of seeded deterministic buffers (100 / 250 / 500 MiB): RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload. PEM keys live under the suite IOTemp session.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, or 500 MiB.")]
+public class AesGcmRsaEncryptionBenchmarks : LyoBenchmarkBase
 {
-    private byte[] _encryptedLarge = null!;
-    private byte[] _encryptedMedium = null!;
-    private byte[] _encryptedSmall = null!;
+    private byte[] _encrypted = null!;
     private AesGcmRsaEncryptionService _encryptionService = null!;
-    private byte[] _largeData = null!;
-    private byte[] _mediumData = null!;
-    private string _privatePath = null!;
-    private string _publicPath = null!;
-    private byte[] _smallData = null!;
+    private byte[] _testData = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    [Params(BenchmarkData.BufferedSize100MiB, BenchmarkData.BufferedSize250MiB, BenchmarkData.BufferedSize500MiB)]
+    public int DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
-        (_publicPath, _privatePath) = EncryptionBenchmarkSupport.CreateRsaPemFiles();
-        _encryptionService = new(_publicPath, _privatePath, padding: RSAEncryptionPadding.OaepSHA256);
-        _smallData = new byte[1024];
-        _mediumData = new byte[1024 * 1024];
-        _largeData = new byte[10 * 1024 * 1024];
-        RandomNumberGenerator.Fill(_smallData);
-        RandomNumberGenerator.Fill(_mediumData);
-        RandomNumberGenerator.Fill(_largeData);
-        _encryptedSmall = _encryptionService.Encrypt(_smallData);
-        _encryptedMedium = _encryptionService.Encrypt(_mediumData);
-        _encryptedLarge = _encryptionService.Encrypt(_largeData);
+        var (publicPath, privatePath) = EncryptionBenchmarkSupport.CreateRsaPemFiles(Temp);
+        _encryptionService = new(publicPath, privatePath, padding: RSAEncryptionPadding.OaepSHA256);
+        _testData = BenchmarkData.DeterministicBytes(DataSize);
     }
 
-    [GlobalCleanup]
-    public void Cleanup()
+    [GlobalSetup(Target = nameof(Decrypt))]
+    public void SetupDecrypt()
     {
-        _encryptionService.Dispose();
-        EncryptionBenchmarkSupport.TryDelete(_publicPath, _privatePath);
+        EnsureGlobalSetup();
+        _encrypted = _encryptionService.Encrypt(_testData);
     }
 
-    [Benchmark]
-    public byte[] Encrypt_1KB() => _encryptionService.Encrypt(_smallData);
+    /// <inheritdoc />
+    protected override void OnGlobalCleanup() => _encryptionService?.Dispose();
 
     [Benchmark]
-    public byte[] Encrypt_1MB() => _encryptionService.Encrypt(_mediumData);
+    public byte[] Encrypt() => _encryptionService.Encrypt(_testData);
 
     [Benchmark]
-    public byte[] Encrypt_10MB() => _encryptionService.Encrypt(_largeData);
-
-    [Benchmark]
-    public byte[] Decrypt_1KB() => _encryptionService.Decrypt(_encryptedSmall);
-
-    [Benchmark]
-    public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedMedium);
-
-    [Benchmark]
-    public byte[] Decrypt_10MB() => _encryptionService.Decrypt(_encryptedLarge);
+    public byte[] Decrypt() => _encryptionService.Decrypt(_encrypted);
 }

@@ -1,83 +1,49 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Benchmarks;
 
 [BenchmarkDescription(
-    "Buffered GZip compress/decompress of fixed 1 KB / 1 MB / 10 MB random (incompressible) buffers; decompress cases reuse output from setup. Method names encode size.")]
-public class GZipCompressionBenchmarks
+    "Buffered GZip compress/decompress of seeded deterministic (incompressible) buffers (100 / 250 / 500 MiB); decompress cases reuse output from setup.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Input size: 100, 250, or 500 MiB.")]
+public class GZipCompressionBenchmarks : LyoBenchmarkBase
 {
-    private byte[] _compressedLarge = null!;
-    private byte[] _compressedMedium = null!;
-    private byte[] _compressedSmall = null!;
+    private byte[] _compressed = null!;
     private CompressionService _compressionService = null!;
-    private byte[] _largeData = null!;
-    private byte[] _mediumData = null!;
-    private byte[] _smallData = null!;
+    private byte[] _testData = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    [Params(BenchmarkData.BufferedSize100MiB, BenchmarkData.BufferedSize250MiB, BenchmarkData.BufferedSize500MiB)]
+    public int DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
-        var options = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false };
         ICompressorFactory[] factories = [new GZipCompressorFactory()];
-        _compressionService = new(factories, options: options);
+        _compressionService = new(factories, options: new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
+        _testData = BenchmarkData.DeterministicBytes(DataSize);
+    }
 
-        // Generate test data
-        _smallData = new byte[1024]; // 1 KB
-        _mediumData = new byte[1024 * 1024]; // 1 MB
-        _largeData = new byte[10 * 1024 * 1024]; // 10 MB
-        RandomNumberGenerator.Fill(_smallData);
-        RandomNumberGenerator.Fill(_mediumData);
-        RandomNumberGenerator.Fill(_largeData);
-
-        // Pre-compress data for decompression benchmarks
-        _ = _compressionService.Compress(_smallData, out _compressedSmall);
-        _ = _compressionService.Compress(_mediumData, out _compressedMedium);
-        _ = _compressionService.Compress(_largeData, out _compressedLarge);
+    [GlobalSetup(Target = nameof(Decompress))]
+    public void SetupDecompress()
+    {
+        EnsureGlobalSetup();
+        _ = _compressionService.Compress(_testData, out _compressed);
     }
 
     [Benchmark]
-    public byte[] Compress_1KB()
+    public byte[] Compress()
     {
-        _ = _compressionService.Compress(_smallData, out var compressed);
+        _ = _compressionService.Compress(_testData, out var compressed);
         return compressed;
     }
 
     [Benchmark]
-    public byte[] Compress_1MB()
+    public byte[] Decompress()
     {
-        _ = _compressionService.Compress(_mediumData, out var compressed);
-        return compressed;
-    }
-
-    [Benchmark]
-    public byte[] Compress_10MB()
-    {
-        _ = _compressionService.Compress(_largeData, out var compressed);
-        return compressed;
-    }
-
-    [Benchmark]
-    public byte[] Decompress_1KB()
-    {
-        _ = _compressionService.Decompress(_compressedSmall, out var decompressed);
-        return decompressed;
-    }
-
-    [Benchmark]
-    public byte[] Decompress_1MB()
-    {
-        _ = _compressionService.Decompress(_compressedMedium, out var decompressed);
-        return decompressed;
-    }
-
-    [Benchmark]
-    public byte[] Decompress_10MB()
-    {
-        _ = _compressionService.Decompress(_compressedLarge, out var decompressed);
+        _ = _compressionService.Decompress(_compressed, out var decompressed);
         return decompressed;
     }
 }

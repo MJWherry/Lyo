@@ -998,6 +998,19 @@ def cmd_render() -> None:
 
     print(f"render: {len(packages)} READMEs + root README + portfolio + Blazor from project {DOCS_FILENAME}")
 
+    # Adhoc tooling READMEs (scripts/*, k6 matrix, etc.) — same SoT rule via tooling-docs.
+    tooling = Path(__file__).with_name("tooling-docs.py")
+    if tooling.is_file():
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("lyo_tooling_docs", tooling)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            mod.render()
+    else:
+        print("warn: tooling-docs.py not found; skipped adhoc tooling READMEs", file=sys.stderr)
+
 
 def cmd_audit() -> None:
     packages = load_all_docs()

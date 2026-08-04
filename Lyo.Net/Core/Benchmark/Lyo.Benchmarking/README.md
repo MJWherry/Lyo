@@ -71,13 +71,23 @@ report's `slo` list so micro reports get the same SLA summary section the k6 loa
 
 ## Output — Running: always `--join`
 
-`scripts/benchmarks/run-dotnet-benchmarks.sh` passes `--join` so every benchmark class in a suite produces **one** joined `Summary`, and the exporter writes a single `<name>.lyobench.json` covering all groups + the comparison table. Without `--join`, `BenchmarkSwitcher` emits one `Summary` per class and the exporter (which writes a fixed `<name>.lyobench.json`) keeps only the last class.
+`python3 scripts/benchmarks/run_dotnet.py` passes `--join` so every benchmark class in a suite produces **one** joined `Summary`, and the exporter writes a single `<name>.lyobench.json` covering all groups + the comparison table. Without `--join`, `BenchmarkSwitcher` emits one `Summary` per class and the exporter (which writes a fixed `<name>.lyobench.json`) keeps only the last class.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Benchmark.Models` — (direct, lyo)
+- `Lyo.IO.Temp` — (direct, lyo)
 - `BenchmarkDotNet` `0.15.8` — (direct, third-party)
 - `Testcontainers.Redis` `4.13.0` — (direct, third-party)
+- `Lyo.Common` — (transitive, lyo)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Lyo.Metrics` — (transitive, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

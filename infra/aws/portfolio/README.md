@@ -26,7 +26,7 @@ terraform plan
 terraform apply
 ```
 
-Outputs include `lyo_api_base_url`, ECR repo URLs, and instance IDs for GitLab deploy via SSM.
+Outputs include `lyo_api_base_url`, ECR repo URLs, and instance IDs for GitHub Actions deploy via SSM.
 
 ## Post-apply deploy
 
@@ -34,4 +34,4 @@ Outputs include `lyo_api_base_url`, ECR repo URLs, and instance IDs for GitLab d
 2. On **api** EC2: copy `deploy/portfolio/api` compose + `.env` (Postgres password from SSM), `docker compose up -d`.
 3. On **web** EC2: set `LYO_API_BASE_URL` to the `lyo_api_base_url` output, `docker compose up -d`.
 
-User-data installs Docker; first deploy is driven by GitLab `deploy` jobs (SSM Run Command) or manual SSH/SSM.
+User-data installs Docker; first deploy is driven by GitHub Actions deploy jobs (SSM Run Command) or manual SSH/SSM.

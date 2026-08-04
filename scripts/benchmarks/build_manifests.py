@@ -12,7 +12,9 @@ Two sources feed one schema:
 For every report it writes ``<name>.json`` (portable) and ``<name>.js``
 (``window.LyoBench.reports["<name>"] = …`` for file:// viewing), archives a timestamped
 snapshot under ``docs/benchmarks/history/<name>/``, attaches Δ-vs-prior-run fields and a
-run-history summary, then a ``registry.js`` listing all reports for the index page.
+run-history summary, then a ``registry.js`` listing all reports for the static
+``docs/benchmarks/index.html`` hub. By default it also copies history into
+``apps/portfolio/public/benchmarks/history`` for the Next.js viewer.
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from lyo_tooling.bench import sync_portfolio_history  # noqa: E402
 from lyo_tooling.dotnet import (  # noqa: E402
     REPO_ROOT,
     find_project_csproj,
@@ -51,7 +54,7 @@ FALLBACK_ARTIFACT_ROOTS = (
 )
 
 K6_RESULTS = REPO_ROOT / "k6" / "framework-person" / "results"
-# Run dirs are named "<optional-prefix->YYYYMMDD-HHMMSS" (run_all.sh default is the bare timestamp).
+# Run dirs are named "<optional-prefix->YYYYMMDD-HHMMSS" (run_all.py default is the bare timestamp).
 K6_RUN_TIMESTAMP = re.compile(r"(\d{8}-\d{6})$")
 K6_SUITE_NAMES = [
     "query_load",
@@ -203,6 +206,7 @@ BDN_CATEGORIES: list[dict[str, Any]] = [
     {"name": "csv", "dir": _artifacts("Data", "Csv", "Lyo.Csv.Benchmarks")},
     {"name": "xlsx", "dir": _artifacts("Data", "Xlsx", "Lyo.Xlsx.Benchmarks")},
     {"name": "lock", "dir": _artifacts("Core", "Lock", "Lyo.Lock.Benchmarks")},
+    {"name": "filestorage", "dir": _artifacts("Data", "FileStorage", "Lyo.FileStorage.Benchmarks")},
 ]
 
 
@@ -265,16 +269,16 @@ def archive_report(report: dict[str, Any]) -> Path:
     """Persist a timestamped snapshot under docs/benchmarks/history/<name>/."""
     clean = strip_view_metadata(report)
     name = clean["name"]
-    paths = list_history_paths(name)
-    if paths:
-        latest = strip_view_metadata(_load_snapshot(paths[-1]) or {})
-        if latest.get("runId") == clean.get("runId"):
-            print(f"{name}: snapshot already archived for run {clean.get('runId')}")
-            return paths[-1]
+    run_id = clean.get("runId")
+    for path in list_history_paths(name):
+        snap = strip_view_metadata(_load_snapshot(path) or {})
+        if snap.get("runId") == run_id:
+            print(f"{name}: snapshot already archived for run {run_id}")
+            return path
 
     hist_dir = _history_dir(name)
     hist_dir.mkdir(parents=True, exist_ok=True)
-    run_id = clean.get("runId") or "run"
+    run_id = run_id or "run"
     safe_run = re.sub(r"[^\w.-]+", "_", str(run_id))[:80]
     path = hist_dir / f"{_archive_stamp(clean)}_{safe_run}.json"
     with path.open("w", encoding="utf-8") as f:
@@ -435,16 +439,22 @@ def _report_richness(report: dict[str, Any]) -> int:
     return sum(len(group.get("measurements") or []) for group in report.get("groups") or [])
 
 
-def _report_rank(report: dict[str, Any]) -> tuple[int, int, float]:
-    """Higher is better: joined full runs, then richness, then newest timestamp.
+def _report_rank(report: dict[str, Any]) -> tuple[int, float | int, float | int]:
+    """Higher is better.
 
-    Richness before time so a partial/ceiling load run (few scenarios) cannot
-    displace a fuller matrix just because it finished later. Equal-richness
-    micro runs still resolve to the newest timestamp.
+    Load reports: joined, then richness, then timestamp — a partial/ceiling run must not
+    displace a fuller matrix just because it finished later.
+
+    Micro reports: joined, then timestamp, then richness — intentional suite changes (e.g.
+    larger payloads → fewer Params) and Docker exports must not lose to an older host
+    ``data/<name>.json`` that happens to have more measurements.
     """
     ts = _parse_report_timestamp(report)
     joined = 1 if "joined" in str(report.get("runId", "")).lower() else 0
-    return (joined, _report_richness(report), ts)
+    richness = _report_richness(report)
+    if report.get("type") == "load":
+        return (joined, richness, ts)
+    return (joined, ts, richness)
 
 
 def _collect_report_candidates(name: str) -> list[dict[str, Any]]:
@@ -474,16 +484,18 @@ def _best_report(name: str, incoming: dict[str, Any]) -> dict[str, Any]:
 
 
 def publish_report(report: dict[str, Any]) -> None:
-    """Archive, rebuild all history views (Δ vs historical average), and write dashboard files."""
+    """Archive the incoming artifact, pick the ranked-best snapshot for the dashboard, rebuild views."""
     name = report["name"]
     incoming = strip_view_metadata(report)
+    # Always archive what just ran — even if an older snapshot still ranks as "latest" for
+    # the dashboard. Docker only persists mounted paths; discarding the artifact loses the run.
+    archive_report(incoming)
     best = _best_report(name, incoming)
     if best.get("runId") != incoming.get("runId"):
         print(
-            f"{name}: keeping newer {best.get('runId')} "
-            f"(ignoring stale artifact {incoming.get('runId')})"
+            f"{name}: publishing {best.get('runId')} "
+            f"(incoming {incoming.get('runId')} archived but ranked lower)"
         )
-    archive_report(best)
     latest_view = rebuild_history_views(name)
     if latest_view is None:
         latest_view = copy.deepcopy(best)
@@ -1335,13 +1347,29 @@ def main() -> None:
         action="store_true",
         help="Re-select latest per suite from archived history (no new artifact ingest).",
     )
+    parser.add_argument(
+        "--sync-portfolio-only",
+        action="store_true",
+        help="Only copy docs/benchmarks/history → apps/portfolio/public/benchmarks/history.",
+    )
+    parser.add_argument(
+        "--no-sync-portfolio",
+        action="store_true",
+        help="Skip copying history into the portfolio public tree (use in Docker; history is already mounted).",
+    )
     for category in BDN_CATEGORIES:
         parser.add_argument(f"--{category['name']}-only", action="store_true")
     args = parser.parse_args()
 
+    if args.sync_portfolio_only:
+        sync_portfolio_history()
+        return
+
     if args.republish_history:
         republish_from_history()
         write_registry()
+        if not args.no_sync_portfolio:
+            sync_portfolio_history()
         return
 
     category_flags = {c["name"]: getattr(args, f"{c['name']}_only") for c in BDN_CATEGORIES}
@@ -1355,6 +1383,8 @@ def main() -> None:
             build_micro_category(category)
 
     write_registry()
+    if not args.no_sync_portfolio:
+        sync_portfolio_history()
 
 
 if __name__ == "__main__":

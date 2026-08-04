@@ -4,18 +4,19 @@
 # A single `run` service is driven by TARGET, which selects projects by group (benchmarks|tests|all),
 # exact project name (e.g. Lyo.Lock.Benchmarks), or a space/comma list. The same TARGET decides what
 # the image compiles AND what the container runs. The source is baked into the image, so the host tree
-# is NEVER mounted for building (the container can't touch your obj/bin). The only thing mounted out
-# at runtime is docs/benchmarks/data, so just the dashboard manifests update on the host.
+# is NEVER mounted for building (the container can't touch your obj/bin). At runtime
+# docs/benchmarks/{data,history} and apps/portfolio/public/benchmarks/history are mounted out so
+# static + portfolio update on-the-fly after each suite.
 #
 # Easiest entrypoint is the wrapper, which auto-tags a per-target image:
-#   scripts/docker/run.sh Lyo.Lock.Benchmarks    # one suite
-#   scripts/docker/run.sh benchmarks             # a whole group
-#   scripts/docker/run.sh tests                  # every *.Tests (auto-installs OCR libs)
+#   python3 scripts/docker/run.py Lyo.Lock.Benchmarks    # one suite
+#   python3 scripts/docker/run.py benchmarks             # a whole group
+#   python3 scripts/docker/run.py tests                  # every *.Tests (auto-installs OCR libs)
 #
 # Or drive compose directly (set the image tag yourself so targets don't clobber each other):
 #   TARGET=Lyo.Lock.Benchmarks RUN_IMAGE=lyo-runner-lock docker compose run -d --rm run
 #
-# Source changes require a rebuild (source is baked in): scripts/docker/run.sh --build-only <target>
+# Source changes require a rebuild (source is baked in): python3 scripts/docker/run.py --build-only <target>
 # or `docker compose build run`. After a bench run, open docs/benchmarks/index.html.
 
 # Shared build settings; the per-target image tag + TARGET arg are supplied per invocation.
@@ -40,9 +41,11 @@ x-runner: &runner
     # Mount the host Docker socket so Testcontainers can spin up sibling
     # Redis/Postgres containers for the Docker-backed suites.
     - /var/run/docker.sock:/var/run/docker.sock
-    # The ONLY host-tree mount: dashboard manifests written by build_manifests.py land here.
-    # Everything else (source, build output, raw artifacts) stays inside the container.
+    # Host mounts for dashboard output from build_manifests.py. Raw BenchmarkDotNet.Artifacts
+    # stay inside the container; history + portfolio history must be mounted or mid-run sync is lost.
     - ./docs/benchmarks/data:/src/docs/benchmarks/data
+    - ./docs/benchmarks/history:/src/docs/benchmarks/history
+    - ./apps/portfolio/public/benchmarks/history:/src/apps/portfolio/public/benchmarks/history
   # Let Testcontainers reach host-published ports when running over the socket.
   extra_hosts:
     - "host.docker.internal:host-gateway"

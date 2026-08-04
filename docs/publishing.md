@@ -1,7 +1,7 @@
 # Publishing packages
 
 Lyo libraries are packed as NuGet packages by
-[`Lyo.Net/build-nuget.sh`](../Lyo.Net/build-nuget.sh). The script discovers
+[`scripts/nuget/build_nuget.py`](../scripts/nuget/build_nuget.py). The script discovers
 projects, builds them in dependency order, and emits `.nupkg` (plus `.snupkg`
 symbols) into a local output directory. Packaging uses SDK-style `dotnet pack`;
 dependencies are derived automatically from `ProjectReference` items, so there
@@ -22,23 +22,23 @@ Common package properties are set once in
 
 ```bash
 # Build all packages (skips unchanged — see change detection)
-Lyo.Net/build-nuget.sh
+python3 scripts/nuget/build_nuget.py
 
 # Build all packages at a specific version
-Lyo.Net/build-nuget.sh -v 2.0.0
+python3 scripts/nuget/build_nuget.py -v 2.0.0
 
 # Build a specific package and its Lyo dependencies
-Lyo.Net/build-nuget.sh Lyo.Encryption
+python3 scripts/nuget/build_nuget.py Lyo.Encryption
 
 # Pin a version for a specific package + deps
-Lyo.Net/build-nuget.sh -v 1.5.0 Lyo.Encryption
+python3 scripts/nuget/build_nuget.py -v 1.5.0 Lyo.Encryption
 
 # Force a rebuild even if nothing changed
-Lyo.Net/build-nuget.sh -f Lyo.Encryption
+python3 scripts/nuget/build_nuget.py -f Lyo.Encryption
 
 # Patterns and multiple targets
-Lyo.Net/build-nuget.sh 'Lyo.Encryption.*'
-Lyo.Net/build-nuget.sh Lyo.Encryption Lyo.Compression
+python3 scripts/nuget/build_nuget.py 'Lyo.Encryption.*'
+python3 scripts/nuget/build_nuget.py Lyo.Encryption Lyo.Compression
 ```
 
 Test, benchmark, and tool projects (`*.Tests`, `*.Benchmarks`, `*TestConsole`,

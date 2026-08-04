@@ -48,41 +48,44 @@ reports the context comes from attributes (`[BenchmarkReport(Description=…)]`,
 
 ```bash
 # Run the BenchmarkDotNet suites (Release) and rebuild all dashboard data
-scripts/benchmarks/run-dotnet-benchmarks.sh                 # all suites — exports each category as it finishes
-scripts/benchmarks/run-dotnet-benchmarks.sh --no-docker hashing csv
+python3 scripts/benchmarks/run_dotnet.py                 # all suites — exports each category as it finishes
+python3 scripts/benchmarks/run_dotnet.py --no-docker hashing csv
 
 # Or just rebuild dashboard data from existing artifacts / k6 results
-python3 scripts/benchmarks/build_manifests.py               # micro + k6
+python3 scripts/benchmarks/build_manifests.py               # micro + k6 (+ sync portfolio history)
 python3 scripts/benchmarks/build_manifests.py --k6-only
 python3 scripts/benchmarks/build_manifests.py --hashing-only
+python3 scripts/benchmarks/build_manifests.py --sync-portfolio-only   # history → apps/portfolio/public
 ```
 
 Each successful export appends to `history/<name>/` (unless that `runId` was already
-archived). Re-open a report to use the **Snapshot** dropdown (older runs load from
-`history/<name>/*.js`). **Δ** columns compare each snapshot to the **immediately prior
-archived run** (green = better; red = worse). The first archived run has no Δ columns.
+archived) and updates `data/<name>.{json,js}` + `registry.js` for the static
+[`index.html`](index.html) hub. By default history is also copied into
+`apps/portfolio/public/benchmarks/history` for the Next.js viewer. Re-open a report
+to use the **Snapshot** dropdown. **Δ** columns compare each snapshot to the
+immediately prior archived run (green = better; red = worse).
 
 ### Troubleshooting stale runs
 
 `build_manifests.py` searches the suite's project `BenchmarkDotNet.Artifacts/` plus fallback
-`BenchmarkDotNet.Artifacts/` at the repo root and under `Lyo.Net/`. It prefers **joined**
-runs (`runId` contains `joined`) over ad-hoc filtered runs, then the newest timestamp.
+`BenchmarkDotNet.Artifacts/` at the repo root and under `Lyo.Net/`. For micro reports it
+prefers **joined** runs (`runId` contains `joined`), then the **newest** timestamp.
 
-If the dashboard still shows a June run after you benchmarked in July:
+If the dashboard still shows an old run after you benchmarked:
 
 1. **Use the run script** — it passes `--join` and `--artifacts` so the exporter writes
    `<name>.lyobench.json` next to the project:
-   `scripts/benchmarks/run-dotnet-benchmarks.sh csv`
+   `python3 scripts/benchmarks/run_dotnet.py csv`
 2. **Avoid bare `dotnet run` from the repo root** — without `--artifacts`, BenchmarkDotNet
    writes to `./BenchmarkDotNet.Artifacts/` and without `--join` you only get the last
    benchmark class, not the full suite.
 3. **Regenerate** — `python3 scripts/benchmarks/build_manifests.py --csv-only` (or `--<name>-only`
    for the suite you ran).
-4. Check the manifest output for `using …` / `synced …` lines to see which artifact file
-   was picked.
+4. Check the manifest output for `using …` / `synced …` / `publishing …` lines to see which
+   artifact file was picked.
 
 k6 matrix runs also refresh automatically at the end of
-[`k6/framework-person/run_all.sh`](../../k6/framework-person/run_all.sh).
+[`k6/framework-person/run_all.py`](../../k6/framework-person/run_all.py).
 
 ## View
 

@@ -38,16 +38,16 @@ dotnet run -c Release --project Lyo.Encryption.Benchmarks -- --job short --filte
 
 | Class | What it measures |
 |-----------------------------------------|----------------------------------------------------|
-| `AesGcmEncryptionBenchmarks` | AES-GCM encrypt/decrypt @ 1 KB, 1 MB, 10 MB |
-| `ChaCha20Poly1305EncryptionBenchmarks` | ChaCha20-Poly1305 @ 1 KB, 1 MB, 10 MB |
-| `AesCcmEncryptionBenchmarks` | AES-CCM @ 1 KB, 1 MB, 10 MB |
-| `AesSivEncryptionBenchmarks` | AES-SIV @ 1 KB, 1 MB, 10 MB |
-| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 1 KB, 1 MB, 10 MB (explicit key) |
-| `RsaEncryptionBenchmarks` | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB |
-| `AesGcmRsaEncryptionBenchmarks` | Hybrid RSA + AES-GCM @ 1 KB, 1 MB, 10 MB |
-| `TwoKeyEncryptionBenchmarks` | Envelope (DEK/KEK) AES + ChaCha @ 1 KB–2 GB |
-| `LargeFileStreamingBenchmarks` | Stream API AES + ChaCha @ 100 MB, 1 GB, 2 GB |
-| `AlgorithmComparisonBenchmarks` | Side-by-side all five symmetric AEAD @ 1 KB–100 MB |
+| `AesGcmEncryptionBenchmarks` | AES-GCM encrypt/decrypt @ 100 / 250 / 500 MiB |
+| `ChaCha20Poly1305EncryptionBenchmarks` | ChaCha20-Poly1305 @ 100 / 250 / 500 MiB |
+| `AesCcmEncryptionBenchmarks` | AES-CCM @ 100 / 250 / 500 MiB |
+| `AesSivEncryptionBenchmarks` | AES-SIV @ 100 / 250 / 500 MiB |
+| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 100 / 250 / 500 MiB (explicit key) |
+| `RsaEncryptionBenchmarks` | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB (asymmetric path) |
+| `AesGcmRsaEncryptionBenchmarks` | Hybrid RSA + AES-GCM @ 100 / 250 / 500 MiB |
+| `TwoKeyEncryptionBenchmarks` | Envelope (DEK/KEK) AES + ChaCha @ 100 MiB–2 GiB streaming |
+| `LargeFileStreamingBenchmarks` | Stream API AES-GCM / ChaCha / AES-SIV @ 100 MiB–2 GiB |
+| `AlgorithmComparisonBenchmarks` | Side-by-side all five symmetric AEAD @ 100 / 250 / 500 MiB |
 
 ## Headline results (June 2026, this hardware)
 
@@ -80,9 +80,11 @@ Optional future runs may add `--exporters json`; v1 reads CSV reports.
 ## Notes
 
 - Always run in **Release** mode
-- Payloads use `RandomNumberGenerator.Fill`
+- Payloads use a shared deterministic seed (`BenchmarkData.PayloadSeed`) so runs are comparable across algorithms and machines
+- All suites inherit `LyoBenchmarkBase`: per-suite `IIOTempService` + `IIOTempSession`; encrypt/decrypt file I/O stays under that session
+- Streaming suites (100 MiB–2 GiB) need multi‑GiB free disk under the IOTemp root; the full ladder is slow by design
 - `[MemoryDiagnoser]` enabled on all classes
-- `AlgorithmComparisonBenchmarks` @ 100 MB may fail on memory-constrained runs — use dedicated classes instead
+- `AlgorithmComparisonBenchmarks` @ 500 MiB may fail on memory-constrained runs — prefer streaming classes or smaller Params filters
 
 ## Dependencies
 

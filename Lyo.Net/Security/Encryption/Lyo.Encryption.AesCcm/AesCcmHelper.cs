@@ -13,6 +13,12 @@ internal static class AesCcmHelper
 
     public const int TagSize = 16;
 
+    /// <summary>
+    /// Maximum single-packet plaintext length for a 12-byte nonce (RFC 3610: <c>q = 15 - nonceLen = 3</c> → <c>2^(8q) - 1</c>).
+    /// Larger payloads must use the streaming APIs (per-chunk CCM packets).
+    /// </summary>
+    public const int MaxPlaintextLength = (1 << 24) - 1; // 16_777_215
+
     public static void ValidateKeyLength(ReadOnlySpan<byte> key, int expectedLengthBytes)
     {
         if (expectedLengthBytes is not (16 or 24 or 32))
@@ -21,8 +27,19 @@ internal static class AesCcmHelper
         ArgumentHelpers.ThrowIf(key.Length != expectedLengthBytes, $"AES-CCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
     }
 
+    public static void ValidatePlaintextLength(int plaintextLength, string paramName = "plaintext")
+    {
+        if (plaintextLength > MaxPlaintextLength) {
+            throw new ArgumentOutOfRangeException(
+                paramName,
+                plaintextLength,
+                $"AES-CCM with a {NonceSize}-byte nonce supports at most {MaxPlaintextLength} bytes per packet (~16 MiB). Use EncryptToStreamAsync / file streaming for larger payloads.");
+        }
+    }
+
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
+        ValidatePlaintextLength(plaintext.Length);
         var cipher = new CcmBlockCipher(new AesEngine());
         cipher.Init(true, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
         byte[] packed;

@@ -29,10 +29,10 @@ The build script packs each library and its Lyo dependencies into a local feed
 
 ```bash
 # All packages
-Lyo.Net/build-nuget.sh
+python3 scripts/nuget/build_nuget.py
 
 # A single package (plus its Lyo dependencies), pinned to a version
-Lyo.Net/build-nuget.sh -v 1.0.0 Lyo.Encryption
+python3 scripts/nuget/build_nuget.py -v 1.0.0 Lyo.Encryption
 ```
 
 Add the output directory as a NuGet source, then reference packages normally:

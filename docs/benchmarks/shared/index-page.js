@@ -24,7 +24,7 @@
             container.appendChild(
                 R.el("div", {className: "error-box"}, [
                     R.el("strong", {text: "No benchmark reports found."}),
-                    R.el("p", {text: "Run scripts/benchmarks/run-dotnet-benchmarks.sh (or build_manifests.py) to generate reports, then reload."}),
+                    R.el("p", {text: "Run python3 scripts/benchmarks/run_dotnet.py (or build_manifests.py) to generate reports, then reload."}),
                 ])
             );
             return;

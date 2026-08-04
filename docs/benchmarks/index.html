@@ -4,10 +4,18 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>Lyo Benchmark Dashboards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <script>document.documentElement.setAttribute("data-theme", (function () { try { var t = localStorage.getItem("lyo-bench-theme"); if (t === "light" || t === "dark") return t; } catch (e) {} return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; })());</script>
     <link href="shared/style.css" rel="stylesheet">
 </head>
 <body>
 <div class="page">
+    <nav class="top-nav">
+        <span>Lyo</span>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme">Dark</button>
+    </nav>
     <header class="hero">
         <h1>Lyo Benchmark Dashboards</h1>
         <p class="subtitle">Single-instance performance snapshots across the Lyo framework: the query API (k6) plus BenchmarkDotNet suites for encryption, compression, hashing,
@@ -19,8 +27,8 @@
     <section>
         <h2>Refresh data</h2>
         <div class="callout">
-            <p>Run the BenchmarkDotNet suites and regenerate every report:</p>
-            <p><code>scripts/benchmarks/run-dotnet-benchmarks.sh</code></p>
+            <p>Run the BenchmarkDotNet suites and regenerate every report (manifests update after each suite):</p>
+            <p><code>python3 scripts/benchmarks/run_dotnet.py</code></p>
             <p>Or just rebuild the dashboard data from existing artifacts / k6 results:</p>
             <p><code>python3 scripts/benchmarks/build_manifests.py</code></p>
             <p>Each report follows the unified <code>lyo.bench/v1</code> schema (<code>type: "micro"</code> or <code>"load"</code>) and opens in <code>report.html</code>. Then
@@ -31,6 +39,7 @@
     <footer>Generated data lives in <code>docs/benchmarks/data/</code> (<code>&lt;name&gt;.json</code> + <code>&lt;name&gt;.js</code> + <code>registry.js</code>).</footer>
 </div>
 
+<script src="shared/theme.js"></script>
 <script src="data/registry.js"></script>
 <script src="shared/render.js"></script>
 <script src="shared/index-page.js"></script>

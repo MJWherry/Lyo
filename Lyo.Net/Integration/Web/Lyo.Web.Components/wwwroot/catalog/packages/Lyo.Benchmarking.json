@@ -94,7 +94,7 @@
     {
       "type": "paragraph",
       "title": "Output — Running: always `--join`",
-      "text": "`scripts/benchmarks/run-dotnet-benchmarks.sh` passes `--join` so every benchmark class in a suite produces **one** joined `Summary`, and the exporter writes a single `<name>.lyobench.json` covering all groups + the comparison table. Without `--join`, `BenchmarkSwitcher` emits one `Summary` per class and the exporter (which writes a fixed `<name>.lyobench.json`) keeps only the last class."
+      "text": "`python3 scripts/benchmarks/run_dotnet.py` passes `--join` so every benchmark class in a suite produces **one** joined `Summary`, and the exporter writes a single `<name>.lyobench.json` covering all groups + the comparison table. Without `--join`, `BenchmarkSwitcher` emits one `Summary` per class and the exporter (which writes a fixed `<name>.lyobench.json`) keeps only the last class."
     }
   ],
   "links": [],
@@ -102,6 +102,14 @@
   "dependencies": [
     {
       "name": "Lyo.Benchmark.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -124,6 +132,85 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
       ]
     },
     {

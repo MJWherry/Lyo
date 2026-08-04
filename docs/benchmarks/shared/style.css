@@ -1,34 +1,87 @@
-:root {
-    color-scheme: dark;
-    --bg: #0f1419;
-    --bg-elevated: #171d24;
-    --bg-card: #1c2430;
-    --border: #2a3441;
-    --text: #e7edf4;
-    --text-muted: #94a3b8;
-    --accent: #38bdf8;
-    --accent-soft: rgba(56, 189, 248, 0.12);
-    --good: #34d399;
-    --warn: #fbbf24;
-    --bad: #f87171;
-    --grade-a: #34d399;
-    --grade-b: #86efac;
-    --grade-c: #fbbf24;
-    --grade-d: #fb923c;
-    --grade-f: #f87171;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+/* Portfolio-aligned tokens (from apps/portfolio/app/globals.css). Legacy aliases keep JS/CSS working. */
+:root,
+[data-theme="light"] {
+    color-scheme: light;
+    --bg-deep: #ffffff;
+    --bg: #f4f4f7;
+    --bg-elevated: #ffffff;
+    --bg-soft: #ebebf0;
+    --bg-card: var(--bg-elevated);
+    --ink: #1a1523;
+    --ink-muted: #5c5668;
+    --ink-faint: #8b8499;
+    --accent: #6d28d9;
+    --accent-hover: #5b21b6;
+    --accent-soft: rgba(109, 40, 217, 0.1);
+    --line: rgba(26, 21, 35, 0.1);
+    --border: var(--line);
+    --ok: #15803d;
+    --danger: #b91c1c;
+    --warn: #b45309;
+    --hero-wash-a: rgba(109, 40, 217, 0.1);
+    --hero-wash-b: rgba(124, 58, 237, 0.06);
+    --shadow: 0 1px 2px rgba(26, 21, 35, 0.06), 0 8px 24px rgba(26, 21, 35, 0.04);
+    --font-display: "Syne", "Segoe UI", sans-serif;
+    --font-body: "Source Serif 4", "Georgia", serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+    --radius: 0.45rem;
+    --grade-a: var(--ok);
+    --grade-b: #16a34a;
+    --grade-c: var(--warn);
+    --grade-d: #c2410c;
+    --grade-f: var(--danger);
+    /* Legacy aliases used throughout this stylesheet / JS */
+    --text: var(--ink);
+    --text-muted: var(--ink-muted);
+    --good: var(--ok);
+    --bad: var(--danger);
 }
 
-* {
+[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-deep: #0f0c14;
+    --bg: #16121f;
+    --bg-elevated: #1e1830;
+    --bg-soft: #2a2340;
+    --bg-card: var(--bg-elevated);
+    --ink: #f3f0f8;
+    --ink-muted: #b0a8c0;
+    --ink-faint: #7e7694;
+    --accent: #a78bfa;
+    --accent-hover: #c4b5fd;
+    --accent-soft: rgba(167, 139, 250, 0.14);
+    --line: rgba(243, 240, 248, 0.12);
+    --border: var(--line);
+    --ok: #4ade80;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --hero-wash-a: rgba(167, 139, 250, 0.14);
+    --hero-wash-b: rgba(109, 40, 217, 0.1);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.25);
+    --grade-a: var(--ok);
+    --grade-b: #86efac;
+    --grade-c: var(--warn);
+    --grade-d: #fb923c;
+    --grade-f: var(--danger);
+}
+
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    background: radial-gradient(circle at top, #17202c 0%, var(--bg) 45%);
-    color: var(--text);
-    line-height: 1.55;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    background:
+        radial-gradient(1100px 520px at 8% -8%, var(--hero-wash-a), transparent 55%),
+        radial-gradient(800px 420px at 92% 0%, var(--hero-wash-b), transparent 50%),
+        var(--bg);
 }
 
 a {
@@ -37,7 +90,15 @@ a {
 }
 
 a:hover {
+    color: var(--accent-hover);
     text-decoration: underline;
+}
+
+code,
+pre,
+.history-select,
+.mono {
+    font-family: var(--font-mono);
 }
 
 .page {
@@ -50,8 +111,28 @@ a:hover {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    align-items: center;
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    font-family: var(--font-display);
+}
+
+.theme-toggle {
+    margin-left: auto;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--ink-muted);
+    font: inherit;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .hero {
@@ -60,8 +141,10 @@ a:hover {
 
 .hero h1 {
     margin: 0 0 0.35rem;
+    font-family: var(--font-display);
     font-size: clamp(1.8rem, 4vw, 2.5rem);
     letter-spacing: -0.02em;
+    font-weight: 700;
 }
 
 .hero .subtitle {
@@ -76,15 +159,17 @@ a:hover {
     gap: 0.65rem 1rem;
     margin-top: 1rem;
     padding: 0.75rem 1rem;
-    border-radius: 12px;
+    border-radius: var(--radius);
     background: var(--bg-card);
     border: 1px solid var(--border);
+    box-shadow: var(--shadow);
 }
 
 .history-label {
     color: var(--text-muted);
     font-size: 0.9rem;
     font-weight: 600;
+    font-family: var(--font-display);
 }
 
 .history-select {
@@ -92,7 +177,7 @@ a:hover {
     max-width: 100%;
     flex: 1 1 16rem;
     padding: 0.45rem 0.65rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--bg-elevated);
     color: var(--text);
@@ -121,6 +206,7 @@ a:hover {
     border: 1px solid var(--border);
     color: var(--text-muted);
     font-size: 0.85rem;
+    font-family: var(--font-display);
 }
 
 .grid {
@@ -135,13 +221,11 @@ a:hover {
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius);
     padding: 1.1rem 1.2rem;
     box-shadow: var(--shadow);
 }
 
-/* Cards stacked within a section (comparison tables, benchmark classes) need breathing room between
-   them. The index grid lays cards out with `gap`, so this only applies to in-section stacks. */
 section > .card + .card {
     margin-top: 1.25rem;
 }
@@ -151,6 +235,7 @@ section > .card + .card {
 section h2 {
     margin: 0 0 0.75rem;
     font-size: 1.05rem;
+    font-family: var(--font-display);
 }
 
 .card-link {
@@ -169,6 +254,7 @@ section h2 {
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: -0.03em;
+    font-family: var(--font-display);
 }
 
 .metric-label {
@@ -187,21 +273,21 @@ section > p,
 
 .callout {
     background: var(--accent-soft);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius);
     padding: 1rem 1.1rem;
     margin-top: 1rem;
 }
 
 .callout.warn {
-    background: rgba(251, 191, 36, 0.08);
-    border-color: rgba(251, 191, 36, 0.25);
+    background: color-mix(in srgb, var(--warn) 12%, transparent);
+    border-color: color-mix(in srgb, var(--warn) 35%, transparent);
 }
 
 .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius);
     background: var(--bg-elevated);
 }
 
@@ -222,9 +308,10 @@ td {
 th {
     position: sticky;
     top: 0;
-    background: #121820;
+    background: var(--bg-soft);
     color: var(--text-muted);
     font-weight: 600;
+    font-family: var(--font-display);
     z-index: 1;
 }
 
@@ -235,6 +322,7 @@ tr:last-child td {
 .num {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
 }
 
 .delta-good {
@@ -250,42 +338,39 @@ tr:last-child td {
     min-width: 2rem;
     text-align: center;
     padding: 0.15rem 0.45rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     font-weight: 700;
+    font-family: var(--font-display);
 }
 
 .grade-a,
 .grade-aplus {
-    background: rgba(52, 211, 153, 0.15);
+    background: color-mix(in srgb, var(--grade-a) 18%, transparent);
     color: var(--grade-a);
 }
 
 .grade-aminus,
-.grade-bplus {
-    background: rgba(134, 239, 172, 0.12);
-    color: var(--grade-b);
-}
-
+.grade-bplus,
 .grade-b,
 .grade-bminus {
-    background: rgba(134, 239, 172, 0.1);
+    background: color-mix(in srgb, var(--grade-b) 14%, transparent);
     color: var(--grade-b);
 }
 
 .grade-c,
 .grade-cminus {
-    background: rgba(251, 191, 36, 0.12);
+    background: color-mix(in srgb, var(--grade-c) 14%, transparent);
     color: var(--grade-c);
 }
 
 .grade-d,
 .grade-dplus {
-    background: rgba(251, 146, 60, 0.12);
+    background: color-mix(in srgb, var(--grade-d) 14%, transparent);
     color: var(--grade-d);
 }
 
 .grade-f {
-    background: rgba(248, 113, 113, 0.12);
+    background: color-mix(in srgb, var(--grade-f) 14%, transparent);
     color: var(--grade-f);
 }
 
@@ -296,20 +381,21 @@ tr:last-child td {
     font-size: 0.78rem;
     font-weight: 600;
     white-space: nowrap;
+    font-family: var(--font-display);
 }
 
 .badge.meets {
-    background: rgba(52, 211, 153, 0.15);
+    background: color-mix(in srgb, var(--good) 18%, transparent);
     color: var(--good);
 }
 
 .badge.exceeds {
-    background: rgba(56, 189, 248, 0.15);
+    background: var(--accent-soft);
     color: var(--accent);
 }
 
 .badge.miss {
-    background: rgba(248, 113, 113, 0.15);
+    background: color-mix(in srgb, var(--bad) 18%, transparent);
     color: var(--bad);
 }
 
@@ -363,6 +449,7 @@ tr:last-child td {
 .dataset h4 {
     margin: 0 0 0.5rem;
     font-size: 0.95rem;
+    font-family: var(--font-display);
 }
 
 .dataset-stat {
@@ -371,7 +458,6 @@ tr:last-child td {
     margin-bottom: 0.6rem;
 }
 
-/* Report methodology shown as a muted lead/subtitle rather than a heavy callout. */
 .report-lead {
     color: var(--text-muted);
     font-size: 0.95rem;
@@ -379,27 +465,23 @@ tr:last-child td {
     margin: 0.25rem 0 1.75rem;
 }
 
-/* Concise, muted card blurbs on the index. */
 .card p {
     color: var(--text-muted);
     font-size: 0.9rem;
 }
 
-/* Small explanatory note under a table (e.g. the baseline legend). */
 .table-note {
     color: var(--text-muted);
     font-size: 0.8rem;
     margin: 0.5rem 0 0;
 }
 
-/* Method-name cell layout (name beside an optional baseline tag). */
 .method-head {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
 }
 
-/* Small pill marking the baseline method in a measurement table. */
 .baseline-tag {
     display: inline-block;
     padding: 0.05rem 0.4rem;
@@ -411,10 +493,9 @@ tr:last-child td {
     background: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-muted);
+    font-family: var(--font-display);
 }
 
-/* Wrapping table variant for wide, text-heavy grids (query cases, breakdowns). Only the body text
-   wraps; short header labels ("Result", "Latest", ...) stay on one line so they don't break mid-word. */
 .table-wrap.wrap td {
     white-space: normal;
     word-break: break-word;
@@ -425,21 +506,16 @@ tr:last-child td {
     white-space: nowrap;
 }
 
-/* Numeric columns (Latest, Mean, Allocated, Ratio) must stay on one line even inside a wrapping
-   table, so values like "142.83 ms (7 MB/s)" don't break across rows. */
 .table-wrap.wrap td.num {
     white-space: nowrap;
     word-break: normal;
 }
 
-/* Identifier cells (e.g. SLA assessment "Area" like BZip2_Compress) must not break mid-token. They
-   may still wrap at real spaces (multi-word k6 areas), but never split a single word across lines. */
 .table-wrap.wrap td.no-break {
     word-break: normal;
     overflow-wrap: normal;
 }
 
-/* Expandable scenario rows. */
 tr.expandable {
     cursor: pointer;
 }
@@ -481,14 +557,15 @@ tr.detail-row > td {
     margin: 0 0 0.6rem;
     font-size: 0.9rem;
     color: var(--text-muted);
+    font-family: var(--font-display);
 }
 
 .error-box {
-    background: rgba(248, 113, 113, 0.1);
-    border: 1px solid rgba(248, 113, 113, 0.35);
-    border-radius: 12px;
+    background: color-mix(in srgb, var(--bad) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bad) 40%, transparent);
+    border-radius: var(--radius);
     padding: 1rem;
-    color: #fecaca;
+    color: var(--bad);
 }
 
 footer {
@@ -505,5 +582,9 @@ footer {
     th,
     td {
         white-space: normal;
+    }
+
+    .theme-toggle {
+        margin-left: 0;
     }
 }

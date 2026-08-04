@@ -1,13 +1,13 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 
 namespace Lyo.Hashing.Benchmarks;
 
 /// <summary>Benchmarks comparing the content-digest algorithms exposed by <see cref="IHashingService" />.</summary>
 [ComparisonSuite(Baseline = "Sha256")]
-[BenchmarkDescription("Hashes the same random byte buffer with SHA-256/384/512 and MD5 to compare digest throughput at each payload size.")]
-[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the random input buffer being hashed (1 KB, 1 MB, 10 MB).")]
+[BenchmarkDescription("Hashes the same seeded deterministic byte buffer with SHA-256/384/512 and MD5 to compare digest throughput at each payload size.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the seeded input buffer being hashed (1 KB, 1 MB, 10 MB).")]
 [BenchmarkSla(
     MinThroughputMbps = 150, SizeParam = "DataSize",
     Standard = "Modern content hashing (SHA-2 family) on hardware-accelerated CPUs should sustain hundreds of MB/s; >= 150 MB/s is a conservative production floor.")]
@@ -16,15 +16,11 @@ public class AlgorithmComparisonBenchmarks
     private readonly IHashingService _hashing = HashingService.Shared;
     private byte[] _data = null!;
 
-    [Params(1024, 1024 * 1024, 10 * 1024 * 1024)] // 1 KB, 1 MB, 10 MB
+    [Params(1024, BenchmarkData.MiB, 10 * BenchmarkData.MiB)]
     public int DataSize { get; set; }
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _data = new byte[DataSize];
-        RandomNumberGenerator.Fill(_data);
-    }
+    public void Setup() => _data = BenchmarkData.DeterministicBytes(DataSize);
 
     [Benchmark(Baseline = true)]
     [ComparisonAxis("Hash")]

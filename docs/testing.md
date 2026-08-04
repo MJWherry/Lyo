@@ -36,8 +36,8 @@ dotnet run -c Release --project Lyo.Net/Security/Encryption/Lyo.Encryption.Bench
 To run all suites and rebuild the dashboard data in one step, use the helper:
 
 ```bash
-scripts/benchmarks/run-dotnet-benchmarks.sh                 # all suites
-scripts/benchmarks/run-dotnet-benchmarks.sh --no-docker hashing csv
+python3 scripts/benchmarks/run_dotnet.py                 # all suites
+python3 scripts/benchmarks/run_dotnet.py --no-docker hashing csv
 ```
 
 ## Containerized tests and benchmarks
@@ -47,21 +47,21 @@ dependencies), so the image stays lean and your host `obj/bin` is never touched.
 Drive it with the wrapper:
 
 ```bash
-scripts/docker/run.sh Lyo.Lock.Benchmarks          # one benchmark suite
-scripts/docker/run.sh Lyo.Query.Tests              # one test project
-scripts/docker/run.sh benchmarks                   # every *.Benchmarks
-scripts/docker/run.sh tests                        # every *.Tests (OCR libs auto-added)
-scripts/docker/run.sh all                          # benchmarks + tests
+python3 scripts/docker/run.py Lyo.Lock.Benchmarks          # one benchmark suite
+python3 scripts/docker/run.py Lyo.Query.Tests              # one test project
+python3 scripts/docker/run.py benchmarks                   # every *.Benchmarks
+python3 scripts/docker/run.py tests                        # every *.Tests (OCR libs auto-added)
+python3 scripts/docker/run.py all                          # benchmarks + tests
 ```
 
 Useful passthrough options:
 
 ```bash
-scripts/docker/run.sh --fg Lyo.Hashing.Benchmarks                 # run in foreground
-scripts/docker/run.sh --build-only benchmarks                     # build image only
-scripts/docker/run.sh --no-docker Lyo.Cache.Benchmarks            # skip Testcontainers classes
-scripts/docker/run.sh --filter '*Sha256*' Lyo.Hashing.Benchmarks  # BenchmarkDotNet --filter
-scripts/docker/run.sh --test-filter 'Category=Fast' Lyo.Csv.Tests # xUnit --filter
+python3 scripts/docker/run.py --fg Lyo.Hashing.Benchmarks                 # run in foreground
+python3 scripts/docker/run.py --build-only benchmarks                     # build image only
+python3 scripts/docker/run.py --no-docker Lyo.Cache.Benchmarks            # skip Testcontainers classes
+python3 scripts/docker/run.py --filter '*Sha256*' Lyo.Hashing.Benchmarks  # BenchmarkDotNet --filter
+python3 scripts/docker/run.py --test-filter 'Category=Fast' Lyo.Csv.Tests # xUnit --filter
 ```
 
 The `TARGET` grammar (groups, exact names, globs, paths) and the full option list

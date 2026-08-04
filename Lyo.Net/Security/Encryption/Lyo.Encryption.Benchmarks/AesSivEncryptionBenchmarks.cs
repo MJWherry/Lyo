@@ -1,52 +1,39 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 using Lyo.Encryption.AesSiv;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[BenchmarkDescription("AES-SIV (nonce-misuse-resistant) encrypt and decrypt of fixed 1 KB / 1 MB / 10 MB random buffers; decrypt cases reuse ciphertext from setup.")]
-public class AesSivEncryptionBenchmarks
+[BenchmarkDescription(
+    "AES-SIV (nonce-misuse-resistant) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, or 500 MiB.")]
+public class AesSivEncryptionBenchmarks : LyoBenchmarkBase
 {
-    private byte[] _encryptedLarge = null!;
-    private byte[] _encryptedMedium = null!;
-    private byte[] _encryptedSmall = null!;
+    private byte[] _encrypted = null!;
     private AesSivEncryptionService _encryptionService = null!;
-    private byte[] _largeData = null!;
-    private byte[] _mediumData = null!;
-    private byte[] _smallData = null!;
+    private byte[] _testData = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    [Params(BenchmarkData.BufferedSize100MiB, BenchmarkData.BufferedSize250MiB, BenchmarkData.BufferedSize500MiB)]
+    public int DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
-        var keyStore = EncryptionBenchmarkSupport.CreateKeyStore();
-        _encryptionService = new(keyStore);
-        _smallData = new byte[1024];
-        _mediumData = new byte[1024 * 1024];
-        _largeData = new byte[10 * 1024 * 1024];
-        RandomNumberGenerator.Fill(_smallData);
-        RandomNumberGenerator.Fill(_mediumData);
-        RandomNumberGenerator.Fill(_largeData);
-        _encryptedSmall = _encryptionService.Encrypt(_smallData, EncryptionBenchmarkSupport.KeyId);
-        _encryptedMedium = _encryptionService.Encrypt(_mediumData, EncryptionBenchmarkSupport.KeyId);
-        _encryptedLarge = _encryptionService.Encrypt(_largeData, EncryptionBenchmarkSupport.KeyId);
+        _encryptionService = new(EncryptionBenchmarkSupport.CreateKeyStore());
+        _testData = BenchmarkData.DeterministicBytes(DataSize);
+    }
+
+    [GlobalSetup(Target = nameof(Decrypt))]
+    public void SetupDecrypt()
+    {
+        EnsureGlobalSetup();
+        _encrypted = _encryptionService.Encrypt(_testData, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public byte[] Encrypt_1KB() => _encryptionService.Encrypt(_smallData, EncryptionBenchmarkSupport.KeyId);
+    public byte[] Encrypt() => _encryptionService.Encrypt(_testData, EncryptionBenchmarkSupport.KeyId);
 
     [Benchmark]
-    public byte[] Encrypt_1MB() => _encryptionService.Encrypt(_mediumData, EncryptionBenchmarkSupport.KeyId);
-
-    [Benchmark]
-    public byte[] Encrypt_10MB() => _encryptionService.Encrypt(_largeData, EncryptionBenchmarkSupport.KeyId);
-
-    [Benchmark]
-    public byte[] Decrypt_1KB() => _encryptionService.Decrypt(_encryptedSmall, EncryptionBenchmarkSupport.KeyId);
-
-    [Benchmark]
-    public byte[] Decrypt_1MB() => _encryptionService.Decrypt(_encryptedMedium, EncryptionBenchmarkSupport.KeyId);
-
-    [Benchmark]
-    public byte[] Decrypt_10MB() => _encryptionService.Decrypt(_encryptedLarge, EncryptionBenchmarkSupport.KeyId);
+    public byte[] Decrypt() => _encryptionService.Decrypt(_encrypted, EncryptionBenchmarkSupport.KeyId);
 }

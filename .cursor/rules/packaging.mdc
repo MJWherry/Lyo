@@ -35,4 +35,5 @@ plus references, `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals 
 ## Solution registration
 
 - Every new project needs a `<Project Path="..."/>` entry inside the matching `<Folder>` element of `Lyo.Net/Lyo.slnx`. Solution folders mirror disk paths; create a new `<Folder Name="/Area/Group/">` if none exists.
-- Every package ships a `README.md` (packed into the NuGet package via `PackageReadmeFile`).
+- Package documentation source of truth is **`docs.json`** (schema: `docs/catalog/schema/package.schema.json`). When adding or changing public APIs, update that package’s `docs.json` — do **not** hand-edit generated `README.md` files. Regenerate READMEs via `scripts/docs/project-docs.py` (e.g. `render`). Never run `extract` (it overwrites JSON from README and is lossy).
+- Every package still ships a generated `README.md` (packed into the NuGet package via `PackageReadmeFile`).

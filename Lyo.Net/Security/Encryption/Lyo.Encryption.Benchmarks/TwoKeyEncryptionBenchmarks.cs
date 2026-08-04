@@ -1,47 +1,40 @@
-using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmarking;
+using Lyo.Benchmarking.Data;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
-
-// ReSharper disable InconsistentNaming
+using Lyo.Streams;
 
 namespace Lyo.Encryption.Benchmarks;
 
 [BenchmarkDescription(
-    "Envelope (two-key DEK/KEK) streaming encrypt and decrypt with AES-GCM and ChaCha20-Poly1305 across 1 KB to 2 GB inputs; large sizes stream through temp files. Method names encode cipher and size.")]
-public class TwoKeyEncryptionBenchmarks
+    "Envelope (two-key DEK/KEK) encrypt/decrypt at 100 MiB–2 GiB with AES-GCM and ChaCha20-Poly1305. Stream methods use DeterministicPayloadStream + NullingStream; file methods use IOTemp paths (EncryptToFileAsync / DecryptToStreamAsync to file).")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB.")]
+public class TwoKeyEncryptionBenchmarks : LyoBenchmarkBase
 {
-    private const string KeyId = "benchmark-key";
     private TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService> _aesGcmService = null!;
     private TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService> _chachaService = null!;
-    private Stream _data100MB = null!;
-    private Stream _data1GB = null!;
-    private Stream _data2GB = null!;
-    private Stream _encrypted100MBAesGcm = null!;
-    private Stream _encrypted100MBChacha = null!;
-    private Stream _encrypted1GBAesGcm = null!;
-    private Stream _encrypted1GBChacha = null!;
-    private Stream _encrypted2GBAesGcm = null!;
-    private Stream _encrypted2GBChacha = null!;
-    private MemoryStream _encryptedLargeAesGcm = null!;
-    private MemoryStream _encryptedLargeChacha = null!;
-    private MemoryStream _encryptedMediumAesGcm = null!;
-    private MemoryStream _encryptedMediumChacha = null!;
-    private MemoryStream _encryptedSmallAesGcm = null!;
-    private MemoryStream _encryptedSmallChacha = null!;
+    private string _encryptedAesGcmPath = null!;
+    private string _encryptedChachaPath = null!;
     private LocalKeyStore _keyStore = null!;
-    private byte[] _largeData = null!;
-    private byte[] _mediumData = null!;
-    private byte[] _smallData = null!;
+    private string _plaintextPath = null!;
 
-    [GlobalSetup]
-    public void Setup()
+    [Params(
+        BenchmarkData.StreamingSize100MiB,
+        BenchmarkData.StreamingSize250MiB,
+        BenchmarkData.StreamingSize500MiB,
+        BenchmarkData.StreamingSize750MiB,
+        BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB,
+        BenchmarkData.StreamingSize2GiB)]
+    public long DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
     {
-        _keyStore = new();
-        _keyStore.UpdateKeyFromString(KeyId, "benchmark-test-key-32-bytes-long!");
+        _keyStore = EncryptionBenchmarkSupport.CreateKeyStore();
         var aesGcmDek = new AesGcmEncryptionService(_keyStore);
         var aesGcmKek = new AesGcmEncryptionService(_keyStore);
         _aesGcmService = new(aesGcmDek, aesGcmKek, _keyStore);
@@ -49,331 +42,94 @@ public class TwoKeyEncryptionBenchmarks
         var chachaKek = new ChaCha20Poly1305EncryptionService(_keyStore);
         _chachaService = new(chachaDek, chachaKek, _keyStore);
 
-        // Generate test data
-        _smallData = new byte[1024]; // 1 KB
-        _mediumData = new byte[1024 * 1024]; // 1 MB
-        _largeData = new byte[10 * 1024 * 1024]; // 10 MB
-        _data100MB = CreateTestDataStream(100 * 1024 * 1024); // 100 MB
-        _data1GB = CreateTestDataStream(1024L * 1024 * 1024); // 1 GB
-        _data2GB = CreateTestDataStream(2L * 1024 * 1024 * 1024); // 2 GB
-        RandomNumberGenerator.Fill(_smallData);
-        RandomNumberGenerator.Fill(_mediumData);
-        RandomNumberGenerator.Fill(_largeData);
-
-        // Pre-encrypt data for decryption benchmarks
-        _encryptedSmallAesGcm = new();
-        _encryptedMediumAesGcm = new();
-        _encryptedLargeAesGcm = new();
-        _encryptedSmallChacha = new();
-        _encryptedMediumChacha = new();
-        _encryptedLargeChacha = new();
-        _aesGcmService.EncryptToStreamAsync(new MemoryStream(_smallData), _encryptedSmallAesGcm, KeyId).Wait();
-        _aesGcmService.EncryptToStreamAsync(new MemoryStream(_mediumData), _encryptedMediumAesGcm, KeyId).Wait();
-        _aesGcmService.EncryptToStreamAsync(new MemoryStream(_largeData), _encryptedLargeAesGcm, KeyId).Wait();
-        _chachaService.EncryptToStreamAsync(new MemoryStream(_smallData), _encryptedSmallChacha, KeyId).Wait();
-        _chachaService.EncryptToStreamAsync(new MemoryStream(_mediumData), _encryptedMediumChacha, KeyId).Wait();
-        _chachaService.EncryptToStreamAsync(new MemoryStream(_largeData), _encryptedLargeChacha, KeyId).Wait();
-
-        // Pre-encrypt large files
-        _encrypted100MBAesGcm = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _encrypted1GBAesGcm = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _encrypted2GBAesGcm = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _encrypted100MBChacha = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _encrypted1GBChacha = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _encrypted2GBChacha = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        _data100MB.Position = 0;
-        _aesGcmService.EncryptToStreamAsync(_data100MB, _encrypted100MBAesGcm, KeyId).Wait();
-        _data1GB.Position = 0;
-        _aesGcmService.EncryptToStreamAsync(_data1GB, _encrypted1GBAesGcm, KeyId).Wait();
-        _data2GB.Position = 0;
-        _aesGcmService.EncryptToStreamAsync(_data2GB, _encrypted2GBAesGcm, KeyId).Wait();
-        _data100MB.Position = 0;
-        _chachaService.EncryptToStreamAsync(_data100MB, _encrypted100MBChacha, KeyId).Wait();
-        _data1GB.Position = 0;
-        _chachaService.EncryptToStreamAsync(_data1GB, _encrypted1GBChacha, KeyId).Wait();
-        _data2GB.Position = 0;
-        _chachaService.EncryptToStreamAsync(_data2GB, _encrypted2GBChacha, KeyId).Wait();
+        _plaintextPath = CreateSeededFilePath(DataSize);
     }
 
-    [GlobalCleanup]
-    public void Cleanup()
+    [GlobalSetup(Targets = [nameof(DecryptStream_AesGcm), nameof(DecryptFile_AesGcm)])]
+    public void SetupAesGcmDecrypt()
     {
-        _data100MB.Dispose();
-        _data1GB.Dispose();
-        _data2GB.Dispose();
-        _encrypted100MBAesGcm.Dispose();
-        _encrypted1GBAesGcm.Dispose();
-        _encrypted2GBAesGcm.Dispose();
-        _encrypted100MBChacha.Dispose();
-        _encrypted1GBChacha.Dispose();
-        _encrypted2GBChacha.Dispose();
+        EnsureGlobalSetup();
+        _encryptedAesGcmPath = CreateTempOutputPath();
+using var input = File.OpenRead(_plaintextPath);
+_aesGcmService.EncryptToFileAsync(input, _encryptedAesGcmPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
-    private Stream CreateTestDataStream(long size)
+    [GlobalSetup(Targets = [nameof(DecryptStream_ChaCha), nameof(DecryptFile_ChaCha)])]
+    public void SetupChaChaDecrypt()
     {
-        // For very large files (1GB+), use a FileStream to avoid memory issues
-        if (size >= 1024 * 1024 * 1024) // 1 GB or larger
-        {
-            var tempFile = Path.GetTempFileName();
-            using (var fileStream = File.Create(tempFile)) {
-                var buffer = new byte[1024 * 1024]; // 1 MB buffer
-                var rng = RandomNumberGenerator.Create();
-                var remaining = size;
-                while (remaining > 0) {
-                    var toWrite = (int)Math.Min(remaining, buffer.Length);
-                    rng.GetBytes(buffer, 0, toWrite);
-                    fileStream.Write(buffer, 0, toWrite);
-                    remaining -= toWrite;
-                }
-            }
-
-            return new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.DeleteOnClose);
-        }
-
-        // For smaller files, use MemoryStream
-        var data = new byte[size];
-        RandomNumberGenerator.Fill(data);
-        return new MemoryStream(data);
+        EnsureGlobalSetup();
+        _encryptedChachaPath = CreateTempOutputPath();
+using var input = File.OpenRead(_plaintextPath);
+_chachaService.EncryptToFileAsync(input, _encryptedChachaPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
     [Benchmark]
-    public async Task Encrypt_AesGcm_1KB()
+    [BenchmarkCategory("Stream")]
+    public async Task EncryptStream_AesGcm()
     {
-        var input = new MemoryStream(_smallData);
-        var output = new MemoryStream();
-        await _aesGcmService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = new DeterministicPayloadStream(DataSize, BenchmarkData.PayloadSeed);
+        await using var output = new NullingStream();
+        await _aesGcmService.EncryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Encrypt_AesGcm_1MB()
+    [BenchmarkCategory("Stream")]
+    public async Task DecryptStream_AesGcm()
     {
-        var input = new MemoryStream(_mediumData);
-        var output = new MemoryStream();
-        await _aesGcmService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = File.OpenRead(_encryptedAesGcmPath);
+        await using var output = new NullingStream();
+        await _aesGcmService.DecryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Encrypt_AesGcm_10MB()
+    [BenchmarkCategory("File")]
+    public async Task EncryptFile_AesGcm()
     {
-        var input = new MemoryStream(_largeData);
-        var output = new MemoryStream();
-        await _aesGcmService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = File.OpenRead(_plaintextPath);
+        await _aesGcmService.EncryptToFileAsync(input, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Encrypt_ChaCha_1KB()
+    [BenchmarkCategory("File")]
+    public async Task DecryptFile_AesGcm()
     {
-        var input = new MemoryStream(_smallData);
-        var output = new MemoryStream();
-        await _chachaService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = File.OpenRead(_encryptedAesGcmPath);
+        await using var output = File.Create(CreateIterationOutputPath());
+        await _aesGcmService.DecryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Encrypt_ChaCha_1MB()
+    [BenchmarkCategory("Stream")]
+    public async Task EncryptStream_ChaCha()
     {
-        var input = new MemoryStream(_mediumData);
-        var output = new MemoryStream();
-        await _chachaService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = new DeterministicPayloadStream(DataSize, BenchmarkData.PayloadSeed);
+        await using var output = new NullingStream();
+        await _chachaService.EncryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Encrypt_ChaCha_10MB()
+    [BenchmarkCategory("Stream")]
+    public async Task DecryptStream_ChaCha()
     {
-        var input = new MemoryStream(_largeData);
-        var output = new MemoryStream();
-        await _chachaService.EncryptToStreamAsync(input, output, KeyId);
+        await using var input = File.OpenRead(_encryptedChachaPath);
+        await using var output = new NullingStream();
+        await _chachaService.DecryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Decrypt_AesGcm_1KB()
+    [BenchmarkCategory("File")]
+    public async Task EncryptFile_ChaCha()
     {
-        _encryptedSmallAesGcm.Position = 0;
-        var output = new MemoryStream();
-        await _aesGcmService.DecryptToStreamAsync(_encryptedSmallAesGcm, output, KeyId);
+        await using var input = File.OpenRead(_plaintextPath);
+        await _chachaService.EncryptToFileAsync(input, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
     }
 
     [Benchmark]
-    public async Task Decrypt_AesGcm_1MB()
+    [BenchmarkCategory("File")]
+    public async Task DecryptFile_ChaCha()
     {
-        _encryptedMediumAesGcm.Position = 0;
-        var output = new MemoryStream();
-        await _aesGcmService.DecryptToStreamAsync(_encryptedMediumAesGcm, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_AesGcm_10MB()
-    {
-        _encryptedLargeAesGcm.Position = 0;
-        var output = new MemoryStream();
-        await _aesGcmService.DecryptToStreamAsync(_encryptedLargeAesGcm, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_1KB()
-    {
-        _encryptedSmallChacha.Position = 0;
-        var output = new MemoryStream();
-        await _chachaService.DecryptToStreamAsync(_encryptedSmallChacha, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_1MB()
-    {
-        _encryptedMediumChacha.Position = 0;
-        var output = new MemoryStream();
-        await _chachaService.DecryptToStreamAsync(_encryptedMediumChacha, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_10MB()
-    {
-        _encryptedLargeChacha.Position = 0;
-        var output = new MemoryStream();
-        await _chachaService.DecryptToStreamAsync(_encryptedLargeChacha, output, KeyId);
-    }
-
-    // Large file benchmarks (100MB, 1GB, 2GB)
-    [Benchmark]
-    public async Task Encrypt_AesGcm_100MB()
-    {
-        _data100MB.Position = 0;
-        var output = new MemoryStream();
-        await _aesGcmService.EncryptToStreamAsync(_data100MB, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Encrypt_AesGcm_1GB()
-    {
-        _data1GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _aesGcmService.EncryptToStreamAsync(_data1GB, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Encrypt_AesGcm_2GB()
-    {
-        _data2GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _aesGcmService.EncryptToStreamAsync(_data2GB, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Encrypt_ChaCha_100MB()
-    {
-        _data100MB.Position = 0;
-        var output = new MemoryStream();
-        await _chachaService.EncryptToStreamAsync(_data100MB, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Encrypt_ChaCha_1GB()
-    {
-        _data1GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _chachaService.EncryptToStreamAsync(_data1GB, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Encrypt_ChaCha_2GB()
-    {
-        _data2GB.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _chachaService.EncryptToStreamAsync(_data2GB, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Decrypt_AesGcm_100MB()
-    {
-        _encrypted100MBAesGcm.Position = 0;
-        var output = new MemoryStream();
-        await _aesGcmService.DecryptToStreamAsync(_encrypted100MBAesGcm, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_AesGcm_1GB()
-    {
-        _encrypted1GBAesGcm.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _aesGcmService.DecryptToStreamAsync(_encrypted1GBAesGcm, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Decrypt_AesGcm_2GB()
-    {
-        _encrypted2GBAesGcm.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _aesGcmService.DecryptToStreamAsync(_encrypted2GBAesGcm, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_100MB()
-    {
-        _encrypted100MBChacha.Position = 0;
-        var output = new MemoryStream();
-        await _chachaService.DecryptToStreamAsync(_encrypted100MBChacha, output, KeyId);
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_1GB()
-    {
-        _encrypted1GBChacha.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _chachaService.DecryptToStreamAsync(_encrypted1GBChacha, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
-    }
-
-    [Benchmark]
-    public async Task Decrypt_ChaCha_2GB()
-    {
-        _encrypted2GBChacha.Position = 0;
-        var output = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.DeleteOnClose);
-        try {
-            await _chachaService.DecryptToStreamAsync(_encrypted2GBChacha, output, KeyId);
-        }
-        finally {
-            await output.DisposeAsync();
-            File.Delete(output.Name);
-        }
+        await using var input = File.OpenRead(_encryptedChachaPath);
+        await using var output = File.Create(CreateIterationOutputPath());
+        await _chachaService.DecryptToStreamAsync(input, output, EncryptionBenchmarkSupport.KeyId);
     }
 }

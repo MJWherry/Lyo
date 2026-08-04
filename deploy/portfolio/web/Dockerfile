@@ -34,7 +34,6 @@ COPY --from=deps /repo/apps/portfolio/node_modules /repo/apps/portfolio/node_mod
 COPY packages/typescript /repo/packages/typescript
 COPY apps/portfolio /repo/apps/portfolio
 COPY docs/benchmarks/data /repo/docs/benchmarks/data
-COPY scripts/portfolio /repo/scripts/portfolio
 # docs/benchmarks/history is gitignored — sync-benchmarks no-ops when absent.
 
 WORKDIR /repo/packages/typescript/lyo-api-client

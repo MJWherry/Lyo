@@ -9,6 +9,8 @@
     "**CountingStream** – Track bytes read or written",
     "**ProgressStream** – Report progress during stream operations",
     "**ConcatenatedStream** – Sequentially read from multiple streams",
+    "**DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation)",
+    "**NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)",
     "**StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)",
     "**StreamChunkSizeHelper** – Determine optimal buffer size for stream operations"
   ],
@@ -17,6 +19,11 @@
       "title": "Quick Start",
       "language": "csharp",
       "code": "using Lyo.Streams;\nusing Lyo.Hashing;\nusing System.Security.Cryptography;\n\n// Hash while reading — use Lyo.Hashing.HashingStream\nusing var hashingStream = new HashingStream(sourceStream, SHA256.Create());\nawait hashingStream.CopyToAsync(destinationStream);\nvar hash = hashingStream.GetHash();\n\n// Tee to multiple outputs\nusing var tee = new TeeStream(inputStream, stream1, stream2);\nawait tee.CopyToAsync(outputStream);\n\n// Concatenate multiple streams\nvar streams = new[] { stream1, stream2, stream3 };\nusing var concatenated = new ConcatenatedStream(streams);\nawait concatenated.CopyToAsync(outputStream);\n\n// Copy with progress (IProgress<long> reports cumulative bytes written)\nvar progress = new Progress<long>(bytes => Console.WriteLine($\"Copied {bytes} bytes\"));\nawait source.CopyToAsync(destination, bufferSize: 81920, progress: progress);"
+    },
+    {
+      "title": "Deterministic payload and nulling sink",
+      "language": "csharp",
+      "code": "using Lyo.Streams;\n\n// Generate 100 MiB of seeded bytes without allocating a 100 MiB array\nawait using var input = new DeterministicPayloadStream(length: 100L * 1024 * 1024, seed: 0x4C594F42);\nawait using var sink = new NullingStream();\nawait input.CopyToAsync(sink);\nConsole.WriteLine($\"Drained {sink.BytesWritten} bytes\");"
     }
   ],
   "sections": [],

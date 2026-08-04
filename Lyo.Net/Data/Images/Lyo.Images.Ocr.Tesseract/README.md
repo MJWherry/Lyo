@@ -15,7 +15,7 @@ concurrent.
 ### 1. Native runtime (2)
 
 ```bash
-bash Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup-linux-tesseract-nuget-libs.sh \
+python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py \
   "$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0"
 ```
 
@@ -105,7 +105,7 @@ sometimes **`root`**-owned). Remove it with **`sudo rm -rf`** if it appears.
 ** unless you add a symlink. The setup script drops **`libdl.so` → libdl.so.2** next to **`$(OutputPath)`** (same folder as your **`*.dll`**), which is one of the paths .NET
 probes.
 
-**Automatic (Linux):** **`PrepareTesseractLinuxNativeLibs=true`** triggers **`scripts/setup-linux-tesseract-nuget-libs.sh`** after each **`Build`** (Linux only). The MSBuild *
+**Automatic (Linux):** **`PrepareTesseractLinuxNativeLibs=true`** triggers **`scripts/setup_linux_tesseract_nuget_libs.py`** after each **`Build`** (Linux only). The MSBuild *
 *`PrepareTesseractLinuxNativeLibs`** target lives in **`Lyo.Net/Data/Images/Directory.Build.targets`**.
 
 - Projects **under **`Lyo.Net/Data/Images/`**** pick that file up automatically.

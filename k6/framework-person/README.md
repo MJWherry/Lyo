@@ -99,7 +99,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `queryproject_ceiling.js`
   - `queryroot_ceiling.js`
   - (legacy scenarios retained for migration compatibility)
-- `run_all.sh` strict matrix runner with package-build preflight
+- `run_all.py` strict matrix runner with package-build preflight (see also [TOOLING.md](TOOLING.md))
 
 ## Quick start
 
@@ -121,32 +121,32 @@ k6 run -e BASE_URL="http://localhost:5251" -e ENDPOINT_PATH="/person/QueryConcre
 Run everything:
 
 ```bash
-./k6/framework-person/run_all.sh
+python3 k6/framework-person/run_all.py
 
 # Run specific scenarios by keyword (substring match)
-./k6/framework-person/run_all.sh query_spike queryproject_load
+python3 k6/framework-person/run_all.py query_spike queryproject_load
 
 # Run profile groups across both endpoints (matrix-style)
-./k6/framework-person/run_all.sh spike
-./k6/framework-person/run_all.sh load
-./k6/framework-person/run_all.sh stress
+python3 k6/framework-person/run_all.py spike
+python3 k6/framework-person/run_all.py load
+python3 k6/framework-person/run_all.py stress
 
 # Combine groups/keywords
-./k6/framework-person/run_all.sh query spike
-./k6/framework-person/run_all.sh nonsoak
+python3 k6/framework-person/run_all.py query spike
+python3 k6/framework-person/run_all.py nonsoak
 
 # Saturation (ceiling) runs — find the max sustained arrival rate
-RUN_LABEL=ceiling-uncached ./k6/framework-person/run_all.sh ceiling
-CACHE_HIT_MODE=true RUN_LABEL=ceiling-cached ./k6/framework-person/run_all.sh ceiling
+RUN_LABEL=ceiling-uncached python3 k6/framework-person/run_all.py ceiling
+CACHE_HIT_MODE=true RUN_LABEL=ceiling-cached python3 k6/framework-person/run_all.py ceiling
 
 # Equivalent via env var (comma-separated)
-TEST_FILTER="query_spike,queryproject_load" ./k6/framework-person/run_all.sh
+TEST_FILTER="query_spike,queryproject_load" python3 k6/framework-person/run_all.py
 ```
 
 Smoke matrix mode:
 
 ```bash
-MODE=smoke ./k6/framework-person/run_all.sh
+MODE=smoke python3 k6/framework-person/run_all.py
 ```
 
 ## Useful env vars
@@ -158,7 +158,7 @@ MODE=smoke ./k6/framework-person/run_all.sh
   - `TOKEN` (optional bearer token)
   - `SLEEP_SECONDS`
 - Matrix control:
-  - `MODE` (`full` or `smoke`) in `run_all.sh`
+  - `MODE` (`full` or `smoke`) in `run_all.py`
   - `RUN_LABEL` (prefixes the results directory name, e.g. `RUN_LABEL=ceiling-cached` → `results/ceiling-cached-<timestamp>/`; shows up in the dashboard snapshot dropdown)
   - `CACHE_HIT_MODE` (`true|false`, default `false`) pins request shapes — fixed `Start=0`/`Amount=amountMin`, round-robin case rotation, and all include/Select/sort randomization off — so every case settles on one server cache key and repeat requests hit TestApi's query cache. Use for cache-hit benchmarking; the default (varied paging) measures cache-miss behavior.
   - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.

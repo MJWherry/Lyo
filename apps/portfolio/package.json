@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3100",
-    "prebuild": "python3 ../../scripts/docs/project-docs.py render && node ../../scripts/portfolio/sync-benchmark-assets.mjs",
+    "prebuild": "python3 ../../scripts/docs/project-docs.py render && python3 ../../scripts/benchmarks/build_manifests.py --sync-portfolio-only",
     "build": "next build",
     "start": "next start --port 3100",
     "lint": "next lint",
-    "measure-sizes": "node ../../scripts/portfolio/measure-package-sizes.mjs",
-    "sync-benchmarks": "node ../../scripts/portfolio/sync-benchmark-assets.mjs",
+    "sync-benchmarks": "python3 ../../scripts/benchmarks/build_manifests.py --sync-portfolio-only",
     "sync-docs": "python3 ../../scripts/docs/project-docs.py render",
     "sync-deps": "python3 ../../scripts/docs/project-docs.py sync-deps",
     "docs": "python3 ../../scripts/docs/project-docs.py render"

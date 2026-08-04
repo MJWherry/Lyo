@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmarking\Lyo.Benchmarking.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
         <ProjectReference Include="..\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\Lyo.Encryption.AesCcm\Lyo.Encryption.AesCcm.csproj"/>
         <ProjectReference Include="..\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>

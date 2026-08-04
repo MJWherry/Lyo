@@ -327,7 +327,7 @@ the `README.md` beside each library.
 | [Configuration](docs/configuration.md)     | Environment variables for the tooling/runner.                                                    |
 | [Testing](docs/testing.md)                 | Unit tests, benchmarks, and k6 — local and containerized.                                        |
 | [Deployment](docs/deployment.md)           | The container stack and operational notes.                                                       |
-| [Publishing](docs/publishing.md)           | Versioning and packing with `build-nuget.sh`.                                                    |
+| [Publishing](docs/publishing.md)           | Versioning and packing with `scripts/nuget/build_nuget.py`.                                                    |
 | [Security](docs/security/README.md)        | Security model and crypto design notes ([`SECURITY.md`](SECURITY.md) for reporting).             |
 | [Glossary](docs/glossary.md)               | Domain terms and recurring concepts.                                                             |
 

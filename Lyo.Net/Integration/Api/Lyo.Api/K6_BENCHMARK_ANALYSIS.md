@@ -12,7 +12,7 @@ status/shape checks. Use the report's **Snapshot** dropdown to compare against e
 
 ```bash
 # Automatic when using the matrix runner:
-k6/framework-person/run_all.sh
+k6/framework-person/run_all.py
 
 # Or manually:
 python3 scripts/benchmarks/build_manifests.py --k6-only

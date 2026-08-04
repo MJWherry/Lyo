@@ -6,4 +6,21 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
+
+    <!-- Refresh adhoc tooling READMEs from docs.json when packing (warn-only if python missing). -->
+    <Target Name="RenderToolingDocsOnPack" BeforeTargets="Pack">
+        <PropertyGroup>
+            <_RepoRoot>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', '..'))))</_RepoRoot>
+            <_ToolingDocs>$([System.IO.Path]::Combine('$(_RepoRoot)', 'scripts', 'docs', 'tooling-docs.py'))</_ToolingDocs>
+        </PropertyGroup>
+        <Exec Command="python3 &quot;$(_ToolingDocs)&quot; render"
+              WorkingDirectory="$(_RepoRoot)"
+              IgnoreExitCode="true"
+              Condition="Exists('$(_ToolingDocs)')"
+              ConsoleToMsBuild="true">
+            <Output TaskParameter="ExitCode" PropertyName="_ToolingDocsExitCode"/>
+        </Exec>
+        <Warning Text="tooling-docs render skipped or failed (exit $(_ToolingDocsExitCode)). Pack continues."
+                 Condition="Exists('$(_ToolingDocs)') AND '$(_ToolingDocsExitCode)' != '' AND '$(_ToolingDocsExitCode)' != '0'"/>
+    </Target>
 </Project>

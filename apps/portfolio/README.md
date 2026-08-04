@@ -77,13 +77,12 @@ npm run dev
 
 Open http://localhost:3100
 
-### Package sizes / benchmark history
+### Benchmark history
 
 ```bash
-npm run measure-sizes      # → content/package-sizes.json
 npm run sync-benchmarks    # → public/benchmarks/history (gitignored)
 ```
 
 ## Deploy
 
-See `deploy/portfolio/` and `infra/aws/portfolio/`. GitLab CI: root `.gitlab-ci.yml`.
+See `deploy/portfolio/` and `infra/aws/portfolio/`. CI/CD: `.github/workflows/portfolio.yml`.

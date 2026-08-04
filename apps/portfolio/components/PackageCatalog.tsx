@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import packages from "@/content/packages.json";
-import sizes from "@/content/package-sizes.json";
-import { formatBytes } from "@/lib/benchmarks/format";
 import type { CatalogPackageIndex } from "@/lib/catalog/types";
 
 /** Areas shown on the features catalog (Tools / test hosts stay out of the grid). */
@@ -41,20 +39,7 @@ function isCatalogExcluded(pkg: CatalogPackageIndex): boolean {
   return false;
 }
 
-type SizeById = Map<string, { id: string; bytes: number }>;
-
-function PackageCard({
-  pkg,
-  area,
-  sizeById,
-  showSizes,
-}: {
-  pkg: CatalogPackageIndex;
-  area: string;
-  sizeById: SizeById;
-  showSizes: boolean;
-}) {
-  const size = sizeById.get(pkg.id);
+function PackageCard({ pkg, area }: { pkg: CatalogPackageIndex; area: string }) {
   const blurb = pkg.tagline || "";
   const tfms = Array.isArray(pkg.targetFrameworks) ? pkg.targetFrameworks : [];
   return (
@@ -68,17 +53,13 @@ function PackageCard({
             {shortTfm(tfm)}
           </span>
         ))}
-        {showSizes ? (
-          <span className="badge">{size && size.bytes > 0 ? formatBytes(size.bytes) : "—"}</span>
-        ) : null}
       </div>
     </Link>
   );
 }
 
-export function PackageCatalog({ showSizes = true }: { showSizes?: boolean }) {
+export function PackageCatalog() {
   const [query, setQuery] = useState("");
-  const sizeById = useMemo(() => new Map(sizes.packages.map((p) => [p.id, p])), []);
 
   const catalog = useMemo(
     () => (packages as CatalogPackageIndex[]).filter((pkg) => !isCatalogExcluded(pkg)),
@@ -164,13 +145,7 @@ export function PackageCatalog({ showSizes = true }: { showSizes?: boolean }) {
                   </h3>
                   <div className="card-grid">
                     {items.map((pkg) => (
-                      <PackageCard
-                        key={pkg.id}
-                        pkg={pkg}
-                        area={area}
-                        sizeById={sizeById}
-                        showSizes={showSizes}
-                      />
+                      <PackageCard key={pkg.id} pkg={pkg} area={area} />
                     ))}
                   </div>
                 </div>

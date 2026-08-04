@@ -23,4 +23,4 @@ Full reference: `docs/testing.md`.
 ## BenchmarkDotNet (`*.Benchmarks` projects)
 
 - Normal console projects run in Release: `dotnet run -c Release --project {path}`.
-- `scripts/benchmarks/run-dotnet-benchmarks.sh` runs suites and rebuilds the dashboard data under `docs/benchmarks/data/`.
+- `python3 scripts/benchmarks/run_dotnet.py` runs suites and rebuilds the dashboard data under `docs/benchmarks/data/`.
