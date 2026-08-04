@@ -5,32 +5,6 @@ concurrent.
 
 ## Examples
 
-### 1. Native runtime
-
-```bash
-   find /usr/share/tesseract-ocr -name eng.traineddata 2>/dev/null
-   
-```
-
-### 1. Native runtime (2)
-
-```bash
-python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py \
-  "$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0"
-```
-
-### 1. Native runtime (3)
-
-```bash
-OUT=/path/to/your/app/bin/Debug/net10.0
-ARCH=x86_64-linux-gnu
-mkdir -p "$OUT/x64"
-ln -sf "$(readlink -f /usr/lib/$ARCH/libleptonica.so 2>/dev/null || readlink -f /usr/lib/$ARCH/liblept.so.5)" \
-  "$OUT/x64/libleptonica-1.82.0.so"
-ln -sf "$(readlink -f /usr/lib/$ARCH/libtesseract.so.5)" "$OUT/x64/libtesseract50.so"
-ln -sf "$(readlink -f /lib/$ARCH/libdl.so.2)" "$OUT/libdl.so"
-```
-
 ### Register with DI
 
 ```csharp
@@ -86,6 +60,10 @@ from `libtesseract5` alone.
 
 You should see something like **`/usr/share/tesseract-ocr/5/tessdata/eng.traineddata`**.
 
+```shell
+find /usr/share/tesseract-ocr -name eng.traineddata 2>/dev/null
+```
+
 #### Linux: `libleptonica-1.82.0.so` / `libtesseract50.so` (NuGet vs distro filenames)
 
 The **charlesw/Tesseract** NuGet asks **`InteropDotNet`** for those exact basenames. Distros ship **`liblept.so.*`**, **`libleptonica.so`**, **`libtesseract.so.5`**, etc. **`apt`
@@ -122,12 +100,27 @@ symlink step never runs).
 
 Pass the **TFM output directory** (`**/bin/Debug/net10.0`, not `**/x64`):
 
+```shell
+python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py \
+  "$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0"
+```
+
 Re-run after a clean build if output was deleted.
 
 Optional: **`--also-system`** uses **`sudo`** to mirror Leptonica/Tesseract under **`/usr/local/lib`**, **`libdl.so`** next to the system **`libdl.so.2`**, and runs **`ldconfig`**.
 Usually unnecessary if app-local symlinks exist.
 
 Manual equivalent (same idea as the script):
+
+```shell
+OUT=/path/to/your/app/bin/Debug/net10.0
+ARCH=x86_64-linux-gnu
+mkdir -p "$OUT/x64"
+ln -sf "$(readlink -f /usr/lib/$ARCH/libleptonica.so 2>/dev/null || readlink -f /usr/lib/$ARCH/liblept.so.5)" \
+  "$OUT/x64/libleptonica-1.82.0.so"
+ln -sf "$(readlink -f /usr/lib/$ARCH/libtesseract.so.5)" "$OUT/x64/libtesseract50.so"
+ln -sf "$(readlink -f /lib/$ARCH/libdl.so.2)" "$OUT/libdl.so"
+```
 
 **macOS (Homebrew)**
 

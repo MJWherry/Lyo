@@ -6,7 +6,7 @@ services:
       dockerfile: deploy/portfolio/web/Dockerfile
     restart: unless-stopped
     environment:
-      LYO_API_BASE_URL: ${LYO_API_BASE_URL:?set LYO_API_BASE_URL to internal TestApi URL}
+      LYO_API_BASE_URL: ${LYO_API_BASE_URL:?set LYO_API_BASE_URL to internal Portfolio API URL}
       LYO_API_TOKEN: ${LYO_API_TOKEN:-}
       PORT: "3100"
       HOSTNAME: "0.0.0.0"

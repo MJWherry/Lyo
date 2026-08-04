@@ -6,7 +6,7 @@ WORKDIR /repo
 
 COPY packages/typescript/lyo-api-client/package.json packages/typescript/lyo-api-client/
 COPY packages/typescript/lyo-query/package.json packages/typescript/lyo-query/
-COPY packages/typescript/lyo-query-react/package.json packages/typescript/lyo-query-react/
+COPY packages/typescript/lyo-query-components/package.json packages/typescript/lyo-query-components/
 COPY packages/typescript/lyo-person-api-client/package.json packages/typescript/lyo-person-api-client/
 COPY apps/portfolio/package.json apps/portfolio/package-lock.json* apps/portfolio/
 
@@ -16,7 +16,7 @@ RUN npm install --ignore-scripts
 WORKDIR /repo/packages/typescript/lyo-query
 RUN npm install --ignore-scripts
 
-WORKDIR /repo/packages/typescript/lyo-query-react
+WORKDIR /repo/packages/typescript/lyo-query-components
 RUN npm install --ignore-scripts
 
 WORKDIR /repo/packages/typescript/lyo-person-api-client
@@ -42,7 +42,7 @@ RUN npm run build
 WORKDIR /repo/packages/typescript/lyo-query
 RUN npm run build
 
-WORKDIR /repo/packages/typescript/lyo-query-react
+WORKDIR /repo/packages/typescript/lyo-query-components
 RUN npm run build
 
 WORKDIR /repo/packages/typescript/lyo-person-api-client

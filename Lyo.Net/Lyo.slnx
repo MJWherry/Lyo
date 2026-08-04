@@ -323,7 +323,7 @@
         <File Path="Lyo.sln.DotSettings"/>
     </Folder>
     <Folder Name="/Apps/Portfolio/">
-        <Project Path="Apps/Portfolio/Lyo.Portfolio.csproj"/>
+        <Project Path="Apps/Portfolio/Lyo.Portfolio.Api/Lyo.Portfolio.Api.csproj"/>
     </Folder>
     <Folder Name="/Communication/"/>
     <Folder Name="/Communication/Email/">

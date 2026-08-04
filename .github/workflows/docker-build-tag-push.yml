@@ -1,0 +1,90 @@
+# Reusable: build a Dockerfile and push a versioned tag to ECR.
+# Tag format: {run_id}.{run_number}.{run_attempt} (same as Court-Canary).
+
+name: Docker - Build/Tag/Push
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_NAME:
+        description: ECR repository name (e.g. lyo-portfolio-api)
+        required: true
+        type: string
+      DOCKERFILE:
+        description: Dockerfile path relative to repo root
+        required: true
+        type: string
+      PUSH:
+        description: Push to ECR after build
+        required: false
+        type: boolean
+        default: true
+
+env:
+  AWS_REGION: us-east-2
+  VERSION: ${{ github.run_id }}.${{ github.run_number }}.${{ github.run_attempt }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.VERSION }}
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Image tag summary
+        id: meta
+        run: |
+          IMAGE="${{ inputs.IMAGE_NAME }}:${VERSION}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Image tag"
+            echo ""
+            echo '```'
+            echo "$VERSION"
+            echo '```'
+            echo ""
+            echo "Local: \`${IMAGE}\`"
+            echo ""
+            echo "Copy this tag into **Deploy - Portfolio** → \`image_tag\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker - Build
+        run: |
+          docker buildx build \
+            -f ${{ inputs.DOCKERFILE }} \
+            -t ${{ inputs.IMAGE_NAME }}:$VERSION \
+            --load \
+            .
+
+      - name: AWS - Configure
+        if: inputs.PUSH
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: AWS - Login
+        if: inputs.PUSH
+        uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      - name: AWS - Tag + Push
+        if: inputs.PUSH
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          REMOTE="${ECR_REGISTRY}/${{ inputs.IMAGE_NAME }}:${VERSION}"
+          docker tag "${{ inputs.IMAGE_NAME }}:${VERSION}" "$REMOTE"
+          docker push "$REMOTE"
+          {
+            echo ""
+            echo "ECR: \`${REMOTE}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

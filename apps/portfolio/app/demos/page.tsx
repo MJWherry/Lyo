@@ -23,7 +23,7 @@ export default function DemosPage() {
             </span>
             <div className="card-meta">
               <span className="badge badge-accent">Live</span>
-              <span className="badge">lyo-query-react</span>
+              <span className="badge">lyo-query-components</span>
             </div>
           </Link>
         </div>

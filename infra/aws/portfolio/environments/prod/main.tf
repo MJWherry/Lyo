@@ -124,11 +124,11 @@ resource "aws_security_group" "web" {
 
 resource "aws_security_group" "api" {
   name        = "${var.name_prefix}-api"
-  description = "TestApi + Postgres EC2"
+  description = "Portfolio API + Postgres EC2"
   vpc_id      = aws_vpc.portfolio.id
 
   ingress {
-    description     = "TestApi from web"
+    description     = "Portfolio API from web"
     from_port       = 5251
     to_port         = 5251
     protocol        = "tcp"
@@ -136,7 +136,7 @@ resource "aws_security_group" "api" {
   }
 
   ingress {
-    description = "TestApi admin"
+    description = "Portfolio API admin"
     from_port   = 5251
     to_port     = 5251
     protocol    = "tcp"
@@ -274,8 +274,8 @@ resource "aws_eip" "web" {
   tags     = { Name = "${var.name_prefix}-web-eip" }
 }
 
-resource "aws_ecr_repository" "testapi" {
-  name                 = "${var.name_prefix}-testapi"
+resource "aws_ecr_repository" "api" {
+  name                 = "${var.name_prefix}-api"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 

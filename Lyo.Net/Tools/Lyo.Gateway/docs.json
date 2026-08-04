@@ -3,7 +3,7 @@
   "name": "Lyo.Gateway",
   "area": "Tools",
   "tagline": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page run against either…",
-  "description": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page\nrun against either the Test API (`Lyo.TestApi`) or against in-process services registered the same way as in production.",
+  "description": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page\nrun against either a remote API (`Lyo.Portfolio.Api` by default via `ApiClient` / `LyoAuthClient`, or `Lyo.TestApi` for kitchen-sink) or against in-process services registered the same way as in production.",
   "features": [],
   "examples": [],
   "sections": [
@@ -34,7 +34,7 @@
         [
           "`/PeopleManagement`",
           "`People/PeopleManagement`",
-          "`Lyo.Api.Client` against the Test API `Person` CRUD"
+          "`Lyo.Api.Client` against the Portfolio API `Person` CRUD"
         ],
         [
           "`/comics`, `/comics/series/{id}`, `/comics/volume/{id}`, `/comics/read/{id}`",
@@ -69,7 +69,7 @@
         [
           "`/filestorage-workbench`",
           "`FileStorageWorkbenchPage`",
-          "Test API workbench routes via `TestApi*` proxy services (see below)"
+          "Remote API workbench routes via `TestApi*` proxy services when `UseRemoteApiServices=true` (see below)"
         ],
         [
           "`/html-to-pdf`",
@@ -119,7 +119,7 @@
       "type": "list",
       "title": "Proxy routes",
       "items": [
-        "`GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseTestApiServices=true`. Asks the Test API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.",
+        "`GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseRemoteApiServices=true` (alias `UseTestApiServices` still accepted). Asks the remote API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.",
         "`GET /comic-files/{id:guid}` — Calls `IComicApiClient.GetFileWithTypeAsync($\"files/{id}\")` and returns the bytes with the Comic API's content type. Used so a phone on the LAN can load images even though the Comic API only listens on `localhost`."
       ]
     },
@@ -127,8 +127,8 @@
       "type": "list",
       "title": "File Storage Workbench wiring",
       "items": [
-        "**Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).",
-        "**In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend."
+        "**Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Portfolio.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).",
+        "**In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend."
       ]
     },
     {
@@ -153,15 +153,19 @@
       "rows": [
         [
           "`ApiClient`",
-          "`Lyo.Api.Client` (talking to `Lyo.TestApi`)"
+          "`Lyo.Api.Client` (`BaseUrl` → `Lyo.Portfolio.Api`, typically `http://localhost:5251/`)"
+        ],
+        [
+          "`LyoAuthClient`",
+          "`AuthBaseUrl` → same Portfolio API host for OIDC BFF handoff / refresh / logout"
         ],
         [
           "`FileStorageWorkbench`",
-          "`AddFileStorageWorkbenchSupport`"
+          "`AddFileStorageWorkbenchSupport` (`UseRemoteApiServices`; alias `UseTestApiServices`)"
         ],
         [
           "`AwsKeyStore`, `S3FileStorageOptions`, `PostgresFileMetadataStore`",
-          "In-process S3 + metadata when `UseTestApiServices=false`"
+          "In-process S3 + metadata when `UseRemoteApiServices=false`"
         ],
         [
           "`AwsTranslationOptions`",

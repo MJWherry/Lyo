@@ -1,0 +1,902 @@
+{
+  "id": "Lyo.Portfolio.Api",
+  "name": "Lyo.Portfolio.Api",
+  "area": "Apps",
+  "tagline": "Portfolio + Gateway backend API: People, Config, Job, Reporting, local file storage, Lyo auth with Google.",
+  "description": "Dedicated API host for the public Next.js portfolio (`apps/portfolio`). Keeps `Lyo.TestApi` as a separate kitchen-sink host. A portfolio Gateway (Test Gateway-style) can point here later. Single Postgres (schemas for people/config/job/reporting/filestore/auth), local disk file storage, RabbitMQ for job events, and Google OIDC via Lyo authentication.",
+  "features": [
+    "People CRUD + root `POST /Query`",
+    "Config API under `/api/config` (`AddConfigApi` / `MapConfigApiEndpoints`)",
+    "`BuildJobGroup` + optional RabbitMQ job event publisher",
+    "Reporting API with generation hooks into local file storage",
+    "File storage workbench at `Workbench/FileStorage` (local disk + Postgres metadata)",
+    "Lyo JWT auth + Google provider when `GoogleAuth:ClientId` is set",
+    "`GET /health` → `{ service: \"Lyo.Portfolio.Api\" }` on port 5251"
+  ],
+  "examples": [
+    {
+      "title": "Google OAuth (local)",
+      "language": "json",
+      "code": "{\n  \"GoogleAuth\": {\n    \"ClientId\": \"…\",\n    \"ClientSecret\": \"…\",\n    \"RedirectUri\": \"http://localhost:5251/auth/callback/google\"\n  },\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:3100\", \"http://localhost:5138\" ]\n  }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Google Cloud setup",
+      "body": "Create an OAuth client on your Google Cloud console. Authorized redirect URI must match `GoogleAuth:RedirectUri` exactly (local: `http://localhost:5251/auth/callback/google`). Add production API callback when deploying. Whitelist portfolio and Gateway origins in `LyoOidcBff:AllowedReturnOrigins`. Seed domain data yourself via the HTTP APIs after deploy."
+    },
+    {
+      "type": "list",
+      "title": "Not included (stay on TestApi)",
+      "items": [
+        "Endato, Discord, Twilio, Comic, OCR and other kitchen-sink integrations"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Portfolio/Lyo.Portfolio.Api/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Export",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Export.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Reporting",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Google",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.OpenIdConnect",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Job.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Lock",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue.RabbitMq",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.People.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Mapster",
+      "kind": "package",
+      "version": "10.0.10",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Mapster.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.10",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.OpenApi",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Scalar.AspNetCore",
+      "kind": "package",
+      "version": "2.16.11",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Keycloak",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.ContentThreatScan",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diff",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Geolocation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Job.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.MessageQueue",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.People.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Scheduler",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "ClosedXML",
+      "kind": "package",
+      "version": "0.105.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "CsvHelper",
+      "kind": "package",
+      "version": "33.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DocumentFormat.OpenXml",
+      "kind": "package",
+      "version": "3.1.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader.DataSet",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Authorization",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Http.Abstractions",
+      "kind": "package",
+      "version": "2.*",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Analyzers",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.DataAnnotations",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "RabbitMQ.Client",
+      "kind": "package",
+      "version": "7.2.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.0",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Diagnostics.DiagnosticSource",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

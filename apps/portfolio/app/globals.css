@@ -23,7 +23,7 @@
   --font-mono: "IBM Plex Mono", "Consolas", monospace;
   --max: 72rem;
   --radius: 0.45rem;
-  /* lyo-query-react theme hooks */
+  /* lyo-query-components theme hooks */
   --lyo-qb-accent: var(--accent);
   --lyo-qb-line: var(--line);
   --lyo-qb-bg: var(--bg);

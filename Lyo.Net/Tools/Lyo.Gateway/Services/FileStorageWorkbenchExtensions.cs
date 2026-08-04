@@ -19,7 +19,7 @@ public static class FileStorageWorkbenchExtensions
         configuration.GetSection(FileStorageWorkbenchOptions.SectionName).Bind(options);
         var keyStoreKey = string.IsNullOrWhiteSpace(options.KeyStoreServiceKey) ? "gateway-filestorage" : options.KeyStoreServiceKey;
         var fileStorageKey = string.IsNullOrWhiteSpace(options.FileStorageServiceKey) ? "gateway-filestorage" : options.FileStorageServiceKey;
-        if (options.UseTestApiServices) {
+        if (options.UseRemoteApiServices) {
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(fileStorageKey) && s.ServiceType == typeof(IFileStorageService))) {
                 services.AddKeyedScoped<IFileStorageService>(
                     fileStorageKey,

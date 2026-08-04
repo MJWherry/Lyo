@@ -161,7 +161,7 @@ app.MapGet(
             IOptions<FileStorageWorkbenchOptions> fsw,
             IOptions<ApiClientOptions> apiOptions,
             CancellationToken ct) => {
-            if (!fsw.Value.UseTestApiServices)
+            if (!fsw.Value.UseRemoteApiServices)
                 return Results.Problem("File storage workbench is not configured to use Test API services.", statusCode: StatusCodes.Status400BadRequest);
 
             var baseUrl = apiOptions.Value.BaseUrl?.Trim().TrimEnd('/');

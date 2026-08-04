@@ -2136,12 +2136,12 @@
     ]
   },
   {
-    "id": "Lyo.Portfolio",
-    "name": "Portfolio (Lyo.Portfolio)",
+    "id": "Lyo.Portfolio.Api",
+    "name": "Lyo.Portfolio.Api",
     "area": "Apps",
     "topic": "Lyo.Portfolio",
-    "tagline": "Blazor WebAssembly showcase for the in-process subset of Lyo: components that work without any backend (cache, locks, scheduler, encryption + compression, CSV/XLSX, text diff, rich text editor, etc.)…",
-    "readme": "Lyo.Net/Apps/Portfolio/README.md",
+    "tagline": "Portfolio + Gateway backend API: People, Config, Job, Reporting, local file storage, Lyo auth with Google.",
+    "readme": "Lyo.Net/Apps/Portfolio/Lyo.Portfolio.Api/README.md",
     "targetFrameworks": [
       "net10.0"
     ]

@@ -4,8 +4,18 @@ public sealed class FileStorageWorkbenchOptions
 {
     public const string SectionName = "FileStorageWorkbench";
 
-    /// <summary>When true, the host resolves the workbench through HTTP calls to the test API using the shared <see cref="Lyo.Api.Client.IApiClient" />.</summary>
-    public bool UseTestApiServices { get; set; } = true;
+    /// <summary>
+    /// When true, the host resolves the workbench through HTTP calls to a remote API
+    /// (typically <c>Lyo.Portfolio.Api</c> or <c>Lyo.TestApi</c>) using the shared <see cref="Lyo.Api.Client.IApiClient" />.
+    /// </summary>
+    public bool UseRemoteApiServices { get; set; } = true;
+
+    /// <summary>Obsolete alias for <see cref="UseRemoteApiServices"/> (still bound from config).</summary>
+    public bool UseTestApiServices
+    {
+        get => UseRemoteApiServices;
+        set => UseRemoteApiServices = value;
+    }
 
     /// <summary>When true, the host auto-registers an AWS Secrets Manager keystore + S3 file storage stack from configuration.</summary>
     public bool AutoRegisterS3Services { get; set; }

@@ -25,8 +25,8 @@ services:
     networks:
       - api_net
 
-  testapi:
-    image: ${TESTAPI_IMAGE:-lyo-testapi:latest}
+  api:
+    image: ${PORTFOLIO_API_IMAGE:-lyo-portfolio-api:latest}
     build:
       context: ../../..
       dockerfile: deploy/portfolio/api/Dockerfile
@@ -40,14 +40,23 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:5251
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresConfig__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresUser__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresFileMetadataStore__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
       RabbitMqOptions__Host: rabbitmq
       RabbitMqOptions__Port: "5672"
       RabbitMqOptions__Username: ${RABBITMQ_USER:-lyo}
       RabbitMqOptions__Password: ${RABBITMQ_PASSWORD:-lyo}
       RabbitMqOptions__VirtualHost: /
       RabbitMqOptions__AdminUrl: http://rabbitmq:15672
+      LocalFileStorage__RootDirectoryPath: /var/lyo/portfolio-files
+      GoogleAuth__ClientId: ${GoogleAuth__ClientId:-}
+      GoogleAuth__ClientSecret: ${GoogleAuth__ClientSecret:-}
+      GoogleAuth__RedirectUri: ${GoogleAuth__RedirectUri:-}
     ports:
-      - "${TESTAPI_HOST_PORT:-5251}:5251"
+      - "${PORTFOLIO_API_HOST_PORT:-5251}:5251"
+    volumes:
+      - portfolio_files:/var/lyo/portfolio-files
     networks:
       - api_net
     healthcheck:
@@ -63,3 +72,4 @@ networks:
 
 volumes:
   lyo_pg_data:
+  portfolio_files:

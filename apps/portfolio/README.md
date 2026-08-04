@@ -9,11 +9,12 @@ Home · Features · Benchmarks · Demos · About
 ## Architecture
 
 - **Browser** → Next.js (public) only
-- **Next.js Route Handlers** → `Lyo.TestApi` over `LYO_API_BASE_URL` (private)
+- **Next.js Route Handlers** → `Lyo.Portfolio.Api` over `LYO_API_BASE_URL` (private)
+- Auth: Lyo JWT + Google OIDC (configure Google Cloud OAuth; canonical site URL is lyo)
 - TypeScript clients: `lyo-api-client` + `lyo-person-api-client` (async / fetch)
 - Theme: purple / gray / white with light default + dark invert (`lyo-theme` in localStorage)
 
-Blazor WASM Portfolio under `Lyo.Net/Apps/Portfolio` is unchanged.
+.NET backend host: `Lyo.Net/Apps/Portfolio/Lyo.Portfolio.Api` (separate from kitchen-sink `Lyo.TestApi`). A portfolio Gateway (Test Gateway-style) is planned later.
 
 ## Featured home benchmarks
 
@@ -62,10 +63,10 @@ Run `npm run sync-docs` after editing docs. Schema: `docs/catalog/schema/package
 # Terminal 1 — build TS packages (once), in order:
 cd packages/typescript/lyo-api-client && npm i && npm run build
 cd ../lyo-query && npm i && npm run build
-cd ../lyo-query-react && npm i && npm run build
+cd ../lyo-query-components && npm i && npm run build
 cd ../lyo-person-api-client && npm i && npm run build
 
-# Terminal 2 — TestApi + Postgres (or use deploy/portfolio/api compose)
+# Terminal 2 — Portfolio.Api + Postgres (or use deploy/portfolio/api compose)
 
 # Terminal 3 — this app
 cd apps/portfolio
@@ -85,4 +86,4 @@ npm run sync-benchmarks    # → public/benchmarks/history (gitignored)
 
 ## Deploy
 
-See `deploy/portfolio/` and `infra/aws/portfolio/`. CI/CD: `.github/workflows/portfolio.yml`.
+See `deploy/portfolio/` and `infra/aws/portfolio/`. CI (manual): **Docker - Build Portfolio** + **Deploy - Portfolio**.

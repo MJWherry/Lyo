@@ -6,8 +6,8 @@ import {
   activeRequestPreview,
   createDefaultQueryBuilderValue,
   type QueryBuilderValue,
-} from "lyo-query-react";
-import "lyo-query-react/styles.css";
+} from "lyo-query-components";
+import "lyo-query-components/styles.css";
 import {
   DEFAULT_PERSON_INCLUDES,
   DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS,

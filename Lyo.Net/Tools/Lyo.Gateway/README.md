@@ -1,7 +1,7 @@
 # Lyo.Gateway
 
 Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page
-run against either the Test API (`Lyo.TestApi`) or against in-process services registered the same way as in production.
+run against either a remote API (`Lyo.Portfolio.Api` by default via `ApiClient` / `LyoAuthClient`, or `Lyo.TestApi` for kitchen-sink) or against in-process services registered the same way as in production.
 
 ## Hosting model
 
@@ -17,14 +17,14 @@ Every workbench page lives under `Components/Pages/` and uses `@attribute [Route
 | Route | Page | Backed by |
 | ------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/` | `Home` | `AuthorizedPage` placeholder |
-| `/PeopleManagement` | `People/PeopleManagement` | `Lyo.Api.Client` against the Test API `Person` CRUD |
+| `/PeopleManagement` | `People/PeopleManagement` | `Lyo.Api.Client` against the Portfolio API `Person` CRUD |
 | `/comics`, `/comics/series/{id}`, `/comics/volume/{id}`, `/comics/read/{id}` | `Comics*Page` | `Lyo.Comic.Api.Client` |
 | `/query-builder` | `QueryBuilderExample` | `Lyo.Query.Web.Components` |
 | `/id-generator` | `IdGeneratorTest` | `Lyo.Web.Components` |
 | `/messaging`, `/translation`, `/tts`, `/profanity` | Sms/Email, Translate, TTS, Profanity | `Lyo.Email`, `Lyo.Sms.Twilio`, `Lyo.Translation.Aws`, `Lyo.Tts.Typecast`, `Lyo.Profanity` |
 | `/csv-xlsx` (legacy `/csv`, `/xlsx`) | `CsvTest` (single workbench, two tabs) | `Lyo.Csv`, `Lyo.Xlsx` |
 | `/file-service` | `FileToolsTest` | In-process compression + encryption demos |
-| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Test API workbench routes via `TestApi*` proxy services (see below) |
+| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Remote API workbench routes via `TestApi*` proxy services when `UseRemoteApiServices=true` (see below) |
 | `/html-to-pdf` | `HtmlToPdfTest` | `Lyo.Web.WebRenderer` + `Lyo.Pdf` |
 | `/pdf-annotator` | `PdfAnnotationTest` | `Lyo.Pdf.Web.Components.PdfAnnotator` |
 | `/qr-code-generator`, `/barcode-generator` | `QrCodeTest`, `BarcodeTest` | `Lyo.QRCode`, `Lyo.Barcode.Native` |
@@ -38,13 +38,13 @@ Constants are defined in `Lyo.Gateway.Constants.Page` (workbench routes) and `Ly
 
 ## Proxy routes
 
-- `GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseTestApiServices=true`. Asks the Test API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.
+- `GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseRemoteApiServices=true` (alias `UseTestApiServices` still accepted). Asks the remote API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.
 - `GET /comic-files/{id:guid}` — Calls `IComicApiClient.GetFileWithTypeAsync($"files/{id}")` and returns the bytes with the Comic API's content type. Used so a phone on the LAN can load images even though the Comic API only listens on `localhost`.
 
 ## File Storage Workbench wiring
 
-- **Proxy mode (`UseTestApiServices = true`, the default in `appsettings.json`)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the Test API using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
-- **In-process mode (`UseTestApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend.
+- **Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Portfolio.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
+- **In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend.
 
 ## Other services in `Program.cs`
 
@@ -60,10 +60,11 @@ Constants are defined in `Lyo.Gateway.Constants.Page` (workbench routes) and `Ly
 `appsettings.json` ships placeholders for every section the host binds:
 
 | Section | Used by |
-| ------------------------------------------------------------------ | -------------------------------------------------------- |
-| `ApiClient` | `Lyo.Api.Client` (talking to `Lyo.TestApi`) |
-| `FileStorageWorkbench` | `AddFileStorageWorkbenchSupport` |
-| `AwsKeyStore`, `S3FileStorageOptions`, `PostgresFileMetadataStore` | In-process S3 + metadata when `UseTestApiServices=false` |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `ApiClient` | `Lyo.Api.Client` (`BaseUrl` → `Lyo.Portfolio.Api`, typically `http://localhost:5251/`) |
+| `LyoAuthClient` | `AuthBaseUrl` → same Portfolio API host for OIDC BFF handoff / refresh / logout |
+| `FileStorageWorkbench` | `AddFileStorageWorkbenchSupport` (`UseRemoteApiServices`; alias `UseTestApiServices`) |
+| `AwsKeyStore`, `S3FileStorageOptions`, `PostgresFileMetadataStore` | In-process S3 + metadata when `UseRemoteApiServices=false` |
 | `AwsTranslationOptions` | `AddAwsTranslationServiceFromConfiguration` |
 | `TypecastClient`, `TypecastOptions` | Typecast TTS workbench |
 | `EmailServiceOptions` | SMTP-based `Lyo.Email` |

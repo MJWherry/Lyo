@@ -263,7 +263,7 @@ top-level area.
 - [Lyo.Config.Api.Client](Lyo.Net/Apps/Config/Lyo.Config.Api.Client/README.md): Typed HTTP client for the central `Lyo.Config.Api` — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an optional **`X-Api-Key`** header, and a single DI extension.
 - [Lyo.Config.Api.Hosting](Lyo.Net/Apps/Config/Lyo.Config.Api.Hosting/README.md): Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and * *`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…
 - [Lyo.Config.Api.Models](Lyo.Net/Apps/Config/Lyo.Config.Api.Models/README.md): Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.
-- [Portfolio (Lyo.Portfolio)](Lyo.Net/Apps/Portfolio/README.md): Blazor WebAssembly showcase for the in-process subset of Lyo: components that work without any backend (cache, locks, scheduler, encryption + compression, CSV/XLSX, text diff, rich text editor, etc.)…
+- [Lyo.Portfolio.Api](Lyo.Net/Apps/Portfolio/Lyo.Portfolio.Api/README.md): Portfolio + Gateway backend API: People, Config, Job, Reporting, local file storage, Lyo auth with Google.
 
 ### Security
 

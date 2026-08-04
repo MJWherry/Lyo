@@ -19,12 +19,12 @@ output "api_private_ip" {
 }
 
 output "lyo_api_base_url" {
-  description = "Internal TestApi URL for the web compose stack."
+  description = "Internal Portfolio API URL for the web compose stack."
   value       = "http://${aws_instance.api.private_ip}:5251"
 }
 
-output "ecr_testapi_url" {
-  value = aws_ecr_repository.testapi.repository_url
+output "ecr_api_url" {
+  value = aws_ecr_repository.api.repository_url
 }
 
 output "ecr_web_url" {

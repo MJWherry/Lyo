@@ -5,7 +5,7 @@ encryption keys.
 
 Two integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:
 
-1. **Proxy mode** — talks to a backend host (typically **`Lyo.TestApi`**) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials.
+1. **Proxy mode** — talks to a backend host (typically **`Lyo.Portfolio.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials.
 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.
 
 ## Components
@@ -38,8 +38,8 @@ Two integration modes are supported, controlled by **`FileStorageWorkbenchOption
 Default section: `FileStorageWorkbench`.
 
 | Property | Default | Notes |
-| ---------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `UseTestApiServices` | `true` | Resolve the workbench through HTTP calls to a Test API via **`Lyo.Api.Client.IApiClient`**. |
+| ---------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `UseRemoteApiServices` | `true` | Resolve the workbench through HTTP calls to a remote API via **`Lyo.Api.Client.IApiClient`**. Legacy alias: `UseTestApiServices`. |
 | `AutoRegisterS3Services` | `false` | Host auto-registers AWS Secrets Manager keystore + S3 file storage stack from configuration. |
 | `ApiRoutePrefix` | `Workbench/FileStorage` | Route prefix on the API used for the workbench endpoints. |
 | `StreamUploadRelativePath` | `upload/file` | Endpoint for multipart streaming uploads; set empty to fall back to `{ApiRoutePrefix}/files/save-stream`. |

@@ -1,0 +1,45 @@
+# Manual only: deploy a previously built ECR image tag to api or web EC2.
+# Terraform is local — this workflow never plans/applies infra.
+
+name: Deploy - Portfolio
+run-name: "deploy ${{ inputs.app }} ${{ inputs.image_tag }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "App / host to deploy"
+        required: true
+        type: choice
+        options:
+          - api
+          - web
+      image_tag:
+        description: "ECR image tag (from build run title, e.g. 12345.6.1)"
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-2
+  NAME_PREFIX: lyo-portfolio
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: AWS - Configure
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy via SSM
+        run: |
+          chmod +x deploy/portfolio/scripts/deploy-via-ssm.sh
+          deploy/portfolio/scripts/deploy-via-ssm.sh \
+            "${{ inputs.app }}" \
+            "${{ inputs.image_tag }}"

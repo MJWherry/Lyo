@@ -38,7 +38,7 @@ variable "api_instance_type" {
 
 variable "admin_cidrs" {
   type        = list(string)
-  description = "CIDRs allowed to hit TestApi:5251 and Next.js:3100 directly (SSM preferred for shell)."
+  description = "CIDRs allowed to hit Portfolio API:5251 and Next.js:3100 directly (SSM preferred for shell)."
   default     = []
 }
 

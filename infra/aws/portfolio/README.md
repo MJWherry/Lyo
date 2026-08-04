@@ -4,17 +4,21 @@ Two EC2 instances in a single public subnet:
 
 | Host | Role |
 |------|------|
-| **api** | Docker Compose: `Lyo.TestApi` + Postgres 16 + RabbitMQ |
+| **api** | Docker Compose: `Lyo.Portfolio.Api` + Postgres 16 + RabbitMQ |
 | **web** | Docker Compose: Next.js portfolio (BFF) + optional Caddy TLS |
 
-The web security group can reach API `:5251`. The browser never talks to TestApi.
+The web security group can reach API `:5251`. The browser never talks to the Portfolio API directly.
+
+Seed people/config/job/reporting data yourself via the HTTP APIs after deploy (no Bogus seeder).
 
 ## Prerequisites
 
 - Terraform ≥ 1.5, AWS credentials with VPC/EC2/ECR/SSM permissions
 - Optional remote state: S3 + DynamoDB (uncomment backend in `environments/prod/main.tf`)
 
-## Apply
+## Apply (local only)
+
+Terraform is **not** run from GitHub Actions. Apply from your machine:
 
 ```bash
 cd infra/aws/portfolio/environments/prod
@@ -26,12 +30,37 @@ terraform plan
 terraform apply
 ```
 
-Outputs include `lyo_api_base_url`, ECR repo URLs, and instance IDs for GitHub Actions deploy via SSM.
+If you previously had ECR `lyo-portfolio-testapi`, rename state before apply:
 
-## Post-apply deploy
+```bash
+terraform state mv aws_ecr_repository.testapi aws_ecr_repository.api
+# then apply — ECR name change still recreates the repo; re-push images after
+```
 
-1. CI pushes images to ECR (`lyo-portfolio-testapi`, `lyo-portfolio-web`).
-2. On **api** EC2: copy `deploy/portfolio/api` compose + `.env` (Postgres password from SSM), `docker compose up -d`.
-3. On **web** EC2: set `LYO_API_BASE_URL` to the `lyo_api_base_url` output, `docker compose up -d`.
+Outputs include `lyo_api_base_url`, `ecr_api_url`, `ecr_web_url`, and instance IDs.
 
-User-data installs Docker; first deploy is driven by GitHub Actions deploy jobs (SSM Run Command) or manual SSH/SSM.
+## Google OAuth (dashboard)
+
+1. Create an OAuth client in Google Cloud; set authorized redirect URI to
+   `https://<api-public-or-proxy>/auth/callback/google` (must match `GoogleAuth:RedirectUri`).
+2. Put `ClientId` / `ClientSecret` / `RedirectUri` in the API host `.env` (or SSM → compose env).
+3. Allowlist portfolio and Gateway origins in `LyoOidcBff:AllowedReturnOrigins`.
+
+Domain redirects (e.g. mjwherry → lyo) stay at Cloudflare — not in this repo.
+
+## Images + deploy (GitHub Actions, manual)
+
+Both workflows are **`workflow_dispatch` only** — nothing runs on push/PR.
+
+1. **Docker - Build Portfolio** — choose `api` or `web`; builds and pushes
+   `lyo-portfolio-api` / `lyo-portfolio-web` tagged
+   `{run_id}.{run_number}.{run_attempt}` (see the run title / step summary).
+2. **Deploy - Portfolio** — choose `api` or `web` and paste that image tag.
+   Deploys via SSM to the matching EC2 host (`deploy/portfolio/scripts/deploy-via-ssm.sh`).
+
+First-time host bootstrap (compose files onto `/opt/lyo/portfolio/{api,web}`):
+
+```bash
+deploy/portfolio/scripts/bootstrap-host.sh api <instance-id>
+deploy/portfolio/scripts/bootstrap-host.sh web <instance-id>
+```

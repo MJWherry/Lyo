@@ -2,7 +2,7 @@
 
 Shared Lyo Query **where-clause** models and helpers for TypeScript.
 
-Use this from API clients, BFFs, and UI packages (`lyo-query-react`). Domain clients
+Use this from API clients, BFFs, and UI packages (`lyo-query-components`). Domain clients
 (e.g. `lyo-person-api-client`) re-export these types on request models.
 
 ## Usage
