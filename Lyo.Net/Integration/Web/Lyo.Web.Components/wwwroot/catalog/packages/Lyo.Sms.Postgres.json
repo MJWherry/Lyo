@@ -3,7 +3,7 @@
   "name": "Lyo.Sms.Postgres",
   "area": "Communication",
   "tagline": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can persist send outcomes…",
-  "description": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can\npersist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.\n\n---",
+  "description": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.\n\n---",
   "features": [],
   "examples": [],
   "sections": [

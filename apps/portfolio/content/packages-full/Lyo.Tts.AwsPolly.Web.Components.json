@@ -3,7 +3,7 @@
   "name": "Lyo.Tts.AwsPolly.Web.Components",
   "area": "Communication",
   "tagline": "Blazor (MudBlazor) workbench component for trying out the `Lyo.Tts.AwsPolly` implementation interactively from a host application.",
-  "description": "Blazor (MudBlazor) workbench component for trying out the [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md)\nimplementation interactively from a host application.",
+  "description": "Blazor (MudBlazor) workbench component for trying out the [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) implementation interactively from a host application.",
   "features": [],
   "examples": [],
   "sections": [

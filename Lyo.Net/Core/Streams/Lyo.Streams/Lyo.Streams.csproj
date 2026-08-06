@@ -6,6 +6,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="System.Buffers"/>
+        <PackageReference Include="System.Memory"/>
     </ItemGroup>
 
     <PropertyGroup>
@@ -14,7 +15,6 @@
         <PackageTags>streams tee counting progress concatenated</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
-
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>

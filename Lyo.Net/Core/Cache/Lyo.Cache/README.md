@@ -1,7 +1,6 @@
 # Lyo.Cache
 
-Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression /
-encryption on .NET 10+), and round-tripping without Fusion’s default CLR binary formatter for cached objects.
+Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression / encryption on .NET 10+), and round-tripping without Fusion’s default CLR binary formatter for cached objects.
 
 ## Features
 

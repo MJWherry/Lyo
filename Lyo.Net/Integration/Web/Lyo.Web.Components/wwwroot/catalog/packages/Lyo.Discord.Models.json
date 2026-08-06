@@ -3,7 +3,7 @@
   "name": "Lyo.Discord.Models",
   "area": "Integration",
   "tagline": "Wire-level DTOs and shared constants for the Discord integration. Used by both `Lyo.Discord.Client` (typed HTTP client) and `Lyo.Discord.Postgres` (API host + persistence) so request/response shapes…",
-  "description": "Wire-level DTOs and shared constants for the Discord integration. Used by both [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and\n[`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request/response shapes stay symmetric.",
+  "description": "Wire-level DTOs and shared constants for the Discord integration. Used by both [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request/response shapes stay symmetric.",
   "features": [],
   "examples": [],
   "sections": [

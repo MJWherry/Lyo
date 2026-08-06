@@ -1,7 +1,6 @@
 # Lyo.Formatter
 
-**SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting. Designed for **validation + formatting**
-pipelines (for example **`IFormatterService`** with **`Lyo.Api`** computed fields and **`Lyo.Web.Automation`** step templates).
+**SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting. Designed for **validation + formatting** pipelines (for example **`IFormatterService`** with **`Lyo.Api`** computed fields and **`Lyo.Web.Automation`** step templates).
 
 ## Examples
 

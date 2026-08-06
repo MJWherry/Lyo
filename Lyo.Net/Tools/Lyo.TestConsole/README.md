@@ -1,8 +1,6 @@
 # Lyo.TestConsole
 
-Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process. Most of `Program.cs` is registration: nearly every Lyo service is wired
-up so you can resolve any of them from a single scope and try things end-to-end. The "main" routine itself is short and intentionally throwaway — at present it opens a Playwright
-browser session, navigates to a manga page, and (optionally) starts the Discord bot.
+Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process. Most of `Program.cs` is registration: nearly every Lyo service is wired up so you can resolve any of them from a single scope and try things end-to-end. The "main" routine itself is short and intentionally throwaway — at present it opens a Playwright browser session, navigates to a manga page, and (optionally) starts the Discord bot.
 
 ## What it actually does
 

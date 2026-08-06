@@ -1,8 +1,6 @@
 # Lyo.Csv.Models
 
-Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by
-[`Lyo.Csv`](../Lyo.Csv/README.md) so consumers can depend on `ICsvService` /
-`ICsvReader` / `ICsvWriter` without pulling in CsvHelper directly.
+Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by [`Lyo.Csv`](../Lyo.Csv/README.md) so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without pulling in CsvHelper directly.
 
 ## Interfaces
 

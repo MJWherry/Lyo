@@ -3,7 +3,7 @@
   "name": "Lyo.Result",
   "area": "Core",
   "tagline": "Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** `Lyo.Common` **`Result`** (different namespace and design); many feature libraries pick…",
-  "description": "Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace\nand design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling\nthe whole API layer.",
+  "description": "Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace and design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling the whole API layer.",
   "features": [],
   "examples": [],
   "sections": [

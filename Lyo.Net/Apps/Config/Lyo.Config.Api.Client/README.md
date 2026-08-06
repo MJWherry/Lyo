@@ -1,12 +1,8 @@
 # Lyo.Config.Api.Client
 
-Typed HTTP client for the central [`Lyo.Config.Api`](../Lyo.Config.Api/README.md) — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an
-optional **`X-Api-Key`** header, and a single DI extension. The client deliberately exposes only the resolve route (`/api/config/{appKind}/{appId}`); the management API (
-`/manage/...`) is intended for operator tools, not service callers.
+Typed HTTP client for the central [`Lyo.Config.Api`](../Lyo.Config.Api/README.md) — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an optional **`X-Api-Key`** header, and a single DI extension. The client deliberately exposes only the resolve route (`/api/config/{appKind}/{appId}`); the management API ( `/manage/...`) is intended for operator tools, not service callers.
 
-References [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md) for `ConfigResolveConditionalResult` / `ConfigResolveOutcome`, and `Lyo.Config` for `AppConfigEntity`
-slug validation and `ResolvedConfigRecord`. For a polling host that publishes config via `IOptionsMonitor<T>`, see
-[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md).
+References [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md) for `ConfigResolveConditionalResult` / `ConfigResolveOutcome`, and `Lyo.Config` for `AppConfigEntity` slug validation and `ResolvedConfigRecord`. For a polling host that publishes config via `IOptionsMonitor<T>`, see [`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md).
 
 ## Features
 

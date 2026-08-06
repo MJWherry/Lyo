@@ -1,7 +1,6 @@
 # Lyo.Api.Models
 
-Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees +
-projection DTOs).
+Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees + projection DTOs).
 
 ## Request envelopes
 

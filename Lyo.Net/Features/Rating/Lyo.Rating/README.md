@@ -1,9 +1,6 @@
 # Lyo.Rating
 
-Abstractions for rating and reviewing arbitrary entities, plus like/dislike
-reactions on those ratings. Each rating is keyed by `(forEntity, fromEntity,
-subject)`, so the same actor can rate the same target on multiple subject axes
-(e.g. `"scary"`, `"action"`). Subjects of `null` represent a general rating.
+Abstractions for rating and reviewing arbitrary entities, plus like/dislike reactions on those ratings. Each rating is keyed by `(forEntity, fromEntity, subject)`, so the same actor can rate the same target on multiple subject axes (e.g. `"scary"`, `"action"`). Subjects of `null` represent a general rating.
 
 ## Examples
 

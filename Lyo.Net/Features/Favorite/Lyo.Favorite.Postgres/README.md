@@ -1,15 +1,8 @@
 # Lyo.Favorite.Postgres
 
-PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core.
-Persists favorites to the `favorite.favorite` table (schema constant:
-`PostgresFavoriteOptions.Schema = "favorite"`) with migrations support.
-Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same
-`(tenant, ForEntity, FromEntity, context)` tuple are prevented by the
-`SaveAsync` idempotency check.
+PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant: `PostgresFavoriteOptions.Schema = "favorite"`) with migrations support. Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same `(tenant, ForEntity, FromEntity, context)` tuple are prevented by the `SaveAsync` idempotency check.
 
-`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth`
-(`HealthCheckName = "favorite-postgres"`), so registering the store also exposes
-a database liveness probe.
+`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "favorite-postgres"`), so registering the store also exposes a database liveness probe.
 
 ## Examples
 

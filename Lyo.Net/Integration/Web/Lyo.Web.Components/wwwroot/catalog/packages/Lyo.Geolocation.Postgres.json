@@ -3,7 +3,7 @@
   "name": "Lyo.Geolocation.Postgres",
   "area": "Core",
   "tagline": "PostgreSQL persistence for canonical geolocation data using Entity Framework Core.",
-  "description": "PostgreSQL persistence for canonical geolocation data using Entity Framework Core.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md) persist via\n`IGeolocationStore` in the host. See [package layout](../../../docs/package-layout.md).",
+  "description": "PostgreSQL persistence for canonical geolocation data using Entity Framework Core.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md) persist via `IGeolocationStore` in the host. See [package layout](../../../docs/package-layout.md).",
   "features": [],
   "examples": [
     {

@@ -293,10 +293,33 @@
         [
           "**Inherited (`FileStorageServiceBaseOptions`)**",
           ""
+        ],
+        [
+          "**`HealthCheckMode`**",
+          "Lightweight vs fuller health probes"
+        ],
+        [
+          "**`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`**",
+          "Dedup by plaintext `originalFileHash`; see [Duplicate detection](#duplicate-detection)"
+        ],
+        [
+          "**`ThrowOnFileNotFound`**, **`ThrowOnDeleteNotFound`**, **`ThrowOnHashMismatch`**",
+          "Failure-vs-null behaviour"
+        ],
+        [
+          "**`MaxUploadSizeBytes`**, **`MaxDecompressedFileSize`**, **`AllowedContentTypes`**",
+          "Safety / validation. `MaxUploadSizeBytes` is enforced on direct-upload PUT bodies in addition to streamed saves; an **empty** `AllowedContentTypes` list **denies** all uploads (configure null or omit to allow any)."
+        ],
+        [
+          "**`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`**",
+          "Availability + **`IFileMalwareScanner`** integration. When `RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`** caps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated)."
+        ],
+        [
+          "**`DecompressionAlgorithmOverride`**",
+          "When set, all reads decompress with this codec instead of per-file metadata (migration/recovery)."
         ]
       ],
-      "lead": "**`DiskFileStorageOptions`** adds:",
-      "trail": "| **`HealthCheckMode`** | Lightweight vs fuller health probes |\n\n| **`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`** | Dedup by plaintext `originalFileHash`; see [Duplicate detection](#duplicate-detection) |\n\n| **`ThrowOnFileNotFound`**, **`ThrowOnDeleteNotFound`**, **`ThrowOnHashMismatch`** | Failure-vs-null behaviour |\n\n| **`MaxUploadSizeBytes`**, **`MaxDecompressedFileSize`**, **`AllowedContentTypes`** | Safety / validation. `MaxUploadSizeBytes` is enforced on direct-upload PUT bodies in addition\nto streamed saves; an **empty** `AllowedContentTypes` list **denies** all uploads (configure null or omit to allow any). |\n\n| **`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`** | Availability + **`IFileMalwareScanner`** integration. When\n`RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`**\ncaps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated). |\n\n| **`DecompressionAlgorithmOverride`** | When set, all reads decompress with this codec instead of per-file metadata (migration/recovery). |"
+      "lead": "**`DiskFileStorageOptions`** adds:"
     },
     {
       "type": "table",

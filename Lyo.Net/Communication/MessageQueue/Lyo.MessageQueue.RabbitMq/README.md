@@ -1,7 +1,6 @@
 # Lyo.MessageQueue.RabbitMq
 
-Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService`
-when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.
+Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService` when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.
 
 ## Features
 

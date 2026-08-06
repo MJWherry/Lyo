@@ -1,7 +1,6 @@
 # Lyo.Translation.Google
 
-Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService`
-extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.
+Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService` extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.
 
 **Target frameworks:** `netstandard2.0;net10.0`
 

@@ -3,7 +3,7 @@
   "name": "Lyo.Web.Automation.Selenium",
   "area": "Integration",
   "tagline": "Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session isolation, polling…",
-  "description": "Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session\nisolation, polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.",
+  "description": "Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session isolation, polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.",
   "features": [],
   "examples": [
     {

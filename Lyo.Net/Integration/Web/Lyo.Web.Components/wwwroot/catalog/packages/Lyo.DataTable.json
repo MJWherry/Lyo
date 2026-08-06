@@ -3,7 +3,7 @@
   "name": "Lyo.DataTable",
   "area": "Data",
   "tagline": "Empty package placeholder reserving the `Lyo.DataTable` name. The runtime types (`DataTable`, `DataTableRow`, `DataTableBuilder`, cell types, HTML renderer) all live in `Lyo.DataTable.Models`.",
-  "description": "Empty package placeholder reserving the `Lyo.DataTable` name. The runtime types\n(`DataTable`, `DataTableRow`, `DataTableBuilder`, cell types, HTML renderer) all live\nin [`Lyo.DataTable.Models`](../Lyo.DataTable.Models/README.md).\n\nIf you need the data-table API, reference `Lyo.DataTable.Models` directly.",
+  "description": "Empty package placeholder reserving the `Lyo.DataTable` name. The runtime types (`DataTable`, `DataTableRow`, `DataTableBuilder`, cell types, HTML renderer) all live in [`Lyo.DataTable.Models`](../Lyo.DataTable.Models/README.md).\n\nIf you need the data-table API, reference `Lyo.DataTable.Models` directly.",
   "features": [],
   "examples": [],
   "sections": [

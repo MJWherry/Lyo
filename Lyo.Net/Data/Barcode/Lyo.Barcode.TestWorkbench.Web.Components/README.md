@@ -1,7 +1,6 @@
 # Lyo.Barcode.TestWorkbench.Web.Components
 
-Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo
-gateway test harness.
+Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo gateway test harness.
 
 ## Components
 

@@ -56,7 +56,14 @@ FALLBACK_ARTIFACT_ROOTS = (
 K6_RESULTS = REPO_ROOT / "k6" / "framework-person" / "results"
 # Run dirs are named "<optional-prefix->YYYYMMDD-HHMMSS" (run_all.py default is the bare timestamp).
 K6_RUN_TIMESTAMP = re.compile(r"(\d{8}-\d{6})$")
-K6_SUITE_NAMES = [
+# Legacy: endpoint_profile.summary.json
+# Matrix cell: endpoint_profile_intensity_cacheMode.summary.json
+K6_SUMMARY_NAME = re.compile(
+    r"^(?P<endpoint>query|queryproject|queryroot)_"
+    r"(?P<profile>load|stress|spike|soak|ceiling)"
+    r"(?:_(?P<intensity>low|med|high)_(?P<cache>cached|uncached))?$"
+)
+K6_LEGACY_SUITE_NAMES = [
     "query_load",
     "query_stress",
     "query_spike",
@@ -75,12 +82,12 @@ K6_REPORT_TITLE = "Query API (k6)"
 
 # Suite-level methodology so the latencies are interpretable on their own.
 K6_DESCRIPTION = (
-    "k6 load/stress/spike/soak against the Lyo person API. /person/QueryConcrete returns full "
+    "k6 load/stress/spike/soak/ceiling matrix against the Lyo person API across intensity "
+    "(low/med/high) and cache mode (uncached/cached). /person/QueryConcrete returns full "
     "Person entities; /person/QueryProject returns field-projected rows; POST /Query is root "
-    "From/Joins sparse projection. Every iteration pages 100-300 persons (varied by VU/iteration to "
-    "bypass caches). Randomized multi-key sorting over unindexed columns is disabled by default "
-    "(only filter_sort carries a fixed sort); other cases use the server default (PK) order. The "
-    "'cases' below describe the request shape behind each scenario; hotspots reference these case ids."
+    "From/Joins sparse projection. Uncached iterations page 100-300 persons (varied by VU/iteration); "
+    "cached mode pins shapes for query-cache hits. Query generation uses a fixed RANDOM_SEED. "
+    "The 'cases' below describe the request shape behind each scenario; hotspots reference these case ids."
 )
 
 # Per-case query structure. Source of truth: k6/framework-person/lib/cases.js + queryFactory.js +
@@ -905,8 +912,20 @@ def _k6_run_timestamp(run_id: str) -> str:
     return match.group(1) if match else ""
 
 
+def list_k6_summary_stems(run_dir: Path) -> list[str]:
+    """Return summary basenames (without .summary.json) that match matrix or legacy naming."""
+    if not run_dir.is_dir():
+        return []
+    stems: list[str] = []
+    for path in sorted(run_dir.glob("*.summary.json")):
+        stem = path.name.removesuffix(".summary.json")
+        if K6_SUMMARY_NAME.match(stem):
+            stems.append(stem)
+    return stems
+
+
 def _k6_run_has_summaries(run_dir: Path) -> bool:
-    return any((run_dir / f"{name}.summary.json").is_file() for name in K6_SUITE_NAMES)
+    return bool(list_k6_summary_stems(run_dir))
 
 
 def discover_k6_runs() -> list[tuple[str, Path]]:
@@ -937,9 +956,7 @@ def _k6_run_times(run_id: str, run_dir: Path) -> tuple[str | None, str | None]:
             .isoformat()
         )
     mtimes = [
-        (run_dir / f"{name}.summary.json").stat().st_mtime
-        for name in K6_SUITE_NAMES
-        if (run_dir / f"{name}.summary.json").is_file()
+        (run_dir / f"{stem}.summary.json").stat().st_mtime for stem in list_k6_summary_stems(run_dir)
     ]
     ended = None
     if mtimes:
@@ -991,25 +1008,65 @@ def query_case_hotspots(metrics: dict[str, Any]) -> list[dict[str, Any]]:
     return [hotspot for _, hotspot in cases]
 
 
+def parse_suite_name(name: str) -> dict[str, str | None]:
+    match = K6_SUMMARY_NAME.match(name)
+    if not match:
+        endpoint, _, profile = name.partition("_")
+        return {"endpoint": endpoint, "profile": profile, "intensity": None, "cacheMode": None}
+    return {
+        "endpoint": match.group("endpoint"),
+        "profile": match.group("profile"),
+        "intensity": match.group("intensity"),
+        "cacheMode": match.group("cache"),
+    }
+
+
 def split_suite_name(name: str) -> tuple[str, str]:
-    endpoint, _, profile = name.partition("_")
-    return endpoint, profile
+    parsed = parse_suite_name(name)
+    return str(parsed["endpoint"] or ""), str(parsed["profile"] or "")
+
+
+def find_suite(
+    by_name: dict[str, dict[str, Any]],
+    endpoint: str,
+    profile: str,
+    *,
+    intensity: str = "med",
+    cache_mode: str = "uncached",
+) -> dict[str, Any]:
+    """Prefer intensity×cache cell, then legacy endpoint_profile name."""
+    preferred = f"{endpoint}_{profile}_{intensity}_{cache_mode}"
+    if preferred in by_name:
+        return by_name[preferred]
+    legacy = f"{endpoint}_{profile}"
+    if legacy in by_name:
+        return by_name[legacy]
+    # Fall back to any matching endpoint/profile (first by name).
+    for name, scenario in sorted(by_name.items()):
+        if scenario.get("endpoint") == endpoint and scenario.get("profile") == profile:
+            return scenario
+    return {}
 
 
 def build_scenarios(run_dir: Path) -> list[dict[str, Any]]:
     scenarios: list[dict[str, Any]] = []
-    for name in K6_SUITE_NAMES:
+    stems = list_k6_summary_stems(run_dir) or [
+        name for name in K6_LEGACY_SUITE_NAMES if (run_dir / f"{name}.summary.json").is_file()
+    ]
+    for name in stems:
         summary_path = run_dir / f"{name}.summary.json"
         if not summary_path.is_file():
             continue
         metrics = read_json(summary_path).get("metrics") or {}
         reqs = metrics.get("http_reqs") or {}
-        endpoint, profile = split_suite_name(name)
+        parsed = parse_suite_name(name)
         scenarios.append(
             {
                 "name": name,
-                "profile": profile,
-                "endpoint": endpoint,
+                "profile": parsed["profile"],
+                "endpoint": parsed["endpoint"],
+                "intensity": parsed["intensity"],
+                "cacheMode": parsed["cacheMode"],
                 "latency": metric_stat(metrics, "http_req_duration"),
                 "throughput": reqs.get("rate"),
                 "requests": int(reqs.get("count") or 0),
@@ -1053,8 +1110,8 @@ def endpoint_rollup(scenarios: list[dict[str, Any]], endpoint: str) -> dict[str,
 def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
     by_name = {s["name"]: s for s in scenarios}
 
-    def suite(name: str) -> dict[str, Any]:
-        return by_name.get(name, {})
+    def suite(endpoint: str, profile: str) -> dict[str, Any]:
+        return find_suite(by_name, endpoint, profile)
 
     def letter(category: str, grade: str, rationale: str) -> dict[str, str]:
         return {"category": category, "grade": grade, "rationale": rationale}
@@ -1062,8 +1119,8 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
     grades: list[dict[str, str]] = []
 
     query_scn = [s for s in scenarios if s["endpoint"] == "query"]
-    query_status = all((s.get("statusPass") or 0) >= 100 for s in query_scn)
-    query_shape = all((s.get("shapePass") or 0) >= 100 for s in query_scn)
+    query_status = all((s.get("statusPass") or 0) >= 100 for s in query_scn) if query_scn else False
+    query_shape = all((s.get("shapePass") or 0) >= 100 for s in query_scn) if query_scn else False
     grades.append(
         letter(
             "Query functional correctness (status/shape)",
@@ -1074,8 +1131,9 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         )
     )
 
-    load_p95 = p95(suite("query_load"))
-    load_checks = suite("query_load").get("checksPass") or 0
+    load = suite("query", "load")
+    load_p95 = p95(load)
+    load_checks = load.get("checksPass") or 0
     grades.append(
         letter(
             "Query load",
@@ -1084,8 +1142,9 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         )
     )
 
-    stress_p95 = p95(suite("query_stress"))
-    stress_checks = suite("query_stress").get("checksPass") or 0
+    stress = suite("query", "stress")
+    stress_p95 = p95(stress)
+    stress_checks = stress.get("checksPass") or 0
     if stress_p95 is None:
         stress_grade = "C"
     elif stress_p95 <= 1000:
@@ -1102,9 +1161,10 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         )
     )
 
-    spike_p95 = p95(suite("query_spike"))
-    spike_checks = suite("query_spike").get("checksPass") or 0
-    spike_dropped = suite("query_spike").get("droppedIterations") or 0
+    spike = suite("query", "spike")
+    spike_p95 = p95(spike)
+    spike_checks = spike.get("checksPass") or 0
+    spike_dropped = spike.get("droppedIterations") or 0
     if spike_p95 is None:
         spike_grade = "C"
     elif spike_p95 <= 700:
@@ -1125,8 +1185,9 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         )
     )
 
-    soak_p95 = p95(suite("query_soak"))
-    soak_checks = suite("query_soak").get("checksPass") or 0
+    soak = suite("query", "soak")
+    soak_p95 = p95(soak)
+    soak_checks = soak.get("checksPass") or 0
     if soak_p95 is None:
         soak_grade = "C"
     elif soak_p95 <= 500:
@@ -1143,15 +1204,15 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         )
     )
 
-    qp_load = p95(suite("queryproject_load"))
-    qp_stress = p95(suite("queryproject_stress"))
-    qp_spike = p95(suite("queryproject_spike"))
-    qp_soak = p95(suite("queryproject_soak"))
+    qp_load = p95(suite("queryproject", "load"))
+    qp_stress = p95(suite("queryproject", "stress"))
+    qp_spike = p95(suite("queryproject", "spike"))
+    qp_soak = p95(suite("queryproject", "soak"))
     qp_checks = min(
-        suite("queryproject_load").get("checksPass") or 0,
-        suite("queryproject_stress").get("checksPass") or 100,
-        suite("queryproject_spike").get("checksPass") or 100,
-        suite("queryproject_soak").get("checksPass") or 100,
+        suite("queryproject", "load").get("checksPass") or 0,
+        suite("queryproject", "stress").get("checksPass") or 100,
+        suite("queryproject", "spike").get("checksPass") or 100,
+        suite("queryproject", "soak").get("checksPass") or 100,
     )
     if all(v is not None for v in (qp_load, qp_stress, qp_spike, qp_soak)):
         if max(qp_load, qp_spike, qp_soak) <= 300 and qp_stress <= 700 and qp_checks >= 99.5:
@@ -1171,15 +1232,15 @@ def grade_k6(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
         qp_rationale = "Incomplete QueryProject suite coverage"
     grades.append(letter("QueryProject path", qp_grade, qp_rationale))
 
-    qr_load = p95(suite("queryroot_load"))
-    qr_stress = p95(suite("queryroot_stress"))
-    qr_spike = p95(suite("queryroot_spike"))
-    qr_soak = p95(suite("queryroot_soak"))
+    qr_load = p95(suite("queryroot", "load"))
+    qr_stress = p95(suite("queryroot", "stress"))
+    qr_spike = p95(suite("queryroot", "spike"))
+    qr_soak = p95(suite("queryroot", "soak"))
     qr_checks = min(
-        suite("queryroot_load").get("checksPass") or 0,
-        suite("queryroot_stress").get("checksPass") or 100,
-        suite("queryroot_spike").get("checksPass") or 100,
-        suite("queryroot_soak").get("checksPass") or 100,
+        suite("queryroot", "load").get("checksPass") or 0,
+        suite("queryroot", "stress").get("checksPass") or 100,
+        suite("queryroot", "spike").get("checksPass") or 100,
+        suite("queryroot", "soak").get("checksPass") or 100,
     )
     if all(v is not None for v in (qr_load, qr_stress, qr_spike, qr_soak)):
         if max(qr_load, qr_spike, qr_soak) <= 400 and qr_stress <= 1000 and qr_checks >= 99.5:
@@ -1209,42 +1270,42 @@ def slo_assessment(scenarios: list[dict[str, Any]]) -> list[dict[str, str]]:
     def add(area: str, target: str, latest: str, result: str) -> None:
         rows.append({"area": area, "target": target, "latest": latest, "result": result})
 
-    def lat(name: str) -> float | None:
-        return p95(by_name.get(name, {}))
+    def lat(endpoint: str, profile: str) -> float | None:
+        return p95(find_suite(by_name, endpoint, profile))
 
-    qp_load, qp_spike, qp_soak = lat("queryproject_load"), lat("queryproject_spike"), lat("queryproject_soak")
+    qp_load, qp_spike, qp_soak = lat("queryproject", "load"), lat("queryproject", "spike"), lat("queryproject", "soak")
     if all(v is not None for v in (qp_load, qp_spike, qp_soak)):
         latest = f"{min(qp_load, qp_spike, qp_soak):.0f}-{max(qp_load, qp_spike, qp_soak):.0f} ms"
         worst = max(qp_load, qp_spike, qp_soak)
         add("QueryProject load/spike/soak", "100-300 ms", latest, "Exceeds target" if worst <= 300 else "Meets" if worst <= 700 else "Miss")
 
-    qp_stress = lat("queryproject_stress")
+    qp_stress = lat("queryproject", "stress")
     if qp_stress is not None:
         add("QueryProject stress", "300-700 ms", f"{qp_stress:.0f} ms", "Meets" if qp_stress <= 700 else "Slightly above" if qp_stress <= 1500 else "Miss")
 
-    q_load = lat("query_load")
+    q_load = lat("query", "load")
     if q_load is not None:
         add("Query load", "300-700 ms", f"{q_load:.0f} ms", "Exceeds target" if q_load <= 300 else "Meets")
 
-    q_stress = lat("query_stress")
+    q_stress = lat("query", "stress")
     if q_stress is not None:
         add("Query stress", "500-1,000 ms", f"{q_stress:.0f} ms", "Meets" if q_stress <= 1000 else "Slightly above" if q_stress <= 2000 else "Miss")
 
-    q_spike = lat("query_spike")
+    q_spike = lat("query", "spike")
     if q_spike is not None:
         add("Query spike", "700-1,500 ms", f"{q_spike:.0f} ms", "Exceeds target" if q_spike <= 700 else "Meets" if q_spike <= 1500 else "Miss")
 
-    q_soak = lat("query_soak")
+    q_soak = lat("query", "soak")
     if q_soak is not None:
         add("Query soak", "500-1,000 ms", f"{q_soak:.0f} ms", "Exceeds target" if q_soak <= 500 else "Meets" if q_soak <= 1000 else "Miss")
 
-    qr_load, qr_spike, qr_soak = lat("queryroot_load"), lat("queryroot_spike"), lat("queryroot_soak")
+    qr_load, qr_spike, qr_soak = lat("queryroot", "load"), lat("queryroot", "spike"), lat("queryroot", "soak")
     if all(v is not None for v in (qr_load, qr_spike, qr_soak)):
         latest = f"{min(qr_load, qr_spike, qr_soak):.0f}-{max(qr_load, qr_spike, qr_soak):.0f} ms"
         worst = max(qr_load, qr_spike, qr_soak)
         add("QueryRoot load/spike/soak", "100-500 ms", latest, "Exceeds target" if worst <= 300 else "Meets" if worst <= 700 else "Miss")
 
-    qr_stress = lat("queryroot_stress")
+    qr_stress = lat("queryroot", "stress")
     if qr_stress is not None:
         add("QueryRoot stress", "300-1,000 ms", f"{qr_stress:.0f} ms", "Meets" if qr_stress <= 1000 else "Slightly above" if qr_stress <= 2000 else "Miss")
 

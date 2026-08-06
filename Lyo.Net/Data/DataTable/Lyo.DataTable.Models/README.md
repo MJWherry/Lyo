@@ -1,13 +1,8 @@
 # Lyo.DataTable.Models
 
-Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse
-optional format map, fluent builders, and an HTML renderer. Used as the canonical tabular
-exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md),
-[`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md),
-and for ad-hoc programmatic table construction.
+Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse optional format map, fluent builders, and an HTML renderer. Used as the canonical tabular exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md), and for ad-hoc programmatic table construction.
 
-This project contains all of the runtime types. The sibling
-[`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.
+This project contains all of the runtime types. The sibling [`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.
 
 ## Core types
 

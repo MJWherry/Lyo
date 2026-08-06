@@ -3,7 +3,7 @@
   "name": "Lyo.Notification",
   "area": "Core",
   "tagline": "In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and handler lives in the…",
-  "description": "In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and\nhandler lives in the **same DI container** (typical ASP.NET Core host or worker). For cross-service messaging use **`Lyo.MessageQueue`** (RabbitMQ, etc.).",
+  "description": "In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and handler lives in the **same DI container** (typical ASP.NET Core host or worker). For cross-service messaging use **`Lyo.MessageQueue`** (RabbitMQ, etc.).",
   "features": [
     "**`AddLyoNotification`** registers **`INotificationPublisher`** as **`NotificationPublisher`** (**singleton**). The publisher captures **`IServiceProvider`** so each publish can resolve the current handler set (supports scoped handlers **only if** you resolve **`INotificationPublisher`** from the same scope that contains scoped handlers—which is fragile; prefer **singleton/transient** handlers or resolve handlers explicitly in tests)."
   ],

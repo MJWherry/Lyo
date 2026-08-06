@@ -3,7 +3,7 @@
   "name": "Lyo.Barcode",
   "area": "Data",
   "tagline": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**.",
-  "description": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support\nlive in companion packages (for example **`Lyo.Barcode.Native`**).",
+  "description": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support live in companion packages (for example **`Lyo.Barcode.Native`**).",
   "features": [],
   "examples": [
     {

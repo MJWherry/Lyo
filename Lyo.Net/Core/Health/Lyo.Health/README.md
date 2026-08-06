@@ -1,7 +1,6 @@
 # Lyo.Health
 
-Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service. Health returns `HealthResult` with status,
-timings, and optional metadata.
+Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service. Health returns `HealthResult` with status, timings, and optional metadata.
 
 ## Examples
 

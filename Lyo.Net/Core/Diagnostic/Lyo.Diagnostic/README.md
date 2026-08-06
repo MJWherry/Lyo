@@ -2,19 +2,9 @@
 
 Diagnostic utilities: stack trace decoding, exception classification, **breadcrumb trails**, an **in-memory error inbox**, sanitisation, and structured logging for observability.
 
-Source is grouped by feature folder; namespaces match (e.g. `StackTrace/` → `Lyo.Diagnostic.StackTrace`). **`Lyo.Diagnostic`** (root) holds `AddDiagnosticsPackage` in
-`Registration/`. Package metadata DTOs and **`IPackageMetadataStore`** live in **[`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata)**.
+Source is grouped by feature folder; namespaces match (e.g. `StackTrace/` → `Lyo.Diagnostic.StackTrace`). **`Lyo.Diagnostic`** (root) holds `AddDiagnosticsPackage` in `Registration/`. Package metadata DTOs and **`IPackageMetadataStore`** live in **[`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata)**.
 
-| Folder | Namespace |
-|-------------------|---------------------------------|
-| `StackTrace/` | `Lyo.Diagnostic.StackTrace` |
-| `Classification/` | `Lyo.Diagnostic.Classification` |
-| `Context/` | `Lyo.Diagnostic.Context` |
-| `Breadcrumbs/` | `Lyo.Diagnostic.Breadcrumbs` |
-| `Inbox/` | `Lyo.Diagnostic.Inbox` |
-| `Logging/` | `Lyo.Diagnostic.Logging` |
-| `Sanitisation/` | `Lyo.Diagnostic.Sanitisation` |
-| `Registration/` | `Lyo.Diagnostic` |
+| Folder | Namespace | |-------------------|---------------------------------| | `StackTrace/` | `Lyo.Diagnostic.StackTrace` | | `Classification/` | `Lyo.Diagnostic.Classification` | | `Context/` | `Lyo.Diagnostic.Context` | | `Breadcrumbs/` | `Lyo.Diagnostic.Breadcrumbs` | | `Inbox/` | `Lyo.Diagnostic.Inbox` | | `Logging/` | `Lyo.Diagnostic.Logging` | | `Sanitisation/` | `Lyo.Diagnostic.Sanitisation` | | `Registration/` | `Lyo.Diagnostic` |
 
 ## Examples
 

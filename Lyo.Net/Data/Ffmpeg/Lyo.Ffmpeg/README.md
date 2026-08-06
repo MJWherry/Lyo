@@ -1,8 +1,6 @@
 # Lyo.Ffmpeg
 
-FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.Ffmpeg.Models`](../Lyo.Ffmpeg.Models/README.md):
-**`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream
-inputs (`FfmpegTempHelper`).
+FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.Ffmpeg.Models`](../Lyo.Ffmpeg.Models/README.md): **`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream inputs (`FfmpegTempHelper`).
 
 ## Examples
 

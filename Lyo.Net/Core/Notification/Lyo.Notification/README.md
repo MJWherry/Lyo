@@ -1,7 +1,6 @@
 # Lyo.Notification
 
-In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and
-handler lives in the **same DI container** (typical ASP.NET Core host or worker). For cross-service messaging use **`Lyo.MessageQueue`** (RabbitMQ, etc.).
+In-process **publish/subscribe** for small domain events. It is **not** durable, **not** distributed, and **not** ordered across machines—only useful when every publisher and handler lives in the **same DI container** (typical ASP.NET Core host or worker). For cross-service messaging use **`Lyo.MessageQueue`** (RabbitMQ, etc.).
 
 ## Features
 

@@ -1,8 +1,6 @@
 # Lyo.Pdf
 
-PdfPig-backed reading and PDFsharp-backed editing for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md).
-`PdfService` is the entry point; it returns disposable `IPdfReader` instances for
-read/extract workflows and `IPdfWriter` instances for structural edits and merges.
+PdfPig-backed reading and PDFsharp-backed editing for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md). `PdfService` is the entry point; it returns disposable `IPdfReader` instances for read/extract workflows and `IPdfWriter` instances for structural edits and merges.
 
 Multi-targets `netstandard2.0;net10.0`.
 

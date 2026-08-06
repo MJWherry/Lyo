@@ -1,10 +1,8 @@
 # Lyo.Metrics.Statistics
 
-Statistical analysis extensions for `Lyo.Metrics` histograms. Provides percentile / quartile / moving-average / anomaly-detection helpers on top of the metrics primitives in
-`Lyo.Metrics`.
+Statistical analysis extensions for `Lyo.Metrics` histograms. Provides percentile / quartile / moving-average / anomaly-detection helpers on top of the metrics primitives in `Lyo.Metrics`.
 
-This package exists so the base `Lyo.Metrics` package can stay dependency-light: the heavy `Lyo.Mathematics` + `Lyo.Mathematics.Functions` (F#) chain only gets pulled in when
-callers explicitly opt in by referencing `Lyo.Metrics.Statistics`.
+This package exists so the base `Lyo.Metrics` package can stay dependency-light: the heavy `Lyo.Mathematics` + `Lyo.Mathematics.Functions` (F#) chain only gets pulled in when callers explicitly opt in by referencing `Lyo.Metrics.Statistics`.
 
 ## Examples
 

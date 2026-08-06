@@ -1,7 +1,6 @@
 # Lyo.Testing.Containers
 
-xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover *
-*PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
+xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover **PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
 
 > **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
 

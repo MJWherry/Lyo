@@ -3,7 +3,7 @@
   "name": "Lyo.Testing.Containers",
   "area": "Core",
   "tagline": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing.",
-  "description": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover *\n*PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.\n\n> **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.",
+  "description": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover **PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.\n\n> **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.",
   "features": [],
   "examples": [
     {

@@ -1,10 +1,8 @@
-import { createEndpointProfileScenario } from "../lib/matrixRunner.js";
+import { MatrixCell } from "../lib/matrixCell.js";
+import { ScenarioFactory } from "../lib/scenarioFactory.js";
 
-const scenario = createEndpointProfileScenario({
-  endpointKind: "queryproject",
-  profile: "load",
-  testTag: "queryproject-load",
-});
+const cell = MatrixCell.fromEnv({ endpointKind: "queryproject", profile: "load" });
+const scenario = ScenarioFactory.create(cell);
 
 export const options = scenario.options;
 

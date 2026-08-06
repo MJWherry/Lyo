@@ -2,26 +2,13 @@
 
 Server-side authentication services for Lyo. Two coexisting bearer formats behind a single contract:
 
-- **Format B opaque API tokens** — `lyo_<kind>_<ring>_<id>_<secret>` (e.g. `lyo_pat_live_01hxy8k2qf9_4f3b...`). Store-backed, validated by DB lookup + constant-time SHA-256
-  comparison. For CLIs, services, integrations, webhooks, and refresh tokens.
-- **Lyo-signed JWTs** — `Authorization: Bearer ey...` (EdDSA / Ed25519). Short-lived, locally validated via JWKS. Issued by the Lyo API after a successful external OIDC login. For
-  browser/mobile frontends and direct API callers.
+- **Format B opaque API tokens** — `lyo_<kind>_<ring>_<id>_<secret>` (e.g. `lyo_pat_live_01hxy8k2qf9_4f3b...`). Store-backed, validated by DB lookup + constant-time SHA-256 comparison. For CLIs, services, integrations, webhooks, and refresh tokens. - **Lyo-signed JWTs** — `Authorization: Bearer ey...` (EdDSA / Ed25519). Short-lived, locally validated via JWKS. Issued by the Lyo API after a successful external OIDC login. For browser/mobile frontends and direct API callers.
 
-This package has zero ASP.NET, EF, or HTTP dependencies — but it **does** depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle for key/hash operations. Reserve it for the
-API/auth-server host. **Do not reference it from consumer-side libraries or Blazor WebAssembly clients** — use `Lyo.Authentication.Models` instead for wire-shape DTOs / format
-helpers / JWT parsing.
+This package has zero ASP.NET, EF, or HTTP dependencies — but it **does** depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle for key/hash operations. Reserve it for the API/auth-server host. **Do not reference it from consumer-side libraries or Blazor WebAssembly clients** — use `Lyo.Authentication.Models` instead for wire-shape DTOs / format helpers / JWT parsing.
 
 It owns:
 
-- `ApiTokenCodec` — mint + hash for Format-B tokens (parse-only helpers live in `Lyo.Authentication.Models`)
-- `IApiTokenIssuer` / `IApiTokenValidator` — opaque token lifecycle
-- `ILyoJwtIssuer` / `ILyoJwtValidator` — Ed25519 JWT lifecycle (backed by `Lyo.Keystore` for the signing key)
-- `IUserStore` / `IExternalIdentityStore` — Lyo user + linked-identity persistence
-- `IScopeRegistry` — fine-grained scope contract (`{resource}.{action}`)
-- `IApiTokenStore` — token persistence (in-memory fallback included)
-- `Ed25519KeyBootstrapper` — `IHostedService` that auto-provisions a signing key on first run
-- `IAuthAuditRecorder` / `IAuthAuditContextAccessor` / `AuthAuditExtensions` — server-side audit recorder plumbing (the event records + enum taxonomy live in
-  `Lyo.Authentication.Models`)
+- `ApiTokenCodec` — mint + hash for Format-B tokens (parse-only helpers live in `Lyo.Authentication.Models`) - `IApiTokenIssuer` / `IApiTokenValidator` — opaque token lifecycle - `ILyoJwtIssuer` / `ILyoJwtValidator` — Ed25519 JWT lifecycle (backed by `Lyo.Keystore` for the signing key) - `IUserStore` / `IExternalIdentityStore` — Lyo user + linked-identity persistence - `IScopeRegistry` — fine-grained scope contract (`{resource}.{action}`) - `IApiTokenStore` — token persistence (in-memory fallback included) - `Ed25519KeyBootstrapper` — `IHostedService` that auto-provisions a signing key on first run - `IAuthAuditRecorder` / `IAuthAuditContextAccessor` / `AuthAuditExtensions` — server-side audit recorder plumbing (the event records + enum taxonomy live in `Lyo.Authentication.Models`)
 
 ## Examples
 

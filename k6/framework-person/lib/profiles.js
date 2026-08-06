@@ -1,5 +1,6 @@
 import { env, toInt } from "./env.js";
 import { resolveCaseSlowMs } from "./cases.js";
+import { IntensityPresets } from "./intensityPresets.js";
 
 export function commonThresholds(extra = {}) {
   return {
@@ -11,64 +12,166 @@ export function commonThresholds(extra = {}) {
   };
 }
 
-export function loadOptions(extra = {}) {
-  return {
-    scenarios: {
-      load: {
+/** ProfileOptionsBuilder: maps IntensityPresets knobs → k6 options. Env overrides win. */
+export class ProfileOptionsBuilder {
+  /**
+   * @param {string} [intensity]
+   */
+  constructor(intensity = IntensityPresets.resolveIntensity()) {
+    this.intensity = intensity;
+  }
+
+  loadOptions(extra = {}) {
+    const knobs = IntensityPresets.forProfile("load", this.intensity);
+    return {
+      scenarios: {
+        load: {
+          executor: "constant-arrival-rate",
+          rate: toInt("LOAD_RATE", knobs.rate),
+          timeUnit: env("LOAD_TIME_UNIT", "1s"),
+          duration: env("LOAD_DURATION", knobs.duration),
+          preAllocatedVUs: toInt("LOAD_PREALLOCATED_VUS", knobs.preAllocatedVUs),
+          maxVUs: toInt("LOAD_MAX_VUS", knobs.maxVUs),
+        },
+      },
+      thresholds: commonThresholds(),
+      summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+      ...extra,
+    };
+  }
+
+  stressOptions(extra = {}) {
+    const knobs = IntensityPresets.forProfile("stress", this.intensity);
+    const target2 = toInt("STRESS_TARGET2", knobs.target2);
+    return {
+      scenarios: {
+        stress: {
+          executor: "ramping-vus",
+          startVUs: toInt("STRESS_START_VUS", knobs.startVUs),
+          stages: [
+            { duration: env("STRESS_RAMP1", "2m"), target: toInt("STRESS_TARGET1", knobs.target1) },
+            { duration: env("STRESS_RAMP2", "3m"), target: target2 },
+            { duration: env("STRESS_HOLD", "2m"), target: target2 },
+            { duration: env("STRESS_RAMP_DOWN", "1m"), target: 0 },
+          ],
+        },
+      },
+      thresholds: commonThresholds(),
+      summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+      ...extra,
+    };
+  }
+
+  spikeOptions(extra = {}) {
+    const knobs = IntensityPresets.forProfile("spike", this.intensity);
+    const targetRate = toInt("SPIKE_TARGET_RATE", knobs.targetRate);
+    return {
+      scenarios: {
+        spike: {
+          executor: "ramping-arrival-rate",
+          startRate: toInt("SPIKE_START_RATE", knobs.startRate),
+          timeUnit: env("SPIKE_TIME_UNIT", "1s"),
+          preAllocatedVUs: toInt("SPIKE_PREALLOCATED_VUS", knobs.preAllocatedVUs),
+          maxVUs: toInt("SPIKE_MAX_VUS", knobs.maxVUs),
+          stages: [
+            { duration: env("SPIKE_RAMP", "20s"), target: targetRate },
+            { duration: env("SPIKE_HOLD", "40s"), target: targetRate },
+            { duration: env("SPIKE_RECOVER", "60s"), target: toInt("SPIKE_RECOVER_RATE", knobs.recoverRate) },
+          ],
+        },
+      },
+      thresholds: commonThresholds(),
+      summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+      ...extra,
+    };
+  }
+
+  soakOptions(extra = {}) {
+    const knobs = IntensityPresets.forProfile("soak", this.intensity);
+    return {
+      scenarios: {
+        soak: {
+          executor: "constant-vus",
+          vus: toInt("SOAK_VUS", knobs.vus),
+          duration: env("SOAK_DURATION", knobs.duration),
+        },
+      },
+      thresholds: commonThresholds({
+        http_req_duration: [env("SOAK_HTTP_P95_THRESHOLD", "p(95)<3500")],
+        query_duration: [env("SOAK_QUERY_P95_THRESHOLD", "p(95)<3500")],
+      }),
+      summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+      ...extra,
+    };
+  }
+
+  /**
+   * Saturation profile: staggered constant-arrival-rate steps until the server saturates.
+   * Thresholds are tautologies so k6 exports per-step submetrics without failing the run.
+   */
+  ceilingOptions(extra = {}) {
+    const knobs = IntensityPresets.forProfile("ceiling", this.intensity);
+    const rates = env("CEILING_RATES", knobs.rates)
+      .split(",")
+      .map((x) => Math.trunc(Number(x.trim())))
+      .filter((x) => Number.isFinite(x) && x > 0);
+    const stepDuration = env("CEILING_STEP_DURATION", "45s");
+    const stepSeconds = parseDurationSeconds(stepDuration, 45);
+    const maxVUs = toInt("CEILING_MAX_VUS", 400);
+
+    const scenarios = {};
+    const thresholds = {};
+    rates.forEach((rate, index) => {
+      const name = `r${rate}`;
+      scenarios[name] = {
         executor: "constant-arrival-rate",
-        rate: toInt("LOAD_RATE", 7),
-        timeUnit: env("LOAD_TIME_UNIT", "1s"),
-        duration: env("LOAD_DURATION", "3m"),
-        preAllocatedVUs: toInt("LOAD_PREALLOCATED_VUS", 6),
-        maxVUs: toInt("LOAD_MAX_VUS", 12),
-      },
-    },
-    thresholds: commonThresholds(),
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
-    ...extra,
-  };
-}
+        rate,
+        timeUnit: "1s",
+        duration: stepDuration,
+        startTime: `${Math.round(index * stepSeconds)}s`,
+        preAllocatedVUs: Math.min(maxVUs, Math.max(20, Math.ceil(rate / 4))),
+        maxVUs,
+        gracefulStop: env("CEILING_GRACEFUL_STOP", "10s"),
+      };
+      thresholds[`http_req_duration{scenario:${name}}`] = ["p(95)>=0"];
+      thresholds[`http_reqs{scenario:${name}}`] = ["count>=0"];
+      thresholds[`dropped_iterations{scenario:${name}}`] = ["count>=0"];
+    });
 
-export function stressOptions(extra = {}) {
-  return {
-    scenarios: {
-      stress: {
-        executor: "ramping-vus",
-        startVUs: toInt("STRESS_START_VUS", 5),
-        stages: [
-          { duration: env("STRESS_RAMP1", "2m"), target: toInt("STRESS_TARGET1", 20) },
-          { duration: env("STRESS_RAMP2", "3m"), target: toInt("STRESS_TARGET2", 40) },
-          { duration: env("STRESS_HOLD", "2m"), target: toInt("STRESS_TARGET2", 40) },
-          { duration: env("STRESS_RAMP_DOWN", "1m"), target: 0 },
-        ],
-      },
-    },
-    thresholds: commonThresholds(),
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
-    ...extra,
-  };
-}
+    return {
+      scenarios,
+      thresholds,
+      summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
+      ...extra,
+    };
+  }
 
-export function spikeOptions(extra = {}) {
-  return {
-    scenarios: {
-      spike: {
-        executor: "ramping-arrival-rate",
-        startRate: toInt("SPIKE_START_RATE", 5),
-        timeUnit: env("SPIKE_TIME_UNIT", "1s"),
-        preAllocatedVUs: toInt("SPIKE_PREALLOCATED_VUS", 10),
-        maxVUs: toInt("SPIKE_MAX_VUS", 80),
-        stages: [
-          { duration: env("SPIKE_RAMP", "20s"), target: toInt("SPIKE_TARGET_RATE", 80) },
-          { duration: env("SPIKE_HOLD", "40s"), target: toInt("SPIKE_TARGET_RATE", 80) },
-          { duration: env("SPIKE_RECOVER", "60s"), target: toInt("SPIKE_RECOVER_RATE", 10) },
-        ],
+  /**
+   * @param {string} profile
+   * @param {unknown[]} caseDefs
+   * @param {Record<string, unknown>} [extra]
+   */
+  matrixOptions(profile, caseDefs, extra = {}) {
+    if (profile === "ceiling") {
+      return this.ceilingOptions(extra);
+    }
+
+    const thresholds = commonThresholds(perCaseThresholds(caseDefs));
+    const mergedExtra = {
+      ...extra,
+      thresholds: {
+        ...thresholds,
+        ...(extra.thresholds ?? {}),
       },
-    },
-    thresholds: commonThresholds(),
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
-    ...extra,
-  };
+    };
+
+    if (profile === "load") return this.loadOptions(mergedExtra);
+    if (profile === "stress") return this.stressOptions(mergedExtra);
+    if (profile === "spike") return this.spikeOptions(mergedExtra);
+    if (profile === "soak") return this.soakOptions(mergedExtra);
+
+    throw new Error(`Unknown matrix profile '${profile}'`);
+  }
 }
 
 function parseDurationSeconds(value, fallbackSeconds) {
@@ -80,68 +183,6 @@ function parseDurationSeconds(value, fallbackSeconds) {
   const unit = match[2] || "s";
   const scale = unit === "ms" ? 0.001 : unit === "m" ? 60 : unit === "h" ? 3600 : 1;
   return amount * scale;
-}
-
-/**
- * Saturation ("ceiling") profile: staggered constant-arrival-rate steps that climb until the
- * server saturates. Each step is its own scenario so the summary export carries per-step
- * latency and dropped-iteration submetrics — the knee is read straight from the summary JSON.
- * No pass/fail thresholds: saturation intentionally blows past every SLO, and a threshold
- * failure exit code would abort run_all.py. The listed thresholds are tautologies whose only
- * purpose is to force k6 to export the per-step submetrics.
- */
-export function ceilingOptions(extra = {}) {
-  const rates = env("CEILING_RATES", "25,50,100,150,200,300,450,700,1000")
-    .split(",")
-    .map((x) => Math.trunc(Number(x.trim())))
-    .filter((x) => Number.isFinite(x) && x > 0);
-  const stepDuration = env("CEILING_STEP_DURATION", "45s");
-  const stepSeconds = parseDurationSeconds(stepDuration, 45);
-  const maxVUs = toInt("CEILING_MAX_VUS", 400);
-
-  const scenarios = {};
-  const thresholds = {};
-  rates.forEach((rate, index) => {
-    const name = `r${rate}`;
-    scenarios[name] = {
-      executor: "constant-arrival-rate",
-      rate,
-      timeUnit: "1s",
-      duration: stepDuration,
-      startTime: `${Math.round(index * stepSeconds)}s`,
-      preAllocatedVUs: Math.min(maxVUs, Math.max(20, Math.ceil(rate / 4))),
-      maxVUs,
-      gracefulStop: env("CEILING_GRACEFUL_STOP", "10s"),
-    };
-    thresholds[`http_req_duration{scenario:${name}}`] = ["p(95)>=0"];
-    thresholds[`http_reqs{scenario:${name}}`] = ["count>=0"];
-    thresholds[`dropped_iterations{scenario:${name}}`] = ["count>=0"];
-  });
-
-  return {
-    scenarios,
-    thresholds,
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
-    ...extra,
-  };
-}
-
-export function soakOptions(extra = {}) {
-  return {
-    scenarios: {
-      soak: {
-        executor: "constant-vus",
-        vus: toInt("SOAK_VUS", 10),
-        duration: env("SOAK_DURATION", "2h"),
-      },
-    },
-    thresholds: commonThresholds({
-      http_req_duration: [env("SOAK_HTTP_P95_THRESHOLD", "p(95)<3500")],
-      query_duration: [env("SOAK_QUERY_P95_THRESHOLD", "p(95)<3500")],
-    }),
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
-    ...extra,
-  };
 }
 
 function perCaseThresholds(caseDefs) {
@@ -156,33 +197,32 @@ function perCaseThresholds(caseDefs) {
   return thresholds;
 }
 
+/** @deprecated Prefer ProfileOptionsBuilder; kept for legacy scenario imports. */
+export function loadOptions(extra = {}) {
+  return new ProfileOptionsBuilder().loadOptions(extra);
+}
+
+/** @deprecated Prefer ProfileOptionsBuilder */
+export function stressOptions(extra = {}) {
+  return new ProfileOptionsBuilder().stressOptions(extra);
+}
+
+/** @deprecated Prefer ProfileOptionsBuilder */
+export function spikeOptions(extra = {}) {
+  return new ProfileOptionsBuilder().spikeOptions(extra);
+}
+
+/** @deprecated Prefer ProfileOptionsBuilder */
+export function soakOptions(extra = {}) {
+  return new ProfileOptionsBuilder().soakOptions(extra);
+}
+
+/** @deprecated Prefer ProfileOptionsBuilder */
+export function ceilingOptions(extra = {}) {
+  return new ProfileOptionsBuilder().ceilingOptions(extra);
+}
+
+/** @deprecated Prefer ProfileOptionsBuilder.matrixOptions */
 export function matrixOptions(profile, caseDefs, extra = {}) {
-  if (profile === "ceiling") {
-    // No per-case SLO thresholds: a saturation run is expected to blow past them.
-    return ceilingOptions(extra);
-  }
-
-  const thresholds = commonThresholds(perCaseThresholds(caseDefs));
-  const mergedExtra = {
-    ...extra,
-    thresholds: {
-      ...thresholds,
-      ...(extra.thresholds ?? {}),
-    },
-  };
-
-  if (profile === "load") {
-    return loadOptions(mergedExtra);
-  }
-  if (profile === "stress") {
-    return stressOptions(mergedExtra);
-  }
-  if (profile === "spike") {
-    return spikeOptions(mergedExtra);
-  }
-  if (profile === "soak") {
-    return soakOptions(mergedExtra);
-  }
-
-  throw new Error(`Unknown matrix profile '${profile}'`);
+  return new ProfileOptionsBuilder().matrixOptions(profile, caseDefs, extra);
 }

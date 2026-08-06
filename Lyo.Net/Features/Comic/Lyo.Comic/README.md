@@ -1,7 +1,6 @@
 # Lyo.Comic
 
-Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**, **`ComicAlternateTitle`**), hierarchical organization (**`ComicVolume`**, **`ComicChapter`**, *
-*`ComicPage`**), cast (**`ComicCharacter`**), query DTO (**`ComicSeriesQuery`**), enums **`ComicType`/`ComicStatus`**, plus the persistence façade **`IComicStore`**.
+Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**, **`ComicAlternateTitle`**), hierarchical organization (**`ComicVolume`**, **`ComicChapter`**, **`ComicPage`**), cast (**`ComicCharacter`**), query DTO (**`ComicSeriesQuery`**), enums **`ComicType`/`ComicStatus`**, plus the persistence façade **`IComicStore`**.
 
 ## `IComicStore` responsibilities
 

@@ -1,7 +1,6 @@
 # Lyo.Sms.Twilio.Postgres
 
-EF Core PostgreSQL persistence tailored for **Twilio-outbound (+ metadata)** traces: **`TwilioSmsDbContext`** and **`TwilioSmsLogEntity`**. Complements [
-`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md); it never calls Twilio by itself.
+EF Core PostgreSQL persistence tailored for **Twilio-outbound (+ metadata)** traces: **`TwilioSmsDbContext`** and **`TwilioSmsLogEntity`**. Complements [ `Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md); it never calls Twilio by itself.
 
 ---
 

@@ -3,7 +3,7 @@
   "name": "Lyo.Pdf.Ocr",
   "area": "Data",
   "tagline": "Glues `Lyo.Pdf.Rendering` (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.",
-  "description": "Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an\n`IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF\ncoordinate space.\n\nTargets `net10.0`.",
+  "description": "Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.\n\nTargets `net10.0`.",
   "features": [],
   "examples": [
     {

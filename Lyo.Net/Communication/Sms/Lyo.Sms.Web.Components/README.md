@@ -1,7 +1,6 @@
 # Lyo.Sms.Web.Components
 
-**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from [
-`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).
+**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from [ `Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).
 
 ---
 

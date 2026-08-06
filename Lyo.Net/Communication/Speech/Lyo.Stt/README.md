@@ -1,10 +1,6 @@
 # Lyo.Stt
 
-Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface
-(`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records,
-and metric name constants. **No provider implementations ship in this repository today** — applications
-that need transcription provide their own `SttServiceBase` subclass (or any `ISttService`) and register it
-through DI themselves.
+Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records, and metric name constants. **No provider implementations ship in this repository today** — applications that need transcription provide their own `SttServiceBase` subclass (or any `ISttService`) and register it through DI themselves.
 
 ## What ships — `ISttService`
 

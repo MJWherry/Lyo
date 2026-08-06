@@ -1,7 +1,6 @@
 # Lyo.Metrics
 
-A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and
-implementations.
+A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and implementations.
 
 ## Features
 

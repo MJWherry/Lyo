@@ -1,7 +1,6 @@
 # Lyo.Images.Ocr.Tesseract
 
-**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely
-concurrent.
+**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.
 
 ## Examples
 

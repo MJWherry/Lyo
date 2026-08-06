@@ -1,7 +1,6 @@
 # Lyo.EntityReference.Models
 
-Portable primitives for **entity references** in Lyo: a typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), plus helpers for composite keys, JSON,
-opaque tokens, validation, and domain row shapes. **No database or EF dependency.**
+Portable primitives for **entity references** in Lyo: a typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), plus helpers for composite keys, JSON, opaque tokens, validation, and domain row shapes. **No database or EF dependency.**
 
 ## Examples
 

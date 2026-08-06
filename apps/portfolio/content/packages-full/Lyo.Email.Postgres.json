@@ -3,7 +3,7 @@
   "name": "Lyo.Email.Postgres",
   "area": "Communication",
   "tagline": "PostgreSQL schema and `EmailDbContext` for logging emails sent by `Lyo.Email`. This package does **not** subscribe to `EmailService` events — consumers handle the mapping and insertion (e.g.",
-  "description": "PostgreSQL schema and `EmailDbContext` for logging emails sent by [`Lyo.Email`](../Lyo.Email/README.md).\nThis package does **not** subscribe to `EmailService` events — consumers handle the mapping and\ninsertion (e.g. from the `EmailSent` / `BulkEmailSent` events) into the tables exposed here.",
+  "description": "PostgreSQL schema and `EmailDbContext` for logging emails sent by [`Lyo.Email`](../Lyo.Email/README.md). This package does **not** subscribe to `EmailService` events — consumers handle the mapping and insertion (e.g. from the `EmailSent` / `BulkEmailSent` events) into the tables exposed here.",
   "features": [],
   "examples": [
     {

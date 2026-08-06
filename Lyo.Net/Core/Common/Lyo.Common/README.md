@@ -1,11 +1,8 @@
 # Lyo.Common
 
-Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared
-`System.Text.Json` options.
+Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared `System.Text.Json` options.
 
-> **Note** — earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in *
-*[`Lyo.Result`](../../Result/Lyo.Result/README.md)**, not here. `Lyo.Common` has **no** dependency on results — it sits below them and provides primitives that the rest of the
-> framework composes.
+> **Note** — earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in **[`Lyo.Result`](../../Result/Lyo.Result/README.md)**, not here. `Lyo.Common` has **no** dependency on results — it sits below them and provides primitives that the rest of the > framework composes.
 
 ## Features
 

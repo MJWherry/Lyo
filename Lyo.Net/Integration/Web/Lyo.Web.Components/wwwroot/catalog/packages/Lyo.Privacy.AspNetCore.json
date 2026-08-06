@@ -3,7 +3,7 @@
   "name": "Lyo.Privacy.AspNetCore",
   "area": "Core",
   "tagline": "ASP.NET Core DI integration for `Lyo.Privacy`: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and supports keyed per-tenant or per-feature…",
-  "description": "ASP.NET Core DI integration for [`Lyo.Privacy`](../Lyo.Privacy/README.md): registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and\nsupports keyed per-tenant or per-feature policies.",
+  "description": "ASP.NET Core DI integration for [`Lyo.Privacy`](../Lyo.Privacy/README.md): registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and supports keyed per-tenant or per-feature policies.",
   "features": [],
   "examples": [
     {

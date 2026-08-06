@@ -1,7 +1,6 @@
 # Lyo.Diff
 
-Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you
-can also inject independently.
+Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you can also inject independently.
 
 ## Examples
 

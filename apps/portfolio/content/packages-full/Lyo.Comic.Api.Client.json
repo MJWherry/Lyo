@@ -3,7 +3,7 @@
   "name": "Lyo.Comic.Api.Client",
   "area": "Apps",
   "tagline": "Typed **`HttpClient`** for the `Lyo.Comic.Api` service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI…",
-  "description": "Typed **`HttpClient`** for the [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single\n**`AddComicApiClientFromConfiguration`** DI extension that binds **`ComicApiClientOptions`** from configuration.",
+  "description": "Typed **`HttpClient`** for the [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI extension that binds **`ComicApiClientOptions`** from configuration.",
   "features": [
     "Binds `ComicApiClientOptions` from the section named by `configSectionName` (defaults to **`\"ComicApi\"`**, see `ComicApiClientOptions.SectionName`). The section is optional — if it does not exist the defaults from `ApiClientOptions` are used.",
     "Registers `IOptions<ComicApiClientOptions>` and the resolved options instance as singletons.",

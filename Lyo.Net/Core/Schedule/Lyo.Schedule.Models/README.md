@@ -1,7 +1,6 @@
 # Lyo.Schedule.Models
 
-DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a
-transport-friendly representation of "when does this run".
+DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a transport-friendly representation of "when does this run".
 
 ## Examples
 

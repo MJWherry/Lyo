@@ -3,7 +3,7 @@
   "name": "Lyo.ChangeTracker.Postgres",
   "area": "Core",
   "tagline": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional actor.",
-  "description": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional\nactor.",
+  "description": "PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional actor.",
   "features": [
     "`PostgresChangeTracker` implementing both `IChangeTracker` and `Lyo.Health.IHealth`",
     "EF Core migrations in the `change_tracker` schema (`PostgresChangeTrackerOptions.Schema`)",

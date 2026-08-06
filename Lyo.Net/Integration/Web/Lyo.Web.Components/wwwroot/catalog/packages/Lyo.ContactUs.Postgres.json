@@ -3,7 +3,7 @@
   "name": "Lyo.ContactUs.Postgres",
   "area": "Features",
   "tagline": "PostgreSQL + EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) backed by `ContactUsDbContext`, `PostgresContactUsOptions`, and…",
-  "description": "PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) backed by `ContactUsDbContext`,\n`PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` for auto-applied schema upgrades on host startup.",
+  "description": "PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) backed by `ContactUsDbContext`, `PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` for auto-applied schema upgrades on host startup.",
   "features": [],
   "examples": [],
   "sections": [

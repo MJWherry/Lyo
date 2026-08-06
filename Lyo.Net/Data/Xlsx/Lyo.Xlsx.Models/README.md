@@ -1,9 +1,6 @@
 # Lyo.Xlsx.Models
 
-Interfaces and value types for the Lyo XLSX stack. Defines the contract implemented by
-[`Lyo.Xlsx`](../Lyo.Xlsx/README.md) so consumers can depend on `IXlsxService` /
-`IXlsxReader` / `IXlsxWriter` without pulling in ClosedXML or ExcelDataReader
-directly.
+Interfaces and value types for the Lyo XLSX stack. Defines the contract implemented by [`Lyo.Xlsx`](../Lyo.Xlsx/README.md) so consumers can depend on `IXlsxService` / `IXlsxReader` / `IXlsxWriter` without pulling in ClosedXML or ExcelDataReader directly.
 
 ## Interfaces
 

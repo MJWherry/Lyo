@@ -3,7 +3,7 @@
   "name": "Lyo.Comic.Web.Components",
   "area": "Features",
   "tagline": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader.",
-  "description": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader.\nThe library is data-source agnostic: every component takes the data it needs as parameters and asks the host to provide async callbacks for fetching pages, resolving cover\nURLs, and emitting navigation events. There is no DI registration step.",
+  "description": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader. The library is data-source agnostic: every component takes the data it needs as parameters and asks the host to provide async callbacks for fetching pages, resolving cover URLs, and emitting navigation events. There is no DI registration step.",
   "features": [],
   "examples": [
     {

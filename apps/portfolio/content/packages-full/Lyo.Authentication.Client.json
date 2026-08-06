@@ -3,7 +3,7 @@
   "name": "Lyo.Authentication.Client",
   "area": "Security",
   "tagline": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to…",
-  "description": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a\nBlazor Server gateway or a server-rendered API consumer) into a Lyo\nauthentication API without ever exposing tokens to the browser.",
+  "description": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to the browser.",
   "features": [],
   "examples": [
     {

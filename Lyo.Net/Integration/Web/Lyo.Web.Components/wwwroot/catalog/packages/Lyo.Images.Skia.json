@@ -3,7 +3,7 @@
   "name": "Lyo.Images.Skia",
   "area": "Data",
   "tagline": "**SkiaSharp** implementation of **`IImageService`** from `Lyo.Images`: resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based…",
-  "description": "**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression,\nmetadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.",
+  "description": "**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.",
   "features": [],
   "examples": [
     {

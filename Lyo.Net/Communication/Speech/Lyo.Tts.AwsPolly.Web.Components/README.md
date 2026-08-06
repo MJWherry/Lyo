@@ -1,7 +1,6 @@
 # Lyo.Tts.AwsPolly.Web.Components
 
-Blazor (MudBlazor) workbench component for trying out the [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md)
-implementation interactively from a host application.
+Blazor (MudBlazor) workbench component for trying out the [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) implementation interactively from a host application.
 
 ## Components
 

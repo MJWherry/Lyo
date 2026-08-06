@@ -3,7 +3,7 @@
   "name": "Lyo.Email.Models",
   "area": "Communication",
   "tagline": "Shared models, options, error codes, and event arguments for the `Lyo.Email` SMTP service.",
-  "description": "Shared models, options, error codes, and event arguments for the [`Lyo.Email`](../Lyo.Email/README.md)\nSMTP service.",
+  "description": "Shared models, options, error codes, and event arguments for the [`Lyo.Email`](../Lyo.Email/README.md) SMTP service.",
   "features": [],
   "examples": [],
   "sections": [

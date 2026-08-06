@@ -2,8 +2,8 @@
   "id": "Lyo.Streams",
   "name": "Lyo.Streams",
   "area": "Core",
-  "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: * *`HashingStream`**).",
-  "description": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: *\n*`HashingStream`**).",
+  "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).",
+  "description": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).",
   "features": [
     "**TeeStream** – Duplicate stream output to multiple destinations",
     "**CountingStream** – Track bytes read or written",

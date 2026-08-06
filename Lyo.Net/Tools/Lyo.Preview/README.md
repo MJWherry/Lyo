@@ -1,11 +1,8 @@
 # Lyo.Preview
 
-Cross-platform preview in the system default browser. The default implementation, `BrowserPreview`, spins up an `HttpListener` on `127.0.0.1` (random free port), registers one byte
-buffer per call under a `/p/{id}` path, opens the URL in the OS browser, and releases the entry as soon as the browser fetches it. CSV and XLSX content is converted to an HTML
-table before serving so the browser doesn't try to download it.
+Cross-platform preview in the system default browser. The default implementation, `BrowserPreview`, spins up an `HttpListener` on `127.0.0.1` (random free port), registers one byte buffer per call under a `/p/{id}` path, opens the URL in the OS browser, and releases the entry as soon as the browser fetches it. CSV and XLSX content is converted to an HTML table before serving so the browser doesn't try to download it.
 
-**Supported types:** PDF, HTML, PNG, JPEG, GIF, BMP, SVG, WebP, TIFF, TXT, JSON, XML, CSV, XLSX. Anything else throws `NotSupportedException`. XLSX additionally requires an
-`IXlsxService` to be available in DI (see [DI registration](#di-registration)).
+**Supported types:** PDF, HTML, PNG, JPEG, GIF, BMP, SVG, WebP, TIFF, TXT, JSON, XML, CSV, XLSX. Anything else throws `NotSupportedException`. XLSX additionally requires an `IXlsxService` to be available in DI (see [DI registration](#di-registration)).
 
 ## Examples
 

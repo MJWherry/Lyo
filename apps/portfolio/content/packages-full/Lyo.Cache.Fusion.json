@@ -2,8 +2,8 @@
   "id": "Lyo.Cache.Fusion",
   "name": "Lyo.Cache.Fusion",
   "area": "Core",
-  "tagline": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between * *purely in-memory**…",
-  "description": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between *\n*purely in-memory** [`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) and **Fusion + optional Redis backplane** without rewriting call sites.",
+  "tagline": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between **purely in-memory**…",
+  "description": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between **purely in-memory** [`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) and **Fusion + optional Redis backplane** without rewriting call sites.",
   "features": [],
   "examples": [],
   "sections": [

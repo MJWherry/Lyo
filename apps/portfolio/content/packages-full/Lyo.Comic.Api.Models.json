@@ -3,7 +3,7 @@
   "name": "Lyo.Comic.Api.Models",
   "area": "Apps",
   "tagline": "Request and response DTOs shared between `Lyo.Comic.Api` and `Lyo.Comic.Api.Client`.",
-  "description": "Request and response DTOs shared between [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) and [`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md). Targets\n**`netstandard2.0`** and **`net10.0`** so the same contracts can be referenced from any host (server, Blazor, MAUI, console).\n\nThe package brings in comic domain types via [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) (for `ComicType` / `ComicStatus` enums and `ComicSeriesQuery`) and\n[`Lyo.Api.Models`](../../../Integration/Api/Lyo.Api.Models/README.md) when shared API envelopes or error contracts are needed.\n\n**`IComicApiClient`**, HTTP client implementation, and DI registration live in **[`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md)** (not this assembly).",
+  "description": "Request and response DTOs shared between [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) and [`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md). Targets **`netstandard2.0`** and **`net10.0`** so the same contracts can be referenced from any host (server, Blazor, MAUI, console).\n\nThe package brings in comic domain types via [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) (for `ComicType` / `ComicStatus` enums and `ComicSeriesQuery`) and [`Lyo.Api.Models`](../../../Integration/Api/Lyo.Api.Models/README.md) when shared API envelopes or error contracts are needed.\n\n**`IComicApiClient`**, HTTP client implementation, and DI registration live in **[`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md)** (not this assembly).",
   "features": [],
   "examples": [],
   "sections": [

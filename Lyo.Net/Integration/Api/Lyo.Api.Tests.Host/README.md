@@ -1,7 +1,6 @@
 # Lyo.Api.Tests.Host
 
-Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target. It wires a realistic combination of
-`Lyo.Api` services so tests exercise the same registration and middleware paths as production hosts.
+Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target. It wires a realistic combination of `Lyo.Api` services so tests exercise the same registration and middleware paths as production hosts.
 
 ## Examples
 

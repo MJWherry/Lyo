@@ -3,7 +3,7 @@
   "name": "Lyo.Endato.Client",
   "area": "Integration",
   "tagline": "Typed HTTP client for the Endato data-enrichment REST API.",
-  "description": "Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.\n\n**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [\n`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` /\n`EndatoCePerson` on **`source_entity_*`**). See [package layout](../../../docs/package-layout.md).\n\nSubclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.",
+  "description": "Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.\n\n**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [ `Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on **`source_entity_*`**). See [package layout](../../../docs/package-layout.md).\n\nSubclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.",
   "features": [],
   "examples": [
     {

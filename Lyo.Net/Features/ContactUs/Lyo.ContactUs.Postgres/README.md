@@ -1,7 +1,6 @@
 # Lyo.ContactUs.Postgres
 
-PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) backed by `ContactUsDbContext`,
-`PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` for auto-applied schema upgrades on host startup.
+PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) backed by `ContactUsDbContext`, `PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` for auto-applied schema upgrades on host startup.
 
 ## What ships
 

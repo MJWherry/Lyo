@@ -1,8 +1,6 @@
 # Lyo.Comment
 
-Abstractions for attaching threaded, reactable comments to any entity. Each
-comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and cached
-like/dislike counters maintained via the reaction methods.
+Abstractions for attaching threaded, reactable comments to any entity. Each comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and cached like/dislike counters maintained via the reaction methods.
 
 ## Examples
 

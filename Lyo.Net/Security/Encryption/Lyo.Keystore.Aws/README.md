@@ -1,11 +1,8 @@
 # Lyo.Keystore.Aws
 
-**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and
-key-rotation jobs can both encrypt against it and enumerate available `keyId`s / versions.
+**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs can both encrypt against it and enumerate available `keyId`s / versions.
 
-The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-material", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId`
-stages; unresolved version requests fall through to `AWSCURRENT`. String values run through key derivation so callers receive cryptographic-length KEK bytes usable by
-`AesGcmEncryptionService` and the other symmetric services in `Lyo.Encryption`.
+The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-material", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` stages; unresolved version requests fall through to `AWSCURRENT`. String values run through key derivation so callers receive cryptographic-length KEK bytes usable by `AesGcmEncryptionService` and the other symmetric services in `Lyo.Encryption`.
 
 ## `AwsKeyStore` API
 

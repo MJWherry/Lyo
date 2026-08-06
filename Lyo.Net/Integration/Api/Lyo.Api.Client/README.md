@@ -1,7 +1,6 @@
 # Lyo.Api.Client
 
-HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and *
-*`System.Text.Json`** parity with server options when you wire them.
+HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with server options when you wire them.
 
 Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—resolve via **`IHttpClientFactory`** so lifetimes stay correct in DI).
 

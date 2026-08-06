@@ -3,7 +3,7 @@
   "name": "Lyo.Comic.Api",
   "area": "Apps",
   "tagline": "ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with…",
-  "description": "ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file\nupload/download** with optional **compression and envelope encryption**, and **enriched reads** that batch-load related data through **`Lyo.Api`** query services.",
+  "description": "ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with optional **compression and envelope encryption**, and **enriched reads** that batch-load related data through **`Lyo.Api`** query services.",
   "features": [],
   "examples": [
     {

@@ -1,20 +1,8 @@
 # Lyo.HomeInventory.Postgres
 
-EF Core implementation of [`IHomeInventoryStore`](../Lyo.HomeInventory/README.md)
-backed by PostgreSQL.
+EF Core implementation of [`IHomeInventoryStore`](../Lyo.HomeInventory/README.md) backed by PostgreSQL.
 
-- `HomeInventoryDbContext` models items, categories, locations, stock, and the
-  movement ledger (see `Database/*` plus the migrations snapshot for the
-  authoritative FK / cascade story).
-- `PostgresHomeInventoryStore` runs stock adjustments and transfers inside
-  database transactions (`BeginTransactionAsync`) so the stock row and its
-  paired movement row commit atomically.
-- The store also implements `Lyo.Health.IHealth`
-  (`HealthCheckName = "home-inventory-postgres"`), so registering the store
-  exposes a database liveness probe.
-- Schema constant: `PostgresHomeInventoryOptions.Schema = "home_inventory"`.
-  The default configuration section name is `PostgresHomeInventory`
-  (`PostgresHomeInventoryOptions.SectionName`).
+- `HomeInventoryDbContext` models items, categories, locations, stock, and the movement ledger (see `Database/*` plus the migrations snapshot for the authoritative FK / cascade story). - `PostgresHomeInventoryStore` runs stock adjustments and transfers inside database transactions (`BeginTransactionAsync`) so the stock row and its paired movement row commit atomically. - The store also implements `Lyo.Health.IHealth` (`HealthCheckName = "home-inventory-postgres"`), so registering the store exposes a database liveness probe. - Schema constant: `PostgresHomeInventoryOptions.Schema = "home_inventory"`. The default configuration section name is `PostgresHomeInventory` (`PostgresHomeInventoryOptions.SectionName`).
 
 ## Examples
 

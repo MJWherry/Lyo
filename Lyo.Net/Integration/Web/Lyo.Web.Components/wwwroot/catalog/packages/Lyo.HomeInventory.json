@@ -3,7 +3,7 @@
   "name": "Lyo.HomeInventory",
   "area": "Features",
   "tagline": "Portable contract for **household inventory** — large purchases (electronics, appliances) with warranty tracking, kitchen consumables stocked across pantries / freezers, and bin locations in garages.",
-  "description": "Portable contract for **household inventory** — large purchases (electronics,\nappliances) with warranty tracking, kitchen consumables stocked across\npantries / freezers, and bin locations in garages. Domain records\n(`HomeItemRecord`, `HomeCategoryRecord`, `HomeLocationRecord`,\n`HomeItemStockRecord`, `HomeItemMovementRecord`) are keyed by `Guid`, and all\noperations flow through `IHomeInventoryStore`.",
+  "description": "Portable contract for **household inventory** — large purchases (electronics, appliances) with warranty tracking, kitchen consumables stocked across pantries / freezers, and bin locations in garages. Domain records (`HomeItemRecord`, `HomeCategoryRecord`, `HomeLocationRecord`, `HomeItemStockRecord`, `HomeItemMovementRecord`) are keyed by `Guid`, and all operations flow through `IHomeInventoryStore`.",
   "features": [],
   "examples": [],
   "sections": [

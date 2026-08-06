@@ -3,7 +3,7 @@
   "name": "Lyo.Profanity",
   "area": "Features",
   "tagline": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
-  "description": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement\nstrategies.",
+  "description": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
   "features": [
     "**Word sources** – JSON file, HTTP URL, or per-language `WordsByLanguage`",
     "**Format support** – Structured JSON (`[{ id, match, tags, severity, exceptions }]`), plain array `[\"word1\", \"word2\"]`, or plain newline-separated text (one word per line)",

@@ -3,7 +3,7 @@
   "name": "Lyo.Schedule.Models",
   "area": "Core",
   "tagline": "DTO-only assembly that describes a schedule. Used by `Lyo.Scheduler`, `Lyo.Job.Postgres`, and any consumer that needs a transport-friendly representation of \"when does this run\".",
-  "description": "DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a\ntransport-friendly representation of \"when does this run\".",
+  "description": "DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a transport-friendly representation of \"when does this run\".",
   "features": [],
   "examples": [
     {

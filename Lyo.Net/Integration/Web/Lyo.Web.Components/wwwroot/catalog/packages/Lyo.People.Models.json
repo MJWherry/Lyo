@@ -3,7 +3,7 @@
   "name": "Lyo.People.Models",
   "area": "Core",
   "tagline": "People and person-related models for the Lyo library suite.",
-  "description": "People and person-related models for the Lyo library suite.\n\n**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C; map into `people.*` in the host.\nSee [package layout](../../../docs/package-layout.md).",
+  "description": "People and person-related models for the Lyo library suite.\n\n**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C; map into `people.*` in the host. See [package layout](../../../docs/package-layout.md).",
   "features": [],
   "examples": [
     {

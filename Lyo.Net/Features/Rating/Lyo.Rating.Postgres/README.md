@@ -1,18 +1,8 @@
 # Lyo.Rating.Postgres
 
-PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists
-ratings to the `rating.rating` table and reactions to `rating.rating_reaction`
-(schema constant: `PostgresRatingOptions.Schema = "rating"`) with migrations
-support. Ratings have **subject** / **actor** (`for_entity_*` / `from_entity_*`) and an
-optional rating-axis **Subject** field (e.g. `"scary"`, `"action"`). Multiple ratings per entity
-per user are allowed — one per subject, where `subject = null` is the general
-rating. `Value` is optional (a review can be text-only), and reactions
-(`Like` / `Dislike`) are kept in a sibling table while their counts are cached
-back onto the parent rating.
+PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to the `rating.rating` table and reactions to `rating.rating_reaction` (schema constant: `PostgresRatingOptions.Schema = "rating"`) with migrations support. Ratings have **subject** / **actor** (`for_entity_*` / `from_entity_*`) and an optional rating-axis **Subject** field (e.g. `"scary"`, `"action"`). Multiple ratings per entity per user are allowed — one per subject, where `subject = null` is the general rating. `Value` is optional (a review can be text-only), and reactions (`Like` / `Dislike`) are kept in a sibling table while their counts are cached back onto the parent rating.
 
-`PostgresRatingStore` implements `IRatingStore` and `Lyo.Health.IHealth`
-(`HealthCheckName = "rating-postgres"`), so registering the store also wires up
-a liveness probe.
+`PostgresRatingStore` implements `IRatingStore` and `Lyo.Health.IHealth` (`HealthCheckName = "rating-postgres"`), so registering the store also wires up a liveness probe.
 
 ## Examples
 

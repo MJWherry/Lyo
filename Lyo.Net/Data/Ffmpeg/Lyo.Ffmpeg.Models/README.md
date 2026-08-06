@@ -1,8 +1,6 @@
 # Lyo.Ffmpeg.Models
 
-Engine-neutral **contracts and models** for [`Lyo.Ffmpeg`](../Lyo.Ffmpeg/README.md): the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their
-request/options shapes (`AudioConversionRequest`, `AudioConversionOptions`), the probe result type (`AudioProbeResult`), and global host configuration (`FfmpegOptions` +
-`FfmpegProcessOutputMode`).
+Engine-neutral **contracts and models** for [`Lyo.Ffmpeg`](../Lyo.Ffmpeg/README.md): the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`, `AudioConversionOptions`), the probe result type (`AudioProbeResult`), and global host configuration (`FfmpegOptions` + `FfmpegProcessOutputMode`).
 
 This package has **no DI surface** — registration lives in `Lyo.Ffmpeg`. Reference it from libraries that only need the abstractions (mocking, custom backends, host bindings).
 

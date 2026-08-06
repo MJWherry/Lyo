@@ -1,9 +1,6 @@
 # Lyo.Favorite
 
-Abstractions for "X favorited Y" relationships across any two entities. The API
-accepts `EntityRef` at the boundary (so any feature can produce a favorite);
-the default Postgres store persists subject/actor as **nullable varchar** (`for_entity_*` / `from_entity_*` columns), using **`EntityRefPersistedGuid.PersistedEntityId()`** when
-callers pass Guid strings in `EntityRef.EntityId`.
+Abstractions for "X favorited Y" relationships across any two entities. The API accepts `EntityRef` at the boundary (so any feature can produce a favorite); the default Postgres store persists subject/actor as **nullable varchar** (`for_entity_*` / `from_entity_*` columns), using **`EntityRefPersistedGuid.PersistedEntityId()`** when callers pass Guid strings in `EntityRef.EntityId`.
 
 ## Surface — `IFavoriteStore`
 

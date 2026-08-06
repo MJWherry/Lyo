@@ -1,7 +1,6 @@
 # Lyo.Webhook.Twilio
 
-**Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value**
-form parameters, matching Twilio’s server-side behavior (including URL variants with/without an explicit default port).
+**Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value** form parameters, matching Twilio’s server-side behavior (including URL variants with/without an explicit default port).
 
 Reference: [Twilio — Webhooks security](https://www.twilio.com/docs/usage/webhooks/webhooks-security).
 

@@ -1,16 +1,8 @@
 # Lyo.Xlsx
 
-Implementation of
-[`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an
-`XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader`
-(ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams,
-and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`.
-Multi-targets `netstandard2.0;net10.0`; async, custom-header, and formatter export
-overloads are only available on `net10.0`.
+Implementation of [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams, and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`. Multi-targets `netstandard2.0;net10.0`; async, custom-header, and formatter export overloads are only available on `net10.0`.
 
-Export streams rows straight into the worksheet part via `OpenXmlWriter`, keeping
-memory bounded regardless of row count. Column widths are approximated from a bounded
-sample of the leading rows rather than a full-workbook auto-fit pass.
+Export streams rows straight into the worksheet part via `OpenXmlWriter`, keeping memory bounded regardless of row count. Column widths are approximated from a bounded sample of the leading rows rather than a full-workbook auto-fit pass.
 
 ## Features
 

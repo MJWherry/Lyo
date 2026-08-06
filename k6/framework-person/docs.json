@@ -1,34 +1,36 @@
 {
   "id": "k6.framework-person",
   "name": "k6 framework-person matrix",
-  "tagline": "Load / stress / spike / soak / ceiling matrix for person Query APIs.",
-  "description": "Python matrix runner builds shared TypeScript clients, runs selected k6 scenarios, then refreshes the load-test dashboard via build_manifests.py --k6-only. Scenario details and env vars live in the hand-maintained k6/framework-person/README.md.",
+  "tagline": "Intensity × cache matrix for person Query APIs (load/stress/spike/soak/ceiling).",
+  "description": "Python MatrixPlanner expands endpoint × profile × intensity (low/med/high) × cache (uncached/cached) cells, pins RANDOM_SEED, invokes k6 via K6ProcessRunner, then refreshes the dashboard with build_manifests.py --k6-only. Scenario details live in k6/framework-person/README.md.",
   "commands": [
     {
       "cmd": "python3 k6/framework-person/run_all.py",
-      "blurb": "Run the full matrix"
+      "blurb": "Full matrix (90 cells: 3×5×3×2)"
     },
     {
-      "cmd": "python3 k6/framework-person/run_all.py spike",
-      "blurb": "Spike profile across query endpoints"
+      "cmd": "python3 k6/framework-person/run_all.py nonsoak med uncached",
+      "blurb": "Day-run slice without soak"
     },
     {
-      "cmd": "python3 k6/framework-person/run_all.py query spike",
-      "blurb": "Combine group aliases / keywords"
+      "cmd": "python3 k6/framework-person/run_all.py query load med",
+      "blurb": "One endpoint/profile/intensity × both cache modes"
     },
     {
-      "cmd": "MODE=smoke python3 k6/framework-person/run_all.py",
-      "blurb": "One VU / one iteration per selected test"
+      "cmd": "python3 k6/framework-person/run_all.py spike high uncached",
+      "blurb": "Spike high intensity, cache-miss only"
     },
     {
-      "cmd": "CACHE_HIT_MODE=true RUN_LABEL=ceiling-cached python3 k6/framework-person/run_all.py ceiling",
-      "blurb": "Saturation runs with cache-hit request shapes"
+      "cmd": "MODE=smoke python3 k6/framework-person/run_all.py query load med",
+      "blurb": "One VU / one iteration per planned cell"
     }
   ],
   "notes": [
-    "TEST_FILTER accepts comma-separated keywords (same as CLI args)",
-    "Results land under k6/framework-person/results/<optional-label-><timestamp>/",
-    "CONTINUE_ON_FAILURE=true keeps going after a failed scenario"
+    "Keywords AND across axes (endpoint/profile/intensity/cache); OR within an axis",
+    "Results: {endpoint}_{profile}_{intensity}_{cached|uncached}.summary.json under results/<optional-label-><timestamp>/",
+    "RANDOM_SEED=20260623 is always pinned by run_all.py",
+    "CONTINUE_ON_FAILURE=true keeps going after a failed cell",
+    "TEST_FILTER accepts comma-separated keywords (same as CLI args)"
   ],
   "readmePath": "k6/framework-person/TOOLING.md"
 }

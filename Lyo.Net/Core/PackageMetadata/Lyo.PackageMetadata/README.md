@@ -1,7 +1,6 @@
 # Lyo.PackageMetadata
 
-Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace
-namespaces with persisted package/catalog data.
+Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace namespaces with persisted package/catalog data.
 
 ## Public surface
 

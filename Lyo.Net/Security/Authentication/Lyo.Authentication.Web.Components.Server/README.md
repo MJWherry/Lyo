@@ -1,7 +1,6 @@
 # Lyo.Authentication.Web.Components.Server
 
-Blazor Server host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Plugs the shared login / debug / profile pages into the
-BFF-cookie auth runtime in [`Lyo.Authentication.Client`](../Lyo.Authentication.Client/README.md).
+Blazor Server host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Plugs the shared login / debug / profile pages into the BFF-cookie auth runtime in [`Lyo.Authentication.Client`](../Lyo.Authentication.Client/README.md).
 
 ## Examples
 

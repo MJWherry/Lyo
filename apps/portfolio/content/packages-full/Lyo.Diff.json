@@ -3,7 +3,7 @@
   "name": "Lyo.Diff",
   "area": "Core",
   "tagline": "Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**.",
-  "description": "Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you\ncan also inject independently.",
+  "description": "Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you can also inject independently.",
   "features": [],
   "examples": [
     {

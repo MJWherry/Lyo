@@ -1,4 +1,6 @@
 import { env, toBool, toFloat, toInt } from "./env.js";
+import { MATRIX_SEED } from "./matrixAxes.js";
+import { defaultCacheModePolicy } from "./cacheModePolicy.js";
 
 function normalizeKey(value) {
   return String(value || "")
@@ -33,7 +35,7 @@ export function requestSeed({
   iter = 0,
   vu = 0,
 } = {}) {
-  const baseSeed = toInt("RANDOM_SEED", 20260623) >>> 0;
+  const baseSeed = toInt("RANDOM_SEED", MATRIX_SEED) >>> 0;
   const stable = `${namespace}|${caseId}|${endpointKind}|${profile}`;
   const mix = fnv1a32(stable);
   const iterMix = (Math.imul((iter + 1) >>> 0, 2654435761) ^ Math.imul((vu + 11) >>> 0, 2246822519)) >>> 0;
@@ -143,16 +145,13 @@ export function navBranchRates(prefix = "") {
   };
 }
 
-/** True when CACHE_HIT_MODE pins request shapes for server cache hits. */
+/** True when cache mode pins request shapes for server cache hits. */
 export function cacheHitMode() {
-  return toBool("CACHE_HIT_MODE", false);
+  return defaultCacheModePolicy().isCached;
 }
 
 export function shouldRandomize(flagName, fallback = true) {
-  if (cacheHitMode()) {
-    return false;
-  }
-  return toBool(flagName, fallback);
+  return defaultCacheModePolicy().allowsShapeRandomization(toBool(flagName, fallback));
 }
 
 export function parseFieldPool(keys, fallbackCsv) {

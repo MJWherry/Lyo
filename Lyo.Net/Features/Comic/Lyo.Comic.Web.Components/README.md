@@ -1,8 +1,6 @@
 # Lyo.Comic.Web.Components
 
-Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader.
-The library is data-source agnostic: every component takes the data it needs as parameters and asks the host to provide async callbacks for fetching pages, resolving cover
-URLs, and emitting navigation events. There is no DI registration step.
+Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader. The library is data-source agnostic: every component takes the data it needs as parameters and asks the host to provide async callbacks for fetching pages, resolving cover URLs, and emitting navigation events. There is no DI registration step.
 
 ## Examples
 

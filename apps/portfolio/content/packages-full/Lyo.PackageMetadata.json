@@ -3,7 +3,7 @@
   "name": "Lyo.PackageMetadata",
   "area": "Core",
   "tagline": "Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace namespaces with…",
-  "description": "Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace\nnamespaces with persisted package/catalog data.",
+  "description": "Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace namespaces with persisted package/catalog data.",
   "features": [],
   "examples": [],
   "sections": [

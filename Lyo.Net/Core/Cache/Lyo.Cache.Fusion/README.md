@@ -1,7 +1,6 @@
 # Lyo.Cache.Fusion
 
-**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between *
-*purely in-memory** [`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) and **Fusion + optional Redis backplane** without rewriting call sites.
+**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between **purely in-memory** [`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) and **Fusion + optional Redis backplane** without rewriting call sites.
 
 ## What Fusion buys you
 

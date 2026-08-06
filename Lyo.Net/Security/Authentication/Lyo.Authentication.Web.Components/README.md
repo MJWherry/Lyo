@@ -1,7 +1,6 @@
 # Lyo.Authentication.Web.Components
 
-Host-agnostic Razor / MudBlazor components for Lyo authentication. Ships the **Login**, **Auth Debug**, and **Profile** pages plus the abstractions that the host adapter (
-`Lyo.Authentication.Web.Components.Server` or `Lyo.Authentication.Web.Components.Wasm`) plugs into.
+Host-agnostic Razor / MudBlazor components for Lyo authentication. Ships the **Login**, **Auth Debug**, and **Profile** pages plus the abstractions that the host adapter ( `Lyo.Authentication.Web.Components.Server` or `Lyo.Authentication.Web.Components.Wasm`) plugs into.
 
 ## Examples
 

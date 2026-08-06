@@ -1,12 +1,8 @@
 # Lyo.Config.Api
 
-HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../../Features/Config/Lyo.Config/README.md). Microservices resolve merged config per
-deployment identity
-and poll using **ETags** or an optional **`version`** query mirror.
+HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../../Features/Config/Lyo.Config/README.md). Microservices resolve merged config per deployment identity and poll using **ETags** or an optional **`version`** query mirror.
 
-Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**. The HTTP typed client and *
-*`AddConfigApiClientFromConfiguration`** live in **`Lyo.Config.Api.Client`** ([readme](../Lyo.Config.Api.Client/README.md)). Route slug → **`EntityRef`** mapping uses *
-*`AppConfigEntity`** from **`Lyo.Config`**. Polling plus **`IOptionsMonitor<T>`** is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)**.
+Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**. The HTTP typed client and **`AddConfigApiClientFromConfiguration`** live in **`Lyo.Config.Api.Client`** ([readme](../Lyo.Config.Api.Client/README.md)). Route slug → **`EntityRef`** mapping uses **`AppConfigEntity`** from **`Lyo.Config`**. Polling plus **`IOptionsMonitor<T>`** is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)**.
 
 ## Examples
 

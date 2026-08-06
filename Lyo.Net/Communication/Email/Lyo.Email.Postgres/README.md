@@ -1,8 +1,6 @@
 # Lyo.Email.Postgres
 
-PostgreSQL schema and `EmailDbContext` for logging emails sent by [`Lyo.Email`](../Lyo.Email/README.md).
-This package does **not** subscribe to `EmailService` events — consumers handle the mapping and
-insertion (e.g. from the `EmailSent` / `BulkEmailSent` events) into the tables exposed here.
+PostgreSQL schema and `EmailDbContext` for logging emails sent by [`Lyo.Email`](../Lyo.Email/README.md). This package does **not** subscribe to `EmailService` events — consumers handle the mapping and insertion (e.g. from the `EmailSent` / `BulkEmailSent` events) into the tables exposed here.
 
 ## Examples
 

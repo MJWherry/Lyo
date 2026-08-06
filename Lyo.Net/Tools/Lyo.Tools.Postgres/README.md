@@ -1,7 +1,6 @@
 # Lyo.Tools.Postgres
 
-Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Useful for spinning a
-fresh local database up to the latest schema or stepping a single schema back to a specific migration.
+Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Useful for spinning a fresh local database up to the latest schema or stepping a single schema back to a specific migration.
 
 ## Entry point
 

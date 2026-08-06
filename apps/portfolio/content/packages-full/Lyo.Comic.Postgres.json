@@ -3,7 +3,7 @@
   "name": "Lyo.Comic.Postgres",
   "area": "Features",
   "tagline": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and `AddPostgresMigrations<ComicDbContext…",
-  "description": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and\n`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can auto-upgrade schema similarly to other Lyo feature modules.\n\n`PostgresComicStore` also implements **`Lyo.Health.IHealth`** so orchestrators can probe relational connectivity.",
+  "description": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and `AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can auto-upgrade schema similarly to other Lyo feature modules.\n\n`PostgresComicStore` also implements **`Lyo.Health.IHealth`** so orchestrators can probe relational connectivity.",
   "features": [],
   "examples": [],
   "sections": [

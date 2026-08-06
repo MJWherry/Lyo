@@ -2,6 +2,40 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lyo.local/catalog/section.schema.json",
   "title": "Lyo catalog section",
+  "$defs": {
+    "listItem": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Flat list bullet (markdown inline allowed)."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Optional bold label for the bullet."
+            },
+            "text": {
+              "type": "string",
+              "description": "Bullet body when not using a bare string."
+            },
+            "items": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/listItem" },
+              "description": "Nested sub-bullets."
+            }
+          },
+          "anyOf": [
+            { "required": ["text"] },
+            { "required": ["title"] },
+            { "required": ["items"] }
+          ]
+        }
+      ]
+    }
+  },
   "oneOf": [
     {
       "type": "object",
@@ -23,7 +57,7 @@
         "ordered": { "type": "boolean" },
         "items": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/listItem" }
         }
       }
     },

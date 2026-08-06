@@ -1,18 +1,10 @@
 # Lyo.Query.Models
 
-Filter / sort / projection DTOs and fluent builders for query requests. The same
-`WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into
-LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints
-(`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests
-build queries the same way.
+Filter / sort / projection DTOs and fluent builders for query requests. The same `WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints (`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests build queries the same way.
 
-Covers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`,
-sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`,
-`ProjectionQueryReqBuilder`, `QueryReqBuilder`).
+Covers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`).
 
-> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured
-> on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion),
-> not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
+> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
 
 Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
 

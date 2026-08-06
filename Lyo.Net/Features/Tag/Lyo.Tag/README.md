@@ -1,8 +1,6 @@
 # Lyo.Tag
 
-Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef`
-(what is tagged) and optionally a second `EntityRef` (who applied the tag),
-so any feature in the framework can attach tags without a foreign-key coupling.
+Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef` (what is tagged) and optionally a second `EntityRef` (who applied the tag), so any feature in the framework can attach tags without a foreign-key coupling.
 
 ## Surface — `ITagStore`
 

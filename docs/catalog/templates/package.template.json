@@ -7,7 +7,17 @@
   "description": "Longer intro: what it is, when to use it, and the primary contracts (interfaces / Add* extensions).",
   "features": [
     "**Feature one** — short explanation",
-    "**Feature two** — short explanation"
+    {
+      "title": "Feature group",
+      "text": "Optional blurb for the group.",
+      "items": [
+        "Subfeature A",
+        {
+          "title": "Subfeature B",
+          "items": ["Detail one", "Detail two"]
+        }
+      ]
+    }
   ],
   "examples": [
     {

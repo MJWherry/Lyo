@@ -1,7 +1,6 @@
 # Lyo.Authentication.Models
 
-Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material,
-no DI; just records, format helpers, and a JWT parser.
+Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material, no DI; just records, format helpers, and a JWT parser.
 
 ## Examples
 

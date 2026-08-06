@@ -3,7 +3,7 @@
   "name": "Lyo.Translation",
   "area": "Communication",
   "tagline": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`. See package layout.",
-  "description": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`.\nSee [package layout](../../../docs/package-layout.md).\n\nContracts and shared behaviour for machine translation in Lyo: the `ITranslationService` interface,\n`TranslationServiceBase` (bulk pipeline + metrics + lifecycle events), error codes, metric key names,\nand a small DI helper.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "description": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`. See [package layout](../../../docs/package-layout.md).\n\nContracts and shared behaviour for machine translation in Lyo: the `ITranslationService` interface, `TranslationServiceBase` (bulk pipeline + metrics + lifecycle events), error codes, metric key names, and a small DI helper.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
   "features": [],
   "examples": [
     {

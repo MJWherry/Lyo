@@ -1,7 +1,6 @@
 # Lyo.ChangeTracker
 
-Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific
-aggregate.
+Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.
 
 ## Features
 

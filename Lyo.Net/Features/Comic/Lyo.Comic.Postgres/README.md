@@ -1,7 +1,6 @@
 # Lyo.Comic.Postgres
 
-PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and
-`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can auto-upgrade schema similarly to other Lyo feature modules.
+PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and `AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can auto-upgrade schema similarly to other Lyo feature modules.
 
 `PostgresComicStore` also implements **`Lyo.Health.IHealth`** so orchestrators can probe relational connectivity.
 

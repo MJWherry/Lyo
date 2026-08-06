@@ -1,7 +1,6 @@
 # Lyo.Espn.Fantasy.Football
 
-Typed read-only client for the ESPN fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`). Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization,
-Accept-Encoding, and request compression match the rest of the Lyo HTTP-client family.
+Typed read-only client for the ESPN fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`). Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and request compression match the rest of the Lyo HTTP-client family.
 
 ## Examples
 

@@ -1,8 +1,6 @@
 # Lyo.Scheduler.Cache
 
-Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Persists each schedule's `LastRunUtc` / `NextRunUtc` / state markers through [
-`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) so cron/interval/one-shot schedules survive process restarts without external infrastructure beyond whatever backs your cache (Fusion
-in-memory, Postgres, Redis, …).
+Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Persists each schedule's `LastRunUtc` / `NextRunUtc` / state markers through [ `Lyo.Cache`](../../Cache/Lyo.Cache/README.md) so cron/interval/one-shot schedules survive process restarts without external infrastructure beyond whatever backs your cache (Fusion in-memory, Postgres, Redis, …).
 
 ## Examples
 

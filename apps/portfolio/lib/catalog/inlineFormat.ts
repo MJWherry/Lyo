@@ -1,5 +1,25 @@
 /** Escape HTML and apply light markdown: links, code, bold. */
 
+/** Join soft line wraps; keep blank-line paragraphs; heal broken ``**`` markers. */
+export function normalizeProse(text: string): string {
+  if (!text) return "";
+  let s = text.replace(/\r\n/g, "\n");
+  s = s.replace(/\*\s*\n\s*\*/g, "**").replace(/\*\s+\*/g, "**");
+  return s
+    .split(/\n\s*\n/)
+    .map((para) => para.replace(/[ \t]*\n[ \t]*/g, " ").replace(/[ \t]{2,}/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/** Description HTML: paragraphs from blank lines (soft wraps become spaces). */
+export function formatDescriptionHtml(text: string): string {
+  return normalizeProse(text)
+    .split("\n\n")
+    .map((para) => `<p>${inlineFormat(para)}</p>`)
+    .join("");
+}
+
 function packageHrefFromMarkdownUrl(url: string): string | null {
   const cleaned = url.trim();
   // ../Lyo.Foo/README.md or ../../../Core/Cache/Lyo.Cache/README.md

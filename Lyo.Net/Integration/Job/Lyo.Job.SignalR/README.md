@@ -1,7 +1,6 @@
 # Lyo.Job.SignalR
 
-SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`**
-records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.
+SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.
 
 ## Examples
 

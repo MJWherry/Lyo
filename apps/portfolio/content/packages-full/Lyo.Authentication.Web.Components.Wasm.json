@@ -3,7 +3,7 @@
   "name": "Lyo.Authentication.Web.Components.Wasm",
   "area": "Security",
   "tagline": "Blazor WebAssembly host adapter for `Lyo.Authentication.Web.Components`. Implements the same login / debug / profile pages over a **pure-browser** auth flow — no consumer-side server, no HttpOnly…",
-  "description": "Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a\n**pure-browser** auth flow — no consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.",
+  "description": "Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a **pure-browser** auth flow — no consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.",
   "features": [],
   "examples": [
     {

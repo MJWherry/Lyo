@@ -3,7 +3,7 @@
   "name": "Lyo.Scientific",
   "area": "Core",
   "tagline": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on `Lyo.Mathematics`.",
-  "description": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [\n`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [\n`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "description": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [ `Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [ `Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [],
   "sections": [

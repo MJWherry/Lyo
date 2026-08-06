@@ -1,12 +1,8 @@
 # Lyo.Job.Scheduler
 
-Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (with misfire catch-up, blackout calendars, and per-schedule time zones), creates job runs
-via `IApiClient`, listens to `IJobEventPublisher` for definition updates and run completions, fires triggers, schedules retries with linear or **exponential backoff**, aggregates
-batch parent progress, trips/resets per-definition circuit breakers, and publishes failure/circuit-breaker alerts.
+Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (with misfire catch-up, blackout calendars, and per-schedule time zones), creates job runs via `IApiClient`, listens to `IJobEventPublisher` for definition updates and run completions, fires triggers, schedules retries with linear or **exponential backoff**, aggregates batch parent progress, trips/resets per-definition circuit breakers, and publishes failure/circuit-breaker alerts.
 
-Optional **`JobWorkflowEngine`** advances multi-step workflow runs when constituent job runs finish. Step runs are created with dispatch suppressed and only published after the run
-is linked to its workflow run step, so a fast worker cannot finish a step run before the engine knows which step it belongs to. Completion-message processing failures use a bounded
-counted requeue (like `QueueWorkerBase`) instead of requeueing forever, so a poison message cannot loop indefinitely.
+Optional **`JobWorkflowEngine`** advances multi-step workflow runs when constituent job runs finish. Step runs are created with dispatch suppressed and only published after the run is linked to its workflow run step, so a fast worker cannot finish a step run before the engine knows which step it belongs to. Completion-message processing failures use a bounded counted requeue (like `QueueWorkerBase`) instead of requeueing forever, so a poison message cannot loop indefinitely.
 
 Designed for multi-instance deployment: run creation uses the `(JobScheduleId, ScheduledSlotUtc)` unique constraint to keep duplicate slot creations idempotent.
 

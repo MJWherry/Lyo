@@ -3,7 +3,7 @@
   "name": "Lyo.Geolocation",
   "area": "Core",
   "tagline": "Provider-agnostic geospatial operations and persistence contracts.",
-  "description": "Provider-agnostic geospatial operations and persistence contracts.\n\n**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C\nunder `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).",
+  "description": "Provider-agnostic geospatial operations and persistence contracts.\n\n**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C under `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).",
   "features": [],
   "examples": [
     {

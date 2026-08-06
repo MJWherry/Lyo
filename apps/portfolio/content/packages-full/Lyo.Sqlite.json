@@ -3,7 +3,7 @@
   "name": "Lyo.Sqlite",
   "area": "Data",
   "tagline": "Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema.",
-  "description": "Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at\nhost startup when the consumer's options opt in.\n\n> Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders live in consumer libraries when needed.",
+  "description": "Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer's options opt in.\n\n> Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders live in consumer libraries when needed.",
   "features": [],
   "examples": [
     {

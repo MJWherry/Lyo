@@ -1,7 +1,6 @@
 # Lyo.Translation.Web.Components
 
-Blazor (MudBlazor) workbench component for exercising the configured [`Lyo.Translation`](../Lyo.Translation/README.md)
-implementation interactively from a host application.
+Blazor (MudBlazor) workbench component for exercising the configured [`Lyo.Translation`](../Lyo.Translation/README.md) implementation interactively from a host application.
 
 ## Components
 

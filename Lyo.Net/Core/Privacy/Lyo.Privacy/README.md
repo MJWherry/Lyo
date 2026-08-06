@@ -1,10 +1,6 @@
 # Lyo.Privacy
 
-Redaction and sanitization for **free text**, **JSON**, and **XML**: emails, phones, payment-card-shaped numbers (Luhn) with optional **BIN allow/block lists**, **IBAN** (MOD-97),
-heuristic **bank-account digit blocks**, **API key / secret** patterns (AWS access keys, GitHub PATs, `KEY=value` assignments) with optional **entropy** gating, **opt-in national /
-tax ID packs** (US SSN shape, UK NINO, German Steuer-ID heuristic), URL query strings, IP addresses, **best-effort US street lines**, composable regex/literal rules, **allowlisted
-literals** that must never be masked, **policy JSON** for ops-owned tuning, **SHA-256 policy fingerprints** for audit trails (no secret material in the hash), named **presets**,
-and optional **`Lyo.Metrics.IMetrics`** instrumentation.
+Redaction and sanitization for **free text**, **JSON**, and **XML**: emails, phones, payment-card-shaped numbers (Luhn) with optional **BIN allow/block lists**, **IBAN** (MOD-97), heuristic **bank-account digit blocks**, **API key / secret** patterns (AWS access keys, GitHub PATs, `KEY=value` assignments) with optional **entropy** gating, **opt-in national / tax ID packs** (US SSN shape, UK NINO, German Steuer-ID heuristic), URL query strings, IP addresses, **best-effort US street lines**, composable regex/literal rules, **allowlisted literals** that must never be masked, **policy JSON** for ops-owned tuning, **SHA-256 policy fingerprints** for audit trails (no secret material in the hash), named **presets**, and optional **`Lyo.Metrics.IMetrics`** instrumentation.
 
 Targets **netstandard2.0** and **net10.0**. ASP.NET Core helpers live in **`Lyo.Privacy.AspNetCore`**.
 

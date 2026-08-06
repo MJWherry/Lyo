@@ -1,11 +1,8 @@
 # Lyo.Pdf.Web.Components
 
-Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a
-PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets
-end-users draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.
+Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.
 
-Targets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and
-`MudBlazor` 9.3+.
+Targets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and `MudBlazor` 9.3+.
 
 ## Examples
 

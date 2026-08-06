@@ -53,8 +53,16 @@ public sealed class DeterministicPayloadStream : Stream
         var offset = 0;
         while (offset < buffer.Length) {
             var toFill = Math.Min(chunk.Length, buffer.Length - offset);
-            rng.NextBytes(chunk.AsSpan(0, toFill));
-            chunk.AsSpan(0, toFill).CopyTo(buffer[offset..]);
+            if (toFill == chunk.Length)
+                rng.NextBytes(chunk);
+            else {
+                var partial = new byte[toFill];
+                rng.NextBytes(partial);
+                partial.AsSpan().CopyTo(buffer.Slice(offset, toFill));
+                break;
+            }
+
+            chunk.AsSpan().CopyTo(buffer.Slice(offset, toFill));
             offset += toFill;
         }
     }

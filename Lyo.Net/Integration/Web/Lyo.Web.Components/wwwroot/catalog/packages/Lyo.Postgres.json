@@ -3,7 +3,7 @@
   "name": "Lyo.Postgres",
   "area": "Data",
   "tagline": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.).",
-  "description": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). The package is a thin\n**`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer’s options opt in.\n\n> Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer\n> libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.",
+  "description": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer’s options opt in.\n\n> Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.",
   "features": [],
   "examples": [
     {

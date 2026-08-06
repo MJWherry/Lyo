@@ -364,7 +364,7 @@
     "name": "Lyo.Cache.Fusion",
     "area": "Core",
     "topic": "Lyo.Cache",
-    "tagline": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between * *purely in-memory**…",
+    "tagline": "**`FusionCacheService`** adapts **`ZiggyCreatures.FusionCache`** to **`ICacheService`** so application code (**`Lyo.Api`**, background workers, feature modules) can swap between **purely in-memory**…",
     "readme": "Lyo.Net/Core/Cache/Lyo.Cache.Fusion/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -798,7 +798,7 @@
     "name": "Lyo.Streams",
     "area": "Core",
     "topic": "Lyo.Streams",
-    "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: * *`HashingStream`**).",
+    "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).",
     "readme": "Lyo.Net/Core/Streams/Lyo.Streams/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -1415,7 +1415,7 @@
     "name": "Lyo.Comic",
     "area": "Features",
     "topic": "Lyo.Comic",
-    "tagline": "Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**, **`ComicAlternateTitle`**), hierarchical organization (**`ComicVolume`**, **`ComicChapter`**, * *`ComicPage`**), cast…",
+    "tagline": "Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**, **`ComicAlternateTitle`**), hierarchical organization (**`ComicVolume`**, **`ComicChapter`**, **`ComicPage`**), cast…",
     "readme": "Lyo.Net/Features/Comic/Lyo.Comic/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -1679,7 +1679,7 @@
     "name": "Lyo.Api.Client",
     "area": "Integration",
     "topic": "Lyo.Api",
-    "tagline": "HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and * *`System.Text.Json`** parity with…",
+    "tagline": "HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with…",
     "readme": "Lyo.Net/Integration/Api/Lyo.Api.Client/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -2116,7 +2116,7 @@
     "name": "Lyo.Config.Api.Hosting",
     "area": "Apps",
     "topic": "Lyo.Config",
-    "tagline": "Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and * *`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…",
+    "tagline": "Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…",
     "readme": "Lyo.Net/Apps/Config/Lyo.Config.Api.Hosting/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -2298,7 +2298,7 @@
     "name": "Lyo.Encryption",
     "area": "Security",
     "topic": "Lyo.Encryption",
-    "tagline": "Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and * *AES-GCM + RSA**…",
+    "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.Keystore lookup.",
     "readme": "Lyo.Net/Security/Encryption/Lyo.Encryption/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -2346,7 +2346,7 @@
     "name": "Lyo.Hashing",
     "area": "Security",
     "topic": "Lyo.Hashing",
-    "tagline": "Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (* *`HexEncoding`**)…",
+    "tagline": "Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (**`HexEncoding`**)…",
     "readme": "Lyo.Net/Security/Hashing/Lyo.Hashing/README.md",
     "targetFrameworks": [
       "netstandard2.0",

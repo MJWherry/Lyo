@@ -1,10 +1,8 @@
 # Lyo.Comic.Api.Models
 
-Request and response DTOs shared between [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) and [`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md). Targets
-**`netstandard2.0`** and **`net10.0`** so the same contracts can be referenced from any host (server, Blazor, MAUI, console).
+Request and response DTOs shared between [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) and [`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md). Targets **`netstandard2.0`** and **`net10.0`** so the same contracts can be referenced from any host (server, Blazor, MAUI, console).
 
-The package brings in comic domain types via [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) (for `ComicType` / `ComicStatus` enums and `ComicSeriesQuery`) and
-[`Lyo.Api.Models`](../../../Integration/Api/Lyo.Api.Models/README.md) when shared API envelopes or error contracts are needed.
+The package brings in comic domain types via [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) (for `ComicType` / `ComicStatus` enums and `ComicSeriesQuery`) and [`Lyo.Api.Models`](../../../Integration/Api/Lyo.Api.Models/README.md) when shared API envelopes or error contracts are needed.
 
 **`IComicApiClient`**, HTTP client implementation, and DI registration live in **[`Lyo.Comic.Api.Client`](../Lyo.Comic.Api.Client/README.md)** (not this assembly).
 

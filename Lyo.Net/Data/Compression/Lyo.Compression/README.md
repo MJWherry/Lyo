@@ -1,13 +1,8 @@
 # Lyo Compression Library
 
-A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple
-algorithms, batch operations, and atomic file operations.
+A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple algorithms, batch operations, and atomic file operations.
 
-The primary contracts are **`ICompressionService`** (default codec plus **`Resolver`**, **`AlgorithmSelector`**, and **`ResolveForCompress`**) and **`ICompressionResolver`** (
-explicit per-algorithm compress/decompress; implemented by **`CompressionService`**). With **XML documentation** enabled in the repo
-(`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the
-API
-summaries below; this README stays the long-form guide (examples, security, configuration tables).
+The primary contracts are **`ICompressionService`** (default codec plus **`Resolver`**, **`AlgorithmSelector`**, and **`ResolveForCompress`**) and **`ICompressionResolver`** ( explicit per-algorithm compress/decompress; implemented by **`CompressionService`**). With **XML documentation** enabled in the repo (`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the API summaries below; this README stays the long-form guide (examples, security, configuration tables).
 
 ## Features
 

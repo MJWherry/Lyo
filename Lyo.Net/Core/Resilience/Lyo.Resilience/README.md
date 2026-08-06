@@ -1,7 +1,6 @@
 # Lyo.Resilience
 
-A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions;
-pipelines are defined entirely via configuration.
+A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions; pipelines are defined entirely via configuration.
 
 ## Features
 

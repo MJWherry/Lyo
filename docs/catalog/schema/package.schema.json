@@ -16,6 +16,36 @@
     "readmePath"
   ],
   "additionalProperties": false,
+  "$defs": {
+    "featureNode": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Flat feature bullet (markdown inline allowed)."
+        },
+        {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Group or bullet label."
+            },
+            "text": {
+              "type": "string",
+              "description": "Optional short blurb after the title."
+            },
+            "items": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/featureNode" },
+              "description": "Nested bullets / subfeatures."
+            }
+          }
+        }
+      ]
+    }
+  },
   "properties": {
     "$schema": { "type": "string" },
     "id": { "type": "string", "minLength": 1 },
@@ -44,7 +74,7 @@
     },
     "features": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "$ref": "#/$defs/featureNode" }
     },
     "examples": {
       "type": "array",

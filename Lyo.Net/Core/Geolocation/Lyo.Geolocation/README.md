@@ -2,8 +2,7 @@
 
 Provider-agnostic geospatial operations and persistence contracts.
 
-**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C
-under `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).
+**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C under `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).
 
 ## Examples
 

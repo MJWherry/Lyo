@@ -3,7 +3,7 @@
   "name": "Lyo.Tag",
   "area": "Features",
   "tagline": "Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef` (what is tagged) and optionally a second `EntityRef` (who applied the tag), so any feature in the framework can attach…",
-  "description": "Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef`\n(what is tagged) and optionally a second `EntityRef` (who applied the tag),\nso any feature in the framework can attach tags without a foreign-key coupling.",
+  "description": "Abstractions for tagging arbitrary entities. Tags are keyed off an `EntityRef` (what is tagged) and optionally a second `EntityRef` (who applied the tag), so any feature in the framework can attach tags without a foreign-key coupling.",
   "features": [],
   "examples": [],
   "sections": [

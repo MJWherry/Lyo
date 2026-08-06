@@ -3,7 +3,7 @@
   "name": "Lyo.Barcode.TestWorkbench.Web.Components",
   "area": "Data",
   "tagline": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from `Lyo.Barcode.Web.Components` inside an `MudContainer` for the Lyo gateway test harness.",
-  "description": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo\ngateway test harness.",
+  "description": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo gateway test harness.",
   "features": [],
   "examples": [],
   "sections": [

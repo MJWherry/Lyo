@@ -3,7 +3,7 @@
   "name": "Lyo.Query.Web.Components",
   "area": "Data",
   "tagline": "Reusable Blazor / MudBlazor components for editing and running `Lyo.Query.Models` requests against any Lyo.Api host.",
-  "description": "Reusable Blazor / MudBlazor components for editing and running\n[`Lyo.Query.Models`](../Lyo.Query.Models/README.md) requests against any Lyo.Api host.\n\nRazor SDK targeting `net10.0`. Requires `MudBlazor` 9.3+ and\n[`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) for the\nshared JSON editor, filter widgets, and client storage.",
+  "description": "Reusable Blazor / MudBlazor components for editing and running [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) requests against any Lyo.Api host.\n\nRazor SDK targeting `net10.0`. Requires `MudBlazor` 9.3+ and [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) for the shared JSON editor, filter widgets, and client storage.",
   "features": [],
   "examples": [],
   "sections": [

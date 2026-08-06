@@ -3,7 +3,7 @@
   "name": "Lyo.Web.WebRenderer",
   "area": "Integration",
   "tagline": "Server-side rendering of Razor components and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…",
-  "description": "Server-side rendering of Razor components and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by\n**PuppeteerSharp** against a locally-installed Chromium/Chrome browser.",
+  "description": "Server-side rendering of Razor components and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a locally-installed Chromium/Chrome browser.",
   "features": [],
   "examples": [
     {

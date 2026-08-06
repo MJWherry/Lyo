@@ -1,7 +1,6 @@
 # Lyo.Scheduler
 
-In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with
-logging, metrics, and optional state persistence via `ISchedulerStateStore`.
+In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging, metrics, and optional state persistence via `ISchedulerStateStore`.
 
 ## Features
 

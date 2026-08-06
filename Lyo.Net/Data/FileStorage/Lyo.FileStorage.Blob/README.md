@@ -1,8 +1,6 @@
 # Lyo.FileStorage.Blob
 
-**Azure Blob Storage** implementation of [`IFileStorageService`](../Lyo.FileStorage/README.md) using **`Azure.Storage.Blobs`**. The package id and namespace *
-*`Lyo.FileStorage.Blob`** reflect the blob abstraction; configuration and types use **`Blob*`** naming (with a legacy **`AzureFileStorageOptions`** appsettings subsection for
-migration).
+**Azure Blob Storage** implementation of [`IFileStorageService`](../Lyo.FileStorage/README.md) using **`Azure.Storage.Blobs`**. The package id and namespace **`Lyo.FileStorage.Blob`** reflect the blob abstraction; configuration and types use **`Blob*`** naming (with a legacy **`AzureFileStorageOptions`** appsettings subsection for migration).
 
 Architecture, duplicate handling, and threat-model context for storage live in **`Lyo.FileStorage`**; this README is the assembly surface plus Azure-specific options.
 

@@ -1,10 +1,11 @@
 import { CodeBlock } from "./CodeBlock";
 import { inlineFormat } from "@/lib/catalog/inlineFormat";
-import type { DocSection } from "@/lib/catalog/types";
+import type { DocSection, ListItemNode } from "@/lib/catalog/types";
 
 type MdBlock =
   | { type: "table"; content: string }
   | { type: "code"; language: string; code: string }
+  | { type: "heading"; level: number; content: string }
   | { type: "pre"; content: string };
 
 type MdGroup =
@@ -12,7 +13,7 @@ type MdGroup =
   | { type: "codes"; items: Array<Extract<MdBlock, { type: "code" }>> };
 
 function MarkdownBlock({ body }: { body: string }) {
-  // Render tables, fenced code, and prose in document order.
+  // Render tables, fenced code, headings, and prose in document order.
   const lines = body.replace(/\r\n/g, "\n").split("\n");
   const blocks: MdBlock[] = [];
   let i = 0;
@@ -30,6 +31,12 @@ function MarkdownBlock({ body }: { body: string }) {
       blocks.push({ type: "code", language, code: code.join("\n") });
       continue;
     }
+    const heading = lines[i].match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      blocks.push({ type: "heading", level: heading[1].length, content: heading[2].trim() });
+      i++;
+      continue;
+    }
     if (lines[i].trim().startsWith("|")) {
       const tableLines: string[] = [];
       while (i < lines.length && lines[i].trim().startsWith("|")) {
@@ -43,7 +50,8 @@ function MarkdownBlock({ body }: { body: string }) {
     while (
       i < lines.length &&
       !lines[i].trim().startsWith("|") &&
-      !/^```/.test(lines[i])
+      !/^```/.test(lines[i]) &&
+      !/^#{1,4}\s+/.test(lines[i])
     ) {
       pre.push(lines[i]);
       i++;
@@ -91,6 +99,16 @@ function MarkdownBlock({ body }: { body: string }) {
             </div>
           );
         }
+        if (b.type === "heading") {
+          const Tag = (`h${Math.min(b.level + 1, 4)}` as "h2" | "h3" | "h4");
+          return (
+            <Tag
+              key={gidx}
+              className="doc-md-heading"
+              dangerouslySetInnerHTML={{ __html: inlineFormat(b.content) }}
+            />
+          );
+        }
         if (b.type === "table") {
           const rows = b.content
             .split("\n")
@@ -135,6 +153,35 @@ function MarkdownBlock({ body }: { body: string }) {
   );
 }
 
+function ListItems({ items, ordered }: { items: ListItemNode[]; ordered?: boolean }) {
+  const ListTag = ordered ? "ol" : "ul";
+  return (
+    <ListTag className="doc-list muted">
+      {items.map((item, idx) => (
+        <ListItem key={idx} item={item} />
+      ))}
+    </ListTag>
+  );
+}
+
+function ListItem({ item }: { item: ListItemNode }) {
+  if (typeof item === "string") {
+    return <li dangerouslySetInnerHTML={{ __html: inlineFormat(item) }} />;
+  }
+
+  const title = (item.title ?? "").trim();
+  const text = (item.text ?? "").trim();
+  const children = item.items ?? [];
+  const label = title && text ? `**${title}** — ${text}` : text || title;
+
+  return (
+    <li>
+      {label ? <span dangerouslySetInnerHTML={{ __html: inlineFormat(label) }} /> : null}
+      {children.length > 0 ? <ListItems items={children} /> : null}
+    </li>
+  );
+}
+
 export function DocSections({ sections }: { sections: DocSection[] }) {
   if (!sections?.length) return null;
 
@@ -162,15 +209,10 @@ function SectionBlock({ section }: { section: DocSection }) {
   }
 
   if (section.type === "list") {
-    const ListTag = section.ordered ? "ol" : "ul";
     return (
       <div className="panel" style={{ marginBottom: "1rem" }}>
         {section.title ? <h2 style={{ fontSize: "1.25rem" }}>{section.title}</h2> : null}
-        <ListTag className="muted" style={{ paddingLeft: "1.2rem", margin: "0.5rem 0 0" }}>
-          {section.items.map((item, idx) => (
-            <li key={idx} dangerouslySetInnerHTML={{ __html: inlineFormat(item) }} />
-          ))}
-        </ListTag>
+        <ListItems items={section.items} ordered={section.ordered} />
       </div>
     );
   }

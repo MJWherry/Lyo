@@ -1,10 +1,8 @@
 # Lyo.Web.Components
 
-Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff
-viewer, identifier workbench, and several smaller inputs. Targets `net10.0` (Razor SDK) and depends on `Blazored.LocalStorage` and `MudBlazor >= 9.3`.
+Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff viewer, identifier workbench, and several smaller inputs. Targets `net10.0` (Razor SDK) and depends on `Blazored.LocalStorage` and `MudBlazor >= 9.3`.
 
-Every visual component participates in the `LyoElementRoot` element-id scheme, so each rendered control gets a deterministic DOM id derived from the component's `ElementId`
-parameter — useful for testing and analytics.
+Every visual component participates in the `LyoElementRoot` element-id scheme, so each rendered control gets a deterministic DOM id derived from the component's `ElementId` parameter — useful for testing and analytics.
 
 ## Data grid (`DataGrid/`)
 

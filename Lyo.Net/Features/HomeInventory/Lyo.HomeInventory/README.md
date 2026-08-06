@@ -1,11 +1,6 @@
 # Lyo.HomeInventory
 
-Portable contract for **household inventory** — large purchases (electronics,
-appliances) with warranty tracking, kitchen consumables stocked across
-pantries / freezers, and bin locations in garages. Domain records
-(`HomeItemRecord`, `HomeCategoryRecord`, `HomeLocationRecord`,
-`HomeItemStockRecord`, `HomeItemMovementRecord`) are keyed by `Guid`, and all
-operations flow through `IHomeInventoryStore`.
+Portable contract for **household inventory** — large purchases (electronics, appliances) with warranty tracking, kitchen consumables stocked across pantries / freezers, and bin locations in garages. Domain records (`HomeItemRecord`, `HomeCategoryRecord`, `HomeLocationRecord`, `HomeItemStockRecord`, `HomeItemMovementRecord`) are keyed by `Guid`, and all operations flow through `IHomeInventoryStore`.
 
 ## Surface — `IHomeInventoryStore`
 

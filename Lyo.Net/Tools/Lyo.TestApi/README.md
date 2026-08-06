@@ -1,7 +1,6 @@
 # Lyo.TestApi
 
-Minimal-API host that backs `Lyo.Gateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes
-the file storage workbench surface that the Gateway's `/filestorage-workbench` page talks to.
+Minimal-API host that backs `Lyo.Gateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage workbench surface that the Gateway's `/filestorage-workbench` page talks to.
 
 ## Host setup (`Program.cs`)
 

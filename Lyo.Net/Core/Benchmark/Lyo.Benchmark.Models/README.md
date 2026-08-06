@@ -1,13 +1,8 @@
 # Lyo.Benchmark.Models
 
-Consumer-facing models and builders for the **unified Lyo benchmark report schema**
-(`lyo.bench/v1`). One polymorphic document represents both BenchmarkDotNet
-micro-benchmarks and k6 load tests, so a single viewer (or your portfolio / test
-gateway) can render any report file by switching on one discriminator.
+Consumer-facing models and builders for the **unified Lyo benchmark report schema** (`lyo.bench/v1`). One polymorphic document represents both BenchmarkDotNet micro-benchmarks and k6 load tests, so a single viewer (or your portfolio / test gateway) can render any report file by switching on one discriminator.
 
-Minimal dependencies (only `System.Text.Json`); targets `netstandard2.0;net10.0`. No
-BenchmarkDotNet / Testcontainers baggage — the benchmark-only helpers live in
-[`Lyo.Benchmarking`](../Lyo.Benchmarking/README.md).
+Minimal dependencies (only `System.Text.Json`); targets `netstandard2.0;net10.0`. No BenchmarkDotNet / Testcontainers baggage — the benchmark-only helpers live in [`Lyo.Benchmarking`](../Lyo.Benchmarking/README.md).
 
 ## Examples
 

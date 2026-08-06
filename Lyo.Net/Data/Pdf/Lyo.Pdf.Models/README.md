@@ -1,9 +1,6 @@
 # Lyo.Pdf.Models
 
-Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by
-[`Lyo.Pdf`](../Lyo.Pdf/README.md) so consumers can depend on `IPdfService`,
-`IPdfReader`, `IPdfWriter`, and `ITextExtractor` without pulling in PdfPig or PDFsharp
-directly.
+Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by [`Lyo.Pdf`](../Lyo.Pdf/README.md) so consumers can depend on `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without pulling in PdfPig or PDFsharp directly.
 
 ## Service contracts
 

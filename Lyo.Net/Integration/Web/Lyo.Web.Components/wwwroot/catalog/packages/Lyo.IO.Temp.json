@@ -3,7 +3,7 @@
   "name": "Lyo.IO.Temp",
   "area": "Data",
   "tagline": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.",
-  "description": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling. Ideal for upload processing, report generation,\nor any workflow needing short-lived temp storage.\n\nThe public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in\nthe\nrepo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.",
+  "description": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling. Ideal for upload processing, report generation, or any workflow needing short-lived temp storage.\n\nThe public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.",
   "features": [
     "**Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose",
     "**Standalone files/dirs** – One-off `CreateFile` / `CreateDirectory` without a session",

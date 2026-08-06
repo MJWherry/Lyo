@@ -1,8 +1,6 @@
 # Lyo.Web.Automation.Playwright
 
-Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes
-the same tab/frame/dialog/keyboard/locator surface as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners
-behave identically across both engines.
+Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes the same tab/frame/dialog/keyboard/locator surface as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners behave identically across both engines.
 
 ## Examples
 

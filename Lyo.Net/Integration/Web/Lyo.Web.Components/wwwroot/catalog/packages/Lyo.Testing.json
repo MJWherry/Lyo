@@ -3,7 +3,7 @@
   "name": "Lyo.Testing",
   "area": "Core",
   "tagline": "Part of the Lyo workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an…",
-  "description": "Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers,\npolling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.",
+  "description": "Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.",
   "features": [
     "**TestData** – Seeded reproducible byte payloads (`TestData.Seed` / `Create` / `Fill`); same seed as `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`"
   ],

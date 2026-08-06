@@ -3,7 +3,7 @@
   "name": "Lyo.Privacy.Web.Components",
   "area": "Core",
   "tagline": "Blazor (Server / Interactive) workbench components for `Lyo.Privacy`. Lets operators preview, compare, and tune redaction policies without round-tripping through a host config edit.",
-  "description": "Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Lets operators preview, compare, and tune redaction policies without\nround-tripping through a host config edit.",
+  "description": "Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Lets operators preview, compare, and tune redaction policies without round-tripping through a host config edit.",
   "features": [],
   "examples": [],
   "sections": [

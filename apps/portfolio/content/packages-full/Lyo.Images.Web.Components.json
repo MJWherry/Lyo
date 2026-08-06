@@ -3,7 +3,7 @@
   "name": "Lyo.Images.Web.Components",
   "area": "Data",
   "tagline": "Reusable **Blazor / MudBlazor** components for exercising `Lyo.Images`: an `IImageService` workbench and a spritesheet animator/extractor built on `ISpriteSheetExportService`.",
-  "description": "Reusable **Blazor / MudBlazor** components for exercising [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet\nanimator/extractor built on `ISpriteSheetExportService`.",
+  "description": "Reusable **Blazor / MudBlazor** components for exercising [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet animator/extractor built on `ISpriteSheetExportService`.",
   "features": [],
   "examples": [
     {

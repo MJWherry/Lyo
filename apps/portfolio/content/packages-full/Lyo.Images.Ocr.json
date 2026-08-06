@@ -3,7 +3,7 @@
   "name": "Lyo.Images.Ocr",
   "area": "Data",
   "tagline": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with `BoundingBox2D`), coordinate helpers, and shared…",
-  "description": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with\n[`BoundingBox2D`](../../../Core/Common/Lyo.Common/Records/BoundingBox2D.cs)), coordinate helpers, and shared **`OcrEngineOptions`**.\n\nImplementations (e.g. **`Lyo.Images.Ocr.Tesseract`**) register **`IOcrEngine`**. This package only registers cross-provider options via **`AddOcrEngineOptions`** /\n**`AddOcrEngineOptionsFromConfiguration`**.",
+  "description": "Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with [`BoundingBox2D`](../../../Core/Common/Lyo.Common/Records/BoundingBox2D.cs)), coordinate helpers, and shared **`OcrEngineOptions`**.\n\nImplementations (e.g. **`Lyo.Images.Ocr.Tesseract`**) register **`IOcrEngine`**. This package only registers cross-provider options via **`AddOcrEngineOptions`** / **`AddOcrEngineOptionsFromConfiguration`**.",
   "features": [],
   "examples": [
     {

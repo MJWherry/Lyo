@@ -1,14 +1,12 @@
 # Lyo.Job.Web.Components
 
-Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA
-breach** indicators), **worker registry**, and **workflow** views — all using an injected `IApiClient` and configurable base route prefix.
+Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA breach** indicators), **worker registry**, and **workflow** views — all using an injected `IApiClient` and configurable base route prefix.
 
 Pair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live-updating dashboard that receives `JobEvent` broadcasts without polling.
 
 All components target server-side or interactive Blazor in `net10.0` and pull in MudBlazor `>= 9.3`.
 
-This package is a **Razor component library** — it has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [
-`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
+This package is a **Razor component library** — it has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [ `Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
 
 ## Examples
 

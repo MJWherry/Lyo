@@ -1,7 +1,6 @@
 # Lyo.Testing
 
-Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers,
-polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.
+Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.
 
 ## Features
 

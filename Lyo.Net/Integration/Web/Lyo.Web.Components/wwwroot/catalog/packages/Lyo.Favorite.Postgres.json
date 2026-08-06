@@ -3,7 +3,7 @@
   "name": "Lyo.Favorite.Postgres",
   "area": "Features",
   "tagline": "PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant: `PostgresFavoriteOptions.Schema = \"favorite\"`) with…",
-  "description": "PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core.\nPersists favorites to the `favorite.favorite` table (schema constant:\n`PostgresFavoriteOptions.Schema = \"favorite\"`) with migrations support.\nFavorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same\n`(tenant, ForEntity, FromEntity, context)` tuple are prevented by the\n`SaveAsync` idempotency check.\n\n`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth`\n(`HealthCheckName = \"favorite-postgres\"`), so registering the store also exposes\na database liveness probe.",
+  "description": "PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant: `PostgresFavoriteOptions.Schema = \"favorite\"`) with migrations support. Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same `(tenant, ForEntity, FromEntity, context)` tuple are prevented by the `SaveAsync` idempotency check.\n\n`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = \"favorite-postgres\"`), so registering the store also exposes a database liveness probe.",
   "features": [],
   "examples": [
     {

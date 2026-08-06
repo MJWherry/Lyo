@@ -1,7 +1,6 @@
 # Lyo.ShortUrl
 
-Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default
-`ShortUrlService` that **generates** short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
+Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default `ShortUrlService` that **generates** short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
 
 ## Examples
 

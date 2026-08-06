@@ -3,7 +3,7 @@
   "name": "Lyo.Cache",
   "area": "Core",
   "tagline": "Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression / encryption on .NET 10+)…",
-  "description": "Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression /\nencryption on .NET 10+), and round-tripping without Fusion’s default CLR binary formatter for cached objects.",
+  "description": "Local and Fusion-backed **`ICacheService`** implementations with optional **typed byte payload** APIs for serializing values once, storing framed bytes (optional compression / encryption on .NET 10+), and round-tripping without Fusion’s default CLR binary formatter for cached objects.",
   "features": [
     "**`AddLocalCache`** / **`AddLocalCacheFromConfiguration`** — in-process cache backed by `IMemoryCache`; wires **`ICachePayloadCodec`**, **`ICachePayloadSerializer`**, and the payload-aware **`ICacheService`** (singleton **`LocalCacheService`**). The serializer is registered with **`TryAddSingleton`** so hosts can pre-register their own **`ICachePayloadSerializer`** (e.g. one bound to the host's `JsonOptions`) before calling `AddLocalCache*`.",
     "**`AddFusionCache`** (in **`Lyo.Cache.Fusion`**) — same payload services; **`FusionCacheService`** implements the byte and typed **`GetOrSetPayloadAsync`** / * *`GetOrSetPayloadAsync<T>`** overloads."

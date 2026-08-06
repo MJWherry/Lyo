@@ -1,7 +1,6 @@
 # Lyo.Config
 
-Typed, definition-driven configuration for **per-entity** values (e.g. a Discord guild, a tenant). The abstract API lives here; **PostgreSQL** persistence is in
-`Lyo.Config.Postgres`.
+Typed, definition-driven configuration for **per-entity** values (e.g. a Discord guild, a tenant). The abstract API lives here; **PostgreSQL** persistence is in `Lyo.Config.Postgres`.
 
 ## Concepts
 

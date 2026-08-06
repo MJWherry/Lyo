@@ -1,7 +1,6 @@
 # Lyo.Email.Models
 
-Shared models, options, error codes, and event arguments for the [`Lyo.Email`](../Lyo.Email/README.md)
-SMTP service.
+Shared models, options, error codes, and event arguments for the [`Lyo.Email`](../Lyo.Email/README.md) SMTP service.
 
 ## What ships in this package — Request / result records
 

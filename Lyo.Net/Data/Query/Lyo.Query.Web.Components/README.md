@@ -1,11 +1,8 @@
 # Lyo.Query.Web.Components
 
-Reusable Blazor / MudBlazor components for editing and running
-[`Lyo.Query.Models`](../Lyo.Query.Models/README.md) requests against any Lyo.Api host.
+Reusable Blazor / MudBlazor components for editing and running [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) requests against any Lyo.Api host.
 
-Razor SDK targeting `net10.0`. Requires `MudBlazor` 9.3+ and
-[`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) for the
-shared JSON editor, filter widgets, and client storage.
+Razor SDK targeting `net10.0`. Requires `MudBlazor` 9.3+ and [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) for the shared JSON editor, filter widgets, and client storage.
 
 ## Components
 

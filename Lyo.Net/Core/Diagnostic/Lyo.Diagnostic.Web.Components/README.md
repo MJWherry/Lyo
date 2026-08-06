@@ -1,7 +1,6 @@
 # Lyo.Diagnostic.Web.Components
 
-Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md). The workbench is
-deliberately pure-UI — paste, view, and classify; nothing is persisted by the components themselves.
+Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md). The workbench is deliberately pure-UI — paste, view, and classify; nothing is persisted by the components themselves.
 
 ## Components
 

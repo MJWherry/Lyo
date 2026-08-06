@@ -1,7 +1,6 @@
 # Lyo.Sqlite
 
-Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at
-host startup when the consumer's options opt in.
+Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer's options opt in.
 
 > Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders live in consumer libraries when needed.
 

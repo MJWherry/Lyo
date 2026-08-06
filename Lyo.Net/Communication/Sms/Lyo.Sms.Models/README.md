@@ -1,7 +1,6 @@
 # Lyo.Sms.Models
 
-Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in
-provider packages (`Lyo.Sms.Twilio`, etc.).
+Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in provider packages (`Lyo.Sms.Twilio`, etc.).
 
 ---
 

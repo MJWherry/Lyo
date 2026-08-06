@@ -3,7 +3,7 @@
   "name": "Lyo.Api.Models",
   "area": "Integration",
   "tagline": "Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from `Lyo.Query.Models` (filter trees + projection DTOs).",
-  "description": "Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees +\nprojection DTOs).",
+  "description": "Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees + projection DTOs).",
   "features": [],
   "examples": [],
   "sections": [

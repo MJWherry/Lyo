@@ -1,13 +1,8 @@
 # Lyo.Note.Postgres
 
-PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists
-notes to the `note.note` table (schema constant:
-`PostgresNoteOptions.Schema = "note"`) with migrations support. Notes have
-**subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
+PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists notes to the `note.note` table (schema constant: `PostgresNoteOptions.Schema = "note"`) with migrations support. Notes have **subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
 
-`PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth`
-(`HealthCheckName = "note-postgres"`), so registering the store also wires up a
-liveness probe.
+`PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "note-postgres"`), so registering the store also wires up a liveness probe.
 
 ## Examples
 

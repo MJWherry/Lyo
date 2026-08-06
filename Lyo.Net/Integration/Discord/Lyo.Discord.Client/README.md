@@ -1,7 +1,6 @@
 # Lyo.Discord.Client
 
-Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps
-`Lyo.Api.Client.ApiClient` so all Lyo-API behavior — Accept-Encoding, request compression, problem-details parsing — comes for free.
+Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps `Lyo.Api.Client.ApiClient` so all Lyo-API behavior — Accept-Encoding, request compression, problem-details parsing — comes for free.
 
 ## Examples
 

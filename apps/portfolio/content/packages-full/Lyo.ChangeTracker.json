@@ -3,7 +3,7 @@
   "name": "Lyo.ChangeTracker",
   "area": "Core",
   "tagline": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.",
-  "description": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific\naggregate.",
+  "description": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.",
   "features": [
     "`ChangeRecord` for entity-scoped history with old values, changed values, optional **actor** (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`",
     "`IChangeTracker` for recording, querying, and deleting change history",

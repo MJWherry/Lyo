@@ -1,7 +1,6 @@
 # Lyo.Mathematics
 
-C# **contracts** for the Lyo math stack: physical quantities as structs, 2D/3D vectors and small matrices, typed inputs/results for formulas, and a small **registry** for
-discoverability. **Numerical implementations** live in [`Lyo.Mathematics.Functions`](../Lyo.Mathematics.Functions/README.md) (F#).
+C# **contracts** for the Lyo math stack: physical quantities as structs, 2D/3D vectors and small matrices, typed inputs/results for formulas, and a small **registry** for discoverability. **Numerical implementations** live in [`Lyo.Mathematics.Functions`](../Lyo.Mathematics.Functions/README.md) (F#).
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 

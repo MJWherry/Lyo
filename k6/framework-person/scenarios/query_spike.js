@@ -1,10 +1,8 @@
-import { createEndpointProfileScenario } from "../lib/matrixRunner.js";
+import { MatrixCell } from "../lib/matrixCell.js";
+import { ScenarioFactory } from "../lib/scenarioFactory.js";
 
-const scenario = createEndpointProfileScenario({
-  endpointKind: "query",
-  profile: "spike",
-  testTag: "query-spike",
-});
+const cell = MatrixCell.fromEnv({ endpointKind: "query", profile: "spike" });
+const scenario = ScenarioFactory.create(cell);
 
 export const options = scenario.options;
 

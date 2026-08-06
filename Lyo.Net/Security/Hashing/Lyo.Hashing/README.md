@@ -1,14 +1,8 @@
 # Lyo.Hashing
 
-Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (*
-*`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** /
-**`HashingService`**). A process-wide default is exposed as **`HashingService.Shared`**
-(analogous to **`Random.Shared`**).
+Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (**`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** / **`HashingService`**). A process-wide default is exposed as **`HashingService.Shared`** (analogous to **`Random.Shared`**).
 
-The public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default *
-*`IHashingService`**
-implementation. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror
-the interfaces.
+The public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default **`IHashingService`** implementation. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.
 
 Hex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / **`Lower`**) from **`Lyo.Common`**.
 

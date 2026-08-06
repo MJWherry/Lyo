@@ -3,7 +3,7 @@
   "name": "Lyo.Translation.Aws",
   "area": "Communication",
   "tagline": "Amazon Translate implementation of `ITranslationService`: translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.",
-  "description": "[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation,\npragmatic **language detection**, and **`ListLanguages`** connection checks.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "description": "[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [
     {

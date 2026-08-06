@@ -1,8 +1,6 @@
 # Lyo.Pdf.Rendering
 
-Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage)
-(PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets
-`net10.0`.
+Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage) (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.
 
 ## Examples
 

@@ -1,7 +1,6 @@
 # Lyo.Profanity
 
-File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement
-strategies.
+File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.
 
 ## Features
 

@@ -1,7 +1,6 @@
 # Lyo.Translation.Aws
 
-[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation,
-pragmatic **language detection**, and **`ListLanguages`** connection checks.
+[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 

@@ -1,10 +1,6 @@
 # Lyo.Benchmarking
 
-Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue
-of [`Lyo.Testing`](../../Lyo.Testing/Lyo.Testing.csproj). References
-[`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md) + BenchmarkDotNet (+ Testcontainers),
-so the consumer-facing models stay dependency-light while the suites share one config, entry
-point, exporter, and data/container helpers.
+Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of [`Lyo.Testing`](../../Lyo.Testing/Lyo.Testing.csproj). References [`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md) + BenchmarkDotNet (+ Testcontainers), so the consumer-facing models stay dependency-light while the suites share one config, entry point, exporter, and data/container helpers.
 
 `net10.0`, not packable.
 

@@ -1,7 +1,6 @@
 # Lyo.MessageQueue
 
-Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind
-**`Lyo.MessageQueue.*` implementations**.
+Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind **`Lyo.MessageQueue.*` implementations**.
 
 Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity alongside DB/cache checks.
 

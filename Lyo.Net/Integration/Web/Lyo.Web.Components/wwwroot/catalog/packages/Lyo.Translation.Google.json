@@ -3,7 +3,7 @@
   "name": "Lyo.Translation.Google",
   "area": "Communication",
   "tagline": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService` extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.",
-  "description": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService`\nextends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "description": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService` extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
   "features": [],
   "examples": [
     {

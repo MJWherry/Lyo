@@ -3,7 +3,7 @@
   "name": "Lyo.DataTable.Models",
   "area": "Data",
   "tagline": "Mutable in-memory data table with sparse columns, thin cells, an optional format map, fluent builders, and an HTML renderer.",
-  "description": "Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse\noptional format map, fluent builders, and an HTML renderer. Used as the canonical tabular\nexchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md),\n[`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md),\nand for ad-hoc programmatic table construction.\n\nThis project contains all of the runtime types. The sibling\n[`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.",
+  "description": "Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse optional format map, fluent builders, and an HTML renderer. Used as the canonical tabular exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md), and for ad-hoc programmatic table construction.\n\nThis project contains all of the runtime types. The sibling [`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.",
   "features": [],
   "examples": [],
   "sections": [

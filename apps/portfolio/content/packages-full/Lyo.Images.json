@@ -3,7 +3,7 @@
   "name": "Lyo.Images",
   "area": "Data",
   "tagline": "Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**.",
-  "description": "Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**. Implements **`IImageService`** (resize, crop, rotate, watermark, format conversion,\nthumbnails, compression, metadata, palette extraction, batch processing) plus a generic **image-decoration** surface (`IImageDecorationService`): centered/positioned **overlay**\ncompositing (raster + SVG), stroked **frame** outlines, **caption** bands, and **outer padding/shadow** — all stream-based and chainable through\n**`IImageDecorationPipeline`**.",
+  "description": "Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**. Implements **`IImageService`** (resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata, palette extraction, batch processing) plus a generic **image-decoration** surface (`IImageDecorationService`): centered/positioned **overlay** compositing (raster + SVG), stroked **frame** outlines, **caption** bands, and **outer padding/shadow** — all stream-based and chainable through **`IImageDecorationPipeline`**.",
   "features": [
     "**Resize** — Max, Crop, Pad, BoxPad, Stretch (`ResizeMode`).",
     "**Crop**, **Rotate**, **Watermark**, **Convert format**, **Thumbnail**, **Compress**.",

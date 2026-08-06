@@ -1,10 +1,8 @@
 # Lyo.Keystore
 
-**Key Encryption Key (KEK)** storage and rotation contracts for [`Lyo.Encryption`](../Lyo.Encryption/README.md). Encryption services call into **`IKeyStore`** by **`keyId`** (and
-optional **version** string) so ciphertext can outlive a single key material rotation.
+**Key Encryption Key (KEK)** storage and rotation contracts for [`Lyo.Encryption`](../Lyo.Encryption/README.md). Encryption services call into **`IKeyStore`** by **`keyId`** (and optional **version** string) so ciphertext can outlive a single key material rotation.
 
-**Vocabulary:** the **KEK** lives in the store. **Data Encryption Keys (DEKs)** used by envelope / two-key flows are generated per operation by the encryption layer and are **not**
-persisted in the keystore—only the KEK that wraps them.
+**Vocabulary:** the **KEK** lives in the store. **Data Encryption Keys (DEKs)** used by envelope / two-key flows are generated per operation by the encryption layer and are **not** persisted in the keystore—only the KEK that wraps them.
 
 ## Examples
 

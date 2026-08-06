@@ -3,7 +3,7 @@
   "name": "Lyo.Job.Postgres",
   "area": "Integration",
   "tagline": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem.",
-  "description": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`),\noptional parameter encryption, audit recording, and `IJobEventPublisher` so a host can drop in a complete job service: definitions, parameters, schedules, triggers, calendars,\nworkflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.",
+  "description": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can drop in a complete job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.",
   "features": [],
   "examples": [
     {

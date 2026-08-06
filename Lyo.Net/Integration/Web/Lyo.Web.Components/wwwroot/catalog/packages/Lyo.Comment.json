@@ -3,7 +3,7 @@
   "name": "Lyo.Comment",
   "area": "Features",
   "tagline": "Abstractions for attaching threaded, reactable comments to any entity. Each comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and…",
-  "description": "Abstractions for attaching threaded, reactable comments to any entity. Each\ncomment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and cached\nlike/dislike counters maintained via the reaction methods.",
+  "description": "Abstractions for attaching threaded, reactable comments to any entity. Each comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and cached like/dislike counters maintained via the reaction methods.",
   "features": [],
   "examples": [
     {

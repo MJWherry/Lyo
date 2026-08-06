@@ -3,7 +3,7 @@
   "name": "Lyo.FileMetadataStore",
   "area": "Data",
   "tagline": "**File identity without bytes.** Large systems split:",
-  "description": "**File identity without bytes.** Large systems split:\n\n1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs.\n2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.\n\nClients depend on **`IFileMetadataStore`** only where they manipulate **canonical `Guid`** file identifiers.",
+  "description": "**File identity without bytes.** Large systems split:\n\n1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs. 2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.\n\nClients depend on **`IFileMetadataStore`** only where they manipulate **canonical `Guid`** file identifiers.",
   "features": [],
   "examples": [],
   "sections": [

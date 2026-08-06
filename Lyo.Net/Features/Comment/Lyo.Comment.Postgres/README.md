@@ -1,16 +1,8 @@
 # Lyo.Comment.Postgres
 
-PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists
-comments to the `comment.comment` table and reactions to
-`comment.comment_reaction` (schema constant:
-`PostgresCommentOptions.Schema = "comment"`) with migrations support. Comments
-have **subject** / **actor** (`for_entity_*` / `from_entity_*`), optional
-**ReplyToCommentId** (parent comment), and cached `LikeCount` / `DislikeCount`
-counters.
+PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists comments to the `comment.comment` table and reactions to `comment.comment_reaction` (schema constant: `PostgresCommentOptions.Schema = "comment"`) with migrations support. Comments have **subject** / **actor** (`for_entity_*` / `from_entity_*`), optional **ReplyToCommentId** (parent comment), and cached `LikeCount` / `DislikeCount` counters.
 
-`PostgresCommentStore` implements `ICommentStore` and `Lyo.Health.IHealth`
-(`HealthCheckName = "comment-postgres"`), so registering the store also wires
-up a liveness probe.
+`PostgresCommentStore` implements `ICommentStore` and `Lyo.Health.IHealth` (`HealthCheckName = "comment-postgres"`), so registering the store also wires up a liveness probe.
 
 ## Features
 

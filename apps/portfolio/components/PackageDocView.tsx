@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { CodeBlock } from "./CodeBlock";
 import { DocSections } from "./DocSections";
 import { resolveFeaturedMetrics } from "@/lib/benchmarks/resolveFeatured";
-import { inlineFormat } from "@/lib/catalog/inlineFormat";
-import type { CatalogDependency, CatalogPackage } from "@/lib/catalog/types";
+import { formatDescriptionHtml, inlineFormat, normalizeProse } from "@/lib/catalog/inlineFormat";
+import type { CatalogDependency, CatalogPackage, FeatureNode } from "@/lib/catalog/types";
 
 const LEGACY_DEPS_TITLE =
   /^(related\s+packages|related\s+projects|dependencies)(\b| — |-|:)/i;
@@ -45,14 +46,84 @@ function DependenciesPanel({ deps }: { deps: CatalogDependency[] }) {
 
 /** Hide body description only when it adds nothing beyond the hero tagline. */
 function descriptionIsRedundant(tagline: string, description: string): boolean {
-  const a = tagline.replace(/\s+/g, " ").trim().toLowerCase();
-  const b = description.replace(/\s+/g, " ").trim().toLowerCase();
+  const a = normalizeProse(tagline).replace(/\s+/g, " ").trim().toLowerCase();
+  const b = normalizeProse(description).replace(/\s+/g, " ").trim().toLowerCase();
   if (!b) return true;
   if (!a) return false;
   if (a === b) return true;
   // Truncated tagline of a longer description → still show the full body.
   if (b.startsWith(a.replace(/\s*\.?\s*$/, "")) && b.length > a.length + 24) return false;
   return b.startsWith(a) && b.length <= a.length + 24;
+}
+
+function isFeatureGroup(node: FeatureNode): node is Exclude<FeatureNode, string> {
+  return typeof node !== "string" && Array.isArray(node.items) && node.items.length > 0;
+}
+
+function FeatureLeafList({ nodes }: { nodes: FeatureNode[] }) {
+  if (!nodes.length) return null;
+  return (
+    <ul className="feature-list muted">
+      {nodes.map((node, i) => (
+        <FeatureLeaf key={i} node={node} />
+      ))}
+    </ul>
+  );
+}
+
+function FeatureLeaf({ node }: { node: FeatureNode }) {
+  if (typeof node === "string") {
+    return <li dangerouslySetInnerHTML={{ __html: inlineFormat(node) }} />;
+  }
+
+  const title = (node.title ?? "").trim();
+  const text = (node.text ?? "").trim();
+  const items = node.items ?? [];
+  const label = title && text ? `**${title}** — ${text}` : title || text;
+
+  return (
+    <li>
+      {label ? <span dangerouslySetInnerHTML={{ __html: inlineFormat(label) }} /> : null}
+      {items.length > 0 ? <FeatureLeafList nodes={items} /> : null}
+    </li>
+  );
+}
+
+/** Top-level features: groups become subsections; leaf runs stay one list. */
+function FeaturesBlock({ features }: { features: FeatureNode[] }) {
+  const blocks: ReactNode[] = [];
+  let leafRun: FeatureNode[] = [];
+
+  const flushLeaves = () => {
+    if (!leafRun.length) return;
+    blocks.push(<FeatureLeafList key={`leaves-${blocks.length}`} nodes={[...leafRun]} />);
+    leafRun = [];
+  };
+
+  features.forEach((node, i) => {
+    if (isFeatureGroup(node)) {
+      flushLeaves();
+      const title = (node.title ?? "").trim();
+      const text = (node.text ?? "").trim();
+      blocks.push(
+        <div key={`group-${i}`} className="feature-group">
+          {title ? <h3 className="feature-group-title">{title}</h3> : null}
+          {text ? (
+            <p
+              className="feature-group-text"
+              dangerouslySetInnerHTML={{ __html: inlineFormat(text) }}
+            />
+          ) : null}
+          <FeatureLeafList nodes={node.items ?? []} />
+        </div>,
+      );
+      return;
+    }
+    leafRun.push(node);
+  });
+  flushLeaves();
+
+  return <>{blocks}</>;
 }
 
 /** Renders a full package docs.json the same way README render does. */
@@ -63,27 +134,24 @@ export function PackageDocView({ pkg }: { pkg: CatalogPackage }) {
   const showDescription = Boolean(description) && !descriptionIsRedundant(tagline, description);
   const sections = (pkg.sections ?? []).filter((s) => !LEGACY_DEPS_TITLE.test(s.title ?? ""));
   const dependencies = pkg.dependencies ?? [];
+  const features = pkg.features ?? [];
 
   return (
     <>
       {showDescription ? (
         <div
-          className="panel"
+          className="panel doc-prose"
           style={{ marginBottom: "1rem" }}
           dangerouslySetInnerHTML={{
-            __html: inlineFormat(description).replace(/\n/g, "<br/>"),
+            __html: formatDescriptionHtml(description),
           }}
         />
       ) : null}
 
-      {(pkg.features ?? []).length > 0 ? (
+      {features.length > 0 ? (
         <div className="panel" style={{ marginBottom: "1rem" }}>
           <h2 style={{ fontSize: "1.25rem" }}>Features</h2>
-          <ul className="muted" style={{ paddingLeft: "1.2rem", margin: "0.5rem 0 0" }}>
-            {pkg.features.map((f) => (
-              <li key={f} dangerouslySetInnerHTML={{ __html: inlineFormat(f) }} />
-            ))}
-          </ul>
+          <FeaturesBlock features={features} />
         </div>
       ) : null}
 
@@ -114,7 +182,7 @@ export function PackageDocView({ pkg }: { pkg: CatalogPackage }) {
               </Link>
             </p>
           ) : null}
-          <ul className="muted" style={{ paddingLeft: "1.2rem", margin: 0 }}>
+          <ul className="doc-list muted">
             {(pkg.benchmarks.items ?? []).map((item) => {
               const resolved = item.featured
                 ? resolveFeaturedMetrics(pkg.benchmarks?.suite, item)
@@ -156,7 +224,7 @@ export function PackageDocView({ pkg }: { pkg: CatalogPackage }) {
       {(pkg.links ?? []).length > 0 ? (
         <div className="panel" style={{ marginTop: "1rem" }}>
           <h2 style={{ fontSize: "1.15rem" }}>Links</h2>
-          <ul className="muted" style={{ paddingLeft: "1.2rem", margin: 0 }}>
+          <ul className="doc-list muted">
             {pkg.links.map((l) => (
               <li key={l.href}>
                 <a href={l.href}>{l.label}</a>

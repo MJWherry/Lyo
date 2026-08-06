@@ -10,18 +10,53 @@ Shared reusable API code lives outside k6 in:
 
 ## Production Matrix
 
-The primary production path is now a **symmetric matrix**:
+Four axes (cartesian product = **90 cells** by default):
 
-- Endpoints: `/person/QueryConcrete`, `/person/QueryProject`, root `POST /Query` (From/Joins sparse projection)
-- Profiles: `load`, `stress`, `spike`, `soak`, `ceiling` (saturation)
-- Dedicated suites: 15 scenario files (one per endpoint x profile)
+| Axis | Values |
+|------|--------|
+| **Endpoint** | `query` (`/person/QueryConcrete`), `queryproject` (`/person/QueryProject`), `queryroot` (`POST /Query`) |
+| **Profile** | `load`, `stress`, `spike`, `soak`, `ceiling` |
+| **Intensity** | `low`, `med`, `high` |
+| **Cache** | `uncached` (varied shapes), `cached` (`CACHE_HIT_MODE` pins shapes) |
 
-Core matrix orchestration is data-driven via:
+Every cell pins **`RANDOM_SEED=20260623`**. Results are named `{endpoint}_{profile}_{intensity}_{cached|uncached}.summary.json`.
 
-- `lib/config.js` (matrix/env schema)
-- `lib/cases.js` (case registry)
-- `lib/k6Transport.js` (k6 adapter over shared TS clients)
-- `lib/matrixRunner.js` (shared per-iteration execution)
+Still **15 scenario stubs** (endpoint × profile only); intensity + cache are env-driven. `run_all.py` expands the product via `MatrixPlanner`.
+
+### Intensity presets (SoT: `lib/intensityPresets.js`)
+
+| Profile | low | med | high |
+|---------|-----|-----|------|
+| **load** | 7/s, 3m, maxVU 12 | 25/s, 5m, maxVU 40 | 40/s, 5m, maxVU 60 |
+| **stress** | 5→15→25 VU | 10→30→50 VU | 15→45→75 VU |
+| **spike** | 5→40→10/s, maxVU 60 | 15→100→25/s, maxVU 120 | 25→150→40/s, maxVU 180 |
+| **soak** | 5 VU / 30m | 15 VU / 1h | 25 VU / 2h |
+| **ceiling** | 10…100 | 25…300 | 25…1000 (full ladder) |
+
+### Flow table (× 3 endpoints = 90)
+
+For each of `query`, `queryproject`, `queryroot`:
+
+| Profile | Intensity | uncached | cached |
+|---------|-----------|----------|--------|
+| load / stress / spike / soak / ceiling | low \| med \| high | cell | cell |
+
+Day-run tip: `python3 k6/framework-person/run_all.py nonsoak med uncached` (12 cells). Full product is long — soak dominates.
+
+### OOP layout (reusable composition)
+
+```
+scenario stub → ScenarioFactory.create(MatrixCell)
+                  ├─ IntensityPresets → ProfileOptionsBuilder
+                  ├─ CacheModePolicy → paging / shape RNG
+                  ├─ CaseCatalog (cases.js)
+                  └─ CaseRunner (client.js)
+
+run_all.py → MatrixPlanner → K6ProcessRunner(cell.to_env())
+```
+
+JS: `lib/matrixCell.js`, `intensityPresets.js`, `cacheModePolicy.js`, `scenarioFactory.js`, `profiles.js` (`ProfileOptionsBuilder`).  
+Python: `matrix/axes.py`, `cell.py`, `planner.py`, `runner.py`.
 
 ## Benchmarks & “modern standards”
 
@@ -70,18 +105,25 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
 ## Directory layout
 
 - `lib/`
+  - `matrixAxes.js` / `matrixCell.js` — cell identity (endpoint × profile × intensity × cache × seed)
+  - `intensityPresets.js` — low/med/high numeric tables (SoT)
+  - `cacheModePolicy.js` — cached vs uncached paging / RNG policy
+  - `scenarioFactory.js` — composes cell → runnable k6 scenario
+  - `profiles.js` — `ProfileOptionsBuilder` (presets → k6 options)
   - `env.js` env parsing helpers
   - `client.js` HTTP execution + validation checks/metrics
   - `metrics.js` custom k6 metrics
-  - `profiles.js` workload profile option builders
   - `config.js` matrix config schema and selectors
   - `cases.js` endpoint-aware query case registry
   - `k6Transport.js` transport adapter for shared TS API client
-  - `matrixRunner.js` shared execution flow for endpoint/profile suites
+  - `matrixRunner.js` thin legacy wrapper → `ScenarioFactory`
+  - `workloadShape.js` seeded RNG / sort helpers
   - `personModels.js` shared field names and source-type constants
   - `queryFactory.js` `QueryConcreteReq` body builders (`/person/QueryConcrete`)
   - `projectionQueries.js` `ProjectionQueryReq` body builders (`/person/QueryProject`)
   - `rootQueries.js` root query body builders (`POST /Query` — From/Joins sparse projection)
+- `matrix/` (Python)
+  - `axes.py` / `cell.py` / `planner.py` / `runner.py` — cartesian expansion + k6 process invoke
 - `scenarios/`
   - `query_load.js`
   - `query_stress.js`
@@ -118,35 +160,27 @@ k6 run -e BASE_URL="http://localhost:5251" -e ENDPOINT_PATH="/person/QueryConcre
   k6/framework-person/scenarios/01_load_mixed_queries.js
 ```
 
-Run everything:
+Run the matrix (default: all endpoints × profiles × intensities × both cache modes = 90 cells):
 
 ```bash
 python3 k6/framework-person/run_all.py
 
-# Run specific scenarios by keyword (substring match)
-python3 k6/framework-person/run_all.py query_spike queryproject_load
+# Axis filters (AND across axes; OR within an axis)
+python3 k6/framework-person/run_all.py query load med          # 2 cells (cached + uncached)
+python3 k6/framework-person/run_all.py spike high uncached     # 3 endpoints × spike × high × uncached
+python3 k6/framework-person/run_all.py nonsoak med uncached    # day-run slice (no soak)
 
-# Run profile groups across both endpoints (matrix-style)
-python3 k6/framework-person/run_all.py spike
-python3 k6/framework-person/run_all.py load
-python3 k6/framework-person/run_all.py stress
+# Saturation
+python3 k6/framework-person/run_all.py ceiling med
 
-# Combine groups/keywords
-python3 k6/framework-person/run_all.py query spike
-python3 k6/framework-person/run_all.py nonsoak
-
-# Saturation (ceiling) runs — find the max sustained arrival rate
-RUN_LABEL=ceiling-uncached python3 k6/framework-person/run_all.py ceiling
-CACHE_HIT_MODE=true RUN_LABEL=ceiling-cached python3 k6/framework-person/run_all.py ceiling
-
-# Equivalent via env var (comma-separated)
-TEST_FILTER="query_spike,queryproject_load" python3 k6/framework-person/run_all.py
+# Equivalent via env var (comma-separated keywords)
+TEST_FILTER="query,load,med,uncached" python3 k6/framework-person/run_all.py
 ```
 
-Smoke matrix mode:
+Smoke matrix mode (1 VU / 1 iteration per cell):
 
 ```bash
-MODE=smoke python3 k6/framework-person/run_all.py
+MODE=smoke python3 k6/framework-person/run_all.py query load med
 ```
 
 ## Useful env vars
@@ -159,14 +193,16 @@ MODE=smoke python3 k6/framework-person/run_all.py
   - `SLEEP_SECONDS`
 - Matrix control:
   - `MODE` (`full` or `smoke`) in `run_all.py`
-  - `RUN_LABEL` (prefixes the results directory name, e.g. `RUN_LABEL=ceiling-cached` → `results/ceiling-cached-<timestamp>/`; shows up in the dashboard snapshot dropdown)
-  - `CACHE_HIT_MODE` (`true|false`, default `false`) pins request shapes — fixed `Start=0`/`Amount=amountMin`, round-robin case rotation, and all include/Select/sort randomization off — so every case settles on one server cache key and repeat requests hit TestApi's query cache. Use for cache-hit benchmarking; the default (varied paging) measures cache-miss behavior.
+  - `RUN_LABEL` (prefixes the results directory name; shows up in the dashboard snapshot dropdown)
+  - `INTENSITY` (`low|med|high`, default `med` when running a stub directly; `run_all.py` expands all three unless filtered)
+  - `CACHE_MODE` (`uncached|cached`) preferred cache axis; `CACHE_HIT_MODE` (`true|false`) legacy equivalent
+  - Cached mode pins request shapes (fixed `Start=0`/`Amount=amountMin`, round-robin cases, no include/Select/sort randomization) so each case hits one query-cache key
+  - `RANDOM_SEED` (integer, default `20260623`) — always pinned by `run_all.py` for every cell
   - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.
   - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
   - Fairness default: both `/person/QueryConcrete` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
   - `MATRIX_SLEEP_SECONDS` (global matrix iteration sleep override)
-  - `RANDOMIZE_CASE_SELECTION` (`true|false`, default `true`) weighted random case selection instead of strict round-robin
-  - `RANDOM_SEED` (integer, default `20260623`) deterministic replay seed for case/shape/sort generation
+  - `RANDOMIZE_CASE_SELECTION` (`true|false`, default `true`) weighted random case selection instead of strict round-robin (forced off in cached mode)
   - `CASE_WEIGHT_<CASE_ID>` (e.g. `CASE_WEIGHT_PROJECTION_NESTED=2.0`) set case weights
   - `CASE_WEIGHT_<ENDPOINT>_<PROFILE>_<CASE_ID>` (most specific override; e.g. `CASE_WEIGHT_QUERYPROJECT_SPIKE_PROJECTION_UNIFIED=3.0`)
 - Query behavior:
@@ -187,12 +223,12 @@ MODE=smoke python3 k6/framework-person/run_all.py
   - `SORT_KEYCOUNT_WEIGHTS` or endpoint-specific variants (`QUERY_SORT_KEYCOUNT_WEIGHTS`, `QUERYPROJECT_SORT_KEYCOUNT_WEIGHTS`) using `count:weight` CSV, e.g. `0:0.1,1:0.4,2:0.4,3:0.1`
   - `SORT_DESC_RATE` / endpoint-specific variants (default `0.45`)
   - `SORT_MIXED_DIRECTION_RATE` / endpoint-specific variants (default `0.35`)
-- Profile tuning:
-  - Load: `LOAD_RATE`, `LOAD_DURATION`, `LOAD_PREALLOCATED_VUS`, `LOAD_MAX_VUS` (defaults: `7`, `3m`, `6`, `12`)
+- Profile tuning (defaults come from `INTENSITY` presets in `lib/intensityPresets.js`; env overrides still win):
+  - Load: `LOAD_RATE`, `LOAD_DURATION`, `LOAD_PREALLOCATED_VUS`, `LOAD_MAX_VUS`
   - Stress: `STRESS_START_VUS`, `STRESS_TARGET1`, `STRESS_TARGET2`, stage durations
-  - Spike: `SPIKE_START_RATE`, `SPIKE_TARGET_RATE`, `SPIKE_MAX_VUS`
+  - Spike: `SPIKE_START_RATE`, `SPIKE_TARGET_RATE`, `SPIKE_RECOVER_RATE`, `SPIKE_PREALLOCATED_VUS`, `SPIKE_MAX_VUS`
   - Soak: `SOAK_VUS`, `SOAK_DURATION`, `SOAK_HEAVY_EVERY`
-  - Ceiling: `CEILING_RATES` (CSV arrival-rate steps, default `25,50,100,150,200,300,450,700,1000`), `CEILING_STEP_DURATION` (default `45s`), `CEILING_MAX_VUS` (default `400`), `CEILING_GRACEFUL_STOP` (default `10s`)
+  - Ceiling: `CEILING_RATES`, `CEILING_STEP_DURATION`, `CEILING_MAX_VUS`, `CEILING_GRACEFUL_STOP`
 - Heavy include:
   - `BYPASS_CACHE=true|false`
   - `HEAVY_AMOUNT`, `HEAVY_MIN_AMOUNT`, `HEAVY_MAX_AMOUNT` (defaults: `200`, `150`, `300`)

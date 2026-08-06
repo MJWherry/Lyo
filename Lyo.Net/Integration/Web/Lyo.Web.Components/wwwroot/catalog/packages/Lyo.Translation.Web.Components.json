@@ -3,7 +3,7 @@
   "name": "Lyo.Translation.Web.Components",
   "area": "Communication",
   "tagline": "Blazor (MudBlazor) workbench component for exercising the configured `Lyo.Translation` implementation interactively from a host application.",
-  "description": "Blazor (MudBlazor) workbench component for exercising the configured [`Lyo.Translation`](../Lyo.Translation/README.md)\nimplementation interactively from a host application.",
+  "description": "Blazor (MudBlazor) workbench component for exercising the configured [`Lyo.Translation`](../Lyo.Translation/README.md) implementation interactively from a host application.",
   "features": [],
   "examples": [],
   "sections": [

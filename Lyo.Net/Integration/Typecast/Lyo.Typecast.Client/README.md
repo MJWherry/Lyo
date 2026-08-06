@@ -1,7 +1,6 @@
 # Lyo.Typecast.Client
 
-Typecast API client for text-to-speech and voice management. `TypecastClient` extends `Lyo.Api.Client.ApiClient`, configures the `X-API-KEY` header from `TypecastClientOptions`,
-and exposes two managers (`TextToSpeech`, `Voices`) for the underlying REST endpoints.
+Typecast API client for text-to-speech and voice management. `TypecastClient` extends `Lyo.Api.Client.ApiClient`, configures the `X-API-KEY` header from `TypecastClientOptions`, and exposes two managers (`TextToSpeech`, `Voices`) for the underlying REST endpoints.
 
 Multi-targets `netstandard2.0` and `net10.0`.
 

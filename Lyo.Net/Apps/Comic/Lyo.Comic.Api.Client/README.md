@@ -1,7 +1,6 @@
 # Lyo.Comic.Api.Client
 
-Typed **`HttpClient`** for the [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single
-**`AddComicApiClientFromConfiguration`** DI extension that binds **`ComicApiClientOptions`** from configuration.
+Typed **`HttpClient`** for the [`Lyo.Comic.Api`](../Lyo.Comic.Api/README.md) service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI extension that binds **`ComicApiClientOptions`** from configuration.
 
 ## Features
 

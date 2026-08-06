@@ -3,7 +3,7 @@
   "name": "Lyo.Validation",
   "area": "Core",
   "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures.",
-  "description": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are\npopulated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.",
+  "description": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are populated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.",
   "features": [],
   "examples": [
     {

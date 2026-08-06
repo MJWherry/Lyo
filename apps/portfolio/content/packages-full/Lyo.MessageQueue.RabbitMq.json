@@ -3,7 +3,7 @@
   "name": "Lyo.MessageQueue.RabbitMq",
   "area": "Communication",
   "tagline": "Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService` when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.",
-  "description": "Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService`\nwhen you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.",
+  "description": "Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService` when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.",
   "features": [
     "`RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration. Default section name: `RabbitMqOptions.SectionName = \"RabbitMqOptions\"`.",
     "`IConnectionFactory` singleton built from those options with:",

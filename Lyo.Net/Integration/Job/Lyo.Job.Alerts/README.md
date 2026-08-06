@@ -1,10 +1,8 @@
 # Lyo.Job.Alerts
 
-Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches
-them through **`INotificationPublisher`** (in-process handlers) and/or an optional **HTTP webhook**.
+Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches them through **`INotificationPublisher`** (in-process handlers) and/or an optional **HTTP webhook**.
 
-Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via
-`IJobEventPublisher.PublishAlertAsync`.
+Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via `IJobEventPublisher.PublishAlertAsync`.
 
 ## Examples
 

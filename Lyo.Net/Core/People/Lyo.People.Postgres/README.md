@@ -2,8 +2,7 @@
 
 PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.
 
-**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host.
-See [package layout](../../../docs/package-layout.md).
+**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host. See [package layout](../../../docs/package-layout.md).
 
 ## Features
 

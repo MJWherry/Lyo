@@ -1,7 +1,6 @@
 # Lyo.Barcode
 
-**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support
-live in companion packages (for example **`Lyo.Barcode.Native`**).
+**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support live in companion packages (for example **`Lyo.Barcode.Native`**).
 
 ## Examples
 

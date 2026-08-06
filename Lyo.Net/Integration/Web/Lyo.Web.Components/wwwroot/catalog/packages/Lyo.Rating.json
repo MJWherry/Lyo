@@ -3,7 +3,7 @@
   "name": "Lyo.Rating",
   "area": "Features",
   "tagline": "Abstractions for rating and reviewing arbitrary entities, plus like/dislike reactions on those ratings.",
-  "description": "Abstractions for rating and reviewing arbitrary entities, plus like/dislike\nreactions on those ratings. Each rating is keyed by `(forEntity, fromEntity,\nsubject)`, so the same actor can rate the same target on multiple subject axes\n(e.g. `\"scary\"`, `\"action\"`). Subjects of `null` represent a general rating.",
+  "description": "Abstractions for rating and reviewing arbitrary entities, plus like/dislike reactions on those ratings. Each rating is keyed by `(forEntity, fromEntity, subject)`, so the same actor can rate the same target on multiple subject axes (e.g. `\"scary\"`, `\"action\"`). Subjects of `null` represent a general rating.",
   "features": [],
   "examples": [
     {

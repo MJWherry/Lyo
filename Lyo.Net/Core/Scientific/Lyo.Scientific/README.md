@@ -1,8 +1,6 @@
 # Lyo.Scientific
 
-Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [
-`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [
-`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).
+Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [ `Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [ `Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 

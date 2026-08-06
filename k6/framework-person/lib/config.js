@@ -1,6 +1,7 @@
-import { env, toBool, toFloat, toInt, variedAmount, variedStart } from "./env.js";
+import { env, toFloat, toInt } from "./env.js";
+import { CacheModePolicy, defaultCacheModePolicy } from "./cacheModePolicy.js";
 
-export function loadMatrixConfig({ endpointKind, profile }) {
+export function loadMatrixConfig({ endpointKind, profile, cachePolicy } = {}) {
   const baseUrl = env("BASE_URL", "http://localhost:5251");
   const token = env("TOKEN", "");
   const defaultMatrixCases = profile === "load" && endpointKind === "query"
@@ -12,7 +13,7 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     .map((x) => x.trim())
     .filter(Boolean);
 
-  // Fair-by-default matrix pagination: both endpoints use identical ranges unless explicitly overridden.
+  // Fair-by-default matrix pagination: endpoints use identical ranges unless overridden.
   const amountMin = toInt(
     "MATRIX_AMOUNT_MIN",
     toInt("QUERY_AMOUNT_MIN", toInt("QUERYPROJECT_AMOUNT_MIN", 100))
@@ -30,9 +31,7 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     profile === "ceiling" ? 0 : profile === "soak" ? 0.15 : profile === "spike" ? 0.02 : 0.08;
   const sleepSeconds = toFloat("MATRIX_SLEEP_SECONDS", defaultSleep);
 
-  // CACHE_HIT_MODE pins request shapes (fixed paging, no randomized includes/Select/sorts)
-  // so every case settles on one server cache key and subsequent requests hit the cache.
-  const cacheHitMode = toBool("CACHE_HIT_MODE", false);
+  const policy = cachePolicy instanceof CacheModePolicy ? cachePolicy : defaultCacheModePolicy();
 
   return {
     endpointKind,
@@ -48,7 +47,9 @@ export function loadMatrixConfig({ endpointKind, profile }) {
     amountMax,
     startMax,
     sleepSeconds,
-    cacheHitMode,
+    cachePolicy: policy,
+    /** @deprecated use cachePolicy.isCached */
+    cacheHitMode: policy.isCached,
   };
 }
 
@@ -62,11 +63,8 @@ export function resolveCaseIdsForEndpoint(endpointKind, requestedCases, fallback
 }
 
 export function nextStartAmount(config, iter, vu) {
-  if (config.cacheHitMode) {
-    return { start: 0, amount: config.amountMin };
-  }
-  return {
-    start: variedStart(config.startMax, iter, vu),
-    amount: variedAmount(config.amountMin, config.amountMax, iter, vu),
-  };
+  const policy = config.cachePolicy instanceof CacheModePolicy
+    ? config.cachePolicy
+    : defaultCacheModePolicy();
+  return policy.resolvePaging(config, iter, vu);
 }

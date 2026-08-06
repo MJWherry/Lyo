@@ -1,29 +1,38 @@
 # Lyo.Encryption
 
-Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and *
-*AES-GCM +
-RSA** hybrids, and **envelope / two-key** flows (**`ITwoKeyEncryptionService`**) composed from **`IEncryptionService`** implementations. Keys can be supplied inline or resolved
-from
-**`Lyo.Keystore`** via **`keyId`**.
+Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and **AES-GCM + RSA** hybrids, plus envelope / two-key flows via **`ITwoKeyEncryptionService`**.
 
-The primary contracts are **`IEncryptionService`** (single key per operation), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`**
-(shared streaming, string, and file helpers). With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README for documented members.
+Primary contracts: **`IEncryptionService`** (single key), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`** (streaming, string, and file helpers). Keys can be inline or resolved from **`Lyo.Keystore`** by **`keyId`**.
 
-For architecture, threat model, **`IKeyStore`** expectations, benchmarks, and operational checklists, see **[Security/Encryption `README.md`](../README.md)** — treat that document
-as
-the umbrella guide; this file focuses on **this assembly’s API surface**.
+For architecture, threat model, and operational checklists, see the **[Security/Encryption README](../README.md)** — this file covers this assembly’s API surface.
 
 ## Features
 
-- **AEAD** – Confidentiality + integrity (authenticated tags); tampering surfaces as **`DecryptionFailedException`**
-- **Key sources** – Optional **`byte[] key`** / **`byte[] kek`** or **`IKeyStore`** lookup by **`keyId`** (and version for two-key decrypt / rotation)
-- **Streaming** – **`EncryptToStreamAsync`** / **`DecryptToStreamAsync`** chunk large payloads without materializing the whole ciphertext in memory (framed format on the wire)
-- **Files** – **`EncryptToFileAsync`**, **`DecryptFromFileAsync`**, and stream-to-file variants
-- **Strings** – **`EncryptString`** / **`DecryptString`** using the per-direction encoding (**`GetEncryptionEncoding`** / **`GetDecryptionEncoding`**, UTF-8 by default; set via * *`SetEncryptionEncoding`** / **`SetDecryptionEncoding`**)
-- **DI helpers** – **`EncryptionServiceExtensions`**: RSA / AES-GCM+RSA registration, keyed **`ITwoKeyEncryptionService`** + keyed **`IKeyStore`**
-- **Discovery** – **`EncryptionAlgorithm`**, **`EncryptionAlgorithmDiscovery`**, algorithm metadata on **`EncryptionServiceBase.AlgorithmKind`**
-- **Non-throwing workflows** – **`EncryptionResult`** / **`DecryptionResult`** in **`Lyo.Encryption.Models`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
-- **Utilities** – **`SecurityUtilities`** (buffer zeroing, constant-time compare) — **not** KDFs (see [`Lyo.Keystore`](../Lyo.Keystore/README.md))
+### Algorithms
+
+Confidentiality + integrity (authenticated tags); tampering surfaces as **`DecryptionFailedException`**.
+
+- Symmetric AEAD: AES-GCM, ChaCha20-Poly1305, XChaCha20-Poly1305, AES-CCM, AES-SIV
+- RSA encrypt/decrypt and AES-GCM + RSA hybrid
+- Envelope / two-key via **`ITwoKeyEncryptionService`**
+
+### Keying
+
+- Inline **`byte[] key`** / **`byte[] kek`**, or **`IKeyStore`** lookup by **`keyId`**
+- Versioned decrypt / rotation on two-key paths
+
+### I/O
+
+- **Streaming** — **`EncryptToStreamAsync`** / **`DecryptToStreamAsync`** for large payloads (framed wire format)
+- **Files** — **`EncryptToFileAsync`**, **`DecryptFromFileAsync`**, and stream-to-file variants
+- **Strings** — **`EncryptString`** / **`DecryptString`** with per-direction encoding (UTF-8 by default)
+
+### Integration
+
+- DI helpers for RSA / AES-GCM+RSA, keyed **`ITwoKeyEncryptionService`** + **`IKeyStore`**
+- Algorithm discovery via **`EncryptionAlgorithm`** / **`EncryptionAlgorithmDiscovery`**
+- Non-throwing **`EncryptionResult`** / **`DecryptionResult`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
+- **`SecurityUtilities`** for buffer zeroing and constant-time compare (not KDFs — see [`Lyo.Keystore`](../Lyo.Keystore/README.md))
 
 ## Examples
 
@@ -141,8 +150,7 @@ Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already re
 | `AddDefaultTwoKeyEncryptionService<T>()` | Unkeyed **`ITwoKeyEncryptionService`** → `T` (rare) |
 | `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX) |
 
-Unkeyed addon methods do **not** register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. **File storage and envelope encryption** should use *
-*keyed** registration (includes `ITwoKeyEncryptionService`).
+Unkeyed addon methods do **not** register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. **File storage and envelope encryption** should use **keyed** registration (includes `ITwoKeyEncryptionService`).
 
 ## Keyed two-key (recommended)
 

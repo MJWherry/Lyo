@@ -1,7 +1,6 @@
 # Lyo.Encryption.XChaCha20Poly1305
 
-XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`. Uses an HChaCha20 subkey derivation step then BouncyCastle's IETF
-ChaCha20-Poly1305 implementation for the inner AEAD.
+XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`. Uses an HChaCha20 subkey derivation step then BouncyCastle's IETF ChaCha20-Poly1305 implementation for the inner AEAD.
 
 Install this addon only when you actually use XChaCha20-Poly1305 — the core `Lyo.Encryption` package no longer pulls BouncyCastle on `net10`.
 

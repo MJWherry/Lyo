@@ -3,7 +3,7 @@
   "name": "Lyo.FileSystemWatcher",
   "area": "Data",
   "tagline": "A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.",
-  "description": "A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based\nmonitoring, debouncing, and hash-based move/rename detection.",
+  "description": "A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.",
   "features": [
     "**Snapshot-Based Change Detection** - More reliable than relying solely on FileSystemWatcher events",
     "**Debouncing** - Batches rapid changes to prevent event storms",

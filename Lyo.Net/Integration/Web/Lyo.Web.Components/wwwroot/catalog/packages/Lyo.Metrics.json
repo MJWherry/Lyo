@@ -3,7 +3,7 @@
   "name": "Lyo.Metrics",
   "area": "Core",
   "tagline": "A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and implementations.",
-  "description": "A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and\nimplementations.",
+  "description": "A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and implementations.",
   "features": [
     "**Thread-Safe**: Built with `ConcurrentDictionary` and proper locking mechanisms",
     "**Multiple Metric Types**: Counters, Gauges, Histograms, Timings, Errors, Events",

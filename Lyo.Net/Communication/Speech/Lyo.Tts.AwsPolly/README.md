@@ -1,7 +1,6 @@
 # Lyo.Tts.AwsPolly
 
-[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk
-synthesis, metrics, and DI helpers.
+[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 

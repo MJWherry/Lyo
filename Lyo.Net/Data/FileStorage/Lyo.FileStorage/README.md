@@ -1,13 +1,8 @@
 # Lyo.FileStorage
 
-Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ([
-`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)), **two-key encryption**
-([`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)), **duplicate hashing**, **access policies**, **malware scans**, **audit hooks**, **multipart uploads** (
-via
-[`IMultipartUploadService`](Multipart/IMultipartUploadService.cs)), and **presigned/direct-upload/copy** on cloud-capable backends.
+Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ([ `Lyo.Compression`](../../Compression/Lyo.Compression/README.md)), **two-key encryption** ([`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)), **duplicate hashing**, **access policies**, **malware scans**, **audit hooks**, **multipart uploads** ( via [`IMultipartUploadService`](Multipart/IMultipartUploadService.cs)), and **presigned/direct-upload/copy** on cloud-capable backends.
 
-With XML documentation generation enabled in the repo (**`GenerateDocumentationFile`** in **`Directory.Build.props`**), IntelliSense surfaces the same summaries as this README for
-documented members.
+With XML documentation generation enabled in the repo (**`GenerateDocumentationFile`** in **`Directory.Build.props`**), IntelliSense surfaces the same summaries as this README for documented members.
 
 ## Examples
 
@@ -168,27 +163,18 @@ commit workers after **`UploadCompleted`**.
 **`DiskFileStorageOptions`** adds:
 
 | Property | Typical use |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`RootDirectoryPath`** | Root folder for blobs and bundled JSON metadata (when **`IFileMetadataStore`** not injected explicitly) |
 | **`EnableMetrics`** | Emit metrics via **`IMetrics`** when configured |
 | **`AllowFileUriPresignedUrls`** | (**Dev**) allow **`file://`** presigned-style URLs instead of rejecting presigned reads |
 | **`DirectUploadReceiveBaseUri`** | Absolute origin of the host that exposes **`PUT …/Workbench/FileStorage/direct-upload/{fileId}/put`** (matches **Lyo.TestApi** conventions). When null, **`BeginDirectUploadAsync`** delegates to **`NotSupported`** |
 | **`DirectUploadPutRouteRelativePath`** | Path between base URI and **`{fileId}/put`**; default **`Workbench/FileStorage/direct-upload`** with the bundled Test API |
 | **Inherited (`FileStorageServiceBaseOptions`)** | |
-
 | **`HealthCheckMode`** | Lightweight vs fuller health probes |
-
 | **`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`** | Dedup by plaintext `originalFileHash`; see [Duplicate detection](#duplicate-detection) |
-
 | **`ThrowOnFileNotFound`**, **`ThrowOnDeleteNotFound`**, **`ThrowOnHashMismatch`** | Failure-vs-null behaviour |
-
-| **`MaxUploadSizeBytes`**, **`MaxDecompressedFileSize`**, **`AllowedContentTypes`** | Safety / validation. `MaxUploadSizeBytes` is enforced on direct-upload PUT bodies in addition
-to streamed saves; an **empty** `AllowedContentTypes` list **denies** all uploads (configure null or omit to allow any). |
-
-| **`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`** | Availability + **`IFileMalwareScanner`** integration. When
-`RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`**
-caps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated). |
-
+| **`MaxUploadSizeBytes`**, **`MaxDecompressedFileSize`**, **`AllowedContentTypes`** | Safety / validation. `MaxUploadSizeBytes` is enforced on direct-upload PUT bodies in addition to streamed saves; an **empty** `AllowedContentTypes` list **denies** all uploads (configure null or omit to allow any). |
+| **`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`** | Availability + **`IFileMalwareScanner`** integration. When `RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`** caps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated). |
 | **`DecompressionAlgorithmOverride`** | When set, all reads decompress with this codec instead of per-file metadata (migration/recovery). |
 
 ## Options — **`FileStorageServiceBaseOptions`** / **`DiskFileStorageOptions`** — Compression (resolver)

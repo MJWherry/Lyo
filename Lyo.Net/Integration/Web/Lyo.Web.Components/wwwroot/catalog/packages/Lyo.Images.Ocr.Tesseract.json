@@ -3,7 +3,7 @@
   "name": "Lyo.Images.Ocr.Tesseract",
   "area": "Data",
   "tagline": "**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.",
-  "description": "**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely\nconcurrent.",
+  "description": "**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.",
   "features": [],
   "examples": [
     {

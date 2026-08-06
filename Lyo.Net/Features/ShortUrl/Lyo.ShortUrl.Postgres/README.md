@@ -2,9 +2,7 @@
 
 EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.
 
-> **Heads up — there is no `PostgresShortUrlService` / `PostgresShortUrlStore` in this package.** It deliberately ships only the database surface (DbContext, entities,
-> migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, plug your own implementation on top of `ShortUrlDbContext` (or
-> use the in-box `Lyo.ShortUrl.ShortUrlService` for id-only generation; it does **not** persist anything).
+> **Heads up — there is no `PostgresShortUrlService` / `PostgresShortUrlStore` in this package.** It deliberately ships only the database surface (DbContext, entities, > migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, plug your own implementation on top of `ShortUrlDbContext` (or > use the in-box `Lyo.ShortUrl.ShortUrlService` for id-only generation; it does **not** persist anything).
 
 ## Examples
 

@@ -1,7 +1,6 @@
 # Lyo.Webhook
 
-Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and
-counters**, and **structured logging** via `Microsoft.Extensions.Logging`.
+Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and **structured logging** via `Microsoft.Extensions.Logging`.
 
 Provider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.
 

@@ -1,11 +1,8 @@
 # Lyo.Authentication.OpenIdConnect
 
-OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment. After
-a successful external login, the API either:
+OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment. After a successful external login, the API either:
 
-- issues tokens directly as JSON (for **API clients** calling `/auth/login/{provider}?mode=api`), or
-- mints a single-use **handoff code** and 302-redirects the browser to a whitelisted consumer origin which then exchanges that code server-to-server for the tokens (for **browser
-  clients** via `Lyo.Authentication.Client`).
+- issues tokens directly as JSON (for **API clients** calling `/auth/login/{provider}?mode=api`), or - mints a single-use **handoff code** and 302-redirects the browser to a whitelisted consumer origin which then exchanges that code server-to-server for the tokens (for **browser clients** via `Lyo.Authentication.Client`).
 
 ## Examples
 

@@ -3,7 +3,7 @@
   "name": "Lyo.Webhook",
   "area": "Core",
   "tagline": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and…",
-  "description": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and\ncounters**, and **structured logging** via `Microsoft.Extensions.Logging`.\n\nProvider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.",
+  "description": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and **structured logging** via `Microsoft.Extensions.Logging`.\n\nProvider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.",
   "features": [
     "**Abstractions**: `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`",
     "**Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)",

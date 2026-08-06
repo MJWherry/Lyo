@@ -1,7 +1,6 @@
 # Lyo.FileMetadataStore.Sqlite
 
-SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with [
-`Lyo.FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) for embedded, offline-first, and local-dev scenarios.
+SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with [ `Lyo.FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) for embedded, offline-first, and local-dev scenarios.
 
 ## Examples
 

@@ -1,7 +1,6 @@
 # Lyo.Tts.Typecast.Web.Components
 
-Blazor (MudBlazor) workbench component for exercising [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md)
-interactively from a host application.
+Blazor (MudBlazor) workbench component for exercising [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) interactively from a host application.
 
 ## Components
 

@@ -3,7 +3,7 @@
   "name": "Lyo.Tts.Typecast.Web.Components",
   "area": "Communication",
   "tagline": "Blazor (MudBlazor) workbench component for exercising `Lyo.Tts.Typecast` interactively from a host application.",
-  "description": "Blazor (MudBlazor) workbench component for exercising [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md)\ninteractively from a host application.",
+  "description": "Blazor (MudBlazor) workbench component for exercising [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) interactively from a host application.",
   "features": [],
   "examples": [],
   "sections": [

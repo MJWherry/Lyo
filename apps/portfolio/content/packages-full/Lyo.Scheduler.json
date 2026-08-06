@@ -3,7 +3,7 @@
   "name": "Lyo.Scheduler",
   "area": "Core",
   "tagline": "In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging, metrics, and…",
-  "description": "In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with\nlogging, metrics, and optional state persistence via `ISchedulerStateStore`.",
+  "description": "In-process scheduler service for executing actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging, metrics, and optional state persistence via `ISchedulerStateStore`.",
   "features": [
     "**Schedule types** – `SetTimes` (specific daily times), `Interval` (periodic within a window), `OneShot` (single run), `Cron` (full cron expressions via [ `Lyo.Schedule.Models.CronExpression`](../../Schedule/Lyo.Schedule.Models/README.md))",
     "**State persistence** – In-memory by default; pluggable `ISchedulerStateStore` (e.g. cache-backed) for cross-restart persistence",

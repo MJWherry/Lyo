@@ -3,7 +3,7 @@
   "name": "Lyo.People.Postgres",
   "area": "Core",
   "tagline": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.",
-  "description": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host.\nSee [package layout](../../../docs/package-layout.md).",
+  "description": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host. See [package layout](../../../docs/package-layout.md).",
   "features": [
     "**person** — Core person data with flattened name, demographics, and JSON columns for preferences/citizenship/custom fields",
     "**phone_number** — Base phone numbers (E.164)",

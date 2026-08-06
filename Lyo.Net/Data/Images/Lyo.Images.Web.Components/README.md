@@ -1,7 +1,6 @@
 # Lyo.Images.Web.Components
 
-Reusable **Blazor / MudBlazor** components for exercising [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet
-animator/extractor built on `ISpriteSheetExportService`.
+Reusable **Blazor / MudBlazor** components for exercising [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet animator/extractor built on `ISpriteSheetExportService`.
 
 ## Examples
 

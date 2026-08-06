@@ -1,7 +1,6 @@
 # Lyo.Privacy.Web.Components
 
-Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Lets operators preview, compare, and tune redaction policies without
-round-tripping through a host config edit.
+Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Lets operators preview, compare, and tune redaction policies without round-tripping through a host config edit.
 
 ## Components
 

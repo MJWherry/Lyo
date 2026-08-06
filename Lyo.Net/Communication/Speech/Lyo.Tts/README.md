@@ -1,7 +1,6 @@
 # Lyo.Tts
 
-Contracts and shared behaviour for text-to-speech in Lyo: provider-agnostic interfaces, a non-generic
-façade, and a base service with bulk synthesis, metrics hooks, and lifecycle events.
+Contracts and shared behaviour for text-to-speech in Lyo: provider-agnostic interfaces, a non-generic façade, and a base service with bulk synthesis, metrics hooks, and lifecycle events.
 
 **Target frameworks:** `netstandard2.0;net10.0`
 

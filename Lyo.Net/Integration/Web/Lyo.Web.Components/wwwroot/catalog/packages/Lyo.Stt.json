@@ -3,7 +3,7 @@
   "name": "Lyo.Stt",
   "area": "Communication",
   "tagline": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records…",
-  "description": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface\n(`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records,\nand metric name constants. **No provider implementations ship in this repository today** — applications\nthat need transcription provide their own `SttServiceBase` subclass (or any `ISttService`) and register it\nthrough DI themselves.",
+  "description": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records, and metric name constants. **No provider implementations ship in this repository today** — applications that need transcription provide their own `SttServiceBase` subclass (or any `ISttService`) and register it through DI themselves.",
   "features": [],
   "examples": [],
   "sections": [

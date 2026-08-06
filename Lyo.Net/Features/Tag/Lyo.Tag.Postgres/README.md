@@ -1,13 +1,8 @@
 # Lyo.Tag.Postgres
 
-PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists
-tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`)
-with migrations support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by
-`(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.
+PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`) with migrations support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by `(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.
 
-`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth`
-(`HealthCheckName = "tag-postgres"`), so registering the store also wires up a
-liveness probe.
+`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth` (`HealthCheckName = "tag-postgres"`), so registering the store also wires up a liveness probe.
 
 ## Examples
 

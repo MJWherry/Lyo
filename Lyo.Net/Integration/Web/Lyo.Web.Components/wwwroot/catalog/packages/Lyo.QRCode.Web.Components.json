@@ -3,7 +3,7 @@
   "name": "Lyo.QRCode.Web.Components",
   "area": "Data",
   "tagline": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**).",
-  "description": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**). The main surface is **`QrCodeWorkbench`**: a three-column layout (output and styling ·\ntyped payload · result), wired to **`IQRCodeService`**, **`IImageDecorationService`** (overlay / frame / caption / padding primitives from **`Lyo.Images`**), and\n**`Lyo.Web.Components.FileUpload.LyoFileUpload`** for logo files.",
+  "description": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**). The main surface is **`QrCodeWorkbench`**: a three-column layout (output and styling · typed payload · result), wired to **`IQRCodeService`**, **`IImageDecorationService`** (overlay / frame / caption / padding primitives from **`Lyo.Images`**), and **`Lyo.Web.Components.FileUpload.LyoFileUpload`** for logo files.",
   "features": [],
   "examples": [],
   "sections": [

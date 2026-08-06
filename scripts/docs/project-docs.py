@@ -130,6 +130,24 @@ def collapse_ws(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def normalize_prose(text: str) -> str:
+    """Join soft line wraps; keep blank-line paragraphs; heal broken ``**`` markers."""
+    if not text:
+        return ""
+    s = text.replace("\r\n", "\n")
+    # Mid-wrap often splits bold: "*\n*AES" or "* *AES"
+    s = re.sub(r"\*\s*\n\s*\*", "**", s)
+    s = re.sub(r"\*\s+\*", "**", s)
+    paragraphs = re.split(r"\n\s*\n", s)
+    out: list[str] = []
+    for para in paragraphs:
+        joined = re.sub(r"[ \t]*\n[ \t]*", " ", para).strip()
+        joined = re.sub(r"[ \t]{2,}", " ", joined)
+        if joined:
+            out.append(joined)
+    return "\n\n".join(out)
+
+
 def strip_md_links(text: str) -> str:
     return re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text).strip()
 
@@ -291,67 +309,111 @@ def iter_code_and_text(body: str):
         yield ("text", None, tail)
 
 
-def parse_feature_list(text: str) -> list[str]:
-    """Top-level bullets; nested children collapsed onto parent with —."""
-    items: list[str] = []
-    current: str | None = None
-    children: list[str] = []
-
-    def flush():
-        nonlocal current, children
-        if current is None:
-            return
-        parent = strip_emoji(current)
-        if children:
-            items.append(f"{parent} — {'; '.join(strip_emoji(c) for c in children)}")
+def _build_nested_nodes(entries: list[tuple[int, str]], start: int, parent_indent: int) -> tuple[list, int]:
+    """Build FeatureNode / list-item trees from (indent, body) pairs."""
+    nodes: list = []
+    i = start
+    while i < len(entries):
+        indent, body = entries[i]
+        if indent <= parent_indent:
+            break
+        j = i + 1
+        if j < len(entries) and entries[j][0] > indent:
+            children, j = _build_nested_nodes(entries, j, indent)
+            nodes.append({"title": body, "items": children})
+            i = j
         else:
-            items.append(parent)
-        current = None
-        children = []
+            nodes.append(body)
+            i = j
+    return nodes, i
 
+
+def _parse_indented_bullets(text: str) -> list:
+    """Parse markdown bullets into nested string / {title, items} nodes."""
+    entries: list[tuple[int, str]] = []
     for line in text.split("\n"):
-        m = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)$", line)
+        m = re.match(r"^([ \t]*)([-*+]|\d+\.)\s+(.*)$", line)
         if m:
-            indent = len(m.group(1))
-            body = m.group(3).rstrip()
-            # Top-level bullets sit at column 0 (or a single space); nested are indented 2+.
-            if indent < 2:
-                flush()
-                current = body
-            elif current is not None:
-                children.append(body)
-            else:
-                current = body
+            indent = len(m.group(1).expandtabs(2))
+            entries.append((indent, strip_emoji(m.group(3).rstrip())))
             continue
-        if current is not None and re.match(r"^\s+\S", line):
-            if children:
-                children[-1] = f"{children[-1]} {line.strip()}"
-            else:
-                current = f"{current} {line.strip()}"
+        if entries and re.match(r"^\s+\S", line):
+            indent, body = entries[-1]
+            entries[-1] = (indent, f"{body} {line.strip()}")
             continue
         if not line.strip():
             continue
-        if current is not None:
+        if entries:
             break
-    flush()
-    return items
+    if not entries:
+        return []
+    nodes, _ = _build_nested_nodes(entries, 0, -1)
+    return nodes
 
 
-def parse_bullet_list(text: str) -> list[str] | None:
-    items: list[str] = []
-    for line in text.split("\n"):
-        m = re.match(r"^\s*([-*+]|\d+\.)\s+(.*)$", line)
-        if m:
-            items.append(strip_emoji(m.group(2).rstrip()))
-            continue
-        if items and re.match(r"^\s+\S", line):
-            items[-1] = f"{items[-1]} {line.strip()}"
-            continue
-        if not line.strip():
-            continue
-        if items:
-            break
+def parse_feature_list(text: str) -> list:
+    """Top-level bullets; nested children become `{title, items}` objects."""
+    return _parse_indented_bullets(text)
+
+
+def parse_bullet_list(text: str) -> list | None:
+    items = _parse_indented_bullets(text)
     return items or None
+
+
+def feature_node_to_md(node, indent: int = 0) -> list[str]:
+    """Emit a FeatureNode as markdown lines."""
+    pad = "  " * indent
+    if isinstance(node, str):
+        return [f"{pad}- {node}"]
+
+    title = (node.get("title") or "").strip()
+    text = (node.get("text") or "").strip()
+    items = node.get("items") or []
+
+    # Top-level groups with children → ### subsection under Features.
+    if indent == 0 and items:
+        lines: list[str] = [f"### {title}", ""]
+        if text:
+            lines.extend([text, ""])
+        for child in items:
+            lines.extend(feature_node_to_md(child, 0))
+        lines.append("")
+        return lines
+
+    if title and text:
+        label = f"**{title}** — {text}"
+    elif title:
+        label = f"**{title}**" if items else title
+    else:
+        label = text
+
+    lines = [f"{pad}- {label}"] if label else []
+    for child in items:
+        lines.extend(feature_node_to_md(child, indent + (1 if label else indent)))
+    return lines
+
+
+def list_item_to_md(item, indent: int = 0, ordered: bool = False, index: int = 1) -> list[str]:
+    """Emit a list section item (string or nested object) as markdown lines."""
+    pad = "  " * indent
+    prefix = f"{index}. " if ordered and indent == 0 else "- "
+    if isinstance(item, str):
+        return [f"{pad}{prefix}{item}"]
+
+    title = (item.get("title") or "").strip()
+    text = (item.get("text") or "").strip()
+    children = item.get("items") or []
+    if title and text:
+        label = f"**{title}** — {text}"
+    else:
+        label = text or title
+
+    lines = [f"{pad}{prefix}{label}"] if label else []
+    child_indent = indent + (1 if label else 0)
+    for child in children:
+        lines.extend(list_item_to_md(child, child_indent, ordered=False))
+    return lines
 
 
 def split_table_cells(line: str) -> list[str]:
@@ -687,11 +749,9 @@ def section_to_md(section: dict, level: int = 2) -> str:
         parts.append(section.get("text") or "")
         parts.append("")
     elif t == "list":
+        ordered = bool(section.get("ordered"))
         for idx, item in enumerate(section.get("items") or []):
-            if section.get("ordered"):
-                parts.append(f"{idx + 1}. {item}")
-            else:
-                parts.append(f"- {item}")
+            parts.extend(list_item_to_md(item, indent=0, ordered=ordered, index=idx + 1))
         parts.append("")
     elif t == "code":
         parts.append(f"```{section.get('language') or 'text'}")
@@ -713,7 +773,18 @@ def section_to_md(section: dict, level: int = 2) -> str:
     return "\n".join(parts)
 
 
+def normalize_pkg_prose(pkg: dict) -> dict:
+    """Return a shallow copy with tagline/description soft-wraps normalized."""
+    out = dict(pkg)
+    if "tagline" in out:
+        out["tagline"] = normalize_prose(out.get("tagline") or "")
+    if "description" in out:
+        out["description"] = normalize_prose(out.get("description") or "")
+    return out
+
+
 def docs_to_readme(pkg: dict) -> str:
+    pkg = normalize_pkg_prose(pkg)
     tagline = (pkg.get("tagline") or "").strip()
     desc = (pkg.get("description") or "").strip()
     lines = [
@@ -730,7 +801,10 @@ def docs_to_readme(pkg: dict) -> str:
         lines.append("## Features")
         lines.append("")
         for f in pkg["features"]:
-            lines.append(f"- {f}")
+            lines.extend(feature_node_to_md(f, 0))
+        # feature_node_to_md may already end groups with a blank line; collapse trailing blanks.
+        while lines and lines[-1] == "":
+            lines.pop()
         lines.append("")
 
     if pkg.get("examples"):
@@ -928,7 +1002,9 @@ def cmd_render() -> None:
             "(docs.json is the source of truth; do not extract from README)"
         )
 
-    for pkg in packages:
+    emit_packages = [normalize_pkg_prose(p) for p in packages]
+
+    for pkg in emit_packages:
         readme_path = ROOT / pkg["readmePath"]
         readme_path.write_text(docs_to_readme(pkg), encoding="utf-8")
 
@@ -940,7 +1016,7 @@ def cmd_render() -> None:
                 root_md,
                 "<!-- catalog:packages:start -->",
                 "<!-- catalog:packages:end -->",
-                render_root_packages_list(packages),
+                render_root_packages_list(emit_packages),
             )
             ROOT_README.write_text(root_md, encoding="utf-8")
         except ValueError as err:
@@ -964,10 +1040,10 @@ def cmd_render() -> None:
             "readme": p["readmePath"],
             "targetFrameworks": p.get("targetFrameworks") or [],
         }
-        for p in packages
+        for p in emit_packages
     ]
     write_json(PORTFOLIO / "packages.json", index)
-    for p in packages:
+    for p in emit_packages:
         write_json(PORTFOLIO_FULL / f"{p['id']}.json", p)
 
     # Blazor catalog mirror
@@ -975,13 +1051,13 @@ def cmd_render() -> None:
     blazor_packages.mkdir(parents=True, exist_ok=True)
     for old in blazor_packages.glob("*.json"):
         old.unlink()
-    for p in packages:
+    for p in emit_packages:
         write_json(blazor_packages / f"{p['id']}.json", p)
     write_json(
         BLAZOR / "index.json",
         {
             "generatedAt": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
-            "packageCount": len(packages),
+            "packageCount": len(emit_packages),
             "packages": [
                 {
                     "id": p["id"],
@@ -991,12 +1067,12 @@ def cmd_render() -> None:
                     "tagline": p.get("tagline"),
                     "targetFrameworks": p.get("targetFrameworks") or [],
                 }
-                for p in packages
+                for p in emit_packages
             ],
         },
     )
 
-    print(f"render: {len(packages)} READMEs + root README + portfolio + Blazor from project {DOCS_FILENAME}")
+    print(f"render: {len(emit_packages)} READMEs + root README + portfolio + Blazor from project {DOCS_FILENAME}")
 
     # Adhoc tooling READMEs (scripts/*, k6 matrix, etc.) — same SoT rule via tooling-docs.
     tooling = Path(__file__).with_name("tooling-docs.py")
@@ -1053,7 +1129,11 @@ def cmd_audit() -> None:
                 "examples": len(p.get("examples") or []),
                 "sections": len(p.get("sections") or []),
                 "exTitles": [e.get("title") for e in (p.get("examples") or [])[:8]],
-                "feat0": (p.get("features") or [""])[0][:90],
+                "feat0": (
+                    (lambda f: f if isinstance(f, str) else (f.get("title") or f.get("text") or ""))(
+                        (p.get("features") or [""])[0]
+                    )
+                )[:90],
             },
         )
 

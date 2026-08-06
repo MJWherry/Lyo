@@ -3,7 +3,7 @@
   "name": "Lyo.Pdf.Models",
   "area": "Data",
   "tagline": "Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by `Lyo.Pdf` so consumers can depend on `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without…",
-  "description": "Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by\n[`Lyo.Pdf`](../Lyo.Pdf/README.md) so consumers can depend on `IPdfService`,\n`IPdfReader`, `IPdfWriter`, and `ITextExtractor` without pulling in PdfPig or PDFsharp\ndirectly.",
+  "description": "Interfaces and value types for the Lyo PDF stack. Defines the contracts implemented by [`Lyo.Pdf`](../Lyo.Pdf/README.md) so consumers can depend on `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without pulling in PdfPig or PDFsharp directly.",
   "features": [],
   "examples": [],
   "sections": [

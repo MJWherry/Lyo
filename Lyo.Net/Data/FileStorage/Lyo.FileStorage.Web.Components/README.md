@@ -1,12 +1,10 @@
 # Lyo.FileStorage.Web.Components
 
-Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key
-encryption keys.
+Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.
 
 Two integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:
 
-1. **Proxy mode** — talks to a backend host (typically **`Lyo.Portfolio.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials.
-2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.
+1. **Proxy mode** — talks to a backend host (typically **`Lyo.Portfolio.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials. 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.
 
 ## Components
 

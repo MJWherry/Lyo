@@ -3,7 +3,7 @@
   "name": "Lyo.Resilience",
   "area": "Core",
   "tagline": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging.",
-  "description": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions;\npipelines are defined entirely via configuration.",
+  "description": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions; pipelines are defined entirely via configuration.",
   "features": [
     "**Default pipelines** – `lyo-basic` and `lyo-http` with sensible retry and timeout; use without config",
     "Load resilience pipelines from `appsettings.json` (or any `IConfiguration` source)",

@@ -2,8 +2,7 @@
 
 **File identity without bytes.** Large systems split:
 
-1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs.
-2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.
+1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs. 2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.
 
 Clients depend on **`IFileMetadataStore`** only where they manipulate **canonical `Guid`** file identifiers.
 

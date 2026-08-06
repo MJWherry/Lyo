@@ -1,6 +1,24 @@
+/** Nested feature bullet or titled group (docs.json `features[]`). */
+export type FeatureNode =
+  | string
+  | {
+      title: string;
+      text?: string;
+      items?: FeatureNode[];
+    };
+
+/** Nested list section item (docs.json `sections[].items`). */
+export type ListItemNode =
+  | string
+  | {
+      title?: string;
+      text?: string;
+      items?: ListItemNode[];
+    };
+
 export type DocSection =
   | { type: "paragraph"; title?: string; text: string }
-  | { type: "list"; title?: string; ordered?: boolean; items: string[] }
+  | { type: "list"; title?: string; ordered?: boolean; items: ListItemNode[] }
   | { type: "code"; title?: string; language: string; code: string }
   | {
       type: "table";
@@ -71,7 +89,7 @@ export type CatalogPackage = {
   area: string;
   tagline: string;
   description: string;
-  features: string[];
+  features: FeatureNode[];
   examples: CatalogExample[];
   benchmarks?: CatalogBenchmarks;
   sections: DocSection[];

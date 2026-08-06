@@ -1,8 +1,6 @@
 # Lyo.Pdf.Ocr
 
-Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an
-`IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF
-coordinate space.
+Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.
 
 Targets `net10.0`.
 

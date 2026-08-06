@@ -1,10 +1,8 @@
-import { createEndpointProfileScenario } from "../lib/matrixRunner.js";
+import { MatrixCell } from "../lib/matrixCell.js";
+import { ScenarioFactory } from "../lib/scenarioFactory.js";
 
-const scenario = createEndpointProfileScenario({
-  endpointKind: "query",
-  profile: "ceiling",
-  testTag: "query-ceiling",
-});
+const cell = MatrixCell.fromEnv({ endpointKind: "query", profile: "ceiling" });
+const scenario = ScenarioFactory.create(cell);
 
 export const options = scenario.options;
 

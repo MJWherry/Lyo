@@ -1,7 +1,6 @@
 # Lyo.Lock.Redis
 
-Distributed implementation of `ILockService` using **Redis** and [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Use this when multiple app instances
-must exclude each other on the same logical key.
+Distributed implementation of `ILockService` using **Redis** and [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Use this when multiple app instances must exclude each other on the same logical key.
 
 **Keyed semaphores** (`IKeyedSemaphoreService`) are not implemented here; they remain in-process in [`Lyo.Lock`](../Lyo.Lock/README.md).
 
