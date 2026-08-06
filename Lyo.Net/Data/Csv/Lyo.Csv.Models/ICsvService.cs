@@ -65,16 +65,17 @@ public interface ICsvService
     /// <param name="data">Row index → column index → cell text.</param>
     /// <param name="csvFilePath">Destination path.</param>
     /// <param name="hasHeaderRow">When true, writes a header row.</param>
-    void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true);
+    /// <param name="hasFooterRow">When true, the last row after header peel is written as a trailing footer line.</param>
+    void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Exports a row/column dictionary map to a CSV stream.</summary>
-    void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true);
+    void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Serializes a dictionary map to a CSV string.</summary>
-    string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true);
+    string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Serializes a dictionary map to CSV bytes.</summary>
-    byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true);
+    byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Exports a data table to a CSV file.</summary>
     void ExportToCsvFromDataTable(DataTable.Models.DataTable dataTable, string csvFilePath);
@@ -104,19 +105,21 @@ public interface ICsvService
     /// <summary>Parses a CSV file into a mutable data table with optional header interpretation.</summary>
     /// <param name="csvFilePath">Path to the CSV file.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic names. When null, uses configuration.</param>
-    Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null);
+    /// <param name="hasFooterRow">When true, the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</param>
+    Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses a CSV stream into a mutable data table.</summary>
-    Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses CSV bytes into a mutable data table.</summary>
-    Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Exports CSV bytes to an HTML document containing a table.</summary>
     /// <param name="csvBytes">Raw CSV file bytes.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, uses Column0, Column1, etc. When null, uses CsvService configuration.</param>
+    /// <param name="hasFooterRow">When true, the last body row becomes the table footer.</param>
     /// <returns>Complete HTML document string with table.</returns>
-    string ExportToHtmlTable(byte[] csvBytes, bool? hasHeaderRow = null);
+    string ExportToHtmlTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses CSV bytes row-by-row as <typeparamref name="T" />.</summary>
     IEnumerable<T> ParseBytes<T>(byte[] csvBytes);
@@ -125,7 +128,7 @@ public interface ICsvService
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseBytesAsDictionary(byte[] csvBytes);
 
     /// <summary>Downloads CSV from a URL and parses it into a data table (blocking).</summary>
-    Result<DataTable.Models.DataTable> ParseFromUrlAsDataTable(string url, bool? hasHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseFromUrlAsDataTable(string url, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Downloads CSV from a URL and parses it as a nested dictionary.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseFromUrlAsDictionary(string url);
@@ -186,6 +189,7 @@ public interface ICsvService
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string csvFilePath,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Exports a dictionary map to a CSV stream asynchronously.</summary>
@@ -193,13 +197,14 @@ public interface ICsvService
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream csvStream,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Serializes a dictionary map to a CSV string asynchronously.</summary>
-    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, CancellationToken ct = default);
+    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Serializes a dictionary map to CSV bytes asynchronously.</summary>
-    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, CancellationToken ct = default);
+    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Exports a data table to a CSV file asynchronously.</summary>
     Task ExportToCsvFromDataTableAsync(DataTable.Models.DataTable dataTable, string csvFilePath, CancellationToken ct = default);
@@ -226,20 +231,21 @@ public interface ICsvService
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseStreamAsDictionaryAsync(Stream csvStream, CancellationToken ct = default);
 
     /// <summary>Parses a CSV file into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses a CSV stream into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses CSV bytes into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Exports CSV bytes to an HTML document containing a table.</summary>
     /// <param name="csvBytes">Raw CSV file bytes.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, uses Column0, Column1, etc. When null, uses CsvService configuration.</param>
+    /// <param name="hasFooterRow">When true, the last body row becomes the table footer.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Complete HTML document string with table.</returns>
-    Task<string> ExportToHtmlTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<string> ExportToHtmlTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses CSV bytes into a list of <typeparamref name="T" />.</summary>
     Task<List<T>> ParseBytesAsync<T>(byte[] csvBytes, CancellationToken ct = default);
@@ -250,8 +256,9 @@ public interface ICsvService
     /// <summary>Downloads CSV from a URL and parses it into a data table.</summary>
     /// <param name="url">HTTP(S) URL to the CSV resource.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic column names. When null, uses service configuration.</param>
+    /// <param name="hasFooterRow">When true, the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task<Result<DataTable.Models.DataTable>> ParseFromUrlAsDataTableAsync(string url, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseFromUrlAsDataTableAsync(string url, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Downloads CSV from a URL and parses it into a row/column dictionary map.</summary>
     /// <param name="url">HTTP(S) URL to the CSV resource.</param>
@@ -267,15 +274,18 @@ public interface ICsvService
     /// <summary>Parses multiple CSV files to data tables, returning one result per path (same order as <paramref name="csvFilePaths" />).</summary>
     /// <param name="csvFilePaths">Paths to CSV files on disk.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic column names. When null, uses service configuration.</param>
-    IReadOnlyList<Result<DataTable.Models.DataTable>> BatchParseFilesAsDataTable(IEnumerable<string> csvFilePaths, bool? hasHeaderRow = null);
+    /// <param name="hasFooterRow">When true, the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</param>
+    IReadOnlyList<Result<DataTable.Models.DataTable>> BatchParseFilesAsDataTable(IEnumerable<string> csvFilePaths, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses multiple CSV files to data tables asynchronously, returning one result per path (same order as <paramref name="csvFilePaths" />).</summary>
     /// <param name="csvFilePaths">Paths to CSV files on disk.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic column names. When null, uses service configuration.</param>
+    /// <param name="hasFooterRow">When true, the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</param>
     /// <param name="ct">Cancellation token.</param>
     Task<IReadOnlyList<Result<DataTable.Models.DataTable>>> BatchParseFilesAsDataTableAsync(
         IEnumerable<string> csvFilePaths,
         bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Parses a CSV file as an async sequence of rows (bounded memory).</summary>

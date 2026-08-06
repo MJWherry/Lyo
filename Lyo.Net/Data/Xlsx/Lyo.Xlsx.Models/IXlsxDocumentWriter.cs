@@ -21,7 +21,7 @@ public interface IXlsxDocumentWriter : IDisposable
 
     /// <summary>
     /// Streams a row/column dictionary map as a worksheet named <paramref name="sheetName" />; <paramref name="useHeaderRow" /> controls whether the first row is treated as
-    /// headers.
+    /// headers; <paramref name="useFooterRow" /> writes the last ordered row as a trailing footer.
     /// </summary>
-    void AddSheetFromDictionary(string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, CancellationToken ct = default);
+    void AddSheetFromDictionary(string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false, CancellationToken ct = default);
 }

@@ -27,6 +27,10 @@ This project contains all of the runtime types. The sibling [`Lyo.DataTable`](..
 
 `AddSumFooter` (or `WithSumFooter` on a column definition) flags a column for auto-summation. At `Build()` time the builder reads `DisplayValue` from each row's cell, trims common currency prefixes (`$ £ € ¥`), removes thousands separators, and parses with `InvariantCulture`; unparseable cells contribute `0`.
 
+## I/O round-trip
+
+`Lyo.Csv` and `Lyo.Xlsx` round-trip `Headers`, `Rows`, and `Footer` (Xlsx also maps footer formats at row `-2`). Export always writes `Footer` when present; import peels the last physical body row into `Footer` only when `hasFooterRow` / `useFooterRow` is true (default false). PDF extract still fills headers and body only.
+
 ## Targeting
 
 `netstandard2.0;net10.0`. No NuGet dependencies; references [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md) for argument validation.

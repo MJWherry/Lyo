@@ -1106,6 +1106,67 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
+    public void ExportToCsvFromDataTable_WithFooter_RoundTripsWhenHasFooterRow()
+    {
+        var svc = new CsvService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var csv = svc.ExportToCsvStringFromDataTable(dt);
+        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), hasHeaderRow: true, hasFooterRow: true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("2", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseBytesAsDataTable_DefaultKeepsLastRowAsBody()
+    {
+        var svc = new CsvService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var csv = svc.ExportToCsvStringFromDataTable(dt);
+        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv)).ValueOrThrow();
+        Assert.Equal(2, parsed.Rows.Count);
+        Assert.Equal("Total", parsed.Rows[1][0].DisplayValue);
+        Assert.Empty(parsed.Footer);
+    }
+
+    [Fact]
+    public void ExportToCsvFromDataTable_EmptyFooter_MatchesHeaderAndBodyOnly()
+    {
+        var svc = new CsvService(_logger);
+        var withEmpty = new DataTable.Models.DataTable();
+        withEmpty.SetHeader(0, "A").SetHeader(1, "B");
+        withEmpty.AddRow().SetCell(0, "1").SetCell(1, "2");
+        var without = new DataTable.Models.DataTable();
+        without.SetHeader(0, "A").SetHeader(1, "B");
+        without.AddRow().SetCell(0, "1").SetCell(1, "2");
+        Assert.Equal(svc.ExportToCsvStringFromDataTable(without), svc.ExportToCsvStringFromDataTable(withEmpty));
+    }
+
+    [Fact]
+    public void ExportToCsvFromDictionary_WithFooterRow_DataTableParsePeelsFooter()
+    {
+        var svc = new CsvService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "H1", [1] = "H2" },
+            [1] = new Dictionary<int, string> { [0] = "a", [1] = "b" },
+            [2] = new Dictionary<int, string> { [0] = "Total", [1] = "1" }
+        };
+        var csv = svc.ExportToCsvStringFromDictionary(data, hasHeaderRow: true, hasFooterRow: true);
+        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), hasHeaderRow: true, hasFooterRow: true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("a", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("1", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
     public async Task ValidateAsync_HandlesEmptyFile()
     {
         var tempFile = _tempSession.TouchFile();

@@ -50,13 +50,13 @@ public interface IXlsxService
     byte[] ExportToXlsxBytes<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets);
 
     /// <summary>Exports a row/column dictionary map to an XLSX file.</summary>
-    void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string xlsxFilePath, bool useHeaderRow = true);
+    void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string xlsxFilePath, bool useHeaderRow = true, bool useFooterRow = false);
 
     /// <summary>Exports a row/column dictionary map to a stream.</summary>
-    void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream xlsxStream, bool useHeaderRow = true);
+    void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream xlsxStream, bool useHeaderRow = true, bool useFooterRow = false);
 
     /// <summary>Serializes a row/column dictionary map to XLSX bytes.</summary>
-    byte[] ExportToXlsxBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true);
+    byte[] ExportToXlsxBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false);
 
     /// <summary>Exports a Lyo data table to an XLSX file.</summary>
     void ExportToXlsxFromDataTable(DataTable.Models.DataTable dataTable, string xlsxFilePath);
@@ -103,34 +103,36 @@ public interface IXlsxService
     /// <summary>Parses the first worksheet into a data table.</summary>
     /// <param name="xlsxFilePath">Path to the workbook.</param>
     /// <param name="useHeaderRow">When true, first row is headers. When false, synthetic columns. When null, uses configuration.</param>
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, bool? useHeaderRow = null);
+    /// <param name="useFooterRow">When true, the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</param>
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses a workbook stream into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses XLSX bytes into a data table (values + spans only).</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the first worksheet into a data table with formatting in the sparse format map.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses a workbook stream into a data table with formatting.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses XLSX bytes into a data table with formatting.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Exports XLSX bytes to an HTML document containing a table (first sheet).</summary>
     /// <param name="xlsxBytes">Raw XLSX file bytes.</param>
     /// <param name="useHeaderRow">When true, first row is headers. When false, uses Column0, Column1, etc. When null, uses XlsxService configuration.</param>
+    /// <param name="useFooterRow">When true, the last body row becomes the table footer.</param>
     /// <returns>Complete HTML document string with table.</returns>
-    string ExportToHtmlTable(byte[] xlsxBytes, bool? useHeaderRow = null);
+    string ExportToHtmlTable(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the first worksheet from bytes into a nested dictionary.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxBytesAsDictionary(byte[] xlsxBytes);
 
     /// <summary>Parses multiple XLSX files to data tables (one result per path, same order as input).</summary>
-    IReadOnlyList<Result<DataTable.Models.DataTable>> BatchParseFilesAsDataTable(IEnumerable<string> xlsxFilePaths, bool? useHeaderRow = null);
+    IReadOnlyList<Result<DataTable.Models.DataTable>> BatchParseFilesAsDataTable(IEnumerable<string> xlsxFilePaths, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Lists worksheet names of a workbook file, in workbook order.</summary>
     IReadOnlyList<string> ListSheetNames(string xlsxFilePath);
@@ -160,41 +162,41 @@ public interface IXlsxService
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxBytesAsDictionary(byte[] xlsxBytes, int sheetIndex);
 
     /// <summary>Parses the named worksheet from a file into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, string sheetName, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the worksheet at the given zero-based index from a file into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the named worksheet from a stream into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, string sheetName, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the worksheet at the given zero-based index from a stream into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the named worksheet from bytes into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses the worksheet at the given zero-based index from bytes into a data table.</summary>
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses every worksheet of a workbook file into data tables, keyed by sheet name in workbook order.</summary>
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxFileAsAllSheets(string xlsxFilePath, bool? useHeaderRow = null);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxFileAsAllSheets(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses every worksheet of a workbook stream into data tables, keyed by sheet name in workbook order.</summary>
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxStreamAsAllSheets(Stream xlsxStream, bool? useHeaderRow = null);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxStreamAsAllSheets(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Parses every worksheet of workbook bytes into data tables, keyed by sheet name in workbook order.</summary>
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheets(byte[] xlsxBytes, bool? useHeaderRow = null);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheets(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, string sheetName, bool? useHeaderRow = null);
-    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null);
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, string sheetName, bool? useHeaderRow = null);
-    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null);
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null);
-    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null);
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxFileAsAllSheetsWithFormatting(string xlsxFilePath, bool? useHeaderRow = null);
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxStreamAsAllSheetsWithFormatting(Stream xlsxStream, bool? useHeaderRow = null);
-    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheetsWithFormatting(byte[] xlsxBytes, bool? useHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
+    Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTableWithFormatting(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
+    Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableWithFormatting(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false);
+    Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTableWithFormatting(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxFileAsAllSheetsWithFormatting(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxStreamAsAllSheetsWithFormatting(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false);
+    IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheetsWithFormatting(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
     /// <summary>Splits a workbook into one XLSX file per worksheet.</summary>
     /// <returns>Paths of the created workbooks, in sheet order.</returns>
@@ -309,25 +311,27 @@ public interface IXlsxService
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxStreamAsDictionaryAsync(Stream xlsxStream, CancellationToken ct = default);
 
     /// <summary>Parses a workbook file into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses a workbook stream into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses XLSX bytes into a data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Exports XLSX bytes to an HTML document containing a table (first sheet).</summary>
     /// <param name="xlsxBytes">Raw XLSX file bytes.</param>
     /// <param name="useHeaderRow">When true, first row is headers. When false, uses Column0, Column1, etc. When null, uses XlsxService configuration.</param>
+    /// <param name="useFooterRow">When true, the last body row becomes the table footer.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Complete HTML document string with table.</returns>
-    Task<string> ExportToHtmlTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<string> ExportToHtmlTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses multiple XLSX files to data tables asynchronously.</summary>
     Task<IReadOnlyList<Result<DataTable.Models.DataTable>>> BatchParseFilesAsDataTableAsync(
         IEnumerable<string> xlsxFilePaths,
         bool? useHeaderRow = null,
+        bool useFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Exports a row/column dictionary map to an XLSX file asynchronously.</summary>
@@ -335,6 +339,7 @@ public interface IXlsxService
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string xlsxFilePath,
         bool useHeaderRow = true,
+        bool useFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Exports a row/column dictionary map to a stream asynchronously.</summary>
@@ -342,10 +347,11 @@ public interface IXlsxService
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream xlsxStream,
         bool useHeaderRow = true,
+        bool useFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Serializes a row/column dictionary map to XLSX bytes asynchronously.</summary>
-    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, CancellationToken ct = default);
+    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Exports a Lyo data table to an XLSX file asynchronously.</summary>
     Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, string xlsxFilePath, CancellationToken ct = default);
@@ -387,44 +393,44 @@ public interface IXlsxService
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, int sheetIndex, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a file into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a file into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a stream into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a stream into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from bytes into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from bytes into a data table.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of a workbook file into data tables, keyed by sheet name in workbook order.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of a workbook stream into data tables, keyed by sheet name in workbook order.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of workbook bytes into data tables, keyed by sheet name in workbook order.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default);
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously splits a workbook into one XLSX file per worksheet.</summary>
     Task<IReadOnlyList<string>> SplitXlsxBySheetAsync(string xlsxFilePath, string outputDirectory, CancellationToken ct = default);

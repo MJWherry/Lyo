@@ -110,7 +110,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
 
     /// <summary>Writes a worksheet: a bold header row followed by <paramref name="rows" />, with column widths approximated from the leading rows.</summary>
     public void WriteSheet(string sheetName, IReadOnlyList<string> headers, IEnumerable<XlsxCell[]> rows, CancellationToken ct = default)
-        => WriteSheet(sheetName, headers, rows, headerFormats: null, ct);
+        => WriteSheet(sheetName, headers, rows, headerFormats: null, footer: null, footerFormats: null, ct);
 
     /// <summary>
     /// Writes a worksheet. When <paramref name="headerFormats" /> or cell <see cref="XlsxCell.Format" /> values are present, those styles are written into the stylesheet.
@@ -121,6 +121,20 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         IReadOnlyList<string> headers,
         IEnumerable<XlsxCell[]> rows,
         IReadOnlyList<DataTableCellFormat?>? headerFormats,
+        CancellationToken ct = default)
+        => WriteSheet(sheetName, headers, rows, headerFormats, footer: null, footerFormats: null, ct);
+
+    /// <summary>
+    /// Writes a worksheet with optional header/footer format maps and an optional trailing <paramref name="footer" /> row (bold by default, like the header).
+    /// Per-cell and <paramref name="footerFormats" /> win over the bold default.
+    /// </summary>
+    public void WriteSheet(
+        string sheetName,
+        IReadOnlyList<string> headers,
+        IEnumerable<XlsxCell[]> rows,
+        IReadOnlyList<DataTableCellFormat?>? headerFormats,
+        XlsxCell[]? footer,
+        IReadOnlyList<DataTableCellFormat?>? footerFormats,
         CancellationToken ct = default)
     {
         var worksheetPart = _workbookPart.AddNewPart<WorksheetPart>();
@@ -141,7 +155,10 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             sample.Add(row);
         }
 
-        RegisterFormatsFromSheet(headerFormats, sample, enumerator);
+        if (footer != null)
+            UpdateWidths(maxChars, footer);
+
+        RegisterFormatsFromSheet(headerFormats, footerFormats, footer, sample, enumerator);
 
         // pendingRows[col] > 0 means the column is covered by a rowspan from a previous row; mergeRefs collects A1-style merge ranges.
         var pendingRows = new int[columnCount];
@@ -164,6 +181,9 @@ internal sealed class OpenXmlStreamWriter : IDisposable
                 rowIndex++;
             }
 
+            if (footer != null)
+                WriteFooterRow(writer, footer, columnLetters, rowIndex, footerFormats, pendingRows, mergeRefs);
+
             writer.WriteEndElement(); // SheetData
 
             // mergeCells is valid after sheetData in the worksheet schema, so streaming is preserved.
@@ -183,12 +203,26 @@ internal sealed class OpenXmlStreamWriter : IDisposable
 
     private void RegisterFormatsFromSheet(
         IReadOnlyList<DataTableCellFormat?>? headerFormats,
+        IReadOnlyList<DataTableCellFormat?>? footerFormats,
+        XlsxCell[]? footer,
         List<XlsxCell[]> sample,
         IEnumerator<XlsxCell[]> enumerator)
     {
         var hasHeaderFormats = headerFormats != null && headerFormats.Any(static f => f != null);
+        var hasFooterFormats = footerFormats != null && footerFormats.Any(static f => f != null);
+        var footerCellHasFormats = false;
+        if (footer != null) {
+            foreach (var cell in footer) {
+                if (cell.Format == null)
+                    continue;
+
+                footerCellHasFormats = true;
+                break;
+            }
+        }
+
         var sampleHasFormats = false;
-        if (!hasHeaderFormats) {
+        if (!hasHeaderFormats && !hasFooterFormats && !footerCellHasFormats) {
             foreach (var row in sample) {
                 foreach (var cell in row) {
                     if (cell.Format == null)
@@ -207,10 +241,24 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         }
 
         var dirty = false;
-        var needsFullScan = hasHeaderFormats || sampleHasFormats;
+        var needsFullScan = hasHeaderFormats || hasFooterFormats || footerCellHasFormats || sampleHasFormats;
         if (headerFormats != null) {
             foreach (var format in headerFormats) {
                 if (format != null && EnsureFormatStyle(format))
+                    dirty = true;
+            }
+        }
+
+        if (footerFormats != null) {
+            foreach (var format in footerFormats) {
+                if (format != null && EnsureFormatStyle(format))
+                    dirty = true;
+            }
+        }
+
+        if (footer != null) {
+            foreach (var cell in footer) {
+                if (cell.Format != null && EnsureFormatStyle(cell.Format))
                     dirty = true;
             }
         }
@@ -500,6 +548,54 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             }
 
             c += colSpan; // covered columns of the merged range in this row are skipped
+        }
+
+        writer.WriteEndElement(); // Row
+    }
+
+    /// <summary>
+    /// Writes a trailing footer row. Defaults to bold-header style like <see cref="WriteHeaderRow" />; per-cell or <paramref name="footerFormats" /> win. Preserves merges like data rows.
+    /// </summary>
+    private void WriteFooterRow(
+        OpenXmlWriter writer,
+        XlsxCell[] footer,
+        string[] columnLetters,
+        uint rowIndex,
+        IReadOnlyList<DataTableCellFormat?>? footerFormats,
+        int[] pendingRows,
+        List<string> mergeRefs)
+    {
+        writer.WriteStartElement(new Row { RowIndex = rowIndex });
+        var rowRef = rowIndex.ToString(CultureInfo.InvariantCulture);
+        var c = 0;
+        while (c < columnLetters.Length) {
+            if (pendingRows[c] > 0) {
+                pendingRows[c]--;
+                c++;
+                continue;
+            }
+
+            if (c >= footer.Length) {
+                c++;
+                continue;
+            }
+
+            var cell = footer[c];
+            var format = cell.Format ?? (footerFormats != null && c < footerFormats.Count ? footerFormats[c] : null);
+            var style = ResolveStyle(format, StyleBoldHeader);
+            var colSpan = Math.Min(cell.ColSpan, columnLetters.Length - c);
+            var rowSpan = cell.RowSpan;
+            WriteInlineStringCell(writer, columnLetters[c] + rowRef, cell.DisplayText, style);
+            if (colSpan > 1 || rowSpan > 1) {
+                var endRow = rowIndex + (uint)(rowSpan - 1);
+                mergeRefs.Add($"{columnLetters[c]}{rowRef}:{columnLetters[c + colSpan - 1]}{endRow.ToString(CultureInfo.InvariantCulture)}");
+                if (rowSpan > 1) {
+                    for (var k = c; k < c + colSpan; k++)
+                        pendingRows[k] += rowSpan - 1;
+                }
+            }
+
+            c += colSpan;
         }
 
         writer.WriteEndElement(); // Row

@@ -73,33 +73,33 @@ internal sealed class CsvReader : ICsvReader
         return ParseReaderAsDictionary(reader);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTable(System.String,System.Nullable{System.Boolean})' />
-    public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTable(System.String,System.Nullable{System.Boolean},System.Boolean)' />
+    public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
         using var reader = new StreamReader(csvFilePath);
-        return ParseReaderAsDataTable(reader, hasHeaderRow);
+        return ParseReaderAsDataTable(reader, hasHeaderRow, hasFooterRow);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTable(System.IO.Stream,System.Nullable{System.Boolean})' />
-    public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTable(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean)' />
+    public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
         _logger.LogDebug("Parsing csv stream as DataTable");
         using var reader = new StreamReader(csvStream, Config.Encoding, true, 1024, true);
-        return ParseReaderAsDataTable(reader, hasHeaderRow);
+        return ParseReaderAsDataTable(reader, hasHeaderRow, hasFooterRow);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean})' />
-    public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean},System.Boolean)' />
+    public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
-        return ParseStreamAsDataTable(ms, hasHeaderRow);
+        return ParseStreamAsDataTable(ms, hasHeaderRow, hasFooterRow);
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytes``1(System.Byte[])' />
@@ -150,10 +150,10 @@ internal sealed class CsvReader : ICsvReader
         return result;
     }
 
-    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(TextReader reader, bool? hasHeaderRow, DataTablePoolingOptions? pooling = null)
+    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(TextReader reader, bool? hasHeaderRow, bool hasFooterRow = false, DataTablePoolingOptions? pooling = null)
     {
         var dict = ParseReaderAsDictionary(reader);
-        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord, pooling);
+        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord, hasFooterRow, pooling);
         return Result<DataTable.Models.DataTable>.Success(dt);
     }
 
@@ -164,6 +164,7 @@ internal sealed class CsvReader : ICsvReader
     private DataTable.Models.DataTable DictToDataTable(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> dict,
         bool useFirstRowAsHeader,
+        bool useLastRowAsFooter = false,
         DataTablePoolingOptions? pooling = null)
     {
         IReadOnlyDictionary<int, string> headers;
@@ -186,8 +187,22 @@ internal sealed class CsvReader : ICsvReader
             rows = rowsDict;
         }
 
+        IReadOnlyDictionary<int, string>? footerRow = null;
+        if (useLastRowAsFooter && rows.Count > 0) {
+            var ordered = rows.OrderBy(r => r.Key).ToList();
+            footerRow = ordered[ordered.Count - 1].Value;
+            var bodyDict = new Dictionary<int, IReadOnlyDictionary<int, string>>();
+            for (var i = 0; i < ordered.Count - 1; i++)
+                bodyDict[i] = ordered[i].Value;
+
+            rows = bodyDict;
+        }
+
         var colCount = headers.Count > 0 ? headers.Keys.Max() + 1 : 0;
-        var estimatedCells = Math.Max(colCount, 1) * (rows.Count + 1);
+        if (footerRow != null && footerRow.Count > 0)
+            colCount = Math.Max(colCount, footerRow.Keys.DefaultIfEmpty(-1).Max() + 1);
+
+        var estimatedCells = Math.Max(colCount, 1) * (rows.Count + 1 + (footerRow != null ? 1 : 0));
         var interner = new DataTableValueInterner(pooling ?? Pooling, estimatedCells);
         var dt = new DataTable.Models.DataTable();
         foreach (var kv in headers)
@@ -197,6 +212,11 @@ internal sealed class CsvReader : ICsvReader
             var dataRow = dt.AddRow();
             foreach (var colKv in rowKv.Value)
                 dataRow.SetCell(colKv.Key, DataTableCell.FromValue(interner.Intern(colKv.Value)));
+        }
+
+        if (footerRow != null) {
+            foreach (var colKv in footerRow)
+                dt.SetFooter(colKv.Key, DataTableCell.FromValue(interner.Intern(colKv.Value)));
         }
 
         return dt;
@@ -251,18 +271,18 @@ internal sealed class CsvReader : ICsvReader
         return await ParseReaderAsDictionaryAsync(reader, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, CancellationToken ct = default)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
+    public async Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
-        return await ParseStreamAsDataTableAsync(stream, hasHeaderRow, ct).ConfigureAwait(false);
+        return await ParseStreamAsDataTableAsync(stream, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTableAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, CancellationToken ct = default)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTableAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
+    public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
@@ -270,16 +290,16 @@ internal sealed class CsvReader : ICsvReader
         _logger.LogDebug("Parsing csv stream as DataTable");
         using var reader = new StreamReader(csvStream, Config.Encoding, true, 1024, true);
         var dict = await ParseReaderAsDictionaryAsync(reader, ct).ConfigureAwait(false);
-        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord);
+        var dt = DictToDataTable(dict, hasHeaderRow ?? Config.HasHeaderRecord, hasFooterRow);
         return Result<DataTable.Models.DataTable>.Success(dt);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default)
+    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
+    public async Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
-        return await ParseStreamAsDataTableAsync(ms, hasHeaderRow, ct).ConfigureAwait(false);
+        return await ParseStreamAsDataTableAsync(ms, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsync``1(System.Byte[],System.Threading.CancellationToken)' />

@@ -39,6 +39,11 @@
     },
     {
       "type": "paragraph",
+      "title": "I/O round-trip",
+      "text": "`Lyo.Csv` and `Lyo.Xlsx` round-trip `Headers`, `Rows`, and `Footer` (Xlsx also maps footer formats at row `-2`). Export always writes `Footer` when present; import peels the last physical body row into `Footer` only when `hasFooterRow` / `useFooterRow` is true (default false). PDF extract still fills headers and body only."
+    },
+    {
+      "type": "paragraph",
       "title": "Targeting",
       "text": "`netstandard2.0;net10.0`. No NuGet dependencies; references [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md) for argument validation."
     },

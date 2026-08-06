@@ -6,7 +6,7 @@ CsvHelper-backed implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.m
 
 - Strongly-typed read/write via `IEnumerable<T>` / `List<T>`.
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
-- `Lyo.DataTable.Models.DataTable` round-trip (`ParseFileAsDataTable`, `ExportToCsvFromDataTable`, plus an HTML helper `ExportToHtmlTable`).
+- `Lyo.DataTable.Models.DataTable` round-trip including `Footer` (`ParseFileAsDataTable` with `hasFooterRow`, `ExportToCsvFromDataTable` always appends footer when present, plus an HTML helper `ExportToHtmlTable`).
 - CSV → DataTable pooling via `CsvOptions.Pooling` / `CsvParseOptions.Pooling` (defaults `PoolValues=false`; estimate is `cols × (rows+1)` after the full CSV is buffered).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`), custom-header export (`IReadOnlyDictionary<string, PropertyInfo>`), and formatter export (`IReadOnlyDictionary<string, Func<T, string>>`).
 - URL download helpers (`ParseFromUrl*`) that share an optional injected `HttpClient`.
@@ -110,13 +110,13 @@ await csv.ExportToCsvStreamAsync(rows, formatters, stream, ct);
 ### DataTable, dictionary, and HTML helpers
 
 ```csharp
-Result<DataTable> parsed = csv.ParseFileAsDataTable("in.csv", hasHeaderRow: true);
-csv.ExportToCsvFromDataTable(parsed.ValueOrThrow(), "out.csv");
+Result<DataTable> parsed = csv.ParseFileAsDataTable("in.csv", hasHeaderRow: true, hasFooterRow: true);
+csv.ExportToCsvFromDataTable(parsed.ValueOrThrow(), "out.csv"); // writes Footer as trailing row when present
 
 var grid = csv.ParseFileAsDictionary("in.csv");
-csv.ExportToCsvFromDictionary(grid, "out.csv");
+csv.ExportToCsvFromDictionary(grid, "out.csv", hasHeaderRow: true, hasFooterRow: true);
 
-string html = csv.ExportToHtmlTable(File.ReadAllBytes("in.csv"));
+string html = csv.ExportToHtmlTable(File.ReadAllBytes("in.csv"), hasHeaderRow: true, hasFooterRow: true);
 ```
 
 ### Streaming, options, statistics, validation, comparison
@@ -191,15 +191,16 @@ byte[] bytesAsync = await csv.ExportToCsvBytesAsync(rows, ct);
 ## URL and batch
 
 ```csharp
-Result<DataTable> table = await csv.ParseFromUrlAsDataTableAsync(url, hasHeaderRow: true, ct);
+Result<DataTable> table = await csv.ParseFromUrlAsDataTableAsync(url, hasHeaderRow: true, hasFooterRow: true, ct);
 List<Person> rows = await csv.ParseFromUrlAsync<Person>(url, ct);
 
 IReadOnlyList<Result<DataTable>> results =
-    await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, ct);
+    await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, hasFooterRow: true, ct);
 ```
 
 If you do not supply an `HttpClient` to the constructor, a fresh one is created per URL
 call and disposed afterward; production callers should inject one via DI.
+Pass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`).
 
 ## Custom configuration and class maps
 

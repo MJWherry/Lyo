@@ -15,7 +15,7 @@ Export streams rows straight into the worksheet part via `OpenXmlWriter`, keepin
 - Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
-- `Lyo.DataTable.Models.DataTable` round-trip (values always; formats when present on the map) and HTML table export (`ExportToHtmlTable`).
+- `Lyo.DataTable.Models.DataTable` round-trip including `Footer` (export always appends footer when present; import peels the last body row when `useFooterRow: true`; formats on map row `-2`) and HTML table export (`ExportToHtmlTable`).
 - XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with optional `Encoding`.
 - Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one `Result<DataTable>` per input path.
 - `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
@@ -87,14 +87,14 @@ await xlsx.ExportToXlsxAsync(rows, formatters, stream, ct: ct);
 ### DataTable, dictionary, and HTML helpers
 
 ```csharp
-Result<DataTable> thin = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
-Result<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting("in.xlsx", useHeaderRow: true);
-xlsx.ExportToXlsxFromDataTable(styled.ValueOrThrow(), "out.xlsx"); // writes formats when HasFormats
+Result<DataTable> thin = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true, useFooterRow: true);
+Result<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting("in.xlsx", useHeaderRow: true, useFooterRow: true);
+xlsx.ExportToXlsxFromDataTable(styled.ValueOrThrow(), "out.xlsx"); // writes Footer + formats when present
 
 var grid = xlsx.ParseXlsxFileAsDictionary("in.xlsx");
-xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true);
+xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true, useFooterRow: true);
 
-string html = xlsx.ExportToHtmlTable(File.ReadAllBytes("in.xlsx"), useHeaderRow: true);
+string html = xlsx.ExportToHtmlTable(File.ReadAllBytes("in.xlsx"), useHeaderRow: true, useFooterRow: true);
 ```
 
 ### XLSX ↔ CSV
@@ -112,10 +112,10 @@ byte[] csvAsync = await xlsx.ConvertXlsxToCsvBytesAsync(inputStream, Encoding.UT
 
 ```csharp
 IReadOnlyList<Result<DataTable>> sync =
-    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true);
+    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true, useFooterRow: true);
 
 IReadOnlyList<Result<DataTable>> async =
-    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, ct);
+    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, useFooterRow: true, ct);
 ```
 
 ## Benchmarks
@@ -150,7 +150,7 @@ using (var doc = xlsx.CreateDocumentWriter("report.xlsx"))
     doc.AddSheet("People", people); // typed rows
     doc.AddSheet("Names", people, selectedProps); // selected properties
     doc.AddSheetFromDataTable("Summary", summaryTable); // Lyo DataTable
-    doc.AddSheetFromDictionary("Raw", grid, useHeaderRow: true);
+    doc.AddSheetFromDictionary("Raw", grid, useHeaderRow: true, useFooterRow: true);
 }
 ```
 

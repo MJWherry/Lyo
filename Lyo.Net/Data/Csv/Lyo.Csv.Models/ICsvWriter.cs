@@ -13,16 +13,17 @@ public interface ICsvWriter
     /// <param name="data">Row index → column index → cell text.</param>
     /// <param name="csvFilePath">Destination file path.</param>
     /// <param name="hasHeaderRow">If true, the first data row is written as column headers.</param>
-    void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true);
+    /// <param name="hasFooterRow">If true, the last data row (after header peel) is written as a trailing footer line.</param>
+    void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Writes a nested row/column dictionary to <paramref name="csvStream" />.</summary>
-    void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true);
+    void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Serializes a nested row/column dictionary to a CSV string.</summary>
-    string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true);
+    string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Serializes a nested row/column dictionary to CSV bytes.</summary>
-    byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true);
+    byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false);
 
     /// <summary>Exports a Lyo data table to <paramref name="csvFilePath" />.</summary>
     void ExportToCsvFromDataTable(DataTable.Models.DataTable dataTable, string csvFilePath);
@@ -126,6 +127,7 @@ public interface ICsvWriter
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string csvFilePath,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Asynchronously writes a nested row/column dictionary to <paramref name="csvStream" />.</summary>
@@ -133,13 +135,14 @@ public interface ICsvWriter
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream csvStream,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to a CSV string.</summary>
-    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, CancellationToken ct = default);
+    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to CSV bytes.</summary>
-    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, CancellationToken ct = default);
+    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously exports a Lyo data table to <paramref name="csvFilePath" />.</summary>
     Task ExportToCsvFromDataTableAsync(DataTable.Models.DataTable dataTable, string csvFilePath, CancellationToken ct = default);

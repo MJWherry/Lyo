@@ -49,17 +49,19 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     public void AddSheetFromDataTable(string sheetName, DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows, headerFormats) = XlsxWriter.BuildFromDataTable(dataTable);
-        WriteSheet(sheetName, headers, rows, ct, headerFormats);
+        var (headers, rows, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(dataTable);
+        WriteSheet(sheetName, headers, rows, ct, headerFormats, footer, footerFormats);
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Xlsx.Models.IXlsxDocumentWriter.AddSheetFromDictionary(System.String,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
-    public void AddSheetFromDictionary(string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, CancellationToken ct = default)
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxDocumentWriter.AddSheetFromDictionary(System.String,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
+    public void AddSheetFromDictionary(
+        string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
-        var (headers, rows) = XlsxWriter.BuildFromDictionary(data, useHeaderRow);
-        WriteSheet(sheetName, headers, rows, ct);
+        var (headers, rows, footer) = XlsxWriter.BuildFromDictionary(data, useHeaderRow, useFooterRow);
+        WriteSheet(sheetName, headers, rows, ct, footer: footer);
     }
 
     public void Dispose()
@@ -77,7 +79,9 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
         IReadOnlyList<string> headers,
         IEnumerable<XlsxCell[]> rows,
         CancellationToken ct,
-        IReadOnlyList<DataTableCellFormat?>? headerFormats = null)
+        IReadOnlyList<DataTableCellFormat?>? headerFormats = null,
+        XlsxCell[]? footer = null,
+        IReadOnlyList<DataTableCellFormat?>? footerFormats = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sheetName);
         if (_disposed)
@@ -87,6 +91,6 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
             throw new ArgumentException($"A sheet named '{sheetName}' has already been added to this document.", nameof(sheetName));
 
         _logger.LogDebug("Streaming worksheet {XlsxSheetName} into document session", sheetName);
-        _writer.WriteSheet(sheetName, headers, rows, headerFormats, ct);
+        _writer.WriteSheet(sheetName, headers, rows, headerFormats, footer, footerFormats, ct);
     }
 }

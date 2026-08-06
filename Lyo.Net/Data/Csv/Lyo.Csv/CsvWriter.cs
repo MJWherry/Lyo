@@ -150,46 +150,46 @@ internal sealed class CsvWriter : ICsvWriter
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean)' />
-    public void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true)
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Boolean)' />
+    public void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting dictionary to {ExportCsvPath}", csvFilePath);
         using var writer = new StreamWriter(csvFilePath, false, Config.Encoding);
-        WriteDictionaryToCsv(data, writer, hasHeaderRow);
+        WriteDictionaryToCsv(data, writer, hasHeaderRow, hasFooterRow);
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean)' />
-    public void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true)
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Boolean)' />
+    public void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting dictionary to csv stream");
         using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
-        WriteDictionaryToCsv(data, writer, hasHeaderRow);
+        WriteDictionaryToCsv(data, writer, hasHeaderRow, hasFooterRow);
         writer.Flush();
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean)' />
-    public string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true)
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean)' />
+    public string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(data);
         using var writer = new StringWriter();
-        WriteDictionaryToCsv(data, writer, hasHeaderRow);
+        WriteDictionaryToCsv(data, writer, hasHeaderRow, hasFooterRow);
         return writer.ToString();
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean)' />
-    public byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true)
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean)' />
+    public byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(data);
         using var ms = new MemoryStream();
-        ExportToCsvStreamFromDictionary(data, ms, hasHeaderRow);
+        ExportToCsvStreamFromDictionary(data, ms, hasHeaderRow, hasFooterRow);
         return ms.ToArray();
     }
 
@@ -239,7 +239,7 @@ internal sealed class CsvWriter : ICsvWriter
             csv.Context.RegisterClassMap(mapType);
     }
 
-    private void WriteDictionaryToCsv(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, TextWriter writer, bool hasHeaderRow)
+    private void WriteDictionaryToCsv(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, TextWriter writer, bool hasHeaderRow, bool hasFooterRow)
     {
         if (data.Count == 0)
             return;
@@ -262,9 +262,22 @@ internal sealed class CsvWriter : ICsvWriter
             writer.WriteLine();
         }
 
+        IReadOnlyDictionary<int, string>? footerRow = null;
+        if (hasFooterRow && orderedRows.Count > 0) {
+            footerRow = orderedRows[^1].Value;
+            orderedRows = orderedRows.Take(orderedRows.Count - 1).ToList();
+        }
+
         foreach (var kv in orderedRows) {
             for (var c = 0; c < maxCol; c++)
                 writer.Write((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, "")));
+
+            writer.WriteLine();
+        }
+
+        if (footerRow != null) {
+            for (var c = 0; c < maxCol; c++)
+                writer.Write((c > 0 ? "," : "") + EscapeCsv(footerRow.GetValueOrDefault(c, "")));
 
             writer.WriteLine();
         }
@@ -284,6 +297,16 @@ internal sealed class CsvWriter : ICsvWriter
             for (var c = 0; c < maxCol; c++) {
                 var cell = row.Cells.TryGetValue(c, out var cellVal) ? cellVal : null;
                 writer.Write((c > 0 ? "," : "") + EscapeCsv(cell?.DisplayValue ?? ""));
+            }
+
+            writer.WriteLine();
+        }
+
+        if (dataTable.Footer.Count > 0) {
+            var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
+            for (var c = 0; c < maxCol; c++) {
+                var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
+                writer.Write((c > 0 ? "," : "") + EscapeCsv(footer?.DisplayValue ?? ""));
             }
 
             writer.WriteLine();
@@ -367,26 +390,28 @@ internal sealed class CsvWriter : ICsvWriter
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Threading.CancellationToken)' />
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
     public async Task ExportToCsvFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string csvFilePath,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting dictionary to {ExportCsvPath}", csvFilePath);
         await using var writer = new StreamWriter(csvFilePath, false, Config.Encoding);
-        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, ct).ConfigureAwait(false);
+        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Threading.CancellationToken)' />
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream csvStream,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -394,33 +419,35 @@ internal sealed class CsvWriter : ICsvWriter
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting dictionary to csv stream");
         await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
-        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, ct).ConfigureAwait(false);
+        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
     public async Task<string> ExportToCsvStringFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
         await using var writer = new StringWriter();
-        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, ct).ConfigureAwait(false);
+        await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
         return writer.ToString();
     }
 
     /// <inheritdoc
-    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
+    ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToCsvBytesFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         bool hasHeaderRow = true,
+        bool hasFooterRow = false,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
         await using var ms = new MemoryStream();
-        await ExportToCsvStreamFromDictionaryAsync(data, ms, hasHeaderRow, ct).ConfigureAwait(false);
+        await ExportToCsvStreamFromDictionaryAsync(data, ms, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
         return ms.ToArray();
     }
 
@@ -464,7 +491,12 @@ internal sealed class CsvWriter : ICsvWriter
         return ms.ToArray();
     }
 
-    private async Task WriteDictionaryToCsvAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, TextWriter writer, bool hasHeaderRow, CancellationToken ct)
+    private async Task WriteDictionaryToCsvAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        TextWriter writer,
+        bool hasHeaderRow,
+        bool hasFooterRow,
+        CancellationToken ct)
     {
         if (data.Count == 0)
             return;
@@ -487,10 +519,23 @@ internal sealed class CsvWriter : ICsvWriter
             await writer.WriteLineAsync().ConfigureAwait(false);
         }
 
+        IReadOnlyDictionary<int, string>? footerRow = null;
+        if (hasFooterRow && orderedRows.Count > 0) {
+            footerRow = orderedRows[^1].Value;
+            orderedRows = orderedRows.Take(orderedRows.Count - 1).ToList();
+        }
+
         foreach (var kv in orderedRows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++)
                 await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, ""))).ConfigureAwait(false);
+
+            await writer.WriteLineAsync().ConfigureAwait(false);
+        }
+
+        if (footerRow != null) {
+            for (var c = 0; c < maxCol; c++)
+                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(footerRow.GetValueOrDefault(c, ""))).ConfigureAwait(false);
 
             await writer.WriteLineAsync().ConfigureAwait(false);
         }
@@ -511,6 +556,16 @@ internal sealed class CsvWriter : ICsvWriter
             for (var c = 0; c < maxCol; c++) {
                 var cell = row.Cells!.GetValueOrDefault(c, null);
                 await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(cell?.DisplayValue ?? "")).ConfigureAwait(false);
+            }
+
+            await writer.WriteLineAsync().ConfigureAwait(false);
+        }
+
+        if (dataTable.Footer.Count > 0) {
+            var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
+            for (var c = 0; c < maxCol; c++) {
+                var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
+                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(footer?.DisplayValue ?? "")).ConfigureAwait(false);
             }
 
             await writer.WriteLineAsync().ConfigureAwait(false);

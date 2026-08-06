@@ -19,14 +19,14 @@ public interface ICsvReader
     /// <summary>Parses a stream into row index → column index → cell text.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseStreamAsDictionary(Stream csvStream);
 
-    /// <summary>Parses a file into a Lyo data table. When <c>hasHeaderRow</c> is true the first row is headers; false uses synthetic names; null uses configuration.</summary>
-    Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null);
+    /// <summary>Parses a file into a Lyo data table. When <c>hasHeaderRow</c> is true the first row is headers; false uses synthetic names; null uses configuration. When <c>hasFooterRow</c> is true the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</summary>
+    Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses a stream into a Lyo data table.</summary>
-    Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses bytes into a Lyo data table.</summary>
-    Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null);
+    Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses bytes lazily as <typeparamref name="T" />.</summary>
     IEnumerable<T> ParseBytes<T>(byte[] csvBytes);
@@ -48,13 +48,13 @@ public interface ICsvReader
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseStreamAsDictionaryAsync(Stream csvStream, CancellationToken ct = default);
 
     /// <summary>Parses a file into a Lyo data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses a stream into a Lyo data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses bytes into a Lyo data table asynchronously.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Parses bytes into a list of <typeparamref name="T" /> asynchronously.</summary>
     Task<List<T>> ParseBytesAsync<T>(byte[] csvBytes, CancellationToken ct = default);

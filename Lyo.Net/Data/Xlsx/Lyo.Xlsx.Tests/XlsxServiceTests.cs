@@ -120,8 +120,108 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var table = new Lyo.DataTable.Models.DataTable();
         table.SetHeader(0, "H");
         table.AddRow().SetCell(0, "v");
-        var (_, _, headerFormats) = XlsxWriter.BuildFromDataTable(table);
+        var (_, _, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(table);
         Assert.Null(headerFormats);
+        Assert.Null(footer);
+        Assert.Null(footerFormats);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_WithFooter_RoundTripsWhenUseFooterRow()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new Lyo.DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("2", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_DefaultKeepsLastRowAsBody()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new Lyo.DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes).ValueOrThrow();
+        Assert.Equal(2, parsed.Rows.Count);
+        Assert.Equal("Total", parsed.Rows[1][0].DisplayValue);
+        Assert.Empty(parsed.Footer);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_EmptyFooter_OmitsTrailingRow()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var withEmpty = new Lyo.DataTable.Models.DataTable();
+        withEmpty.SetHeader(0, "A");
+        withEmpty.AddRow().SetCell(0, "1");
+        var without = new Lyo.DataTable.Models.DataTable();
+        without.SetHeader(0, "A");
+        without.AddRow().SetCell(0, "1");
+        var parsedEmpty = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytesFromDataTable(withEmpty)).ValueOrThrow();
+        var parsedWithout = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytesFromDataTable(without)).ValueOrThrow();
+        Assert.Equal(parsedWithout.Rows.Count, parsedEmpty.Rows.Count);
+        Assert.Empty(parsedEmpty.Footer);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDictionary_WithFooterRow_DataTableParsePeelsFooter()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "H1", [1] = "H2" },
+            [1] = new Dictionary<int, string> { [0] = "a", [1] = "b" },
+            [2] = new Dictionary<int, string> { [0] = "Total", [1] = "1" }
+        };
+        var bytes = svc.ExportToXlsxBytesFromDictionary(data, useHeaderRow: true, useFooterRow: true);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("a", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("1", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTableWithFormatting_CapturesBoldFooter()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new Lyo.DataTable.Models.DataTable();
+        dt.SetHeader(0, "X");
+        dt.AddRow().SetCell(0, "1");
+        dt.SetFooter(0, "Total", new DataTableCellFormat(FontBold: true));
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.True(parsed.GetFormat(-2, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void CreatePartFromRows_CopiesFooterAndFormats()
+    {
+        var source = new Lyo.DataTable.Models.DataTable();
+        source.SetHeader(0, "H");
+        source.AddRow().SetCell(0, "a");
+        source.AddRow().SetCell(0, "b");
+        source.SetFooter(0, "Sum", new DataTableCellFormat(FontBold: true));
+        var part = XlsxService.CreatePartFromRows(source, 0, 1);
+        Assert.Single(part.Rows);
+        Assert.Equal("a", part.Rows[0][0].DisplayValue);
+        Assert.Equal("Sum", part.Footer[0].DisplayValue);
+        Assert.True(part.GetFormat(-2, 0)?.FontBold == true);
     }
 
     [Fact]

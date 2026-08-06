@@ -5,8 +5,8 @@ Interfaces and value types for the Lyo CSV stack. Defines the contract implement
 ## Interfaces
 
 - `ICsvService` — façade with the full read/write/validate/compare/split/combine surface. Exposes `Writer`, `Reader` and `SetEncoding(Encoding)`.
-- `ICsvWriter` — write enumerables, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, row/column dictionaries, and `Lyo.DataTable` snapshots to file, `Stream`, `TextWriter`, string, or byte array. Sync overloads work on all targets; async, progress (`IProgress<CsvProgress>`), and append overloads are gated on `!NETSTANDARD2_0`.
-- `ICsvReader` — parse files, streams, and byte arrays as typed rows, row/column dictionaries, or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`). Async-only surface adds streaming (`IAsyncEnumerable<T>`), `CsvParseOptions` (continue-on-error, row filter, max rows), chunked processing, statistics, schema validation, column-mapping parsing, and file comparison.
+- `ICsvWriter` — write enumerables, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, row/column dictionaries (`hasFooterRow` peels last row as trailing footer), and `Lyo.DataTable` snapshots (always appends `Footer` when present) to file, `Stream`, `TextWriter`, string, or byte array. Sync overloads work on all targets; async, progress (`IProgress<CsvProgress>`), and append overloads are gated on `!NETSTANDARD2_0`.
+- `ICsvReader` — parse files, streams, and byte arrays as typed rows, row/column dictionaries, or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`; `hasFooterRow` peels the last body row into `Footer`). Async-only surface adds streaming (`IAsyncEnumerable<T>`), `CsvParseOptions` (continue-on-error, row filter, max rows), chunked processing, statistics, schema validation, column-mapping parsing, and file comparison.
 
 ## Models
 
