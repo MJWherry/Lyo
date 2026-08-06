@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Security.Cryptography;
 using Lyo.Exceptions;
 using Org.BouncyCastle.Crypto;
@@ -39,39 +40,84 @@ internal static class AesCcmHelper
 
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
-        ValidatePlaintextLength(plaintext.Length);
-        var cipher = new CcmBlockCipher(new AesEngine());
-        cipher.Init(true, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
-        byte[] packed;
-        if (plaintext.Length == 0)
-            packed = cipher.ProcessPacket([], 0, 0);
-        else {
-            var pb = new byte[plaintext.Length];
-            plaintext.CopyTo(pb);
-            packed = cipher.ProcessPacket(pb, 0, pb.Length);
-        }
-
-        var ciphertext = new byte[plaintext.Length];
         var tag = new byte[TagSize];
-        if (plaintext.Length > 0)
-            Buffer.BlockCopy(packed, 0, ciphertext, 0, plaintext.Length);
-
-        Buffer.BlockCopy(packed, plaintext.Length, tag, 0, TagSize);
+        var ciphertext = new byte[plaintext.Length];
+        Encrypt(plaintext, key, nonce, ciphertext, tag, associatedData);
         return (ciphertext, tag);
     }
 
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce, byte[]? associatedData = null)
         => Encrypt(plaintext.AsSpan(), key, nonce, associatedData);
 
+    /// <summary>Encrypts into caller-provided <paramref name="ciphertext" /> and <paramref name="tag" /> (BC emits ct‖tag; results are split into the destinations).</summary>
+    public static void Encrypt(
+        ReadOnlySpan<byte> plaintext,
+        byte[] key,
+        ReadOnlySpan<byte> nonce,
+        Span<byte> ciphertext,
+        Span<byte> tag,
+        byte[]? associatedData = null)
+    {
+        ValidatePlaintextLength(plaintext.Length);
+        ArgumentHelpers.ThrowIf(ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+        ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
+        ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
+
+        var cipher = new CcmBlockCipher(new AesEngine());
+        cipher.Init(true, new AeadParameters(new(key), 128, nonce.ToArray(), associatedData is { Length: > 0 } ? associatedData : null));
+        byte[] packed;
+        if (plaintext.Length == 0)
+            packed = cipher.ProcessPacket([], 0, 0);
+        else {
+            var pb = ArrayPool<byte>.Shared.Rent(plaintext.Length);
+            try {
+                plaintext.CopyTo(pb);
+                packed = cipher.ProcessPacket(pb, 0, plaintext.Length);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(pb, clearArray: true);
+            }
+        }
+
+        if (plaintext.Length > 0)
+            packed.AsSpan(0, plaintext.Length).CopyTo(ciphertext);
+
+        packed.AsSpan(plaintext.Length, TagSize).CopyTo(tag);
+    }
+
     public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce, byte[]? associatedData = null)
     {
+        var plaintext = new byte[ciphertext.Length];
+        Decrypt(ciphertext, tag, key, nonce, plaintext, associatedData);
+        return plaintext;
+    }
+
+    /// <summary>Decrypts into caller-provided <paramref name="plaintext" /> (must be sized to ciphertext length).</summary>
+    public static void Decrypt(
+        ReadOnlySpan<byte> ciphertext,
+        ReadOnlySpan<byte> tag,
+        byte[] key,
+        ReadOnlySpan<byte> nonce,
+        Span<byte> plaintext,
+        byte[]? associatedData = null)
+    {
+        ArgumentHelpers.ThrowIf(plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+        ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
+        ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
         try {
-            var combined = new byte[ciphertext.Length + TagSize];
-            Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
-            Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
-            var cipher = new CcmBlockCipher(new AesEngine());
-            cipher.Init(false, new AeadParameters(new(key), 128, nonce, associatedData is { Length: > 0 } ? associatedData : null));
-            return cipher.ProcessPacket(combined, 0, combined.Length);
+            var combinedLen = ciphertext.Length + TagSize;
+            var combined = ArrayPool<byte>.Shared.Rent(combinedLen);
+            try {
+                ciphertext.CopyTo(combined);
+                tag.CopyTo(combined.AsSpan(ciphertext.Length));
+                var cipher = new CcmBlockCipher(new AesEngine());
+                cipher.Init(false, new AeadParameters(new(key), 128, nonce.ToArray(), associatedData is { Length: > 0 } ? associatedData : null));
+                var decrypted = cipher.ProcessPacket(combined, 0, combinedLen);
+                decrypted.AsSpan(0, plaintext.Length).CopyTo(plaintext);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(combined, clearArray: true);
+            }
         }
         catch (InvalidCipherTextException ex) {
             throw new CryptographicException("AES-CCM authentication failed.", ex);

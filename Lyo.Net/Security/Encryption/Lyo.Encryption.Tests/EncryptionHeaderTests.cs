@@ -4,6 +4,7 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -395,7 +396,7 @@ public class EncryptionHeaderTests
         using (var aesKwService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
             new AesGcmEncryptionService(keyStore), new AesGcmEncryptionService(keyStore), keyStore)) {
             using var output = new MemoryStream();
-            await aesKwService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(32), ct: ct);
+            await aesKwService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: TestData.Create(32), ct: ct);
             output.Position = 0;
             var header = EncryptionHeader.Read(output);
             Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, header.DekEncoding);
@@ -407,7 +408,7 @@ public class EncryptionHeaderTests
         using (var envelopeService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(
             new AesGcmEncryptionService(keyStore), new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512), keyStore)) {
             using var output = new MemoryStream();
-            await envelopeService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: RandomNumberGenerator.GetBytes(64), ct: ct);
+            await envelopeService.EncryptToStreamAsync(new MemoryStream("data"u8.ToArray()), output, kek: TestData.Create(64), ct: ct);
             output.Position = 0;
             var header = EncryptionHeader.Read(output);
             Assert.Equal(EncryptionHeader.DekEncodingEnvelope, header.DekEncoding);

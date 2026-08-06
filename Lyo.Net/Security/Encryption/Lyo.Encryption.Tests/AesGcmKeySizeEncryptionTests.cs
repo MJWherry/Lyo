@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Lyo.Encryption.AesGcm;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -14,7 +15,7 @@ public class AesGcmKeySizeEncryptionTests
     public void Service_EncryptDecrypt_WithDirectKey_MatchesKeySize(AesGcmKeySizeBits keySizeBits)
     {
         var len = keySizeBits.GetKeyLengthBytes();
-        var key = RandomNumberGenerator.GetBytes(len);
+        var key = TestData.Create(len);
         var keyStore = new LocalKeyStore();
         var svc = new AesGcmEncryptionService(keyStore, keySizeBits);
         var plaintext = "aes-gcm sized key"u8.ToArray();
@@ -32,7 +33,7 @@ public class AesGcmKeySizeEncryptionTests
         const string keyId = "dek-test";
         var len = keySizeBits.GetKeyLengthBytes();
         var keyStore = new LocalKeyStore();
-        keyStore.AddKey(keyId, "1", RandomNumberGenerator.GetBytes(len));
+        keyStore.AddKey(keyId, "1", TestData.Create(len));
         var svc = new AesGcmEncryptionService(keyStore, keySizeBits);
         var enc = svc.Encrypt("keystore key length"u8.ToArray(), keyId);
         var dec = svc.Decrypt(enc, keyId);
@@ -44,7 +45,7 @@ public class AesGcmKeySizeEncryptionTests
     {
         const string keyId = "k";
         var keyStore = new LocalKeyStore();
-        keyStore.AddKey(keyId, "1", RandomNumberGenerator.GetBytes(32));
+        keyStore.AddKey(keyId, "1", TestData.Create(32));
         var svc = new AesGcmEncryptionService(keyStore, AesGcmKeySizeBits.Bits128);
         var ex = Assert.Throws<ArgumentException>(() => svc.Encrypt("x"u8.ToArray(), keyId));
         Assert.Contains("16", ex.Message);

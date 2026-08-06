@@ -1,13 +1,17 @@
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Streams;
 
 namespace Lyo.Benchmarking.Data;
 
 /// <summary>Shared payload generators used across benchmark suites (de-duplicates per-project helpers).</summary>
 public static class BenchmarkData
 {
-    /// <summary>Fixed seed for deterministic, incompressible payload bytes shared by all benchmark suites.</summary>
-    public const int PayloadSeed = 0x4C594F42; // "LYOB"
+    /// <summary>
+    /// Fixed seed for deterministic, incompressible payload bytes shared by all benchmark suites. Same value as <see cref="DeterministicPayloadStream.DefaultSeed" /> and
+    /// <c>Lyo.Testing.TestData.Seed</c>.
+    /// </summary>
+    public const int PayloadSeed = DeterministicPayloadStream.DefaultSeed;
 
     /// <summary>One mebibyte in bytes.</summary>
     public const int MiB = 1024 * 1024;
@@ -81,29 +85,10 @@ public static class BenchmarkData
     /// Fills <paramref name="buffer" /> with deterministic bytes from <see cref="PayloadSeed" />. The same seed and length always produce the same sequence so suite results are
     /// comparable across runs and algorithms.
     /// </summary>
-    public static void FillDeterministic(Span<byte> buffer)
-    {
-        if (buffer.IsEmpty)
-            return;
-
-        var rng = new Random(PayloadSeed);
-        var chunk = new byte[Math.Min(buffer.Length, MiB)];
-        var offset = 0;
-        while (offset < buffer.Length) {
-            var toFill = Math.Min(chunk.Length, buffer.Length - offset);
-            rng.NextBytes(chunk.AsSpan(0, toFill));
-            chunk.AsSpan(0, toFill).CopyTo(buffer[offset..]);
-            offset += toFill;
-        }
-    }
+    public static void FillDeterministic(Span<byte> buffer) => DeterministicPayloadStream.Fill(buffer, PayloadSeed);
 
     /// <summary>Allocates a buffer of <paramref name="sizeBytes" /> filled via <see cref="FillDeterministic" />.</summary>
-    public static byte[] DeterministicBytes(int sizeBytes)
-    {
-        var buffer = new byte[Math.Max(0, sizeBytes)];
-        FillDeterministic(buffer);
-        return buffer;
-    }
+    public static byte[] DeterministicBytes(int sizeBytes) => DeterministicPayloadStream.CreateBytes(sizeBytes, PayloadSeed);
 
     /// <summary>
     /// Writes exactly <paramref name="size" /> deterministic bytes (from <see cref="PayloadSeed" />) to <paramref name="stream" /> using a reusable chunk buffer. Suitable for

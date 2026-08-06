@@ -340,6 +340,82 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         return Decrypt(chunk, keyId, key, associatedData);
     }
 
+    /// <summary>
+    /// Byte count of a <see cref="BinaryWriter.Write(string)" /> payload (7-bit encoded UTF-8 length + UTF-8 bytes). Used by single-shot framing to pre-size output buffers.
+    /// </summary>
+    protected static int GetBinaryWriterStringByteCount(string value)
+    {
+        var utf8Len = Encoding.UTF8.GetByteCount(value);
+        return Get7BitEncodedIntByteCount(utf8Len) + utf8Len;
+    }
+
+    /// <summary>Writes a <see cref="BinaryWriter.Write(string)" />-compatible string into <paramref name="destination" />. Returns bytes written.</summary>
+    protected static int WriteBinaryWriterString(Span<byte> destination, string value)
+    {
+        var utf8 = Encoding.UTF8.GetBytes(value);
+        var lenBytes = Write7BitEncodedInt(destination, utf8.Length);
+        utf8.CopyTo(destination[lenBytes..]);
+        return lenBytes + utf8.Length;
+    }
+
+    /// <summary>Reads a <see cref="BinaryReader.ReadString" />-compatible string from <paramref name="source" />.</summary>
+    protected static string ReadBinaryWriterString(ReadOnlySpan<byte> source, out int bytesConsumed)
+    {
+        var utf8Len = Read7BitEncodedInt(source, out var lenBytes);
+        if (utf8Len < 0 || lenBytes + utf8Len > source.Length)
+            throw new InvalidDataException("Invalid encrypted data format: truncated BinaryWriter string.");
+
+        bytesConsumed = lenBytes + utf8Len;
+        return utf8Len == 0 ? string.Empty : Encoding.UTF8.GetString(source.Slice(lenBytes, utf8Len).ToArray());
+    }
+
+    private static int Get7BitEncodedIntByteCount(int value)
+    {
+        ArgumentHelpers.ThrowIfNegative(value);
+        var count = 1;
+        var v = (uint)value;
+        while (v >= 0x80) {
+            v >>= 7;
+            count++;
+        }
+
+        return count;
+    }
+
+    private static int Write7BitEncodedInt(Span<byte> destination, int value)
+    {
+        ArgumentHelpers.ThrowIfNegative(value);
+        var v = (uint)value;
+        var written = 0;
+        while (v >= 0x80) {
+            destination[written++] = (byte)(v | 0x80);
+            v >>= 7;
+        }
+
+        destination[written++] = (byte)v;
+        return written;
+    }
+
+    private static int Read7BitEncodedInt(ReadOnlySpan<byte> source, out int bytesConsumed)
+    {
+        var result = 0;
+        var shift = 0;
+        bytesConsumed = 0;
+        while (shift < 35) {
+            if (bytesConsumed >= source.Length)
+                throw new InvalidDataException("Invalid encrypted data format: truncated 7-bit encoded integer.");
+
+            var b = source[bytesConsumed++];
+            result |= (b & 0x7F) << shift;
+            if ((b & 0x80) == 0)
+                return result;
+
+            shift += 7;
+        }
+
+        throw new InvalidDataException("Invalid encrypted data format: malformed 7-bit encoded integer.");
+    }
+
     // File helpers
     /// <summary>
     /// Convenience method: Encrypts a file and writes it to an output file. This is a convenience method not part of IEncryptionService interface. For interface-compliant

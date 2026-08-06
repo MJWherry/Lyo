@@ -6,6 +6,7 @@ using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Keystore;
 using Lyo.Keystore.KeyDerivation;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -27,7 +28,7 @@ public class ChaCha20Poly1305Tests
     {
         var plaintext = "hello world"u8.ToArray();
         var key = DeriveKey("k");
-        var nonce = RandomNumberGenerator.GetBytes(ChaCha20Poly1305Helper.NonceSize);
+        var nonce = TestData.Create(ChaCha20Poly1305Helper.NonceSize);
         var (cipher, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, key, nonce);
         var result = ChaCha20Poly1305Helper.Decrypt(cipher, tag, key, nonce);
         Assert.Equal("hello world", Encoding.UTF8.GetString(result));
@@ -65,7 +66,7 @@ public class ChaCha20Poly1305Tests
     {
         var plaintext = "msg"u8.ToArray();
         var key = DeriveKey("k");
-        var nonce = RandomNumberGenerator.GetBytes(ChaCha20Poly1305Helper.NonceSize);
+        var nonce = TestData.Create(ChaCha20Poly1305Helper.NonceSize);
         var (cipher, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, key, nonce);
         // tamper tag
         tag[0] ^= 0xFF;
@@ -97,7 +98,7 @@ public class ChaCha20Poly1305Tests
     public void Helper_EncryptDecrypt_EmptyPlaintext()
     {
         var key = DeriveKey("k");
-        var nonce = RandomNumberGenerator.GetBytes(ChaCha20Poly1305Helper.NonceSize);
+        var nonce = TestData.Create(ChaCha20Poly1305Helper.NonceSize);
         var (cipher, tag) = ChaCha20Poly1305Helper.Encrypt([], key, nonce);
         var pt = ChaCha20Poly1305Helper.Decrypt(cipher, tag, key, nonce);
         Assert.Empty(pt);

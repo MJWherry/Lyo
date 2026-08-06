@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -34,7 +35,7 @@ public class EncryptionConcurrencyTests
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-single-password");
         var svc = CreateService(algorithm, keyStore);
-        var plaintexts = Enumerable.Range(0, Concurrency).Select(_ => RandomNumberGenerator.GetBytes(64)).ToArray();
+        var plaintexts = Enumerable.Range(0, Concurrency).Select(i => TestData.Create(64, TestData.Seed + i)).ToArray();
         var encrypted = new byte[Concurrency][];
         await Parallel.ForEachAsync(
             Enumerable.Range(0, Concurrency), ct, (i, _) => {
@@ -56,7 +57,7 @@ public class EncryptionConcurrencyTests
         const string keyId = "concurrent-transient";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-transient-password");
-        var plaintexts = Enumerable.Range(0, Concurrency).Select(_ => RandomNumberGenerator.GetBytes(64)).ToArray();
+        var plaintexts = Enumerable.Range(0, Concurrency).Select(i => TestData.Create(64, TestData.Seed + i)).ToArray();
         var encrypted = new byte[Concurrency][];
 
         // Each task builds its own service instance over the shared KeyStore.
@@ -84,7 +85,7 @@ public class EncryptionConcurrencyTests
         var svc = CreateService(algorithm, keyStore);
 
         // Each payload spans many chunks (chunkSize 16) so every stream emits a counter sequence under its own random prefix.
-        var plaintexts = Enumerable.Range(0, Concurrency).Select(_ => RandomNumberGenerator.GetBytes(16 * 8)).ToArray();
+        var plaintexts = Enumerable.Range(0, Concurrency).Select(i => TestData.Create(16 * 8, TestData.Seed + i)).ToArray();
         var encrypted = new byte[Concurrency][];
         await Parallel.ForEachAsync(
             Enumerable.Range(0, Concurrency), ct, async (i, token) => {
@@ -118,13 +119,13 @@ public class EncryptionConcurrencyTests
         await Parallel.ForEachAsync(
             Enumerable.Range(0, Concurrency), ct, async (i, token) => {
                 if (i % 2 == 0) {
-                    var plaintext = RandomNumberGenerator.GetBytes(64);
+                    var plaintext = TestData.Create(64, TestData.Seed + i);
                     var encrypted = svc.Encrypt(plaintext, keyId);
                     nonces.Add(ExtractSingleShotNonce(encrypted));
                     Assert.Equal(plaintext, svc.Decrypt(encrypted, keyId));
                 }
                 else {
-                    var plaintext = RandomNumberGenerator.GetBytes(16 * 8);
+                    var plaintext = TestData.Create(16 * 8, TestData.Seed + i);
                     using var input = new MemoryStream(plaintext);
                     using var output = new MemoryStream();
                     await svc.EncryptToStreamAsync(input, output, keyId, null, 16, ct: token);

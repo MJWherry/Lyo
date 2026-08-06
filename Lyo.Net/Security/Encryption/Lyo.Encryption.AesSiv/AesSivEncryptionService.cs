@@ -1,8 +1,8 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
-using Lyo.Encryption.Security;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -54,109 +54,20 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
-        if (key != null)
-            ValidateKey(key);
-
-        byte[]? actualKey = null;
-        string? keyVersion = null;
-        if (key != null)
-            actualKey = key;
-        else if (keyId != null && KeyStore != null) {
-            actualKey = KeyStore.GetCurrentKey(keyId);
-            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key available for key ID '{keyId}'. Ensure a key is configured.");
-            ValidateKey(actualKey);
-            keyVersion = KeyStore.GetCurrentVersion(keyId);
-        }
-        else
-            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
-
-        var total = new byte[SivSize + plaintext.Length];
-        using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-            siv.Encrypt(plaintext, total.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
-
-        var sivBlock = new byte[SivSize];
-        Buffer.BlockCopy(total, 0, sivBlock, 0, SivSize);
-        var body = new byte[plaintext.Length];
-        if (plaintext.Length > 0)
-            Buffer.BlockCopy(total, SivSize, body, 0, plaintext.Length);
-
-        try {
-            using var ms = new MemoryStream();
-            using var bw = new BinaryWriter(ms);
-            bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
-            var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
-            bw.Write(keyIdBytes.Length);
-            if (keyIdBytes.Length > 0)
-                bw.Write(keyIdBytes);
-
-            bw.Write(keyVersion ?? "");
-            bw.Write(sivBlock.Length);
-            bw.Write(sivBlock);
-            bw.Write(body);
-            return ms.ToArray();
-        }
-        finally {
-            SecurityUtilities.Clear(sivBlock);
-            SecurityUtilities.Clear(total);
-        }
+        return EncryptCore(plaintext, keyId, key, associatedData);
     }
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
-        if (key != null)
-            ValidateKey(key);
-
-        byte[]? actualKey = null;
-        string? keyVersion = null;
-        if (key != null)
-            actualKey = key;
-        else if (keyId != null && KeyStore != null) {
-            actualKey = KeyStore.GetCurrentKey(keyId);
-            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key available for key ID '{keyId}'. Ensure a key is configured.");
-            ValidateKey(actualKey);
-            keyVersion = KeyStore.GetCurrentVersion(keyId);
-        }
-        else
-            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
-
-        var total = new byte[SivSize + bytes.Length];
-        using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-            siv.Encrypt(bytes, total.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
-
-        var sivBlock = new byte[SivSize];
-        Buffer.BlockCopy(total, 0, sivBlock, 0, SivSize);
-        var body = new byte[bytes.Length];
-        if (bytes.Length > 0)
-            Buffer.BlockCopy(total, SivSize, body, 0, body.Length);
-
-        try {
-            using var ms = new MemoryStream();
-            using var bw = new BinaryWriter(ms);
-            bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
-            var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
-            bw.Write(keyIdBytes.Length);
-            if (keyIdBytes.Length > 0)
-                bw.Write(keyIdBytes);
-
-            bw.Write(keyVersion ?? "");
-            bw.Write(sivBlock.Length);
-            bw.Write(sivBlock);
-            bw.Write(body);
-            return ms.ToArray();
-        }
-        finally {
-            SecurityUtilities.Clear(sivBlock);
-            SecurityUtilities.Clear(total);
-        }
+        return EncryptCore(bytes, keyId, key, associatedData);
     }
 
     public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 27;
         ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
-        using var ms = new MemoryStream(encryptedBytes);
-        return DecryptFromStream(ms, keyId, key, associatedData);
+        return DecryptCore(encryptedBytes, keyId, key, associatedData);
     }
 
     /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[], byte[])" />
@@ -167,42 +78,103 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     {
         const int minEncryptedSize = 27;
         ArgumentHelpers.ThrowIfNotInRange((long)count, minEncryptedSize, Options.MaxInputSize, nameof(count));
-        using var ms = new MemoryStream(buffer, offset, count, false);
-        return DecryptFromStream(ms, keyId, key, associatedData);
+        return DecryptCore(buffer.AsSpan(offset, count), keyId, key, associatedData);
     }
 
-    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key, byte[]? associatedData)
+    private byte[] EncryptCore(ReadOnlySpan<byte> plaintext, string? keyId, byte[]? key, byte[]? associatedData)
     {
-        using var br = new BinaryReader(ms);
-        var firstByte = br.ReadByte();
+        if (key != null)
+            ValidateKey(key);
+
+        byte[]? actualKey = null;
+        string? keyVersion = null;
+        if (key != null)
+            actualKey = key;
+        else if (keyId != null && KeyStore != null) {
+            actualKey = KeyStore.GetCurrentKey(keyId);
+            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key available for key ID '{keyId}'. Ensure a key is configured.");
+            ValidateKey(actualKey);
+            keyVersion = KeyStore.GetCurrentVersion(keyId);
+        }
+        else
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
+
+        var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
+        var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
+        var versionString = keyVersion ?? "";
+        // prefix through nonceLen; SIV‖ciphertext written contiguously after that (tagSize=0).
+        var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4;
+        var result = new byte[prefixLen + SivSize + plaintext.Length];
+
+        var o = 0;
+        result[o++] = formatVersion;
+        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
+        o += 4;
+        if (keyIdBytes.Length > 0) {
+            keyIdBytes.CopyTo(result.AsSpan(o));
+            o += keyIdBytes.Length;
+        }
+
+        o += WriteBinaryWriterString(result.AsSpan(o), versionString);
+        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), SivSize);
+        o += 4;
+        // Dorssel writes [SIV(16)][ciphertext] into this contiguous region.
+        using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
+            siv.Encrypt(plaintext, result.AsSpan(o, SivSize + plaintext.Length), associatedData is { Length: > 0 } ? associatedData : ReadOnlySpan<byte>.Empty);
+
+        return result;
+    }
+
+    private byte[] DecryptCore(ReadOnlySpan<byte> encrypted, string? keyId, byte[]? key, byte[]? associatedData)
+    {
+        var o = 0;
+        if (encrypted.Length < 1)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for format version.");
+
+        var firstByte = encrypted[o++];
         var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
         if (firstByte != expectedFormatVersion)
             throw new InvalidDataException($"Invalid encrypted data format: expected format version {expectedFormatVersion}, got {firstByte}.");
 
-        var keyIdLength = br.ReadInt32();
+        if (encrypted.Length - o < 4)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for keyId length.");
+
+        var keyIdLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
+        o += 4;
         if (keyIdLength < 0 || keyIdLength > 1024)
             throw new InvalidDataException($"Invalid key ID length: {keyIdLength}. Maximum allowed: 1024 bytes.");
 
         string? headerKeyId = null;
         if (keyIdLength > 0) {
-            if (ms.Position + keyIdLength > ms.Length)
+            if (encrypted.Length - o < keyIdLength)
                 throw new InvalidDataException("Invalid encrypted data format: keyId length exceeds remaining data.");
 
-            var keyIdBytes = br.ReadBytes(keyIdLength);
-            headerKeyId = Encoding.UTF8.GetString(keyIdBytes);
+            headerKeyId = Encoding.UTF8.GetString(encrypted.Slice(o, keyIdLength).ToArray());
+            o += keyIdLength;
         }
 
-        if (ms.Position >= ms.Length)
+        if (o >= encrypted.Length)
             throw new InvalidDataException("Invalid encrypted data format: insufficient data for keyVersion.");
 
-        var headerKeyVersion = br.ReadString();
+        var headerKeyVersion = ReadBinaryWriterString(encrypted[o..], out var versionBytes);
+        o += versionBytes;
         if (string.IsNullOrWhiteSpace(headerKeyVersion))
             headerKeyVersion = null;
 
-        var nonceLength = br.ReadInt32();
-        ArgumentHelpers.ThrowIfNotInRange(nonceLength, SivSize, SivSize, nameof(ms), $"Invalid synthetic IV length: {nonceLength}. Expected {SivSize} bytes.");
-        var sivBlock = br.ReadBytes(nonceLength);
-        var body = br.ReadBytes((int)(ms.Length - ms.Position));
+        if (encrypted.Length - o < 4)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for synthetic IV length.");
+
+        var nonceLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
+        o += 4;
+        ArgumentHelpers.ThrowIfNotInRange(nonceLength, SivSize, SivSize, nameof(encrypted), $"Invalid synthetic IV length: {nonceLength}. Expected {SivSize} bytes.");
+
+        if (encrypted.Length - o < SivSize)
+            throw new InvalidDataException("Invalid encrypted data format: truncated synthetic IV or ciphertext.");
+
+        // Contiguous SIV‖body as required by Dorssel.
+        var combined = encrypted[o..];
+        var bodyLength = combined.Length - SivSize;
+
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;
@@ -229,24 +201,14 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         if (key != null)
             ValidateKey(key);
 
-        var combined = new byte[SivSize + body.Length];
-        Buffer.BlockCopy(sivBlock, 0, combined, 0, SivSize);
-        if (body.Length > 0)
-            Buffer.BlockCopy(body, 0, combined, SivSize, body.Length);
-
-        var plaintext = new byte[body.Length];
+        var plaintext = new byte[bodyLength];
         try {
-            using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
-                siv.Decrypt(combined.AsSpan(), plaintext.AsSpan(), associatedData is { Length: > 0 } ? associatedData.AsSpan() : ReadOnlySpan<byte>.Empty);
-
+            using var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!);
+            siv.Decrypt(combined, plaintext, associatedData is { Length: > 0 } ? associatedData : ReadOnlySpan<byte>.Empty);
             return plaintext;
         }
         catch (CryptographicException ex) {
             throw new DecryptionFailedException("Decryption failed. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
-        }
-        finally {
-            SecurityUtilities.Clear(sivBlock);
-            SecurityUtilities.Clear(combined);
         }
     }
 

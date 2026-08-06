@@ -3,6 +3,7 @@ using Lyo.Compression;
 using Lyo.Compression.Compressors;
 using Lyo.Encryption.AesGcm;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -27,9 +28,9 @@ public sealed class CompressEncryptPipelineTests
         var ct = TestContext.Current.CancellationToken;
         var compression = CreateCompressionService();
         var encryption = CreateEncryptionService();
-        var key = RandomNumberGenerator.GetBytes(32);
+        var key = TestData.Create(32);
         var plaintext = new byte[300_000];
-        RandomNumberGenerator.Fill(plaintext.AsSpan(0, 1000)); // mostly zeros so compression actually shrinks it
+        TestData.Fill(plaintext.AsSpan(0, 1000)); // mostly zeros so compression actually shrinks it
         using var encrypted = new MemoryStream();
         using (var input = new MemoryStream(plaintext))
             await CompressEncryptPipeline.CompressThenEncryptAsync(input, encrypted, compression, encryption, key: key, ct: ct);
@@ -46,11 +47,11 @@ public sealed class CompressEncryptPipelineTests
     {
         var ct = TestContext.Current.CancellationToken;
         var encryption = CreateEncryptionService();
-        var key = RandomNumberGenerator.GetBytes(32);
+        var key = TestData.Create(32);
 
         // Incompressible plaintext (~1 MB compressed) so that when the bomb guard trips, the decrypt stage still has far
         // more than the pipe's ~64 KB pause threshold left to write — the exact condition that used to deadlock.
-        var plaintext = RandomNumberGenerator.GetBytes(1024 * 1024);
+        var plaintext = TestData.Create(1024 * 1024);
         using var encrypted = new MemoryStream();
         using (var input = new MemoryStream(plaintext))
             await CompressEncryptPipeline.CompressThenEncryptAsync(input, encrypted, CreateCompressionService(), encryption, key: key, ct: ct);
@@ -70,7 +71,7 @@ public sealed class CompressEncryptPipelineTests
 
         // Invalid AES key: the encrypt stage faults before consuming the pipe, while the compress stage wants to write ~1 MB.
         var invalidKey = new byte[5];
-        var plaintext = RandomNumberGenerator.GetBytes(1024 * 1024);
+        var plaintext = TestData.Create(1024 * 1024);
         using var input = new MemoryStream(plaintext);
         using var output = new MemoryStream();
         var ex = await Assert.ThrowsAnyAsync<Exception>(()

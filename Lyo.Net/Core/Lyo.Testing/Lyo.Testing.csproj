@@ -23,6 +23,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
     </ItemGroup>
 
 </Project>

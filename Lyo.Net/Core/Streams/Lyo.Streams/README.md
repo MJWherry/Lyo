@@ -9,7 +9,7 @@ Common stream implementations including **TeeStream**, **CountingStream**, **Pro
 - **CountingStream** – Track bytes read or written
 - **ProgressStream** – Report progress during stream operations
 - **ConcatenatedStream** – Sequentially read from multiple streams
-- **DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation)
+- **DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`
 - **NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)
 - **StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)
 - **StreamChunkSizeHelper** – Determine optimal buffer size for stream operations
@@ -48,7 +48,7 @@ await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 using Lyo.Streams;
 
 // Generate 100 MiB of seeded bytes without allocating a 100 MiB array
-await using var input = new DeterministicPayloadStream(length: 100L * 1024 * 1024, seed: 0x4C594F42);
+await using var input = new DeterministicPayloadStream(length: 100L * 1024 * 1024);
 await using var sink = new NullingStream();
 await input.CopyToAsync(sink);
 Console.WriteLine($"Drained {sink.BytesWritten} bytes");

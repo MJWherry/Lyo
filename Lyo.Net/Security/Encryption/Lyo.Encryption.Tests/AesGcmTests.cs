@@ -4,6 +4,7 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Exceptions;
 using Lyo.Keystore;
 using Lyo.Keystore.KeyDerivation;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -25,7 +26,7 @@ public class AesGcmTests
     {
         var plaintext = "hello world"u8.ToArray();
         var key = DeriveKey("k");
-        var nonce = RandomNumberGenerator.GetBytes(AesGcmHelper.NonceSize);
+        var nonce = TestData.Create(AesGcmHelper.NonceSize);
         var (cipher, tag) = AesGcmHelper.Encrypt(plaintext, key, nonce);
         var result = AesGcmHelper.Decrypt(cipher, tag, key, nonce);
         Assert.Equal("hello world", Encoding.UTF8.GetString(result));
@@ -63,7 +64,7 @@ public class AesGcmTests
     {
         var plaintext = "msg"u8.ToArray();
         var key = DeriveKey("k");
-        var nonce = RandomNumberGenerator.GetBytes(AesGcmHelper.NonceSize);
+        var nonce = TestData.Create(AesGcmHelper.NonceSize);
         var (cipher, tag) = AesGcmHelper.Encrypt(plaintext, key, nonce);
         // tamper tag
         tag[0] ^= 0xFF;

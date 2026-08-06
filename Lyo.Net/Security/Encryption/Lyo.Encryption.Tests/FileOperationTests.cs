@@ -8,6 +8,7 @@ using Lyo.Encryption.TwoKey;
 using Lyo.IO.Temp.Models;
 using Lyo.Keystore;
 using Lyo.Keystore.KeyDerivation;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -460,7 +461,7 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
         await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var largeData = new byte[5 * 1024 * 1024];
-        RandomNumberGenerator.Fill(largeData);
+        TestData.Fill(largeData);
         var encryptedFile = _tempSession.GetFilePath();
         await svc.EncryptToFileAsync(largeData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
@@ -476,7 +477,7 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var largeData = new byte[5 * 1024 * 1024];
-        RandomNumberGenerator.Fill(largeData);
+        TestData.Fill(largeData);
         var inputFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);

@@ -79,6 +79,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Benchmark.Models` — (direct, lyo)
 - `Lyo.IO.Temp` — (direct, lyo)
+- `Lyo.Streams` — (direct, lyo)
 - `BenchmarkDotNet` `0.15.8` — (direct, third-party)
 - `Testcontainers.Redis` `4.13.0` — (direct, third-party)
 - `Lyo.Common` — (transitive, lyo)
@@ -89,5 +90,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

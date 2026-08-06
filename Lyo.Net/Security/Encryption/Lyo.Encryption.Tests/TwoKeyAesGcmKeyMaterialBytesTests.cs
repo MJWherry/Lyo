@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -17,7 +18,7 @@ public class TwoKeyAesGcmKeyMaterialBytesTests
     {
         const string keyId = "kek";
         var keyStore = new LocalKeyStore();
-        keyStore.AddKey(keyId, "1", RandomNumberGenerator.GetBytes(expectedMaterialBytes));
+        keyStore.AddKey(keyId, "1", TestData.Create(expectedMaterialBytes));
         var aes = new AesGcmEncryptionService(keyStore, keySizeBits);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aes, keyStore);
         var plaintext = Encoding.UTF8.GetBytes("two-key material size");

@@ -3,7 +3,21 @@
 Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers,
 polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.
 
+## Features
+
+- **TestData** – Seeded reproducible byte payloads (`TestData.Seed` / `Create` / `Fill`); same seed as `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`
+
 ## Examples
+
+### Seeded payloads
+
+```csharp
+using Lyo.Testing;
+
+var plaintext = TestData.Create(1024);
+var wrongKey = TestData.Create(32, TestData.Seed ^ 1);
+TestData.Fill(buffer);
+```
 
 ### Polling
 
@@ -59,6 +73,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.IO.Temp` — (direct, lyo)
+- `Lyo.Streams` — (direct, lyo)
 - `Microsoft.NET.Test.Sdk` `18` — (direct, microsoft)
 - `Polly` `8.7.0` — (direct, third-party)
 - `Xunit.DependencyInjection` `11.3.0` — (direct, third-party)
@@ -72,5 +87,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

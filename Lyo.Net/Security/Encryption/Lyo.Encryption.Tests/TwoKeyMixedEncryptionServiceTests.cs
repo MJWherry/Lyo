@@ -9,6 +9,7 @@ using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.TwoKey;
 using Lyo.Encryption.XChaCha20Poly1305;
 using Lyo.Keystore;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -146,7 +147,7 @@ public class TwoKeyMixedEncryptionServiceTests
 
         // Try to decrypt with wrong KEK (must be 32 bytes for AES-GCM / ChaCha KEK unwrap paths)
         var wrongKek = new byte[32];
-        RandomNumberGenerator.Fill(wrongKek);
+        TestData.Fill(wrongKek, TestData.Seed ^ 1);
         Assert.ThrowsAny<DecryptionFailedException>(() => svc.Decrypt(result.EncryptedData, result.EncryptedDataEncryptionKey, keyId, wrongKek));
     }
 
@@ -268,7 +269,7 @@ public class TwoKeyMixedEncryptionServiceTests
         const string keyId = "test-key";
         // Create a larger payload (100KB)
         var largeData = new byte[100 * 1024];
-        new Random(42).NextBytes(largeData);
+        TestData.Fill(largeData);
         var result = svc.Encrypt(largeData, keyId);
         var decrypted = svc.Decrypt(result.EncryptedData, result.EncryptedDataEncryptionKey, keyId);
         Assert.Equal(largeData, decrypted);

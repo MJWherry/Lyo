@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
+using Lyo.Testing;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -118,7 +119,7 @@ public sealed class PostgresApiTokenStoreTests
     {
         const string alphabet = "0123456789abcdefghjkmnpqrstvwxyz";
         var bytes = new byte[11];
-        RandomNumberGenerator.Fill(bytes);
+        TestData.Fill(bytes);
         var chars = new char[11];
         for (var i = 0; i < 11; i++)
             chars[i] = alphabet[bytes[i] % alphabet.Length];
@@ -128,6 +129,6 @@ public sealed class PostgresApiTokenStoreTests
 
     private static ApiTokenRecord NewToken(string id, Guid? userId = null, IReadOnlyList<string>? scopes = null, string? rotatedFromId = null)
         => new(
-            id, RandomNumberGenerator.GetBytes(32), ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], null, DateTime.UtcNow, null, null, null, null, null,
+            id, TestData.Create(32), ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], null, DateTime.UtcNow, null, null, null, null, null,
             rotatedFromId);
 }

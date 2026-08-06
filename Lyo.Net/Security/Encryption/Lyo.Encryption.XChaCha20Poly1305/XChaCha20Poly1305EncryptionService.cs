@@ -1,8 +1,8 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
-using Lyo.Encryption.Security;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -39,93 +39,20 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
-        if (key != null)
-            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
-
-        byte[]? actualKey = null;
-        string? keyVersion = null;
-        if (key != null)
-            actualKey = key;
-        else if (keyId != null && KeyStore != null) {
-            actualKey = KeyStore.GetCurrentKey(keyId);
-            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key found in KeyStore for key ID '{keyId}'. Ensure the key ID is correct and a key is configured.");
-            keyVersion = KeyStore.GetCurrentVersion(keyId);
-        }
-        else
-            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
-
-        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
-        var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-        try {
-            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce, associatedData);
-            using var ms = new MemoryStream();
-            using var bw = new BinaryWriter(ms);
-            bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
-            var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
-            bw.Write(keyIdBytes.Length);
-            if (keyIdBytes.Length > 0)
-                bw.Write(keyIdBytes);
-
-            bw.Write(keyVersion ?? "");
-            bw.Write(nonce.Length);
-            bw.Write(nonce);
-            bw.Write(tag);
-            bw.Write(ciphertext);
-            return ms.ToArray();
-        }
-        finally {
-            SecurityUtilities.Clear(nonce);
-        }
+        return EncryptCore(plaintext, keyId, key, associatedData);
     }
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
-        if (key != null)
-            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
-
-        byte[]? actualKey = null;
-        string? keyVersion = null;
-        if (key != null)
-            actualKey = key;
-        else if (keyId != null && KeyStore != null) {
-            actualKey = KeyStore.GetCurrentKey(keyId);
-            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key found in KeyStore for key ID '{keyId}'. Ensure the key ID is correct and a key is configured.");
-            keyVersion = KeyStore.GetCurrentVersion(keyId);
-        }
-        else
-            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
-
-        // A fresh random nonce per call keeps Encrypt stateless and thread-safe (no shared counter).
-        var nonce = CryptographicRandom.GetBytes(XChaCha20Poly1305Helper.NonceSize);
-        try {
-            var (ciphertext, tag) = XChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce, associatedData);
-            using var ms = new MemoryStream();
-            using var bw = new BinaryWriter(ms);
-            bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
-            var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
-            bw.Write(keyIdBytes.Length);
-            if (keyIdBytes.Length > 0)
-                bw.Write(keyIdBytes);
-
-            bw.Write(keyVersion ?? "");
-            bw.Write(nonce.Length);
-            bw.Write(nonce);
-            bw.Write(tag);
-            bw.Write(ciphertext);
-            return ms.ToArray();
-        }
-        finally {
-            SecurityUtilities.Clear(nonce);
-        }
+        return EncryptCore(bytes, keyId, key, associatedData);
     }
 
     public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         const int minEncryptedSize = 50;
         ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
-        using var ms = new MemoryStream(encryptedBytes);
-        return DecryptFromStream(ms, keyId, key, associatedData);
+        return DecryptCore(encryptedBytes, keyId, key, associatedData);
     }
 
     /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[], byte[])" />
@@ -136,46 +63,108 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     {
         const int minEncryptedSize = 50;
         ArgumentHelpers.ThrowIfNotInRange((long)count, minEncryptedSize, Options.MaxInputSize, nameof(count));
-        using var ms = new MemoryStream(buffer, offset, count, false);
-        return DecryptFromStream(ms, keyId, key, associatedData);
+        return DecryptCore(buffer.AsSpan(offset, count), keyId, key, associatedData);
     }
 
-    private byte[] DecryptFromStream(MemoryStream ms, string? keyId, byte[]? key, byte[]? associatedData)
+    private byte[] EncryptCore(ReadOnlySpan<byte> plaintext, string? keyId, byte[]? key, byte[]? associatedData)
     {
-        using var br = new BinaryReader(ms);
-        var firstByte = br.ReadByte();
+        if (key != null)
+            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
+
+        byte[]? actualKey = null;
+        string? keyVersion = null;
+        if (key != null)
+            actualKey = key;
+        else if (keyId != null && KeyStore != null) {
+            actualKey = KeyStore.GetCurrentKey(keyId);
+            OperationHelpers.ThrowIfNull(actualKey, $"No encryption key found in KeyStore for key ID '{keyId}'. Ensure the key ID is correct and a key is configured.");
+            keyVersion = KeyStore.GetCurrentVersion(keyId);
+        }
+        else
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
+
+        var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
+        var keyIdBytes = keyId != null && !string.IsNullOrWhiteSpace(keyVersion) ? Encoding.UTF8.GetBytes(keyId) : [];
+        var versionString = keyVersion ?? "";
+        var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4 + XChaCha20Poly1305Helper.NonceSize;
+        var result = new byte[prefixLen + XChaCha20Poly1305Helper.TagSize + plaintext.Length];
+
+        var o = 0;
+        result[o++] = formatVersion;
+        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
+        o += 4;
+        if (keyIdBytes.Length > 0) {
+            keyIdBytes.CopyTo(result.AsSpan(o));
+            o += keyIdBytes.Length;
+        }
+
+        o += WriteBinaryWriterString(result.AsSpan(o), versionString);
+        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), XChaCha20Poly1305Helper.NonceSize);
+        o += 4;
+        var nonceSpan = result.AsSpan(o, XChaCha20Poly1305Helper.NonceSize);
+        CryptographicRandom.Fill(nonceSpan);
+        o += XChaCha20Poly1305Helper.NonceSize;
+        var tagSpan = result.AsSpan(o, XChaCha20Poly1305Helper.TagSize);
+        o += XChaCha20Poly1305Helper.TagSize;
+        var ctSpan = result.AsSpan(o, plaintext.Length);
+        XChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonceSpan, ctSpan, tagSpan, associatedData);
+        return result;
+    }
+
+    private byte[] DecryptCore(ReadOnlySpan<byte> encrypted, string? keyId, byte[]? key, byte[]? associatedData)
+    {
+        var o = 0;
+        if (encrypted.Length < 1)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for format version.");
+
+        var firstByte = encrypted[o++];
         var expectedFormatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
         if (firstByte != expectedFormatVersion)
             throw new InvalidDataException($"Invalid encrypted data format: expected format version {expectedFormatVersion}, got {firstByte}.");
 
-        var keyIdLength = br.ReadInt32();
+        if (encrypted.Length - o < 4)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for keyId length.");
+
+        var keyIdLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
+        o += 4;
         if (keyIdLength < 0 || keyIdLength > 1024)
             throw new InvalidDataException($"Invalid key ID length: {keyIdLength}. Maximum allowed: 1024 bytes.");
 
         string? headerKeyId = null;
         if (keyIdLength > 0) {
-            if (ms.Position + keyIdLength > ms.Length)
+            if (encrypted.Length - o < keyIdLength)
                 throw new InvalidDataException("Invalid encrypted data format: keyId length exceeds remaining data.");
 
-            var keyIdBytes = br.ReadBytes(keyIdLength);
-            headerKeyId = Encoding.UTF8.GetString(keyIdBytes);
+            headerKeyId = Encoding.UTF8.GetString(encrypted.Slice(o, keyIdLength).ToArray());
+            o += keyIdLength;
         }
 
-        if (ms.Position >= ms.Length)
+        if (o >= encrypted.Length)
             throw new InvalidDataException("Invalid encrypted data format: insufficient data for keyVersion.");
 
-        var headerKeyVersion = br.ReadString();
+        var headerKeyVersion = ReadBinaryWriterString(encrypted[o..], out var versionBytes);
+        o += versionBytes;
         if (string.IsNullOrWhiteSpace(headerKeyVersion))
             headerKeyVersion = null;
 
-        var nonceLength = br.ReadInt32();
+        if (encrypted.Length - o < 4)
+            throw new InvalidDataException("Invalid encrypted data format: insufficient data for nonce length.");
+
+        var nonceLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
+        o += 4;
         ArgumentHelpers.ThrowIfNotInRange(
-            nonceLength, XChaCha20Poly1305Helper.NonceSize, XChaCha20Poly1305Helper.NonceSize, nameof(ms),
+            nonceLength, XChaCha20Poly1305Helper.NonceSize, XChaCha20Poly1305Helper.NonceSize, nameof(encrypted),
             $"Invalid nonce length: {nonceLength}. Expected {XChaCha20Poly1305Helper.NonceSize} bytes.");
 
-        var nonce = br.ReadBytes(nonceLength);
-        var tag = br.ReadBytes(XChaCha20Poly1305Helper.TagSize);
-        var ciphertext = br.ReadBytes((int)(ms.Length - ms.Position));
+        if (encrypted.Length - o < nonceLength + XChaCha20Poly1305Helper.TagSize)
+            throw new InvalidDataException("Invalid encrypted data format: truncated nonce or tag.");
+
+        var nonce = encrypted.Slice(o, nonceLength);
+        o += nonceLength;
+        var tag = encrypted.Slice(o, XChaCha20Poly1305Helper.TagSize);
+        o += XChaCha20Poly1305Helper.TagSize;
+        var ciphertext = encrypted[o..];
+
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;
@@ -198,8 +187,10 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
                 OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
+        var plaintext = new byte[ciphertext.Length];
         try {
-            return XChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey!, nonce, associatedData);
+            XChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey!, nonce, plaintext, associatedData);
+            return plaintext;
         }
 #if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {
@@ -208,9 +199,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
 #endif
         catch (CryptographicException ex) {
             throw new DecryptionFailedException("Decryption failed. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
-        }
-        finally {
-            SecurityUtilities.Clear(nonce);
         }
     }
 }

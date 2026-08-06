@@ -554,7 +554,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var largeData = new byte[1024 * 1024]; // 1MB
-        new Random().NextBytes(largeData);
+        TestData.Fill(largeData);
         var result = await service.SaveFileAsync(largeData, "large.bin", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(largeData.Length, result.OriginalFileSize);
@@ -1358,9 +1358,9 @@ public class LocalFileStorageServiceTests : IDisposable
         const string targetKeyId = "envelope-key";
         var keyStore = new LocalKeyStore();
         // 32-byte source KEK -> DEK protected via AES Key Wrap; 64-byte target KEK (AES-SIV) is not AES-KW eligible -> KEK-service envelope.
-        keyStore.AddKey(sourceKeyId, "1", RandomNumberGenerator.GetBytes(32));
+        keyStore.AddKey(sourceKeyId, "1", TestData.Create(32));
         keyStore.SetCurrentVersion(sourceKeyId, "1");
-        keyStore.AddKey(targetKeyId, "1", RandomNumberGenerator.GetBytes(64));
+        keyStore.AddKey(targetKeyId, "1", TestData.Create(64, TestData.Seed ^ 2));
         keyStore.SetCurrentVersion(targetKeyId, "1");
         var dekService = new AesGcmEncryptionService(keyStore);
         var kekService = new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits512);
@@ -1911,7 +1911,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var largeData = new byte[1024 * 1024]; // 1MB
-        new Random().NextBytes(largeData);
+        TestData.Fill(largeData);
         var tempFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken);
         var result = await service.SaveFileAsync(tempFile, "large.bin", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);

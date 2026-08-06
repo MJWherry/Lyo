@@ -9,7 +9,7 @@
     "**CountingStream** – Track bytes read or written",
     "**ProgressStream** – Report progress during stream operations",
     "**ConcatenatedStream** – Sequentially read from multiple streams",
-    "**DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation)",
+    "**DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`",
     "**NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)",
     "**StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)",
     "**StreamChunkSizeHelper** – Determine optimal buffer size for stream operations"
@@ -23,7 +23,7 @@
     {
       "title": "Deterministic payload and nulling sink",
       "language": "csharp",
-      "code": "using Lyo.Streams;\n\n// Generate 100 MiB of seeded bytes without allocating a 100 MiB array\nawait using var input = new DeterministicPayloadStream(length: 100L * 1024 * 1024, seed: 0x4C594F42);\nawait using var sink = new NullingStream();\nawait input.CopyToAsync(sink);\nConsole.WriteLine($\"Drained {sink.BytesWritten} bytes\");"
+      "code": "using Lyo.Streams;\n\n// Generate 100 MiB of seeded bytes without allocating a 100 MiB array\nawait using var input = new DeterministicPayloadStream(length: 100L * 1024 * 1024);\nawait using var sink = new NullingStream();\nawait input.CopyToAsync(sink);\nConsole.WriteLine($\"Drained {sink.BytesWritten} bytes\");"
     }
   ],
   "sections": [],

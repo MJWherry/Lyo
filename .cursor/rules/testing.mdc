@@ -14,6 +14,7 @@ Full reference: `docs/testing.md`.
 - Test classes sit in the sibling `Lyo.{X}.Tests` project mirroring the source namespace; internals are reachable via `InternalsVisibleTo`.
 - Suites touching Postgres/Redis use Testcontainers and need a reachable Docker daemon. Keep pure unit tests filterable with `[Trait("Category", "Fast")]` where the project uses categories.
 - Nullable warnings CS8618/CS8619/CS8610 and CA1806 are already suppressed for `*.Tests` projects — don't add pragmas for them.
+- **Seeded payloads:** never use unseeded `new Random()`, `RandomNumberGenerator.GetBytes`/`Fill`, or crypto RNG for test *data* (plaintexts, keys, nonces under test). Use `Lyo.Testing.TestData.Create` / `Fill` (`TestData.Seed`, same value as `BenchmarkData.PayloadSeed` / `DeterministicPayloadStream.DefaultSeed`). Distinct values → distinct seeds (e.g. `TestData.Seed + i` or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use `Guid.NewGuid()`.
 - Run:
   - whole solution: `dotnet test Lyo.Net/Lyo.slnx`
   - one project: `dotnet test Lyo.Net/{Area}/{Group}/Lyo.{X}.Tests`
@@ -24,3 +25,4 @@ Full reference: `docs/testing.md`.
 
 - Normal console projects run in Release: `dotnet run -c Release --project {path}`.
 - `python3 scripts/benchmarks/run_dotnet.py` runs suites and rebuilds the dashboard data under `docs/benchmarks/data/`.
+- Payloads: `BenchmarkData.DeterministicBytes` / `DeterministicPayloadStream` (`BenchmarkData.PayloadSeed` == `TestData.Seed`). Do not use crypto RNG for suite inputs.

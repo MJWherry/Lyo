@@ -12,21 +12,60 @@ namespace Lyo.Streams;
 /// </remarks>
 public sealed class DeterministicPayloadStream : Stream
 {
+    /// <summary>
+    /// Shared default seed (<c>0x4C594F42</c> / "LYOB") for reproducible payloads. Tests use <c>Lyo.Testing.TestData.Seed</c>; benchmarks use
+    /// <c>Lyo.Benchmarking.Data.BenchmarkData.PayloadSeed</c> — both alias this constant.
+    /// </summary>
+    public const int DefaultSeed = 0x4C594F42;
+
+    private const int FillChunkSize = 1024 * 1024;
+
     private readonly long _length;
     private readonly int _seed;
     private bool _disposed;
     private long _position;
     private Random _rng;
 
+    /// <summary>Creates a stream that yields <paramref name="length" /> bytes from <see cref="DefaultSeed" />.</summary>
+    public DeterministicPayloadStream(long length)
+        : this(length, DefaultSeed) { }
+
     /// <summary>Creates a stream that yields <paramref name="length" /> bytes from <paramref name="seed" />.</summary>
     /// <param name="length">Exact number of bytes available to read; must be non-negative.</param>
-    /// <param name="seed">PRNG seed; identical seeds produce identical sequences for the same length.</param>
+    /// <param name="seed">PRNG seed; identical seeds produce identical sequences for the same length. Prefer <see cref="DefaultSeed" />.</param>
     public DeterministicPayloadStream(long length, int seed)
     {
         ArgumentHelpers.ThrowIfNegative(length);
         _length = length;
         _seed = seed;
         _rng = new Random(seed);
+    }
+
+    /// <summary>Fills <paramref name="buffer" /> with deterministic bytes from <paramref name="seed" /> (defaults to <see cref="DefaultSeed" />).</summary>
+    /// <remarks>Prefer <c>Lyo.Testing.TestData</c> in tests and <c>BenchmarkData</c> in benchmark suites; this method is the shared implementation both wrap.</remarks>
+    public static void Fill(Span<byte> buffer, int seed = DefaultSeed)
+    {
+        if (buffer.IsEmpty)
+            return;
+
+        var rng = new Random(seed);
+        var chunk = new byte[Math.Min(buffer.Length, FillChunkSize)];
+        var offset = 0;
+        while (offset < buffer.Length) {
+            var toFill = Math.Min(chunk.Length, buffer.Length - offset);
+            rng.NextBytes(chunk.AsSpan(0, toFill));
+            chunk.AsSpan(0, toFill).CopyTo(buffer[offset..]);
+            offset += toFill;
+        }
+    }
+
+    /// <summary>Allocates <paramref name="sizeBytes" /> bytes filled via <see cref="Fill" />.</summary>
+    public static byte[] CreateBytes(int sizeBytes, int seed = DefaultSeed)
+    {
+        ArgumentHelpers.ThrowIfNegative(sizeBytes);
+        var buffer = new byte[sizeBytes];
+        Fill(buffer, seed);
+        return buffer;
     }
 
     /// <inheritdoc />

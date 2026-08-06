@@ -5,7 +5,7 @@ public sealed class DeterministicPayloadStreamTests
     [Fact]
     public void Same_seed_and_length_produce_identical_bytes()
     {
-        const int seed = 0x4C594F42;
+        const int seed = DeterministicPayloadStream.DefaultSeed;
         const int length = 10_000;
         using var a = new DeterministicPayloadStream(length, seed);
         using var b = new DeterministicPayloadStream(length, seed);
@@ -14,6 +14,17 @@ public sealed class DeterministicPayloadStreamTests
         Assert.Equal(length, a.Read(bufA, 0, length));
         Assert.Equal(length, b.Read(bufB, 0, length));
         Assert.Equal(bufA, bufB);
+    }
+
+    [Fact]
+    public void Create_matches_stream_prefix_for_default_seed()
+    {
+        const int length = 4096;
+        var buffered = DeterministicPayloadStream.CreateBytes(length);
+        using var stream = new DeterministicPayloadStream(length);
+        var fromStream = new byte[length];
+        Assert.Equal(length, stream.Read(fromStream, 0, length));
+        Assert.Equal(buffered, fromStream);
     }
 
     [Fact]

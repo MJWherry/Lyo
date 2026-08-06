@@ -4,6 +4,7 @@ using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Rsa;
 using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -48,7 +49,7 @@ public class RsaEncryptorDecryptorTests : IDisposable, IAsyncDisposable
 
         // Create data larger than RSA can encrypt in one chunk (~190 bytes for 2048-bit key with OAEP-SHA256)
         var plaintext = new byte[500];
-        RandomNumberGenerator.Fill(plaintext);
+        TestData.Fill(plaintext);
         var enc = encryptor.Encrypt(plaintext);
         var dec = decryptor.Decrypt(enc);
         Assert.Equal(plaintext, dec);

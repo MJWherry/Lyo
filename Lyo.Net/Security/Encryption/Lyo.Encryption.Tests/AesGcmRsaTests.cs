@@ -5,6 +5,7 @@ using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Rsa;
 using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
+using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;
 
@@ -52,7 +53,7 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
     {
         var (pub, priv) = GeneratePemFiles();
         using var svc = new AesGcmRsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        var aesKey = RandomNumberGenerator.GetBytes(32);
+        var aesKey = TestData.Create(32);
         var plaintext = Encoding.UTF8.GetBytes("external key message");
         var enc = svc.Encrypt(plaintext, key: aesKey);
         var dec = svc.Decrypt(enc, key: aesKey);
@@ -64,10 +65,10 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
     {
         var (pub, priv) = GeneratePemFiles();
         using var svc = new AesGcmRsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        var aesKey = RandomNumberGenerator.GetBytes(32);
+        var aesKey = TestData.Create(32);
         var plaintext = "payload"u8.ToArray();
         var enc = svc.Encrypt(plaintext, key: aesKey);
-        var wrongKey = RandomNumberGenerator.GetBytes(32);
+        var wrongKey = TestData.Create(32, TestData.Seed ^ 1);
         Assert.ThrowsAny<DecryptionFailedException>(() => svc.Decrypt(enc, key: wrongKey));
     }
 
@@ -98,7 +99,7 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
         var ct = TestContext.Current.CancellationToken;
         var (pub, priv) = GeneratePemFiles();
         using var svc = new AesGcmRsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        var plaintext = RandomNumberGenerator.GetBytes(size);
+        var plaintext = TestData.Create(size);
         byte[] encrypted;
         using (var input = new MemoryStream(plaintext)) {
             using (var output = new MemoryStream()) {
