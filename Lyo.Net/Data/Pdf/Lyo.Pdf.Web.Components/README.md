@@ -74,7 +74,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `PDFsharp` `6.2.4` — (transitive, third-party)
 - `PdfPig` `0.1.15` — (transitive, third-party)
 - `PuppeteerSharp` `24.0.0` — (transitive, third-party)
-- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

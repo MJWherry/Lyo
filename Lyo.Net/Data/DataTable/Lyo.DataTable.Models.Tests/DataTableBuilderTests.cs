@@ -54,4 +54,15 @@ public sealed class DataTableBuilderTests
         Assert.Equal("#FF0000", table.GetFormat(0, 1)?.FontColor);
         Assert.Null(table.GetFormat(1, 1)?.FontColor);
     }
+
+    [Fact]
+    public async Task EnumerateRowsAsync_YieldsBodyRows()
+    {
+        var table = new DataTableBuilder().AddHeaders("Name").AddRow(r => r.AddCells("Alice")).AddRow(r => r.AddCells("Bob")).Build();
+        var names = new List<string>();
+        await foreach (var row in table.EnumerateRowsAsync(TestContext.Current.CancellationToken))
+            names.Add(row.Cells[0].DisplayValue);
+
+        Assert.Equal(["Alice", "Bob"], names);
+    }
 }

@@ -634,6 +634,39 @@ internal sealed class XlsxWriter : IXlsxWriter
             .ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.String,System.String,System.Threading.CancellationToken)' />
+    public async Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        var list = await MaterializeAsync(data, ct).ConfigureAwait(false);
+        await ExportToXlsxAsync(list, xlsxFilePath, worksheetName, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    public async Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        var list = await MaterializeAsync(data, ct).ConfigureAwait(false);
+        await ExportToXlsxAsync(list, xlsxStream, worksheetName, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxBytesAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.String,System.Threading.CancellationToken)' />
+    public async Task<byte[]> ExportToXlsxBytesAsync<T>(IAsyncEnumerable<T> data, string? worksheetName = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        var list = await MaterializeAsync(data, ct).ConfigureAwait(false);
+        return await ExportToXlsxBytesAsync(list, worksheetName, ct).ConfigureAwait(false);
+    }
+
+    private static async Task<List<T>> MaterializeAsync<T>(IAsyncEnumerable<T> data, CancellationToken ct)
+    {
+        var list = new List<T>();
+        await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false))
+            list.Add(item);
+
+        return list;
+    }
+
     // Throw synchronously so an already-cancelled token surfaces the exact OperationCanceledException (not a derived TaskCanceledException).
     private static Task RunToStreamAsync(Stream stream, Action<OpenXmlStreamWriter, CancellationToken> write, CancellationToken ct)
     {

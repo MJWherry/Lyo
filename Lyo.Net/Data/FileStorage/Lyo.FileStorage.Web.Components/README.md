@@ -95,7 +95,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

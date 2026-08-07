@@ -64,6 +64,19 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
         WriteSheet(sheetName, headers, rows, ct, footer: footer);
     }
 
+#if !NETSTANDARD2_0
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxDocumentWriter.AddSheetAsync``1(System.String,System.Collections.Generic.IAsyncEnumerable{``0},System.Threading.CancellationToken)' />
+    public async Task AddSheetAsync<T>(string sheetName, IAsyncEnumerable<T> rows, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(rows);
+        var list = new List<T>();
+        await foreach (var row in rows.WithCancellation(ct).ConfigureAwait(false))
+            list.Add(row);
+
+        AddSheet(sheetName, list, ct);
+    }
+#endif
+
     public void Dispose()
     {
         if (_disposed)

@@ -1266,5 +1266,51 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         Assert.Single(dict);
         Assert.Equal("Test", dict[0][0]);
     }
+
+    [Fact]
+    public async Task ParseXlsxStreamRowsStreamingAsync_YieldsHeaderAndDataRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var rows = new List<IReadOnlyList<string>>();
+        await foreach (var row in svc.ParseXlsxStreamRowsStreamingAsync(ms, TestContext.Current.CancellationToken))
+            rows.Add(row);
+
+        Assert.Equal(3, rows.Count);
+        Assert.Equal("Id", rows[0][0]);
+        Assert.Equal("Name", rows[0][1]);
+        Assert.Equal("Alice", rows[1][1]);
+        Assert.Equal("Bob", rows[2][1]);
+    }
+
+    [Fact]
+    public async Task ExportAndParseStreamingAsync_TypedRoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 11, Name = "Stream", Age = 41 }];
+
+        async IAsyncEnumerable<TestModel> Source()
+        {
+            foreach (var item in data)
+                yield return item;
+
+            await Task.CompletedTask;
+        }
+
+        var bytes = await svc.ExportToXlsxBytesAsync(Source(), ct: TestContext.Current.CancellationToken);
+        using var ms = BytesToStream(bytes);
+        var parsed = new List<TestModel>();
+        await foreach (var row in svc.ParseXlsxStreamStreamingAsync<TestModel>(ms, TestContext.Current.CancellationToken))
+            parsed.Add(row);
+
+        Assert.Single(parsed);
+        Assert.Equal(11, parsed[0].Id);
+        Assert.Equal("Stream", parsed[0].Name);
+        Assert.Equal(41, parsed[0].Age);
+    }
 #endif
 }

@@ -1,20 +1,20 @@
 # Lyo.Csv
 
-CsvHelper-backed implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). `CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from files, streams, byte arrays, URLs, and `TextWriter`/`TextReader`. Multi-targets `net10.0;netstandard2.0`; async, streaming, and option-based overloads are only available on `net10.0`.
+Owned implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). `CsvService` composes a `CsvWriter` and `CsvReader` over an internal field tokenizer/writer and cached type binder. Multi-targets `net10.0;netstandard2.0`; async, streaming, and option-based overloads are only available on `net10.0`.
 
 ## Features
 
-- Strongly-typed read/write via `IEnumerable<T>` / `List<T>`.
+- Strongly-typed read/write via `IEnumerable<T>` / `List<T>` and `IAsyncEnumerable<T>` (net10).
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
 - `Lyo.DataTable.Models.DataTable` round-trip including `Footer` (`ParseFileAsDataTable` with `hasFooterRow`, `ExportToCsvFromDataTable` always appends footer when present, plus an HTML helper `ExportToHtmlTable`).
 - CSV → DataTable pooling via `CsvOptions.Pooling` / `CsvParseOptions.Pooling` (defaults `PoolValues=false`; estimate is `cols × (rows+1)` after the full CSV is buffered).
 - Selected-property export (`IReadOnlyList<PropertyInfo>`), custom-header export (`IReadOnlyDictionary<string, PropertyInfo>`), and formatter export (`IReadOnlyDictionary<string, Func<T, string>>`).
 - URL download helpers (`ParseFromUrl*`) that share an optional injected `HttpClient`.
 - Append, combine, and split file operations (async, `net10.0` only).
-- Streaming reads (`IAsyncEnumerable<T>`), chunked processing, statistics, schema validation, column-mapping parses, and CSV-to-CSV comparison.
-- Custom `ClassMap` registration and `CsvConfiguration` overrides.
-- Encoding configuration via `SetEncoding`; `CodePagesEncodingProvider` is registered in the service constructor so legacy encodings work out of the box.
-- Bundled `ITypeConverter` implementations: `DecimalCsvConverter`, `Int32CsvConverter`, `Int64CsvConverter`, `YesNoBoolCsvConverter`.
+- Streaming reads (`IAsyncEnumerable<T>` and string-row streams), `IAsyncEnumerable` exports, chunked processing, statistics, schema validation, column-mapping parses, and CSV-to-CSV comparison.
+- Dialect via `CsvOptions`: delimiter, quote, escape, comments, trim, blank-line skip, column-count detection, culture, encoding.
+- Header rename via `[CsvColumn]`; encoding via `SetEncoding` / `SetOptions`; `CodePagesEncodingProvider` registered in the service constructor.
+- Bundled `ICsvValueConverter` implementations: `DecimalCsvConverter`, `Int32CsvConverter`, `Int64CsvConverter`, `YesNoBoolCsvConverter`.
 - `CsvErrorCodes` constants (`CSV_EXPORT_FAILED`, `CSV_PARSE_FAILED`, `CSV_OPERATION_CANCELLED`, `CSV_FILE_OPERATION_FAILED`, `CSV_VALIDATION_FAILED`) used when wrapping failures in `Result<T>`.
 
 ## Examples
@@ -23,27 +23,22 @@ CsvHelper-backed implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.m
 
 ```csharp
 using Lyo.Csv;
+using Lyo.Csv.Models;
 
 services.AddCsvService();
 services.AddCsvService(o => {
     o.Pooling.PoolValues = true; // opt in for high-duplication grids
     o.Pooling.PoolingCellThreshold = 512;
+    o.Delimiter = ";";
+    o.HasHeaderRecord = true;
+    o.AllowComments = true;
 });
 
-services.AddCsvService(config => {
-    config.Delimiter = ";";
-    config.HasHeaderRecord = true;
-    config.IgnoreBlankLines = true;
-});
+services.AddCsvService(new CsvOptions { Delimiter = "|", Quote = '"', Escape = '"' });
 
-services.AddCsvService(() => new CsvConfiguration(CultureInfo.InvariantCulture) {
-    Delimiter = ",",
-    HasHeaderRecord = true,
-});
-
-services.AddCsvService((provider, config) => {
+services.AddCsvService((provider, options) => {
     var feature = provider.GetRequiredService<IFeatureFlags>();
-    config.Delimiter = feature.UseSemicolons ? ";" : ",";
+    options.Delimiter = feature.UseSemicolons ? ";" : ",";
 });
 ```
 
@@ -62,27 +57,29 @@ public sealed class ReportingService(ICsvService csv)
 public sealed record Person(int Id, string Name, int Age);
 ```
 
-### Custom configuration and class maps
+### Options and column attributes
 
 ```csharp
 csv.SetEncoding(new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-csv.SetCsvConfiguration(new CsvConfiguration(CultureInfo.InvariantCulture) {
+csv.SetOptions(new CsvOptions {
     Delimiter = ";",
-    TrimOptions = TrimOptions.Trim,
+    TrimFields = true,
     IgnoreBlankLines = true,
+    AllowComments = true,
+    Comment = '#',
 });
 
-public sealed class PersonMap : ClassMap<Person>
+public sealed class Person
 {
-    public PersonMap()
-    {
-        Map(p => p.Id).Name("Id").Ignore();
-        Map(p => p.Name).Name("Full Name");
-        Map(p => p.Age).Name("Years Old");
-    }
-}
+    [CsvColumn(Ignore = true)]
+    public int Id { get; set; }
 
-csv.RegisterClassMap<PersonMap>();
+    [CsvColumn("Full Name")]
+    public string Name { get; set; }
+
+    [CsvColumn("Years Old")]
+    public int Age { get; set; }
+}
 ```
 
 ### Column shaping
@@ -131,6 +128,12 @@ await foreach (var row in csv.ParseFileStreamingAsync<Person>("big.csv", new Csv
     // process row
 }
 
+await foreach (var cells in csv.ParseFileRowsStreamingAsync("big.csv", ct)) {
+    // untyped string cells
+}
+
+await csv.ExportToCsvStreamAsync(asyncRows, stream, ct);
+
 CsvStatistics stats = await csv.GetStatisticsAsync("big.csv", ct);
 
 await csv.ProcessFileInChunksAsync<Person>(
@@ -168,7 +171,7 @@ UTF-8 export of 100,000 sample rows in tens of milliseconds.
 
 ## Dependency injection
 
-`AddCsvService` registers a singleton `CsvService` and routes `ICsvService`, `ICsvWriter`, and `ICsvReader` to the same instance. Overloads accept `Action<CsvOptions>`, an options instance, `AddCsvServiceFromConfiguration` (binds `Csv` and optional `DataTablePooling` sections), or the existing `CsvConfiguration` / builder overloads (default CSV pooling remains off).
+`AddCsvService` registers a singleton `CsvService` and routes `ICsvService`, `ICsvWriter`, and `ICsvReader` to the same instance. Overloads accept `Action<CsvOptions>`, an options instance, `Action<IServiceProvider, CsvOptions>`, and `AddCsvServiceFromConfiguration` (binds `Csv` and optional `DataTablePooling` sections). Default CSV pooling remains off.
 
 ## Output targets
 
@@ -202,9 +205,9 @@ If you do not supply an `HttpClient` to the constructor, a fresh one is created 
 call and disposed afterward; production callers should inject one via DI.
 Pass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`).
 
-## Custom configuration and class maps
+## Dialect defaults
 
-The default `CsvConfiguration` used by `CsvService` enables `IgnoreBlankLines`, trims fields, normalizes header matching, disables constructor-parameter mapping, and logs `BadDataFound` warnings via `ILogger<CsvService>`. <!-- LYO_README_SYNC:BEGIN -->
+Default `CsvOptions` use comma delimiter, RFC doubled quotes, header row on, blank-line skip, field trim, and `DetectColumnCountChanges` (throws `CsvBadDataException` on uneven rows). Header names match properties case-insensitively after trim; rename with `[CsvColumn]`. Prefer typed/`IAsyncEnumerable` streams for large files — `Parse*AsDataTable*` materializes the full grid. <!-- LYO_README_SYNC:BEGIN -->
 
 ## Public API (generated)
 
@@ -229,7 +232,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Csv.Models` — (direct, lyo)
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Result` — (direct, lyo)
-- `CsvHelper` `33.1.0` — (direct, third-party)
 - `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)

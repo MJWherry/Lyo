@@ -469,5 +469,38 @@ public interface IXlsxService
 
     /// <summary>Asynchronously merges multiple XLSX byte arrays into one workbook payload.</summary>
     Task<byte[]> MergeXlsxBytesAsync(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default);
+
+    /// <summary>Asynchronously writes rows from an async sequence to an XLSX file.</summary>
+    Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously writes rows from an async sequence to an XLSX stream.</summary>
+    Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously serializes an async sequence of rows to XLSX bytes.</summary>
+    Task<byte[]> ExportToXlsxBytesAsync<T>(IAsyncEnumerable<T> data, string? worksheetName = null, CancellationToken ct = default);
+
+    /// <summary>Streams worksheet rows as string cells (forward-only). Does not materialize the full sheet.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, CancellationToken ct = default);
+
+    /// <summary>Streams worksheet rows as string cells from a stream (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, CancellationToken ct = default);
+
+    /// <summary>Streams the named worksheet as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, string sheetName, CancellationToken ct = default);
+
+    /// <summary>Streams the worksheet at the given zero-based index as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, int sheetIndex, CancellationToken ct = default);
+
+    /// <summary>Streams the named worksheet from a stream as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, string sheetName, CancellationToken ct = default);
+
+    /// <summary>Streams the worksheet at the given zero-based index from a stream as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, int sheetIndex, CancellationToken ct = default);
+
+    /// <summary>Streams typed rows by mapping header names to public writable properties.</summary>
+    IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, CancellationToken ct = default) where T : new();
+
+    /// <summary>Streams typed rows from a stream by mapping header names to public writable properties.</summary>
+    IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default) where T : new();
 #endif
 }

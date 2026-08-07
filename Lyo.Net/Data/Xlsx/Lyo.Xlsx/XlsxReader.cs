@@ -1,4 +1,7 @@
 using System.Data;
+using System.Globalization;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ClosedXML.Excel;
 using ClosedXML.Graphics;
@@ -965,6 +968,232 @@ internal sealed class XlsxReader : IXlsxReader
         catch (OperationCanceledException) {
             _logger.LogWarning("Parse operation was cancelled");
             throw;
+        }
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileRowsStreamingAsync(System.String,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        _logger.LogDebug("Streaming rows from {ParsingXlsxPath}", xlsxFilePath);
+        await using var inputStream = File.OpenRead(xlsxFilePath);
+        await foreach (var row in ParseXlsxStreamRowsStreamingAsync(inputStream, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
+        OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
+        _logger.LogDebug("Streaming xlsx rows from stream");
+        using var reader = ExcelReaderFactory.CreateReader(xlsxStream);
+        await foreach (var row in EnumerateStringRowsAsync(reader, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileRowsStreamingAsync(System.String,System.String,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, string sheetName, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sheetName);
+        await using var inputStream = File.OpenRead(xlsxFilePath);
+        await foreach (var row in ParseXlsxStreamRowsStreamingAsync(inputStream, sheetName, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileRowsStreamingAsync(System.String,System.Int32,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, int sheetIndex, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        ArgumentHelpers.ThrowIfNegative(sheetIndex);
+        await using var inputStream = File.OpenRead(xlsxFilePath);
+        await foreach (var row in ParseXlsxStreamRowsStreamingAsync(inputStream, sheetIndex, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, string sheetName, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sheetName);
+        OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
+        using var reader = ExcelReaderFactory.CreateReader(xlsxStream);
+        SelectSheetByName(reader, sheetName);
+        await foreach (var row in EnumerateStringRowsAsync(reader, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.Int32,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, int sheetIndex, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
+        ArgumentHelpers.ThrowIfNegative(sheetIndex);
+        OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
+        using var reader = ExcelReaderFactory.CreateReader(xlsxStream);
+        SelectSheetByIndex(reader, sheetIndex);
+        await foreach (var row in EnumerateStringRowsAsync(reader, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileStreamingAsync``1(System.String,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, [EnumeratorCancellation] CancellationToken ct = default) where T : new()
+    {
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
+        _logger.LogDebug("Streaming typed rows from {ParsingXlsxPath}", xlsxFilePath);
+        await using var inputStream = File.OpenRead(xlsxFilePath);
+        await foreach (var row in ParseXlsxStreamStreamingAsync<T>(inputStream, ct).ConfigureAwait(false))
+            yield return row;
+    }
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxStreamStreamingAsync``1(System.IO.Stream,System.Threading.CancellationToken)' />
+    public async IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, [EnumeratorCancellation] CancellationToken ct = default) where T : new()
+    {
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
+        OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
+        _logger.LogDebug("Streaming typed {RowType} rows from xlsx stream", typeof(T).FullName);
+        using var reader = ExcelReaderFactory.CreateReader(xlsxStream);
+        var useHeaderRow = Config.UseHeaderRow;
+        var writable = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanWrite).ToArray();
+        PropertyInfo?[]? columnBindings = null;
+        var isFirst = true;
+
+        while (reader.Read()) {
+            ct.ThrowIfCancellationRequested();
+            if (isFirst && useHeaderRow) {
+                columnBindings = BindHeadersToProperties(reader, writable);
+                isFirst = false;
+                continue;
+            }
+
+            if (isFirst) {
+                columnBindings = BindPositionalProperties(writable, reader.FieldCount);
+                isFirst = false;
+            }
+
+            yield return BindTypedRow<T>(reader, columnBindings!);
+            await Task.Yield();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private static async IAsyncEnumerable<IReadOnlyList<string>> EnumerateStringRowsAsync(IExcelDataReader reader, [EnumeratorCancellation] CancellationToken ct)
+    {
+        while (reader.Read()) {
+            ct.ThrowIfCancellationRequested();
+            yield return ReadCurrentRow(reader);
+            await Task.Yield();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private static IReadOnlyList<string> ReadCurrentRow(IExcelDataReader reader)
+    {
+        var cells = new string[reader.FieldCount];
+        for (var i = 0; i < reader.FieldCount; i++)
+            cells[i] = reader.GetValue(i)?.ToString() ?? string.Empty;
+
+        return cells;
+    }
+
+    private static void SelectSheetByName(IExcelDataReader reader, string sheetName)
+    {
+        do {
+            if (string.Equals(reader.Name, sheetName, StringComparison.OrdinalIgnoreCase))
+                return;
+        } while (reader.NextResult());
+
+        throw new ArgumentException($"Worksheet '{sheetName}' was not found in the workbook.");
+    }
+
+    private static void SelectSheetByIndex(IExcelDataReader reader, int sheetIndex)
+    {
+        var index = 0;
+        while (index < sheetIndex) {
+            if (!reader.NextResult())
+                throw new ArgumentException($"Worksheet index {sheetIndex} is out of range.");
+
+            index++;
+        }
+    }
+
+    private static PropertyInfo?[] BindHeadersToProperties(IExcelDataReader reader, PropertyInfo[] writable)
+    {
+        var byName = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in writable)
+            byName.TryAdd(property.Name, property);
+
+        var bindings = new PropertyInfo?[reader.FieldCount];
+        for (var i = 0; i < reader.FieldCount; i++) {
+            var header = reader.GetValue(i)?.ToString();
+            if (!string.IsNullOrWhiteSpace(header) && byName.TryGetValue(header, out var property))
+                bindings[i] = property;
+        }
+
+        return bindings;
+    }
+
+    private static PropertyInfo?[] BindPositionalProperties(PropertyInfo[] writable, int fieldCount)
+    {
+        var bindings = new PropertyInfo?[fieldCount];
+        var count = Math.Min(writable.Length, fieldCount);
+        for (var i = 0; i < count; i++)
+            bindings[i] = writable[i];
+
+        return bindings;
+    }
+
+    private static T BindTypedRow<T>(IExcelDataReader reader, PropertyInfo?[] columnBindings) where T : new()
+    {
+        var item = new T();
+        var count = Math.Min(columnBindings.Length, reader.FieldCount);
+        for (var i = 0; i < count; i++) {
+            var property = columnBindings[i];
+            if (property == null)
+                continue;
+
+            SetPropertyValue(property, item, reader.GetValue(i));
+        }
+
+        return item;
+    }
+
+    private static void SetPropertyValue(PropertyInfo property, object target, object? raw)
+    {
+        if (raw is null or DBNull) {
+            if (!property.PropertyType.IsValueType || Nullable.GetUnderlyingType(property.PropertyType) != null)
+                property.SetValue(target, null);
+
+            return;
+        }
+
+        var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+        try {
+            if (targetType == typeof(string)) {
+                property.SetValue(target, raw.ToString());
+                return;
+            }
+
+            if (targetType.IsEnum) {
+                property.SetValue(target, Enum.Parse(targetType, raw.ToString() ?? string.Empty, true));
+                return;
+            }
+
+            if (raw.GetType() == targetType) {
+                property.SetValue(target, raw);
+                return;
+            }
+
+            property.SetValue(target, Convert.ChangeType(raw, targetType, CultureInfo.InvariantCulture));
+        }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException) {
+            var text = raw.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            property.SetValue(target, Convert.ChangeType(text, targetType, CultureInfo.InvariantCulture));
         }
     }
 #endif

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using CsvHelper;
 using Lyo.Csv.Converters;
 using Lyo.Csv.Models;
 using Lyo.Csv.Tests.TestModels;
@@ -123,7 +122,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     public void ParseStreamAsDataTable_WithoutHeader_UsesColumnN()
     {
         var svc = new CsvService(_logger);
-        svc.SetCsvConfiguration(new(CultureInfo.InvariantCulture) { HasHeaderRecord = false });
+        svc.SetOptions(new CsvOptions { HasHeaderRecord = false });
         var csv = "a,b\n1,2\n";
         using var ms = StringToStream(csv);
         var result = svc.ParseStreamAsDataTable(ms);
@@ -238,11 +237,10 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
-    public void RegisterClassMap_AllowsParsingWithCustomHeaderNames()
+    public void CsvColumnAttribute_AllowsParsingWithCustomHeaderNames()
     {
         var csv = "Full Name\nEve\n";
         var svc = new CsvService(_logger);
-        svc.RegisterClassMap<PersonNameMap>();
         using var ms = StringToStream(csv);
         var parsed = svc.ParseStream<PersonName>(ms).ToList();
         Assert.Single(parsed);
@@ -278,10 +276,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
-    public void RegisterClassMap_ChangesHeaderOnExport()
+    public void CsvColumnAttribute_ChangesHeaderOnExport()
     {
         var svc = new CsvService(_logger);
-        svc.RegisterClassMap<PersonNameMap>();
         PersonName[] data = [new() { Name = "Dana" }];
         var bytes = svc.ExportToCsvBytes(data);
         var header = GetHeaderFromBytes(bytes);
@@ -336,71 +333,68 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     public void Int32Converter_WorksBothWays()
     {
         var conv = new Int32CsvConverter();
-        var from = conv.ConvertFromString("123", null!, null!);
+        var culture = CultureInfo.InvariantCulture;
+        var from = conv.ConvertFromString("123", culture);
         Assert.IsType<int>(from);
         Assert.Equal(123, (int)from);
-        Assert.Null(conv.ConvertFromString("", null!, null!));
-        Assert.Equal("123", conv.ConvertToString(123, null!, null!));
-        Assert.Equal(string.Empty, conv.ConvertToString(null, null!, null!));
+        Assert.Null(conv.ConvertFromString("", culture));
+        Assert.Equal("123", conv.ConvertToString(123, culture));
+        Assert.Equal(string.Empty, conv.ConvertToString(null, culture));
     }
 
     [Fact]
     public void Int64Converter_WorksBothWays()
     {
         var conv = new Int64CsvConverter();
-        var from = conv.ConvertFromString("9000000000", null!, null!);
+        var culture = CultureInfo.InvariantCulture;
+        var from = conv.ConvertFromString("9000000000", culture);
         Assert.IsType<long>(from);
         Assert.Equal(9000000000L, (long)from);
-        Assert.Null(conv.ConvertFromString("", null!, null!));
-        Assert.Equal("9000000000", conv.ConvertToString(9000000000L, null!, null!));
-        Assert.Equal(string.Empty, conv.ConvertToString(null, null!, null!));
+        Assert.Null(conv.ConvertFromString("", culture));
+        Assert.Equal("9000000000", conv.ConvertToString(9000000000L, culture));
+        Assert.Equal(string.Empty, conv.ConvertToString(null, culture));
     }
 
     [Fact]
     public void DecimalConverter_WorksBothWays_WithInvariantCulture()
     {
         var conv = new DecimalCsvConverter();
-        var prev = CultureInfo.CurrentCulture;
-        try {
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            var from = conv.ConvertFromString("12.34", null!, null!);
-            Assert.IsType<decimal>(from);
-            Assert.Equal(12.34m, (decimal)from);
-            Assert.Null(conv.ConvertFromString("", null!, null!));
-            Assert.Equal("12.34", conv.ConvertToString(12.34m, null!, null!));
-            Assert.Equal(string.Empty, conv.ConvertToString(null, null!, null!));
-        }
-        finally {
-            CultureInfo.CurrentCulture = prev;
-        }
+        var culture = CultureInfo.InvariantCulture;
+        var from = conv.ConvertFromString("12.34", culture);
+        Assert.IsType<decimal>(from);
+        Assert.Equal(12.34m, (decimal)from);
+        Assert.Null(conv.ConvertFromString("", culture));
+        Assert.Equal("12.34", conv.ConvertToString(12.34m, culture));
+        Assert.Equal(string.Empty, conv.ConvertToString(null, culture));
     }
 
     [Fact]
     public void YesNoBoolConverter_InterpretsValuesCorrectly()
     {
         var conv = new YesNoBoolCsvConverter();
-        var t = conv.ConvertFromString("yes", null!, null!);
+        var culture = CultureInfo.InvariantCulture;
+        var t = conv.ConvertFromString("yes", culture);
         Assert.IsType<bool>(t);
         Assert.True((bool)t);
-        var f = conv.ConvertFromString("no", null!, null!);
+        var f = conv.ConvertFromString("no", culture);
         Assert.IsType<bool>(f);
         Assert.False((bool)f);
-        Assert.Null(conv.ConvertFromString("", null!, null!));
-        Assert.Equal("yes", conv.ConvertToString(true, null!, null!));
-        Assert.Equal("no", conv.ConvertToString(false, null!, null!));
-        Assert.Equal("yes", conv.ConvertToString(1, null!, null!));
-        Assert.Equal("no", conv.ConvertToString(0, null!, null!));
-        Assert.Null(conv.ConvertToString(2, null!, null!));
-        Assert.Null(conv.ConvertToString(null, null!, null!));
+        Assert.Null(conv.ConvertFromString("", culture));
+        Assert.Equal("yes", conv.ConvertToString(true, culture));
+        Assert.Equal("no", conv.ConvertToString(false, culture));
+        Assert.Equal("yes", conv.ConvertToString(1, culture));
+        Assert.Equal("no", conv.ConvertToString(0, culture));
+        Assert.Equal(string.Empty, conv.ConvertToString(2, culture));
+        Assert.Equal(string.Empty, conv.ConvertToString(null, culture));
     }
 
     [Fact]
-    public void BadDataFound_IsLogged_WhenColumnCountChanges()
+    public void DetectColumnCountChanges_ThrowsCsvBadDataException()
     {
-        // Header has two columns, second row has three -> CsvHelper will throw because DetectColumnCountChanges=true
+        // Header has two columns, second row has three -> DetectColumnCountChanges=true
         var csv = "A,B\n1,2,3\n";
         using var ms = StringToStream(csv);
-        var ex = Assert.Throws<BadDataException>(() => new CsvService(_logger).ParseStreamAsDictionary(ms));
+        var ex = Assert.Throws<CsvBadDataException>(() => new CsvService(_logger).ParseStreamAsDictionary(ms));
         Assert.Contains("inconsistent number of columns", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 

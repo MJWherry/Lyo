@@ -1,5 +1,3 @@
-using System.Globalization;
-using CsvHelper.Configuration;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
@@ -47,7 +45,7 @@ public static class Extensions
         return services.AddCsvService(options);
     }
 
-    /// <summary>Adds CSV service with the given options instance (default CsvHelper configuration).</summary>
+    /// <summary>Adds CSV service with the given options instance.</summary>
     public static IServiceCollection AddCsvService(this IServiceCollection services, CsvOptions options)
     {
         ArgumentHelpers.ThrowIfNull(services);
@@ -57,7 +55,7 @@ public static class Extensions
         services.AddSingleton<CsvService>(provider => {
             var logger = provider.GetService<ILogger<CsvService>>();
             var opts = provider.GetService<IOptions<CsvOptions>>()?.Value ?? options;
-            return new(logger, csvConfiguration: null, httpClient: null, opts);
+            return new(logger, httpClient: null, opts);
         });
 
         services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
@@ -69,56 +67,19 @@ public static class Extensions
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Adds CSV service with CsvHelper configuration (default <see cref="CsvOptions" /> pooling).</summary>
-        /// <param name="configure">Action to configure the CSV configuration</param>
-        /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddCsvService(Action<CsvConfiguration> configure)
+        /// <summary>Adds CSV service with options configured via the service provider.</summary>
+        /// <param name="configure">Action that receives the service provider and options to configure.</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddCsvService(Action<IServiceProvider, CsvOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<CsvService>(provider => {
                 var logger = provider.GetService<ILogger<CsvService>>();
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-                configure(config);
-                return new(logger, config);
-            });
-
-            services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
-            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
-            return services;
-        }
-
-        /// <summary>Adds CSV service with a CsvHelper configuration builder (default <see cref="CsvOptions" /> pooling).</summary>
-        /// <param name="configBuilder">Function that builds the CSV configuration</param>
-        /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddCsvService(Func<CsvConfiguration> configBuilder)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configBuilder);
-            services.AddSingleton<CsvService>(provider => {
-                var logger = provider.GetService<ILogger<CsvService>>();
-                return new(logger, configBuilder);
-            });
-
-            services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
-            services.AddSingleton<ICsvWriter>(sp => sp.GetRequiredService<CsvService>().Writer);
-            services.AddSingleton<ICsvReader>(sp => sp.GetRequiredService<CsvService>().Reader);
-            return services;
-        }
-
-        /// <summary>Adds CSV service with CsvHelper configuration that has access to the service provider.</summary>
-        /// <param name="configure">Action that receives the service provider and CSV configuration to configure</param>
-        /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddCsvService(Action<IServiceProvider, CsvConfiguration> configure)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<CsvService>(provider => {
-                var logger = provider.GetService<ILogger<CsvService>>();
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture);
-                configure(provider, config);
-                return new(logger, config);
+                var options = new CsvOptions();
+                configure(provider, options);
+                options.Validate();
+                return new(logger, httpClient: null, options);
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());

@@ -1,24 +1,21 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
+﻿using System.Globalization;
+using Lyo.Csv.Models;
 
 namespace Lyo.Csv.Converters;
 
-/// <summary>CsvHelper converter: empty or unparsable input becomes null; otherwise a <see cref="decimal" />.</summary>
-public sealed class DecimalCsvConverter : ITypeConverter
+/// <summary>Empty or unparsable input becomes null; otherwise a <see cref="decimal" />.</summary>
+public sealed class DecimalCsvConverter : ICsvValueConverter
 {
-    /// <summary>Parses a decimal from CSV text; returns null when empty or invalid.</summary>
-    public object? ConvertFromString(string? text, IReaderRow row, MemberMapData memberMapData)
+    /// <inheritdoc />
+    public object? ConvertFromString(string? text, CultureInfo culture)
     {
         if (string.IsNullOrEmpty(text))
             return null;
 
-        if (decimal.TryParse(text, out var value))
-            return value;
-
-        return null;
+        return decimal.TryParse(text, NumberStyles.Number, culture, out var value) ? value : null;
     }
 
-    /// <summary>Writes a decimal cell value as its string form, or empty when null.</summary>
-    public string ConvertToString(object? value, IWriterRow row, MemberMapData memberMapData) => value?.ToString() ?? "";
+    /// <inheritdoc />
+    public string ConvertToString(object? value, CultureInfo culture)
+        => value is IFormattable f ? f.ToString(null, culture) ?? "" : value?.ToString() ?? "";
 }

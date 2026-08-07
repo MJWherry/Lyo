@@ -828,15 +828,6 @@
       ]
     },
     {
-      "name": "CsvHelper",
-      "kind": "package",
-      "version": "33.1.0",
-      "tags": [
-        "transitive",
-        "third-party"
-      ]
-    },
-    {
       "name": "DocumentFormat.OpenXml",
       "kind": "package",
       "version": "3.1.1",
@@ -1085,7 +1076,7 @@
     {
       "name": "System.Buffers",
       "kind": "package",
-      "version": "4.6.0",
+      "version": "4.6.1",
       "tags": [
         "transitive",
         "microsoft",

@@ -423,7 +423,7 @@
     {
       "name": "System.Buffers",
       "kind": "package",
-      "version": "4.6.0",
+      "version": "4.6.1",
       "tags": [
         "transitive",
         "microsoft",

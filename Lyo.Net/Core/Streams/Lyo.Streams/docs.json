@@ -41,7 +41,17 @@
     {
       "name": "System.Buffers",
       "kind": "package",
-      "version": "4.6.0",
+      "version": "4.6.1",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
       "tags": [
         "direct",
         "microsoft",

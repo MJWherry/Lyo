@@ -215,6 +215,19 @@ public sealed class DataTable
         return row;
     }
 
+#if !NETSTANDARD2_0
+    /// <summary>Enumerates body rows asynchronously for <c>await foreach</c> ergonomics. The table remains fully materialised in memory.</summary>
+    public async IAsyncEnumerable<DataTableRow> EnumerateRowsAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    {
+        foreach (var row in _rows) {
+            ct.ThrowIfCancellationRequested();
+            yield return row;
+        }
+
+        await Task.CompletedTask;
+    }
+#endif
+
     public override string ToString()
         => $"DataTable(Headers: {string.Join(", ", _headers.Select(kv => $"[{kv.Key}: {kv.Value.DisplayValue}]"))}, Rows: {_rows.Count}, Footer: {string.Join(", ", _footer.Select(kv => $"[{kv.Key}: {kv.Value.DisplayValue}]"))}, Formats: {(HasFormats ? Formats.Count : 0)})";
 

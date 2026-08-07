@@ -994,7 +994,7 @@
     "name": "Lyo.Csv",
     "area": "Data",
     "topic": "Lyo.Csv",
-    "tagline": "CsvHelper-backed implementation of `Lyo.Csv.Models`. `CsvService` composes a `CsvWriter` and `CsvReader` to read and write CSV from files, streams, byte arrays, URLs, and `TextWriter`/`TextReader`.",
+    "tagline": "Owned CSV stack implementing `Lyo.Csv.Models`. `CsvService` composes a `CsvWriter` and `CsvReader` over an internal tokenizer/writer with typed binders — no third-party CSV dependency.",
     "readme": "Lyo.Net/Data/Csv/Lyo.Csv/README.md",
     "targetFrameworks": [
       "net10.0",
@@ -1006,7 +1006,7 @@
     "name": "Lyo.Csv.Models",
     "area": "Data",
     "topic": "Lyo.Csv",
-    "tagline": "Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by `Lyo.Csv` so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without pulling in CsvHelper…",
+    "tagline": "Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by `Lyo.Csv` so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without the implementation package.",
     "readme": "Lyo.Net/Data/Csv/Lyo.Csv.Models/README.md",
     "targetFrameworks": [
       "netstandard2.0",

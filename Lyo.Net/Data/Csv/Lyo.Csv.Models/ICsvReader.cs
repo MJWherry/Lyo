@@ -69,6 +69,12 @@ public interface ICsvReader
     /// <summary>Parses a CSV stream as an async sequence of <typeparamref name="T" />.</summary>
     IAsyncEnumerable<T> ParseStreamStreamingAsync<T>(Stream csvStream, CsvParseOptions? options = null, CancellationToken ct = default);
 
+    /// <summary>Yields each physical CSV row from a file without materializing the full file.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseFileRowsStreamingAsync(string csvFilePath, CancellationToken ct = default);
+
+    /// <summary>Yields each physical CSV row from a stream without materializing all rows.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseStreamRowsStreamingAsync(Stream csvStream, CancellationToken ct = default);
+
     /// <summary>Parses all rows into a list using <paramref name="options" /> (continue-on-error, filters, row caps).</summary>
     /// <typeparam name="T">Row type.</typeparam>
     Task<List<T>> ParseFileWithOptionsAsync<T>(string csvFilePath, CsvParseOptions? options, CancellationToken ct = default);

@@ -1,4 +1,4 @@
-using CsvHelper.Configuration;
+using Lyo.Csv.Models;
 
 // ReSharper disable once CheckNamespace
 namespace Lyo.Csv.Tests.TestModels;
@@ -14,10 +14,6 @@ internal sealed class Person
 
 internal sealed class PersonName
 {
+    [CsvColumn("Full Name")]
     public string? Name { get; set; }
-}
-
-internal sealed class PersonNameMap : ClassMap<PersonName>
-{
-    public PersonNameMap() => Map(m => m.Name).Name("Full Name");
 }

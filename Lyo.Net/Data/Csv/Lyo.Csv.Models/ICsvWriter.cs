@@ -5,7 +5,7 @@ namespace Lyo.Csv.Models;
 /// <summary>Writes data to CSV format. Supports enumerables, row/column dictionaries, <see cref="DataTable.Models.DataTable" />, property selection, and async export with progress.</summary>
 public interface ICsvWriter
 {
-    /// <summary>Writes <paramref name="data" /> to <paramref name="csvFilePath" /> using CsvHelper and registered class maps.</summary>
+    /// <summary>Writes <paramref name="data" /> to <paramref name="csvFilePath" /> using the owned CSV writer and <see cref="CsvColumnAttribute" /> column attributes.</summary>
     /// <typeparam name="T">Row type.</typeparam>
     void ExportToCsv<T>(IEnumerable<T> data, string csvFilePath);
 
@@ -167,5 +167,29 @@ public interface ICsvWriter
     /// <summary>Appends rows to an existing file; optionally writes the header if the file is new or empty.</summary>
     /// <typeparam name="T">Row type.</typeparam>
     Task AppendToCsvAsync<T>(IEnumerable<T> data, string csvFilePath, bool includeHeaderIfMissing = false, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="csvFilePath" /> without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, string csvFilePath, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="csvStream" /> without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="writer" /> without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, TextWriter writer, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams selected properties from <paramref name="data" /> without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams custom columns from <paramref name="data" /> without buffering the full sequence. Key = header text, value = property to read.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams formatter columns from <paramref name="data" /> without buffering the full sequence. Key = header text, value = cell text per row.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, Func<T, string>> columnFormatters, Stream csvStream, CancellationToken ct = default);
 #endif
 }

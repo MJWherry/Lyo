@@ -275,7 +275,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
 - `SmartFormat.NET` `3.6.1` — (transitive, third-party)
-- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
 - `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)

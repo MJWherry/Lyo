@@ -6,7 +6,7 @@ Export streams rows straight into the worksheet part via `OpenXmlWriter`, keepin
 
 ## Features
 
-- Strongly-typed read/write via `IEnumerable<T>`.
+- Strongly-typed read/write via `IEnumerable<T>`; on `net10.0`, `IAsyncEnumerable<T>` export and forward-only streaming reads (`ParseXlsx*RowsStreamingAsync` / typed `ParseXlsx*StreamingAsync`) via ExcelDataReader.
 - Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet name → rows).
 - Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` / `ParseXlsx*AsDataTableWithFormatting`), or parse every sheet at once (`ParseXlsx*AsAllSheets` / `…WithFormatting`).
 - Thin vs formatted DataTable import: `AsDataTable` skips ClosedXML style reads (values + spans only); `AsDataTableWithFormatting` populates the sparse `(row,col) → DataTableCellFormat` map (absent key = no format; default black/white/theme colors and font size/name are stripped so unstyled sheets stay empty). Export writes styles for mapped cells (unique custom styles capped at 512). Skipping style reads does not remove ClosedXML workbook-load cost.

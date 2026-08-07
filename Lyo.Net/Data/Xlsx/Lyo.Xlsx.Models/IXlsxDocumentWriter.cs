@@ -24,4 +24,10 @@ public interface IXlsxDocumentWriter : IDisposable
     /// headers; <paramref name="useFooterRow" /> writes the last ordered row as a trailing footer.
     /// </summary>
     void AddSheetFromDictionary(string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false, CancellationToken ct = default);
+
+#if !NETSTANDARD2_0
+    /// <summary>Awaits <paramref name="rows" />, then streams a worksheet named <paramref name="sheetName" /> with one column per readable property of <typeparamref name="T" />.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task AddSheetAsync<T>(string sheetName, IAsyncEnumerable<T> rows, CancellationToken ct = default);
+#endif
 }

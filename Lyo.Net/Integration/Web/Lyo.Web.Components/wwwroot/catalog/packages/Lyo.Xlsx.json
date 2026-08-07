@@ -5,7 +5,7 @@
   "tagline": "Implementation of `Lyo.Xlsx.Models`. `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX…",
   "description": "Implementation of [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams, and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`. Multi-targets `netstandard2.0;net10.0`; async, custom-header, and formatter export overloads are only available on `net10.0`.\n\nExport streams rows straight into the worksheet part via `OpenXmlWriter`, keeping memory bounded regardless of row count. Column widths are approximated from a bounded sample of the leading rows rather than a full-workbook auto-fit pass.",
   "features": [
-    "Strongly-typed read/write via `IEnumerable<T>`.",
+    "Strongly-typed read/write via `IEnumerable<T>`; on `net10.0`, `IAsyncEnumerable<T>` export and forward-only streaming reads (`ParseXlsx*RowsStreamingAsync` / typed `ParseXlsx*StreamingAsync`) via ExcelDataReader.",
     "Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet name → rows).",
     "Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` / `ParseXlsx*AsDataTableWithFormatting`), or parse every sheet at once (`ParseXlsx*AsAllSheets` / `…WithFormatting`).",
     "Thin vs formatted DataTable import: `AsDataTable` skips ClosedXML style reads (values + spans only); `AsDataTableWithFormatting` populates the sparse `(row,col) → DataTableCellFormat` map (absent key = no format; default black/white/theme colors and font size/name are stripped so unstyled sheets stay empty). Export writes styles for mapped cells (unique custom styles capped at 512). Skipping style reads does not remove ClosedXML workbook-load cost.",
@@ -14,7 +14,7 @@
     "Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX merged ranges (`<mergeCells>` on write, `MergedRanges` on read).",
     "Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter (`IReadOnlyDictionary<string, Func<T, string>>`) exports.",
     "Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.",
-    "`Lyo.DataTable.Models.DataTable` round-trip (values always; formats when present on the map) and HTML table export (`ExportToHtmlTable`).",
+    "`Lyo.DataTable.Models.DataTable` round-trip including `Footer` (export always appends footer when present; import peels the last body row when `useFooterRow: true`; formats on map row `-2`) and HTML table export (`ExportToHtmlTable`).",
     "XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with optional `Encoding`.",
     "Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one `Result<DataTable>` per input path.",
     "`XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`."
@@ -43,7 +43,7 @@
     {
       "title": "DataTable, dictionary, and HTML helpers",
       "language": "csharp",
-      "code": "Result<DataTable> thin = xlsx.ParseXlsxFileAsDataTable(\"in.xlsx\", useHeaderRow: true);\nResult<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting(\"in.xlsx\", useHeaderRow: true);\nxlsx.ExportToXlsxFromDataTable(styled.ValueOrThrow(), \"out.xlsx\"); // writes formats when HasFormats\n\nvar grid = xlsx.ParseXlsxFileAsDictionary(\"in.xlsx\");\nxlsx.ExportToXlsxFromDictionary(grid, \"out.xlsx\", useHeaderRow: true);\n\nstring html = xlsx.ExportToHtmlTable(File.ReadAllBytes(\"in.xlsx\"), useHeaderRow: true);"
+      "code": "Result<DataTable> thin = xlsx.ParseXlsxFileAsDataTable(\"in.xlsx\", useHeaderRow: true, useFooterRow: true);\nResult<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting(\"in.xlsx\", useHeaderRow: true, useFooterRow: true);\nxlsx.ExportToXlsxFromDataTable(styled.ValueOrThrow(), \"out.xlsx\"); // writes Footer + formats when present\n\nvar grid = xlsx.ParseXlsxFileAsDictionary(\"in.xlsx\");\nxlsx.ExportToXlsxFromDictionary(grid, \"out.xlsx\", useHeaderRow: true, useFooterRow: true);\n\nstring html = xlsx.ExportToHtmlTable(File.ReadAllBytes(\"in.xlsx\"), useHeaderRow: true, useFooterRow: true);"
     },
     {
       "title": "XLSX ↔ CSV",
@@ -53,7 +53,7 @@
     {
       "title": "Batch parses",
       "language": "csharp",
-      "code": "IReadOnlyList<Result<DataTable>> sync =\n    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true);\n\nIReadOnlyList<Result<DataTable>> async =\n    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, ct);"
+      "code": "IReadOnlyList<Result<DataTable>> sync =\n    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true, useFooterRow: true);\n\nIReadOnlyList<Result<DataTable>> async =\n    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, useFooterRow: true, ct);"
     }
   ],
   "sections": [
@@ -65,7 +65,7 @@
     {
       "type": "markdown",
       "title": "Multi-sheet workbooks",
-      "body": "```csharp\nvar workbook = new Dictionary<string, IEnumerable<Person>> {\n    [\"Active\"] = activePeople,\n    [\"Archived\"] = archivedPeople,\n};\nxlsx.ExportToXlsx(workbook, \"people.xlsx\");\nawait xlsx.ExportToXlsxAsync(workbook, stream, ct);\n```\n\nFor heterogeneous sheets (different row types or sources per sheet), open an\nincremental writing session; each `AddSheet*` call streams one worksheet, and\ndisposing the session finalizes the workbook:\n\n```csharp\nusing (var doc = xlsx.CreateDocumentWriter(\"report.xlsx\"))\n{\n    doc.AddSheet(\"People\", people); // typed rows\n    doc.AddSheet(\"Names\", people, selectedProps); // selected properties\n    doc.AddSheetFromDataTable(\"Summary\", summaryTable); // Lyo DataTable\n    doc.AddSheetFromDictionary(\"Raw\", grid, useHeaderRow: true);\n}\n```\n\nDuplicate sheet names (case-insensitive) are rejected. `CreateDocumentWriter(stream)`\nleaves the destination stream open for the caller; the file-path overload closes the\nfile on dispose."
+      "body": "```csharp\nvar workbook = new Dictionary<string, IEnumerable<Person>> {\n    [\"Active\"] = activePeople,\n    [\"Archived\"] = archivedPeople,\n};\nxlsx.ExportToXlsx(workbook, \"people.xlsx\");\nawait xlsx.ExportToXlsxAsync(workbook, stream, ct);\n```\n\nFor heterogeneous sheets (different row types or sources per sheet), open an\nincremental writing session; each `AddSheet*` call streams one worksheet, and\ndisposing the session finalizes the workbook:\n\n```csharp\nusing (var doc = xlsx.CreateDocumentWriter(\"report.xlsx\"))\n{\n    doc.AddSheet(\"People\", people); // typed rows\n    doc.AddSheet(\"Names\", people, selectedProps); // selected properties\n    doc.AddSheetFromDataTable(\"Summary\", summaryTable); // Lyo DataTable\n    doc.AddSheetFromDictionary(\"Raw\", grid, useHeaderRow: true, useFooterRow: true);\n}\n```\n\nDuplicate sheet names (case-insensitive) are rejected. `CreateDocumentWriter(stream)`\nleaves the destination stream open for the caller; the file-path overload closes the\nfile on dispose."
     },
     {
       "type": "markdown",

@@ -1,9 +1,8 @@
+using System.Globalization;
 using System.Reflection;
-using CsvHelper.Configuration;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
-using HelperCsvWriter = CsvHelper.CsvWriter;
 #if NETSTANDARD2_0
 using Lyo.Common;
 #endif
@@ -12,16 +11,14 @@ namespace Lyo.Csv;
 
 internal sealed class CsvWriter : ICsvWriter
 {
-    private readonly List<Type> _classMapTypes;
-    private readonly Func<CsvConfiguration> _getConfig;
+    private readonly Func<CsvOptions> _getOptions;
     private readonly ILogger _logger;
 
-    private CsvConfiguration Config => _getConfig();
+    private CsvOptions Config => _getOptions();
 
-    internal CsvWriter(Func<CsvConfiguration> getConfig, List<Type> classMapTypes, ILogger logger)
+    internal CsvWriter(Func<CsvOptions> getOptions, ILogger logger)
     {
-        _getConfig = getConfig;
-        _classMapTypes = classMapTypes;
+        _getOptions = getOptions;
         _logger = logger;
     }
 
@@ -42,7 +39,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream", typeof(T).FullName);
-        using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         ExportToCsv(data, writer);
         writer.Flush();
     }
@@ -53,9 +50,19 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(writer);
         _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
-        using var csv = new HelperCsvWriter(writer, Config);
-        RegisterClassMaps(csv);
-        csv.WriteRecords(data);
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
+        using var csv = new CsvTextWriter(writer, options);
+        if (options.HasHeaderRecord) {
+            csv.WriteFields(CsvTypeBinder.GetHeaders(map));
+            csv.NextRecord();
+        }
+
+        foreach (var item in data) {
+            csv.WriteFields(CsvTypeBinder.GetFieldValues(item, map, options.Culture));
+            csv.NextRecord();
+        }
+
         csv.Flush();
     }
 
@@ -99,7 +106,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
-        using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         ExportToCsv(data, selectedProperties, writer);
         writer.Flush();
     }
@@ -110,16 +117,15 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
-        using var csv = new HelperCsvWriter(writer, Config);
+        var options = Config;
+        using var csv = new CsvTextWriter(writer, options);
         foreach (var prop in selectedProperties)
             csv.WriteField(prop.Name);
 
         csv.NextRecord();
         foreach (var item in data) {
-            foreach (var prop in selectedProperties) {
-                var value = prop.GetValue(item);
-                csv.WriteField(value);
-            }
+            foreach (var prop in selectedProperties)
+                csv.WriteField(FormatValue(prop.GetValue(item), options.Culture));
 
             csv.NextRecord();
         }
@@ -168,7 +174,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting dictionary to csv stream");
-        using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         WriteDictionaryToCsv(data, writer, hasHeaderRow, hasFooterRow);
         writer.Flush();
     }
@@ -210,7 +216,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting tabular to csv stream");
-        using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         WriteDataTableToCsv(dataTable, writer);
         writer.Flush();
     }
@@ -233,33 +239,29 @@ internal sealed class CsvWriter : ICsvWriter
         return ms.ToArray();
     }
 
-    private void RegisterClassMaps(HelperCsvWriter csv)
-    {
-        foreach (var mapType in _classMapTypes)
-            csv.Context.RegisterClassMap(mapType);
-    }
-
     private void WriteDictionaryToCsv(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, TextWriter writer, bool hasHeaderRow, bool hasFooterRow)
     {
         if (data.Count == 0)
             return;
 
+        var options = Config;
         var maxCol = data.Values.SelectMany(r => r.Keys).DefaultIfEmpty(-1).Max() + 1;
         maxCol = Math.Max(maxCol, 1);
         var orderedRows = data.OrderBy(kv => kv.Key).ToList();
         var firstRow = orderedRows[0].Value;
+        using var csv = new CsvTextWriter(writer, options);
         if (hasHeaderRow && orderedRows.Count > 0) {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(firstRow.GetValueOrDefault(c, "")));
+                csv.WriteField(firstRow.GetValueOrDefault(c, ""));
 
-            writer.WriteLine();
+            csv.NextRecord();
             orderedRows = orderedRows.Skip(1).ToList();
         }
         else {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv($"Column{c}"));
+                csv.WriteField($"Column{c}");
 
-            writer.WriteLine();
+            csv.NextRecord();
         }
 
         IReadOnlyDictionary<int, string>? footerRow = null;
@@ -270,59 +272,61 @@ internal sealed class CsvWriter : ICsvWriter
 
         foreach (var kv in orderedRows) {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, "")));
+                csv.WriteField(kv.Value.GetValueOrDefault(c, ""));
 
-            writer.WriteLine();
+            csv.NextRecord();
         }
 
         if (footerRow != null) {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(footerRow.GetValueOrDefault(c, "")));
+                csv.WriteField(footerRow.GetValueOrDefault(c, ""));
 
-            writer.WriteLine();
+            csv.NextRecord();
         }
+
+        csv.Flush();
     }
 
     private void WriteDataTableToCsv(DataTable.Models.DataTable dataTable, TextWriter writer)
     {
+        var options = Config;
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
+        using var csv = new CsvTextWriter(writer, options);
         for (var c = 0; c < maxCol; c++) {
             var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
-            writer.Write((c > 0 ? "," : "") + EscapeCsv(header?.DisplayValue ?? ""));
+            csv.WriteField(header?.DisplayValue ?? "");
         }
 
-        writer.WriteLine();
+        csv.NextRecord();
         foreach (var row in dataTable.Rows) {
             for (var c = 0; c < maxCol; c++) {
                 var cell = row.Cells.TryGetValue(c, out var cellVal) ? cellVal : null;
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(cell?.DisplayValue ?? ""));
+                csv.WriteField(cell?.DisplayValue ?? "");
             }
 
-            writer.WriteLine();
+            csv.NextRecord();
         }
 
         if (dataTable.Footer.Count > 0) {
             var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
             for (var c = 0; c < maxCol; c++) {
                 var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(footer?.DisplayValue ?? ""));
+                csv.WriteField(footer?.DisplayValue ?? "");
             }
 
-            writer.WriteLine();
+            csv.NextRecord();
         }
+
+        csv.Flush();
     }
 
-    private static string EscapeCsv(string? s)
-    {
-        if (s is null || string.IsNullOrEmpty(s))
-            return "";
-
-        if (s.Contains(',') || s.Contains('"') || s.Contains('\r') || s.Contains('\n'))
-            return $"\"{s.Replace("\"", "\"\"")}\"";
-
-        return s;
-    }
+    private static string FormatValue(object? value, CultureInfo culture)
+        => value switch {
+            null => "",
+            IFormattable f => f.ToString(null, culture) ?? "",
+            var o => o.ToString() ?? ""
+        };
 
 #if !NETSTANDARD2_0
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.Threading.CancellationToken)' />
@@ -341,7 +345,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream", typeof(T).FullName);
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await ExportToCsvAsync(data, writer, ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
@@ -352,10 +356,65 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(writer);
         _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
-        await using var csv = new HelperCsvWriter(writer, Config);
-        RegisterClassMaps(csv);
-        await csv.WriteRecordsAsync(data, ct).ConfigureAwait(false);
-        await csv.FlushAsync().ConfigureAwait(false);
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
+        await using var csv = new CsvTextWriter(writer, options);
+        if (options.HasHeaderRecord) {
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        foreach (var item in data) {
+            ct.ThrowIfCancellationRequested();
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="csvFilePath" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, string csvFilePath, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath}", typeof(T).FullName, csvFilePath);
+        await using var writer = new StreamWriter(csvFilePath, false, Config.Encoding);
+        await ExportToCsvAsync(data, writer, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="csvStream" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, Stream csvStream, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
+        _logger.LogDebug("Exporting {ExportType} to csv stream", typeof(T).FullName);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
+        await ExportToCsvAsync(data, writer, ct).ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams <paramref name="data" /> to <paramref name="writer" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, TextWriter writer, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(writer);
+        _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
+        await using var csv = new CsvTextWriter(writer, options);
+        if (options.HasHeaderRecord) {
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringAsync``1(System.Collections.Generic.IEnumerable{``0},System.Threading.CancellationToken)' />
@@ -418,7 +477,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting dictionary to csv stream");
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
@@ -468,7 +527,7 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting tabular to csv stream");
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await WriteDataTableToCsvAsync(dataTable, writer, ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
@@ -501,22 +560,24 @@ internal sealed class CsvWriter : ICsvWriter
         if (data.Count == 0)
             return;
 
+        var options = Config;
         var maxCol = data.Values.SelectMany(r => r.Keys).DefaultIfEmpty(-1).Max() + 1;
         maxCol = Math.Max(maxCol, 1);
         var orderedRows = data.OrderBy(kv => kv.Key).ToList();
         var firstRow = orderedRows[0].Value;
+        await using var csv = new CsvTextWriter(writer, options);
         if (hasHeaderRow && orderedRows.Count > 0) {
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(firstRow.GetValueOrDefault(c, ""))).ConfigureAwait(false);
+                await csv.WriteFieldAsync(firstRow.GetValueOrDefault(c, ""), ct).ConfigureAwait(false);
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
             orderedRows = orderedRows.Skip(1).ToList();
         }
         else {
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv($"Column{c}")).ConfigureAwait(false);
+                await csv.WriteFieldAsync($"Column{c}", ct).ConfigureAwait(false);
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         IReadOnlyDictionary<int, string>? footerRow = null;
@@ -528,48 +589,54 @@ internal sealed class CsvWriter : ICsvWriter
         foreach (var kv in orderedRows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, ""))).ConfigureAwait(false);
+                await csv.WriteFieldAsync(kv.Value.GetValueOrDefault(c, ""), ct).ConfigureAwait(false);
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         if (footerRow != null) {
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(footerRow.GetValueOrDefault(c, ""))).ConfigureAwait(false);
+                await csv.WriteFieldAsync(footerRow.GetValueOrDefault(c, ""), ct).ConfigureAwait(false);
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     private async Task WriteDataTableToCsvAsync(DataTable.Models.DataTable dataTable, TextWriter writer, CancellationToken ct)
     {
+        var options = Config;
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
+        await using var csv = new CsvTextWriter(writer, options);
         for (var c = 0; c < maxCol; c++) {
             var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
-            await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(header?.DisplayValue ?? "")).ConfigureAwait(false);
+            await csv.WriteFieldAsync(header?.DisplayValue ?? "", ct).ConfigureAwait(false);
         }
 
-        await writer.WriteLineAsync().ConfigureAwait(false);
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
         foreach (var row in dataTable.Rows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++) {
                 var cell = row.Cells!.GetValueOrDefault(c, null);
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(cell?.DisplayValue ?? "")).ConfigureAwait(false);
+                await csv.WriteFieldAsync(cell?.DisplayValue ?? "", ct).ConfigureAwait(false);
             }
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         if (dataTable.Footer.Count > 0) {
             var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
             for (var c = 0; c < maxCol; c++) {
                 var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(footer?.DisplayValue ?? "")).ConfigureAwait(false);
+                await csv.WriteFieldAsync(footer?.DisplayValue ?? "", ct).ConfigureAwait(false);
             }
 
-            await writer.WriteLineAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
@@ -581,8 +648,34 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await ExportToCsvAsync(data, selectedProperties, writer, ct).ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams selected properties from <paramref name="data" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
+        _logger.LogDebug("Exporting {ExportType} to csv stream with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
+        var options = Config;
+        await using var writer = new StreamWriter(csvStream, options.Encoding, 8192, true);
+        await using var csv = new CsvTextWriter(writer, options);
+        foreach (var prop in selectedProperties)
+            await csv.WriteFieldAsync(prop.Name, ct).ConfigureAwait(false);
+
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
+            foreach (var prop in selectedProperties)
+                await csv.WriteFieldAsync(FormatValue(prop.GetValue(item), options.Culture), ct).ConfigureAwait(false);
+
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
@@ -592,22 +685,21 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
-        await using var csv = new HelperCsvWriter(writer, Config);
+        var options = Config;
+        await using var csv = new CsvTextWriter(writer, options);
         foreach (var prop in selectedProperties)
-            csv.WriteField(prop.Name);
+            await csv.WriteFieldAsync(prop.Name, ct).ConfigureAwait(false);
 
-        await csv.NextRecordAsync().ConfigureAwait(false);
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            foreach (var prop in selectedProperties) {
-                var value = prop.GetValue(item);
-                csv.WriteField(value);
-            }
+            foreach (var prop in selectedProperties)
+                await csv.WriteFieldAsync(FormatValue(prop.GetValue(item), options.Culture), ct).ConfigureAwait(false);
 
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
@@ -619,8 +711,34 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream with {ColumnCount} custom columns", typeof(T).FullName, columns.Count);
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await ExportToCsvAsync(data, columns, writer, ct).ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams custom columns from <paramref name="data" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrEmpty(columns);
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
+        _logger.LogDebug("Exporting {ExportType} to csv stream with {ColumnCount} custom columns", typeof(T).FullName, columns.Count);
+        var options = Config;
+        await using var writer = new StreamWriter(csvStream, options.Encoding, 8192, true);
+        await using var csv = new CsvTextWriter(writer, options);
+        foreach (var header in columns.Keys)
+            await csv.WriteFieldAsync(header, ct).ConfigureAwait(false);
+
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
+            foreach (var prop in columns.Values)
+                await csv.WriteFieldAsync(FormatValue(prop.GetValue(item), options.Culture), ct).ConfigureAwait(false);
+
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
@@ -629,22 +747,21 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(columns);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {ColumnCount} custom columns", typeof(T).FullName, columns.Count);
-        await using var csv = new HelperCsvWriter(writer, Config);
+        var options = Config;
+        await using var csv = new CsvTextWriter(writer, options);
         foreach (var header in columns.Keys)
-            csv.WriteField(header);
+            await csv.WriteFieldAsync(header, ct).ConfigureAwait(false);
 
-        await csv.NextRecordAsync().ConfigureAwait(false);
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            foreach (var prop in columns.Values) {
-                var value = prop.GetValue(item);
-                csv.WriteField(value);
-            }
+            foreach (var prop in columns.Values)
+                await csv.WriteFieldAsync(FormatValue(prop.GetValue(item), options.Culture), ct).ConfigureAwait(false);
 
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
@@ -660,8 +777,39 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         _logger.LogDebug("Exporting {ExportType} to csv stream with {ColumnCount} formatter columns", typeof(T).FullName, columnFormatters.Count);
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
+        await using var writer = new StreamWriter(csvStream, Config.Encoding, 8192, true);
         await ExportToCsvAsync(data, columnFormatters, writer, ct).ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Asynchronously streams formatter columns from <paramref name="data" /> without buffering the full sequence.</summary>
+    public async Task ExportToCsvStreamAsync<T>(
+        IAsyncEnumerable<T> data,
+        IReadOnlyDictionary<string, Func<T, string>> columnFormatters,
+        Stream csvStream,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
+        _logger.LogDebug("Exporting {ExportType} to csv stream with {ColumnCount} formatter columns", typeof(T).FullName, columnFormatters.Count);
+        var options = Config;
+        await using var writer = new StreamWriter(csvStream, options.Encoding, 8192, true);
+        await using var csv = new CsvTextWriter(writer, options);
+        foreach (var header in columnFormatters.Keys)
+            await csv.WriteFieldAsync(header, ct).ConfigureAwait(false);
+
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        var formatters = columnFormatters.Values.ToList();
+        await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
+            foreach (var formatter in formatters)
+                await csv.WriteFieldAsync(formatter(item), ct).ConfigureAwait(false);
+
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
+        await csv.FlushAsync(ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
@@ -670,23 +818,22 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {ColumnCount} formatter columns", typeof(T).FullName, columnFormatters.Count);
-        await using var csv = new HelperCsvWriter(writer, Config);
+        var options = Config;
+        await using var csv = new CsvTextWriter(writer, options);
         foreach (var header in columnFormatters.Keys)
-            csv.WriteField(header);
+            await csv.WriteFieldAsync(header, ct).ConfigureAwait(false);
 
-        await csv.NextRecordAsync().ConfigureAwait(false);
+        await csv.NextRecordAsync(ct).ConfigureAwait(false);
         var formatters = columnFormatters.Values.ToList();
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            foreach (var formatter in formatters) {
-                var value = formatter(item);
-                csv.WriteField(value);
-            }
+            foreach (var formatter in formatters)
+                await csv.WriteFieldAsync(formatter(item), ct).ConfigureAwait(false);
 
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
@@ -718,20 +865,26 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         var dataList = data.ToList();
         var totalRows = dataList.Count;
-        await using var writer = new StreamWriter(csvFilePath, false, Config.Encoding);
-        await using var csv = new HelperCsvWriter(writer, Config);
-        RegisterClassMaps(csv);
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
+        await using var writer = new StreamWriter(csvFilePath, false, options.Encoding);
+        await using var csv = new CsvTextWriter(writer, options);
+        if (options.HasHeaderRecord) {
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            csv.WriteRecord(item);
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if ((progress != null && rowsProcessed % 100 == 0) || rowsProcessed == totalRows)
                 progress!.Report(new() { RowsProcessed = rowsProcessed, TotalRows = totalRows, Operation = "Exporting" });
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc
@@ -743,20 +896,26 @@ internal sealed class CsvWriter : ICsvWriter
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         var dataList = data.ToList();
         var totalRows = dataList.Count;
-        await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
-        await using var csv = new HelperCsvWriter(writer, Config);
-        RegisterClassMaps(csv);
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
+        await using var writer = new StreamWriter(csvStream, options.Encoding, 8192, true);
+        await using var csv = new CsvTextWriter(writer, options);
+        if (options.HasHeaderRecord) {
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
+        }
+
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            csv.WriteRecord(item);
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if (progress != null && (rowsProcessed % 100 == 0 || rowsProcessed == totalRows))
                 progress.Report(new() { RowsProcessed = rowsProcessed, TotalRows = totalRows, Operation = "Exporting" });
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
@@ -766,22 +925,23 @@ internal sealed class CsvWriter : ICsvWriter
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         var fileExists = File.Exists(csvFilePath);
         var fileIsEmpty = fileExists && new FileInfo(csvFilePath).Length == 0;
+        var options = Config;
+        var map = CsvTypeBinder.GetMap<T>();
         await using var stream = new FileStream(csvFilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-        await using var writer = new StreamWriter(stream, Config.Encoding);
-        await using var csv = new HelperCsvWriter(writer, Config);
-        RegisterClassMaps(csv);
+        await using var writer = new StreamWriter(stream, options.Encoding);
+        await using var csv = new CsvTextWriter(writer, options);
         if ((!fileExists || fileIsEmpty) && includeHeaderIfMissing) {
-            csv.WriteHeader<T>();
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            csv.WriteRecord(item);
-            await csv.NextRecordAsync().ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
-        await csv.FlushAsync().ConfigureAwait(false);
+        await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 #endif
 }

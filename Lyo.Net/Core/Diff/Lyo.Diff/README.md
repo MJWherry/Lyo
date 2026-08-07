@@ -47,4 +47,4 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Exceptions` — (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `System.Buffers` `4.6.0` — (direct, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (direct, microsoft, netstandard2.0)

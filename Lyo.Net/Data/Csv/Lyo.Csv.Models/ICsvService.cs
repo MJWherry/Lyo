@@ -17,7 +17,11 @@ public interface ICsvService
     /// <param name="encoding">The encoding to use. Must not be null.</param>
     void SetEncoding(Encoding encoding);
 
-    /// <summary>Exports rows to a CSV file using default or registered class maps.</summary>
+    /// <summary>Replaces service options (dialect, encoding, pooling). The instance is cloned after validation.</summary>
+    /// <param name="options">Options to apply. Must not be null.</param>
+    void SetOptions(CsvOptions options);
+
+    /// <summary>Exports rows to a CSV file using default or <see cref="CsvColumnAttribute" /> column attributes.</summary>
     /// <typeparam name="T">Row type.</typeparam>
     /// <param name="data">Rows to write.</param>
     /// <param name="csvFilePath">Destination file path.</param>
@@ -178,6 +182,30 @@ public interface ICsvService
     /// <summary>Exports selected properties to a text writer asynchronously.</summary>
     Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, TextWriter writer, CancellationToken ct = default);
 
+    /// <summary>Asynchronously streams rows to a CSV file without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, string csvFilePath, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams rows to a CSV stream without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams rows to a text writer without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, TextWriter writer, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams selected properties without buffering the full sequence.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams custom columns without buffering the full sequence. Key = header text, Value = property to read.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default);
+
+    /// <summary>Asynchronously streams formatter columns without buffering the full sequence. Key = header text, Value = cell value factory.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, Func<T, string>> columnFormatters, Stream csvStream, CancellationToken ct = default);
+
     /// <summary>Builds a CSV string for selected properties asynchronously.</summary>
     Task<string> ExportToCsvStringAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, CancellationToken ct = default);
 
@@ -293,6 +321,12 @@ public interface ICsvService
 
     /// <summary>Parses a CSV stream as an async sequence of rows.</summary>
     IAsyncEnumerable<T> ParseStreamStreamingAsync<T>(Stream csvStream, CsvParseOptions? options = null, CancellationToken ct = default);
+
+    /// <summary>Yields each physical CSV row from a file without materializing the full file.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseFileRowsStreamingAsync(string csvFilePath, CancellationToken ct = default);
+
+    /// <summary>Yields each physical CSV row from a stream without materializing all rows.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseStreamRowsStreamingAsync(Stream csvStream, CancellationToken ct = default);
 
     /// <summary>Exports rows to a CSV file with progress callbacks.</summary>
     Task ExportToCsvWithProgressAsync<T>(IEnumerable<T> data, string csvFilePath, IProgress<CsvProgress>? progress, CancellationToken ct = default);

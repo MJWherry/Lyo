@@ -1034,5 +1034,49 @@ public class XlsxService : IXlsxService
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.MergeXlsxBytesAsync(System.Collections.Generic.IEnumerable{System.Byte[]},Lyo.Xlsx.Models.XlsxMergeMode,System.Threading.CancellationToken)' />
     public Task<byte[]> MergeXlsxBytesAsync(IEnumerable<byte[]> inputs, XlsxMergeMode mode = XlsxMergeMode.PreserveSheets, CancellationToken ct = default)
         => Task.Run(() => MergeXlsxBytes(inputs, mode), ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ExportToXlsxAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.String,System.String,System.Threading.CancellationToken)' />
+    public Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default)
+        => _writer.ExportToXlsxAsync(data, xlsxFilePath, worksheetName, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ExportToXlsxAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    public Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default)
+        => _writer.ExportToXlsxAsync(data, xlsxStream, worksheetName, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ExportToXlsxBytesAsync``1(System.Collections.Generic.IAsyncEnumerable{``0},System.String,System.Threading.CancellationToken)' />
+    public Task<byte[]> ExportToXlsxBytesAsync<T>(IAsyncEnumerable<T> data, string? worksheetName = null, CancellationToken ct = default)
+        => _writer.ExportToXlsxBytesAsync(data, worksheetName, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxFileRowsStreamingAsync(System.String,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, CancellationToken ct = default)
+        => _reader.ParseXlsxFileRowsStreamingAsync(xlsxFilePath, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, CancellationToken ct = default)
+        => _reader.ParseXlsxStreamRowsStreamingAsync(xlsxStream, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxFileRowsStreamingAsync(System.String,System.String,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, string sheetName, CancellationToken ct = default)
+        => _reader.ParseXlsxFileRowsStreamingAsync(xlsxFilePath, sheetName, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxFileRowsStreamingAsync(System.String,System.Int32,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, int sheetIndex, CancellationToken ct = default)
+        => _reader.ParseXlsxFileRowsStreamingAsync(xlsxFilePath, sheetIndex, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, string sheetName, CancellationToken ct = default)
+        => _reader.ParseXlsxStreamRowsStreamingAsync(xlsxStream, sheetName, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxStreamRowsStreamingAsync(System.IO.Stream,System.Int32,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, int sheetIndex, CancellationToken ct = default)
+        => _reader.ParseXlsxStreamRowsStreamingAsync(xlsxStream, sheetIndex, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxFileStreamingAsync``1(System.String,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, CancellationToken ct = default) where T : new()
+        => _reader.ParseXlsxFileStreamingAsync<T>(xlsxFilePath, ct);
+
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ParseXlsxStreamStreamingAsync``1(System.IO.Stream,System.Threading.CancellationToken)' />
+    public IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default) where T : new()
+        => _reader.ParseXlsxStreamStreamingAsync<T>(xlsxStream, ct);
 #endif
 }

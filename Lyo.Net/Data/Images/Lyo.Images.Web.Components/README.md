@@ -70,7 +70,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `SixLabors.Fonts` `2.1.3` — (transitive, third-party)
 - `SixLabors.ImageSharp` `3.1.12` — (transitive, third-party)
 - `SixLabors.ImageSharp.Drawing` `2.1.7` — (transitive, third-party)
-- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)

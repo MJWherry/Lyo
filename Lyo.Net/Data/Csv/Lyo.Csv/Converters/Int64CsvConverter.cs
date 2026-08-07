@@ -1,24 +1,21 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
+﻿using System.Globalization;
+using Lyo.Csv.Models;
 
 namespace Lyo.Csv.Converters;
 
-/// <summary>CsvHelper converter: empty or unparsable input becomes null; otherwise a 64-bit integer.</summary>
-public sealed class Int64CsvConverter : ITypeConverter
+/// <summary>Empty or unparsable input becomes null; otherwise a <see cref="long" />.</summary>
+public sealed class Int64CsvConverter : ICsvValueConverter
 {
-    /// <summary>Parses a 64-bit integer from CSV text; returns null when empty or invalid.</summary>
-    public object? ConvertFromString(string? text, IReaderRow row, MemberMapData memberMapData)
+    /// <inheritdoc />
+    public object? ConvertFromString(string? text, CultureInfo culture)
     {
         if (string.IsNullOrEmpty(text))
             return null;
 
-        if (long.TryParse(text, out var value))
-            return value;
-
-        return null;
+        return long.TryParse(text, NumberStyles.Integer, culture, out var value) ? value : null;
     }
 
-    /// <summary>Writes an integer cell value as its string form, or empty when null.</summary>
-    public string ConvertToString(object? value, IWriterRow row, MemberMapData memberMapData) => value?.ToString() ?? "";
+    /// <inheritdoc />
+    public string ConvertToString(object? value, CultureInfo culture)
+        => value is IFormattable f ? f.ToString(null, culture) ?? "" : value?.ToString() ?? "";
 }

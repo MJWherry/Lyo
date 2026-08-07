@@ -1,7 +1,4 @@
-using System.Globalization;
-using System.Text;
 using Lyo.Csv.Models;
-using Lyo.DataTable.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -47,14 +44,15 @@ public class CsvExtensionsTests
     }
 
     [Fact]
-    public void AddCsvService_WithConfigBuilder_RegistersService()
+    public void AddCsvService_WithOptionsInstance_RegistersService()
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddCsvService(() => new(CultureInfo.InvariantCulture) { Delimiter = "|" });
+        services.AddCsvService(new CsvOptions { Delimiter = "|" });
         var provider = services.BuildServiceProvider();
         var csvService = provider.GetRequiredService<ICsvService>();
         Assert.NotNull(csvService);
+        Assert.Equal("|", provider.GetRequiredService<IOptions<CsvOptions>>().Value.Delimiter);
     }
 
     [Fact]

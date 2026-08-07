@@ -155,5 +155,17 @@ public interface IXlsxWriter
 
     /// <summary>Asynchronously serializes a Lyo data table to XLSX bytes.</summary>
     Task<byte[]> ExportToXlsxBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default);
+
+    /// <summary>Asynchronously writes rows from an async sequence to <paramref name="xlsxFilePath" />.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously writes rows from an async sequence to <paramref name="xlsxStream" />.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task ExportToXlsxAsync<T>(IAsyncEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default);
+
+    /// <summary>Asynchronously serializes an async sequence of rows to XLSX bytes.</summary>
+    /// <typeparam name="T">Row type.</typeparam>
+    Task<byte[]> ExportToXlsxBytesAsync<T>(IAsyncEnumerable<T> data, string? worksheetName = null, CancellationToken ct = default);
 #endif
 }

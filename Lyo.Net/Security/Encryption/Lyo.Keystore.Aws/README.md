@@ -56,7 +56,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.0` — (transitive, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

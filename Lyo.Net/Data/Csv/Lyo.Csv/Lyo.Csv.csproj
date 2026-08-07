@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks>
-        <Description>CSV processing library using CsvHelper for reading and writing CSV files.</Description>
-        <PackageTags>csv csvhelper parsing</PackageTags>
+        <Description>CSV processing library with an owned reader/writer stack for reading and writing CSV files.</Description>
+        <PackageTags>csv parsing</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
@@ -15,7 +15,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CsvHelper"/>
         <PackageReference Include="Microsoft.Extensions.Configuration"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>

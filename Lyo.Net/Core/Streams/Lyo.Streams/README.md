@@ -58,4 +58,5 @@ Console.WriteLine($"Drained {sink.BytesWritten} bytes");
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Exceptions` — (direct, lyo)
-- `System.Buffers` `4.6.0` — (direct, microsoft, netstandard2.0)
+- `System.Buffers` `4.6.1` — (direct, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` — (direct, microsoft, netstandard2.0)

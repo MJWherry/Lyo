@@ -227,5 +227,29 @@ public interface IXlsxReader
 
     /// <summary>Asynchronously parses every worksheet of workbook bytes with formatting.</summary>
     Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
+
+    /// <summary>Streams worksheet rows as string cells (forward-only via ExcelDataReader). Does not materialize the full sheet.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, CancellationToken ct = default);
+
+    /// <summary>Streams worksheet rows as string cells from a stream (forward-only). Does not materialize the full sheet.</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, CancellationToken ct = default);
+
+    /// <summary>Streams the named worksheet as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, string sheetName, CancellationToken ct = default);
+
+    /// <summary>Streams the worksheet at the given zero-based index as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, int sheetIndex, CancellationToken ct = default);
+
+    /// <summary>Streams the named worksheet from a stream as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, string sheetName, CancellationToken ct = default);
+
+    /// <summary>Streams the worksheet at the given zero-based index from a stream as string-cell rows (forward-only).</summary>
+    IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, int sheetIndex, CancellationToken ct = default);
+
+    /// <summary>Streams typed rows by mapping header names to public writable properties (first row = headers when configuration <c>UseHeaderRow</c> is true).</summary>
+    IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, CancellationToken ct = default) where T : new();
+
+    /// <summary>Streams typed rows from a stream by mapping header names to public writable properties.</summary>
+    IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default) where T : new();
 #endif
 }
