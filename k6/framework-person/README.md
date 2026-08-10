@@ -148,9 +148,11 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
 Build shared TypeScript packages first:
 
 ```bash
-cd packages/typescript/lyo-api-client && npm install && npm run build
+cd packages/typescript/lyo-query && npm install && npm run build
+cd ../lyo-api-client && npm install && npm run build
 cd ../lyo-person-api-client && npm install && npm run build
 cd ../../
+# k6 cannot resolve bare "lyo-query" imports — run_all.py rewrites them after build.
 ```
 
 Then run a scenario:

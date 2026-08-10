@@ -12,6 +12,7 @@ internal static class CsvTypeBinder
     private static readonly ConcurrentDictionary<Type, TypeMap> Maps = new();
     private static readonly ConcurrentDictionary<Type, ICsvValueConverter> Converters = new();
     private static readonly ConcurrentDictionary<(Type Type, string HeaderKey), int[]> HeaderIndexCache = new();
+    private static readonly MethodInfo WriteFieldMethod = typeof(CsvTextWriter).GetMethod(nameof(CsvTextWriter.WriteField), [typeof(string)])!;
 
     static CsvTypeBinder()
     {
@@ -57,25 +58,20 @@ internal static class CsvTypeBinder
         }
     }
 
-    public static string[] GetHeaders(TypeMap map)
-    {
-        var headers = new string[map.Columns.Length];
-        for (var i = 0; i < map.Columns.Length; i++)
-            headers[i] = map.Columns[i].HeaderName;
+    public static string[] GetHeaders(TypeMap map) => map.Headers;
 
-        return headers;
-    }
-
-    public static string?[] GetFieldValues(object? instance, TypeMap map, CultureInfo culture)
+    /// <summary>Writes one typed row field-by-field (no intermediate string array).</summary>
+    public static void WriteRecord(object? instance, TypeMap map, CsvTextWriter csv, CultureInfo culture)
     {
-        var values = new string?[map.Columns.Length];
-        for (var i = 0; i < map.Columns.Length; i++) {
-            var col = map.Columns[i];
-            var raw = instance is null ? null : col.Getter(instance);
-            values[i] = ConvertFrom(col.Property.PropertyType, raw, culture);
+        if (instance is null) {
+            for (var i = 0; i < map.Columns.Length; i++)
+                csv.WriteField("");
+
+            return;
         }
 
-        return values;
+        for (var i = 0; i < map.Columns.Length; i++)
+            map.Columns[i].Writer(instance, csv, culture);
     }
 
     private static void BindWithIndices(object instance, TypeMap map, int[] indices, IReadOnlyList<string> fields, CultureInfo culture)
@@ -93,7 +89,6 @@ internal static class CsvTypeBinder
     {
         var key = BuildHeaderKey(headers);
         return HeaderIndexCache.GetOrAdd((map.Type, key), static tuple => {
-            // tuple can't capture map — resolve via Maps
             var typeMap = Maps[tuple.Type];
             var hdrs = tuple.HeaderKey.Split('\u001f');
             var indices = new int[typeMap.Columns.Length];
@@ -134,6 +129,10 @@ internal static class CsvTypeBinder
 
         return value;
     }
+
+    /// <summary>Used by compiled writers for uncommon property types.</summary>
+    public static string FormatForWrite(Type sourceType, object? value, CultureInfo culture)
+        => ConvertFrom(sourceType, value, culture);
 
     private static object? ConvertTo(Type targetType, string? text, CultureInfo culture)
     {
@@ -196,7 +195,7 @@ internal static class CsvTypeBinder
                 continue;
 
             var name = !string.IsNullOrWhiteSpace(attr?.Name) ? attr!.Name! : prop.Name;
-            columns.Add(new(prop, name, CompileSetter(type, prop, name), CompileGetter(type, prop)));
+            columns.Add(new(prop, name, CompileSetter(type, prop, name), CompileWriter(type, prop)));
         }
 
         return new(type, columns.ToArray(), CompileFactory(type));
@@ -228,7 +227,6 @@ internal static class CsvTypeBinder
         var isNonNullable = prop.PropertyType.IsValueType && Nullable.GetUnderlyingType(prop.PropertyType) is null;
         Expression body;
         if (isNonNullable) {
-            // skip assign when convert returned null and text was empty (ConvertToChecked returns null without throw)
             var valueVar = Expression.Variable(typeof(object), "value");
             var assignVar = Expression.Assign(valueVar, convert);
             var setProp = Expression.Assign(
@@ -250,30 +248,122 @@ internal static class CsvTypeBinder
         return Expression.Lambda<Action<object, string?, CultureInfo>>(body, objParam, textParam, cultureParam).Compile();
     }
 
-    private static Func<object, object?> CompileGetter(Type declaringType, PropertyInfo prop)
+    private static Action<object, CsvTextWriter, CultureInfo> CompileWriter(Type declaringType, PropertyInfo prop)
     {
         var objParam = Expression.Parameter(typeof(object), "obj");
+        var csvParam = Expression.Parameter(typeof(CsvTextWriter), "csv");
+        var cultureParam = Expression.Parameter(typeof(CultureInfo), "culture");
         var typed = Expression.Convert(objParam, declaringType);
-        var access = Expression.Convert(Expression.Property(typed, prop), typeof(object));
-        return Expression.Lambda<Func<object, object?>>(access, objParam).Compile();
+        var propAccess = Expression.Property(typed, prop);
+        var propType = prop.PropertyType;
+        var underlying = Nullable.GetUnderlyingType(propType) ?? propType;
+        var isNullable = Nullable.GetUnderlyingType(propType) != null;
+
+        Expression textExpr;
+        if (propType == typeof(string))
+            textExpr = propAccess;
+        else if (underlying == typeof(bool) && UsesYesNoBool(propType, underlying))
+            textExpr = CompileYesNoText(propAccess, propType, isNullable);
+        else if (TryGetFormattableToString(underlying, out var toString) && toString != null)
+            textExpr = CompileFormattableText(propAccess, propType, isNullable, toString, cultureParam);
+        else {
+            textExpr = Expression.Call(
+                typeof(CsvTypeBinder).GetMethod(nameof(FormatForWrite))!,
+                Expression.Constant(propType, typeof(Type)),
+                Expression.Convert(propAccess, typeof(object)),
+                cultureParam);
+        }
+
+        var body = Expression.Call(csvParam, WriteFieldMethod, textExpr);
+        return Expression.Lambda<Action<object, CsvTextWriter, CultureInfo>>(body, objParam, csvParam, cultureParam).Compile();
     }
 
-    internal sealed class TypeMap(Type type, ColumnMap[] columns, Func<object> factory)
+    private static bool UsesYesNoBool(Type propType, Type underlying)
+        => (Converters.TryGetValue(propType, out var conv) || Converters.TryGetValue(underlying, out conv))
+            && conv is Converters.YesNoBoolCsvConverter;
+
+    private static Expression CompileYesNoText(Expression propAccess, Type propType, bool isNullable)
     {
-        public Type Type { get; } = type;
-        public ColumnMap[] Columns { get; } = columns;
-        public Func<object> Factory { get; } = factory;
+        if (!isNullable) {
+            return Expression.Condition(
+                propAccess,
+                Expression.Constant("yes"),
+                Expression.Constant("no"));
+        }
+
+        return Expression.Condition(
+            Expression.Property(propAccess, nameof(Nullable<bool>.HasValue)),
+            Expression.Condition(
+                Expression.Property(propAccess, nameof(Nullable<bool>.Value)),
+                Expression.Constant("yes"),
+                Expression.Constant("no")),
+            Expression.Constant(""));
+    }
+
+    private static bool TryGetFormattableToString(Type underlying, out MethodInfo? toString)
+    {
+        toString = underlying.GetMethod("ToString", [typeof(string), typeof(IFormatProvider)]);
+        if (toString != null && typeof(IFormattable).IsAssignableFrom(underlying))
+            return true;
+
+        toString = underlying.GetMethod("ToString", [typeof(IFormatProvider)]);
+        return toString != null && typeof(IFormattable).IsAssignableFrom(underlying);
+    }
+
+    private static Expression CompileFormattableText(
+        Expression propAccess,
+        Type propType,
+        bool isNullable,
+        MethodInfo toString,
+        Expression cultureParam)
+    {
+        Expression Format(Expression value)
+        {
+            if (toString.GetParameters().Length == 2)
+                return Expression.Call(value, toString, Expression.Constant(null, typeof(string)), cultureParam);
+
+            return Expression.Call(value, toString, cultureParam);
+        }
+
+        if (!isNullable)
+            return Expression.Coalesce(Format(propAccess), Expression.Constant(""));
+
+        var formatted = Format(Expression.Property(propAccess, "Value"));
+        return Expression.Condition(
+            Expression.Property(propAccess, "HasValue"),
+            Expression.Coalesce(formatted, Expression.Constant("")),
+            Expression.Constant(""));
+    }
+
+    internal sealed class TypeMap
+    {
+        public TypeMap(Type type, ColumnMap[] columns, Func<object> factory)
+        {
+            Type = type;
+            Columns = columns;
+            Factory = factory;
+            var headers = new string[columns.Length];
+            for (var i = 0; i < columns.Length; i++)
+                headers[i] = columns[i].HeaderName;
+
+            Headers = headers;
+        }
+
+        public Type Type { get; }
+        public ColumnMap[] Columns { get; }
+        public Func<object> Factory { get; }
+        public string[] Headers { get; }
     }
 
     internal sealed class ColumnMap(
         PropertyInfo property,
         string headerName,
         Action<object, string?, CultureInfo> setter,
-        Func<object, object?> getter)
+        Action<object, CsvTextWriter, CultureInfo> writer)
     {
         public PropertyInfo Property { get; } = property;
         public string HeaderName { get; } = headerName;
         public Action<object, string?, CultureInfo> Setter { get; } = setter;
-        public Func<object, object?> Getter { get; } = getter;
+        public Action<object, CsvTextWriter, CultureInfo> Writer { get; } = writer;
     }
 }

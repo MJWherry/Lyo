@@ -36,7 +36,7 @@ public sealed class XlsxReportRenderer(IXlsxService xlsxService) : IReportRender
             foreach (var grid in grids) {
                 index++;
                 var sheetName = BuildSheetName(grid.Title, index, usedNames);
-                writer.AddSheetFromDictionary(sheetName, GridToDictionary(grid), true, ct);
+                writer.AddSheetFromDictionary(sheetName, GridToDictionary(grid), true, false, ct);
             }
         }
 

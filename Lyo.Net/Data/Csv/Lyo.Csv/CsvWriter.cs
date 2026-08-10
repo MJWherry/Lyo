@@ -59,7 +59,7 @@ internal sealed class CsvWriter : ICsvWriter
         }
 
         foreach (var item in data) {
-            csv.WriteFields(CsvTypeBinder.GetFieldValues(item, map, options.Culture));
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             csv.NextRecord();
         }
 
@@ -81,9 +81,9 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv bytes", typeof(T).FullName);
-        using var memoryStream = new MemoryStream();
+        using var memoryStream = CreateExportBuffer(data);
         ExportToCsvStream(data, memoryStream);
-        return memoryStream.ToArray();
+        return ToExportBytes(memoryStream);
     }
 
     /// <inheritdoc
@@ -366,7 +366,7 @@ internal sealed class CsvWriter : ICsvWriter
 
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
@@ -410,7 +410,7 @@ internal sealed class CsvWriter : ICsvWriter
         }
 
         await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
@@ -432,9 +432,9 @@ internal sealed class CsvWriter : ICsvWriter
     {
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv bytes", typeof(T).FullName);
-        await using var memoryStream = new MemoryStream();
+        await using var memoryStream = CreateExportBuffer(data);
         await ExportToCsvStreamAsync(data, memoryStream, ct).ConfigureAwait(false);
-        return memoryStream.ToArray();
+        return ToExportBytes(memoryStream);
     }
 
     /// <inheritdoc
@@ -877,7 +877,7 @@ internal sealed class CsvWriter : ICsvWriter
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if ((progress != null && rowsProcessed % 100 == 0) || rowsProcessed == totalRows)
@@ -908,7 +908,7 @@ internal sealed class CsvWriter : ICsvWriter
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if (progress != null && (rowsProcessed % 100 == 0 || rowsProcessed == totalRows))
@@ -937,11 +937,34 @@ internal sealed class CsvWriter : ICsvWriter
 
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetFieldValues(item, map, options.Culture), ct).ConfigureAwait(false);
+            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 #endif
+
+    private const int ExportBytesPerRowGuess = 64;
+
+    private static MemoryStream CreateExportBuffer<T>(IEnumerable<T> data)
+    {
+        var capacity = 256;
+        if (data is ICollection<T> collection)
+            capacity = Math.Max(256, collection.Count * ExportBytesPerRowGuess);
+
+        return new MemoryStream(capacity);
+    }
+
+    private static byte[] ToExportBytes(MemoryStream ms)
+    {
+        if (ms.TryGetBuffer(out var segment)) {
+            var length = (int)ms.Length;
+            var bytes = new byte[length];
+            Buffer.BlockCopy(segment.Array!, segment.Offset, bytes, 0, length);
+            return bytes;
+        }
+
+        return ms.ToArray();
+    }
 }

@@ -32,6 +32,7 @@ from datetime import datetime
 from pathlib import Path
 
 from matrix import K6ProcessRunner, MatrixAxes, MatrixPlanner
+from matrix.k6_compat import rewrite_bare_imports_for_k6
 
 ROOT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = ROOT_DIR.parents[1]
@@ -40,13 +41,20 @@ MANIFESTS = REPO_ROOT / "scripts" / "benchmarks" / "build_manifests.py"
 
 def _build_shared_packages() -> None:
     print("Building shared packages...")
+    # lyo-query first: person-api-client re-exports it; k6 needs a relative path after build.
     for rel in (
+        "packages/typescript/lyo-query",
         "packages/typescript/lyo-api-client",
         "packages/typescript/lyo-person-api-client",
     ):
         pkg = REPO_ROOT / rel
         subprocess.run(["npm", "install"], cwd=pkg, check=True)
         subprocess.run(["npm", "run", "build"], cwd=pkg, check=True)
+    touched = rewrite_bare_imports_for_k6(REPO_ROOT)
+    if touched:
+        print("Rewrote bare imports for k6:")
+        for path in touched:
+            print(f"  - {path.relative_to(REPO_ROOT)}")
     print("Shared packages built.\n")
 
 
