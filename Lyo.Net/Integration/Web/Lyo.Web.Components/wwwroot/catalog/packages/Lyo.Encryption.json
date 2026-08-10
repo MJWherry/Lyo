@@ -265,9 +265,10 @@
       {
         "label": "AES-GCM encrypt",
         "href": "/benchmarks/encryption",
+        "featured": true,
         "method": "AesGcm_Encrypt",
         "params": {
-          "DataSize": "10485760"
+          "DataSize": "104857600"
         },
         "primary": "throughput"
       },

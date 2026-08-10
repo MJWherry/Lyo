@@ -48,7 +48,7 @@ Load (k6) suites use `scenario` instead of `method`/`params`:
       "label": "QueryConcrete load",
       "href": "/benchmarks/query-api",
       "featured": true,
-      "scenario": "query_load",
+      "scenario": "query_load_med_cached",
       "primary": "p95"
     }
   ]

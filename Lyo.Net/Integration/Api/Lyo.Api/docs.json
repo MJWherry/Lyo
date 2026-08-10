@@ -383,28 +383,28 @@
         "label": "QueryConcrete load",
         "href": "/benchmarks/query-api",
         "featured": true,
-        "scenario": "query_load",
+        "scenario": "query_load_med_cached",
         "primary": "p95"
       },
       {
         "label": "QueryConcrete spike",
         "href": "/benchmarks/query-api",
         "featured": true,
-        "scenario": "query_spike",
+        "scenario": "query_spike_med_cached",
         "primary": "p95"
       },
       {
         "label": "QueryConcrete soak",
         "href": "/benchmarks/query-api",
         "featured": true,
-        "scenario": "query_soak",
+        "scenario": "query_soak_med_cached",
         "primary": "p95"
       },
       {
         "label": "QueryProject load",
         "href": "/benchmarks/query-api",
         "featured": true,
-        "scenario": "queryproject_load",
+        "scenario": "queryproject_load_med_cached",
         "primary": "p95"
       }
     ]

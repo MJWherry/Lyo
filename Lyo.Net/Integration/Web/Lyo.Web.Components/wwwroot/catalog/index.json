@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-06T20:26:56.009750+00:00",
-  "packageCount": 211,
+  "generatedAt": "2026-08-10T21:43:19.303049+00:00",
+  "packageCount": 212,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -756,6 +756,17 @@
       "name": "Lyo.Testing.Containers",
       "tagline": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing.",
       "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.TextEncoding",
+      "area": "Core",
+      "topic": "Lyo.TextEncoding",
+      "name": "Lyo.TextEncoding",
+      "tagline": "Binary codecs (Base64 / Base64Url / Hex) and charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable façades.",
+      "targetFrameworks": [
+        "netstandard2.0",
         "net10.0"
       ]
     },

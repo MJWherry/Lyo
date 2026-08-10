@@ -18,6 +18,8 @@
     <Folder Name="/Core/Common/">
         <Project Path="Core/Common/Lyo.Common/Lyo.Common.csproj"/>
         <Project Path="Core/Common/Lyo.Common.Tests/Lyo.Common.Tests.csproj"/>
+        <Project Path="Core/Common/Lyo.TextEncoding/Lyo.TextEncoding.csproj"/>
+        <Project Path="Core/Common/Lyo.TextEncoding.Tests/Lyo.TextEncoding.Tests.csproj"/>
     </Folder>
     <Folder Name="/Core/Result/">
         <Project Path="Core/Result/Lyo.Result/Lyo.Result.csproj"/>
