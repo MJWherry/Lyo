@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <AssemblyName>lyo</AssemblyName>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>lyo</ToolCommandName>
+        <PackageId>Lyo.Cli</PackageId>
+        <IsPackable>true</IsPackable>
+        <Description>Installable Lyo command-line tools (crypt, enc, compress, hash, id, query, csv, xlsx).</Description>
+        <PackageTags>lyo cli tool crypt encoding compression hashing csv xlsx query</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RootNamespace>Lyo.Cli</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="Microsoft.Extensions.Http"/>
+        <PackageReference Include="System.CommandLine"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\Core\Common\Lyo.TextEncoding\Lyo.TextEncoding.csproj"/>
+        <ProjectReference Include="..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.BZip2\Lyo.Compression.BZip2.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.LZ4\Lyo.Compression.LZ4.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.LZMA\Lyo.Compression.LZMA.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Snappier\Lyo.Compression.Snappier.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.XZ\Lyo.Compression.XZ.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Zstd\Lyo.Compression.Zstd.csproj"/>
+        <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Data\Csv\Lyo.Csv.Models\Lyo.Csv.Models.csproj"/>
+        <ProjectReference Include="..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.AesCcm\Lyo.Encryption.AesCcm.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.XChaCha20Poly1305\Lyo.Encryption.XChaCha20Poly1305.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')"/>
+    </ItemGroup>
+
+</Project>

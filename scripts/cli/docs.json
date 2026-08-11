@@ -1,0 +1,35 @@
+{
+  "id": "scripts.cli",
+  "name": "Lyo.Cli pack/install",
+  "tagline": "Pack and install the global `lyo` dotnet tool from Lyo.Cli.",
+  "description": "Thin wrapper around `dotnet pack` / `dotnet tool install|update|uninstall` for the PackAsTool project under Lyo.Net/Tools/Lyo.Cli. Library NuGet packs still skip Tools/; use this script for the CLI tool package.",
+  "commands": [
+    {
+      "cmd": "python3 scripts/cli/pack_install.py pack",
+      "blurb": "Pack Lyo.Cli to artifacts/cli"
+    },
+    {
+      "cmd": "python3 scripts/cli/pack_install.py install",
+      "blurb": "dotnet tool install -g Lyo.Cli from artifacts/cli"
+    },
+    {
+      "cmd": "python3 scripts/cli/pack_install.py update",
+      "blurb": "Force-reinstall global Lyo.Cli from artifacts/cli (same version OK)"
+    },
+    {
+      "cmd": "python3 scripts/cli/pack_install.py pack-install",
+      "blurb": "Pack then force-reinstall the global tool (needed when version stays 1.0.0)"
+    },
+    {
+      "cmd": "python3 scripts/cli/pack_install.py uninstall",
+      "blurb": "Remove the global Lyo.Cli tool"
+    }
+  ],
+  "notes": [
+    "Default version is 1.0.0 (`-v`); nupkg dir defaults to artifacts/cli or LYO_CLI_NUPKG_DIR",
+    "pack-install / update uninstall then install so rebuilding 1.0.0 still refreshes the tool (`dotnet tool update` no-ops on same version)",
+    "After install, invoke as `lyo` (ToolCommandName)",
+    "crypt = encryption; enc = Lyo.TextEncoding (base64/hex/charset)"
+  ],
+  "readmePath": "scripts/cli/README.md"
+}

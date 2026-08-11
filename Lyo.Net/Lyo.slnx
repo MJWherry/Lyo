@@ -471,6 +471,7 @@
         <Project Path="Core/Streams/Lyo.Streams.Tests/Lyo.Streams.Tests.csproj"/>
     </Folder>
     <Folder Name="/Tools/">
+        <Project Path="Tools/Lyo.Cli/Lyo.Cli.csproj"/>
         <Project Path="Tools/Lyo.Gateway/Lyo.Gateway.csproj"/>
         <Project Path="Tools/Lyo.Preview/Lyo.Preview.csproj"/>
         <Project Path="Tools/Lyo.TestApi/Lyo.TestApi.csproj"/>

@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 TOOLING_DOCS: list[Path] = [
     ROOT / "scripts" / "benchmarks" / "docs.json",
+    ROOT / "scripts" / "cli" / "docs.json",
     ROOT / "scripts" / "docker" / "docs.json",
     ROOT / "scripts" / "nuget" / "docs.json",
     ROOT / "k6" / "framework-person" / "docs.json",

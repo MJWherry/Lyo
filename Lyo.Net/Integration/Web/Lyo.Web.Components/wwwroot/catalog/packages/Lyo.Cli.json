@@ -1,0 +1,592 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Cli",
+  "name": "Lyo.Cli",
+  "area": "Tools",
+  "tagline": "Installable `lyo` command-line tool for encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
+  "description": "dotnet tool (`PackAsTool`, command name `lyo`) that wraps Lyo libraries. **crypt** is encryption (Lyo.Encryption); **enc** is binary/charset encoding (Lyo.TextEncoding). **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx** cover the rest. No dedicated CLI test project — parsing uses System.CommandLine; library behavior is covered by package tests.",
+  "features": [
+    "**crypt** — single-key encrypt/decrypt (aesgcm default; file or pipe)",
+    "**enc** — base64 / base64url / hex encode/decode; charset convert/detect",
+    "**compress** / **decompress** — all Lyo.Compression algorithms (brotli default)",
+    "**hash** / **checksum** — SHA-2/MD5, HMAC-SHA256, CRC/Adler, sparse fingerprint; `-o`, `-c/--copy`, `-q/--quiet`",
+    "**id** — ULID, KSUID, NanoID, GUID variants, Snowflake; `-n/--count` for bulk; `-c/--copy` clipboard",
+    "**query build|exec** — Lyo.Query.Models builders + Lyo.Api.Client POST",
+    "**csv** / **xlsx** — merge, split, convert, stats (xlsx→csv native; csv→xlsx via DataTable glue)"
+  ],
+  "examples": [
+    {
+      "title": "Install locally",
+      "language": "bash",
+      "code": "python3 scripts/cli/pack_install.py pack-install\nlyo --help"
+    },
+    {
+      "title": "Hash stdin",
+      "language": "bash",
+      "code": "cat file.bin | lyo hash sha256"
+    },
+    {
+      "title": "Generate many IDs",
+      "language": "bash",
+      "code": "lyo id ulid -n 10\nlyo id guid v7 --count 5 -c -q"
+    },
+    {
+      "title": "Hash and copy digest",
+      "language": "bash",
+      "code": "lyo hash sha256 file.bin -c"
+    },
+    {
+      "title": "XLSX stats",
+      "language": "bash",
+      "code": "lyo xlsx stats workbook.xlsx\nlyo xlsx stats workbook.xlsx --sheet Sheet1"
+    },
+    {
+      "title": "Build a query body",
+      "language": "bash",
+      "code": "lyo query build concrete --where Status:eq:Active --amount 20 -o req.json"
+    },
+    {
+      "title": "Encrypt / decrypt pipe",
+      "language": "bash",
+      "code": "lyo crypt encrypt secret.bin -o - --key 'passphrase' | lyo crypt decrypt - --key 'passphrase' > plain.bin"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Pack / install",
+      "text": "Library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack this tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then `dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Clipboard (`-c/--copy`)",
+      "text": "Available on `id` and `hash`/`checksum` text results. Uses native OS tools via Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy package. Bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Tools/Lyo.Cli/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.BZip2",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.LZ4",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.LZMA",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.Snappier",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.XZ",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression.Zstd",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Csv.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.AesCcm",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.AesSiv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.XChaCha20Poly1305",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Keystore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.TextEncoding",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.CommandLine",
+      "kind": "package",
+      "version": "2.0.10",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "ClosedXML",
+      "kind": "package",
+      "version": "0.105.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DocumentFormat.OpenXml",
+      "kind": "package",
+      "version": "3.1.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Dorssel.Security.Cryptography.AesExtra",
+      "kind": "package",
+      "version": "2.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.LZ4",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.LZMA",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.Snappier",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor.ZstdSharp",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ExcelDataReader.DataSet",
+      "kind": "package",
+      "version": "3.9.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Joveler.Compression.XZ",
+      "kind": "package",
+      "version": "5.0.2",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SharpZipLib",
+      "kind": "package",
+      "version": "1.4.2",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

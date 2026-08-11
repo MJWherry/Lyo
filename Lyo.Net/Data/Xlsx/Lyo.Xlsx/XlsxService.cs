@@ -29,6 +29,8 @@ public class XlsxService : IXlsxService
         _excelDataTableConfiguration = excelDataTableConfiguration ?? new ExcelDataTableConfiguration { UseHeaderRow = true };
         _options = options ?? new();
         _options.Validate();
+        // ExcelDataReader needs legacy code pages (e.g. Windows-1252).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         _writer = new(_logger);
         _reader = new(() => _excelDataTableConfiguration, _logger, () => _options.Pooling);
     }

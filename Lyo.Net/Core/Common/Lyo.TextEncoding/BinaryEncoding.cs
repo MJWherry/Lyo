@@ -611,7 +611,7 @@ public static class BinaryEncoding
             return false;
 
 #if NET5_0_OR_GREATER
-        if (!Convert.TryToBase64Chars(data, destination, out charsWritten, Base64FormattingOptions.None))
+        if (!Convert.TryToBase64Chars(data, destination, out charsWritten))
             return false;
 #else
         var s = Convert.ToBase64String(data.ToArray());

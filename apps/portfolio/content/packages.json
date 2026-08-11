@@ -2389,6 +2389,17 @@
     ]
   },
   {
+    "id": "Lyo.Cli",
+    "name": "Lyo.Cli",
+    "area": "Tools",
+    "topic": "Lyo.Cli",
+    "tagline": "Installable `lyo` command-line tool for encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
+    "readme": "Lyo.Net/Tools/Lyo.Cli/README.md",
+    "targetFrameworks": [
+      "net10.0"
+    ]
+  },
+  {
     "id": "Lyo.Gateway",
     "name": "Lyo.Gateway",
     "area": "Tools",

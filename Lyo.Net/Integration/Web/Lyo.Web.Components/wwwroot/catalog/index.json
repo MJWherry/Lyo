@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-10T21:43:19.303049+00:00",
-  "packageCount": 212,
+  "generatedAt": "2026-08-10T22:21:49.839127+00:00",
+  "packageCount": 213,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -2180,6 +2180,16 @@
       "topic": "Lyo.Keystore",
       "name": "Lyo.Keystore.Aws",
       "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Cli",
+      "area": "Tools",
+      "topic": "Lyo.Cli",
+      "name": "Lyo.Cli",
+      "tagline": "Installable `lyo` command-line tool for encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
       "targetFrameworks": [
         "net10.0"
       ]
