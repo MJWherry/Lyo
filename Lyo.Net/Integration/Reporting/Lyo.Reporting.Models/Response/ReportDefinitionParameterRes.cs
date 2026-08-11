@@ -18,6 +18,7 @@ public sealed record ReportDefinitionParameterRes(
     int? MinLength = null,
     int? MaxLength = null,
     string? AllowedValues = null,
+    string? Options = null,
     DateTime CreatedTimestamp = default,
     DateTime? UpdatedTimestamp = null)
 {

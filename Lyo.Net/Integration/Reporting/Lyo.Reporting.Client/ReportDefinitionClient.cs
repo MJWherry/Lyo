@@ -21,11 +21,15 @@ public sealed class ReportDefinitionClient(IApiClient client, string? routePrefi
     public Task<QueryRes<ReportDefinitionRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
         => client.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(ReportingRouteBuilder.Build(routePrefix, ReportingRoutes.DefinitionsQuery), request, ct: ct);
 
-    public Task<object> UpdateAsync(Guid id, ReportDefinitionReq request, CancellationToken ct = default)
-        => client.PutAsAsync<ReportDefinitionReq, object>(ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/{id}"), request, ct: ct);
+    public Task<UpdateResult<ReportDefinitionRes>> UpdateAsync(Guid id, ReportDefinitionReq request, CancellationToken ct = default)
+        => client.PostAsAsync<UpdateRequest<ReportDefinitionReq>, UpdateResult<ReportDefinitionRes>>(
+            ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/Update"), new(request, id), ct: ct);
 
     public Task<object> PatchAsync(Guid id, PatchRequest patch, CancellationToken ct = default)
-        => client.PatchAsAsync<PatchRequest, object>(ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/{id}"), patch, ct: ct);
+    {
+        patch.Keys = [[id]];
+        return client.PatchAsAsync<PatchRequest, object>(ReportingRouteBuilder.Build(routePrefix, ReportingRoutes.Definitions), patch, ct: ct);
+    }
 
     public Task<object> DeleteAsync(Guid id, CancellationToken ct = default)
         => client.DeleteAsAsync<object>(ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/{id}"), ct: ct);

@@ -227,7 +227,7 @@
         ],
         [
           "**Parameter validation**",
-          "`ValidateRunParametersAsync` enforces definition schema: required, regex, min/max length, pipe-delimited `AllowedValues`."
+          "`ValidateRunParametersAsync` enforces definition schema: required, regex, min/max length, pipe-delimited `AllowedValues`. Definition `Options` (JSON text) is a UI picker source (static or root Query); not re-queried on create."
         ],
         [
           "**Race-safe concurrency**",

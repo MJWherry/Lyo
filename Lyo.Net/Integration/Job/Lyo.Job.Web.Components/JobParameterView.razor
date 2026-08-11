@@ -1,7 +1,8 @@
 @inject ISnackbar Snackbar
 
 <MudStack Spacing="2">
-    <JobParameterTable Title="Job Parameters" Items="@_rows" ShowRequired ShowAllowMultiple OnChanged="@(() => _dirty = true)"/>
+    <JobParameterTable Title="Job Parameters" Items="@_rows" ShowRequired ShowAllowMultiple ShowOptionsEditor ApiClient="ApiClient"
+                       OnChanged="@(() => _dirty = true)"/>
 
     @if (_dirty) {
         <div>
@@ -47,7 +48,9 @@
                 Description = p.Description,
                 Required = p.Required,
                 AllowMultiple = p.AllowMultiple,
-                IsEncrypted = p.EncryptedValue is { Length: > 0 }
+                IsEncrypted = p.EncryptedValue is { Length: > 0 },
+                AllowedValues = p.AllowedValues,
+                Options = p.Options
             })
             .ToList();
 
@@ -63,7 +66,7 @@
                 await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
 
             foreach (var newRow in _rows.Where(d => d.IsNew)) {
-                await ApiClient.PostAsAsync<JobParameterReq, JobParameterRes>(
+                var created = await ApiClient.PostAsAsync<JobParameterReq, CreateResult<JobParameterRes>>(
                     ParameterRoute, new() {
                         JobDefinitionId = JobDefinitionId,
                         Key = newRow.Key,
@@ -71,21 +74,34 @@
                         Value = newRow.Value,
                         Description = newRow.Description,
                         Required = newRow.Required,
-                        AllowMultiple = newRow.AllowMultiple
+                        AllowMultiple = newRow.AllowMultiple,
+                        AllowedValues = newRow.AllowedValues,
+                        Options = newRow.Options
                     });
+
+                if (created?.Data is { } data) {
+                    newRow.Id = data.Id;
+                    newRow.IsNew = false;
+                    newRow.Options = data.Options;
+                    newRow.AllowedValues = data.AllowedValues;
+                    newRow.Value = data.Value;
+                }
             }
 
             foreach (var existingRow in _rows.Where(d => !d.IsNew && d.Id.HasValue)) {
-                await ApiClient.PutAsAsync<JobParameterReq, object>(
-                    $"{ParameterRoute}/{existingRow.Id}", new() {
-                        JobDefinitionId = JobDefinitionId,
-                        Key = existingRow.Key,
-                        Type = existingRow.Type,
-                        Value = existingRow.Value,
-                        Description = existingRow.Description,
-                        Required = existingRow.Required,
-                        AllowMultiple = existingRow.AllowMultiple
-                    });
+                JobParameterReq data = new() {
+                    JobDefinitionId = JobDefinitionId,
+                    Key = existingRow.Key,
+                    Type = existingRow.Type,
+                    Value = existingRow.Value,
+                    Description = existingRow.Description,
+                    Required = existingRow.Required,
+                    AllowMultiple = existingRow.AllowMultiple,
+                    AllowedValues = existingRow.AllowedValues,
+                    Options = existingRow.Options
+                };
+                await ApiClient.PostAsAsync<UpdateRequest<JobParameterReq>, UpdateResult<JobParameterRes>>(
+                    $"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
             }
 
             Snackbar.Add("Parameters saved", Severity.Success);

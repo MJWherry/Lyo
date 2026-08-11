@@ -36,5 +36,8 @@ public sealed class JobParameterReq
     /// <summary>Pipe-separated list of allowed values (e.g. <c>A|B|C</c>). Null = any value allowed.</summary>
     public string? AllowedValues { get; set; }
 
+    /// <summary>JSON picker source (static items or root QueryReq). Null = no options picker; scalar <see cref="Value" /> remains the default.</summary>
+    public string? Options { get; set; }
+
     public override string ToString() => $"({Type}) {Key}={Value}, {Description}";
 }

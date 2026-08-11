@@ -1,0 +1,42 @@
+@using Lyo.Query.Models.Parameters
+
+<MudStack Spacing="0">
+    @if (_loading) {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-1"/>
+    }
+
+    @if (AllowMultiple) {
+        <MudSelect T="string"
+                   Label="@Label"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   MultiSelection="true"
+                   MultiSelectionTextFunc="@MultiText"
+                   SelectedValues="@SelectedValues"
+                   SelectedValuesChanged="OnSelectedValuesChanged"
+                   Clearable="true"
+                   Disabled="@(_items.Count == 0 && !_loading)"
+                   Required="@Required"
+                   HelperText="@_helper">
+            @foreach (var item in _items) {
+                <MudSelectItem T="string" Value="@item.Key">@item.Label</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    else {
+        <MudSelect T="string"
+                   Value="@Value"
+                   ValueChanged="OnValueChanged"
+                   Label="@Label"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   Clearable="true"
+                   Disabled="@(_items.Count == 0 && !_loading)"
+                   Required="@Required"
+                   HelperText="@_helper">
+            @foreach (var item in _items) {
+                <MudSelectItem T="string" Value="@item.Key">@item.Label</MudSelectItem>
+            }
+        </MudSelect>
+    }
+</MudStack>

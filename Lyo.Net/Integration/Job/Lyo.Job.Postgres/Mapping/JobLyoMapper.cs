@@ -194,6 +194,7 @@ public sealed class JobLyoMapper : ILyoMapper
             MinLength = r.MinLength,
             MaxLength = r.MaxLength,
             AllowedValues = r.AllowedValues,
+            Options = r.Options,
             CreatedTimestamp = UtcNow()
         };
 
@@ -403,7 +404,7 @@ public sealed class JobLyoMapper : ILyoMapper
     internal static JobParameterRes ToRes(JobParameter e)
         => new(
             e.Id, e.JobDefinitionId, e.Key, e.Description, Enum.Parse<JobParameterType>(e.Type), MaskParameterValue(e.Value, e.EncryptedValue),
-            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, true, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues);
+            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, true, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.Options);
 
     internal static JobScheduleRes ToRes(JobSchedule e)
         => new(
@@ -562,6 +563,7 @@ public sealed class JobLyoMapper : ILyoMapper
         e.MinLength = r.MinLength;
         e.MaxLength = r.MaxLength;
         e.AllowedValues = r.AllowedValues;
+        e.Options = r.Options;
     }
 
     private static void Apply(JobScheduleReq r, JobSchedule e)

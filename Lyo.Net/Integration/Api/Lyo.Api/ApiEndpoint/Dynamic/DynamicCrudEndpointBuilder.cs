@@ -62,7 +62,12 @@ public static class DynamicCrudEndpointBuilder
     /// Maps root From/Joins <c>POST {baseRoute}/Query</c> for a DbContext without requiring full dynamic CRUD. Use when typed <c>CreateBuilder</c> already owns entity routes
     /// (e.g. Person) but you still want Option A root Query. Pass <paramref name="baseRoute" /> empty for <c>POST /Query</c>.
     /// </summary>
-    public static WebApplication MapRootQueryEndpoints<TContext>(this WebApplication webApp, string baseRoute = "", IEnumerable<Type>? allowlistedEntityTypes = null)
+    /// <param name="configure">Optional endpoint conventions (e.g. <c>b => b.RequireAuthorization()</c>).</param>
+    public static WebApplication MapRootQueryEndpoints<TContext>(
+        this WebApplication webApp,
+        string baseRoute = "",
+        IEnumerable<Type>? allowlistedEntityTypes = null,
+        Action<RouteHandlerBuilder>? configure = null)
         where TContext : DbContext
     {
         using var scope = webApp.Services.CreateScope();
@@ -71,7 +76,7 @@ public static class DynamicCrudEndpointBuilder
         var types = allowlistedEntityTypes?.ToList() ?? DynamicEndpointMapper.GetEntityTypesFromDbContext<TContext>().ToList();
         var rootQueryRegistry = RootQueryEntityRegistry.FromDbContext(context, types);
         var routePrefix = string.IsNullOrEmpty(baseRoute) ? "" : baseRoute.TrimEnd('/') + "/";
-        webApp.MapPost(
+        var endpoint = webApp.MapPost(
                 $"{routePrefix}Query", async ([FromBody] QueryReq queryRequest, [FromServices] IRootQueryService<TContext> rootQueryService, CancellationToken ct) => {
                     var result = await rootQueryService.QueryAsync(queryRequest, rootQueryRegistry, ct).ConfigureAwait(false);
                     return Results.Json(result, statusCode: result.IsSuccess ? StatusCodes.Status200OK : result.Error?.Status ?? StatusCodes.Status400BadRequest);
@@ -80,6 +85,7 @@ public static class DynamicCrudEndpointBuilder
             .WithName($"RootQuery{typeof(TContext).Name}{(string.IsNullOrEmpty(baseRoute) ? "" : "_" + baseRoute.Replace('/', '_'))}")
             .Produces<ProjectedQueryRes<object?>>()
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+        configure?.Invoke(endpoint);
 
         return webApp;
     }

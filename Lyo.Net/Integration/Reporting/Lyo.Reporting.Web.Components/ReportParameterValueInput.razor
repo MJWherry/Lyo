@@ -1,0 +1,114 @@
+@using System.Globalization
+@using Lyo.Query.Models.Parameters
+@using Lyo.Web.Components.ChipInput
+
+@if (AllowMultiple && Type is not ReportParameterType.Bool and not ReportParameterType.Json and not ReportParameterType.Xml) {
+    <LyoChipInput Values="@ChipValues"
+                  ValuesChanged="OnChipValuesChanged"
+                  Placeholder="@(string.IsNullOrWhiteSpace(Label) ? "Type and press Enter" : Label)"/>
+}
+else {
+    @switch (Type) {
+        case ReportParameterType.Bool:
+            <MudSwitch T="bool" Value="@BoolValue" ValueChanged="@(v => SetValue(v ? "true" : "false"))" Color="Color.Primary" Label="@Label" Class="ma-0"/>
+
+            break;
+        case ReportParameterType.Int:
+            <MudNumericField T="int?" Value="@IntValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
+                             Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        case ReportParameterType.Long:
+            <MudNumericField T="long?" Value="@LongValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
+                             Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        case ReportParameterType.Decimal:
+            <MudNumericField T="decimal?" Value="@DecimalValue" ValueChanged="@(v => SetValue(v?.ToString(CultureInfo.InvariantCulture)))"
+                             Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        case ReportParameterType.DateTime:
+            <MudDatePicker Date="@DateTimeValue" DateChanged="@(d => SetValue(d?.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture)))"
+                           Label="@Label" Editable Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        case ReportParameterType.DateOnly:
+            <MudDatePicker Date="@DateOnlyValue" DateChanged="@(d => SetValue(d?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)))"
+                           Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        case ReportParameterType.TimeOnly:
+            <MudTimePicker Time="@TimeOnlyValue" TimeChanged="@(t => SetValue(t?.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture)))"
+                           Label="@Label" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
+            break;
+        case ReportParameterType.Json:
+        case ReportParameterType.Xml:
+            <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
+                          Lines="3" MaxLines="8" AutoGrow Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+        default:
+            <MudTextField T="string" Value="@Value" ValueChanged="@(v => SetValue(v))" Label="@Label"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Required="@Required"/>
+
+            break;
+    }
+}
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public ReportParameterType Type { get; set; }
+
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; }
+
+    [Parameter]
+    public bool AllowMultiple { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    private IEnumerable<string> ChipValues => ParameterListJson.Parse(Value);
+
+    private bool BoolValue => bool.TryParse(Value, out var b) && b;
+
+    private int? IntValue => int.TryParse(Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i) ? i : null;
+
+    private long? LongValue => long.TryParse(Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l) ? l : null;
+
+    private decimal? DecimalValue => decimal.TryParse(Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) ? d : null;
+
+    private DateTime? DateTimeValue => DateTime.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : null;
+
+    private DateTime? DateOnlyValue => DateOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d.ToDateTime(TimeOnly.MinValue) : null;
+
+    private TimeSpan? TimeOnlyValue => TimeOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t) ? t.ToTimeSpan() : null;
+
+    private async Task OnChipValuesChanged(IEnumerable<string> values)
+        => await SetValue(ParameterListJson.Serialize(values, ToListKind(Type)));
+
+    private static ParameterListJsonKind ToListKind(ReportParameterType type)
+        => type switch {
+            ReportParameterType.Int or ReportParameterType.Long or ReportParameterType.Decimal => ParameterListJsonKind.Number,
+            ReportParameterType.Bool => ParameterListJsonKind.Bool,
+            var _ => ParameterListJsonKind.String
+        };
+
+    private async Task SetValue(string? value)
+    {
+        Value = value;
+        if (ValueChanged.HasDelegate)
+            await ValueChanged.InvokeAsync(value);
+    }
+
+}

@@ -1,0 +1,47 @@
+@using Lyo.Query.Models.Common.Request
+@using Lyo.Query.Models.Parameters
+@using Lyo.Web.Components.QueryRequestBuilder
+
+<MudStack Spacing="2">
+    @if (ShowKindSelect) {
+        <MudSelect T="ParameterOptionsKind?"
+                   Value="_kind"
+                   ValueChanged="OnKindChanged"
+                   Label="Options kind"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   Clearable="true"
+                   HelperText="Leave empty for no picker (typed Value input only)">
+            <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static list</MudSelectItem>
+            <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+        </MudSelect>
+    }
+
+    @if (_kind == ParameterOptionsKind.Static) {
+        <MudStack Spacing="1">
+            @for (var i = 0; i < _items.Count; i++) {
+                var index = i;
+                <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" Value="@_items[index].Key" ValueChanged="@(v => SetItem(index, v, _items[index].Label))"
+                                  Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudTextField T="string" Value="@_items[index].Label" ValueChanged="@(v => SetItem(index, _items[index].Key, v))"
+                                  Label="Label" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveItem(index))"/>
+                </MudStack>
+            }
+            <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddItem">Add item</MudButton>
+        </MudStack>
+    }
+    else if (_kind == ParameterOptionsKind.Query) {
+        <MudTextField T="string" Value="@_queryRoute" ValueChanged="OnQueryRouteChanged" Label="Query route" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" HelperText="Default: Query (root /Query endpoint)"/>
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+            Use ComputedFields named Key and Value (or Select Id + Name). Sibling params bind as {{ParamKey}} in filters.
+        </MudText>
+        <QueryRootForm Request="_query" RequestChanged="OnQueryChanged"/>
+    }
+
+    @if (!string.IsNullOrEmpty(_error)) {
+        <MudAlert Severity="Severity.Warning" Dense="true">@_error</MudAlert>
+    }
+</MudStack>

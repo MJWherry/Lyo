@@ -61,6 +61,7 @@ blackout calendars, batch fan-out, workflows, encryption markers, and audit corr
 | Dispatch suppression | `JobRunReq.SuppressDispatch` — persist the run as `Queued` without the immediate MQ publish (caller owns dispatch: scheduler delayed retries, workflow step ordering); a future `ScheduledSlotUtc` suppresses implicitly |
 | Delayed dispatch | `JobRunReq.ScheduledSlotUtc` — slot idempotency for scheduled runs, and the due time for delayed retries picked up by maintenance redispatch |
 | Parameter validation | `JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues` — enforced in `JobService` |
+| Parameter options | `JobParameterReq.Options` — JSON picker source (static items or root `QueryReq`); `Value` remains the default/selected scalar |
 
 ## Production hardening model — `JobDefinitionReq` defaults
 

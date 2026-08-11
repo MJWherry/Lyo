@@ -56,6 +56,7 @@ public sealed class ReportingContext : DbContext
             entity.Property(e => e.MinLength).HasColumnName("min_length");
             entity.Property(e => e.MaxLength).HasColumnName("max_length");
             entity.Property(e => e.AllowedValues).HasMaxLength(1000).HasColumnName("allowed_values");
+            entity.Property(e => e.Options).HasColumnType("text").HasColumnName("options");
             entity.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
             entity.HasIndex(e => e.ReportDefinitionId).HasDatabaseName("ix_report_definition_parameter_definition_id");

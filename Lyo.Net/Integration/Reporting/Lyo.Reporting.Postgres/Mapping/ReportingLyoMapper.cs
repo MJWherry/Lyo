@@ -85,6 +85,7 @@ public sealed class ReportingLyoMapper : ILyoMapper
         entity.MinLength = req.MinLength;
         entity.MaxLength = req.MaxLength;
         entity.AllowedValues = req.AllowedValues;
+        entity.Options = req.Options;
     }
 
     internal static ReportDefinitionRes ToRes(ReportDefinition e)
@@ -95,7 +96,7 @@ public sealed class ReportingLyoMapper : ILyoMapper
     internal static ReportDefinitionParameterRes ToRes(ReportDefinitionParameter e)
         => new(
             e.Id, e.ReportDefinitionId, e.Key, e.Description, ParseParameterType(e.Type), MaskParameterValue(e.Value, e.EncryptedValue),
-            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.CreatedTimestamp,
+            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.Options, e.CreatedTimestamp,
             e.UpdatedTimestamp);
 
     internal static ReportGeneration ReqToNew(ReportGenerationReq req)

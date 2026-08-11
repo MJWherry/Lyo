@@ -71,7 +71,7 @@
       "type": "list",
       "title": "Parameters",
       "items": [
-        "**Definition schema:** `report_definition_parameter` (Key, Type, default Value, Required, validation, EncryptedValue)",
+        "**Definition schema:** `report_definition_parameter` (Key, Type, default Value, Required, validation, EncryptedValue, Options JSON picker source)",
         "**Generation instance:** `report_generation_parameter` (Key, Type, Value, EncryptedValue)",
         "`ReportService.GenerateAsync` merges request `Parameters` over definition defaults, validates, persists generation rows, and passes typed params plus a synthesized Key→Value JSON map to providers/renderers for transition. `AllowMultiple` keys serialize as JSON arrays in that map, so no value is lost."
       ]

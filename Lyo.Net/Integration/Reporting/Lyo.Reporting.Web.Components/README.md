@@ -37,11 +37,11 @@ support the Details dialog.
 ## Components
 
 | Component | Role |
-| ---------------------- | ----------------------------------------------------------- |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `ReportManagement` | Tabs: Definitions / Generations |
 | `ReportDefinitionGrid` | Definition list + Run |
 | `ReportDefinitionView` | Definition detail / JSON preview |
-| `RunReportDialog` | Parameters + format override → `POST …/Generation/Generate` |
+| `RunReportDialog` | Parameters + format override → `POST …/Generation/Generate`; Options / AllowedValues render as MudSelect with live sibling binding |
 | `ReportGenerationGrid` | Generation list + View/Download |
 | `ReportGenerationView` | Generation detail + View/Download actions |
 

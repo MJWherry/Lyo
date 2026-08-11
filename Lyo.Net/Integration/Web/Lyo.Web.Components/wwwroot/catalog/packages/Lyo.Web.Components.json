@@ -70,6 +70,8 @@
         "**`CheckSelect/LyoCheckSelect`** — multi-select dropdown backed by `LyoSelectOption`.",
         "**`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).",
         "**`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).",
+        "**`ParamOptions/LyoParameterOptionsSelect`** — MudSelect from definition parameter `Options` JSON (static items or root `/Query`) or pipe `AllowedValues`, with `{{SiblingKey}}` live input binding.",
+        "**`ParamOptions/LyoParameterOptionsEditor`** — edits static key/label lists or root `QueryReq` via `QueryRootForm` for the `Options` column.",
         "**`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.",
         "**`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [ `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
         "**`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component."

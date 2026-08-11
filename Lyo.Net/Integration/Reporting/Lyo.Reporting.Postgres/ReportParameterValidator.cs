@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Lyo.Common.Conversion;
+using Lyo.Query.Models.Parameters;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres.Database;
@@ -63,7 +64,7 @@ internal static class ReportParameterValidator
                     ValidateAgainstRegex(defParam.Key, defParam.ValidationRegex, value, errors);
 
                 if (!string.IsNullOrEmpty(defParam.AllowedValues)) {
-                    var allowed = defParam.AllowedValues.Split('|', StringSplitOptions.RemoveEmptyEntries);
+                    var allowed = ParameterListJson.Parse(defParam.AllowedValues);
                     if (!allowed.Contains(value, StringComparer.OrdinalIgnoreCase))
                         errors.Add($"Parameter '{defParam.Key}' value '{value}' is not one of the allowed values: {string.Join(", ", allowed)}.");
                 }

@@ -457,6 +457,10 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("min_length");
 
+                    b.Property<string>("Options")
+                        .HasColumnType("text")
+                        .HasColumnName("options");
+
                     b.Property<bool>("Required")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

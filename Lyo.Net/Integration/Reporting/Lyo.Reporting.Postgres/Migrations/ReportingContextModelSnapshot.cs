@@ -150,6 +150,10 @@ namespace Lyo.Reporting.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("min_length");
 
+                    b.Property<string>("Options")
+                        .HasColumnType("text")
+                        .HasColumnName("options");
+
                     b.Property<Guid>("ReportDefinitionId")
                         .HasColumnType("uuid")
                         .HasColumnName("report_definition_id");

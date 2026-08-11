@@ -205,6 +205,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `System.Text.Encoding.CodePages` `10.0.5` — (direct, microsoft)
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

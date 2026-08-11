@@ -304,7 +304,8 @@
                 JobBlackoutCalendarId = _edit.JobBlackoutCalendarId
             };
 
-            await ApiClient.PutAsAsync<JobScheduleReq, object>($"{ScheduleRoute.TrimEnd('/')}/{_selected.Id}", req);
+            await ApiClient.PostAsAsync<UpdateRequest<JobScheduleReq>, UpdateResult<JobScheduleRes>>(
+                $"{ScheduleRoute.TrimEnd('/')}/Update", new(req, _selected.Id));
             Snackbar.Add("Schedule saved", Severity.Success);
         }
         catch (Exception ex) {
@@ -335,15 +336,16 @@
             }
 
             foreach (var existingRow in _paramRows.Where(d => !d.IsNew && d.Id.HasValue)) {
-                await ApiClient.PutAsAsync<JobScheduleParameterReq, object>(
-                    $"{ParameterRoute}/{existingRow.Id}", new() {
-                        JobScheduleId = _selected.Id,
-                        Key = existingRow.Key,
-                        Type = existingRow.Type,
-                        Value = existingRow.Value,
-                        Description = existingRow.Description,
-                        Enabled = existingRow.Enabled
-                    });
+                JobScheduleParameterReq data = new() {
+                    JobScheduleId = _selected.Id,
+                    Key = existingRow.Key,
+                    Type = existingRow.Type,
+                    Value = existingRow.Value,
+                    Description = existingRow.Description,
+                    Enabled = existingRow.Enabled
+                };
+                await ApiClient.PostAsAsync<UpdateRequest<JobScheduleParameterReq>, UpdateResult<JobScheduleParameterRes>>(
+                    $"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
             }
 
             Snackbar.Add("Schedule parameters saved", Severity.Success);

@@ -26,4 +26,10 @@ public class JobParameterEditRow
 
     /// <summary>True when the stored value is encrypted server-side; the value cell shows a warning chip instead of the raw value.</summary>
     public bool IsEncrypted { get; set; }
+
+    /// <summary>Pipe-separated allowed values for server validation / simple select.</summary>
+    public string? AllowedValues { get; set; }
+
+    /// <summary>JSON picker source (static or root QueryReq).</summary>
+    public string? Options { get; set; }
 }

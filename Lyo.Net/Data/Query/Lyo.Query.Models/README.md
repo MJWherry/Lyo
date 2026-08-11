@@ -15,6 +15,7 @@ Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
 - **ProjectionQueryReq** — `Select` + computed fields for `POST …/QueryProject`
 - **QueryReq (root)** — `From` / `Joins` / `Select` for dynamic-context `POST …/Query`
 - **Fluent builders** — `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`
+- **ParameterOptions** — static key/label list or root `QueryReq` template for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`)
 - **Shared with Lyo.Query + Lyo.Api** — same DTOs for in-process LINQ and HTTP endpoints
 
 ## Examples

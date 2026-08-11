@@ -19,6 +19,7 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres.Database;
 using Lyo.Metrics;
+using Lyo.Query.Models.Parameters;
 using Lyo.Scheduler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -799,7 +800,7 @@ public class JobService(
                     errors.Add($"Parameter '{defParam.Key}' does not match the required pattern.");
 
                 if (!string.IsNullOrEmpty(defParam.AllowedValues)) {
-                    var allowed = defParam.AllowedValues.Split('|', StringSplitOptions.RemoveEmptyEntries);
+                    var allowed = ParameterListJson.Parse(defParam.AllowedValues);
                     if (!allowed.Contains(value, StringComparer.OrdinalIgnoreCase))
                         errors.Add($"Parameter '{defParam.Key}' value '{value}' is not one of the allowed values: {string.Join(", ", allowed)}.");
                 }

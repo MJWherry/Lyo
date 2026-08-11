@@ -73,7 +73,7 @@
         ],
         [
           "`JobParameterView`",
-          "Definition parameter grid (including encrypted markers)."
+          "Definition parameter grid (including encrypted markers, AllowedValues, and Options editor)."
         ],
         [
           "`JobScheduleView`",
@@ -101,7 +101,7 @@
         ],
         [
           "`RunJobDialog`",
-          "Ad-hoc run with parameter overrides."
+          "Ad-hoc run with parameter overrides; Options / AllowedValues render as MudSelect with live sibling binding."
         ]
       ],
       "trail": "Every grid / view accepts `IApiClient` and route parameters so components can be hosted independently of the full shell."

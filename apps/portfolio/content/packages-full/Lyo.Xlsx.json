@@ -225,6 +225,15 @@
       ]
     },
     {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [

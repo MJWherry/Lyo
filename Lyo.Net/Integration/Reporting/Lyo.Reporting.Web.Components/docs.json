@@ -53,7 +53,7 @@
         ],
         [
           "`RunReportDialog`",
-          "Parameters + format override → `POST …/Generation/Generate`"
+          "Parameters + format override → `POST …/Generation/Generate`; Options / AllowedValues render as MudSelect with live sibling binding"
         ],
         [
           "`ReportGenerationGrid`",

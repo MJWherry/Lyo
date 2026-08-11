@@ -58,20 +58,20 @@ See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.crea
 ## Component catalog
 
 | Component | Role |
-| ----------------------- | ---------------------------------------------------------------------------------- |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `JobManagement` | Tabbed dashboard shell. |
 | `JobStats` | Aggregated `SpJobStatistic` success rates and counts. |
 | `JobDefinitionGrid` | CRUD grid for definitions. |
 | `JobDefinitionView` | Editor: parameters, schedules, triggers. |
 | `JobScheduleGrid` | Standalone schedule CRUD (misfire, calendar, cron fields via API). |
-| `JobParameterView` | Definition parameter grid (including encrypted markers). |
+| `JobParameterView` | Definition parameter grid (including encrypted markers, AllowedValues, and Options editor). |
 | `JobScheduleView` | Inline schedule editor on definition view. |
 | `JobTriggerView` | Trigger relationships between definitions. |
 | `JobRunGrid` | Runs with state pills, **progress bar** column, drill-down. |
 | `JobRunDetailView` | Parameters, results, logs, **progress**, **SLA breach** chip, alert flags, re-run. |
 | `JobWorkerInstanceGrid` | Live worker registry (type, machine, PID, in-flight, heartbeat). |
 | `JobWorkflowView` | Workflow picker + ordered step diagram. |
-| `RunJobDialog` | Ad-hoc run with parameter overrides. |
+| `RunJobDialog` | Ad-hoc run with parameter overrides; Options / AllowedValues render as MudSelect with live sibling binding. |
 
 Every grid / view accepts `IApiClient` and route parameters so components can be hosted independently of the full shell.
 

@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IJSRuntime JsRuntime
+@inject IJsInterop Js
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -20,16 +21,72 @@
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>
-        <LyoProjectedColumn Field="Id" Title="ID"/>
-        <LyoProjectedColumn Field="ReportDefinitionId" Title="Definition"/>
-        <LyoProjectedColumn Field="Format" Title="Format"/>
-        <LyoProjectedColumn Field="Status" Title="Status"/>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var idText = ProjectedValueHelper.GetDisplayValue(item, "Id");
+                }
+                <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@Shorten(idText)</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID"
+                                   OnClick="@(() => CopyToClipboard(idText))"/>
+                </MudStack>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="ReportDefinitionId" Title="Definition" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var defId = ProjectedValueHelper.GetDisplayValue(item, "ReportDefinitionId");
+                }
+                <MudText Typo="Typo.body2" Style="font-family: monospace;">@Shorten(defId)</MudText>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Format" Title="Format" Align="Align.Center" HeaderStyle="width: 90px;">
+            <CellContent Context="item">
+                @{
+                    var formatText = ProjectedValueHelper.GetDisplayValue(item, "Format");
+                }
+                @if (Enum.TryParse<ReportFormat>(formatText, out var format)) {
+                    <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(format)">@format</MudChip>
+                }
+                else {
+                    @formatText
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                @if (Enum.TryParse<ReportGenerationStatus>(statusText, out var status)) {
+                    <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForStatus(status)">@status</MudChip>
+                }
+                else {
+                    @statusText
+                }
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="CreatedBy" Title="Created By"/>
         <LyoProjectedColumn Field="CreatedTimestamp" Title="Created"/>
         <LyoProjectedColumn Field="StartedTimestamp" Title="Started" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished"/>
         <LyoProjectedColumn Field="OriginalFileName" Title="File"/>
         <LyoProjectedColumn Field="OutputFileId" Title="Output File" HiddenByDefault="true"/>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false" HeaderStyle="width: 100px;" CellStyle="white-space: nowrap;">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                   OnClick="@(() => ViewGeneration(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" Color="Color.Primary" title="Open output"
+                                   Disabled="@(!HasOutput(cell.Item))"
+                                   OnClick="@(() => ViewOutput(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" title="Download output"
+                                   Disabled="@(!HasOutput(cell.Item))"
+                                   OnClick="@(() => DownloadOutput(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
     </Columns>
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewGeneration(item))">Details</MudMenuItem>
@@ -64,6 +121,14 @@
     {
         var id = ProjectedValueHelper.GetValue(item, "Id");
         return ProjectedValueHelper.TryGetGuid(id, out var guid) ? [guid] : id != null ? [id] : [];
+    }
+
+    private static string Shorten(string id) => id.Length > 8 ? id[..8] : id;
+
+    private async Task CopyToClipboard(string text)
+    {
+        await Js.SendToClipboard(text);
+        Snackbar.Add("Copied to clipboard", Severity.Info);
     }
 
     private static bool HasOutput(object? item)

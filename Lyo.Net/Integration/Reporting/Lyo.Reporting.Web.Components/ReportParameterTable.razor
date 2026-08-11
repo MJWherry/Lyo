@@ -1,0 +1,205 @@
+@using Lyo.Query.Models.Parameters
+@using Lyo.Web.Components.ChipInput
+@using Lyo.Web.Components.ParamOptions
+
+<MudStack Spacing="2">
+    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add" OnClick="AddRow">
+            Add Parameter
+        </MudButton>
+    </MudStack>
+
+    @if (Items.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No parameters defined</MudText>
+
+        return;
+    }
+
+    <MudSimpleTable Dense Hover Elevation="0" Style="table-layout: fixed; width: 100%;">
+        <thead>
+        <tr>
+            <th style="width: 40px;"></th>
+            <th style="width: 18%;">Key</th>
+            <th style="width: 110px;">Type</th>
+            <th>Value</th>
+            <th style="width: 22%;">Description</th>
+            <th style="width: 56px;"></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Items) {
+            var expanded = IsExpanded(row);
+            <tr>
+                <td style="text-align: center;">
+                    <MudIconButton Icon="@(expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                                   Size="Size.Small"
+                                   title="@(expanded ? "Collapse details" : "Expand details")"
+                                   OnClick="@(() => ToggleExpanded(row))"/>
+                </td>
+                <td>
+                    <MudTextField T="string" Value="@row.Key" ValueChanged="@(v => Set(() => row.Key = v))"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </td>
+                <td>
+                    <MudSelect T="ReportParameterType" Value="@row.Type" ValueChanged="@(v => Set(() => row.Type = v))"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        @foreach (var t in Enum.GetValues<ReportParameterType>()) {
+                            <MudSelectItem Value="t">@t</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+                <td>
+                    @if (row.IsEncrypted) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Encrypted</MudChip>
+                    }
+                    else if (HasPicker(row) && ApiClient is not null) {
+                        <LyoParameterOptionsSelect ApiClient="ApiClient"
+                                                   OptionsJson="@row.Options"
+                                                   AllowedValues="@row.AllowedValues"
+                                                   SiblingValues="SiblingMap"
+                                                   AllowMultiple="@row.AllowMultiple"
+                                                   ListKind="@ToListKind(row.Type)"
+                                                   Label="@row.Key"
+                                                   Value="@row.Value"
+                                                   ValueChanged="@(v => Set(() => row.Value = v))"/>
+                    }
+                    else {
+                        <ReportParameterValueInput Type="@row.Type"
+                                                   Value="@row.Value"
+                                                   ValueChanged="@(v => Set(() => row.Value = v))"
+                                                   AllowMultiple="@row.AllowMultiple"/>
+                    }
+                </td>
+                <td>
+                    <MudTextField T="string" Value="@row.Description" ValueChanged="@(v => Set(() => row.Description = v))"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </td>
+                <td style="text-align: right; white-space: nowrap;">
+                    @if (row.IsNew) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip>
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete parameter"
+                                   OnClick="@(() => DeleteRow(row))"/>
+                </td>
+            </tr>
+            @if (expanded) {
+                <tr>
+                    <td colspan="6">
+                        <MudPaper Outlined="true" Class="pa-3" Elevation="0">
+                        <MudStack Spacing="2">
+                            <MudStack Row Spacing="3" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
+                                <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))"
+                                             Label="Required" Dense="true" Class="ma-0 mt-2"/>
+                                <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))"
+                                             Label="Allow multiple" Dense="true" Class="ma-0 mt-2"/>
+                                <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 220px;">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">Allowed values</MudText>
+                                    <LyoChipInput Values="@ParameterListJson.Parse(row.AllowedValues)"
+                                                  ValuesChanged="@(v => Set(() => row.AllowedValues = ParameterListJson.Serialize(v, ToListKind(row.Type))))"
+                                                  Placeholder="Type and press Enter"/>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                                        Optional server validation list; also used as a simple select when Options is empty
+                                    </MudText>
+                                </MudStack>
+                            </MudStack>
+                            <MudSelect T="ParameterOptionsKind?"
+                                       Value="@ParameterOptionsJson.TryGetKind(row.Options)"
+                                       ValueChanged="@(v => SetOptionsKind(row, v))"
+                                       Label="Options kind"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Dense="true"
+                                       Clearable="true"
+                                       HelperText="Leave empty for no picker (typed Value input only)"
+                                       Style="max-width: 280px;">
+                                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
+                                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+                            </MudSelect>
+                            @if (ParameterOptionsJson.TryGetKind(row.Options) is not null) {
+                                <LyoParameterOptionsEditor ShowKindSelect="false"
+                                                           OptionsJson="@row.Options"
+                                                           OptionsJsonChanged="@(v => Set(() => row.Options = v))"/>
+                            }
+                        </MudStack>
+                        </MudPaper>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </MudSimpleTable>
+</MudStack>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "Report Parameters";
+
+    [Parameter]
+    [EditorRequired]
+    public List<ReportParameterEditRow> Items { get; set; } = [];
+
+    [Parameter]
+    public IApiClient? ApiClient { get; set; }
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private readonly HashSet<ReportParameterEditRow> _expanded = [];
+
+    private Dictionary<string, string?> SiblingMap
+        => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
+
+    private static bool HasPicker(ReportParameterEditRow row)
+        => !string.IsNullOrWhiteSpace(row.Options) || !string.IsNullOrWhiteSpace(row.AllowedValues);
+
+    private static ParameterListJsonKind ToListKind(ReportParameterType type)
+        => type switch {
+            ReportParameterType.Int or ReportParameterType.Long or ReportParameterType.Decimal => ParameterListJsonKind.Number,
+            ReportParameterType.Bool => ParameterListJsonKind.Bool,
+            var _ => ParameterListJsonKind.String
+        };
+
+    private bool IsExpanded(ReportParameterEditRow row) => _expanded.Contains(row);
+
+    private void ToggleExpanded(ReportParameterEditRow row)
+    {
+        if (!_expanded.Add(row))
+            _expanded.Remove(row);
+    }
+
+    private async Task Set(Action apply)
+    {
+        apply();
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+    private Task SetOptionsKind(ReportParameterEditRow row, ParameterOptionsKind? kind)
+    {
+        if (ParameterOptionsJson.TryGetKind(row.Options) == kind)
+            return Task.CompletedTask;
+
+        return Set(() => row.Options = ParameterOptionsJson.CreateDefaultForKind(kind));
+    }
+
+    private async Task AddRow()
+    {
+        var row = new ReportParameterEditRow { IsNew = true, Key = $"Param{Items.Count + 1}", Type = ReportParameterType.String, Required = true };
+        Items.Add(row);
+        _expanded.Add(row);
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+    private async Task DeleteRow(ReportParameterEditRow row)
+    {
+        Items.Remove(row);
+        _expanded.Remove(row);
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+}

@@ -1,4 +1,6 @@
 @using Lyo.Common.Extensions
+@using Lyo.Query.Models.Parameters
+@using Lyo.Web.Components.ParamOptions
 @inject ISnackbar Snackbar
 
 <LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel">
@@ -41,11 +43,27 @@
                     <MudItem xs="12" md="@(p.Param.Type is JobParameterType.Json or JobParameterType.Xml ? 12 : 6)">
                         <MudStack Spacing="0">
                             @if (p.Encrypted) {
-                                <MudTextField T="string" @bind-Value="p.Value" Label="@ParamLabel(p)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                <MudTextField T="string" Value="@p.Value" ValueChanged="@(v => SetParamValue(p, v))" Label="@ParamLabel(p)" Variant="Variant.Outlined" Margin="Margin.Dense"
                                               InputType="InputType.Password" Required="@p.Param.Required"/>
                             }
+                            else if (HasOptions(p.Param)) {
+                                <LyoParameterOptionsSelect ApiClient="ApiClient"
+                                                           OptionsJson="@p.Param.Options"
+                                                           AllowedValues="@p.Param.AllowedValues"
+                                                           SiblingValues="_siblingMap"
+                                                           AllowMultiple="@p.Param.AllowMultiple"
+                                                           ListKind="@ToListKind(p.Param.Type)"
+                                                           Required="@p.Param.Required"
+                                                           Label="@ParamLabel(p)"
+                                                           Value="@p.Value"
+                                                           ValueChanged="@(v => SetParamValue(p, v))"/>
+                            }
                             else {
-                                <JobParameterValueInput Type="@p.Param.Type" @bind-Value="p.Value" Label="@ParamLabel(p)"/>
+                                <JobParameterValueInput Type="@p.Param.Type"
+                                                        Value="@p.Value"
+                                                        ValueChanged="@(v => SetParamValue(p, v))"
+                                                        Label="@ParamLabel(p)"
+                                                        AllowMultiple="@p.Param.AllowMultiple"/>
                             }
                             <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                 @if (!string.IsNullOrEmpty(p.Param.Description)) {
@@ -88,6 +106,7 @@
     private bool _allowTriggers = true;
     private bool _submitting;
     private List<ParamModel> _paramModels = [];
+    private Dictionary<string, string?> _siblingMap = new(StringComparer.OrdinalIgnoreCase);
 
     private class ParamModel
     {
@@ -102,6 +121,16 @@
 
     private static string ParamLabel(ParamModel p) => p.Param.Required ? $"{p.Param.Key} *" : p.Param.Key;
 
+    private static bool HasOptions(JobParameterRes p)
+        => !string.IsNullOrWhiteSpace(p.Options) || !string.IsNullOrWhiteSpace(p.AllowedValues);
+
+    private static ParameterListJsonKind ToListKind(JobParameterType type)
+        => type switch {
+            JobParameterType.Int or JobParameterType.Long or JobParameterType.Decimal => ParameterListJsonKind.Number,
+            JobParameterType.Bool => ParameterListJsonKind.Bool,
+            var _ => ParameterListJsonKind.String
+        };
+
     protected override void OnInitialized()
     {
         if (SelectedJobDefinition != null)
@@ -111,8 +140,22 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null }).ToList();
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
+                Param = p,
+                Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null
+            })
+            .ToList();
+        RebuildSiblingMap();
     }
+
+    private void SetParamValue(ParamModel p, string? value)
+    {
+        p.Value = value;
+        RebuildSiblingMap();
+    }
+
+    private void RebuildSiblingMap()
+        => _siblingMap = _paramModels.ToDictionary(p => p.Param.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
 
     private bool IsValid()
     {
@@ -129,17 +172,36 @@
 
         _submitting = true;
         try {
+            var runParams = new List<JobRunParameterReq>();
+            foreach (var p in _paramModels) {
+                if (p.Param.AllowMultiple) {
+                    var parts = ParameterListJson.Parse(p.Value);
+                    if (parts.Count > 0) {
+                        foreach (var part in parts) {
+                            runParams.Add(new JobRunParameterReq {
+                                Key = p.Param.Key,
+                                Type = p.Param.Type,
+                                Value = part,
+                                Description = p.Param.Description
+                            });
+                        }
+                        continue;
+                    }
+                }
+
+                runParams.Add(new JobRunParameterReq {
+                    Key = p.Param.Key,
+                    Type = p.Param.Type,
+                    Value = p.Value,
+                    Description = p.Param.Description
+                });
+            }
+
             var req = new JobRunReq {
                 JobDefinitionId = _selectedDef.Id,
                 CreatedBy = _createdBy,
                 AllowTriggers = _allowTriggers,
-                JobRunParameters = _paramModels.Select(p => new JobRunParameterReq {
-                        Key = p.Param.Key,
-                        Type = p.Param.Type,
-                        Value = p.Value,
-                        Description = p.Param.Description
-                    })
-                    .ToList()
+                JobRunParameters = runParams
             };
 
             var result = await ApiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(RunRoute + "/Create", req);

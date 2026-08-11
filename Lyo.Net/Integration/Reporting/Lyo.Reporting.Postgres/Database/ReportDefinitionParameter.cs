@@ -39,6 +39,9 @@ public sealed class ReportDefinitionParameter
     [MaxLength(1000)]
     public string? AllowedValues { get; set; }
 
+    /// <summary>JSON picker source (static key/label list or root QueryReq). Null = no options picker.</summary>
+    public string? Options { get; set; }
+
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }

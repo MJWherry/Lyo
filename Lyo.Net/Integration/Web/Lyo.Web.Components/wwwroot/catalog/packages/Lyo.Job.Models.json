@@ -109,6 +109,10 @@
         [
           "Parameter validation",
           "`JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues` — enforced in `JobService`"
+        ],
+        [
+          "Parameter options",
+          "`JobParameterReq.Options` — JSON picker source (static items or root `QueryReq`); `Value` remains the default/selected scalar"
         ]
       ],
       "lead": "Definitions, schedules, and runs carry the knobs that power priority dispatch, retention, misfire handling, exponential backoff, idempotency, rate limiting, SLA tracking, alerting,\nblackout calendars, batch fan-out, workflows, encryption markers, and audit correlation:"
