@@ -24,8 +24,9 @@ public static partial class ServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers same-context and cross-schema navigations for <typeparamref name="TContext" />. Pair with <see cref="AddDbContextFactoryWithLyoNavigations{TContext}" /> so the
-        /// model customizer applies them. Related tables must live in the same database; cross-schema mappings use <c>ExcludeFromMigrations</c>.
+        /// Registers same-context and cross-schema navigations for <typeparamref name="TContext" />. Pair with
+        /// <see cref="AddDbContextFactoryWithLyoNavigations{TContext}(Action{DbContextOptionsBuilder})" /> so the model customizer applies them. Related tables must live in the same
+        /// database; cross-schema mappings use <c>ExcludeFromMigrations</c>.
         /// </summary>
         public IServiceCollection AddCrossSchemaNavigations<TContext>(Action<CrossSchemaNavigationBuilder<TContext>> configure)
             where TContext : DbContext

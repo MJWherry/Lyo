@@ -12,9 +12,8 @@ namespace Lyo.KeyStore.Aws;
 /// <summary>AWS Secrets Manager implementation of IKeyStore. Stores Key Encryption Keys (KEK) in AWS Secrets Manager with key ID and versioning support.</summary>
 public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 {
-    private readonly ConcurrentDictionary<string, string?> _cachedCurrentVersions = new();
-
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
+    private readonly ConcurrentDictionary<string, string?> _cachedCurrentVersions = new();
 
     private readonly string _secretNamePrefix;
     private readonly IAmazonSecretsManager _secretsManager;

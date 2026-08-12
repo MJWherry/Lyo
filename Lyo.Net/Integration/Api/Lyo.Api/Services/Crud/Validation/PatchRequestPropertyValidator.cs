@@ -6,7 +6,7 @@ using Lyo.Common.Conversion;
 
 namespace Lyo.Api.Services.Crud.Validation;
 
-/// <summary>Validates <see cref="PatchRequest.Properties" /> keys and convertible values against <typeparamref name="TDbModel" />.</summary>
+/// <summary>Validates <see cref="PatchRequest.Properties" /> keys and convertible values against the target entity type.</summary>
 public static class PatchRequestPropertyValidator
 {
     public static IReadOnlyList<ApiError> Validate<TDbModel>(PatchRequest request)

@@ -1,6 +1,8 @@
 # Lyo.FFmpeg
 
-FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): **`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream inputs (`FFmpegTempHelper`).
+FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): **
+`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream inputs
+(`FFmpegTempHelper`).
 
 ## Examples
 
@@ -78,18 +80,18 @@ var args = new FFmpegCommandBuilder()
 
 ## Public API
 
-| Type | Description |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`FFmpegAudioPlayer`** | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`. |
-| **`FFmpegAudioProber`** | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata). |
+| Type                       | Description                                                                                                                                                                                                                                  |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`FFmpegAudioPlayer`**    | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`.                                                                                                                                     |
+| **`FFmpegAudioProber`**    | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata).                                         |
 | **`FFmpegAudioConverter`** | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
-| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FFmpegOptions)`, custom args. |
-| **`FFmpegProcessRunner`** | Internal runner that executes the built command line through CliWrap, applying `FFmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`). |
-| **`FFmpegTempHelper`** | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal). |
-| **`Extensions`** | DI: **`AddFFmpegServices()`**, **`AddFFmpegServices(Action<FFmpegOptions>)`**, **`AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)`**. |
+| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FFmpegOptions)`, custom args.                             |
+| **`FFmpegProcessRunner`**  | Internal runner that executes the built command line through CliWrap, applying `FFmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`).                                                                           |
+| **`FFmpegTempHelper`**     | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal).                                                                                                                   |
+| **`Extensions`**           | DI: **`AddFFmpegServices()`**, **`AddFFmpegServices(Action<FFmpegOptions>)`**, **`AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)`**.                                                                                       |
 
-Each `AddFFmpegServices*` overload registers `FFmpegAudioPlayer`/`FFmpegAudioProber`/`FFmpegAudioConverter` as **scoped** services and exposes them through both the concrete
-type and their respective interfaces.
+Each `AddFFmpegServices*` overload registers `FFmpegAudioPlayer`/`FFmpegAudioProber`/`FFmpegAudioConverter` as **scoped** services and exposes them through both the concrete type
+and their respective interfaces.
 
 ## Notes
 

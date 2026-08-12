@@ -15,13 +15,14 @@ services.AddNativeBarcodeService(o => o.DefaultFormat = BarcodeFormat.Svg);
 
 ## Components
 
-| Component | Purpose |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Component                  | Purpose                                                                                                                                                                                                                                                                  |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **`<BarcodeWorkbench />`** | Generate **Code 128** barcodes in BMP or SVG, with controls for module width, bar height, quiet zone, bar/background/border colors, optional human-readable caption (font, gap, padding, color override), and live preview/download via `IBarcodeService.GenerateAsync`. |
 
 ## DI / required services
 
-The workbench resolves **`IBarcodeService`** plus `IJsInterop` and `ISnackbar` from the host. Register a barcode implementation (e.g. `Lyo.Barcode.Native`) and the standard `Lyo.Web.Components` services:
+The workbench resolves **`IBarcodeService`** plus `IJsInterop` and `ISnackbar` from the host. Register a barcode implementation (e.g. `Lyo.Barcode.Native`) and the standard
+`Lyo.Web.Components` services:
 
 ## Dependencies
 

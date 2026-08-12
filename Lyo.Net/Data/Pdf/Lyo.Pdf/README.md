@@ -1,6 +1,7 @@
 # Lyo.Pdf
 
-PdfPig-backed reading and PDFsharp-backed editing for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md). `PdfService` is the entry point; it returns disposable `IPdfReader` instances for read/extract workflows and `IPdfWriter` instances for structural edits and merges.
+PdfPig-backed reading and PDFsharp-backed editing for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md). `PdfService` is the entry point; it returns disposable `IPdfReader` instances
+for read/extract workflows and `IPdfWriter` instances for structural edits and merges.
 
 Multi-targets `netstandard2.0;net10.0`.
 
@@ -37,19 +38,14 @@ services.AddPdfServiceKeyed("primary", configure: o => o.EnableMetrics = true);
 
 ## Loading
 
-`IPdfService` exposes paired sync and async loaders for **file**, **bytes**, and
-**stream** (`OpenFromFile`, `OpenFromFileAsync`, `OpenFromBytes`,
-`OpenFromBytesAsync`, `OpenFromStream`, `OpenFromStreamAsync`) plus matching batch
-overloads (`OpenFromFiles`, `OpenFromFilesAsync`, `OpenFromBytesBatch`,
+`IPdfService` exposes paired sync and async loaders for **file**, **bytes**, and **stream** (`OpenFromFile`, `OpenFromFileAsync`, `OpenFromBytes`,
+`OpenFromBytesAsync`, `OpenFromStream`, `OpenFromStreamAsync`) plus matching batch overloads (`OpenFromFiles`, `OpenFromFilesAsync`, `OpenFromBytesBatch`,
 `OpenFromBytesBatchAsync`, `OpenFromStreams`, `OpenFromStreamsAsync`).
 
-URL loaders are **async only** — `OpenFromUrlAsync` and `OpenFromUrlsAsync` — so the
-service never blocks on synchronous HTTP. Register an `HttpClient` via DI to share
-connection pooling and timeouts (see below); without one, a new `HttpClient` is
-created per call and disposed.
+URL loaders are **async only** — `OpenFromUrlAsync` and `OpenFromUrlsAsync` — so the service never blocks on synchronous HTTP. Register an `HttpClient` via DI to share connection
+pooling and timeouts (see below); without one, a new `HttpClient` is created per call and disposed.
 
-Each loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).
-**The caller owns the instance** and must dispose it (`using` /
+Each loader returns an `IPdfReader` (PdfPig + immutable byte snapshot). **The caller owns the instance** and must dispose it (`using` /
 `await using`); `PdfService` itself does not implement `IDisposable`.
 
 `PdfServiceOptions.MaxPdfSizeBytes` enforces a per-PDF byte cap (default
@@ -60,9 +56,12 @@ Each loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).
 - **Words and lines** — `GetWords` / `GetLines` (+ async) with optional page and line tolerance.
 - **Anchored slices** — `GetWordsBetween` / `GetLinesBetween` (+ async).
 - **Regions** — `GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, and a word-list overload `GetColumnarText(words, columnCount, yTolerance?)`.
-- **Key/value pairs** — `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when the requested section is not found.
-- **Tables** — `ExtractTable(headers, …)` returns `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` returns a `Lyo.DataTable`. Section-name overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.
-- **Inference helpers** — `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` use `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.
+- **Key/value pairs** — `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional
+  `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when the requested section is not found.
+- **Tables** — `ExtractTable(headers, …)` returns `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` returns a `Lyo.DataTable`. Section-name
+  overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.
+- **Inference helpers** — `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` use
+  `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.
 - **Sections** — `GetSection`, `GetWordsBetweenSections`, `GetLinesBetweenSections` (+ async).
 
 ## Editing and merging (`IPdfWriter`)
@@ -74,7 +73,9 @@ Each loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).
 
 ## Dependency injection
 
-`PdfServiceOptions` is registered as a singleton; `PdfService` and `IPdfService` share the same scoped instance. When an `IHttpClientFactory` is available the default registrations create a named client (`nameof(PdfService)`) for URL loads; otherwise `HttpClient` is created per-call. `IMetrics` is optional — when present and `EnableMetrics = true`, PDF operations emit metrics through the registered implementation.
+`PdfServiceOptions` is registered as a singleton; `PdfService` and `IPdfService` share the same scoped instance. When an `IHttpClientFactory` is available the default registrations
+create a named client (`nameof(PdfService)`) for URL loads; otherwise `HttpClient` is created per-call. `IMetrics` is optional — when present and `EnableMetrics = true`, PDF
+operations emit metrics through the registered implementation.
 
 ## Dependencies
 

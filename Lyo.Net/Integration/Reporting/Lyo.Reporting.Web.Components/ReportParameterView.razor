@@ -103,12 +103,12 @@
                     AllowedValues = existingRow.AllowedValues,
                     Options = existingRow.Options
                 };
+
                 // Do not round-trip masked EncryptedValue (API returns null for ciphertext).
                 if (existingRow.EncryptedValue is { Length: > 0 })
                     data.EncryptedValue = existingRow.EncryptedValue;
 
-                await ApiClient.PostAsAsync<UpdateRequest<ReportDefinitionParameterReq>, UpdateResult<ReportDefinitionParameterRes>>(
-                    $"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
+                await ApiClient.PostAsAsync<UpdateRequest<ReportDefinitionParameterReq>, UpdateResult<ReportDefinitionParameterRes>>($"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
             }
 
             Snackbar.Add("Parameters saved.", Severity.Success);

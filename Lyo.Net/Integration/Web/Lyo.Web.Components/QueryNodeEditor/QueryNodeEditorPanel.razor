@@ -12,7 +12,7 @@
                                            Size="Size.Small"
                                            Disabled="@(_rootNode == null)"
                                            OnClick="@ShowWhereClauseDialog"
-                                           Title="View readable where clause"/>
+                                           aria-label="View readable where clause"/>
                         </MudStack>
                         <style>
                             .drag-over-group-clause {
@@ -68,7 +68,7 @@
                                                                    Color="Color.Error"
                                                                    Size="Size.Small"
                                                                    OnClick="@(() => RemoveNode(treeItem.Value.Node))"
-                                                                   Title="Remove node"/>
+                                                                   aria-label="Remove node"/>
                                                 </div>
                                             </BodyContent>
                                         </MudTreeViewItem>

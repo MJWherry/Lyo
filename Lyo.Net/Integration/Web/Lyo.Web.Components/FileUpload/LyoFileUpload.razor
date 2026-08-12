@@ -19,7 +19,7 @@
             JS-side _blazorFilesById map remains alive. We hide it visually with display:none
             instead of removing it with @if, and re-show it once slots free up.
         *@
-            <ActivatorContent>
+            <CustomContent>
                 @if (AllowDragDrop) {
                     <div class="lyo-drop-zone @(_isDragOver ? "lyo-drop-zone-active" : "")"
                          @ondragenter="OnDragEnter"
@@ -44,7 +44,7 @@
                         @GetButtonText()
                     </MudButton>
                 }
-            </ActivatorContent>
+            </CustomContent>
         </MudFileUpload>
 
         <!-- Uploaded file chips (omit with ClientFileDisplay.ExternalList + parent list) -->
@@ -70,7 +70,7 @@
                                                LyoFileUploadStatus.Uploading => Icons.Material.Filled.CloudUpload,
                                                var _ => Icons.Material.Filled.InsertDriveFile
                                            })"
-                                     DisableRipple="true"
+                                     Ripple="false"
                                      Class="d-flex align-center">
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
                                           Style="overflow:hidden; max-width: 100%; min-width: 0;">
@@ -108,14 +108,14 @@
                                                    Color="Color.Error"
                                                    Size="Size.Small"
                                                    OnClick="() => CancelUpload(fileState)"
-                                                   Title="Cancel upload"/>
+                                                   aria-label="Cancel upload"/>
                                 }
                                 else if (ShowRemoveButton) {
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                    Color="Color.Default"
                                                    Size="Size.Small"
                                                    OnClick="() => RemoveFile(fileState)"
-                                                   Title="Remove file"/>
+                                                   aria-label="Remove file"/>
                                 }
                             </MudChip>
                         }
@@ -141,7 +141,7 @@
                                                LyoFileUploadStatus.Uploading => Icons.Material.Filled.CloudUpload,
                                                var _ => Icons.Material.Filled.InsertDriveFile
                                            })"
-                                     DisableRipple="true"
+                                     Ripple="false"
                                      Class="d-flex align-center">
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
                                           Style="overflow:hidden; max-width: 100%; min-width: 0;">
@@ -179,14 +179,14 @@
                                                    Color="Color.Error"
                                                    Size="Size.Small"
                                                    OnClick="() => CancelUpload(fileState)"
-                                                   Title="Cancel upload"/>
+                                                   aria-label="Cancel upload"/>
                                 }
                                 else if (ShowRemoveButton) {
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                    Color="Color.Default"
                                                    Size="Size.Small"
                                                    OnClick="() => RemoveFile(fileState)"
-                                                   Title="Remove file"/>
+                                                   aria-label="Remove file"/>
                                 }
                             </MudChip>
                         }
@@ -199,7 +199,7 @@
                          Variant="Variant.Filled"
                          Size="Size.Medium"
                          Icon="@Icons.Material.Filled.CloudUpload"
-                         DisableRipple="true"
+                         Ripple="false"
                          Class="d-flex align-center"
                 >
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="overflow:hidden; max-width: 100%;">
@@ -210,7 +210,7 @@
                                    Color="Color.Error"
                                    Size="Size.Small"
                                    OnClick="CancelAllUploads"
-                                   Title="Cancel all uploads"/>
+                                   aria-label="Cancel all uploads"/>
                 </MudChip>
             }
         }

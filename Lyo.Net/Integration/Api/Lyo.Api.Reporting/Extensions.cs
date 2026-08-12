@@ -212,10 +212,7 @@ public static class Extensions
         if (options.DownloadStreamFactory is { } downloadFactory) {
             var download = app.MapGet(
                     $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsDownloadSuffix}", async (
-                        Guid id,
-                        IDbContextFactory<ReportingContext> dbFactory,
-                        HttpContext http,
-                        CancellationToken ct) => {
+                        Guid id, IDbContextFactory<ReportingContext> dbFactory, HttpContext http, CancellationToken ct) => {
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var generation = await db.ReportGenerations.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
                         if (generation is null)

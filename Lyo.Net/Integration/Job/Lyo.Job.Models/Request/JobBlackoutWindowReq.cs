@@ -1,11 +1,11 @@
+using System.Diagnostics;
+using Lyo.Common.Enums;
+using Lyo.Job.Models.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
-using System.Diagnostics;
-using Lyo.Common.Enums;
-using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Request;
 
@@ -25,9 +25,15 @@ public sealed class JobBlackoutWindowReq
     /// <summary>UTC calendar date when this window stops applying. Null = same day as <see cref="StartDateUtc" />.</summary>
     public DateTime? EndDateUtc { get; set; }
 
+#if NET6_0_OR_GREATER
     public TimeOnly StartTime { get; set; }
 
     public TimeOnly EndTime { get; set; }
+#else
+    public TimeOnly StartTime { get; set; } = null!;
+
+    public TimeOnly EndTime { get; set; } = null!;
+#endif
 
     public JobBlackoutPolicy Policy { get; set; } = JobBlackoutPolicy.Skip;
 

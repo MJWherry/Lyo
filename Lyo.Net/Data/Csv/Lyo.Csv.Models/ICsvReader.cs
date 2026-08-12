@@ -19,7 +19,10 @@ public interface ICsvReader
     /// <summary>Parses a stream into row index → column index → cell text.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseStreamAsDictionary(Stream csvStream);
 
-    /// <summary>Parses a file into a Lyo data table. When <c>hasHeaderRow</c> is true the first row is headers; false uses synthetic names; null uses configuration. When <c>hasFooterRow</c> is true the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.</summary>
+    /// <summary>
+    /// Parses a file into a Lyo data table. When <c>hasHeaderRow</c> is true the first row is headers; false uses synthetic names; null uses configuration. When
+    /// <c>hasFooterRow</c> is true the last body row becomes <see cref="DataTable.Models.DataTable.Footer" />.
+    /// </summary>
     Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false);
 
     /// <summary>Parses a stream into a Lyo data table.</summary>

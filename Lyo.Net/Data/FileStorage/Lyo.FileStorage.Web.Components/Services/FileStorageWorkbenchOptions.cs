@@ -5,14 +5,13 @@ public sealed class FileStorageWorkbenchOptions
     public const string SectionName = "FileStorageWorkbench";
 
     /// <summary>
-    /// When true, the host resolves the workbench through HTTP calls to a remote API
-    /// (typically <c>Lyo.Portfolio.Api</c> or <c>Lyo.TestApi</c>) using the shared <see cref="Lyo.Api.Client.IApiClient" />.
+    /// When true, the host resolves the workbench through HTTP calls to a remote API (typically <c>Lyo.Portfolio.Api</c> or <c>Lyo.TestApi</c>) using the shared
+    /// <see cref="Lyo.Api.Client.IApiClient" />.
     /// </summary>
     public bool UseRemoteApiServices { get; set; } = true;
 
-    /// <summary>Obsolete alias for <see cref="UseRemoteApiServices"/> (still bound from config).</summary>
-    public bool UseTestApiServices
-    {
+    /// <summary>Obsolete alias for <see cref="UseRemoteApiServices" /> (still bound from config).</summary>
+    public bool UseTestApiServices {
         get => UseRemoteApiServices;
         set => UseRemoteApiServices = value;
     }

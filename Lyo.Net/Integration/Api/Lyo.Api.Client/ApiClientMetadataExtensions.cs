@@ -3,9 +3,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Api.Client;
 
-/// <summary>
-/// Metadata helpers for Lyo.Api <c>GET {baseRoute}/Metadata</c> (typed CreateBuilder and dynamic CRUD).
-/// </summary>
+/// <summary>Metadata helpers for Lyo.Api <c>GET {baseRoute}/Metadata</c> (typed CreateBuilder and dynamic CRUD).</summary>
 public static class ApiClientMetadataExtensions
 {
     /// <summary>Typed CreateBuilder metadata: <c>GET {baseRoute}/Metadata</c> → <see cref="EndpointMetadataResponse" />.</summary>
@@ -54,7 +52,7 @@ public static class ApiClientMetadataExtensions
         return $"{NormalizeRoutePrefix(baseRoute)}/{encoded}/Metadata";
     }
 
-    static string NormalizeRoutePrefix(string? baseRoute)
+    private static string NormalizeRoutePrefix(string? baseRoute)
     {
         var trimmed = (baseRoute ?? string.Empty).Trim().Trim('/');
         return trimmed.Length == 0 ? string.Empty : "/" + trimmed;

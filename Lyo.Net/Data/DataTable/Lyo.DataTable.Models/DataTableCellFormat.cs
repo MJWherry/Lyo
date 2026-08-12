@@ -41,22 +41,8 @@ public sealed record DataTableCellFormat(
 {
     /// <summary>Returns true when any formatting field is set (non-default).</summary>
     public bool HasAny()
-        => FontSize.HasValue
-           || !string.IsNullOrEmpty(FontName)
-           || FontBold.HasValue
-           || FontItalic.HasValue
-           || FontUnderline.HasValue
-           || FontStrikethrough.HasValue
-           || !string.IsNullOrEmpty(FontColor)
-           || !string.IsNullOrEmpty(BackgroundColor)
-           || !string.IsNullOrEmpty(HorizontalAlignment)
-           || !string.IsNullOrEmpty(VerticalAlignment)
-           || !string.IsNullOrEmpty(NumberFormat)
-           || TextRotation.HasValue
-           || WrapText.HasValue
-           || !string.IsNullOrEmpty(BorderTop)
-           || !string.IsNullOrEmpty(BorderBottom)
-           || !string.IsNullOrEmpty(BorderLeft)
-           || !string.IsNullOrEmpty(BorderRight)
-           || !string.IsNullOrEmpty(BorderColor);
+        => FontSize.HasValue || !string.IsNullOrEmpty(FontName) || FontBold.HasValue || FontItalic.HasValue || FontUnderline.HasValue || FontStrikethrough.HasValue ||
+            !string.IsNullOrEmpty(FontColor) || !string.IsNullOrEmpty(BackgroundColor) || !string.IsNullOrEmpty(HorizontalAlignment) || !string.IsNullOrEmpty(VerticalAlignment) ||
+            !string.IsNullOrEmpty(NumberFormat) || TextRotation.HasValue || WrapText.HasValue || !string.IsNullOrEmpty(BorderTop) || !string.IsNullOrEmpty(BorderBottom) ||
+            !string.IsNullOrEmpty(BorderLeft) || !string.IsNullOrEmpty(BorderRight) || !string.IsNullOrEmpty(BorderColor);
 }

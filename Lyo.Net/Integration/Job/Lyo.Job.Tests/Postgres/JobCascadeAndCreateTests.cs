@@ -343,9 +343,8 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
 
         var deleted = await delete.DeleteAsync<JobBlackoutCalendar, JobBlackoutCalendarRes>(
             [calendarId], ctx => {
-                if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id)) {
+                if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
                     throw new InvalidOperationException($"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
-                }
             }, ct: TestContext.Current.CancellationToken);
 
         Assert.False(deleted.IsSuccess);

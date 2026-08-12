@@ -12,8 +12,7 @@ namespace Lyo.Csv;
 public static class Extensions
 {
     /// <summary>Adds CSV service with default options (CSV value pooling off).</summary>
-    public static IServiceCollection AddCsvService(this IServiceCollection services)
-        => services.AddCsvService(new CsvOptions());
+    public static IServiceCollection AddCsvService(this IServiceCollection services) => services.AddCsvService(new CsvOptions());
 
     /// <summary>Adds CSV service configured by the given <see cref="CsvOptions" /> action.</summary>
     public static IServiceCollection AddCsvService(this IServiceCollection services, Action<CsvOptions> configure)
@@ -26,10 +25,7 @@ public static class Extensions
     }
 
     /// <summary>Adds CSV service from configuration (section <see cref="CsvOptions.SectionName" /> by default).</summary>
-    public static IServiceCollection AddCsvServiceFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string sectionName = CsvOptions.SectionName)
+    public static IServiceCollection AddCsvServiceFromConfiguration(this IServiceCollection services, IConfiguration configuration, string sectionName = CsvOptions.SectionName)
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
@@ -55,7 +51,7 @@ public static class Extensions
         services.AddSingleton<CsvService>(provider => {
             var logger = provider.GetService<ILogger<CsvService>>();
             var opts = provider.GetService<IOptions<CsvOptions>>()?.Value ?? options;
-            return new(logger, httpClient: null, opts);
+            return new(logger, null, opts);
         });
 
         services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());
@@ -79,7 +75,7 @@ public static class Extensions
                 var options = new CsvOptions();
                 configure(provider, options);
                 options.Validate();
-                return new(logger, httpClient: null, options);
+                return new(logger, null, options);
             });
 
             services.AddSingleton<ICsvService>(sp => sp.GetRequiredService<CsvService>());

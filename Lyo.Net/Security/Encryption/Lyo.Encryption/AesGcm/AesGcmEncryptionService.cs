@@ -111,7 +111,6 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var versionString = keyVersion ?? "";
         var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4 + AesGcmHelper.NonceSize;
         var result = new byte[prefixLen + AesGcmHelper.TagSize + plaintext.Length];
-
         var o = 0;
         result[o++] = formatVersion;
         BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
@@ -176,8 +175,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var nonceLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
         o += 4;
         ArgumentHelpers.ThrowIfNotInRange(
-            nonceLength, AesGcmHelper.NonceSize, AesGcmHelper.NonceSize, nameof(encrypted),
-            $"Invalid nonce length: {nonceLength}. Expected {AesGcmHelper.NonceSize} bytes.");
+            nonceLength, AesGcmHelper.NonceSize, AesGcmHelper.NonceSize, nameof(encrypted), $"Invalid nonce length: {nonceLength}. Expected {AesGcmHelper.NonceSize} bytes.");
 
         if (encrypted.Length - o < nonceLength + AesGcmHelper.TagSize)
             throw new InvalidDataException("Invalid encrypted data format: truncated nonce or tag.");
@@ -187,7 +185,6 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var tag = encrypted.Slice(o, AesGcmHelper.TagSize);
         o += AesGcmHelper.TagSize;
         var ciphertext = encrypted[o..];
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;

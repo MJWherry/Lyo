@@ -5,8 +5,7 @@ using Lyo.Encryption.AesSiv;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[BenchmarkDescription(
-    "AES-SIV (nonce-misuse-resistant) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
+[BenchmarkDescription("AES-SIV (nonce-misuse-resistant) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, or 500 MiB.")]
 public class AesSivEncryptionBenchmarks : LyoBenchmarkBase
 {

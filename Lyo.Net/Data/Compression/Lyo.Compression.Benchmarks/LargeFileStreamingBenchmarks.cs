@@ -21,13 +21,8 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
     private CompressionService _zstdService = null!;
 
     [Params(
-        BenchmarkData.StreamingSize100MiB,
-        BenchmarkData.StreamingSize250MiB,
-        BenchmarkData.StreamingSize500MiB,
-        BenchmarkData.StreamingSize750MiB,
-        BenchmarkData.StreamingSize1GiB,
-        BenchmarkData.StreamingSize15GiB,
-        BenchmarkData.StreamingSize2GiB)]
+        BenchmarkData.StreamingSize100MiB, BenchmarkData.StreamingSize250MiB, BenchmarkData.StreamingSize500MiB, BenchmarkData.StreamingSize750MiB, BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB, BenchmarkData.StreamingSize2GiB)]
     public long DataSize { get; set; }
 
     /// <inheritdoc />
@@ -36,7 +31,6 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
         ICompressorFactory[] factories = [new GZipCompressorFactory(), new ZstdCompressorFactory()];
         _gzipService = new(factories, options: new() { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
         _zstdService = new(factories, options: new() { DefaultAlgorithm = ZstdCompressionAlgorithm.Instance, EnableMetrics = false });
-
         _plaintextPath = CreateSeededFilePath(DataSize);
     }
 
@@ -45,7 +39,7 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
     {
         EnsureGlobalSetup();
         var gzipInfo = _gzipService.CompressFile(_plaintextPath, CreateTempOutputPath());
-_compressedGZipPath = gzipInfo.OutputFilePath;
+        _compressedGZipPath = gzipInfo.OutputFilePath;
     }
 
     [GlobalSetup(Targets = [nameof(DecompressStream_Zstd), nameof(DecompressFile_Zstd)])]
@@ -53,7 +47,7 @@ _compressedGZipPath = gzipInfo.OutputFilePath;
     {
         EnsureGlobalSetup();
         var zstdInfo = _zstdService.CompressFile(_plaintextPath, CreateTempOutputPath());
-_compressedZstdPath = zstdInfo.OutputFilePath;
+        _compressedZstdPath = zstdInfo.OutputFilePath;
     }
 
     [Benchmark]
@@ -76,13 +70,11 @@ _compressedZstdPath = zstdInfo.OutputFilePath;
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task CompressFile_GZip()
-        => await _gzipService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
+    public async Task CompressFile_GZip() => await _gzipService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task DecompressFile_GZip()
-        => await _gzipService.DecompressFileAsync(_compressedGZipPath, CreateIterationOutputPath());
+    public async Task DecompressFile_GZip() => await _gzipService.DecompressFileAsync(_compressedGZipPath, CreateIterationOutputPath());
 
     [Benchmark]
     [BenchmarkCategory("Stream")]
@@ -104,11 +96,9 @@ _compressedZstdPath = zstdInfo.OutputFilePath;
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task CompressFile_Zstd()
-        => await _zstdService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
+    public async Task CompressFile_Zstd() => await _zstdService.CompressFileAsync(_plaintextPath, CreateIterationOutputPath());
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task DecompressFile_Zstd()
-        => await _zstdService.DecompressFileAsync(_compressedZstdPath, CreateIterationOutputPath());
+    public async Task DecompressFile_Zstd() => await _zstdService.DecompressFileAsync(_compressedZstdPath, CreateIterationOutputPath());
 }

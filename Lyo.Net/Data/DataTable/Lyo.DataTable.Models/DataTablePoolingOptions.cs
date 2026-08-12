@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.DataTable.Models;
 
 /// <summary>
-/// Options for parse-scoped value and format pooling when building a <see cref="DataTable" />.
-/// Create one <see cref="DataTableValueInterner" /> per parse (single-threaded). Pools are not process-wide string interning.
+/// Options for parse-scoped value and format pooling when building a <see cref="DataTable" />. Create one <see cref="DataTableValueInterner" /> per parse (single-threaded).
+/// Pools are not process-wide string interning.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class DataTablePoolingOptions
@@ -22,8 +22,8 @@ public sealed class DataTablePoolingOptions
     public bool PoolFormats { get; set; } = true;
 
     /// <summary>
-    /// Estimated cell count at/above which enabled pools activate. Use <c>0</c> to always pool when the corresponding flag is on.
-    /// Default is <see cref="DefaultPoolingCellThreshold" />.
+    /// Estimated cell count at/above which enabled pools activate. Use <c>0</c> to always pool when the corresponding flag is on. Default is
+    /// <see cref="DefaultPoolingCellThreshold" />.
     /// </summary>
     public int PoolingCellThreshold { get; set; } = DefaultPoolingCellThreshold;
 
@@ -35,6 +35,5 @@ public sealed class DataTablePoolingOptions
     }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"DataTablePoolingOptions: PoolValues={PoolValues}, PoolFormats={PoolFormats}, PoolingCellThreshold={PoolingCellThreshold}";
+    public override string ToString() => $"DataTablePoolingOptions: PoolValues={PoolValues}, PoolFormats={PoolFormats}, PoolingCellThreshold={PoolingCellThreshold}";
 }

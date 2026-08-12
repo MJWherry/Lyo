@@ -323,18 +323,12 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotInRange<T>(
-        T value,
-        T? min = null,
-        T? max = null,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfNotInRange<T>(T value, T? min = null, T? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : struct, IComparable<T>, IConvertible
     {
         if ((min.HasValue && value.CompareTo(min.Value) < 0) || (max.HasValue && value.CompareTo(max.Value) > 0)) {
             var expected = FormatInclusiveRange(min, max);
-            ThrowInvalidFormat(
-                message ?? $"Value {value} is outside valid range {expected}.", paramName, Convert.ToString(value, CultureInfo.InvariantCulture), expected);
+            ThrowInvalidFormat(message ?? $"Value {value} is outside valid range {expected}.", paramName, Convert.ToString(value, CultureInfo.InvariantCulture), expected);
         }
     }
 
@@ -360,10 +354,13 @@ public static class FormatHelpers
     {
         if (min.HasValue && max.HasValue)
             return $"{min.Value}-{max.Value}";
+
         if (min.HasValue)
             return $">= {min.Value}";
+
         if (max.HasValue)
             return $"<= {max.Value}";
+
         return "any";
     }
 }

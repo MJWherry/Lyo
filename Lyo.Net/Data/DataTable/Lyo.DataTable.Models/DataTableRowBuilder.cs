@@ -10,15 +10,15 @@ public sealed class DataTableRowBuilder
     private readonly Dictionary<int, DataTableCellFormat> _formats = new();
     private readonly DataTableBuilder? _parentBuilder;
 
+    /// <summary>Formats collected for this row (column → format). Applied to the table when the row is added.</summary>
+    internal IReadOnlyDictionary<int, DataTableCellFormat> Formats => _formats;
+
     /// <summary>Creates a row builder with optional column definitions for FormatWhen.</summary>
     public DataTableRowBuilder(IReadOnlyDictionary<int, DataTableColumnBuilder>? columnDefs = null, DataTableBuilder? parentBuilder = null)
     {
         _columnDefs = columnDefs ?? new Dictionary<int, DataTableColumnBuilder>();
         _parentBuilder = parentBuilder;
     }
-
-    /// <summary>Formats collected for this row (column → format). Applied to the table when the row is added.</summary>
-    internal IReadOnlyDictionary<int, DataTableCellFormat> Formats => _formats;
 
     /// <summary>Sets a cell with a typed value. Column FormatWhen rules are applied when defined for this column. Use this (not AddCell) for typed values when FormatWhen is configured.</summary>
     public DataTableRowBuilder SetCell<T>(int col, T value)

@@ -59,20 +59,22 @@ public class SftpClientOptionsTests
         Assert.Throws<InvalidFormatException>(() => client.ResolvePath("../secret"));
     }
 
-    private static SftpClientOptions ValidBase() => new() {
-        Host = "localhost",
-        Username = "foo",
-        Password = "pass",
-        RootRemoteDirectory = "/data/lyo",
-        HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList,
-        AllowedHostKeyFingerprints = ["SHA256:abc"]
-    };
+    private static SftpClientOptions ValidBase()
+        => new() {
+            Host = "localhost",
+            Username = "foo",
+            Password = "pass",
+            RootRemoteDirectory = "/data/lyo",
+            HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList,
+            AllowedHostKeyFingerprints = ["SHA256:abc"]
+        };
 
-    private static SftpClientOptions AcceptAnyOptions() => new() {
-        Host = "localhost",
-        Username = "foo",
-        Password = "pass",
-        RootRemoteDirectory = "/data/lyo",
-        HostKeyPolicy = SftpHostKeyPolicy.AcceptAny
-    };
+    private static SftpClientOptions AcceptAnyOptions()
+        => new() {
+            Host = "localhost",
+            Username = "foo",
+            Password = "pass",
+            RootRemoteDirectory = "/data/lyo",
+            HostKeyPolicy = SftpHostKeyPolicy.AcceptAny
+        };
 }

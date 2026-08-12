@@ -44,18 +44,15 @@ Task<Result<PdfOcrDocumentPage>> ReadPageAsync(
 The pipeline:
 
 1. `pdfReader.GetPageSizePoints(pageNumber1Based)` for the PDF page dimensions.
-2. `IPdfPageRasterizer.RenderPageToPngAsync(pdfReader.SourceBytes, …)` for the
-   pixel raster (and bitmap width/height).
-3. `IOcrEngine.ReadAsync(pngStream, ocrRequest, …)` for the per-word text and
-   pixel-space bounding boxes (Y-up).
+2. `IPdfPageRasterizer.RenderPageToPngAsync(pdfReader.SourceBytes, …)` for the pixel raster (and bitmap width/height).
+3. `IOcrEngine.ReadAsync(pngStream, ocrRequest, …)` for the per-word text and pixel-space bounding boxes (Y-up).
 4. `OcrCoordinateTransforms.MapPixelBoxToPdfPoints(box, pageWidthPts, pageHeightPts,
    widthPx, heightPx)` to lift each `OcrWord` into a `PdfWord`.
 
 `PdfOcrDocumentPage` carries the original `OcrPageResult` plus the projected
 `IReadOnlyList<PdfWord> WordsInPdfPoints` and the source page size.
 
-Failures from either stage propagate as `Result<PdfOcrDocumentPage>.Failure`;
-unexpected exceptions are tagged with `PdfOcrErrorCodes.ReadFailed`
+Failures from either stage propagate as `Result<PdfOcrDocumentPage>.Failure`; unexpected exceptions are tagged with `PdfOcrErrorCodes.ReadFailed`
 (`"PDF_OCR_READ_FAILED"`).
 
 ## Dependency injection

@@ -1,2 +1,2478 @@
-window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };
-window.LyoBench.reports["encryption"] = {"type": "micro", "groups": [{"name": "AesCcmEncryptionBenchmarks", "description": "AES-CCM encrypt and decrypt of seeded deterministic buffers (1 / 4 / 15 MiB). Single-shot CCM with a 12-byte nonce cannot exceed ~16 MiB per packet; use streaming benches for larger payloads.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 1, 4, or 15 MiB (CCM packet limit)."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "1048576"}, "meanNs": 11541569.58064516, "stdDevNs": 212773.4491203847, "allocatedBytes": 2101992, "isBaseline": false, "deltaMeanPct": -15.468045178302607, "deltaAllocPct": -59.95284248261314}, {"method": "Decrypt", "parameters": {"DataSize": "1048576"}, "meanNs": 11308227.033333333, "stdDevNs": 331060.37106334895, "allocatedBytes": 2102176, "isBaseline": false, "deltaMeanPct": -4.40373080592738, "deltaAllocPct": -33.27594656428461}, {"method": "Encrypt", "parameters": {"DataSize": "4194304"}, "meanNs": 46612322.192307696, "stdDevNs": 489742.0249307085, "allocatedBytes": 8393376, "isBaseline": false, "deltaMeanPct": -13.900796475405864, "deltaAllocPct": -59.988543878964784}, {"method": "Decrypt", "parameters": {"DataSize": "4194304"}, "meanNs": 46875975.875, "stdDevNs": 887878.9863650621, "allocatedBytes": 8393560, "isBaseline": false, "deltaMeanPct": -3.8893640109899144, "deltaAllocPct": -33.31916072751863}, {"method": "Encrypt", "parameters": {"DataSize": "15728640"}, "meanNs": 175308873.7, "stdDevNs": 1730335.2580404014, "allocatedBytes": 31462048, "isBaseline": false, "deltaMeanPct": -4.298452674773897, "deltaAllocPct": -59.99696881695876}, {"method": "Decrypt", "parameters": {"DataSize": "15728640"}, "meanNs": 171425237.26666668, "stdDevNs": 1032533.6042888778, "allocatedBytes": 31462240, "isBaseline": false, "deltaMeanPct": -4.671269838185509, "deltaAllocPct": -33.32954727501278}]}, {"name": "AesGcmEncryptionBenchmarks", "description": "AES-GCM encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 25358630.783333335, "stdDevNs": 1130358.1265664059, "allocatedBytes": 104859328, "isBaseline": false, "deltaMeanPct": -48.92508462591443, "deltaAllocPct": -66.6663360617395}, {"method": "Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 26071458.484375, "stdDevNs": 1202224.4010891009, "allocatedBytes": 104859616, "isBaseline": false, "deltaMeanPct": -39.752662116921954, "deltaAllocPct": -49.999475483707975}, {"method": "Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 64389558.77027027, "stdDevNs": 2183836.6215036763, "allocatedBytes": 262145728, "isBaseline": false, "deltaMeanPct": -49.988958923245896, "deltaAllocPct": -66.66652933790456}, {"method": "Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 67472250.84482759, "stdDevNs": 1972588.4074459171, "allocatedBytes": 262146016, "isBaseline": false, "deltaMeanPct": -38.68788975841764, "deltaAllocPct": -49.999790192383514}, {"method": "Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 131181209.33333333, "stdDevNs": 2195858.999805207, "allocatedBytes": 524289776, "isBaseline": false, "deltaMeanPct": -47.3258266915211, "deltaAllocPct": -66.66659596770022}, {"method": "Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 135744551.23333332, "stdDevNs": 2362075.93018452, "allocatedBytes": 524290016, "isBaseline": false, "deltaMeanPct": -37.93198229588698, "deltaAllocPct": -49.99989509600848}]}, {"name": "AesGcmRsaEncryptionBenchmarks", "description": "Hybrid AES-GCM + RSA envelope encrypt/decrypt of seeded deterministic buffers (100 / 250 / 500 MiB): RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload. PEM keys live under the suite IOTemp session.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 25350933.462962963, "stdDevNs": 1055702.629884306, "allocatedBytes": 104859128, "isBaseline": false, "deltaMeanPct": -51.11307210785259, "deltaAllocPct": -66.66645304536368}, {"method": "Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 25368552.416666668, "stdDevNs": 307595.7120520548, "allocatedBytes": 104858992, "isBaseline": false, "deltaMeanPct": -39.91610853393835, "deltaAllocPct": -49.99962234713165}, {"method": "Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 64543320.051724136, "stdDevNs": 1866463.4485430229, "allocatedBytes": 262145552, "isBaseline": false, "deltaMeanPct": -48.11536782385056, "deltaAllocPct": -66.66658325223823}, {"method": "Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 66323859.7, "stdDevNs": 1488756.1085113832, "allocatedBytes": 262145248, "isBaseline": false, "deltaMeanPct": -38.88723091871129, "deltaAllocPct": -49.999869537634204}, {"method": "Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 129141181.46666667, "stdDevNs": 1762062.9890327768, "allocatedBytes": 524289552, "isBaseline": false, "deltaMeanPct": -48.14660563043064, "deltaAllocPct": -66.66662343350289}, {"method": "Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 133560601.92857143, "stdDevNs": 1569900.8165077213, "allocatedBytes": 524289248, "isBaseline": false, "deltaMeanPct": -39.5662410156004, "deltaAllocPct": -49.999934768746925}]}, {"name": "AesSivEncryptionBenchmarks", "description": "AES-SIV (nonce-misuse-resistant) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 1589748398.0714285, "stdDevNs": 12576678.554848123, "allocatedBytes": 104860368, "isBaseline": false, "deltaMeanPct": -5.717840878909505, "deltaAllocPct": -74.99953556423986}, {"method": "Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 1581776890.5, "stdDevNs": 11673865.365826067, "allocatedBytes": 104860664, "isBaseline": false, "deltaMeanPct": -7.511547103641251, "deltaAllocPct": -66.66603089024035}, {"method": "Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 3967463213.7, "stdDevNs": 30387665.921575874, "allocatedBytes": 262146744, "isBaseline": false, "deltaMeanPct": -7.256075427273939, "deltaAllocPct": -74.99981575069279}, {"method": "Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 3870316551.0666666, "stdDevNs": 26419275.983509913, "allocatedBytes": 262147032, "isBaseline": false, "deltaMeanPct": -8.344933038654071, "deltaAllocPct": -66.66641642354175}, {"method": "Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 7765070185.133333, "stdDevNs": 66372956.192743264, "allocatedBytes": 524290800, "isBaseline": false, "deltaMeanPct": -7.14121798696504, "deltaAllocPct": -74.99990520491977}, {"method": "Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 7813994682.833333, "stdDevNs": 130954602.45512563, "allocatedBytes": 524291032, "isBaseline": false, "deltaMeanPct": -6.132715544346945, "deltaAllocPct": -66.66654154485028}]}, {"name": "AlgorithmComparisonBenchmarks", "description": "Encrypts and decrypts the same seeded deterministic buffer with AES-GCM, AES-SIV, ChaCha20-Poly1305, and XChaCha20-Poly1305 to compare throughput at each payload size. Decrypt cases reuse a ciphertext produced once in setup. AES-CCM is covered separately (packet-size limit).", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded plaintext/ciphertext buffer (100 MiB, 250 MiB, 500 MiB)."}], "measurements": [{"method": "AesGcm_Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 25090152.829545453, "stdDevNs": 1373039.92759195, "allocatedBytes": 104859328, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 4179.233212024227, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -48.583916202390284, "deltaAllocPct": -66.6663360617395}, {"method": "AesSiv_Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 1574464523.5625, "stdDevNs": 30138094.702228915, "allocatedBytes": 104860400, "ratioToBaseline": 62.75228908563901, "isBaseline": false, "throughputMbps": 66.59889659675623, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -6.1803826571648415, "deltaAllocPct": -74.99952793490499}, {"method": "ChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 58368176.8125, "stdDevNs": 2654495.829748181, "allocatedBytes": 104859248, "ratioToBaseline": 2.3263380342493285, "isBaseline": false, "throughputMbps": 1796.4857860275656, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -24.553151080516677, "deltaAllocPct": -66.66634284319785}, {"method": "XChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 170661375.6, "stdDevNs": 2748380.3950419547, "allocatedBytes": 104859720, "ratioToBaseline": 6.801926507160769, "isBaseline": false, "throughputMbps": 614.419048430546, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -28.409388523839024, "deltaAllocPct": -79.99972442804399}, {"method": "AesGcm_Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 25972374.64285714, "stdDevNs": 1325229.5594271952, "allocatedBytes": 104859616, "ratioToBaseline": 1.0351620741135068, "isBaseline": false, "throughputMbps": 4037.2742747586108, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -39.41931658122715, "deltaAllocPct": -49.999475483707975}, {"method": "AesSiv_Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 1568078270.1333334, "stdDevNs": 26176336.409463357, "allocatedBytes": 104860632, "ratioToBaseline": 62.4977568206284, "isBaseline": false, "throughputMbps": 66.87013141957766, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -5.756824744937726, "deltaAllocPct": -66.66604106266317}, {"method": "ChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 56472724.64814815, "stdDevNs": 1565358.0513099553, "allocatedBytes": 104859512, "ratioToBaseline": 2.2507923738769526, "isBaseline": false, "throughputMbps": 1856.783086938209, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -23.243628283264336, "deltaAllocPct": -49.999494556719185}, {"method": "XChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 174599397.64285713, "stdDevNs": 2516997.9953996437, "allocatedBytes": 104859672, "ratioToBaseline": 6.958881391796619, "isBaseline": false, "throughputMbps": 600.5610638731188, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -10.943036139906901, "deltaAllocPct": -74.99962663830682}, {"method": "AesGcm_Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 64050565.85483871, "stdDevNs": 1912397.111371965, "allocatedBytes": 262145728, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 4092.766340177404, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -48.09047359492196, "deltaAllocPct": -66.6665344241752}, {"method": "AesSiv_Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 3920555423.5, "stdDevNs": 40651604.39697794, "allocatedBytes": 262146768, "ratioToBaseline": 61.210316742327755, "isBaseline": false, "throughputMbps": 66.86399545041402, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -6.769442790591724, "deltaAllocPct": -74.99981346188152}, {"method": "ChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 147529394.90625, "stdDevNs": 4528060.076081826, "allocatedBytes": 262145672, "ratioToBaseline": 2.3033269564019765, "isBaseline": false, "throughputMbps": 1776.893344994628, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -27.19902499396096, "deltaAllocPct": -66.66653408506221}, {"method": "XChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 414020595.71428573, "stdDevNs": 2288978.798661473, "allocatedBytes": 262146120, "ratioToBaseline": 6.463964684599403, "isBaseline": false, "throughputMbps": 633.1665687977144, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -30.585579360257775, "deltaAllocPct": -79.99988977079173}, {"method": "AesGcm_Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 65790499.93548387, "stdDevNs": 2004348.6920325505, "allocatedBytes": 262146016, "ratioToBaseline": 1.0271650071693117, "isBaseline": false, "throughputMbps": 3984.52664529174, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -39.719752676061766, "deltaAllocPct": -49.999790192383514}, {"method": "AesSiv_Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 3892893048.4, "stdDevNs": 70600220.25001578, "allocatedBytes": 262147032, "ratioToBaseline": 60.77843335877276, "isBaseline": false, "throughputMbps": 67.33912202076617, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -7.31274766405507, "deltaAllocPct": -66.66641642354175}, {"method": "ChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 149939949.47560975, "stdDevNs": 5284415.742442378, "allocatedBytes": 262145912, "ratioToBaseline": 2.3409621363131565, "isBaseline": false, "throughputMbps": 1748.3265861887069, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -19.397004552656334, "deltaAllocPct": -49.99980468816161}, {"method": "XChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 425130670.0714286, "stdDevNs": 2643071.9003895526, "allocatedBytes": 262146072, "ratioToBaseline": 6.637422548848756, "isBaseline": false, "throughputMbps": 616.6198264546657, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -12.909378077711322, "deltaAllocPct": -74.99985179930407}, {"method": "AesGcm_Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 129174398.33333333, "stdDevNs": 1942927.8469669966, "allocatedBytes": 524289776, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 4058.760921394654, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -47.54431360346018, "deltaAllocPct": -66.66659596770022}, {"method": "AesSiv_Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 7830762640.611111, "stdDevNs": 165628777.74295732, "allocatedBytes": 524290768, "ratioToBaseline": 60.62163045965115, "isBaseline": false, "throughputMbps": 66.95235496999877, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -8.62923749335091, "deltaAllocPct": -74.99990673079631}, {"method": "ChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 307107454.07894737, "stdDevNs": 6725027.1202534465, "allocatedBytes": 524289720, "ratioToBaseline": 2.3774637857144065, "isBaseline": false, "throughputMbps": 1707.1809656082871, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -27.247928767745012, "deltaAllocPct": -66.66659732403072}, {"method": "XChaCha20Poly1305_Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 841094687.7857143, "stdDevNs": 5351023.3886939, "allocatedBytes": 524290120, "ratioToBaseline": 6.511311054186429, "isBaseline": false, "throughputMbps": 623.340044365579, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -29.496372641352604, "deltaAllocPct": -79.99994488532488}, {"method": "AesGcm_Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 133851293.38235295, "stdDevNs": 2677902.439782695, "allocatedBytes": 524290016, "ratioToBaseline": 1.0362060525101184, "isBaseline": false, "throughputMbps": 3916.94384679829, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -39.06773267676816, "deltaAllocPct": -49.99989509600848}, {"method": "AesSiv_Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 7735525285.633333, "stdDevNs": 85827113.07144797, "allocatedBytes": 524291032, "ratioToBaseline": 59.88435313375242, "isBaseline": false, "throughputMbps": 67.7766513120608, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "deltaMeanPct": -8.052206780615382, "deltaAllocPct": -66.66654154485028}, {"method": "ChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 304273392.5, "stdDevNs": 8106702.788661686, "allocatedBytes": 524289912, "ratioToBaseline": 2.355523977087359, "isBaseline": false, "throughputMbps": 1723.0819812810282, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -21.425666705970638, "deltaAllocPct": -49.99990386979466}, {"method": "XChaCha20Poly1305_Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 856216231.1666666, "stdDevNs": 7207605.64885288, "allocatedBytes": 524290072, "ratioToBaseline": 6.628374060293345, "isBaseline": false, "throughputMbps": 612.331302439354, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "deltaMeanPct": -12.67304598967117, "deltaAllocPct": -74.99992589957883}]}, {"name": "ChaCha20Poly1305EncryptionBenchmarks", "description": "ChaCha20-Poly1305 encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 59496894.6, "stdDevNs": 2644788.4380939417, "allocatedBytes": 104859248, "isBaseline": false, "deltaMeanPct": -26.454135954083995, "deltaAllocPct": -66.66633775691518}, {"method": "Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 57623592.34210526, "stdDevNs": 1244589.6648289913, "allocatedBytes": 104859512, "isBaseline": false, "deltaMeanPct": -23.054018630111162, "deltaAllocPct": -49.999494556719185}, {"method": "Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 153650252.6388889, "stdDevNs": 5107496.157636248, "allocatedBytes": 262145672, "isBaseline": false, "deltaMeanPct": -22.254116942529343, "deltaAllocPct": -66.66653408506221}, {"method": "Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 149192685.8043478, "stdDevNs": 3629329.308274169, "allocatedBytes": 262145912, "isBaseline": false, "deltaMeanPct": -18.291198085225126, "deltaAllocPct": -49.999800110522095}, {"method": "Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 312087705.7790698, "stdDevNs": 11462786.958249416, "allocatedBytes": 524289672, "isBaseline": false, "deltaMeanPct": -24.97420700361895, "deltaAllocPct": -66.66660037578487}, {"method": "Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 302031436.85, "stdDevNs": 6854418.119560446, "allocatedBytes": 524289944, "isBaseline": false, "deltaMeanPct": -22.71145660003028, "deltaAllocPct": -49.99989700334356}]}, {"name": "LargeFileStreamingBenchmarks", "description": "Encrypt/decrypt at 100 MiB\u20132 GiB with AES-GCM, ChaCha20-Poly1305, and AES-SIV-512. Stream methods use DeterministicPayloadStream input and NullingStream output; file methods use IOTemp paths. Decrypt setup reuses pre-encrypted IOTemp files.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}], "measurements": [{"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 78279543.94949494, "stdDevNs": 6637686.286839625, "allocatedBytes": 43944, "isBaseline": false, "deltaMeanPct": -1.0339179684629598, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 76481324.11666666, "stdDevNs": 3366706.3452948867, "allocatedBytes": 67224, "isBaseline": false, "deltaMeanPct": -3.1992676396374113, "deltaAllocPct": 0.3223495702005731}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 100334269.09375, "stdDevNs": 4621685.951068565, "allocatedBytes": 43960, "isBaseline": false, "deltaMeanPct": -2.3504860379772174, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 103961448.24489796, "stdDevNs": 7838939.907772069, "allocatedBytes": 66872, "isBaseline": false, "deltaMeanPct": -3.281630896746923, "deltaAllocPct": -0.4999404832758005}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "104857600"}, "meanNs": 1712584431.3333333, "stdDevNs": 14826842.5359551, "allocatedBytes": 105057976, "isBaseline": false, "deltaMeanPct": -1.7275125307907746, "deltaAllocPct": -0.005817401660594056}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "104857600"}, "meanNs": 1651565297.5666666, "stdDevNs": 13418197.585459683, "allocatedBytes": 105096888, "isBaseline": false, "deltaMeanPct": -5.281519215205539, "deltaAllocPct": 0.002968777368416365}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 571291218.4333333, "stdDevNs": 5775419.022852312, "allocatedBytes": 104893032, "isBaseline": false, "deltaMeanPct": -8.585613670565143, "deltaAllocPct": -0.002821842802153966}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 30589354.135416668, "stdDevNs": 1895296.2010668197, "allocatedBytes": 51432, "isBaseline": false, "deltaMeanPct": -18.929062114255306, "deltaAllocPct": 0.0}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 586205797.8571428, "stdDevNs": 3272357.1791765876, "allocatedBytes": 104893000, "isBaseline": false, "deltaMeanPct": -9.318029645488938, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 56365074.027472526, "stdDevNs": 3543385.268008595, "allocatedBytes": 51264, "isBaseline": false, "deltaMeanPct": -20.34077104562833, "deltaAllocPct": 0.06246096189881324}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "104857600"}, "meanNs": 2150129981.3333335, "stdDevNs": 11161349.04389395, "allocatedBytes": 209963576, "isBaseline": false, "deltaMeanPct": -10.946096506069638, "deltaAllocPct": -0.002895656503814056}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "104857600"}, "meanNs": 1624229816.3, "stdDevNs": 8544500.690742599, "allocatedBytes": 105084376, "isBaseline": false, "deltaMeanPct": -11.048679399296928, "deltaAllocPct": -0.007269819621692289}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 192004994.60215053, "stdDevNs": 10828622.735368963, "allocatedBytes": 88344, "isBaseline": false, "deltaMeanPct": -3.8285945288111085, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 193529800.23711342, "stdDevNs": 11648062.82630953, "allocatedBytes": 143840, "isBaseline": false, "deltaMeanPct": -1.361845202816999, "deltaAllocPct": -0.10556142007889327}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 270057583.4655172, "stdDevNs": 11702477.414082792, "allocatedBytes": 88360, "isBaseline": false, "deltaMeanPct": 5.030661116763538, "deltaAllocPct": -0.05429372907429192}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 265323323.9848485, "stdDevNs": 12422704.99790271, "allocatedBytes": 144192, "isBaseline": false, "deltaMeanPct": 1.1411421362399263, "deltaAllocPct": 0.10552624271035822}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "262144000"}, "meanNs": 4299996292.714286, "stdDevNs": 23784318.21245487, "allocatedBytes": 265830408, "isBaseline": false, "deltaMeanPct": -1.9450869165522273, "deltaAllocPct": 1.2005843592888648}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "262144000"}, "meanNs": 4230772600.714286, "stdDevNs": 18201521.267883264, "allocatedBytes": 262740880, "isBaseline": false, "deltaMeanPct": -2.3623560644082366, "deltaAllocPct": -0.01780601032151919}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 1400009037.3333333, "stdDevNs": 5126337.80961822, "allocatedBytes": 262243128, "isBaseline": false, "deltaMeanPct": -10.200924472750641, "deltaAllocPct": 0.0029378181949971795}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 74706117.05633803, "stdDevNs": 3624644.1011116076, "allocatedBytes": 116016, "isBaseline": false, "deltaMeanPct": -20.04144614869227, "deltaAllocPct": -0.05513439007580978}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 1456655616.0333333, "stdDevNs": 10353546.025526803, "allocatedBytes": 262235464, "isBaseline": false, "deltaMeanPct": -9.150291460248289, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 138001364.3, "stdDevNs": 4512850.975614045, "allocatedBytes": 116304, "isBaseline": false, "deltaMeanPct": -19.2391513243917, "deltaAllocPct": 0.17916207276736495}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "262144000"}, "meanNs": 5318286765.733334, "stdDevNs": 15307060.78194248, "allocatedBytes": 524907448, "isBaseline": false, "deltaMeanPct": -10.676248516441559, "deltaAllocPct": -0.017351667169576}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "262144000"}, "meanNs": 4005210007.642857, "stdDevNs": 13149320.573740937, "allocatedBytes": 262699312, "isBaseline": false, "deltaMeanPct": -13.374273044350915, "deltaAllocPct": 0.00018271874158922794}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 396910131.5970149, "stdDevNs": 18711386.505127717, "allocatedBytes": 162344, "isBaseline": false, "deltaMeanPct": -0.37476366296236063, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 366400811.0483871, "stdDevNs": 20651921.27001797, "allocatedBytes": 272360, "isBaseline": false, "deltaMeanPct": -6.351599313773994, "deltaAllocPct": 0.19128899352560327}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 504615675.21929824, "stdDevNs": 21682661.50888602, "allocatedBytes": 162360, "isBaseline": false, "deltaMeanPct": -2.9538097266862495, "deltaAllocPct": -0.029555194325402687}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 513812450.75, "stdDevNs": 25094314.682655033, "allocatedBytes": 271640, "isBaseline": false, "deltaMeanPct": -2.106039183932437, "deltaAllocPct": -0.3580127358628987}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "524288000"}, "meanNs": 8542106888.9, "stdDevNs": 18686581.50215771, "allocatedBytes": 525405504, "isBaseline": false, "deltaMeanPct": -2.8476041053257513, "deltaAllocPct": -0.002113370576972702}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "524288000"}, "meanNs": 8339018962.8, "stdDevNs": 34769454.850751646, "allocatedBytes": 525417320, "isBaseline": false, "deltaMeanPct": -3.863208018134469, "deltaAllocPct": -0.0229509597191096}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 2787434867.714286, "stdDevNs": 14378885.684670748, "allocatedBytes": 524474208, "isBaseline": false, "deltaMeanPct": -9.100305308089222, "deltaAllocPct": -0.5966993130361561}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 147630822, "stdDevNs": 3912321.837936713, "allocatedBytes": 224392, "isBaseline": false, "deltaMeanPct": -20.302041740546876, "deltaAllocPct": 0.16784515391757732}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 2852950065.866667, "stdDevNs": 13717197.188853044, "allocatedBytes": 524474176, "isBaseline": false, "deltaMeanPct": -10.456082402739169, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 277490948.0540541, "stdDevNs": 9341038.559711933, "allocatedBytes": 224272, "isBaseline": false, "deltaMeanPct": -18.12109554734283, "deltaAllocPct": 0.014270424545130217}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "524288000"}, "meanNs": 10570340290.766666, "stdDevNs": 34775938.0853418, "allocatedBytes": 1053021496, "isBaseline": false, "deltaMeanPct": -10.574289387563184, "deltaAllocPct": 0.2863204571399454}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "524288000"}, "meanNs": 8022794093.433333, "stdDevNs": 31499110.56214517, "allocatedBytes": 525476376, "isBaseline": false, "deltaMeanPct": -15.32520464595869, "deltaAllocPct": 0.002259334343162407}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 595104342.2619047, "stdDevNs": 21337336.576233156, "allocatedBytes": 236368, "isBaseline": false, "deltaMeanPct": 0.10181910696626804, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 543349129.060606, "stdDevNs": 33077515.06434331, "allocatedBytes": 399904, "isBaseline": false, "deltaMeanPct": -6.599972902155566, "deltaAllocPct": -0.06797009315901004}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 753495188.0588236, "stdDevNs": 23773019.16198632, "allocatedBytes": 236408, "isBaseline": false, "deltaMeanPct": -3.839987878398105, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 731351406.1071428, "stdDevNs": 20674769.268892672, "allocatedBytes": 400064, "isBaseline": false, "deltaMeanPct": -7.198720493581871, "deltaAllocPct": -0.03198464736926275}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "786432000"}, "meanNs": 12670028474.23077, "stdDevNs": 33229968.59380813, "allocatedBytes": 791194144, "isBaseline": false, "deltaMeanPct": -5.009297578806085, "deltaAllocPct": 0.3924195142990976}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "786432000"}, "meanNs": 12402210482.642857, "stdDevNs": 53455533.86081129, "allocatedBytes": 788199776, "isBaseline": false, "deltaMeanPct": -5.326973506044415, "deltaAllocPct": 0.0011205406592441132}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 4173129884.9333334, "stdDevNs": 13445536.650519827, "allocatedBytes": 786712920, "isBaseline": false, "deltaMeanPct": -2.7140867199460637, "deltaAllocPct": 1.2202673843791314e-05}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 217320582.2826087, "stdDevNs": 5480533.328362728, "allocatedBytes": 332048, "isBaseline": false, "deltaMeanPct": -4.175188175231348, "deltaAllocPct": -0.05538298538370777}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 4259311003.9, "stdDevNs": 27351335.37747148, "allocatedBytes": 786712888, "isBaseline": false, "deltaMeanPct": -4.261234494676612, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 410425903.64705884, "stdDevNs": 7306225.462770012, "allocatedBytes": 332240, "isBaseline": false, "deltaMeanPct": -5.2951553190928635, "deltaAllocPct": 0.04577100045771}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "786432000"}, "meanNs": 16125954562.285715, "stdDevNs": 29075803.79288561, "allocatedBytes": 1577962536, "isBaseline": false, "deltaMeanPct": -0.519898870795703, "deltaAllocPct": -0.0024273751337166587}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "786432000"}, "meanNs": 11925836350.133333, "stdDevNs": 41180858.319220506, "allocatedBytes": 788077168, "isBaseline": false, "deltaMeanPct": -3.6271183105219276, "deltaAllocPct": -0.027594756263589017}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 760346889.94, "stdDevNs": 30586825.937013783, "allocatedBytes": 317472, "isBaseline": false, "deltaMeanPct": -5.771505310620818, "deltaAllocPct": 0.007560293339381567}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 765752182.3241758, "stdDevNs": 42610335.29487959, "allocatedBytes": 540712, "isBaseline": false, "deltaMeanPct": -2.6135835120604596, "deltaAllocPct": -0.06210169892504916}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 1051571406.0784314, "stdDevNs": 42537202.557724394, "allocatedBytes": 317464, "isBaseline": false, "deltaMeanPct": -0.12134905599437851, "deltaAllocPct": -0.01511753886467283}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 1053896938.9827586, "stdDevNs": 45935621.70541761, "allocatedBytes": 540480, "isBaseline": false, "deltaMeanPct": -2.4600670214708145, "deltaAllocPct": -0.07838729238460058}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "1073741824"}, "meanNs": 17277857684.2, "stdDevNs": 72255804.18072917, "allocatedBytes": 1079134336, "isBaseline": false, "deltaMeanPct": -4.07474533505113, "deltaAllocPct": 0.28008989240897386}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "1073741824"}, "meanNs": 17524733631.8, "stdDevNs": 54248363.63920953, "allocatedBytes": 1076159936, "isBaseline": false, "deltaMeanPct": -0.6986598100739939, "deltaAllocPct": -0.02290064336664504}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 5513560252.5, "stdDevNs": 13537703.862615213, "allocatedBytes": 1074125256, "isBaseline": false, "deltaMeanPct": -5.540730918332469, "deltaAllocPct": 0.0}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 300040618.35, "stdDevNs": 5594994.253381314, "allocatedBytes": 450416, "isBaseline": false, "deltaMeanPct": -4.603870621105793, "deltaAllocPct": -0.0975921358482531}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 5770957871.214286, "stdDevNs": 20386076.351676684, "allocatedBytes": 1074154480, "isBaseline": false, "deltaMeanPct": -5.726749213332552, "deltaAllocPct": 0.0024868549902342715}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 556167164.8571428, "stdDevNs": 9496062.074307917, "allocatedBytes": 450616, "isBaseline": false, "deltaMeanPct": -4.671354656523527, "deltaAllocPct": -0.08337176712668962}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "1073741824"}, "meanNs": 21678324771.4, "stdDevNs": 33100905.143944126, "allocatedBytes": 2150153728, "isBaseline": false, "deltaMeanPct": -3.0673042828818557, "deltaAllocPct": -0.0024031192554906616}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "1073741824"}, "meanNs": 16512235984.833334, "stdDevNs": 52292468.649261124, "allocatedBytes": 1079211312, "isBaseline": false, "deltaMeanPct": -3.572926341465342, "deltaAllocPct": 0.27418868123512213}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 1121330095.08, "stdDevNs": 32245957.657404575, "allocatedBytes": 469000, "isBaseline": false, "deltaMeanPct": -5.901897446009164, "deltaAllocPct": -0.0051170089377089445}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 1083082157.4473684, "stdDevNs": 37101626.18421188, "allocatedBytes": 802672, "isBaseline": false, "deltaMeanPct": -0.17304767608548255, "deltaAllocPct": -0.16517412935323383}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 1503171964.5357144, "stdDevNs": 38037075.85812568, "allocatedBytes": 469064, "isBaseline": false, "deltaMeanPct": -5.408845520490383, "deltaAllocPct": -0.341639188224496}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 1484582189.25, "stdDevNs": 55623172.86711889, "allocatedBytes": 803080, "isBaseline": false, "deltaMeanPct": -4.670441883891926, "deltaAllocPct": 0.014944704593005878}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "1610612736"}, "meanNs": 25558577366.076923, "stdDevNs": 74739171.08804278, "allocatedBytes": 1613852176, "isBaseline": false, "deltaMeanPct": -4.498098225480845, "deltaAllocPct": -0.20732905029303422}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "1610612736"}, "meanNs": 25425561408.857143, "stdDevNs": 54511250.27527496, "allocatedBytes": 1614547256, "isBaseline": false, "deltaMeanPct": -4.126903297451363, "deltaAllocPct": 0.01919965513274266}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 8311705162.566667, "stdDevNs": 23085610.71999186, "allocatedBytes": 1611206664, "isBaseline": false, "deltaMeanPct": -3.3078260795163725, "deltaAllocPct": -0.00031578717035077834}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 447454863, "stdDevNs": 13040667.2364079, "allocatedBytes": 671816, "isBaseline": false, "deltaMeanPct": 1.7511553036485032, "deltaAllocPct": -0.06426199854815484}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 8666891620.633333, "stdDevNs": 17145207.66793264, "allocatedBytes": 1611233832, "isBaseline": false, "deltaMeanPct": -3.5848049712641883, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 848846896.9285715, "stdDevNs": 14877250.574645255, "allocatedBytes": 671832, "isBaseline": false, "deltaMeanPct": -1.7218650212574602, "deltaAllocPct": -0.07020633522930103}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "1610612736"}, "meanNs": 32328066777.533333, "stdDevNs": 56767437.70140167, "allocatedBytes": 3228460976, "isBaseline": false, "deltaMeanPct": -4.451625170391433, "deltaAllocPct": -0.0016609495896348124}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "1610612736"}, "meanNs": 24560439770.333332, "stdDevNs": 114386393.1982135, "allocatedBytes": 1617202376, "isBaseline": false, "deltaMeanPct": -3.3488256335533197, "deltaAllocPct": 0.1643297096890189}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 1523544033.551948, "stdDevNs": 136295560.05026373, "allocatedBytes": 620552, "isBaseline": false, "deltaMeanPct": -8.602157501102585, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 1438853831.304878, "stdDevNs": 51429186.449499644, "allocatedBytes": 1065152, "isBaseline": false, "deltaMeanPct": -9.502468742089217, "deltaAllocPct": -0.14549490767823126}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 2015938124.9, "stdDevNs": 75455821.9826133, "allocatedBytes": 620568, "isBaseline": false, "deltaMeanPct": -21.413612769770623, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 1983522116, "stdDevNs": 51455557.731742196, "allocatedBytes": 1065008, "isBaseline": false, "deltaMeanPct": -23.069148126427216, "deltaAllocPct": -0.030037697310124203}, {"method": "EncryptFile_AesSiv512", "parameters": {"DataSize": "2147483648"}, "meanNs": 34322239258.566666, "stdDevNs": 119255743.40418714, "allocatedBytes": 2154990944, "isBaseline": false, "deltaMeanPct": -15.38623728702846, "deltaAllocPct": -0.04861915330155093}, {"method": "DecryptFile_AesSiv512", "parameters": {"DataSize": "2147483648"}, "meanNs": 33795078404.666668, "stdDevNs": 113890043.85548294, "allocatedBytes": 2152417552, "isBaseline": false, "deltaMeanPct": -16.319505075947603, "deltaAllocPct": -0.027706646488814417}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 11245629363.642857, "stdDevNs": 36149646.32939381, "allocatedBytes": 2148413024, "isBaseline": false, "deltaMeanPct": -3.520677909107545, "deltaAllocPct": -0.14169827565893522}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 566311323.6666666, "stdDevNs": 9819420.387831962, "allocatedBytes": 894048, "isBaseline": false, "deltaMeanPct": 0.2457892881008089, "deltaAllocPct": -0.000894798536109595}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 11571615427.714285, "stdDevNs": 32317810.08189085, "allocatedBytes": 2148312208, "isBaseline": false, "deltaMeanPct": -3.4388469398646704, "deltaAllocPct": -0.0046181098690713344}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 1098280771.5, "stdDevNs": 16587498.446190841, "allocatedBytes": 893456, "isBaseline": false, "deltaMeanPct": -1.9751914755943099, "deltaAllocPct": 0.02776508943045741}, {"method": "EncryptStream_AesSiv512", "parameters": {"DataSize": "2147483648"}, "meanNs": 43783539348.96667, "stdDevNs": 63819080.53252555, "allocatedBytes": 4303319968, "isBaseline": false, "deltaMeanPct": -3.0730076443145617, "deltaAllocPct": -0.026263422229035552}, {"method": "DecryptStream_AesSiv512", "parameters": {"DataSize": "2147483648"}, "meanNs": 33168117657.166668, "stdDevNs": 79109380.60684693, "allocatedBytes": 2152727736, "isBaseline": false, "deltaMeanPct": -1.7757271969745057, "deltaAllocPct": -0.0021780264165729966}]}, {"name": "RsaEncryptionBenchmarks", "description": "RSA-only encrypt/decrypt (2048-bit, OAEP-SHA256) of fixed 1 KB / 64 KB / 1 MB seeded buffers; payloads beyond one RSA block use automatic chunking, so this measures asymmetric-only cost. PEM keys live under the suite IOTemp session.", "parameters": [], "measurements": [{"method": "Encrypt_1KB", "parameters": {}, "meanNs": 116963.22727272728, "stdDevNs": 6422.694959707688, "allocatedBytes": 8656, "isBaseline": false, "deltaMeanPct": -38.770889212746404, "deltaAllocPct": 0.0}, {"method": "Encrypt_64KB", "parameters": {}, "meanNs": 6256946.928571428, "stdDevNs": 40926.88261628062, "allocatedBytes": 523240, "isBaseline": false, "deltaMeanPct": -1.8374012683304723, "deltaAllocPct": 0.0}, {"method": "Encrypt_1MB", "parameters": {}, "meanNs": 100719195.9, "stdDevNs": 1150927.703219066, "allocatedBytes": 8367744, "isBaseline": false, "deltaMeanPct": -4.408539462084261, "deltaAllocPct": 0.0008604543772748263}, {"method": "Decrypt_1KB", "parameters": {}, "meanNs": 2703619.5384615385, "stdDevNs": 125029.89086452946, "allocatedBytes": 6136, "isBaseline": false, "deltaMeanPct": -2.057360741550628, "deltaAllocPct": 0.0}, {"method": "Decrypt_64KB", "parameters": {}, "meanNs": 154901282.53846154, "stdDevNs": 777570.9906177501, "allocatedBytes": 368056, "isBaseline": false, "deltaMeanPct": -4.254619942301656, "deltaAllocPct": 0.0}, {"method": "Decrypt_1MB", "parameters": {}, "meanNs": 2463898578.3846154, "stdDevNs": 8169797.849229406, "allocatedBytes": 5883568, "isBaseline": false, "deltaMeanPct": -3.7925112877417684, "deltaAllocPct": 0.0}]}, {"name": "TwoKeyEncryptionBenchmarks", "description": "Envelope (two-key DEK/KEK) encrypt/decrypt at 100 MiB\u20132 GiB with AES-GCM and ChaCha20-Poly1305. Stream methods use DeterministicPayloadStream + NullingStream; file methods use IOTemp paths (EncryptToFileAsync / DecryptToStreamAsync to file).", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}], "measurements": [{"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 76461069.01052631, "stdDevNs": 5089240.11312449, "allocatedBytes": 44928, "isBaseline": false, "deltaMeanPct": -3.231782796583548, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 75704198.73958333, "stdDevNs": 4624638.218491663, "allocatedBytes": 67528, "isBaseline": false, "deltaMeanPct": -3.2272173900896837, "deltaAllocPct": 0.0}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 100926213.05555555, "stdDevNs": 6238049.573698456, "allocatedBytes": 44944, "isBaseline": false, "deltaMeanPct": -1.8280809937693758, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 103467434.06060606, "stdDevNs": 6514064.839773728, "allocatedBytes": 67760, "isBaseline": false, "deltaMeanPct": -2.214904307957072, "deltaAllocPct": -0.4934210526315789}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 581302340.6428572, "stdDevNs": 2377309.403621718, "allocatedBytes": 104894024, "isBaseline": false, "deltaMeanPct": -0.17154544785187023, "deltaAllocPct": 0.0}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "104857600"}, "meanNs": 30959612.31632653, "stdDevNs": 2524913.4497346506, "allocatedBytes": 52272, "isBaseline": false, "deltaMeanPct": -1.9187307657778203, "deltaAllocPct": -0.0611807892321811}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 599449032.2, "stdDevNs": 5304344.083562738, "allocatedBytes": 104894040, "isBaseline": false, "deltaMeanPct": -3.141470042880875, "deltaAllocPct": -0.0024557512894410245}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "104857600"}, "meanNs": 56458178.85057471, "stdDevNs": 3088855.1197928237, "allocatedBytes": 52104, "isBaseline": false, "deltaMeanPct": -5.490203277018524, "deltaAllocPct": -0.41284403669724773}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 191536524.1309524, "stdDevNs": 10278952.24877826, "allocatedBytes": 89328, "isBaseline": false, "deltaMeanPct": -2.195625134251163, "deltaAllocPct": -0.17879492222420884}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 188689185.66265061, "stdDevNs": 10031849.74072088, "allocatedBytes": 144760, "isBaseline": false, "deltaMeanPct": -1.593782577817448, "deltaAllocPct": 0.0}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 249737420.36, "stdDevNs": 9986080.300732672, "allocatedBytes": 89344, "isBaseline": false, "deltaMeanPct": -2.348590170461582, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 252901654.39583334, "stdDevNs": 9844248.293143943, "allocatedBytes": 144776, "isBaseline": false, "deltaMeanPct": -3.1722898020389523, "deltaAllocPct": -0.1489737364820128}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 1436884447.1333334, "stdDevNs": 5623076.11091429, "allocatedBytes": 262236488, "isBaseline": false, "deltaMeanPct": -0.7950930858275793, "deltaAllocPct": 0.0}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "262144000"}, "meanNs": 74537160.15625, "stdDevNs": 3355971.6009575855, "allocatedBytes": 116952, "isBaseline": false, "deltaMeanPct": -3.1567506540118306, "deltaAllocPct": -0.18435067595247848}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 1473388129.7666667, "stdDevNs": 13048939.257989699, "allocatedBytes": 262236504, "isBaseline": false, "deltaMeanPct": -2.0484559586833107, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "262144000"}, "meanNs": 139231222.76666668, "stdDevNs": 3867459.607633758, "allocatedBytes": 117120, "isBaseline": false, "deltaMeanPct": -5.0304740756465565, "deltaAllocPct": -0.027314941272876262}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 383684556.40140843, "stdDevNs": 18658278.06715386, "allocatedBytes": 163328, "isBaseline": false, "deltaMeanPct": -0.28161005031246994, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 379923574.1636364, "stdDevNs": 16141645.244881738, "allocatedBytes": 272912, "isBaseline": false, "deltaMeanPct": 1.1892222335975628, "deltaAllocPct": 0.011726766344180593}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 502440961.64, "stdDevNs": 20114579.021347225, "allocatedBytes": 164392, "isBaseline": false, "deltaMeanPct": -1.5163199786862007, "deltaAllocPct": 0.6415907532569302}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 511956298.5681818, "stdDevNs": 19085311.469612814, "allocatedBytes": 272560, "isBaseline": false, "deltaMeanPct": -2.574852403993652, "deltaAllocPct": 0.011741912757588211}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 2778365911.9333334, "stdDevNs": 17732864.556235984, "allocatedBytes": 524475200, "isBaseline": false, "deltaMeanPct": -4.008960464273882, "deltaAllocPct": 0.0}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "524288000"}, "meanNs": 143499478.07894737, "stdDevNs": 3052873.0048139594, "allocatedBytes": 225072, "isBaseline": false, "deltaMeanPct": -3.9230286413614714, "deltaAllocPct": -0.014215651432226882}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 2895328827.0384617, "stdDevNs": 9234584.544249123, "allocatedBytes": 524475216, "isBaseline": false, "deltaMeanPct": -2.484163565513376, "deltaAllocPct": -0.002667738398918591}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "524288000"}, "meanNs": 275636683.0862069, "stdDevNs": 7843475.289805654, "allocatedBytes": 224904, "isBaseline": false, "deltaMeanPct": -5.032900189208108, "deltaAllocPct": 0.014230317691842471}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 555383940.7142857, "stdDevNs": 9290360.315262897, "allocatedBytes": 237440, "isBaseline": false, "deltaMeanPct": -5.064082273641868, "deltaAllocPct": 0.04719207173194903}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 568554357.983871, "stdDevNs": 25519823.32405985, "allocatedBytes": 400576, "isBaseline": false, "deltaMeanPct": -0.36334316812071227, "deltaAllocPct": -0.22914300516069902}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 741100772.1, "stdDevNs": 19159435.89052424, "allocatedBytes": 237344, "isBaseline": false, "deltaMeanPct": -3.182746148554854, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 757388459, "stdDevNs": 17238256.688972984, "allocatedBytes": 400744, "isBaseline": false, "deltaMeanPct": -3.2735332342270156, "deltaAllocPct": -0.045893527017319816}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 4116764895.5666666, "stdDevNs": 17482818.492614392, "allocatedBytes": 786713912, "isBaseline": false, "deltaMeanPct": -2.635048416143607, "deltaAllocPct": 0.0}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "786432000"}, "meanNs": 221027459.80952382, "stdDevNs": 5253153.644368139, "allocatedBytes": 333072, "isBaseline": false, "deltaMeanPct": -2.071202161638006, "deltaAllocPct": 0.05527384585806638}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 4315561361.3, "stdDevNs": 28887229.879732564, "allocatedBytes": 789862248, "isBaseline": false, "deltaMeanPct": -2.229428622182836, "deltaAllocPct": 0.3974265548380862}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "786432000"}, "meanNs": 414531588.8684211, "stdDevNs": 9189346.946645701, "allocatedBytes": 333088, "isBaseline": false, "deltaMeanPct": -4.907093414144106, "deltaAllocPct": 0.04565442006872192}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 772827838.4, "stdDevNs": 31491523.538259476, "allocatedBytes": 318432, "isBaseline": false, "deltaMeanPct": -3.3501612819488913, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 730524741.2272727, "stdDevNs": 26952070.83252046, "allocatedBytes": 540984, "isBaseline": false, "deltaMeanPct": -5.636880246063149, "deltaAllocPct": 0.0}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 1014026482.5666667, "stdDevNs": 30251860.691911515, "allocatedBytes": 318448, "isBaseline": false, "deltaMeanPct": -3.86405033231279, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 992905607.0714285, "stdDevNs": 28062077.88217382, "allocatedBytes": 541184, "isBaseline": false, "deltaMeanPct": -7.790670597417428, "deltaAllocPct": -0.017735737511084836}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 5600515208.466666, "stdDevNs": 24925373.178531483, "allocatedBytes": 1074126248, "isBaseline": false, "deltaMeanPct": -4.252797979711631, "deltaAllocPct": -0.0027236279934380898}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "1073741824"}, "meanNs": 300206684.38461536, "stdDevNs": 8081726.652852438, "allocatedBytes": 451440, "isBaseline": false, "deltaMeanPct": -2.3363176146924185, "deltaAllocPct": 0.04077508110695481}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 5964072815.233334, "stdDevNs": 27736133.34885394, "allocatedBytes": 1074126264, "isBaseline": false, "deltaMeanPct": -2.5691187028134124, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "1073741824"}, "meanNs": 559229900.5, "stdDevNs": 12279777.498003302, "allocatedBytes": 451520, "isBaseline": false, "deltaMeanPct": -6.0353311024127505, "deltaAllocPct": 0.033675404547952}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 1126005737.0270271, "stdDevNs": 38085818.07284109, "allocatedBytes": 470144, "isBaseline": false, "deltaMeanPct": -5.52020436709214, "deltaAllocPct": 0.03404371212637026}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 1050449165.0135136, "stdDevNs": 35657986.59727437, "allocatedBytes": 804080, "isBaseline": false, "deltaMeanPct": -3.234402916424503, "deltaAllocPct": 0.0338389267088658}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 1524432028.6891892, "stdDevNs": 50568579.95549325, "allocatedBytes": 470000, "isBaseline": false, "deltaMeanPct": -2.6050913754821883, "deltaAllocPct": 0.0}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 1493990727.0882354, "stdDevNs": 47984429.59030372, "allocatedBytes": 803544, "isBaseline": false, "deltaMeanPct": -2.9318386595264907, "deltaAllocPct": -0.1570560928817805}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 8346454889.366667, "stdDevNs": 34690315.959488876, "allocatedBytes": 1611264568, "isBaseline": false, "deltaMeanPct": -2.8148559144010936, "deltaAllocPct": 0.003186170457170128}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "1610612736"}, "meanNs": 402950608.25, "stdDevNs": 7870012.854728826, "allocatedBytes": 672984, "isBaseline": false, "deltaMeanPct": -10.459581829568036, "deltaAllocPct": 0.0666135344427659}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 8733242446.5, "stdDevNs": 25046427.08524302, "allocatedBytes": 1611234384, "isBaseline": false, "deltaMeanPct": -4.811131095531634, "deltaAllocPct": 0.0}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "1610612736"}, "meanNs": 801178876.875, "stdDevNs": 16431826.693921711, "allocatedBytes": 672672, "isBaseline": false, "deltaMeanPct": -8.679773895026917, "deltaAllocPct": -0.0047569213205213585}, {"method": "EncryptFile_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 1506355179.2463768, "stdDevNs": 72132799.35029629, "allocatedBytes": 621536, "isBaseline": false, "deltaMeanPct": -5.066548808390606, "deltaAllocPct": 0.0}, {"method": "DecryptFile_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 1402582444.4605262, "stdDevNs": 74579283.15996644, "allocatedBytes": 1066656, "isBaseline": false, "deltaMeanPct": -5.707117667389317, "deltaAllocPct": 0.01950399831965553}, {"method": "EncryptFile_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 1973790337.45, "stdDevNs": 43321767.25469847, "allocatedBytes": 621672, "isBaseline": false, "deltaMeanPct": -4.115107270602213, "deltaAllocPct": 0.0012868687908580841}, {"method": "DecryptFile_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 1971822034.2868853, "stdDevNs": 87964099.10760675, "allocatedBytes": 1065416, "isBaseline": false, "deltaMeanPct": -6.909082422289916, "deltaAllocPct": -0.04353210492738395}, {"method": "EncryptStream_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 11325651580.73077, "stdDevNs": 39800830.27474446, "allocatedBytes": 2148412448, "isBaseline": false, "deltaMeanPct": -0.6776718690649057, "deltaAllocPct": -0.14001029412759397}, {"method": "DecryptStream_AesGcm", "parameters": {"DataSize": "2147483648"}, "meanNs": 508308550.1052632, "stdDevNs": 11044723.236582933, "allocatedBytes": 894160, "isBaseline": false, "deltaMeanPct": -12.035020218820327, "deltaAllocPct": 0.05281485261075453}, {"method": "EncryptStream_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 11866227435.433332, "stdDevNs": 52730498.45980581, "allocatedBytes": 2148314328, "isBaseline": false, "deltaMeanPct": -2.7074851770715105, "deltaAllocPct": -0.1466580774866359}, {"method": "DecryptStream_ChaCha", "parameters": {"DataSize": "2147483648"}, "meanNs": 1046339497.2666667, "stdDevNs": 19210773.647724684, "allocatedBytes": 2991136, "isBaseline": false, "deltaMeanPct": -8.559267740346288, "deltaAllocPct": 234.41139115968733}]}, {"name": "XChaCha20Poly1305EncryptionBenchmarks", "description": "XChaCha20-Poly1305 (24-byte nonce, explicit key) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Encrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 175710098.66666666, "stdDevNs": 2167050.304461497, "allocatedBytes": 104859720, "isBaseline": false, "deltaMeanPct": -24.90181349327586, "deltaAllocPct": -79.99972442804399}, {"method": "Decrypt", "parameters": {"DataSize": "104857600"}, "meanNs": 180917398.2857143, "stdDevNs": 2467938.726279583, "allocatedBytes": 104859672, "isBaseline": false, "deltaMeanPct": -7.856864236233307, "deltaAllocPct": -74.99962949935836}, {"method": "Encrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 425601170.73333335, "stdDevNs": 4433377.576750701, "allocatedBytes": 262146152, "isBaseline": false, "deltaMeanPct": -28.070117716629817, "deltaAllocPct": -79.99988732939175}, {"method": "Decrypt", "parameters": {"DataSize": "262144000"}, "meanNs": 433029414.85714287, "stdDevNs": 6152550.896800584, "allocatedBytes": 262146072, "isBaseline": false, "deltaMeanPct": -9.84607170419554, "deltaAllocPct": -74.99985179930407}, {"method": "Encrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 851710690.5, "stdDevNs": 7920317.634058255, "allocatedBytes": 524290120, "isBaseline": false, "deltaMeanPct": -28.074196086871805, "deltaAllocPct": -79.99994488532488}, {"method": "Decrypt", "parameters": {"DataSize": "524288000"}, "meanNs": 864236919, "stdDevNs": 6204756.544217481, "allocatedBytes": 524290072, "isBaseline": false, "deltaMeanPct": -10.523703899135157, "deltaAllocPct": -74.99992589957883}]}], "comparison": {"baseline": "AesGcm", "description": "Encrypts and decrypts the same seeded deterministic buffer with AES-GCM, AES-SIV, ChaCha20-Poly1305, and XChaCha20-Poly1305 to compare throughput at each payload size. Decrypt cases reuse a ciphertext produced once in setup. AES-CCM is covered separately (packet-size limit).", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded plaintext/ciphertext buffer (100 MiB, 250 MiB, 500 MiB)."}], "groups": [{"axis": "Encrypt", "rows": [{"algorithm": "AesGcm", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 25090152.829545453, "allocatedBytes": 104859328, "ratioToBaseline": 1, "throughputMbps": 4179.233212024227, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -48.583916202390284, "deltaAllocPct": -66.6663360617395}, {"algorithm": "AesSiv", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 1574464523.5625, "allocatedBytes": 104860400, "ratioToBaseline": 62.75228908563901, "throughputMbps": 66.59889659675623, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -6.1803826571648415, "deltaAllocPct": -74.99952793490499}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 58368176.8125, "allocatedBytes": 104859248, "ratioToBaseline": 2.3263380342493285, "throughputMbps": 1796.4857860275656, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -24.553151080516677, "deltaAllocPct": -66.66634284319785}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 170661375.6, "allocatedBytes": 104859720, "ratioToBaseline": 6.801926507160769, "throughputMbps": 614.419048430546, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -28.409388523839024, "deltaAllocPct": -79.99972442804399}, {"algorithm": "AesGcm", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 64050565.85483871, "allocatedBytes": 262145728, "ratioToBaseline": 1, "throughputMbps": 4092.766340177404, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -48.09047359492196, "deltaAllocPct": -66.6665344241752}, {"algorithm": "AesSiv", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 3920555423.5, "allocatedBytes": 262146768, "ratioToBaseline": 61.210316742327755, "throughputMbps": 66.86399545041402, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -6.769442790591724, "deltaAllocPct": -74.99981346188152}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 147529394.90625, "allocatedBytes": 262145672, "ratioToBaseline": 2.3033269564019765, "throughputMbps": 1776.893344994628, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -27.19902499396096, "deltaAllocPct": -66.66653408506221}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 414020595.71428573, "allocatedBytes": 262146120, "ratioToBaseline": 6.463964684599403, "throughputMbps": 633.1665687977144, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -30.585579360257775, "deltaAllocPct": -79.99988977079173}, {"algorithm": "AesGcm", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 129174398.33333333, "allocatedBytes": 524289776, "ratioToBaseline": 1, "throughputMbps": 4058.760921394654, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -47.54431360346018, "deltaAllocPct": -66.66659596770022}, {"algorithm": "AesSiv", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 7830762640.611111, "allocatedBytes": 524290768, "ratioToBaseline": 60.62163045965115, "throughputMbps": 66.95235496999877, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -8.62923749335091, "deltaAllocPct": -74.99990673079631}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 307107454.07894737, "allocatedBytes": 524289720, "ratioToBaseline": 2.3774637857144065, "throughputMbps": 1707.1809656082871, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -27.247928767745012, "deltaAllocPct": -66.66659732403072}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 841094687.7857143, "allocatedBytes": 524290120, "ratioToBaseline": 6.511311054186429, "throughputMbps": 623.340044365579, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -29.496372641352604, "deltaAllocPct": -79.99994488532488}]}, {"axis": "Decrypt", "rows": [{"algorithm": "AesGcm", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 25972374.64285714, "allocatedBytes": 104859616, "ratioToBaseline": 1, "throughputMbps": 4037.2742747586108, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -39.41931658122715, "deltaAllocPct": -49.999475483707975}, {"algorithm": "AesSiv", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 1568078270.1333334, "allocatedBytes": 104860632, "ratioToBaseline": 60.37485180680552, "throughputMbps": 66.87013141957766, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -5.756824744937726, "deltaAllocPct": -66.66604106266317}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 56472724.64814815, "allocatedBytes": 104859512, "ratioToBaseline": 2.174338135218573, "throughputMbps": 1856.783086938209, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -23.243628283264336, "deltaAllocPct": -49.999494556719185}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 174599397.64285713, "allocatedBytes": 104859672, "ratioToBaseline": 6.7225042008577, "throughputMbps": 600.5610638731188, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -10.943036139906901, "deltaAllocPct": -74.99962663830682}, {"algorithm": "AesGcm", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 65790499.93548387, "allocatedBytes": 262146016, "ratioToBaseline": 1, "throughputMbps": 3984.52664529174, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -39.719752676061766, "deltaAllocPct": -49.999790192383514}, {"algorithm": "AesSiv", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 3892893048.4, "allocatedBytes": 262147032, "ratioToBaseline": 59.17105132530513, "throughputMbps": 67.33912202076617, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -7.31274766405507, "deltaAllocPct": -66.66641642354175}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 149939949.47560975, "allocatedBytes": 262145912, "ratioToBaseline": 2.2790516810579846, "throughputMbps": 1748.3265861887069, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -19.397004552656334, "deltaAllocPct": -49.99980468816161}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 425130670.0714286, "allocatedBytes": 262146072, "ratioToBaseline": 6.461885386010509, "throughputMbps": 616.6198264546657, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -12.909378077711322, "deltaAllocPct": -74.99985179930407}, {"algorithm": "AesGcm", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 133851293.38235295, "allocatedBytes": 524290016, "ratioToBaseline": 1, "throughputMbps": 3916.94384679829, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -39.06773267676816, "deltaAllocPct": -49.99989509600848}, {"algorithm": "AesSiv", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 7735525285.633333, "allocatedBytes": 524291032, "ratioToBaseline": 57.79193528998197, "throughputMbps": 67.7766513120608, "slaTarget": ">= 35 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -8.052206780615382, "deltaAllocPct": -66.66654154485028}, {"algorithm": "ChaCha20Poly1305", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 304273392.5, "allocatedBytes": 524289912, "ratioToBaseline": 2.2732196664758986, "throughputMbps": 1723.0819812810282, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -21.425666705970638, "deltaAllocPct": -49.99990386979466}, {"algorithm": "XChaCha20Poly1305", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 856216231.1666666, "allocatedBytes": 524290072, "ratioToBaseline": 6.396772190469926, "throughputMbps": 612.331302439354, "slaTarget": ">= 300 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -12.67304598967117, "deltaAllocPct": -74.99992589957883}]}]}, "slo": [{"area": "AesGcm_Decrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "25.97 ms (4037 MB/s)", "result": "Exceeds"}, {"area": "AesGcm_Encrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "25.09 ms (4179 MB/s)", "result": "Exceeds"}, {"area": "AesSiv_Decrypt", "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "latest": "1568.08 ms (67 MB/s)", "result": "Exceeds"}, {"area": "AesSiv_Encrypt", "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.", "latest": "1574.46 ms (67 MB/s)", "result": "Exceeds"}, {"area": "ChaCha20Poly1305_Decrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "56.47 ms (1857 MB/s)", "result": "Exceeds"}, {"area": "ChaCha20Poly1305_Encrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "58.37 ms (1796 MB/s)", "result": "Exceeds"}, {"area": "XChaCha20Poly1305_Decrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "174.6 ms (601 MB/s)", "result": "Exceeds"}, {"area": "XChaCha20Poly1305_Encrypt", "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.", "latest": "170.66 ms (614 MB/s)", "result": "Exceeds"}], "grades": [{"category": "AlgorithmComparisonBenchmarks", "grade": "A", "rationale": "24 exceed of 24 SLA targets vs declared standards"}], "schema": "lyo.bench/v1", "name": "encryption", "title": "Encryption", "description": "Symmetric authenticated-encryption throughput for Lyo.Encryption: AES-GCM/CCM/SIV and ChaCha20-Poly1305/XChaCha20-Poly1305, encrypt and decrypt. Buffered suites use seeded deterministic buffers at 100/250/500 MiB. Large suites (100 MiB\u20132 GiB) cover stream APIs (DeterministicPayloadStream \u2192 NullingStream) and file APIs (IOTemp paths) with a shared PayloadSeed.", "runId": "BenchmarkRun-joined-2026-08-05-19-53-07", "generatedAt": "2026-08-05T19:53:10.3437108+00:00", "runStarted": "2026-08-05T12:41:31.5423938+00:00", "runEnded": "2026-08-05T19:53:10.3437108+00:00", "durationSeconds": 25898.801317, "environment": {"tool": "BenchmarkDotNet", "toolVersion": "0.15.8", "runtime": ".NET 10.0.0", "cpu": "Intel(R) Core(TM) Ultra 7 155U", "os": "Ubuntu 24.04.3 LTS", "architecture": "X64", "logicalCores": 14, "physicalCores": 12, "memoryBytes": 6442450944, "gcMode": "Workstation", "configuration": "Release", "dotnetSdkVersion": "10.0.100", "dependencies": {"BenchmarkDotNet": "0.15.8", "BouncyCastle.Cryptography": "2.6.2", "Dorssel.Security.Cryptography.AesExtra": "2.0.0", "Konscious.Security.Cryptography.Argon2": "1.3.1", "Microsoft.Extensions.Configuration.Binder": "10.0.5", "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5", "Microsoft.Extensions.Hosting.Abstractions": "10.0.5", "Microsoft.Extensions.Logging.Abstractions": "10.0.5", "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5", "System.IO.Hashing": "10.0.5", "Testcontainers.Redis": "4.13.0"}}, "notes": [], "history": [{"file": "20260629T020706Z_BenchmarkRun-joined-2026-06-28-22-07-05.json", "runId": "BenchmarkRun-joined-2026-06-28-22-07-05", "runStarted": null, "runEnded": null, "generatedAt": "2026-06-29T02:07:06.0651917+00:00", "isCurrent": false, "measurementCount": 107, "medianMeanNs": 8635289.955357144}, {"file": "20260704T120324Z_BenchmarkRun-joined-2026-07-04-12-03-24.json", "runId": "BenchmarkRun-joined-2026-07-04-12-03-24", "runStarted": "2026-07-04T08:00:40.9707287+00:00", "runEnded": "2026-07-04T12:03:24.9964364+00:00", "generatedAt": "2026-07-04T12:03:24.9964364+00:00", "isCurrent": false, "measurementCount": 114, "medianMeanNs": 8632544.783333333}, {"file": "20260708T120022Z_BenchmarkRun-joined-2026-07-08-12-00-21.json", "runId": "BenchmarkRun-joined-2026-07-08-12-00-21", "runStarted": "2026-07-08T07:16:44.0065616+00:00", "runEnded": "2026-07-08T12:00:22.3545472+00:00", "generatedAt": "2026-07-08T12:00:22.3545472+00:00", "isCurrent": false, "measurementCount": 114, "medianMeanNs": 9008280.4765625}, {"file": "20260729T120511Z_BenchmarkRun-joined-2026-07-29-12-05-11.json", "runId": "BenchmarkRun-joined-2026-07-29-12-05-11", "runStarted": "2026-07-29T08:10:42.6717941+00:00", "runEnded": "2026-07-29T12:05:11.6436608+00:00", "generatedAt": "2026-07-29T12:05:11.6436608+00:00", "isCurrent": false, "measurementCount": 114, "medianMeanNs": 9094231.978125}, {"file": "20260801T003919Z_BenchmarkRun-joined-2026-08-01-00-39-16.json", "runId": "BenchmarkRun-joined-2026-08-01-00-39-16", "runStarted": "2026-07-31T15:29:30.4090738+00:00", "runEnded": "2026-08-01T00:39:19.0253023+00:00", "generatedAt": "2026-08-01T00:39:19.0253023+00:00", "isCurrent": false, "measurementCount": 206, "medianMeanNs": 709593812.7619047}, {"file": "20260802T005600Z_BenchmarkRun-joined-2026-08-02-00-55-59.json", "runId": "BenchmarkRun-joined-2026-08-02-00-55-59", "runStarted": "2026-08-01T16:31:47.9723167+00:00", "runEnded": "2026-08-02T00:56:00.9791363+00:00", "generatedAt": "2026-08-02T00:56:00.9791363+00:00", "isCurrent": false, "measurementCount": 206, "medianMeanNs": 624946730.3478261}, {"file": "20260805T195310Z_BenchmarkRun-joined-2026-08-05-19-53-07.json", "runId": "BenchmarkRun-joined-2026-08-05-19-53-07", "runStarted": "2026-08-05T12:41:31.5423938+00:00", "runEnded": "2026-08-05T19:53:10.3437108+00:00", "generatedAt": "2026-08-05T19:53:10.3437108+00:00", "isCurrent": true, "measurementCount": 206, "medianMeanNs": 595104342.2619047}], "deltaBaseline": {"kind": "previousRun", "runId": "BenchmarkRun-joined-2026-08-02-00-55-59", "runStarted": "2026-08-01T16:31:47.9723167+00:00", "runEnded": "2026-08-02T00:56:00.9791363+00:00"}};
+window.LyoBench = window.LyoBench || {reports: {}, history: {}, historyIndex: {}};
+window.LyoBench.reports["encryption"] = {
+    "type": "micro",
+    "groups": [{
+        "name": "AesCcmEncryptionBenchmarks",
+        "description": "AES-CCM encrypt and decrypt of seeded deterministic buffers (1 / 4 / 15 MiB). Single-shot CCM with a 12-byte nonce cannot exceed ~16 MiB per packet; use streaming benches for larger payloads.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 1, 4, or 15 MiB (CCM packet limit)."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "1048576"},
+            "meanNs": 11541569.58064516,
+            "stdDevNs": 212773.4491203847,
+            "allocatedBytes": 2101992,
+            "isBaseline": false,
+            "deltaMeanPct": -15.468045178302607,
+            "deltaAllocPct": -59.95284248261314
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "1048576"},
+            "meanNs": 11308227.033333333,
+            "stdDevNs": 331060.37106334895,
+            "allocatedBytes": 2102176,
+            "isBaseline": false,
+            "deltaMeanPct": -4.40373080592738,
+            "deltaAllocPct": -33.27594656428461
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "4194304"},
+            "meanNs": 46612322.192307696,
+            "stdDevNs": 489742.0249307085,
+            "allocatedBytes": 8393376,
+            "isBaseline": false,
+            "deltaMeanPct": -13.900796475405864,
+            "deltaAllocPct": -59.988543878964784
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "4194304"},
+            "meanNs": 46875975.875,
+            "stdDevNs": 887878.9863650621,
+            "allocatedBytes": 8393560,
+            "isBaseline": false,
+            "deltaMeanPct": -3.8893640109899144,
+            "deltaAllocPct": -33.31916072751863
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "15728640"},
+            "meanNs": 175308873.7,
+            "stdDevNs": 1730335.2580404014,
+            "allocatedBytes": 31462048,
+            "isBaseline": false,
+            "deltaMeanPct": -4.298452674773897,
+            "deltaAllocPct": -59.99696881695876
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "15728640"},
+            "meanNs": 171425237.26666668,
+            "stdDevNs": 1032533.6042888778,
+            "allocatedBytes": 31462240,
+            "isBaseline": false,
+            "deltaMeanPct": -4.671269838185509,
+            "deltaAllocPct": -33.32954727501278
+        }]
+    }, {
+        "name": "AesGcmEncryptionBenchmarks",
+        "description": "AES-GCM encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 25358630.783333335,
+            "stdDevNs": 1130358.1265664059,
+            "allocatedBytes": 104859328,
+            "isBaseline": false,
+            "deltaMeanPct": -48.92508462591443,
+            "deltaAllocPct": -66.6663360617395
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 26071458.484375,
+            "stdDevNs": 1202224.4010891009,
+            "allocatedBytes": 104859616,
+            "isBaseline": false,
+            "deltaMeanPct": -39.752662116921954,
+            "deltaAllocPct": -49.999475483707975
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 64389558.77027027,
+            "stdDevNs": 2183836.6215036763,
+            "allocatedBytes": 262145728,
+            "isBaseline": false,
+            "deltaMeanPct": -49.988958923245896,
+            "deltaAllocPct": -66.66652933790456
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 67472250.84482759,
+            "stdDevNs": 1972588.4074459171,
+            "allocatedBytes": 262146016,
+            "isBaseline": false,
+            "deltaMeanPct": -38.68788975841764,
+            "deltaAllocPct": -49.999790192383514
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 131181209.33333333,
+            "stdDevNs": 2195858.999805207,
+            "allocatedBytes": 524289776,
+            "isBaseline": false,
+            "deltaMeanPct": -47.3258266915211,
+            "deltaAllocPct": -66.66659596770022
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 135744551.23333332,
+            "stdDevNs": 2362075.93018452,
+            "allocatedBytes": 524290016,
+            "isBaseline": false,
+            "deltaMeanPct": -37.93198229588698,
+            "deltaAllocPct": -49.99989509600848
+        }]
+    }, {
+        "name": "AesGcmRsaEncryptionBenchmarks",
+        "description": "Hybrid AES-GCM + RSA envelope encrypt/decrypt of seeded deterministic buffers (100 / 250 / 500 MiB): RSA wraps a per-message AES key while AES-GCM encrypts the bulk payload. PEM keys live under the suite IOTemp session.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 25350933.462962963,
+            "stdDevNs": 1055702.629884306,
+            "allocatedBytes": 104859128,
+            "isBaseline": false,
+            "deltaMeanPct": -51.11307210785259,
+            "deltaAllocPct": -66.66645304536368
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 25368552.416666668,
+            "stdDevNs": 307595.7120520548,
+            "allocatedBytes": 104858992,
+            "isBaseline": false,
+            "deltaMeanPct": -39.91610853393835,
+            "deltaAllocPct": -49.99962234713165
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 64543320.051724136,
+            "stdDevNs": 1866463.4485430229,
+            "allocatedBytes": 262145552,
+            "isBaseline": false,
+            "deltaMeanPct": -48.11536782385056,
+            "deltaAllocPct": -66.66658325223823
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 66323859.7,
+            "stdDevNs": 1488756.1085113832,
+            "allocatedBytes": 262145248,
+            "isBaseline": false,
+            "deltaMeanPct": -38.88723091871129,
+            "deltaAllocPct": -49.999869537634204
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 129141181.46666667,
+            "stdDevNs": 1762062.9890327768,
+            "allocatedBytes": 524289552,
+            "isBaseline": false,
+            "deltaMeanPct": -48.14660563043064,
+            "deltaAllocPct": -66.66662343350289
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 133560601.92857143,
+            "stdDevNs": 1569900.8165077213,
+            "allocatedBytes": 524289248,
+            "isBaseline": false,
+            "deltaMeanPct": -39.5662410156004,
+            "deltaAllocPct": -49.999934768746925
+        }]
+    }, {
+        "name": "AesSivEncryptionBenchmarks",
+        "description": "AES-SIV (nonce-misuse-resistant) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1589748398.0714285,
+            "stdDevNs": 12576678.554848123,
+            "allocatedBytes": 104860368,
+            "isBaseline": false,
+            "deltaMeanPct": -5.717840878909505,
+            "deltaAllocPct": -74.99953556423986
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1581776890.5,
+            "stdDevNs": 11673865.365826067,
+            "allocatedBytes": 104860664,
+            "isBaseline": false,
+            "deltaMeanPct": -7.511547103641251,
+            "deltaAllocPct": -66.66603089024035
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 3967463213.7,
+            "stdDevNs": 30387665.921575874,
+            "allocatedBytes": 262146744,
+            "isBaseline": false,
+            "deltaMeanPct": -7.256075427273939,
+            "deltaAllocPct": -74.99981575069279
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 3870316551.0666666,
+            "stdDevNs": 26419275.983509913,
+            "allocatedBytes": 262147032,
+            "isBaseline": false,
+            "deltaMeanPct": -8.344933038654071,
+            "deltaAllocPct": -66.66641642354175
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 7765070185.133333,
+            "stdDevNs": 66372956.192743264,
+            "allocatedBytes": 524290800,
+            "isBaseline": false,
+            "deltaMeanPct": -7.14121798696504,
+            "deltaAllocPct": -74.99990520491977
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 7813994682.833333,
+            "stdDevNs": 130954602.45512563,
+            "allocatedBytes": 524291032,
+            "isBaseline": false,
+            "deltaMeanPct": -6.132715544346945,
+            "deltaAllocPct": -66.66654154485028
+        }]
+    }, {
+        "name": "AlgorithmComparisonBenchmarks",
+        "description": "Encrypts and decrypts the same seeded deterministic buffer with AES-GCM, AES-SIV, ChaCha20-Poly1305, and XChaCha20-Poly1305 to compare throughput at each payload size. Decrypt cases reuse a ciphertext produced once in setup. AES-CCM is covered separately (packet-size limit).",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded plaintext/ciphertext buffer (100 MiB, 250 MiB, 500 MiB)."}],
+        "measurements": [{
+            "method": "AesGcm_Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 25090152.829545453,
+            "stdDevNs": 1373039.92759195,
+            "allocatedBytes": 104859328,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 4179.233212024227,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -48.583916202390284,
+            "deltaAllocPct": -66.6663360617395
+        }, {
+            "method": "AesSiv_Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1574464523.5625,
+            "stdDevNs": 30138094.702228915,
+            "allocatedBytes": 104860400,
+            "ratioToBaseline": 62.75228908563901,
+            "isBaseline": false,
+            "throughputMbps": 66.59889659675623,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -6.1803826571648415,
+            "deltaAllocPct": -74.99952793490499
+        }, {
+            "method": "ChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 58368176.8125,
+            "stdDevNs": 2654495.829748181,
+            "allocatedBytes": 104859248,
+            "ratioToBaseline": 2.3263380342493285,
+            "isBaseline": false,
+            "throughputMbps": 1796.4857860275656,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -24.553151080516677,
+            "deltaAllocPct": -66.66634284319785
+        }, {
+            "method": "XChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 170661375.6,
+            "stdDevNs": 2748380.3950419547,
+            "allocatedBytes": 104859720,
+            "ratioToBaseline": 6.801926507160769,
+            "isBaseline": false,
+            "throughputMbps": 614.419048430546,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -28.409388523839024,
+            "deltaAllocPct": -79.99972442804399
+        }, {
+            "method": "AesGcm_Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 25972374.64285714,
+            "stdDevNs": 1325229.5594271952,
+            "allocatedBytes": 104859616,
+            "ratioToBaseline": 1.0351620741135068,
+            "isBaseline": false,
+            "throughputMbps": 4037.2742747586108,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -39.41931658122715,
+            "deltaAllocPct": -49.999475483707975
+        }, {
+            "method": "AesSiv_Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1568078270.1333334,
+            "stdDevNs": 26176336.409463357,
+            "allocatedBytes": 104860632,
+            "ratioToBaseline": 62.4977568206284,
+            "isBaseline": false,
+            "throughputMbps": 66.87013141957766,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -5.756824744937726,
+            "deltaAllocPct": -66.66604106266317
+        }, {
+            "method": "ChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 56472724.64814815,
+            "stdDevNs": 1565358.0513099553,
+            "allocatedBytes": 104859512,
+            "ratioToBaseline": 2.2507923738769526,
+            "isBaseline": false,
+            "throughputMbps": 1856.783086938209,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -23.243628283264336,
+            "deltaAllocPct": -49.999494556719185
+        }, {
+            "method": "XChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 174599397.64285713,
+            "stdDevNs": 2516997.9953996437,
+            "allocatedBytes": 104859672,
+            "ratioToBaseline": 6.958881391796619,
+            "isBaseline": false,
+            "throughputMbps": 600.5610638731188,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -10.943036139906901,
+            "deltaAllocPct": -74.99962663830682
+        }, {
+            "method": "AesGcm_Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 64050565.85483871,
+            "stdDevNs": 1912397.111371965,
+            "allocatedBytes": 262145728,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 4092.766340177404,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -48.09047359492196,
+            "deltaAllocPct": -66.6665344241752
+        }, {
+            "method": "AesSiv_Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 3920555423.5,
+            "stdDevNs": 40651604.39697794,
+            "allocatedBytes": 262146768,
+            "ratioToBaseline": 61.210316742327755,
+            "isBaseline": false,
+            "throughputMbps": 66.86399545041402,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -6.769442790591724,
+            "deltaAllocPct": -74.99981346188152
+        }, {
+            "method": "ChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 147529394.90625,
+            "stdDevNs": 4528060.076081826,
+            "allocatedBytes": 262145672,
+            "ratioToBaseline": 2.3033269564019765,
+            "isBaseline": false,
+            "throughputMbps": 1776.893344994628,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -27.19902499396096,
+            "deltaAllocPct": -66.66653408506221
+        }, {
+            "method": "XChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 414020595.71428573,
+            "stdDevNs": 2288978.798661473,
+            "allocatedBytes": 262146120,
+            "ratioToBaseline": 6.463964684599403,
+            "isBaseline": false,
+            "throughputMbps": 633.1665687977144,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -30.585579360257775,
+            "deltaAllocPct": -79.99988977079173
+        }, {
+            "method": "AesGcm_Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 65790499.93548387,
+            "stdDevNs": 2004348.6920325505,
+            "allocatedBytes": 262146016,
+            "ratioToBaseline": 1.0271650071693117,
+            "isBaseline": false,
+            "throughputMbps": 3984.52664529174,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -39.719752676061766,
+            "deltaAllocPct": -49.999790192383514
+        }, {
+            "method": "AesSiv_Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 3892893048.4,
+            "stdDevNs": 70600220.25001578,
+            "allocatedBytes": 262147032,
+            "ratioToBaseline": 60.77843335877276,
+            "isBaseline": false,
+            "throughputMbps": 67.33912202076617,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -7.31274766405507,
+            "deltaAllocPct": -66.66641642354175
+        }, {
+            "method": "ChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 149939949.47560975,
+            "stdDevNs": 5284415.742442378,
+            "allocatedBytes": 262145912,
+            "ratioToBaseline": 2.3409621363131565,
+            "isBaseline": false,
+            "throughputMbps": 1748.3265861887069,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -19.397004552656334,
+            "deltaAllocPct": -49.99980468816161
+        }, {
+            "method": "XChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 425130670.0714286,
+            "stdDevNs": 2643071.9003895526,
+            "allocatedBytes": 262146072,
+            "ratioToBaseline": 6.637422548848756,
+            "isBaseline": false,
+            "throughputMbps": 616.6198264546657,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -12.909378077711322,
+            "deltaAllocPct": -74.99985179930407
+        }, {
+            "method": "AesGcm_Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 129174398.33333333,
+            "stdDevNs": 1942927.8469669966,
+            "allocatedBytes": 524289776,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 4058.760921394654,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -47.54431360346018,
+            "deltaAllocPct": -66.66659596770022
+        }, {
+            "method": "AesSiv_Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 7830762640.611111,
+            "stdDevNs": 165628777.74295732,
+            "allocatedBytes": 524290768,
+            "ratioToBaseline": 60.62163045965115,
+            "isBaseline": false,
+            "throughputMbps": 66.95235496999877,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -8.62923749335091,
+            "deltaAllocPct": -74.99990673079631
+        }, {
+            "method": "ChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 307107454.07894737,
+            "stdDevNs": 6725027.1202534465,
+            "allocatedBytes": 524289720,
+            "ratioToBaseline": 2.3774637857144065,
+            "isBaseline": false,
+            "throughputMbps": 1707.1809656082871,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -27.247928767745012,
+            "deltaAllocPct": -66.66659732403072
+        }, {
+            "method": "XChaCha20Poly1305_Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 841094687.7857143,
+            "stdDevNs": 5351023.3886939,
+            "allocatedBytes": 524290120,
+            "ratioToBaseline": 6.511311054186429,
+            "isBaseline": false,
+            "throughputMbps": 623.340044365579,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -29.496372641352604,
+            "deltaAllocPct": -79.99994488532488
+        }, {
+            "method": "AesGcm_Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 133851293.38235295,
+            "stdDevNs": 2677902.439782695,
+            "allocatedBytes": 524290016,
+            "ratioToBaseline": 1.0362060525101184,
+            "isBaseline": false,
+            "throughputMbps": 3916.94384679829,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -39.06773267676816,
+            "deltaAllocPct": -49.99989509600848
+        }, {
+            "method": "AesSiv_Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 7735525285.633333,
+            "stdDevNs": 85827113.07144797,
+            "allocatedBytes": 524291032,
+            "ratioToBaseline": 59.88435313375242,
+            "isBaseline": false,
+            "throughputMbps": 67.7766513120608,
+            "slaTarget": ">= 35 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+            "deltaMeanPct": -8.052206780615382,
+            "deltaAllocPct": -66.66654154485028
+        }, {
+            "method": "ChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 304273392.5,
+            "stdDevNs": 8106702.788661686,
+            "allocatedBytes": 524289912,
+            "ratioToBaseline": 2.355523977087359,
+            "isBaseline": false,
+            "throughputMbps": 1723.0819812810282,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -21.425666705970638,
+            "deltaAllocPct": -49.99990386979466
+        }, {
+            "method": "XChaCha20Poly1305_Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 856216231.1666666,
+            "stdDevNs": 7207605.64885288,
+            "allocatedBytes": 524290072,
+            "ratioToBaseline": 6.628374060293345,
+            "isBaseline": false,
+            "throughputMbps": 612.331302439354,
+            "slaTarget": ">= 300 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+            "deltaMeanPct": -12.67304598967117,
+            "deltaAllocPct": -74.99992589957883
+        }]
+    }, {
+        "name": "ChaCha20Poly1305EncryptionBenchmarks",
+        "description": "ChaCha20-Poly1305 encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 59496894.6,
+            "stdDevNs": 2644788.4380939417,
+            "allocatedBytes": 104859248,
+            "isBaseline": false,
+            "deltaMeanPct": -26.454135954083995,
+            "deltaAllocPct": -66.66633775691518
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 57623592.34210526,
+            "stdDevNs": 1244589.6648289913,
+            "allocatedBytes": 104859512,
+            "isBaseline": false,
+            "deltaMeanPct": -23.054018630111162,
+            "deltaAllocPct": -49.999494556719185
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 153650252.6388889,
+            "stdDevNs": 5107496.157636248,
+            "allocatedBytes": 262145672,
+            "isBaseline": false,
+            "deltaMeanPct": -22.254116942529343,
+            "deltaAllocPct": -66.66653408506221
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 149192685.8043478,
+            "stdDevNs": 3629329.308274169,
+            "allocatedBytes": 262145912,
+            "isBaseline": false,
+            "deltaMeanPct": -18.291198085225126,
+            "deltaAllocPct": -49.999800110522095
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 312087705.7790698,
+            "stdDevNs": 11462786.958249416,
+            "allocatedBytes": 524289672,
+            "isBaseline": false,
+            "deltaMeanPct": -24.97420700361895,
+            "deltaAllocPct": -66.66660037578487
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 302031436.85,
+            "stdDevNs": 6854418.119560446,
+            "allocatedBytes": 524289944,
+            "isBaseline": false,
+            "deltaMeanPct": -22.71145660003028,
+            "deltaAllocPct": -49.99989700334356
+        }]
+    }, {
+        "name": "LargeFileStreamingBenchmarks",
+        "description": "Encrypt/decrypt at 100 MiB\u20132 GiB with AES-GCM, ChaCha20-Poly1305, and AES-SIV-512. Stream methods use DeterministicPayloadStream input and NullingStream output; file methods use IOTemp paths. Decrypt setup reuses pre-encrypted IOTemp files.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}],
+        "measurements": [{
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 78279543.94949494,
+            "stdDevNs": 6637686.286839625,
+            "allocatedBytes": 43944,
+            "isBaseline": false,
+            "deltaMeanPct": -1.0339179684629598,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 76481324.11666666,
+            "stdDevNs": 3366706.3452948867,
+            "allocatedBytes": 67224,
+            "isBaseline": false,
+            "deltaMeanPct": -3.1992676396374113,
+            "deltaAllocPct": 0.3223495702005731
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 100334269.09375,
+            "stdDevNs": 4621685.951068565,
+            "allocatedBytes": 43960,
+            "isBaseline": false,
+            "deltaMeanPct": -2.3504860379772174,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 103961448.24489796,
+            "stdDevNs": 7838939.907772069,
+            "allocatedBytes": 66872,
+            "isBaseline": false,
+            "deltaMeanPct": -3.281630896746923,
+            "deltaAllocPct": -0.4999404832758005
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1712584431.3333333,
+            "stdDevNs": 14826842.5359551,
+            "allocatedBytes": 105057976,
+            "isBaseline": false,
+            "deltaMeanPct": -1.7275125307907746,
+            "deltaAllocPct": -0.005817401660594056
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1651565297.5666666,
+            "stdDevNs": 13418197.585459683,
+            "allocatedBytes": 105096888,
+            "isBaseline": false,
+            "deltaMeanPct": -5.281519215205539,
+            "deltaAllocPct": 0.002968777368416365
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 571291218.4333333,
+            "stdDevNs": 5775419.022852312,
+            "allocatedBytes": 104893032,
+            "isBaseline": false,
+            "deltaMeanPct": -8.585613670565143,
+            "deltaAllocPct": -0.002821842802153966
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 30589354.135416668,
+            "stdDevNs": 1895296.2010668197,
+            "allocatedBytes": 51432,
+            "isBaseline": false,
+            "deltaMeanPct": -18.929062114255306,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 586205797.8571428,
+            "stdDevNs": 3272357.1791765876,
+            "allocatedBytes": 104893000,
+            "isBaseline": false,
+            "deltaMeanPct": -9.318029645488938,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 56365074.027472526,
+            "stdDevNs": 3543385.268008595,
+            "allocatedBytes": 51264,
+            "isBaseline": false,
+            "deltaMeanPct": -20.34077104562833,
+            "deltaAllocPct": 0.06246096189881324
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 2150129981.3333335,
+            "stdDevNs": 11161349.04389395,
+            "allocatedBytes": 209963576,
+            "isBaseline": false,
+            "deltaMeanPct": -10.946096506069638,
+            "deltaAllocPct": -0.002895656503814056
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1624229816.3,
+            "stdDevNs": 8544500.690742599,
+            "allocatedBytes": 105084376,
+            "isBaseline": false,
+            "deltaMeanPct": -11.048679399296928,
+            "deltaAllocPct": -0.007269819621692289
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 192004994.60215053,
+            "stdDevNs": 10828622.735368963,
+            "allocatedBytes": 88344,
+            "isBaseline": false,
+            "deltaMeanPct": -3.8285945288111085,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 193529800.23711342,
+            "stdDevNs": 11648062.82630953,
+            "allocatedBytes": 143840,
+            "isBaseline": false,
+            "deltaMeanPct": -1.361845202816999,
+            "deltaAllocPct": -0.10556142007889327
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 270057583.4655172,
+            "stdDevNs": 11702477.414082792,
+            "allocatedBytes": 88360,
+            "isBaseline": false,
+            "deltaMeanPct": 5.030661116763538,
+            "deltaAllocPct": -0.05429372907429192
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 265323323.9848485,
+            "stdDevNs": 12422704.99790271,
+            "allocatedBytes": 144192,
+            "isBaseline": false,
+            "deltaMeanPct": 1.1411421362399263,
+            "deltaAllocPct": 0.10552624271035822
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4299996292.714286,
+            "stdDevNs": 23784318.21245487,
+            "allocatedBytes": 265830408,
+            "isBaseline": false,
+            "deltaMeanPct": -1.9450869165522273,
+            "deltaAllocPct": 1.2005843592888648
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4230772600.714286,
+            "stdDevNs": 18201521.267883264,
+            "allocatedBytes": 262740880,
+            "isBaseline": false,
+            "deltaMeanPct": -2.3623560644082366,
+            "deltaAllocPct": -0.01780601032151919
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 1400009037.3333333,
+            "stdDevNs": 5126337.80961822,
+            "allocatedBytes": 262243128,
+            "isBaseline": false,
+            "deltaMeanPct": -10.200924472750641,
+            "deltaAllocPct": 0.0029378181949971795
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 74706117.05633803,
+            "stdDevNs": 3624644.1011116076,
+            "allocatedBytes": 116016,
+            "isBaseline": false,
+            "deltaMeanPct": -20.04144614869227,
+            "deltaAllocPct": -0.05513439007580978
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 1456655616.0333333,
+            "stdDevNs": 10353546.025526803,
+            "allocatedBytes": 262235464,
+            "isBaseline": false,
+            "deltaMeanPct": -9.150291460248289,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 138001364.3,
+            "stdDevNs": 4512850.975614045,
+            "allocatedBytes": 116304,
+            "isBaseline": false,
+            "deltaMeanPct": -19.2391513243917,
+            "deltaAllocPct": 0.17916207276736495
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 5318286765.733334,
+            "stdDevNs": 15307060.78194248,
+            "allocatedBytes": 524907448,
+            "isBaseline": false,
+            "deltaMeanPct": -10.676248516441559,
+            "deltaAllocPct": -0.017351667169576
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4005210007.642857,
+            "stdDevNs": 13149320.573740937,
+            "allocatedBytes": 262699312,
+            "isBaseline": false,
+            "deltaMeanPct": -13.374273044350915,
+            "deltaAllocPct": 0.00018271874158922794
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 396910131.5970149,
+            "stdDevNs": 18711386.505127717,
+            "allocatedBytes": 162344,
+            "isBaseline": false,
+            "deltaMeanPct": -0.37476366296236063,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 366400811.0483871,
+            "stdDevNs": 20651921.27001797,
+            "allocatedBytes": 272360,
+            "isBaseline": false,
+            "deltaMeanPct": -6.351599313773994,
+            "deltaAllocPct": 0.19128899352560327
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 504615675.21929824,
+            "stdDevNs": 21682661.50888602,
+            "allocatedBytes": 162360,
+            "isBaseline": false,
+            "deltaMeanPct": -2.9538097266862495,
+            "deltaAllocPct": -0.029555194325402687
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 513812450.75,
+            "stdDevNs": 25094314.682655033,
+            "allocatedBytes": 271640,
+            "isBaseline": false,
+            "deltaMeanPct": -2.106039183932437,
+            "deltaAllocPct": -0.3580127358628987
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 8542106888.9,
+            "stdDevNs": 18686581.50215771,
+            "allocatedBytes": 525405504,
+            "isBaseline": false,
+            "deltaMeanPct": -2.8476041053257513,
+            "deltaAllocPct": -0.002113370576972702
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 8339018962.8,
+            "stdDevNs": 34769454.850751646,
+            "allocatedBytes": 525417320,
+            "isBaseline": false,
+            "deltaMeanPct": -3.863208018134469,
+            "deltaAllocPct": -0.0229509597191096
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 2787434867.714286,
+            "stdDevNs": 14378885.684670748,
+            "allocatedBytes": 524474208,
+            "isBaseline": false,
+            "deltaMeanPct": -9.100305308089222,
+            "deltaAllocPct": -0.5966993130361561
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 147630822,
+            "stdDevNs": 3912321.837936713,
+            "allocatedBytes": 224392,
+            "isBaseline": false,
+            "deltaMeanPct": -20.302041740546876,
+            "deltaAllocPct": 0.16784515391757732
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 2852950065.866667,
+            "stdDevNs": 13717197.188853044,
+            "allocatedBytes": 524474176,
+            "isBaseline": false,
+            "deltaMeanPct": -10.456082402739169,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 277490948.0540541,
+            "stdDevNs": 9341038.559711933,
+            "allocatedBytes": 224272,
+            "isBaseline": false,
+            "deltaMeanPct": -18.12109554734283,
+            "deltaAllocPct": 0.014270424545130217
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 10570340290.766666,
+            "stdDevNs": 34775938.0853418,
+            "allocatedBytes": 1053021496,
+            "isBaseline": false,
+            "deltaMeanPct": -10.574289387563184,
+            "deltaAllocPct": 0.2863204571399454
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 8022794093.433333,
+            "stdDevNs": 31499110.56214517,
+            "allocatedBytes": 525476376,
+            "isBaseline": false,
+            "deltaMeanPct": -15.32520464595869,
+            "deltaAllocPct": 0.002259334343162407
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 595104342.2619047,
+            "stdDevNs": 21337336.576233156,
+            "allocatedBytes": 236368,
+            "isBaseline": false,
+            "deltaMeanPct": 0.10181910696626804,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 543349129.060606,
+            "stdDevNs": 33077515.06434331,
+            "allocatedBytes": 399904,
+            "isBaseline": false,
+            "deltaMeanPct": -6.599972902155566,
+            "deltaAllocPct": -0.06797009315901004
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 753495188.0588236,
+            "stdDevNs": 23773019.16198632,
+            "allocatedBytes": 236408,
+            "isBaseline": false,
+            "deltaMeanPct": -3.839987878398105,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 731351406.1071428,
+            "stdDevNs": 20674769.268892672,
+            "allocatedBytes": 400064,
+            "isBaseline": false,
+            "deltaMeanPct": -7.198720493581871,
+            "deltaAllocPct": -0.03198464736926275
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 12670028474.23077,
+            "stdDevNs": 33229968.59380813,
+            "allocatedBytes": 791194144,
+            "isBaseline": false,
+            "deltaMeanPct": -5.009297578806085,
+            "deltaAllocPct": 0.3924195142990976
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 12402210482.642857,
+            "stdDevNs": 53455533.86081129,
+            "allocatedBytes": 788199776,
+            "isBaseline": false,
+            "deltaMeanPct": -5.326973506044415,
+            "deltaAllocPct": 0.0011205406592441132
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 4173129884.9333334,
+            "stdDevNs": 13445536.650519827,
+            "allocatedBytes": 786712920,
+            "isBaseline": false,
+            "deltaMeanPct": -2.7140867199460637,
+            "deltaAllocPct": 1.2202673843791314e-05
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 217320582.2826087,
+            "stdDevNs": 5480533.328362728,
+            "allocatedBytes": 332048,
+            "isBaseline": false,
+            "deltaMeanPct": -4.175188175231348,
+            "deltaAllocPct": -0.05538298538370777
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 4259311003.9,
+            "stdDevNs": 27351335.37747148,
+            "allocatedBytes": 786712888,
+            "isBaseline": false,
+            "deltaMeanPct": -4.261234494676612,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 410425903.64705884,
+            "stdDevNs": 7306225.462770012,
+            "allocatedBytes": 332240,
+            "isBaseline": false,
+            "deltaMeanPct": -5.2951553190928635,
+            "deltaAllocPct": 0.04577100045771
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 16125954562.285715,
+            "stdDevNs": 29075803.79288561,
+            "allocatedBytes": 1577962536,
+            "isBaseline": false,
+            "deltaMeanPct": -0.519898870795703,
+            "deltaAllocPct": -0.0024273751337166587
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 11925836350.133333,
+            "stdDevNs": 41180858.319220506,
+            "allocatedBytes": 788077168,
+            "isBaseline": false,
+            "deltaMeanPct": -3.6271183105219276,
+            "deltaAllocPct": -0.027594756263589017
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 760346889.94,
+            "stdDevNs": 30586825.937013783,
+            "allocatedBytes": 317472,
+            "isBaseline": false,
+            "deltaMeanPct": -5.771505310620818,
+            "deltaAllocPct": 0.007560293339381567
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 765752182.3241758,
+            "stdDevNs": 42610335.29487959,
+            "allocatedBytes": 540712,
+            "isBaseline": false,
+            "deltaMeanPct": -2.6135835120604596,
+            "deltaAllocPct": -0.06210169892504916
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 1051571406.0784314,
+            "stdDevNs": 42537202.557724394,
+            "allocatedBytes": 317464,
+            "isBaseline": false,
+            "deltaMeanPct": -0.12134905599437851,
+            "deltaAllocPct": -0.01511753886467283
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 1053896938.9827586,
+            "stdDevNs": 45935621.70541761,
+            "allocatedBytes": 540480,
+            "isBaseline": false,
+            "deltaMeanPct": -2.4600670214708145,
+            "deltaAllocPct": -0.07838729238460058
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 17277857684.2,
+            "stdDevNs": 72255804.18072917,
+            "allocatedBytes": 1079134336,
+            "isBaseline": false,
+            "deltaMeanPct": -4.07474533505113,
+            "deltaAllocPct": 0.28008989240897386
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 17524733631.8,
+            "stdDevNs": 54248363.63920953,
+            "allocatedBytes": 1076159936,
+            "isBaseline": false,
+            "deltaMeanPct": -0.6986598100739939,
+            "deltaAllocPct": -0.02290064336664504
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 5513560252.5,
+            "stdDevNs": 13537703.862615213,
+            "allocatedBytes": 1074125256,
+            "isBaseline": false,
+            "deltaMeanPct": -5.540730918332469,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 300040618.35,
+            "stdDevNs": 5594994.253381314,
+            "allocatedBytes": 450416,
+            "isBaseline": false,
+            "deltaMeanPct": -4.603870621105793,
+            "deltaAllocPct": -0.0975921358482531
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 5770957871.214286,
+            "stdDevNs": 20386076.351676684,
+            "allocatedBytes": 1074154480,
+            "isBaseline": false,
+            "deltaMeanPct": -5.726749213332552,
+            "deltaAllocPct": 0.0024868549902342715
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 556167164.8571428,
+            "stdDevNs": 9496062.074307917,
+            "allocatedBytes": 450616,
+            "isBaseline": false,
+            "deltaMeanPct": -4.671354656523527,
+            "deltaAllocPct": -0.08337176712668962
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 21678324771.4,
+            "stdDevNs": 33100905.143944126,
+            "allocatedBytes": 2150153728,
+            "isBaseline": false,
+            "deltaMeanPct": -3.0673042828818557,
+            "deltaAllocPct": -0.0024031192554906616
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 16512235984.833334,
+            "stdDevNs": 52292468.649261124,
+            "allocatedBytes": 1079211312,
+            "isBaseline": false,
+            "deltaMeanPct": -3.572926341465342,
+            "deltaAllocPct": 0.27418868123512213
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1121330095.08,
+            "stdDevNs": 32245957.657404575,
+            "allocatedBytes": 469000,
+            "isBaseline": false,
+            "deltaMeanPct": -5.901897446009164,
+            "deltaAllocPct": -0.0051170089377089445
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1083082157.4473684,
+            "stdDevNs": 37101626.18421188,
+            "allocatedBytes": 802672,
+            "isBaseline": false,
+            "deltaMeanPct": -0.17304767608548255,
+            "deltaAllocPct": -0.16517412935323383
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1503171964.5357144,
+            "stdDevNs": 38037075.85812568,
+            "allocatedBytes": 469064,
+            "isBaseline": false,
+            "deltaMeanPct": -5.408845520490383,
+            "deltaAllocPct": -0.341639188224496
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1484582189.25,
+            "stdDevNs": 55623172.86711889,
+            "allocatedBytes": 803080,
+            "isBaseline": false,
+            "deltaMeanPct": -4.670441883891926,
+            "deltaAllocPct": 0.014944704593005878
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 25558577366.076923,
+            "stdDevNs": 74739171.08804278,
+            "allocatedBytes": 1613852176,
+            "isBaseline": false,
+            "deltaMeanPct": -4.498098225480845,
+            "deltaAllocPct": -0.20732905029303422
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 25425561408.857143,
+            "stdDevNs": 54511250.27527496,
+            "allocatedBytes": 1614547256,
+            "isBaseline": false,
+            "deltaMeanPct": -4.126903297451363,
+            "deltaAllocPct": 0.01919965513274266
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 8311705162.566667,
+            "stdDevNs": 23085610.71999186,
+            "allocatedBytes": 1611206664,
+            "isBaseline": false,
+            "deltaMeanPct": -3.3078260795163725,
+            "deltaAllocPct": -0.00031578717035077834
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 447454863,
+            "stdDevNs": 13040667.2364079,
+            "allocatedBytes": 671816,
+            "isBaseline": false,
+            "deltaMeanPct": 1.7511553036485032,
+            "deltaAllocPct": -0.06426199854815484
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 8666891620.633333,
+            "stdDevNs": 17145207.66793264,
+            "allocatedBytes": 1611233832,
+            "isBaseline": false,
+            "deltaMeanPct": -3.5848049712641883,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 848846896.9285715,
+            "stdDevNs": 14877250.574645255,
+            "allocatedBytes": 671832,
+            "isBaseline": false,
+            "deltaMeanPct": -1.7218650212574602,
+            "deltaAllocPct": -0.07020633522930103
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 32328066777.533333,
+            "stdDevNs": 56767437.70140167,
+            "allocatedBytes": 3228460976,
+            "isBaseline": false,
+            "deltaMeanPct": -4.451625170391433,
+            "deltaAllocPct": -0.0016609495896348124
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 24560439770.333332,
+            "stdDevNs": 114386393.1982135,
+            "allocatedBytes": 1617202376,
+            "isBaseline": false,
+            "deltaMeanPct": -3.3488256335533197,
+            "deltaAllocPct": 0.1643297096890189
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1523544033.551948,
+            "stdDevNs": 136295560.05026373,
+            "allocatedBytes": 620552,
+            "isBaseline": false,
+            "deltaMeanPct": -8.602157501102585,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1438853831.304878,
+            "stdDevNs": 51429186.449499644,
+            "allocatedBytes": 1065152,
+            "isBaseline": false,
+            "deltaMeanPct": -9.502468742089217,
+            "deltaAllocPct": -0.14549490767823126
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 2015938124.9,
+            "stdDevNs": 75455821.9826133,
+            "allocatedBytes": 620568,
+            "isBaseline": false,
+            "deltaMeanPct": -21.413612769770623,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1983522116,
+            "stdDevNs": 51455557.731742196,
+            "allocatedBytes": 1065008,
+            "isBaseline": false,
+            "deltaMeanPct": -23.069148126427216,
+            "deltaAllocPct": -0.030037697310124203
+        }, {
+            "method": "EncryptFile_AesSiv512",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 34322239258.566666,
+            "stdDevNs": 119255743.40418714,
+            "allocatedBytes": 2154990944,
+            "isBaseline": false,
+            "deltaMeanPct": -15.38623728702846,
+            "deltaAllocPct": -0.04861915330155093
+        }, {
+            "method": "DecryptFile_AesSiv512",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 33795078404.666668,
+            "stdDevNs": 113890043.85548294,
+            "allocatedBytes": 2152417552,
+            "isBaseline": false,
+            "deltaMeanPct": -16.319505075947603,
+            "deltaAllocPct": -0.027706646488814417
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 11245629363.642857,
+            "stdDevNs": 36149646.32939381,
+            "allocatedBytes": 2148413024,
+            "isBaseline": false,
+            "deltaMeanPct": -3.520677909107545,
+            "deltaAllocPct": -0.14169827565893522
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 566311323.6666666,
+            "stdDevNs": 9819420.387831962,
+            "allocatedBytes": 894048,
+            "isBaseline": false,
+            "deltaMeanPct": 0.2457892881008089,
+            "deltaAllocPct": -0.000894798536109595
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 11571615427.714285,
+            "stdDevNs": 32317810.08189085,
+            "allocatedBytes": 2148312208,
+            "isBaseline": false,
+            "deltaMeanPct": -3.4388469398646704,
+            "deltaAllocPct": -0.0046181098690713344
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1098280771.5,
+            "stdDevNs": 16587498.446190841,
+            "allocatedBytes": 893456,
+            "isBaseline": false,
+            "deltaMeanPct": -1.9751914755943099,
+            "deltaAllocPct": 0.02776508943045741
+        }, {
+            "method": "EncryptStream_AesSiv512",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 43783539348.96667,
+            "stdDevNs": 63819080.53252555,
+            "allocatedBytes": 4303319968,
+            "isBaseline": false,
+            "deltaMeanPct": -3.0730076443145617,
+            "deltaAllocPct": -0.026263422229035552
+        }, {
+            "method": "DecryptStream_AesSiv512",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 33168117657.166668,
+            "stdDevNs": 79109380.60684693,
+            "allocatedBytes": 2152727736,
+            "isBaseline": false,
+            "deltaMeanPct": -1.7757271969745057,
+            "deltaAllocPct": -0.0021780264165729966
+        }]
+    }, {
+        "name": "RsaEncryptionBenchmarks",
+        "description": "RSA-only encrypt/decrypt (2048-bit, OAEP-SHA256) of fixed 1 KB / 64 KB / 1 MB seeded buffers; payloads beyond one RSA block use automatic chunking, so this measures asymmetric-only cost. PEM keys live under the suite IOTemp session.",
+        "parameters": [],
+        "measurements": [{
+            "method": "Encrypt_1KB",
+            "parameters": {},
+            "meanNs": 116963.22727272728,
+            "stdDevNs": 6422.694959707688,
+            "allocatedBytes": 8656,
+            "isBaseline": false,
+            "deltaMeanPct": -38.770889212746404,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Encrypt_64KB",
+            "parameters": {},
+            "meanNs": 6256946.928571428,
+            "stdDevNs": 40926.88261628062,
+            "allocatedBytes": 523240,
+            "isBaseline": false,
+            "deltaMeanPct": -1.8374012683304723,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Encrypt_1MB",
+            "parameters": {},
+            "meanNs": 100719195.9,
+            "stdDevNs": 1150927.703219066,
+            "allocatedBytes": 8367744,
+            "isBaseline": false,
+            "deltaMeanPct": -4.408539462084261,
+            "deltaAllocPct": 0.0008604543772748263
+        }, {
+            "method": "Decrypt_1KB",
+            "parameters": {},
+            "meanNs": 2703619.5384615385,
+            "stdDevNs": 125029.89086452946,
+            "allocatedBytes": 6136,
+            "isBaseline": false,
+            "deltaMeanPct": -2.057360741550628,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Decrypt_64KB",
+            "parameters": {},
+            "meanNs": 154901282.53846154,
+            "stdDevNs": 777570.9906177501,
+            "allocatedBytes": 368056,
+            "isBaseline": false,
+            "deltaMeanPct": -4.254619942301656,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Decrypt_1MB",
+            "parameters": {},
+            "meanNs": 2463898578.3846154,
+            "stdDevNs": 8169797.849229406,
+            "allocatedBytes": 5883568,
+            "isBaseline": false,
+            "deltaMeanPct": -3.7925112877417684,
+            "deltaAllocPct": 0.0
+        }]
+    }, {
+        "name": "TwoKeyEncryptionBenchmarks",
+        "description": "Envelope (two-key DEK/KEK) encrypt/decrypt at 100 MiB\u20132 GiB with AES-GCM and ChaCha20-Poly1305. Stream methods use DeterministicPayloadStream + NullingStream; file methods use IOTemp paths (EncryptToFileAsync / DecryptToStreamAsync to file).",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}],
+        "measurements": [{
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 76461069.01052631,
+            "stdDevNs": 5089240.11312449,
+            "allocatedBytes": 44928,
+            "isBaseline": false,
+            "deltaMeanPct": -3.231782796583548,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 75704198.73958333,
+            "stdDevNs": 4624638.218491663,
+            "allocatedBytes": 67528,
+            "isBaseline": false,
+            "deltaMeanPct": -3.2272173900896837,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 100926213.05555555,
+            "stdDevNs": 6238049.573698456,
+            "allocatedBytes": 44944,
+            "isBaseline": false,
+            "deltaMeanPct": -1.8280809937693758,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 103467434.06060606,
+            "stdDevNs": 6514064.839773728,
+            "allocatedBytes": 67760,
+            "isBaseline": false,
+            "deltaMeanPct": -2.214904307957072,
+            "deltaAllocPct": -0.4934210526315789
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 581302340.6428572,
+            "stdDevNs": 2377309.403621718,
+            "allocatedBytes": 104894024,
+            "isBaseline": false,
+            "deltaMeanPct": -0.17154544785187023,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 30959612.31632653,
+            "stdDevNs": 2524913.4497346506,
+            "allocatedBytes": 52272,
+            "isBaseline": false,
+            "deltaMeanPct": -1.9187307657778203,
+            "deltaAllocPct": -0.0611807892321811
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 599449032.2,
+            "stdDevNs": 5304344.083562738,
+            "allocatedBytes": 104894040,
+            "isBaseline": false,
+            "deltaMeanPct": -3.141470042880875,
+            "deltaAllocPct": -0.0024557512894410245
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 56458178.85057471,
+            "stdDevNs": 3088855.1197928237,
+            "allocatedBytes": 52104,
+            "isBaseline": false,
+            "deltaMeanPct": -5.490203277018524,
+            "deltaAllocPct": -0.41284403669724773
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 191536524.1309524,
+            "stdDevNs": 10278952.24877826,
+            "allocatedBytes": 89328,
+            "isBaseline": false,
+            "deltaMeanPct": -2.195625134251163,
+            "deltaAllocPct": -0.17879492222420884
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 188689185.66265061,
+            "stdDevNs": 10031849.74072088,
+            "allocatedBytes": 144760,
+            "isBaseline": false,
+            "deltaMeanPct": -1.593782577817448,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 249737420.36,
+            "stdDevNs": 9986080.300732672,
+            "allocatedBytes": 89344,
+            "isBaseline": false,
+            "deltaMeanPct": -2.348590170461582,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 252901654.39583334,
+            "stdDevNs": 9844248.293143943,
+            "allocatedBytes": 144776,
+            "isBaseline": false,
+            "deltaMeanPct": -3.1722898020389523,
+            "deltaAllocPct": -0.1489737364820128
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 1436884447.1333334,
+            "stdDevNs": 5623076.11091429,
+            "allocatedBytes": 262236488,
+            "isBaseline": false,
+            "deltaMeanPct": -0.7950930858275793,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 74537160.15625,
+            "stdDevNs": 3355971.6009575855,
+            "allocatedBytes": 116952,
+            "isBaseline": false,
+            "deltaMeanPct": -3.1567506540118306,
+            "deltaAllocPct": -0.18435067595247848
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 1473388129.7666667,
+            "stdDevNs": 13048939.257989699,
+            "allocatedBytes": 262236504,
+            "isBaseline": false,
+            "deltaMeanPct": -2.0484559586833107,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 139231222.76666668,
+            "stdDevNs": 3867459.607633758,
+            "allocatedBytes": 117120,
+            "isBaseline": false,
+            "deltaMeanPct": -5.0304740756465565,
+            "deltaAllocPct": -0.027314941272876262
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 383684556.40140843,
+            "stdDevNs": 18658278.06715386,
+            "allocatedBytes": 163328,
+            "isBaseline": false,
+            "deltaMeanPct": -0.28161005031246994,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 379923574.1636364,
+            "stdDevNs": 16141645.244881738,
+            "allocatedBytes": 272912,
+            "isBaseline": false,
+            "deltaMeanPct": 1.1892222335975628,
+            "deltaAllocPct": 0.011726766344180593
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 502440961.64,
+            "stdDevNs": 20114579.021347225,
+            "allocatedBytes": 164392,
+            "isBaseline": false,
+            "deltaMeanPct": -1.5163199786862007,
+            "deltaAllocPct": 0.6415907532569302
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 511956298.5681818,
+            "stdDevNs": 19085311.469612814,
+            "allocatedBytes": 272560,
+            "isBaseline": false,
+            "deltaMeanPct": -2.574852403993652,
+            "deltaAllocPct": 0.011741912757588211
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 2778365911.9333334,
+            "stdDevNs": 17732864.556235984,
+            "allocatedBytes": 524475200,
+            "isBaseline": false,
+            "deltaMeanPct": -4.008960464273882,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 143499478.07894737,
+            "stdDevNs": 3052873.0048139594,
+            "allocatedBytes": 225072,
+            "isBaseline": false,
+            "deltaMeanPct": -3.9230286413614714,
+            "deltaAllocPct": -0.014215651432226882
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 2895328827.0384617,
+            "stdDevNs": 9234584.544249123,
+            "allocatedBytes": 524475216,
+            "isBaseline": false,
+            "deltaMeanPct": -2.484163565513376,
+            "deltaAllocPct": -0.002667738398918591
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 275636683.0862069,
+            "stdDevNs": 7843475.289805654,
+            "allocatedBytes": 224904,
+            "isBaseline": false,
+            "deltaMeanPct": -5.032900189208108,
+            "deltaAllocPct": 0.014230317691842471
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 555383940.7142857,
+            "stdDevNs": 9290360.315262897,
+            "allocatedBytes": 237440,
+            "isBaseline": false,
+            "deltaMeanPct": -5.064082273641868,
+            "deltaAllocPct": 0.04719207173194903
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 568554357.983871,
+            "stdDevNs": 25519823.32405985,
+            "allocatedBytes": 400576,
+            "isBaseline": false,
+            "deltaMeanPct": -0.36334316812071227,
+            "deltaAllocPct": -0.22914300516069902
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 741100772.1,
+            "stdDevNs": 19159435.89052424,
+            "allocatedBytes": 237344,
+            "isBaseline": false,
+            "deltaMeanPct": -3.182746148554854,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 757388459,
+            "stdDevNs": 17238256.688972984,
+            "allocatedBytes": 400744,
+            "isBaseline": false,
+            "deltaMeanPct": -3.2735332342270156,
+            "deltaAllocPct": -0.045893527017319816
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 4116764895.5666666,
+            "stdDevNs": 17482818.492614392,
+            "allocatedBytes": 786713912,
+            "isBaseline": false,
+            "deltaMeanPct": -2.635048416143607,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 221027459.80952382,
+            "stdDevNs": 5253153.644368139,
+            "allocatedBytes": 333072,
+            "isBaseline": false,
+            "deltaMeanPct": -2.071202161638006,
+            "deltaAllocPct": 0.05527384585806638
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 4315561361.3,
+            "stdDevNs": 28887229.879732564,
+            "allocatedBytes": 789862248,
+            "isBaseline": false,
+            "deltaMeanPct": -2.229428622182836,
+            "deltaAllocPct": 0.3974265548380862
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 414531588.8684211,
+            "stdDevNs": 9189346.946645701,
+            "allocatedBytes": 333088,
+            "isBaseline": false,
+            "deltaMeanPct": -4.907093414144106,
+            "deltaAllocPct": 0.04565442006872192
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 772827838.4,
+            "stdDevNs": 31491523.538259476,
+            "allocatedBytes": 318432,
+            "isBaseline": false,
+            "deltaMeanPct": -3.3501612819488913,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 730524741.2272727,
+            "stdDevNs": 26952070.83252046,
+            "allocatedBytes": 540984,
+            "isBaseline": false,
+            "deltaMeanPct": -5.636880246063149,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 1014026482.5666667,
+            "stdDevNs": 30251860.691911515,
+            "allocatedBytes": 318448,
+            "isBaseline": false,
+            "deltaMeanPct": -3.86405033231279,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 992905607.0714285,
+            "stdDevNs": 28062077.88217382,
+            "allocatedBytes": 541184,
+            "isBaseline": false,
+            "deltaMeanPct": -7.790670597417428,
+            "deltaAllocPct": -0.017735737511084836
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 5600515208.466666,
+            "stdDevNs": 24925373.178531483,
+            "allocatedBytes": 1074126248,
+            "isBaseline": false,
+            "deltaMeanPct": -4.252797979711631,
+            "deltaAllocPct": -0.0027236279934380898
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 300206684.38461536,
+            "stdDevNs": 8081726.652852438,
+            "allocatedBytes": 451440,
+            "isBaseline": false,
+            "deltaMeanPct": -2.3363176146924185,
+            "deltaAllocPct": 0.04077508110695481
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 5964072815.233334,
+            "stdDevNs": 27736133.34885394,
+            "allocatedBytes": 1074126264,
+            "isBaseline": false,
+            "deltaMeanPct": -2.5691187028134124,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 559229900.5,
+            "stdDevNs": 12279777.498003302,
+            "allocatedBytes": 451520,
+            "isBaseline": false,
+            "deltaMeanPct": -6.0353311024127505,
+            "deltaAllocPct": 0.033675404547952
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1126005737.0270271,
+            "stdDevNs": 38085818.07284109,
+            "allocatedBytes": 470144,
+            "isBaseline": false,
+            "deltaMeanPct": -5.52020436709214,
+            "deltaAllocPct": 0.03404371212637026
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1050449165.0135136,
+            "stdDevNs": 35657986.59727437,
+            "allocatedBytes": 804080,
+            "isBaseline": false,
+            "deltaMeanPct": -3.234402916424503,
+            "deltaAllocPct": 0.0338389267088658
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1524432028.6891892,
+            "stdDevNs": 50568579.95549325,
+            "allocatedBytes": 470000,
+            "isBaseline": false,
+            "deltaMeanPct": -2.6050913754821883,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1493990727.0882354,
+            "stdDevNs": 47984429.59030372,
+            "allocatedBytes": 803544,
+            "isBaseline": false,
+            "deltaMeanPct": -2.9318386595264907,
+            "deltaAllocPct": -0.1570560928817805
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 8346454889.366667,
+            "stdDevNs": 34690315.959488876,
+            "allocatedBytes": 1611264568,
+            "isBaseline": false,
+            "deltaMeanPct": -2.8148559144010936,
+            "deltaAllocPct": 0.003186170457170128
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 402950608.25,
+            "stdDevNs": 7870012.854728826,
+            "allocatedBytes": 672984,
+            "isBaseline": false,
+            "deltaMeanPct": -10.459581829568036,
+            "deltaAllocPct": 0.0666135344427659
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 8733242446.5,
+            "stdDevNs": 25046427.08524302,
+            "allocatedBytes": 1611234384,
+            "isBaseline": false,
+            "deltaMeanPct": -4.811131095531634,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 801178876.875,
+            "stdDevNs": 16431826.693921711,
+            "allocatedBytes": 672672,
+            "isBaseline": false,
+            "deltaMeanPct": -8.679773895026917,
+            "deltaAllocPct": -0.0047569213205213585
+        }, {
+            "method": "EncryptFile_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1506355179.2463768,
+            "stdDevNs": 72132799.35029629,
+            "allocatedBytes": 621536,
+            "isBaseline": false,
+            "deltaMeanPct": -5.066548808390606,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "DecryptFile_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1402582444.4605262,
+            "stdDevNs": 74579283.15996644,
+            "allocatedBytes": 1066656,
+            "isBaseline": false,
+            "deltaMeanPct": -5.707117667389317,
+            "deltaAllocPct": 0.01950399831965553
+        }, {
+            "method": "EncryptFile_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1973790337.45,
+            "stdDevNs": 43321767.25469847,
+            "allocatedBytes": 621672,
+            "isBaseline": false,
+            "deltaMeanPct": -4.115107270602213,
+            "deltaAllocPct": 0.0012868687908580841
+        }, {
+            "method": "DecryptFile_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1971822034.2868853,
+            "stdDevNs": 87964099.10760675,
+            "allocatedBytes": 1065416,
+            "isBaseline": false,
+            "deltaMeanPct": -6.909082422289916,
+            "deltaAllocPct": -0.04353210492738395
+        }, {
+            "method": "EncryptStream_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 11325651580.73077,
+            "stdDevNs": 39800830.27474446,
+            "allocatedBytes": 2148412448,
+            "isBaseline": false,
+            "deltaMeanPct": -0.6776718690649057,
+            "deltaAllocPct": -0.14001029412759397
+        }, {
+            "method": "DecryptStream_AesGcm",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 508308550.1052632,
+            "stdDevNs": 11044723.236582933,
+            "allocatedBytes": 894160,
+            "isBaseline": false,
+            "deltaMeanPct": -12.035020218820327,
+            "deltaAllocPct": 0.05281485261075453
+        }, {
+            "method": "EncryptStream_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 11866227435.433332,
+            "stdDevNs": 52730498.45980581,
+            "allocatedBytes": 2148314328,
+            "isBaseline": false,
+            "deltaMeanPct": -2.7074851770715105,
+            "deltaAllocPct": -0.1466580774866359
+        }, {
+            "method": "DecryptStream_ChaCha",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1046339497.2666667,
+            "stdDevNs": 19210773.647724684,
+            "allocatedBytes": 2991136,
+            "isBaseline": false,
+            "deltaMeanPct": -8.559267740346288,
+            "deltaAllocPct": 234.41139115968733
+        }]
+    }, {
+        "name": "XChaCha20Poly1305EncryptionBenchmarks",
+        "description": "XChaCha20-Poly1305 (24-byte nonce, explicit key) encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Encrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 175710098.66666666,
+            "stdDevNs": 2167050.304461497,
+            "allocatedBytes": 104859720,
+            "isBaseline": false,
+            "deltaMeanPct": -24.90181349327586,
+            "deltaAllocPct": -79.99972442804399
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 180917398.2857143,
+            "stdDevNs": 2467938.726279583,
+            "allocatedBytes": 104859672,
+            "isBaseline": false,
+            "deltaMeanPct": -7.856864236233307,
+            "deltaAllocPct": -74.99962949935836
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 425601170.73333335,
+            "stdDevNs": 4433377.576750701,
+            "allocatedBytes": 262146152,
+            "isBaseline": false,
+            "deltaMeanPct": -28.070117716629817,
+            "deltaAllocPct": -79.99988732939175
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 433029414.85714287,
+            "stdDevNs": 6152550.896800584,
+            "allocatedBytes": 262146072,
+            "isBaseline": false,
+            "deltaMeanPct": -9.84607170419554,
+            "deltaAllocPct": -74.99985179930407
+        }, {
+            "method": "Encrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 851710690.5,
+            "stdDevNs": 7920317.634058255,
+            "allocatedBytes": 524290120,
+            "isBaseline": false,
+            "deltaMeanPct": -28.074196086871805,
+            "deltaAllocPct": -79.99994488532488
+        }, {
+            "method": "Decrypt",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 864236919,
+            "stdDevNs": 6204756.544217481,
+            "allocatedBytes": 524290072,
+            "isBaseline": false,
+            "deltaMeanPct": -10.523703899135157,
+            "deltaAllocPct": -74.99992589957883
+        }]
+    }],
+    "comparison": {
+        "baseline": "AesGcm",
+        "description": "Encrypts and decrypts the same seeded deterministic buffer with AES-GCM, AES-SIV, ChaCha20-Poly1305, and XChaCha20-Poly1305 to compare throughput at each payload size. Decrypt cases reuse a ciphertext produced once in setup. AES-CCM is covered separately (packet-size limit).",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded plaintext/ciphertext buffer (100 MiB, 250 MiB, 500 MiB)."}],
+        "groups": [{
+            "axis": "Encrypt",
+            "rows": [{
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 25090152.829545453,
+                "allocatedBytes": 104859328,
+                "ratioToBaseline": 1,
+                "throughputMbps": 4179.233212024227,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -48.583916202390284,
+                "deltaAllocPct": -66.6663360617395
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 1574464523.5625,
+                "allocatedBytes": 104860400,
+                "ratioToBaseline": 62.75228908563901,
+                "throughputMbps": 66.59889659675623,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -6.1803826571648415,
+                "deltaAllocPct": -74.99952793490499
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 58368176.8125,
+                "allocatedBytes": 104859248,
+                "ratioToBaseline": 2.3263380342493285,
+                "throughputMbps": 1796.4857860275656,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -24.553151080516677,
+                "deltaAllocPct": -66.66634284319785
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 170661375.6,
+                "allocatedBytes": 104859720,
+                "ratioToBaseline": 6.801926507160769,
+                "throughputMbps": 614.419048430546,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -28.409388523839024,
+                "deltaAllocPct": -79.99972442804399
+            }, {
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 64050565.85483871,
+                "allocatedBytes": 262145728,
+                "ratioToBaseline": 1,
+                "throughputMbps": 4092.766340177404,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -48.09047359492196,
+                "deltaAllocPct": -66.6665344241752
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 3920555423.5,
+                "allocatedBytes": 262146768,
+                "ratioToBaseline": 61.210316742327755,
+                "throughputMbps": 66.86399545041402,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -6.769442790591724,
+                "deltaAllocPct": -74.99981346188152
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 147529394.90625,
+                "allocatedBytes": 262145672,
+                "ratioToBaseline": 2.3033269564019765,
+                "throughputMbps": 1776.893344994628,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -27.19902499396096,
+                "deltaAllocPct": -66.66653408506221
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 414020595.71428573,
+                "allocatedBytes": 262146120,
+                "ratioToBaseline": 6.463964684599403,
+                "throughputMbps": 633.1665687977144,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -30.585579360257775,
+                "deltaAllocPct": -79.99988977079173
+            }, {
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 129174398.33333333,
+                "allocatedBytes": 524289776,
+                "ratioToBaseline": 1,
+                "throughputMbps": 4058.760921394654,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -47.54431360346018,
+                "deltaAllocPct": -66.66659596770022
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 7830762640.611111,
+                "allocatedBytes": 524290768,
+                "ratioToBaseline": 60.62163045965115,
+                "throughputMbps": 66.95235496999877,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -8.62923749335091,
+                "deltaAllocPct": -74.99990673079631
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 307107454.07894737,
+                "allocatedBytes": 524289720,
+                "ratioToBaseline": 2.3774637857144065,
+                "throughputMbps": 1707.1809656082871,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -27.247928767745012,
+                "deltaAllocPct": -66.66659732403072
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 841094687.7857143,
+                "allocatedBytes": 524290120,
+                "ratioToBaseline": 6.511311054186429,
+                "throughputMbps": 623.340044365579,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -29.496372641352604,
+                "deltaAllocPct": -79.99994488532488
+            }]
+        }, {
+            "axis": "Decrypt",
+            "rows": [{
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 25972374.64285714,
+                "allocatedBytes": 104859616,
+                "ratioToBaseline": 1,
+                "throughputMbps": 4037.2742747586108,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -39.41931658122715,
+                "deltaAllocPct": -49.999475483707975
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 1568078270.1333334,
+                "allocatedBytes": 104860632,
+                "ratioToBaseline": 60.37485180680552,
+                "throughputMbps": 66.87013141957766,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -5.756824744937726,
+                "deltaAllocPct": -66.66604106266317
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 56472724.64814815,
+                "allocatedBytes": 104859512,
+                "ratioToBaseline": 2.174338135218573,
+                "throughputMbps": 1856.783086938209,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -23.243628283264336,
+                "deltaAllocPct": -49.999494556719185
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 174599397.64285713,
+                "allocatedBytes": 104859672,
+                "ratioToBaseline": 6.7225042008577,
+                "throughputMbps": 600.5610638731188,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -10.943036139906901,
+                "deltaAllocPct": -74.99962663830682
+            }, {
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 65790499.93548387,
+                "allocatedBytes": 262146016,
+                "ratioToBaseline": 1,
+                "throughputMbps": 3984.52664529174,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -39.719752676061766,
+                "deltaAllocPct": -49.999790192383514
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 3892893048.4,
+                "allocatedBytes": 262147032,
+                "ratioToBaseline": 59.17105132530513,
+                "throughputMbps": 67.33912202076617,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -7.31274766405507,
+                "deltaAllocPct": -66.66641642354175
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 149939949.47560975,
+                "allocatedBytes": 262145912,
+                "ratioToBaseline": 2.2790516810579846,
+                "throughputMbps": 1748.3265861887069,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -19.397004552656334,
+                "deltaAllocPct": -49.99980468816161
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 425130670.0714286,
+                "allocatedBytes": 262146072,
+                "ratioToBaseline": 6.461885386010509,
+                "throughputMbps": 616.6198264546657,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -12.909378077711322,
+                "deltaAllocPct": -74.99985179930407
+            }, {
+                "algorithm": "AesGcm",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 133851293.38235295,
+                "allocatedBytes": 524290016,
+                "ratioToBaseline": 1,
+                "throughputMbps": 3916.94384679829,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -39.06773267676816,
+                "deltaAllocPct": -49.99989509600848
+            }, {
+                "algorithm": "AesSiv",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 7735525285.633333,
+                "allocatedBytes": 524291032,
+                "ratioToBaseline": 57.79193528998197,
+                "throughputMbps": 67.7766513120608,
+                "slaTarget": ">= 35 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -8.052206780615382,
+                "deltaAllocPct": -66.66654154485028
+            }, {
+                "algorithm": "ChaCha20Poly1305",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 304273392.5,
+                "allocatedBytes": 524289912,
+                "ratioToBaseline": 2.2732196664758986,
+                "throughputMbps": 1723.0819812810282,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -21.425666705970638,
+                "deltaAllocPct": -49.99990386979466
+            }, {
+                "algorithm": "XChaCha20Poly1305",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 856216231.1666666,
+                "allocatedBytes": 524290072,
+                "ratioToBaseline": 6.396772190469926,
+                "throughputMbps": 612.331302439354,
+                "slaTarget": ">= 300 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -12.67304598967117,
+                "deltaAllocPct": -74.99992589957883
+            }]
+        }]
+    },
+    "slo": [{
+        "area": "AesGcm_Decrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "25.97 ms (4037 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "AesGcm_Encrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "25.09 ms (4179 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "AesSiv_Decrypt",
+        "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+        "latest": "1568.08 ms (67 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "AesSiv_Encrypt",
+        "target": ">= 35 MB/s \u2014 AES-SIV is nonce-misuse-resistant (S2V + CTR, two passes) and inherently slower; >= 35 MB/s is acceptable when nonce-reuse safety is the priority.",
+        "latest": "1574.46 ms (67 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "ChaCha20Poly1305_Decrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "56.47 ms (1857 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "ChaCha20Poly1305_Encrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "58.37 ms (1796 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "XChaCha20Poly1305_Decrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "174.6 ms (601 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "XChaCha20Poly1305_Encrypt",
+        "target": ">= 300 MB/s \u2014 Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.",
+        "latest": "170.66 ms (614 MB/s)",
+        "result": "Exceeds"
+    }],
+    "grades": [{"category": "AlgorithmComparisonBenchmarks", "grade": "A", "rationale": "24 exceed of 24 SLA targets vs declared standards"}],
+    "schema": "lyo.bench/v1",
+    "name": "encryption",
+    "title": "Encryption",
+    "description": "Symmetric authenticated-encryption throughput for Lyo.Encryption: AES-GCM/CCM/SIV and ChaCha20-Poly1305/XChaCha20-Poly1305, encrypt and decrypt. Buffered suites use seeded deterministic buffers at 100/250/500 MiB. Large suites (100 MiB\u20132 GiB) cover stream APIs (DeterministicPayloadStream \u2192 NullingStream) and file APIs (IOTemp paths) with a shared PayloadSeed.",
+    "runId": "BenchmarkRun-joined-2026-08-05-19-53-07",
+    "generatedAt": "2026-08-05T19:53:10.3437108+00:00",
+    "runStarted": "2026-08-05T12:41:31.5423938+00:00",
+    "runEnded": "2026-08-05T19:53:10.3437108+00:00",
+    "durationSeconds": 25898.801317,
+    "environment": {
+        "tool": "BenchmarkDotNet",
+        "toolVersion": "0.15.8",
+        "runtime": ".NET 10.0.0",
+        "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+        "os": "Ubuntu 24.04.3 LTS",
+        "architecture": "X64",
+        "logicalCores": 14,
+        "physicalCores": 12,
+        "memoryBytes": 6442450944,
+        "gcMode": "Workstation",
+        "configuration": "Release",
+        "dotnetSdkVersion": "10.0.100",
+        "dependencies": {
+            "BenchmarkDotNet": "0.15.8",
+            "BouncyCastle.Cryptography": "2.6.2",
+            "Dorssel.Security.Cryptography.AesExtra": "2.0.0",
+            "Konscious.Security.Cryptography.Argon2": "1.3.1",
+            "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+            "System.IO.Hashing": "10.0.5",
+            "Testcontainers.Redis": "4.13.0"
+        }
+    },
+    "notes": [],
+    "history": [{
+        "file": "20260629T020706Z_BenchmarkRun-joined-2026-06-28-22-07-05.json",
+        "runId": "BenchmarkRun-joined-2026-06-28-22-07-05",
+        "runStarted": null,
+        "runEnded": null,
+        "generatedAt": "2026-06-29T02:07:06.0651917+00:00",
+        "isCurrent": false,
+        "measurementCount": 107,
+        "medianMeanNs": 8635289.955357144
+    }, {
+        "file": "20260704T120324Z_BenchmarkRun-joined-2026-07-04-12-03-24.json",
+        "runId": "BenchmarkRun-joined-2026-07-04-12-03-24",
+        "runStarted": "2026-07-04T08:00:40.9707287+00:00",
+        "runEnded": "2026-07-04T12:03:24.9964364+00:00",
+        "generatedAt": "2026-07-04T12:03:24.9964364+00:00",
+        "isCurrent": false,
+        "measurementCount": 114,
+        "medianMeanNs": 8632544.783333333
+    }, {
+        "file": "20260708T120022Z_BenchmarkRun-joined-2026-07-08-12-00-21.json",
+        "runId": "BenchmarkRun-joined-2026-07-08-12-00-21",
+        "runStarted": "2026-07-08T07:16:44.0065616+00:00",
+        "runEnded": "2026-07-08T12:00:22.3545472+00:00",
+        "generatedAt": "2026-07-08T12:00:22.3545472+00:00",
+        "isCurrent": false,
+        "measurementCount": 114,
+        "medianMeanNs": 9008280.4765625
+    }, {
+        "file": "20260729T120511Z_BenchmarkRun-joined-2026-07-29-12-05-11.json",
+        "runId": "BenchmarkRun-joined-2026-07-29-12-05-11",
+        "runStarted": "2026-07-29T08:10:42.6717941+00:00",
+        "runEnded": "2026-07-29T12:05:11.6436608+00:00",
+        "generatedAt": "2026-07-29T12:05:11.6436608+00:00",
+        "isCurrent": false,
+        "measurementCount": 114,
+        "medianMeanNs": 9094231.978125
+    }, {
+        "file": "20260801T003919Z_BenchmarkRun-joined-2026-08-01-00-39-16.json",
+        "runId": "BenchmarkRun-joined-2026-08-01-00-39-16",
+        "runStarted": "2026-07-31T15:29:30.4090738+00:00",
+        "runEnded": "2026-08-01T00:39:19.0253023+00:00",
+        "generatedAt": "2026-08-01T00:39:19.0253023+00:00",
+        "isCurrent": false,
+        "measurementCount": 206,
+        "medianMeanNs": 709593812.7619047
+    }, {
+        "file": "20260802T005600Z_BenchmarkRun-joined-2026-08-02-00-55-59.json",
+        "runId": "BenchmarkRun-joined-2026-08-02-00-55-59",
+        "runStarted": "2026-08-01T16:31:47.9723167+00:00",
+        "runEnded": "2026-08-02T00:56:00.9791363+00:00",
+        "generatedAt": "2026-08-02T00:56:00.9791363+00:00",
+        "isCurrent": false,
+        "measurementCount": 206,
+        "medianMeanNs": 624946730.3478261
+    }, {
+        "file": "20260805T195310Z_BenchmarkRun-joined-2026-08-05-19-53-07.json",
+        "runId": "BenchmarkRun-joined-2026-08-05-19-53-07",
+        "runStarted": "2026-08-05T12:41:31.5423938+00:00",
+        "runEnded": "2026-08-05T19:53:10.3437108+00:00",
+        "generatedAt": "2026-08-05T19:53:10.3437108+00:00",
+        "isCurrent": true,
+        "measurementCount": 206,
+        "medianMeanNs": 595104342.2619047
+    }],
+    "deltaBaseline": {
+        "kind": "previousRun",
+        "runId": "BenchmarkRun-joined-2026-08-02-00-55-59",
+        "runStarted": "2026-08-01T16:31:47.9723167+00:00",
+        "runEnded": "2026-08-02T00:56:00.9791363+00:00"
+    }
+};

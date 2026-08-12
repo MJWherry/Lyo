@@ -6,8 +6,8 @@ using Lyo.DataTable.Models;
 namespace Lyo.Csv.Models;
 
 /// <summary>
-/// Service-level options for CSV dialect, encoding, and DataTable value pooling.
-/// CSV defaults disable value pooling (unique-heavy grids); enable via <see cref="Pooling" /> or config when duplication is high.
+/// Service-level options for CSV dialect, encoding, and DataTable value pooling. CSV defaults disable value pooling (unique-heavy grids); enable via <see cref="Pooling" />
+/// or config when duplication is high.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class CsvOptions
@@ -34,14 +34,14 @@ public sealed class CsvOptions
     public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
 
     /// <summary>Text encoding for file/stream read and write. Default UTF-8.</summary>
-    public Encoding Encoding { get; set; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+    public Encoding Encoding { get; set; } = new UTF8Encoding(false);
 
     /// <summary>Quote character wrapping fields that contain delimiter, quote, escape, or newlines. Default <c>"</c>.</summary>
     public char Quote { get; set; } = '"';
 
     /// <summary>
-    /// Escape character. When equal to <see cref="Quote" />, doubled-quote RFC style is used (<c>""</c>).
-    /// When different (e.g. <c>\</c>), escape-prefix style is used inside quoted fields.
+    /// Escape character. When equal to <see cref="Quote" />, doubled-quote RFC style is used (<c>""</c>). When different (e.g. <c>\</c>), escape-prefix style is used inside
+    /// quoted fields.
     /// </summary>
     public char Escape { get; set; } = '"';
 
@@ -51,15 +51,11 @@ public sealed class CsvOptions
     /// <summary>Comment line marker when <see cref="AllowComments" /> is enabled. Default <c>#</c>.</summary>
     public char Comment { get; set; } = '#';
 
-    /// <summary>
-    /// Pooling options for CSV → DataTable imports.
-    /// Defaults: <see cref="DataTablePoolingOptions.PoolValues" /> = false (format pooling unused for CSV).
-    /// </summary>
+    /// <summary>Pooling options for CSV → DataTable imports. Defaults: <see cref="DataTablePoolingOptions.PoolValues" /> = false (format pooling unused for CSV).</summary>
     public DataTablePoolingOptions Pooling { get; set; } = CreateDefaultPooling();
 
     /// <summary>Creates CSV-oriented pooling defaults (<c>PoolValues=false</c>, <c>PoolFormats=false</c>).</summary>
-    public static DataTablePoolingOptions CreateDefaultPooling()
-        => new() { PoolValues = false, PoolFormats = false };
+    public static DataTablePoolingOptions CreateDefaultPooling() => new() { PoolValues = false, PoolFormats = false };
 
     /// <summary>Validates dialect and nested options.</summary>
     public void Validate()

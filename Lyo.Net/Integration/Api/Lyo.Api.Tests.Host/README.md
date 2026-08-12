@@ -1,6 +1,7 @@
 # Lyo.Api.Tests.Host
 
-Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target. It wires a realistic combination of `Lyo.Api` services so tests exercise the same registration and middleware paths as production hosts.
+Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target. It wires a realistic combination of
+`Lyo.Api` services so tests exercise the same registration and middleware paths as production hosts.
 
 ## Examples
 
@@ -25,8 +26,10 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## What it ships
 
-- **`Program`** ([`Program.cs`](Program.cs)) — top-level statements that build the host. The empty `Lyo.Api.Tests.Host.Program` class at the bottom is the entry-point type required by `WebApplicationFactory<Program>`.
-- **`MapsterLyoMapper`** ([`MapsterLyoMapper.cs`](MapsterLyoMapper.cs)) — the `ILyoMapper` implementation registered for tests; thin Mapster adapter so request/response DTOs map end-to-end.
+- **`Program`** ([`Program.cs`](Program.cs)) — top-level statements that build the host. The empty `Lyo.Api.Tests.Host.Program` class at the bottom is the entry-point type required
+  by `WebApplicationFactory<Program>`.
+- **`MapsterLyoMapper`** ([`MapsterLyoMapper.cs`](MapsterLyoMapper.cs)) — the `ILyoMapper` implementation registered for tests; thin Mapster adapter so request/response DTOs map
+  end-to-end.
 
 ## Registered services
 
@@ -41,8 +44,11 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## Endpoint surfaces
 
-- **Typed builder** at `/api/Job/Definition` — uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
-- **Dynamic builder** at `api/Job` — `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` ensuring a `Guid.NewGuid()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
+- **Typed builder** at `/api/Job/Definition` — uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`,
+  `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`,
+  `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
+- **Dynamic builder** at `api/Job` — `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` ensuring a `Guid.NewGuid()` PK when callers omit
+  `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
 
 ## Using it from tests
 

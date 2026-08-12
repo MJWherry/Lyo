@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesSiv;

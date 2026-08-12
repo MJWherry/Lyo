@@ -1,35 +1,46 @@
 # Lyo.DataTable.Models
 
-Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse optional format map, fluent builders, and an HTML renderer. Used as the canonical tabular exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md), and for ad-hoc programmatic table construction.
+Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse optional format map, fluent builders, and an HTML renderer. Used as the canonical tabular
+exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md), and for ad-hoc programmatic
+table construction.
 
 This project contains all of the runtime types. The sibling [`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.
 
 ## Core types
 
-- `DataTable` — sparse table with `Headers`, `Rows`, and `Footer`. Indexer `this[int row, int col]` uses `row == -1` for header and `row == -2` for footer. Optional formatting lives in a thread-safe sparse map: `GetFormat` / `SetFormat` / `ClearFormat` / `Formats` (snapshot). Absent key = no format (never store null). Helpers: `SetHeader` / `SetFooter` / `SetCell` (optional format overloads clear the map when format is null; value-only `SetCell` leaves an existing format), `ClearCell` (clears value and format), `AddRow`, `MaxColumn`. On `net10.0`, `EnumerateRowsAsync` yields body rows for `await foreach` (table stays fully materialised). Cell structure mutation is not itself synchronized — only the format map is concurrent-safe. One cell object per populated coordinate remains even when slim (no cell-instance pooling).
+- `DataTable` — sparse table with `Headers`, `Rows`, and `Footer`. Indexer `this[int row, int col]` uses `row == -1` for header and `row == -2` for footer. Optional formatting
+  lives in a thread-safe sparse map: `GetFormat` / `SetFormat` / `ClearFormat` / `Formats` (snapshot). Absent key = no format (never store null). Helpers: `SetHeader` /
+  `SetFooter` / `SetCell` (optional format overloads clear the map when format is null; value-only `SetCell` leaves an existing format), `ClearCell` (clears value and format),
+  `AddRow`, `MaxColumn`. On `net10.0`, `EnumerateRowsAsync` yields body rows for `await foreach` (table stays fully materialised). Cell structure mutation is not itself
+  synchronized — only the format map is concurrent-safe. One cell object per populated coordinate remains even when slim (no cell-instance pooling).
 - `DataTableRow` — sparse `Cells` dictionary keyed by column index, with `SetCell` / `ClearCell` and an indexer.
 - `IDataTableCell` — `DisplayValue`, `ColSpan`, `RowSpan` only. Formatting is not on the cell.
 - `DataTableCell<T>` — sealed record implementing `IDataTableCell`; `DisplayValue` is `Value?.ToString() ?? ""`. `DataTableCell<string>.Empty` is the shared empty cell.
 - `DataTableCell` (static) — non-generic helpers: `Empty`, `FromValue(string?)`, `FromValue(string?, colSpan, rowSpan)`.
 - `DataTableCellFormat` — sealed record of optional font/fill/align/border/number-format fields; `HasAny()` detects meaningful style.
-- `DataTablePoolingOptions` — `PoolValues`, `PoolFormats`, `PoolingCellThreshold` (default 512; `0` = always when enabled). Section name `DataTablePooling`. Create one `DataTableValueInterner` per parse.
+- `DataTablePoolingOptions` — `PoolValues`, `PoolFormats`, `PoolingCellThreshold` (default 512; `0` = always when enabled). Section name `DataTablePooling`. Create one
+  `DataTableValueInterner` per parse.
 - `DataTableValueInterner` — parse-scoped (single-threaded) string/format interning via ordinary dictionaries, gated by pooling options. Not process-wide `string.Intern`.
 - `DataTableToHtml.ToHtmlDocument(DataTable)` — renders HTML with inline styles from the format map (not from the cell type). Honors `ColSpan`/`RowSpan`.
 
 ## Fluent builders
 
-- `DataTableBuilder` — top-level builder. `AddColumn(col, configure)` defines conditional formatting applied to the table format map; `AddHeader` / `AddHeaders`, `AddFooter` / `AddFooters` / `AddSumFooter`, and `AddRow` overloads (including `BuildAndAdd`). `Build()` materializes the `DataTable` and computes sum footers.
-- `DataTableRowBuilder` — `SetCell<T>(col, value)` applies column-level `FormatWhen` rules into the row's pending format map; `AddCell` accepts strings, cells, or a `DataTableCellBuilder`.
+- `DataTableBuilder` — top-level builder. `AddColumn(col, configure)` defines conditional formatting applied to the table format map; `AddHeader` / `AddHeaders`, `AddFooter` /
+  `AddFooters` / `AddSumFooter`, and `AddRow` overloads (including `BuildAndAdd`). `Build()` materializes the `DataTable` and computes sum footers.
+- `DataTableRowBuilder` — `SetCell<T>(col, value)` applies column-level `FormatWhen` rules into the row's pending format map; `AddCell` accepts strings, cells, or a
+  `DataTableCellBuilder`.
 - `DataTableColumnBuilder` — `WithSumFooter()`; `FormatWhen<T>(when, apply)`.
 - `DataTableCellBuilder` — fluent setters for format + spans; `Build()` returns a thin cell; `BuildFormat()` / `Format` returns the optional format for the table map.
 
 ## Sum footers
 
-`AddSumFooter` (or `WithSumFooter` on a column definition) flags a column for auto-summation. At `Build()` time the builder reads `DisplayValue` from each row's cell, trims common currency prefixes (`$ £ € ¥`), removes thousands separators, and parses with `InvariantCulture`; unparseable cells contribute `0`.
+`AddSumFooter` (or `WithSumFooter` on a column definition) flags a column for auto-summation. At `Build()` time the builder reads `DisplayValue` from each row's cell, trims common
+currency prefixes (`$ £ € ¥`), removes thousands separators, and parses with `InvariantCulture`; unparseable cells contribute `0`.
 
 ## I/O round-trip
 
-`Lyo.Csv` and `Lyo.Xlsx` round-trip `Headers`, `Rows`, and `Footer` (Xlsx also maps footer formats at row `-2`). Export always writes `Footer` when present; import peels the last physical body row into `Footer` only when `hasFooterRow` / `useFooterRow` is true (default false). PDF extract still fills headers and body only.
+`Lyo.Csv` and `Lyo.Xlsx` round-trip `Headers`, `Rows`, and `Footer` (Xlsx also maps footer formats at row `-2`). Export always writes `Footer` when present; import peels the last
+physical body row into `Footer` only when `hasFooterRow` / `useFooterRow` is true (default false). PDF extract still fills headers and body only.
 
 ## Targeting
 

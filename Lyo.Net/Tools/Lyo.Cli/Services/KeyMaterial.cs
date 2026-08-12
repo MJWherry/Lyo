@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using Lyo.Exceptions;
 using Lyo.Hashing;
@@ -13,15 +12,11 @@ internal static class KeyMaterial
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(key) && string.IsNullOrWhiteSpace(keyFile), "Provide --key or --key-file.");
         ArgumentHelpers.ThrowIf(!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(keyFile), "Provide only one of --key or --key-file.");
-
-        var text = !string.IsNullOrWhiteSpace(keyFile)
-            ? (await File.ReadAllTextAsync(keyFile, ct).ConfigureAwait(false)).Trim()
-            : key!.Trim();
-
+        var text = !string.IsNullOrWhiteSpace(keyFile) ? (await File.ReadAllTextAsync(keyFile, ct).ConfigureAwait(false)).Trim() : key!.Trim();
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(text), "Key material is empty.");
-
         if (TryParseHex(text, out var hex))
             return hex!;
+
         if (TryParseBase64(text, out var b64))
             return b64!;
 
@@ -50,6 +45,7 @@ internal static class KeyMaterial
         bytes = null;
         if (text.Length == 0 || text.Length % 2 != 0)
             return false;
+
         foreach (var c in text) {
             if (!Uri.IsHexDigit(c))
                 return false;

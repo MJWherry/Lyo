@@ -23,6 +23,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
     {
         _ledger = ledger;
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(definitionKey);
+        _definitionKey = definitionKey;
         _missing = missingDefinitionKeyBehavior;
         _reloadSubscription = ChangeToken.OnChange(_ledger.GetReloadToken, Reload);
     }
@@ -83,7 +84,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
         _initialized = true;
     }
 
-    /// <remarks>Prefer <see cref="ResolvedConfigRecord.TryGetValue" /> so absent keys surface via <paramref name="missingDefinitionKeyBehavior" />.</remarks>
+    /// <remarks>Prefer <see cref="ResolvedConfigRecord.TryGetValue" /> so absent keys surface via the configured <see cref="ConfigApiMissingDefinitionKeyBehavior" />.</remarks>
     private TOptions Materialize(ResolvedConfigRecord? record)
     {
         if (record == null) {

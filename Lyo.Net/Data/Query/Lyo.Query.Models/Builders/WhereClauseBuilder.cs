@@ -224,7 +224,7 @@ public class WhereClauseBuilder
         var left = _children.Count switch {
             0 => node,
             1 => _children[0],
-            var _ => new GroupClause(_groupOperator, [.._children])
+            var _ => new GroupClause(_groupOperator, [.. _children])
         };
 
         var combined = new GroupClause(GroupOperatorEnum.And, _description, left, node);
@@ -255,7 +255,7 @@ public class WhereClauseBuilder
         var left = _children.Count switch {
             0 => node,
             1 => _children[0],
-            var _ => new GroupClause(_groupOperator, [.._children])
+            var _ => new GroupClause(_groupOperator, [.. _children])
         };
 
         var combined = new GroupClause(GroupOperatorEnum.Or, _description, left, node);
@@ -331,7 +331,7 @@ public class WhereClauseBuilder
 
         // Always wrap children into a GroupClause using this builder's operator.
         // Do not flatten a single child — keep the grouping explicit.
-        var node = new GroupClause(_groupOperator, [.._children]);
+        var node = new GroupClause(_groupOperator, [.. _children]);
         if (_subWhere != null)
             node.SubClause = _subWhere;
 

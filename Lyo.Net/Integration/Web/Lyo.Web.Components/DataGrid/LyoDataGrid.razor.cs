@@ -131,6 +131,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private MudDataGrid<T>? _dataGrid;
 
+    private int _gridCurrentPage;
+
     private MudTextField<string>? _searchField;
 
     // State
@@ -267,7 +269,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
             // Restore pagination
             if (savedState.Page > 0)
-                _dataGrid.CurrentPage = savedState.Page;
+                _gridCurrentPage = savedState.Page;
 
             if (savedState.PageSize > 0)
                 await _dataGrid.SetRowsPerPageAsync(savedState.PageSize);
@@ -801,9 +803,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
         if (_loading)
             return string.Empty;
 
-        if (EffectiveSelectedCount > 0) {
+        if (EffectiveSelectedCount > 0)
             return EffectiveSelectedCount <= MaxBulkSize ? $"({EffectiveSelectedCount:N0} items)" : "(too many items)";
-        }
 
         var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
         if (total <= 0)

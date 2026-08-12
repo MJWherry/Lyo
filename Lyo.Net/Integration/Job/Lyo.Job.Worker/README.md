@@ -1,6 +1,9 @@
 # Lyo.Job.Worker
 
-Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled worker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the full run lifecycle (fetch, start, heartbeat, progress, finish), registers in the **worker registry **, decrypts encrypted parameters, supports **batch child runs**, subscribes to cancellation messages, links **distributed traces** from queue envelopes, and reports results back to the Job API.
+Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled
+worker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the full run lifecycle (fetch, start, heartbeat, progress, finish), registers in the **worker
+registry **, decrypts encrypted parameters, supports **batch child runs**, subscribes to cancellation messages, links **distributed traces** from queue envelopes, and reports
+results back to the Job API.
 
 `JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, inheriting ack / requeue / DLQ semantics and `queue.worker.*` metrics.
 
@@ -49,57 +52,67 @@ public sealed class MyImportWorker : JobWorkerBase
 
 ## Registration
 
-Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client) — do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`. When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`.
+Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher
+with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client) — do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*`
+on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`,
+`IMetrics`. When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`.
 
 ## Configuration (`QueueWorkerOptions.SectionName` = `"QueueWorkerOptions"`)
 
 Shared with `Lyo.MessageQueue.QueueWorkerBase` (see [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)):
 
-| Property | Default | Purpose |
-| ------------------------ | ------- | ------------------------------------------------- |
-| `DefaultMaxRequeueCount` | `5` | Cap before DLQ routing |
-| `RequeueDelay` | `2s` | Linear retry delay (requires `IDelayedMqService`) |
+| Property                 | Default | Purpose                                           |
+|--------------------------|---------|---------------------------------------------------|
+| `DefaultMaxRequeueCount` | `5`     | Cap before DLQ routing                            |
+| `RequeueDelay`           | `2s`    | Linear retry delay (requires `IDelayedMqService`) |
 
 ## Metrics (`job.worker.*`)
 
-| Metric | Description |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `job.worker.run.executed` | Execute completed (tag `outcome`) |
-| `job.worker.run.duration` | Execute phase wall time |
-| `job.worker.heartbeat.sent` | Run heartbeat PATCH success |
-| `job.worker.heartbeat.failed` | Run heartbeat PATCH failure |
-| `job.worker.cancellation.honored` | Run cancelled via MQ signal |
-| `job.worker.progress.reported` | `ReportProgressAsync` calls |
-| `job.worker.start.rejected` | `Started` rejected by the API CAS guard (duplicate delivery / cancelled run) — message dropped, not requeued |
-| `job.worker.shutdown.requeued` | Run handed back to `Queued` during graceful host shutdown |
-| `job.worker.late_finish.dropped` | `Finished` report rejected as terminal (run already finalized, e.g. timed out by maintenance) — dropped cleanly |
+| Metric                            | Description                                                                                                     |
+|-----------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `job.worker.run.executed`         | Execute completed (tag `outcome`)                                                                               |
+| `job.worker.run.duration`         | Execute phase wall time                                                                                         |
+| `job.worker.heartbeat.sent`       | Run heartbeat PATCH success                                                                                     |
+| `job.worker.heartbeat.failed`     | Run heartbeat PATCH failure                                                                                     |
+| `job.worker.cancellation.honored` | Run cancelled via MQ signal                                                                                     |
+| `job.worker.progress.reported`    | `ReportProgressAsync` calls                                                                                     |
+| `job.worker.start.rejected`       | `Started` rejected by the API CAS guard (duplicate delivery / cancelled run) — message dropped, not requeued    |
+| `job.worker.shutdown.requeued`    | Run handed back to `Queued` during graceful host shutdown                                                       |
+| `job.worker.late_finish.dropped`  | `Finished` report rejected as terminal (run already finalized, e.g. timed out by maintenance) — dropped cleanly |
 
 Also emits inherited `queue.worker.*` metrics from the message-queue worker base.
 
 ## Production features
 
-| Feature | Implementation |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Priority queues** | Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`. |
+| Feature             | Implementation                                                                                                                                                                  |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Priority queues** | Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`.                                                                                                |
 | **Worker registry** | `POST Job/WorkerInstance` on start (soft-fail if the Job API is down); periodic PATCH with `InFlightCount`; re-register on missing id / heartbeat `404`; `Stopped` on shutdown. |
-| **Progress** | Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`. |
-| **Batch jobs** | `ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`. |
-| **Encryption** | Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered. |
-| **Tracing** | `JobTracing.StartWorkerExecution` links to envelope `TraceId`. |
-| **Cancellation** | Per-run CTS + `SubscribeToRunCancellationsAsync`. |
-| **Dry run** | Not applicable — dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them. |
+| **Progress**        | Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`.                                                                    |
+| **Batch jobs**      | `ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`.                                                                                         |
+| **Encryption**      | Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered.                                                                                       |
+| **Tracing**         | `JobTracing.StartWorkerExecution` links to envelope `TraceId`.                                                                                                                  |
+| **Cancellation**    | Per-run CTS + `SubscribeToRunCancellationsAsync`.                                                                                                                               |
+| **Dry run**         | Not applicable — dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them.                                                 |
 
 Override `HeartbeatInterval` (default 30 s) in a subclass to tune heartbeat/progress PATCH cadence for long-running jobs.
 
 ## Production features — Cancellation topology
 
-Cancellations are broadcast, not competed for: each worker instance binds its **own exclusive auto-delete queue** (`job.run.{workerType}.cancel.{instanceId}`) to the `job.events` exchange on the `job.notifications.run.cancelled` routing key. Every instance of a scaled-out worker type therefore sees every cancel message; instances not executing that run simply ignore it. (A single shared cancel queue would deliver each cancel to only one competing consumer and silently lose cancellations for scaled-out workers.) The queues are auto-deleted when the instance disconnects.
+Cancellations are broadcast, not competed for: each worker instance binds its **own exclusive auto-delete queue** (`job.run.{workerType}.cancel.{instanceId}`) to the `job.events`
+exchange on the `job.notifications.run.cancelled` routing key. Every instance of a scaled-out worker type therefore sees every cancel message; instances not executing that run
+simply ignore it. (A single shared cancel queue would deliver each cancel to only one competing consumer and silently lose cancellations for scaled-out workers.) The queues are
+auto-deleted when the instance disconnects.
 
 ## Production features — Shutdown and rejection semantics
 
-- **Graceful host shutdown** — a run interrupted by host shutdown (not by a user cancel) is handed back via `POST Job/Run/{id}/Requeue`, which CAS-transitions it `Running -> Queued` for redelivery on restart instead of terminally cancelling it. If the requeue fails (API down, or the run is `Cancelling` because a user cancel is pending), the run is left for the maintenance dead-job watchdog.
-- **`Started` rejected (400)** — the API's CAS guard rejects starts for non-`Queued` runs (duplicate dispatch delivery, run cancelled while queued). The worker drops the message without requeueing — retrying can never succeed.
-- **`Finished` rejected (400)** — the run was already finalized (e.g. timed out by maintenance while the worker was still executing). The worker logs and drops the report as terminal instead of churning it through requeue/DLQ. Transient finish failures (network, 5xx) are retried before giving up.
+- **Graceful host shutdown** — a run interrupted by host shutdown (not by a user cancel) is handed back via `POST Job/Run/{id}/Requeue`, which CAS-transitions it
+  `Running -> Queued` for redelivery on restart instead of terminally cancelling it. If the requeue fails (API down, or the run is `Cancelling` because a user cancel is pending),
+  the run is left for the maintenance dead-job watchdog.
+- **`Started` rejected (400)** — the API's CAS guard rejects starts for non-`Queued` runs (duplicate dispatch delivery, run cancelled while queued). The worker drops the message
+  without requeueing — retrying can never succeed.
+- **`Finished` rejected (400)** — the run was already finalized (e.g. timed out by maintenance while the worker was still executing). The worker logs and drops the report as
+  terminal instead of churning it through requeue/DLQ. Transient finish failures (network, 5xx) are retried before giving up.
 
 ## Worker lifecycle
 
@@ -129,14 +142,14 @@ sequenceDiagram
 
 ## `IJobWorkerContext`
 
-| Member | Purpose |
-| ---------------------------------------- | ------------------------- |
-| `Run` | Fully loaded `JobRunRes` |
-| `Logger` | Scoped structured logger |
-| `CancellationToken` | Host shutdown + MQ cancel |
-| `Results` | `JobWorkerResultBuilder` |
-| `ReportProgressAsync(percent, message?)` | Immediate progress PATCH |
-| `CreateChildRunsAsync(request)` | Batch fan-out child runs |
+| Member                                   | Purpose                   |
+|------------------------------------------|---------------------------|
+| `Run`                                    | Fully loaded `JobRunRes`  |
+| `Logger`                                 | Scoped structured logger  |
+| `CancellationToken`                      | Host shutdown + MQ cancel |
+| `Results`                                | `JobWorkerResultBuilder`  |
+| `ReportProgressAsync(percent, message?)` | Immediate progress PATCH  |
+| `CreateChildRunsAsync(request)`          | Batch fan-out child runs  |
 
 ## `JobWorkerResultBuilder`
 

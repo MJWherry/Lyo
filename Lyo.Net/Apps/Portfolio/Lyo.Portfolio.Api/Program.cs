@@ -1,6 +1,4 @@
 using System.IO.Compression;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Export;
@@ -8,7 +6,6 @@ using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;
 using Lyo.Api.Reporting;
 using Lyo.Api.Services.Crud.Read;
-using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Google;
 using Lyo.Authentication.OpenIdConnect;
@@ -20,7 +17,6 @@ using Lyo.Config.Api;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Encryption.Extensions;
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
@@ -65,6 +61,7 @@ builder.Services.AddResponseCompression(options => {
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
 });
+
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 builder.Services.AddRequestDecompression();
@@ -85,26 +82,24 @@ builder.Services.ConfigureHttpJsonOptions(options => {
 
 builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("QueryOptions"));
 builder.Services.ConfigureMapster();
-
-var connStr = builder.Configuration.GetConnectionString("Postgres")
-              ?? "Host=localhost;Port=5432;Database=lyo;Username=lyo;Password=lyo";
-
+var connStr = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5432;Database=lyo;Username=lyo;Password=lyo";
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, []);
 builder.Services.AddMqJobEventPublisher();
 builder.Services.AddPostgresJobManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
+
 builder.Services.AddJobMaintenanceService();
 builder.Services.AddLyoCrudServices<JobContext>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddIOTempService();
 builder.Services.AddReportingApi(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
+
 builder.Services.AddReportingGenerationHooks(
     new() {
         AfterRenderAsync = async (ctx, ct) => {
@@ -112,11 +107,13 @@ builder.Services.AddReportingGenerationHooks(
             var saved = await storage.SaveFileAsync(
                     ctx.StagedFilePath!, ctx.FileName, pathPrefix: ctx.PathPrefix ?? ctx.Request.PathPrefix ?? "reports", contentType: ctx.ContentType, ct: ct)
                 .ConfigureAwait(false);
+
             ctx.OutputFileId = saved.Id;
         },
         OnCleanupAsync = async (ctx, ct) => {
             if (ctx.OutputFileId is not Guid fileId)
                 return;
+
             var storage = ctx.Services.GetRequiredKeyedService<IFileStorageService>(PortfolioRoutes.FileStorageWorkbench.ServiceKey);
             await storage.DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
         }
@@ -142,13 +139,11 @@ var metaKey = PortfolioRoutes.FileStorageWorkbench.MetadataKey;
 var fileRoot = builder.Configuration["LocalFileStorage:RootDirectoryPath"] ?? "/var/lyo/portfolio-files";
 var encKeyId = builder.Configuration["PortfolioFileEncryption:KeyId"] ?? "portfolio-files";
 var encSecret = builder.Configuration["PortfolioFileEncryption:KeySecret"] ?? "change-me-in-production";
-
 var fileKeyStore = new LocalKeyStore();
 fileKeyStore.AddKeyFromString(encKeyId, "v1", encSecret);
 builder.Services.AddKeyedSingleton<IKeyStore>(fileKey, (_, _) => fileKeyStore);
 builder.Services.AddKeyedSingleton<LocalKeyStore>(fileKey, (_, _) => fileKeyStore);
 builder.Services.AddEncryptionServiceKeyed(fileKey, fileKey);
-
 builder.Services.AddPostgresFileMetadataStoreKeyed(metaKey)
     .ConfigurePostgresFileStore(options => {
         var section = builder.Configuration.GetSection("PostgresFileMetadataStore");
@@ -158,29 +153,25 @@ builder.Services.AddPostgresFileMetadataStoreKeyed(metaKey)
     .Build();
 
 builder.Services.AddFileStorageServiceKeyed(
-    fileKey,
-    opts => opts.RootDirectoryPath = fileRoot,
-    provider => {
+    fileKey, opts => opts.RootDirectoryPath = fileRoot, provider => {
         var factory = provider.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>();
         var db = factory.CreateDbContext();
         var loggerFactory = provider.GetService<ILoggerFactory>();
         return new PostgresFileMetadataStore(db, loggerFactory);
-    },
-    fileKey);
+    }, fileKey);
 
 builder.Services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
 builder.Services.TryAddInMemoryStagedFileUploadStoreIfMissing();
 builder.Services.AddKeyedScoped<IMultipartUploadService>(
-    fileKey, (sp, _) => new LocalMultipartUploadService(
-        sp.GetRequiredKeyedService<LocalFileStorageService>(fileKey),
-        sp.GetRequiredService<IMultipartUploadSessionStore>(),
-        sp.GetRequiredService<DiskFileStorageOptions>(),
+    fileKey,
+    (sp, _) => new LocalMultipartUploadService(
+        sp.GetRequiredKeyedService<LocalFileStorageService>(fileKey), sp.GetRequiredService<IMultipartUploadSessionStore>(), sp.GetRequiredService<DiskFileStorageOptions>(),
         loggerFactory: sp.GetService<ILoggerFactory>()));
+
 builder.Services.AddKeyedScoped<IStagedFileUploadService>(
-    fileKey, (sp, _) => new LocalStagedFileUploadService(
-        sp.GetRequiredKeyedService<LocalFileStorageService>(fileKey),
-        sp.GetRequiredService<IStagedFileUploadStore>(),
-        sp.GetRequiredService<DiskFileStorageOptions>(),
+    fileKey,
+    (sp, _) => new LocalStagedFileUploadService(
+        sp.GetRequiredKeyedService<LocalFileStorageService>(fileKey), sp.GetRequiredService<IStagedFileUploadStore>(), sp.GetRequiredService<DiskFileStorageOptions>(),
         loggerFactory: sp.GetService<ILoggerFactory>()));
 
 builder.Services.AddPostgresFileDownloadAccessService();
@@ -205,9 +196,7 @@ app.UseResponseCompression();
 app.UseRequestDecompression();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.Portfolio.Api" }))
-    .AllowAnonymous()
-    .WithTags("Health");
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.Portfolio.Api" })).AllowAnonymous().WithTags("Health");
 app.MapLyoJwks();
 app.MapLyoAuthEndpoints();
 app.MapLyoTokenManagementEndpoints();

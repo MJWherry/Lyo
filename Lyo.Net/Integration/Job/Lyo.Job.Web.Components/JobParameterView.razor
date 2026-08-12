@@ -100,8 +100,8 @@
                     AllowedValues = existingRow.AllowedValues,
                     Options = existingRow.Options
                 };
-                await ApiClient.PostAsAsync<UpdateRequest<JobParameterReq>, UpdateResult<JobParameterRes>>(
-                    $"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
+
+                await ApiClient.PostAsAsync<UpdateRequest<JobParameterReq>, UpdateResult<JobParameterRes>>($"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));
             }
 
             Snackbar.Add("Parameters saved", Severity.Success);

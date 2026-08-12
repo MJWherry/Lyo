@@ -69,20 +69,15 @@ public static class SetupEndpoints
 
             var contactReadFeatures = ApiFeatureSet.ReadOnly + ExportApiFeature.Instance;
             app.CreateReadOnlyBuilder<PeopleDbContext, AddressEntity, AddressEntity>(PortfolioRoutes.Person.Address, "Person").WithCrud(contactReadFeatures, new()).Build();
-            app.CreateReadOnlyBuilder<PeopleDbContext, PhoneNumberEntity, PhoneNumberEntity>(PortfolioRoutes.Person.PhoneNumber, "Person").WithCrud(contactReadFeatures, new()).Build();
-            app.CreateReadOnlyBuilder<PeopleDbContext, EmailAddressEntity, EmailAddressEntity>(PortfolioRoutes.Person.Email, "Person").WithCrud(contactReadFeatures, new()).Build();
+            app.CreateReadOnlyBuilder<PeopleDbContext, PhoneNumberEntity, PhoneNumberEntity>(PortfolioRoutes.Person.PhoneNumber, "Person")
+                .WithCrud(contactReadFeatures, new())
+                .Build();
 
+            app.CreateReadOnlyBuilder<PeopleDbContext, EmailAddressEntity, EmailAddressEntity>(PortfolioRoutes.Person.Email, "Person").WithCrud(contactReadFeatures, new()).Build();
             app.MapRootQueryEndpoints<PeopleDbContext>();
             app.MapGet(
                     "info/{schema}/{table}/{column}/GetUniqueCounts", async (
-                        string schema,
-                        string table,
-                        string column,
-                        int? start,
-                        int? amount,
-                        string? containsFilter,
-                        ISprocService sproc,
-                        CancellationToken ct) => {
+                        string schema, string table, string column, int? start, int? amount, string? containsFilter, ISprocService sproc, CancellationToken ct) => {
                         var parameters = new Dictionary<string, object?> {
                             ["p_schema_name"] = schema,
                             ["p_table_name"] = table,

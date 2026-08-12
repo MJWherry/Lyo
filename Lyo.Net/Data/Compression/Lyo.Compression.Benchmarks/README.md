@@ -7,23 +7,23 @@ the source of the numbers behind [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md).
 
 ## What ships
 
-| File | Suite |
-|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`Program.cs`](Program.cs) | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet. |
-| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs) | Baseline GZip compress / decompress at 100 / 250 / 500 MiB (seeded payloads). |
+| File                                                                   | Suite                                                                                                                                                                                                                                                             |
+|------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`Program.cs`](Program.cs)                                             | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet.                                                                                                                             |
+| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs)         | Baseline GZip compress / decompress at 100 / 250 / 500 MiB (seeded payloads).                                                                                                                                                                                     |
 | [`AlgorithmComparisonBenchmarks.cs`](AlgorithmComparisonBenchmarks.cs) | Side-by-side compress + decompress for every algorithm on `Lyo.Compression` (GZip, Deflate, ZstdSharp, Snappier, LZ4, LZMA, BZip2, XZ; plus Brotli and ZLib on non-`netstandard2.0` targets). Parameterized over `DataSize` `[100, 250, 500 MiB]` via `[Params]`. |
-| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs) | Stream-based compress / decompress for GZip and Zstd at 100 MiB–2 GiB under per-suite IOTemp. Needs multi‑GiB free disk for the full ladder. |
-| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md) | Pointer to [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) (auto-generated from CSV). |
+| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs)   | Stream-based compress / decompress for GZip and Zstd at 100 MiB–2 GiB under per-suite IOTemp. Needs multi‑GiB free disk for the full ladder.                                                                                                                      |
+| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md)                         | Pointer to [HTML benchmark dashboard](../../../docs/benchmarks/compression.html) (auto-generated from CSV).                                                                                                                                                       |
 
 All benchmark types are decorated with `[SimpleJob(RuntimeMoniker.HostProcess)]` and `[MemoryDiagnoser]` so the results include managed allocations and run inside the host process
 for fast iteration.
 
 ## Dependencies
 
-| Package | Version |
+| Package                               | Version  |
 |---------------------------------------|----------|
-| `BenchmarkDotNet` | `0.15.8` |
-| `Lyo.Compression` (project reference) | — |
+| `BenchmarkDotNet`                     | `0.15.8` |
+| `Lyo.Compression` (project reference) | —        |
 
 ## Running the benchmarks
 

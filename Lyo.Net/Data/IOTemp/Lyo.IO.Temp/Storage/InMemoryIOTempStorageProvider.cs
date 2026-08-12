@@ -250,9 +250,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return Task.CompletedTask;
     }
 
-    private string Normalize(string path)
-        => PathHelpers.TrimTrailingSeparators(PathHelpers.GetFullPath(PathStyle, path), PathStyle);
-
+    private string Normalize(string path) => PathHelpers.TrimTrailingSeparators(PathHelpers.GetFullPath(PathStyle, path), PathStyle);
 
     private static string? ParentOf(string normalizedPath)
     {

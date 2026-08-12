@@ -45,8 +45,8 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         IFileMalwareScanner? malwareScanner = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService),
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<AzureBlobFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
-            auditHandlers, contentPolicy, malwareScanner)
+            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<AzureBlobFileStorageService>(), compressionService, twoKeyEncryptionService, metrics,
+            operationContextAccessor, auditHandlers, contentPolicy, malwareScanner)
     {
         _blobOptions = options;
         _containerClient = containerClient ?? new BlobContainerClient(options.ConnectionString, options.ContainerName);

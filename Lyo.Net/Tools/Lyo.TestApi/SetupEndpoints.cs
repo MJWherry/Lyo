@@ -84,14 +84,7 @@ public static class SetupEndpoints
             app.MapRootQueryEndpoints<PeopleDbContext>();
             app.MapGet(
                     "info/{schema}/{table}/{column}/GetUniqueCounts", async (
-                        string schema,
-                        string table,
-                        string column,
-                        int? start,
-                        int? amount,
-                        string? containsFilter,
-                        ISprocService sproc,
-                        CancellationToken ct) => {
+                        string schema, string table, string column, int? start, int? amount, string? containsFilter, ISprocService sproc, CancellationToken ct) => {
                         var parameters = new Dictionary<string, object?> {
                             ["p_schema_name"] = schema,
                             ["p_table_name"] = table,

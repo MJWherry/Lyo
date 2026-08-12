@@ -72,7 +72,6 @@
                                        ValueChanged="@OnTotalCountModeChanged"
                                        Label="Total Count Mode"
                                        Variant="Variant.Outlined"
-                                       Dense
                                        Margin="Margin.Dense"
                                        Style="min-width: 140px;">
                                 <MudSelectItem Value="@QueryTotalCountMode.Exact">Exact</MudSelectItem>
@@ -84,7 +83,6 @@
                                        ValueChanged="@OnIncludeFilterModeChanged"
                                        Label="Include Filter Mode"
                                        Variant="Variant.Outlined"
-                                       Dense
                                        Margin="Margin.Dense"
                                        Style="min-width: 140px;">
                                 <MudSelectItem Value="@QueryIncludeFilterMode.Full">Full</MudSelectItem>
@@ -95,8 +93,7 @@
                                    Value="@GetZipSiblingCollectionSelections()"
                                    ValueChanged="@OnZipSiblingCollectionSelectionsChanged"
                                    Color="Color.Primary"
-                                   Label="Zip sibling collection fields (QueryProject)"
-                                   Dense/>
+                                   Label="Zip sibling collection fields (QueryProject)"/>
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                             When on, multiple <code>Select</code> paths under the same collection merge into one array of objects per row.
                         </MudText>

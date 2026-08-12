@@ -3,13 +3,19 @@
   "$id": "https://lyo.local/catalog/capabilities.schema.json",
   "title": "Lyo capabilities catalog",
   "type": "object",
-  "required": ["capabilities"],
+  "required": [
+    "capabilities"
+  ],
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
     "capabilities": {
       "type": "array",
-      "items": { "$ref": "capability.schema.json" }
+      "items": {
+        "$ref": "capability.schema.json"
+      }
     }
   }
 }

@@ -35,6 +35,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     private Timer? _autoRefreshTimer;
     private MudDataGrid<object?>? _dataGrid;
     private List<FilterState> _filterStates = [];
+
+    private int _gridCurrentPage;
     private DateTime _lastSaveAt = DateTime.MinValue;
     private bool _loading;
     private bool _refocusSearchAfterLoad;
@@ -348,7 +350,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost
                 return;
 
             if (savedState.Page > 0)
-                _dataGrid.CurrentPage = savedState.Page;
+                _gridCurrentPage = savedState.Page;
 
             if (savedState.PageSize > 0)
                 await _dataGrid.SetRowsPerPageAsync(savedState.PageSize);
@@ -712,7 +714,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         if (KeySelector == null || _dataGrid == null)
             return;
 
-        var keyList = _savedSelectedKeys is { Count: > 0 } ? _savedSelectedKeys.ToList() : (_dataGrid.SelectedItems ?? Enumerable.Empty<object?>()).Select(KeySelector).ToList();
+        var keyList = _savedSelectedKeys is { Count: > 0 } ? _savedSelectedKeys.ToList() : SelectedItems.Select(KeySelector).ToList();
         var request = new DeleteRequest { Keys = keyList, AllowMultiple = true };
         try {
             var bulkRoute = DeleteRoute + "/Bulk";
@@ -747,9 +749,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         if (_loading)
             return string.Empty;
 
-        if (EffectiveSelectedCount > 0) {
+        if (EffectiveSelectedCount > 0)
             return EffectiveSelectedCount <= MaxBulkSize ? $"({EffectiveSelectedCount:N0} items)" : "(too many items)";
-        }
 
         var total = CurrentResults?.Total ?? CurrentResults?.Items?.Count ?? 0;
         if (total <= 0)

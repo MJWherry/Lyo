@@ -1,6 +1,8 @@
 # Lyo.Tag.Postgres
 
-PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`) with migrations support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by `(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.
+PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`) with migrations
+support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by `(for_entity_type, for_entity_id, name, tag_type, slug)` per
+tenant.
 
 `PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth` (`HealthCheckName = "tag-postgres"`), so registering the store also wires up a liveness probe.
 
@@ -63,10 +65,12 @@ dotnet ef migrations add MigrationName --project Features/Tag/Lyo.Tag.Postgres
 
 ## DI extensions
 
-- `AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` — register only the `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly from migrations or another store).
+- `AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` — register only the `IDbContextFactory<TagDbContext>` (useful when consuming
+  the schema directly from migrations or another store).
 - `AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — same, but bound from configuration.
 - `AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` — register the DbContext factory **and** the `ITagStore` singleton.
-- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — register the store using configuration binding. The default section name is `PostgresTag`.
+- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — register the store using configuration binding. The default section
+  name is `PostgresTag`.
 
 ## Usage
 
@@ -88,20 +92,18 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Schema
 
-- **tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes
+- **tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`,
+  `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes
 - Unique index on (for_entity_type, for_entity_id, tag)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
 
 ## Tenancy
 
-`PostgresTagStore` accepts an optional `Guid? tenantId` on every read/write
-method (mirroring `IFavoriteStore`) and resolves it through `TenancyResolver`
+`PostgresTagStore` accepts an optional `Guid? tenantId` on every read/write method (mirroring `IFavoriteStore`) and resolves it through `TenancyResolver`
 under the policy configured in `PostgresTagOptions.Tenancy` (inheriting from
 `EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only
-`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is
-rejected at store construction. The store applies a `WhereTenant` filter on
-every query. See
+`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store construction. The store applies a `WhereTenant` filter on every query. See
 [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
 for the full policy matrix and `appsettings.json` snippet.
 

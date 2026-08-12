@@ -20,8 +20,8 @@ public sealed record StackTraceDecoderOptions
     public IReadOnlyList<string> ExtraSystemPrefixes { get; init; } = [];
 
     /// <summary>
-    /// Optional store that resolves NuGet-style package metadata for frames. When set, use <see cref="IStackTraceDecoder.DecodeAsync" /> so lookups can run asynchronously (sync
-    /// <see cref="IStackTraceDecoder.Decode" /> throws).
+    /// Optional store that resolves NuGet-style package metadata for frames. When set, use <see cref="IStackTraceDecoder.DecodeAsync(string, CancellationToken)" /> so lookups
+    /// can run asynchronously (sync <see cref="IStackTraceDecoder.Decode(string)" /> throws).
     /// </summary>
     public IPackageMetadataStore? PackageMetadataStore { get; init; }
 

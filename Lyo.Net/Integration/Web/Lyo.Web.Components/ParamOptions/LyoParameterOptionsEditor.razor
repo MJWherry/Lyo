@@ -1,7 +1,5 @@
-@using Lyo.Query.Models.Common.Request
 @using Lyo.Query.Models.Parameters
 @using Lyo.Web.Components.QueryRequestBuilder
-
 <MudStack Spacing="2">
     @if (ShowKindSelect) {
         <MudSelect T="ParameterOptionsKind?"
@@ -35,9 +33,11 @@
     else if (_kind == ParameterOptionsKind.Query) {
         <MudTextField T="string" Value="@_queryRoute" ValueChanged="OnQueryRouteChanged" Label="Query route" Variant="Variant.Outlined"
                       Margin="Margin.Dense" HelperText="Default: Query (root /Query endpoint)"/>
+
         <MudText Typo="Typo.caption" Class="mud-text-secondary">
             Use ComputedFields named Key and Value (or Select Id + Name). Sibling params bind as {{ParamKey}} in filters.
         </MudText>
+
         <QueryRootForm Request="_query" RequestChanged="OnQueryChanged"/>
     }
 

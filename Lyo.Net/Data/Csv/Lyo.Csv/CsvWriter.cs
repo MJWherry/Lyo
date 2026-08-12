@@ -11,6 +11,7 @@ namespace Lyo.Csv;
 
 internal sealed class CsvWriter : ICsvWriter
 {
+    private const int ExportBytesPerRowGuess = 64;
     private readonly Func<CsvOptions> _getOptions;
     private readonly ILogger _logger;
 
@@ -168,7 +169,11 @@ internal sealed class CsvWriter : ICsvWriter
 
     /// <inheritdoc
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Boolean)' />
-    public void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true, bool hasFooterRow = false)
+    public void ExportToCsvStreamFromDictionary(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        Stream csvStream,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -327,6 +332,27 @@ internal sealed class CsvWriter : ICsvWriter
             IFormattable f => f.ToString(null, culture) ?? "",
             var o => o.ToString() ?? ""
         };
+
+    private static MemoryStream CreateExportBuffer<T>(IEnumerable<T> data)
+    {
+        var capacity = 256;
+        if (data is ICollection<T> collection)
+            capacity = Math.Max(256, collection.Count * ExportBytesPerRowGuess);
+
+        return new(capacity);
+    }
+
+    private static byte[] ToExportBytes(MemoryStream ms)
+    {
+        if (ms.TryGetBuffer(out var segment)) {
+            var length = (int)ms.Length;
+            var bytes = new byte[length];
+            Buffer.BlockCopy(segment.Array!, segment.Offset, bytes, 0, length);
+            return bytes;
+        }
+
+        return ms.ToArray();
+    }
 
 #if !NETSTANDARD2_0
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.Threading.CancellationToken)' />
@@ -944,27 +970,4 @@ internal sealed class CsvWriter : ICsvWriter
         await csv.FlushAsync(ct).ConfigureAwait(false);
     }
 #endif
-
-    private const int ExportBytesPerRowGuess = 64;
-
-    private static MemoryStream CreateExportBuffer<T>(IEnumerable<T> data)
-    {
-        var capacity = 256;
-        if (data is ICollection<T> collection)
-            capacity = Math.Max(256, collection.Count * ExportBytesPerRowGuess);
-
-        return new MemoryStream(capacity);
-    }
-
-    private static byte[] ToExportBytes(MemoryStream ms)
-    {
-        if (ms.TryGetBuffer(out var segment)) {
-            var length = (int)ms.Length;
-            var bytes = new byte[length];
-            Buffer.BlockCopy(segment.Array!, segment.Offset, bytes, 0, length);
-            return bytes;
-        }
-
-        return ms.ToArray();
-    }
 }

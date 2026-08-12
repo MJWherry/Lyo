@@ -66,7 +66,7 @@ public sealed class ReportServiceUnitTests
         using var doc = JsonDocument.Parse(json);
         var tag = doc.RootElement.GetProperty("Tag");
         Assert.Equal(JsonValueKind.Array, tag.ValueKind);
-        Assert.Equal(["a", "b"], tag.EnumerateArray().Select(e => e.GetString()).ToArray());
+        Assert.Equal(["a", "b"], tag.EnumerateArray().Select(e => e.GetString()!).ToArray());
         Assert.Equal("only", doc.RootElement.GetProperty("Single").GetString());
     }
 

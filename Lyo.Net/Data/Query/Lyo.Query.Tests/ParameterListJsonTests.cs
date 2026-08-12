@@ -20,7 +20,6 @@ public sealed class ParameterListJsonTests
         var numbers = ParameterListJson.Serialize(["1", "2.5", "x"], ParameterListJsonKind.Number);
         Assert.Equal("[1,2.5]", numbers);
         Assert.Equal(["1", "2.5"], ParameterListJson.Parse(numbers));
-
         var flags = ParameterListJson.Serialize(["true", "False", "nope"], ParameterListJsonKind.Bool);
         Assert.Equal("[true,false]", flags);
         Assert.Equal([bool.TrueString, bool.FalseString], ParameterListJson.Parse(flags));

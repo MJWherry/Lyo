@@ -1,2 +1,677 @@
-window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };
-window.LyoBench.reports["filestorage"] = {"type": "micro", "groups": [{"name": "LocalFileStorageBenchmarks", "description": "LocalFileStorageService under an IOTemp session directory: SaveFromStream / GetFileStream / DeleteFile for DeterministicPayloadStream inputs (BenchmarkData.PayloadSeed, 1 KiB\u2013100 MiB) crossed with compress and encrypt flags. Get drains into NullingStream so MemoryDiagnoser excludes retained plaintext. Compression and two-key AES-GCM are always wired; flags select the pipeline. SHA-256 hashing and JSON LocalFileMetadataStore are always on.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext payload size: 1 KiB, 64 KiB, 1 MiB, 10 MiB, 100 MiB."}, {"name": "Compress", "description": "When true, save/get run through Lyo.Compression (GZip)."}, {"name": "Encrypt", "description": "When true, save/get run through two-key AES-GCM encryption."}], "measurements": [{"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"}, "meanNs": 343049.9948453608, "stdDevNs": 77185.83457354775, "allocatedBytes": 17912, "isBaseline": false, "deltaMeanPct": 1.5464644451943363, "deltaAllocPct": 1.4959202175883952}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"}, "meanNs": 188860.03125, "stdDevNs": 42132.15339992489, "allocatedBytes": 20016, "isBaseline": false, "deltaMeanPct": 11.026886790839963, "deltaAllocPct": -0.9108910891089108}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"}, "meanNs": 268367.25268817204, "stdDevNs": 52031.16666326392, "allocatedBytes": 34776, "isBaseline": false, "deltaMeanPct": 0.17810013021458218, "deltaAllocPct": -0.7534246575342466}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"}, "meanNs": 470525.4210526316, "stdDevNs": 108259.00949953694, "allocatedBytes": 29584, "isBaseline": false, "deltaMeanPct": 25.490348395655733, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"}, "meanNs": 294962.2368421053, "stdDevNs": 43855.55590587115, "allocatedBytes": 32024, "isBaseline": false, "deltaMeanPct": 14.733957230414275, "deltaAllocPct": -2.9575757575757575}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"}, "meanNs": 325462.6354166667, "stdDevNs": 60583.84424348055, "allocatedBytes": 38216, "isBaseline": false, "deltaMeanPct": 2.1964524062825026, "deltaAllocPct": -1.1587006000413822}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"}, "meanNs": 436030.9052631579, "stdDevNs": 71179.280516094, "allocatedBytes": 21968, "isBaseline": false, "deltaMeanPct": 20.0570623711349, "deltaAllocPct": 1.2163656468853667}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"}, "meanNs": 226216.3350515464, "stdDevNs": 40461.47056451782, "allocatedBytes": 23984, "isBaseline": false, "deltaMeanPct": 13.494521793712636, "deltaAllocPct": 0.773109243697479}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"}, "meanNs": 318327.5208333333, "stdDevNs": 57198.66676914754, "allocatedBytes": 35768, "isBaseline": false, "deltaMeanPct": 6.180981628164721, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"}, "meanNs": 526374.3163265307, "stdDevNs": 86143.57166790236, "allocatedBytes": 32552, "isBaseline": false, "deltaMeanPct": -0.8477402122173122, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"}, "meanNs": 303476.4742268041, "stdDevNs": 44420.40467676726, "allocatedBytes": 35488, "isBaseline": false, "deltaMeanPct": 16.852477655377967, "deltaAllocPct": 0.0}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"}, "meanNs": 390436.97, "stdDevNs": 75156.97616920255, "allocatedBytes": 39312, "isBaseline": false, "deltaMeanPct": 40.55142536595561, "deltaAllocPct": 1.1527377521613833}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"}, "meanNs": 893516.5555555555, "stdDevNs": 412390.2268946103, "allocatedBytes": 142496, "isBaseline": false, "deltaMeanPct": 38.731167500539215, "deltaAllocPct": -0.18492574950966656}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"}, "meanNs": 232930.70212765958, "stdDevNs": 39854.61794773325, "allocatedBytes": 20208, "isBaseline": false, "deltaMeanPct": 13.18348279665789, "deltaAllocPct": 1.0804321728691477}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"}, "meanNs": 272552.51020408166, "stdDevNs": 63193.788369911264, "allocatedBytes": 34880, "isBaseline": false, "deltaMeanPct": -6.591274453559401, "deltaAllocPct": -0.5247547342003194}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"}, "meanNs": 764098.6666666666, "stdDevNs": 138986.84554500476, "allocatedBytes": 159304, "isBaseline": false, "deltaMeanPct": -3.792021586858701, "deltaAllocPct": 0.1659959758551308}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"}, "meanNs": 349495.8505154639, "stdDevNs": 54681.29599629285, "allocatedBytes": 34232, "isBaseline": false, "deltaMeanPct": 16.376976902767204, "deltaAllocPct": 0.0}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"}, "meanNs": 310554.887755102, "stdDevNs": 57195.59106086504, "allocatedBytes": 38240, "isBaseline": false, "deltaMeanPct": 7.249180303531645, "deltaAllocPct": -0.4788673745575682}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"}, "meanNs": 2030141.36, "stdDevNs": 470058.86492076324, "allocatedBytes": 275848, "isBaseline": false, "deltaMeanPct": 44.10997476374426, "deltaAllocPct": 0.09579656293543892}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"}, "meanNs": 245202.57142857142, "stdDevNs": 57917.76855149494, "allocatedBytes": 25464, "isBaseline": false, "deltaMeanPct": -6.179671533358415, "deltaAllocPct": -2.0313942751615883}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"}, "meanNs": 307735.206185567, "stdDevNs": 64448.0149404894, "allocatedBytes": 35976, "isBaseline": false, "deltaMeanPct": -6.475768754018787, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"}, "meanNs": 2141232.84, "stdDevNs": 562517.2172639951, "allocatedBytes": 98560, "isBaseline": false, "deltaMeanPct": 6.117823645117076, "deltaAllocPct": -0.10540825427714264}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"}, "meanNs": 425334.3157894737, "stdDevNs": 67103.17937504634, "allocatedBytes": 40824, "isBaseline": false, "deltaMeanPct": 7.648877975245451, "deltaAllocPct": -0.7584597432905484}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"}, "meanNs": 406196.2272727273, "stdDevNs": 95770.64393428776, "allocatedBytes": 39088, "isBaseline": false, "deltaMeanPct": 7.3722082216954, "deltaAllocPct": 0.47295907875796833}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"}, "meanNs": 13974731.19, "stdDevNs": 5423158.937545869, "allocatedBytes": 2109800, "isBaseline": false, "deltaMeanPct": 11.340262951035, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"}, "meanNs": 752614.6632653062, "stdDevNs": 83783.72033438843, "allocatedBytes": 22712, "isBaseline": false, "deltaMeanPct": 0.8036465696449441, "deltaAllocPct": 0.035236081747709654}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"}, "meanNs": 579969.9526315789, "stdDevNs": 115664.52822368595, "allocatedBytes": 34656, "isBaseline": false, "deltaMeanPct": 6.623649607633593, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"}, "meanNs": 14799834.44, "stdDevNs": 6052336.508246617, "allocatedBytes": 2126184, "isBaseline": false, "deltaMeanPct": 217.43472077808966, "deltaAllocPct": -0.007900855549786676}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"}, "meanNs": 1398580.8645833333, "stdDevNs": 237972.29108666015, "allocatedBytes": 586576, "isBaseline": false, "deltaMeanPct": -5.1350766555688585, "deltaAllocPct": -0.6665402227219769}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"}, "meanNs": 587876.3854166666, "stdDevNs": 90447.62155347962, "allocatedBytes": 38480, "isBaseline": false, "deltaMeanPct": 5.385389897600488, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"}, "meanNs": 32851379.16, "stdDevNs": 5390469.355448837, "allocatedBytes": 4209664, "isBaseline": false, "deltaMeanPct": 13.38262696966433, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"}, "meanNs": 869252.2142857143, "stdDevNs": 110874.51720045049, "allocatedBytes": 32312, "isBaseline": false, "deltaMeanPct": 6.07494440057535, "deltaAllocPct": 0.5727091633466136}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"}, "meanNs": 554724.6914893617, "stdDevNs": 81181.95300366837, "allocatedBytes": 35864, "isBaseline": false, "deltaMeanPct": 2.7042207129254776, "deltaAllocPct": -0.5104305370616955}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"}, "meanNs": 33613449.22, "stdDevNs": 5710362.483605097, "allocatedBytes": 1100232, "isBaseline": false, "deltaMeanPct": 13.365717671796554, "deltaAllocPct": -0.06031450745574514}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"}, "meanNs": 1489069.0913978494, "stdDevNs": 149019.4508980679, "allocatedBytes": 658624, "isBaseline": false, "deltaMeanPct": -3.075182777688317, "deltaAllocPct": -3.1720082328726846}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"}, "meanNs": 533264.9052631579, "stdDevNs": 90113.9712823609, "allocatedBytes": 39168, "isBaseline": false, "deltaMeanPct": 7.073570546097524, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"}, "meanNs": 80139010.59375, "stdDevNs": 4916821.087307845, "allocatedBytes": 20995848, "isBaseline": false, "deltaMeanPct": 11.205040636528524, "deltaAllocPct": -0.0012573756512634338}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"}, "meanNs": 6921748.144736842, "stdDevNs": 334381.354876642, "allocatedBytes": 48456, "isBaseline": false, "deltaMeanPct": 8.521822436467549, "deltaAllocPct": -0.3782894736842105}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"}, "meanNs": 5660177.183673469, "stdDevNs": 1037386.4609648654, "allocatedBytes": 34672, "isBaseline": false, "deltaMeanPct": 24.210964938104574, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"}, "meanNs": 84060355.86363636, "stdDevNs": 3127502.979087036, "allocatedBytes": 21012776, "isBaseline": false, "deltaMeanPct": 13.85252225621429, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"}, "meanNs": 11684983.709677419, "stdDevNs": 782612.592210478, "allocatedBytes": 5328360, "isBaseline": false, "deltaMeanPct": 5.440383073539079, "deltaAllocPct": 0.16015519263737255}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"}, "meanNs": 5989292.285714285, "stdDevNs": 1123510.3341783308, "allocatedBytes": 38520, "isBaseline": false, "deltaMeanPct": 6.085016626157069, "deltaAllocPct": 0.4799666110183639}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"}, "meanNs": 295466790.81578946, "stdDevNs": 6303626.956713836, "allocatedBytes": 41987616, "isBaseline": false, "deltaMeanPct": 14.328848096708882, "deltaAllocPct": -0.0016004462958813658}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"}, "meanNs": 6381030.5, "stdDevNs": 151380.47981847406, "allocatedBytes": 207944, "isBaseline": false, "deltaMeanPct": 4.542358225241526, "deltaAllocPct": 162.1583459404942}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"}, "meanNs": 6289545.510204081, "stdDevNs": 1131939.707145001, "allocatedBytes": 35888, "isBaseline": false, "deltaMeanPct": -49.09627671547377, "deltaAllocPct": -0.5100909292526059}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"}, "meanNs": 273193429.6944444, "stdDevNs": 9109422.422083912, "allocatedBytes": 10715264, "isBaseline": false, "deltaMeanPct": 6.496940321133557, "deltaAllocPct": -0.06036335906797183}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"}, "meanNs": 12138157.65625, "stdDevNs": 937505.3664059895, "allocatedBytes": 6164304, "isBaseline": false, "deltaMeanPct": 5.051837551949205, "deltaAllocPct": -0.02231708424699303}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"}, "meanNs": 5971395.551020408, "stdDevNs": 955346.4384645658, "allocatedBytes": 39024, "isBaseline": false, "deltaMeanPct": -32.729192152061145, "deltaAllocPct": -0.4692919812283207}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"}, "meanNs": 835434547.0666667, "stdDevNs": 8991894.758968089, "allocatedBytes": 105216792, "isBaseline": false, "deltaMeanPct": 10.013300790657606, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"}, "meanNs": 68150895.2, "stdDevNs": 1498590.220972842, "allocatedBytes": 307912, "isBaseline": false, "deltaMeanPct": 4.998614950821697, "deltaAllocPct": 0.08060741588226117}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"}, "meanNs": 38015119.677777775, "stdDevNs": 5322092.189762291, "allocatedBytes": 34696, "isBaseline": false, "deltaMeanPct": 11.711074832557859, "deltaAllocPct": 0.0}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"}, "meanNs": 848427611.4285715, "stdDevNs": 4599112.473652158, "allocatedBytes": 111494408, "isBaseline": false, "deltaMeanPct": 6.394477825670189, "deltaAllocPct": 5.989838458441458}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"}, "meanNs": 111131126.58823529, "stdDevNs": 3535121.02632013, "allocatedBytes": 80415680, "isBaseline": false, "deltaMeanPct": 3.582048169305585, "deltaAllocPct": 0.00485501029103001}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"}, "meanNs": 37785286.16161616, "stdDevNs": 8944580.902191987, "allocatedBytes": 38360, "isBaseline": false, "deltaMeanPct": 9.531284112748663, "deltaAllocPct": -0.4773765047737651}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"}, "meanNs": 2820173616.4666667, "stdDevNs": 39507400.94878929, "allocatedBytes": 105718744, "isBaseline": false, "deltaMeanPct": 10.141243444522605, "deltaAllocPct": 0.0}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"}, "meanNs": 62387298.823529415, "stdDevNs": 1967320.693589291, "allocatedBytes": 514336, "isBaseline": false, "deltaMeanPct": 6.607897099248365, "deltaAllocPct": -0.16460138513618436}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"}, "meanNs": 40487458.17816092, "stdDevNs": 5970577.522373378, "allocatedBytes": 52320, "isBaseline": false, "deltaMeanPct": 0.3172832940727224, "deltaAllocPct": 44.9468085106383}, {"method": "Save_FromStream", "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"}, "meanNs": 2758019309.0666666, "stdDevNs": 27179435.822491754, "allocatedBytes": 106856232, "isBaseline": false, "deltaMeanPct": 10.07681986204557, "deltaAllocPct": 0.008954888848939635}, {"method": "Get_Stream", "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"}, "meanNs": 119085435.48529412, "stdDevNs": 5548353.028144968, "allocatedBytes": 85055224, "isBaseline": false, "deltaMeanPct": 6.314002374753068, "deltaAllocPct": -0.0472880669644154}, {"method": "Delete", "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.", "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"}, "meanNs": 49522962.48, "stdDevNs": 10186565.668738564, "allocatedBytes": 39064, "isBaseline": false, "deltaMeanPct": 7.318488942897819, "deltaAllocPct": -0.4282218597063622}]}], "slo": [], "grades": [], "schema": "lyo.bench/v1", "name": "filestorage", "title": "File Storage", "description": "Local disk LocalFileStorageService save/get/delete throughput for Lyo.FileStorage. Save inputs use DeterministicPayloadStream (BenchmarkData.PayloadSeed) from 1 KiB to 100 MiB; Get drains into NullingStream. Each size is crossed with compress/encrypt flags (plain, compress-only, encrypt-only, compress+encrypt). Storage root lives under the suite IOTemp session from LyoBenchmarkBase. Every save also hashes (SHA-256) and writes JSON metadata via LocalFileMetadataStore.", "runId": "BenchmarkRun-joined-2026-08-01-15-03-15", "generatedAt": "2026-08-01T15:03:15.4988436+00:00", "runStarted": "2026-08-01T14:43:09.8270938+00:00", "runEnded": "2026-08-01T15:03:15.4988436+00:00", "durationSeconds": 1205.6717498, "environment": {"tool": "BenchmarkDotNet", "toolVersion": "0.15.8", "runtime": ".NET 10.0.0", "cpu": "Intel(R) Core(TM) Ultra 7 155U", "os": "Ubuntu 24.04.3 LTS", "architecture": "X64", "logicalCores": 14, "physicalCores": 12, "memoryBytes": 6442450944, "gcMode": "Workstation", "configuration": "Release", "dotnetSdkVersion": "10.0.100", "dependencies": {"BenchmarkDotNet": "0.15.8", "EasyCompressor": "2.1.0", "Konscious.Security.Cryptography.Argon2": "1.3.1", "Microsoft.Extensions.Configuration.Binder": "10.0.5", "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5", "Microsoft.Extensions.Hosting.Abstractions": "10.0.5", "Microsoft.Extensions.Logging.Abstractions": "10.0.5", "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5", "Microsoft.Extensions.Options.DataAnnotations": "10.0.5", "System.IO.Hashing": "10.0.5", "Testcontainers.Redis": "4.13.0"}}, "notes": [], "history": [{"file": "20260731T073720Z_BenchmarkRun-joined-2026-07-31-07-37-20.json", "runId": "BenchmarkRun-joined-2026-07-31-07-37-20", "runStarted": "2026-07-31T07:18:26.5852123+00:00", "runEnded": "2026-07-31T07:37:20.8362688+00:00", "generatedAt": "2026-07-31T07:37:20.8362688+00:00", "isCurrent": false, "measurementCount": 60, "medianMeanNs": 1536313.5408163266}, {"file": "20260801T150315Z_BenchmarkRun-joined-2026-08-01-15-03-15.json", "runId": "BenchmarkRun-joined-2026-08-01-15-03-15", "runStarted": "2026-08-01T14:43:09.8270938+00:00", "runEnded": "2026-08-01T15:03:15.4988436+00:00", "generatedAt": "2026-08-01T15:03:15.4988436+00:00", "isCurrent": true, "measurementCount": 60, "medianMeanNs": 2030141.36}], "deltaBaseline": {"kind": "previousRun", "runId": "BenchmarkRun-joined-2026-07-31-07-37-20", "runStarted": "2026-07-31T07:18:26.5852123+00:00", "runEnded": "2026-07-31T07:37:20.8362688+00:00"}};
+window.LyoBench = window.LyoBench || {reports: {}, history: {}, historyIndex: {}};
+window.LyoBench.reports["filestorage"] = {
+    "type": "micro",
+    "groups": [{
+        "name": "LocalFileStorageBenchmarks",
+        "description": "LocalFileStorageService under an IOTemp session directory: SaveFromStream / GetFileStream / DeleteFile for DeterministicPayloadStream inputs (BenchmarkData.PayloadSeed, 1 KiB\u2013100 MiB) crossed with compress and encrypt flags. Get drains into NullingStream so MemoryDiagnoser excludes retained plaintext. Compression and two-key AES-GCM are always wired; flags select the pipeline. SHA-256 hashing and JSON LocalFileMetadataStore are always on.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Plaintext payload size: 1 KiB, 64 KiB, 1 MiB, 10 MiB, 100 MiB."}, {
+            "name": "Compress",
+            "description": "When true, save/get run through Lyo.Compression (GZip)."
+        }, {"name": "Encrypt", "description": "When true, save/get run through two-key AES-GCM encryption."}],
+        "measurements": [{
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 343049.9948453608,
+            "stdDevNs": 77185.83457354775,
+            "allocatedBytes": 17912,
+            "isBaseline": false,
+            "deltaMeanPct": 1.5464644451943363,
+            "deltaAllocPct": 1.4959202175883952
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 188860.03125,
+            "stdDevNs": 42132.15339992489,
+            "allocatedBytes": 20016,
+            "isBaseline": false,
+            "deltaMeanPct": 11.026886790839963,
+            "deltaAllocPct": -0.9108910891089108
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 268367.25268817204,
+            "stdDevNs": 52031.16666326392,
+            "allocatedBytes": 34776,
+            "isBaseline": false,
+            "deltaMeanPct": 0.17810013021458218,
+            "deltaAllocPct": -0.7534246575342466
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 470525.4210526316,
+            "stdDevNs": 108259.00949953694,
+            "allocatedBytes": 29584,
+            "isBaseline": false,
+            "deltaMeanPct": 25.490348395655733,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 294962.2368421053,
+            "stdDevNs": 43855.55590587115,
+            "allocatedBytes": 32024,
+            "isBaseline": false,
+            "deltaMeanPct": 14.733957230414275,
+            "deltaAllocPct": -2.9575757575757575
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 325462.6354166667,
+            "stdDevNs": 60583.84424348055,
+            "allocatedBytes": 38216,
+            "isBaseline": false,
+            "deltaMeanPct": 2.1964524062825026,
+            "deltaAllocPct": -1.1587006000413822
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 436030.9052631579,
+            "stdDevNs": 71179.280516094,
+            "allocatedBytes": 21968,
+            "isBaseline": false,
+            "deltaMeanPct": 20.0570623711349,
+            "deltaAllocPct": 1.2163656468853667
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 226216.3350515464,
+            "stdDevNs": 40461.47056451782,
+            "allocatedBytes": 23984,
+            "isBaseline": false,
+            "deltaMeanPct": 13.494521793712636,
+            "deltaAllocPct": 0.773109243697479
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 318327.5208333333,
+            "stdDevNs": 57198.66676914754,
+            "allocatedBytes": 35768,
+            "isBaseline": false,
+            "deltaMeanPct": 6.180981628164721,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 526374.3163265307,
+            "stdDevNs": 86143.57166790236,
+            "allocatedBytes": 32552,
+            "isBaseline": false,
+            "deltaMeanPct": -0.8477402122173122,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 303476.4742268041,
+            "stdDevNs": 44420.40467676726,
+            "allocatedBytes": 35488,
+            "isBaseline": false,
+            "deltaMeanPct": 16.852477655377967,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1024", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 390436.97,
+            "stdDevNs": 75156.97616920255,
+            "allocatedBytes": 39312,
+            "isBaseline": false,
+            "deltaMeanPct": 40.55142536595561,
+            "deltaAllocPct": 1.1527377521613833
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 893516.5555555555,
+            "stdDevNs": 412390.2268946103,
+            "allocatedBytes": 142496,
+            "isBaseline": false,
+            "deltaMeanPct": 38.731167500539215,
+            "deltaAllocPct": -0.18492574950966656
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 232930.70212765958,
+            "stdDevNs": 39854.61794773325,
+            "allocatedBytes": 20208,
+            "isBaseline": false,
+            "deltaMeanPct": 13.18348279665789,
+            "deltaAllocPct": 1.0804321728691477
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 272552.51020408166,
+            "stdDevNs": 63193.788369911264,
+            "allocatedBytes": 34880,
+            "isBaseline": false,
+            "deltaMeanPct": -6.591274453559401,
+            "deltaAllocPct": -0.5247547342003194
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 764098.6666666666,
+            "stdDevNs": 138986.84554500476,
+            "allocatedBytes": 159304,
+            "isBaseline": false,
+            "deltaMeanPct": -3.792021586858701,
+            "deltaAllocPct": 0.1659959758551308
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 349495.8505154639,
+            "stdDevNs": 54681.29599629285,
+            "allocatedBytes": 34232,
+            "isBaseline": false,
+            "deltaMeanPct": 16.376976902767204,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 310554.887755102,
+            "stdDevNs": 57195.59106086504,
+            "allocatedBytes": 38240,
+            "isBaseline": false,
+            "deltaMeanPct": 7.249180303531645,
+            "deltaAllocPct": -0.4788673745575682
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 2030141.36,
+            "stdDevNs": 470058.86492076324,
+            "allocatedBytes": 275848,
+            "isBaseline": false,
+            "deltaMeanPct": 44.10997476374426,
+            "deltaAllocPct": 0.09579656293543892
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 245202.57142857142,
+            "stdDevNs": 57917.76855149494,
+            "allocatedBytes": 25464,
+            "isBaseline": false,
+            "deltaMeanPct": -6.179671533358415,
+            "deltaAllocPct": -2.0313942751615883
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 307735.206185567,
+            "stdDevNs": 64448.0149404894,
+            "allocatedBytes": 35976,
+            "isBaseline": false,
+            "deltaMeanPct": -6.475768754018787,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 2141232.84,
+            "stdDevNs": 562517.2172639951,
+            "allocatedBytes": 98560,
+            "isBaseline": false,
+            "deltaMeanPct": 6.117823645117076,
+            "deltaAllocPct": -0.10540825427714264
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 425334.3157894737,
+            "stdDevNs": 67103.17937504634,
+            "allocatedBytes": 40824,
+            "isBaseline": false,
+            "deltaMeanPct": 7.648877975245451,
+            "deltaAllocPct": -0.7584597432905484
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "65536", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 406196.2272727273,
+            "stdDevNs": 95770.64393428776,
+            "allocatedBytes": 39088,
+            "isBaseline": false,
+            "deltaMeanPct": 7.3722082216954,
+            "deltaAllocPct": 0.47295907875796833
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 13974731.19,
+            "stdDevNs": 5423158.937545869,
+            "allocatedBytes": 2109800,
+            "isBaseline": false,
+            "deltaMeanPct": 11.340262951035,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 752614.6632653062,
+            "stdDevNs": 83783.72033438843,
+            "allocatedBytes": 22712,
+            "isBaseline": false,
+            "deltaMeanPct": 0.8036465696449441,
+            "deltaAllocPct": 0.035236081747709654
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 579969.9526315789,
+            "stdDevNs": 115664.52822368595,
+            "allocatedBytes": 34656,
+            "isBaseline": false,
+            "deltaMeanPct": 6.623649607633593,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 14799834.44,
+            "stdDevNs": 6052336.508246617,
+            "allocatedBytes": 2126184,
+            "isBaseline": false,
+            "deltaMeanPct": 217.43472077808966,
+            "deltaAllocPct": -0.007900855549786676
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 1398580.8645833333,
+            "stdDevNs": 237972.29108666015,
+            "allocatedBytes": 586576,
+            "isBaseline": false,
+            "deltaMeanPct": -5.1350766555688585,
+            "deltaAllocPct": -0.6665402227219769
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 587876.3854166666,
+            "stdDevNs": 90447.62155347962,
+            "allocatedBytes": 38480,
+            "isBaseline": false,
+            "deltaMeanPct": 5.385389897600488,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 32851379.16,
+            "stdDevNs": 5390469.355448837,
+            "allocatedBytes": 4209664,
+            "isBaseline": false,
+            "deltaMeanPct": 13.38262696966433,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 869252.2142857143,
+            "stdDevNs": 110874.51720045049,
+            "allocatedBytes": 32312,
+            "isBaseline": false,
+            "deltaMeanPct": 6.07494440057535,
+            "deltaAllocPct": 0.5727091633466136
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 554724.6914893617,
+            "stdDevNs": 81181.95300366837,
+            "allocatedBytes": 35864,
+            "isBaseline": false,
+            "deltaMeanPct": 2.7042207129254776,
+            "deltaAllocPct": -0.5104305370616955
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 33613449.22,
+            "stdDevNs": 5710362.483605097,
+            "allocatedBytes": 1100232,
+            "isBaseline": false,
+            "deltaMeanPct": 13.365717671796554,
+            "deltaAllocPct": -0.06031450745574514
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 1489069.0913978494,
+            "stdDevNs": 149019.4508980679,
+            "allocatedBytes": 658624,
+            "isBaseline": false,
+            "deltaMeanPct": -3.075182777688317,
+            "deltaAllocPct": -3.1720082328726846
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "1048576", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 533264.9052631579,
+            "stdDevNs": 90113.9712823609,
+            "allocatedBytes": 39168,
+            "isBaseline": false,
+            "deltaMeanPct": 7.073570546097524,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 80139010.59375,
+            "stdDevNs": 4916821.087307845,
+            "allocatedBytes": 20995848,
+            "isBaseline": false,
+            "deltaMeanPct": 11.205040636528524,
+            "deltaAllocPct": -0.0012573756512634338
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 6921748.144736842,
+            "stdDevNs": 334381.354876642,
+            "allocatedBytes": 48456,
+            "isBaseline": false,
+            "deltaMeanPct": 8.521822436467549,
+            "deltaAllocPct": -0.3782894736842105
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 5660177.183673469,
+            "stdDevNs": 1037386.4609648654,
+            "allocatedBytes": 34672,
+            "isBaseline": false,
+            "deltaMeanPct": 24.210964938104574,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 84060355.86363636,
+            "stdDevNs": 3127502.979087036,
+            "allocatedBytes": 21012776,
+            "isBaseline": false,
+            "deltaMeanPct": 13.85252225621429,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 11684983.709677419,
+            "stdDevNs": 782612.592210478,
+            "allocatedBytes": 5328360,
+            "isBaseline": false,
+            "deltaMeanPct": 5.440383073539079,
+            "deltaAllocPct": 0.16015519263737255
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 5989292.285714285,
+            "stdDevNs": 1123510.3341783308,
+            "allocatedBytes": 38520,
+            "isBaseline": false,
+            "deltaMeanPct": 6.085016626157069,
+            "deltaAllocPct": 0.4799666110183639
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 295466790.81578946,
+            "stdDevNs": 6303626.956713836,
+            "allocatedBytes": 41987616,
+            "isBaseline": false,
+            "deltaMeanPct": 14.328848096708882,
+            "deltaAllocPct": -0.0016004462958813658
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 6381030.5,
+            "stdDevNs": 151380.47981847406,
+            "allocatedBytes": 207944,
+            "isBaseline": false,
+            "deltaMeanPct": 4.542358225241526,
+            "deltaAllocPct": 162.1583459404942
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 6289545.510204081,
+            "stdDevNs": 1131939.707145001,
+            "allocatedBytes": 35888,
+            "isBaseline": false,
+            "deltaMeanPct": -49.09627671547377,
+            "deltaAllocPct": -0.5100909292526059
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 273193429.6944444,
+            "stdDevNs": 9109422.422083912,
+            "allocatedBytes": 10715264,
+            "isBaseline": false,
+            "deltaMeanPct": 6.496940321133557,
+            "deltaAllocPct": -0.06036335906797183
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 12138157.65625,
+            "stdDevNs": 937505.3664059895,
+            "allocatedBytes": 6164304,
+            "isBaseline": false,
+            "deltaMeanPct": 5.051837551949205,
+            "deltaAllocPct": -0.02231708424699303
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "10485760", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 5971395.551020408,
+            "stdDevNs": 955346.4384645658,
+            "allocatedBytes": 39024,
+            "isBaseline": false,
+            "deltaMeanPct": -32.729192152061145,
+            "deltaAllocPct": -0.4692919812283207
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 835434547.0666667,
+            "stdDevNs": 8991894.758968089,
+            "allocatedBytes": 105216792,
+            "isBaseline": false,
+            "deltaMeanPct": 10.013300790657606,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 68150895.2,
+            "stdDevNs": 1498590.220972842,
+            "allocatedBytes": 307912,
+            "isBaseline": false,
+            "deltaMeanPct": 4.998614950821697,
+            "deltaAllocPct": 0.08060741588226117
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "False"},
+            "meanNs": 38015119.677777775,
+            "stdDevNs": 5322092.189762291,
+            "allocatedBytes": 34696,
+            "isBaseline": false,
+            "deltaMeanPct": 11.711074832557859,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 848427611.4285715,
+            "stdDevNs": 4599112.473652158,
+            "allocatedBytes": 111494408,
+            "isBaseline": false,
+            "deltaMeanPct": 6.394477825670189,
+            "deltaAllocPct": 5.989838458441458
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 111131126.58823529,
+            "stdDevNs": 3535121.02632013,
+            "allocatedBytes": 80415680,
+            "isBaseline": false,
+            "deltaMeanPct": 3.582048169305585,
+            "deltaAllocPct": 0.00485501029103001
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "False", "Encrypt": "True"},
+            "meanNs": 37785286.16161616,
+            "stdDevNs": 8944580.902191987,
+            "allocatedBytes": 38360,
+            "isBaseline": false,
+            "deltaMeanPct": 9.531284112748663,
+            "deltaAllocPct": -0.4773765047737651
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 2820173616.4666667,
+            "stdDevNs": 39507400.94878929,
+            "allocatedBytes": 105718744,
+            "isBaseline": false,
+            "deltaMeanPct": 10.141243444522605,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 62387298.823529415,
+            "stdDevNs": 1967320.693589291,
+            "allocatedBytes": 514336,
+            "isBaseline": false,
+            "deltaMeanPct": 6.607897099248365,
+            "deltaAllocPct": -0.16460138513618436
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "False"},
+            "meanNs": 40487458.17816092,
+            "stdDevNs": 5970577.522373378,
+            "allocatedBytes": 52320,
+            "isBaseline": false,
+            "deltaMeanPct": 0.3172832940727224,
+            "deltaAllocPct": 44.9468085106383
+        }, {
+            "method": "Save_FromStream",
+            "description": "SaveFromStreamAsync from a DeterministicPayloadStream with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 2758019309.0666666,
+            "stdDevNs": 27179435.822491754,
+            "allocatedBytes": 106856232,
+            "isBaseline": false,
+            "deltaMeanPct": 10.07681986204557,
+            "deltaAllocPct": 0.008954888848939635
+        }, {
+            "method": "Get_Stream",
+            "description": "GetFileStreamAsync for a file pre-saved with the current compress/encrypt flags; drains into NullingStream.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 119085435.48529412,
+            "stdDevNs": 5548353.028144968,
+            "allocatedBytes": 85055224,
+            "isBaseline": false,
+            "deltaMeanPct": 6.314002374753068,
+            "deltaAllocPct": -0.0472880669644154
+        }, {
+            "method": "Delete",
+            "description": "DeleteFileAsync for a file saved in IterationSetup with the current compress/encrypt flags.",
+            "parameters": {"DataSize": "104857600", "Compress": "True", "Encrypt": "True"},
+            "meanNs": 49522962.48,
+            "stdDevNs": 10186565.668738564,
+            "allocatedBytes": 39064,
+            "isBaseline": false,
+            "deltaMeanPct": 7.318488942897819,
+            "deltaAllocPct": -0.4282218597063622
+        }]
+    }],
+    "slo": [],
+    "grades": [],
+    "schema": "lyo.bench/v1",
+    "name": "filestorage",
+    "title": "File Storage",
+    "description": "Local disk LocalFileStorageService save/get/delete throughput for Lyo.FileStorage. Save inputs use DeterministicPayloadStream (BenchmarkData.PayloadSeed) from 1 KiB to 100 MiB; Get drains into NullingStream. Each size is crossed with compress/encrypt flags (plain, compress-only, encrypt-only, compress+encrypt). Storage root lives under the suite IOTemp session from LyoBenchmarkBase. Every save also hashes (SHA-256) and writes JSON metadata via LocalFileMetadataStore.",
+    "runId": "BenchmarkRun-joined-2026-08-01-15-03-15",
+    "generatedAt": "2026-08-01T15:03:15.4988436+00:00",
+    "runStarted": "2026-08-01T14:43:09.8270938+00:00",
+    "runEnded": "2026-08-01T15:03:15.4988436+00:00",
+    "durationSeconds": 1205.6717498,
+    "environment": {
+        "tool": "BenchmarkDotNet",
+        "toolVersion": "0.15.8",
+        "runtime": ".NET 10.0.0",
+        "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+        "os": "Ubuntu 24.04.3 LTS",
+        "architecture": "X64",
+        "logicalCores": 14,
+        "physicalCores": 12,
+        "memoryBytes": 6442450944,
+        "gcMode": "Workstation",
+        "configuration": "Release",
+        "dotnetSdkVersion": "10.0.100",
+        "dependencies": {
+            "BenchmarkDotNet": "0.15.8",
+            "EasyCompressor": "2.1.0",
+            "Konscious.Security.Cryptography.Argon2": "1.3.1",
+            "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+            "Microsoft.Extensions.Options.DataAnnotations": "10.0.5",
+            "System.IO.Hashing": "10.0.5",
+            "Testcontainers.Redis": "4.13.0"
+        }
+    },
+    "notes": [],
+    "history": [{
+        "file": "20260731T073720Z_BenchmarkRun-joined-2026-07-31-07-37-20.json",
+        "runId": "BenchmarkRun-joined-2026-07-31-07-37-20",
+        "runStarted": "2026-07-31T07:18:26.5852123+00:00",
+        "runEnded": "2026-07-31T07:37:20.8362688+00:00",
+        "generatedAt": "2026-07-31T07:37:20.8362688+00:00",
+        "isCurrent": false,
+        "measurementCount": 60,
+        "medianMeanNs": 1536313.5408163266
+    }, {
+        "file": "20260801T150315Z_BenchmarkRun-joined-2026-08-01-15-03-15.json",
+        "runId": "BenchmarkRun-joined-2026-08-01-15-03-15",
+        "runStarted": "2026-08-01T14:43:09.8270938+00:00",
+        "runEnded": "2026-08-01T15:03:15.4988436+00:00",
+        "generatedAt": "2026-08-01T15:03:15.4988436+00:00",
+        "isCurrent": true,
+        "measurementCount": 60,
+        "medianMeanNs": 2030141.36
+    }],
+    "deltaBaseline": {
+        "kind": "previousRun",
+        "runId": "BenchmarkRun-joined-2026-07-31-07-37-20",
+        "runStarted": "2026-07-31T07:18:26.5852123+00:00",
+        "runEnded": "2026-07-31T07:37:20.8362688+00:00"
+    }
+};

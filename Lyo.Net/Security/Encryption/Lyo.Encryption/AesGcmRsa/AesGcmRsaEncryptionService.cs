@@ -144,7 +144,6 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         // Minimum size: hasEmbeddedKey flag (1) + at least some data
         const int minEncryptedSize = 1 + 4 + AesGcmHelper.NonceSize + AesGcmHelper.TagSize;
         ArgumentHelpers.ThrowIfNotInRange(encryptedData, minEncryptedSize, MaxInputSize);
-
         ReadOnlySpan<byte> encrypted = encryptedData;
         var o = 0;
         var hasEmbeddedKey = encrypted[o++] == 1;
@@ -170,9 +169,10 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
                         $"Invalid encrypted key+nonce length: {encryptedKeyNonceLength} bytes. Maximum allowed: {expectedRsaEncryptedSize} bytes (RSA key size: {_rsa.KeySize} bits).");
                 }
 
-                if (encrypted.Length - o < encryptedKeyNonceLength)
+                if (encrypted.Length - o < encryptedKeyNonceLength) {
                     throw new InvalidDataException(
                         $"Invalid encrypted data format: encrypted key+nonce length ({encryptedKeyNonceLength} bytes) exceeds remaining stream size ({encrypted.Length - o} bytes).");
+                }
 
                 var encryptedKeyNonce = encrypted.Slice(o, encryptedKeyNonceLength).ToArray();
                 o += encryptedKeyNonceLength;
@@ -212,7 +212,8 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
                     $"Invalid nonce length: {nonceLength}. Expected {AesGcmHelper.NonceSize} bytes.");
 
                 if (encrypted.Length - o < nonceLength)
-                    throw new InvalidDataException($"Invalid encrypted data format: nonce length ({nonceLength} bytes) exceeds remaining stream size ({encrypted.Length - o} bytes).");
+                    throw new InvalidDataException(
+                        $"Invalid encrypted data format: nonce length ({nonceLength} bytes) exceeds remaining stream size ({encrypted.Length - o} bytes).");
 
                 nonce = encrypted.Slice(o, nonceLength);
                 o += nonceLength;
@@ -261,69 +262,6 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     {
         ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, MinInputSize, MaxInputSize, nameof(plaintext));
         return EncryptCore(plaintext, keyId, key, associatedData);
-    }
-
-    private byte[] EncryptCore(ReadOnlySpan<byte> plaintext, string? keyId, byte[]? key, byte[]? associatedData)
-    {
-        // AES-GCM-RSA uses RSA keys from constructor, not keyId
-        ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA encryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
-
-        // If key is provided via parameter, validate and use it (for backward compatibility)
-        // Otherwise, always generate random key (default behavior)
-        if (key != null)
-            AesGcmHelper.ValidateKeyLength(key, _aesKeyLengthBytes);
-
-        var aesKey = key ?? CryptographicRandom.GetBytes(_aesKeyLengthBytes);
-        var hasExternalKey = key != null;
-        try {
-            if (!hasExternalKey) {
-                // [1][encryptedKeyNonceLen:i32][encryptedKeyNonce][tag][ciphertext]
-                var keyNonce = new byte[_aesKeyLengthBytes + AesGcmHelper.NonceSize];
-                try {
-                    aesKey.CopyTo(keyNonce.AsSpan());
-                    CryptographicRandom.Fill(keyNonce.AsSpan(_aesKeyLengthBytes, AesGcmHelper.NonceSize));
-                    var encryptedKeyNonce = _rsa.Encrypt(keyNonce, _padding);
-                    var prefixLen = 1 + 4 + encryptedKeyNonce.Length + AesGcmHelper.TagSize;
-                    var result = new byte[prefixLen + plaintext.Length];
-                    var o = 0;
-                    result[o++] = 1;
-                    BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), encryptedKeyNonce.Length);
-                    o += 4;
-                    encryptedKeyNonce.CopyTo(result.AsSpan(o));
-                    o += encryptedKeyNonce.Length;
-                    var tagSpan = result.AsSpan(o, AesGcmHelper.TagSize);
-                    o += AesGcmHelper.TagSize;
-                    var ctSpan = result.AsSpan(o, plaintext.Length);
-                    AesGcmHelper.Encrypt(plaintext, aesKey, keyNonce.AsSpan(_aesKeyLengthBytes, AesGcmHelper.NonceSize), ctSpan, tagSpan, associatedData);
-                    return result;
-                }
-                finally {
-                    SecurityUtilities.Clear(keyNonce);
-                }
-            }
-            else {
-                // [0][nonceLen:i32][nonce][tag][ciphertext]
-                var prefixLen = 1 + 4 + AesGcmHelper.NonceSize + AesGcmHelper.TagSize;
-                var result = new byte[prefixLen + plaintext.Length];
-                var o = 0;
-                result[o++] = 0;
-                BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), AesGcmHelper.NonceSize);
-                o += 4;
-                var nonceSpan = result.AsSpan(o, AesGcmHelper.NonceSize);
-                CryptographicRandom.Fill(nonceSpan);
-                o += AesGcmHelper.NonceSize;
-                var tagSpan = result.AsSpan(o, AesGcmHelper.TagSize);
-                o += AesGcmHelper.TagSize;
-                var ctSpan = result.AsSpan(o, plaintext.Length);
-                AesGcmHelper.Encrypt(plaintext, aesKey, nonceSpan, ctSpan, tagSpan, associatedData);
-                return result;
-            }
-        }
-        finally {
-            // Securely clear the randomly generated AES key from memory
-            if (!hasExternalKey)
-                SecurityUtilities.Clear(aesKey);
-        }
     }
 
     /// <inheritdoc />
@@ -403,6 +341,69 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
         return outputStream.ToArray();
+    }
+
+    private byte[] EncryptCore(ReadOnlySpan<byte> plaintext, string? keyId, byte[]? key, byte[]? associatedData)
+    {
+        // AES-GCM-RSA uses RSA keys from constructor, not keyId
+        ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA encryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
+
+        // If key is provided via parameter, validate and use it (for backward compatibility)
+        // Otherwise, always generate random key (default behavior)
+        if (key != null)
+            AesGcmHelper.ValidateKeyLength(key, _aesKeyLengthBytes);
+
+        var aesKey = key ?? CryptographicRandom.GetBytes(_aesKeyLengthBytes);
+        var hasExternalKey = key != null;
+        try {
+            if (!hasExternalKey) {
+                // [1][encryptedKeyNonceLen:i32][encryptedKeyNonce][tag][ciphertext]
+                var keyNonce = new byte[_aesKeyLengthBytes + AesGcmHelper.NonceSize];
+                try {
+                    aesKey.CopyTo(keyNonce.AsSpan());
+                    CryptographicRandom.Fill(keyNonce.AsSpan(_aesKeyLengthBytes, AesGcmHelper.NonceSize));
+                    var encryptedKeyNonce = _rsa.Encrypt(keyNonce, _padding);
+                    var prefixLen = 1 + 4 + encryptedKeyNonce.Length + AesGcmHelper.TagSize;
+                    var result = new byte[prefixLen + plaintext.Length];
+                    var o = 0;
+                    result[o++] = 1;
+                    BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), encryptedKeyNonce.Length);
+                    o += 4;
+                    encryptedKeyNonce.CopyTo(result.AsSpan(o));
+                    o += encryptedKeyNonce.Length;
+                    var tagSpan = result.AsSpan(o, AesGcmHelper.TagSize);
+                    o += AesGcmHelper.TagSize;
+                    var ctSpan = result.AsSpan(o, plaintext.Length);
+                    AesGcmHelper.Encrypt(plaintext, aesKey, keyNonce.AsSpan(_aesKeyLengthBytes, AesGcmHelper.NonceSize), ctSpan, tagSpan, associatedData);
+                    return result;
+                }
+                finally {
+                    SecurityUtilities.Clear(keyNonce);
+                }
+            }
+            else {
+                // [0][nonceLen:i32][nonce][tag][ciphertext]
+                var prefixLen = 1 + 4 + AesGcmHelper.NonceSize + AesGcmHelper.TagSize;
+                var result = new byte[prefixLen + plaintext.Length];
+                var o = 0;
+                result[o++] = 0;
+                BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), AesGcmHelper.NonceSize);
+                o += 4;
+                var nonceSpan = result.AsSpan(o, AesGcmHelper.NonceSize);
+                CryptographicRandom.Fill(nonceSpan);
+                o += AesGcmHelper.NonceSize;
+                var tagSpan = result.AsSpan(o, AesGcmHelper.TagSize);
+                o += AesGcmHelper.TagSize;
+                var ctSpan = result.AsSpan(o, plaintext.Length);
+                AesGcmHelper.Encrypt(plaintext, aesKey, nonceSpan, ctSpan, tagSpan, associatedData);
+                return result;
+            }
+        }
+        finally {
+            // Securely clear the randomly generated AES key from memory
+            if (!hasExternalKey)
+                SecurityUtilities.Clear(aesKey);
+        }
     }
 
     private Func<byte[], int, int, byte[]> EncryptChunkTransform(string? keyId, byte[]? key)

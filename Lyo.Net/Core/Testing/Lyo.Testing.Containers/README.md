@@ -1,6 +1,7 @@
 # Lyo.Testing.Containers
 
-xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover **PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
+xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover
+**PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
 
 > **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
 
@@ -61,14 +62,14 @@ var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
 
 ## Public surface
 
-| Type | Role |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`PostgresTestContainer`** | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
-| **`PostgresContainerOptions`** | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc. |
+| Type                               | Role                                                                                                                                                                                                                                                                                                        |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`PostgresTestContainer`**        | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`.                                                                                   |
+| **`PostgresContainerOptions`**     | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc.                                                                                                                                                     |
 | **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
-| **`RabbitMqTestContainer`** | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`. |
-| **`RabbitMqContainerOptions`** | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook. |
-| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown. |
+| **`RabbitMqTestContainer`**        | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`.                                                                                           |
+| **`RabbitMqContainerOptions`**     | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook.                                                                                                                             |
+| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown.                                                                   |
 
 ## Sharing one container across an assembly
 

@@ -12,19 +12,18 @@ using SshNetSftpClient = Renci.SshNet.SftpClient;
 namespace Lyo.Sftp.Client;
 
 /// <summary>
-/// Pooled SSH.NET SFTP client with logging and metrics. Async methods are canonical; sync methods block on them.
-/// Thread-safe for concurrent callers up to <see cref="SftpClientOptions.MaxPooledClients" />.
+/// Pooled SSH.NET SFTP client with logging and metrics. Async methods are canonical; sync methods block on them. Thread-safe for concurrent callers up to
+/// <see cref="SftpClientOptions.MaxPooledClients" />.
 /// </summary>
 public sealed class SftpClient : ISftpClient
 {
-    private readonly ConcurrentBag<PooledConnection> _pool = new();
-    private readonly SemaphoreSlim _poolGate;
-    private readonly SftpClientOptions _options;
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
-    private readonly string _root;
-    private int _leased;
+    private readonly SftpClientOptions _options;
+    private readonly ConcurrentBag<PooledConnection> _pool = new();
+    private readonly SemaphoreSlim _poolGate;
     private bool _disposed;
+    private int _leased;
 
     /// <summary>Creates a client from validated options.</summary>
     public SftpClient(SftpClientOptions options, ILoggerFactory? loggerFactory = null, IMetrics? metrics = null)
@@ -32,28 +31,26 @@ public sealed class SftpClient : ISftpClient
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
         _options = options;
-        _root = PathHelpers.GetFullPath(PathStyle.Posix, options.RootRemoteDirectory);
+        RootRemoteDirectory = PathHelpers.GetFullPath(PathStyle.Posix, options.RootRemoteDirectory);
         _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger("Lyo.Sftp.Client");
         _metrics = options.EnableMetrics ? metrics ?? NullMetrics.Instance : NullMetrics.Instance;
         _poolGate = new(options.MaxPooledClients, options.MaxPooledClients);
         _logger.LogInformation(
-            "SFTP client configured for {Host}:{Port} user {User} root {Root} (max pool {Max})", options.Host, options.Port, options.Username, _root,
+            "SFTP client configured for {Host}:{Port} user {User} root {Root} (max pool {Max})", options.Host, options.Port, options.Username, RootRemoteDirectory,
             options.MaxPooledClients);
     }
 
     /// <inheritdoc />
-    public string RootRemoteDirectory => _root;
+    public string RootRemoteDirectory { get; }
 
     /// <inheritdoc />
     public string ResolvePath(string path)
     {
         ThrowIfDisposed();
         PathHelpers.ThrowIfNullOrWhiteSpace(path);
-        var combined = PathHelpers.IsPathRooted(PathStyle.Posix, path)
-            ? path
-            : PathHelpers.Combine(PathStyle.Posix, _root, path);
+        var combined = PathHelpers.IsPathRooted(PathStyle.Posix, path) ? path : PathHelpers.Combine(PathStyle.Posix, RootRemoteDirectory, path);
         var full = PathHelpers.GetFullPath(PathStyle.Posix, combined);
-        PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, _root, full);
+        PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, RootRemoteDirectory, full);
         return full;
     }
 
@@ -74,6 +71,7 @@ public sealed class SftpClient : ISftpClient
                 var p = ResolvePath(path);
                 if (!await c.ExistsAsync(p, token).ConfigureAwait(false))
                     return false;
+
                 var attrs = await c.GetAttributesAsync(p, token).ConfigureAwait(false);
                 return attrs.IsDirectory;
             }, ct);
@@ -88,6 +86,7 @@ public sealed class SftpClient : ISftpClient
                 var p = ResolvePath(path);
                 if (!await c.ExistsAsync(p, token).ConfigureAwait(false))
                     return false;
+
                 var attrs = await c.GetAttributesAsync(p, token).ConfigureAwait(false);
                 return !attrs.IsDirectory;
             }, ct);
@@ -98,10 +97,11 @@ public sealed class SftpClient : ISftpClient
     /// <inheritdoc />
     public async Task CreateDirectoryAsync(string path, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "mkdir", async (c, token) => {
-                await EnsureDirectoryAsync(c, ResolvePath(path), token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "mkdir", async (c, token) => {
+                    await EnsureDirectoryAsync(c, ResolvePath(path), token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void DeleteDirectory(string path, bool recursive = true) => SyncWait(DeleteDirectoryAsync(path, recursive));
@@ -109,16 +109,19 @@ public sealed class SftpClient : ISftpClient
     /// <inheritdoc />
     public async Task DeleteDirectoryAsync(string path, bool recursive = true, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "rmdir", async (c, token) => {
-                var p = ResolvePath(path);
-                if (!await c.ExistsAsync(p, token).ConfigureAwait(false))
+                "rmdir", async (c, token) => {
+                    var p = ResolvePath(path);
+                    if (!await c.ExistsAsync(p, token).ConfigureAwait(false))
+                        return 0;
+
+                    if (recursive)
+                        await DeleteRecursiveAsync(c, p, token).ConfigureAwait(false);
+                    else
+                        await c.DeleteDirectoryAsync(p, token).ConfigureAwait(false);
+
                     return 0;
-                if (recursive)
-                    await DeleteRecursiveAsync(c, p, token).ConfigureAwait(false);
-                else
-                    await c.DeleteDirectoryAsync(p, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void DeleteFile(string path) => SyncWait(DeleteFileAsync(path));
@@ -126,12 +129,14 @@ public sealed class SftpClient : ISftpClient
     /// <inheritdoc />
     public async Task DeleteFileAsync(string path, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "delete", async (c, token) => {
-                var p = ResolvePath(path);
-                if (await c.ExistsAsync(p, token).ConfigureAwait(false))
-                    await c.DeleteFileAsync(p, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "delete", async (c, token) => {
+                    var p = ResolvePath(path);
+                    if (await c.ExistsAsync(p, token).ConfigureAwait(false))
+                        await c.DeleteFileAsync(p, token).ConfigureAwait(false);
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public IReadOnlyList<SftpEntryInfo> ListDirectory(string path) => SyncWait(ListDirectoryAsync(path));
@@ -145,6 +150,7 @@ public sealed class SftpClient : ISftpClient
                 await foreach (var entry in c.ListDirectoryAsync(p, token).ConfigureAwait(false)) {
                     if (entry.Name is "." or "..")
                         continue;
+
                     list.Add(
                         new(
                             PathHelpers.Combine(PathStyle.Posix, p, entry.Name), entry.IsDirectory, entry.Length,
@@ -161,7 +167,7 @@ public sealed class SftpClient : ISftpClient
     public async Task UploadAsync(string path, byte[] data, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
-        using var ms = new MemoryStream(data, writable: false);
+        using var ms = new MemoryStream(data, false);
         await UploadAsync(path, ms, ct).ConfigureAwait(false);
         _metrics.IncrementCounter("sftp.bytes", data.Length, [("direction", "up")]);
     }
@@ -174,15 +180,16 @@ public sealed class SftpClient : ISftpClient
     {
         ArgumentHelpers.ThrowIfNull(data);
         await WithLeaseAsync(
-            "upload", async (c, token) => {
-                var p = ResolvePath(path);
-                var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, p);
-                if (!string.IsNullOrEmpty(parent))
-                    await EnsureDirectoryAsync(c, parent!, token).ConfigureAwait(false);
+                "upload", async (c, token) => {
+                    var p = ResolvePath(path);
+                    var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, p);
+                    if (!string.IsNullOrEmpty(parent))
+                        await EnsureDirectoryAsync(c, parent!, token).ConfigureAwait(false);
 
-                await c.UploadFileAsync(data, p, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                    await c.UploadFileAsync(data, p, token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -206,10 +213,11 @@ public sealed class SftpClient : ISftpClient
     {
         ArgumentHelpers.ThrowIfNull(destination);
         await WithLeaseAsync(
-            "download", async (c, token) => {
-                await c.DownloadFileAsync(ResolvePath(path), destination, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "download", async (c, token) => {
+                    await c.DownloadFileAsync(ResolvePath(path), destination, token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -218,15 +226,17 @@ public sealed class SftpClient : ISftpClient
     /// <inheritdoc />
     public async Task RenameAsync(string source, string dest, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "rename", async (c, token) => {
-                var s = ResolvePath(source);
-                var d = ResolvePath(dest);
-                var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, d);
-                if (!string.IsNullOrEmpty(parent))
-                    await EnsureDirectoryAsync(c, parent!, token).ConfigureAwait(false);
-                await c.RenameFileAsync(s, d, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "rename", async (c, token) => {
+                    var s = ResolvePath(source);
+                    var d = ResolvePath(dest);
+                    var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, d);
+                    if (!string.IsNullOrEmpty(parent))
+                        await EnsureDirectoryAsync(c, parent!, token).ConfigureAwait(false);
+
+                    await c.RenameFileAsync(s, d, token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void CopyFile(string source, string dest) => SyncWait(CopyFileAsync(source, dest));
@@ -286,6 +296,7 @@ public sealed class SftpClient : ISftpClient
         catch (Exception ex) {
             if (gateTaken)
                 lease.Gate.Release();
+
             ReleaseLease(lease);
             _metrics.RecordError("sftp.errors", ex, [("operation", "open_read")]);
             _logger.LogError(ex, "SFTP open_read failed on {Host}", _options.Host);
@@ -314,9 +325,7 @@ public sealed class SftpClient : ISftpClient
     {
         ThrowIfDisposed();
         var resolved = ResolvePath(path);
-        var existing = await FileExistsAsync(resolved, ct).ConfigureAwait(false)
-            ? await DownloadBytesAsync(resolved, ct).ConfigureAwait(false)
-            : [];
+        var existing = await FileExistsAsync(resolved, ct).ConfigureAwait(false) ? await DownloadBytesAsync(resolved, ct).ConfigureAwait(false) : [];
         var stream = new CommitOnCloseStream(bytes => SyncWait(UploadAsync(resolved, bytes, CancellationToken.None)));
         if (existing.Length <= 0)
             return stream;
@@ -329,17 +338,20 @@ public sealed class SftpClient : ISftpClient
     /// <inheritdoc />
     public async Task HealthPingAsync(CancellationToken ct = default)
         => await WithLeaseAsync(
-            "health", async (c, token) => {
-                await foreach (var _ in c.ListDirectoryAsync(_root, token).ConfigureAwait(false))
-                    break;
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "health", async (c, token) => {
+                    await foreach (var _ in c.ListDirectoryAsync(RootRemoteDirectory, token).ConfigureAwait(false))
+                        break;
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed)
             return;
+
         _disposed = true;
         while (_pool.TryTake(out var item)) {
             try {
@@ -378,6 +390,7 @@ public sealed class SftpClient : ISftpClient
         finally {
             if (gateTaken)
                 lease.Gate.Release();
+
             ReleaseLease(lease);
         }
     }
@@ -441,16 +454,12 @@ public sealed class SftpClient : ISftpClient
         using var timer = _metrics.StartTimer("sftp.connect");
         try {
             var auth = BuildAuthMethods();
-            var connectionInfo = new ConnectionInfo(_options.Host, _options.Port, _options.Username, auth) {
-                Timeout = _options.ConnectTimeout
-            };
-            var client = new SshNetSftpClient(connectionInfo) {
-                OperationTimeout = _options.OperationTimeout
-            };
+            var connectionInfo = new ConnectionInfo(_options.Host, _options.Port, _options.Username, auth) { Timeout = _options.ConnectTimeout };
+            var client = new SshNetSftpClient(connectionInfo) { OperationTimeout = _options.OperationTimeout };
             client.HostKeyReceived += OnHostKeyReceived;
             await client.ConnectAsync(ct).ConfigureAwait(false);
             _logger.LogInformation("Connected SFTP to {Host}:{Port}", _options.Host, _options.Port);
-            return new PooledConnection(client, new SemaphoreSlim(1, 1));
+            return new(client, new(1, 1));
         }
         catch (Exception ex) when (ex is not OperationCanceledException) {
             _metrics.RecordError("sftp.errors", ex, [("operation", "connect")]);
@@ -463,6 +472,7 @@ public sealed class SftpClient : ISftpClient
     {
         if (client.IsConnected)
             return;
+
         _logger.LogDebug("Reconnecting SFTP client to {Host}", _options.Host);
         await client.ConnectAsync(ct).ConfigureAwait(false);
     }
@@ -473,13 +483,11 @@ public sealed class SftpClient : ISftpClient
         PrivateKeyFile? keyFile = null;
         if (!string.IsNullOrWhiteSpace(_options.PrivateKeyPem)) {
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(_options.PrivateKeyPem));
-            keyFile = string.IsNullOrEmpty(_options.PrivateKeyPassphrase)
-                ? new PrivateKeyFile(ms)
-                : new PrivateKeyFile(ms, _options.PrivateKeyPassphrase);
+            keyFile = string.IsNullOrEmpty(_options.PrivateKeyPassphrase) ? new(ms) : new PrivateKeyFile(ms, _options.PrivateKeyPassphrase);
         }
         else if (!string.IsNullOrWhiteSpace(_options.PrivateKeyPath)) {
             keyFile = string.IsNullOrEmpty(_options.PrivateKeyPassphrase)
-                ? new PrivateKeyFile(_options.PrivateKeyPath!)
+                ? new(_options.PrivateKeyPath!)
                 : new PrivateKeyFile(_options.PrivateKeyPath!, _options.PrivateKeyPassphrase);
         }
 
@@ -489,7 +497,7 @@ public sealed class SftpClient : ISftpClient
         if (!string.IsNullOrEmpty(_options.Password))
             methods.Add(new PasswordAuthenticationMethod(_options.Username, _options.Password));
 
-        return [..methods];
+        return [.. methods];
     }
 
     private void OnHostKeyReceived(object? sender, HostKeyEventArgs e)
@@ -506,11 +514,12 @@ public sealed class SftpClient : ISftpClient
             var n = f.Trim();
             if (n.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
                 n = n["SHA256:".Length..];
-            return string.Equals(n, sha256, StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(f.Trim(), sha256, StringComparison.OrdinalIgnoreCase)
-                   || string.Equals(f.Trim(), "SHA256:" + sha256, StringComparison.OrdinalIgnoreCase)
-                   || (!string.IsNullOrEmpty(md5) && string.Equals(f.Trim(), md5, StringComparison.OrdinalIgnoreCase));
+
+            return string.Equals(n, sha256, StringComparison.OrdinalIgnoreCase) || string.Equals(f.Trim(), sha256, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(f.Trim(), "SHA256:" + sha256, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(md5) && string.Equals(f.Trim(), md5, StringComparison.OrdinalIgnoreCase));
         });
+
         e.CanTrust = allowed;
         if (!allowed)
             _logger.LogError("Rejected SFTP host key fingerprint SHA256:{Fingerprint}", sha256);
@@ -520,6 +529,7 @@ public sealed class SftpClient : ISftpClient
     {
         if (string.IsNullOrEmpty(path) || path == "/")
             return;
+
         if (await DirectoryUsableAsync(client, path, ct).ConfigureAwait(false))
             return;
 
@@ -552,6 +562,7 @@ public sealed class SftpClient : ISftpClient
         try {
             await foreach (var _ in client.ListDirectoryAsync(path, ct).ConfigureAwait(false))
                 return true;
+
             return true;
         }
         catch (SshException) {
@@ -564,6 +575,7 @@ public sealed class SftpClient : ISftpClient
         await foreach (var entry in client.ListDirectoryAsync(path, ct).ConfigureAwait(false)) {
             if (entry.Name is "." or "..")
                 continue;
+
             var child = PathHelpers.Combine(PathStyle.Posix, path, entry.Name);
             if (entry.IsDirectory)
                 await DeleteRecursiveAsync(client, child, ct).ConfigureAwait(false);
@@ -587,6 +599,7 @@ public sealed class SftpClient : ISftpClient
     private sealed class PooledConnection(SshNetSftpClient client, SemaphoreSlim gate)
     {
         public SshNetSftpClient Client { get; } = client;
+
         public SemaphoreSlim Gate { get; } = gate;
     }
 
@@ -595,14 +608,26 @@ public sealed class SftpClient : ISftpClient
         private bool _released;
 
         public override bool CanRead => inner.CanRead;
+
         public override bool CanSeek => inner.CanSeek;
+
         public override bool CanWrite => inner.CanWrite;
+
         public override long Length => inner.Length;
-        public override long Position { get => inner.Position; set => inner.Position = value; }
+
+        public override long Position {
+            get => inner.Position;
+            set => inner.Position = value;
+        }
+
         public override void Flush() => inner.Flush();
+
         public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
         public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+
         public override void SetLength(long value) => inner.SetLength(value);
+
         public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
 
         protected override void Dispose(bool disposing)

@@ -76,8 +76,8 @@ public static class Extensions
                     legacy.Bind(options);
                     (provider.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.AzureBlob")
                         .LogWarning(
-                            "Loaded blob file storage configuration from obsolete section [{Legacy}]. Migrate to [{Current}] in appsettings.",
-                            legacyName, AzureBlobFileStorageOptions.SectionName);
+                            "Loaded blob file storage configuration from obsolete section [{Legacy}]. Migrate to [{Current}] in appsettings.", legacyName,
+                            AzureBlobFileStorageOptions.SectionName);
                 }
 
                 return options;

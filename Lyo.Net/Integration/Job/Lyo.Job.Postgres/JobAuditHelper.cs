@@ -11,7 +11,7 @@ internal static class JobAuditHelper
     public static EntityRef? GetActor(IServiceProvider services)
     {
         var httpContextAccessor = services.GetService<IHttpContextAccessor>();
-        var identity = httpContextAccessor?.HttpContext?.User?.Identity;
+        var identity = httpContextAccessor?.HttpContext?.User.Identity;
         if (identity is null || !identity.IsAuthenticated || string.IsNullOrWhiteSpace(identity.Name))
             return null;
 

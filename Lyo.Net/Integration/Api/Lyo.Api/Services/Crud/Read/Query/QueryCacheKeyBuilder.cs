@@ -163,11 +163,11 @@ public static class QueryCacheKeyBuilder
         var typeName = typeof(TDbModel).Name;
         var resultName = typeof(TResult).Name;
         var treeHash = queryTree != null ? WhereClauseHelpers.GetWhereClauseTreeHash(queryTree) : "null";
-        var includeArray = includes as string[] ?? [..NormalizePathValues(includes)];
+        var includeArray = includes as string[] ?? [.. NormalizePathValues(includes)];
         var includeStr = includeArray.Length != 0 ? $":include={CompactCacheSegment(string.Join("|", includeArray))}" : "";
         var sortStr = sortBy.Length > 0 ? $":sortBy={BuildSortKey(sortBy)}" : "";
         var keysStr = keys != null && keys.Count > 0 ? $":keys={string.Join(";", keys.Select(ks => string.Join("|", ks.Select(k => k.ToString() ?? "null"))))}" : "";
-        var selectedFieldsArray = selectedFields as string[] ?? [..NormalizePathValues(selectedFields ?? [])];
+        var selectedFieldsArray = selectedFields as string[] ?? [.. NormalizePathValues(selectedFields ?? [])];
         var selectStr = selectedFields != null && selectedFieldsArray.Length != 0 ? $":select={CompactCacheSegment(string.Join("|", selectedFieldsArray))}" : "";
         var sb = new StringBuilder(256);
         sb.Append(
@@ -182,7 +182,7 @@ public static class QueryCacheKeyBuilder
         if (computedFields is not { Count: > 0 })
             return;
 
-        var computedKey = string.Join("|", computedFields.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).Select(c => $"{NormalizePathValue(c.Name)}={c.Template?.Trim()}"));
+        var computedKey = string.Join("|", computedFields.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).Select(c => $"{NormalizePathValue(c.Name)}={c.Template.Trim()}"));
         keyBuilder.Append($":computed={CompactCacheSegment(computedKey)}");
     }
 
@@ -218,10 +218,10 @@ public static class QueryCacheKeyBuilder
         => new() {
             Start = p.Start,
             Amount = p.Amount,
-            Keys = [..p.Keys.Select(k => k.ToArray())],
+            Keys = [.. p.Keys.Select(k => k.ToArray())],
             WhereClause = p.WhereClause,
-            Include = [..p.Include],
-            SortBy = [..p.SortBy],
+            Include = [.. p.Include],
+            SortBy = [.. p.SortBy],
             Options = new() { TotalCountMode = p.Options.TotalCountMode, IncludeFilterMode = p.Options.IncludeFilterMode }
         };
 }

@@ -229,10 +229,18 @@ public interface ICsvService
         CancellationToken ct = default);
 
     /// <summary>Serializes a dictionary map to a CSV string asynchronously.</summary>
-    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
+    Task<string> ExportToCsvStringFromDictionaryAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Serializes a dictionary map to CSV bytes asynchronously.</summary>
-    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
+    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Exports a data table to a CSV file asynchronously.</summary>
     Task ExportToCsvFromDataTableAsync(DataTable.Models.DataTable dataTable, string csvFilePath, CancellationToken ct = default);

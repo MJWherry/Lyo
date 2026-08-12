@@ -486,10 +486,13 @@ public sealed class EmailService : IEmailService
         connectSw.Stop();
         _metrics.RecordTiming(_metricNames[nameof(Constants.Metrics.SmtpConnectDuration)], connectSw.Elapsed);
         var authSw = Stopwatch.StartNew();
-        _logger.LogDebug("Authenticating as {Username}", _emailServiceOptions.Username);
-        await client.AuthenticateAsync(_emailServiceOptions.Username, _emailServiceOptions.Password, ct).ConfigureAwait(false);
-        authSw.Stop();
-        _metrics.RecordTiming(_metricNames[nameof(Constants.Metrics.SmtpAuthenticateDuration)], authSw.Elapsed);
+        if (!_emailServiceOptions.Username.IsNullOrWhitespace() && !_emailServiceOptions.Password.IsNullOrWhitespace()) {
+            _logger.LogDebug("Authenticating as {Username}", _emailServiceOptions.Username);
+            await client.AuthenticateAsync(_emailServiceOptions.Username!, _emailServiceOptions.Password!, ct).ConfigureAwait(false);
+            authSw.Stop();
+            _metrics.RecordTiming(_metricNames[nameof(Constants.Metrics.SmtpAuthenticateDuration)], authSw.Elapsed);
+        }
+
         return client;
     }
 

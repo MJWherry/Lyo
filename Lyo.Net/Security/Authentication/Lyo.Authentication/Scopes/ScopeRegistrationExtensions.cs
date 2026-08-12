@@ -20,7 +20,9 @@ public static class ScopeRegistrationExtensions
         ArgumentHelpers.ThrowIfNull(implies);
         var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ScopeRegistry));
         OperationHelpers.ThrowIfNull(descriptor, "ScopeRegistry is not registered. Call AddLyoAuthentication before adding scopes.");
-        var registry = (ScopeRegistry)descriptor.ImplementationInstance ?? throw new InvalidOperationException("ScopeRegistry is registered but has no implementation instance.");
+        var registry = descriptor!.ImplementationInstance as ScopeRegistry ??
+            throw new InvalidOperationException("ScopeRegistry is registered but has no implementation instance.");
+
         registry.Register(name, description, implies);
         return services;
     }

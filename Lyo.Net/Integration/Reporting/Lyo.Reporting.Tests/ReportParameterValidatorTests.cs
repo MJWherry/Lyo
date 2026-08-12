@@ -39,14 +39,7 @@ public sealed class ReportParameterValidatorTests
     [Fact]
     public void Validate_enforces_numeric_allowed_values_json()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() {
-                Key = "PageSize",
-                Type = nameof(ReportParameterType.Int),
-                AllowedValues = "[1,2]"
-            }
-        };
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "PageSize", Type = nameof(ReportParameterType.Int), AllowedValues = "[1,2]" } };
         Assert.Contains(ReportParameterValidator.Validate(def, [new("PageSize", ReportParameterType.Int, "3")]), e => e.Contains("allowed", StringComparison.OrdinalIgnoreCase));
         Assert.Empty(ReportParameterValidator.Validate(def, [new("PageSize", ReportParameterType.Int, "1")]));
     }

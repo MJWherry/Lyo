@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using Lyo.Exceptions;
 
 namespace Lyo.Cli.Services;
@@ -12,11 +11,9 @@ internal static class CliClipboard
     public static async Task CopyAsync(string text, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(text);
-        var (fileName, arguments) = ResolveClipboardCommand()
-            ?? throw new InvalidOperationException(MissingToolMessage());
-
+        var (fileName, arguments) = ResolveClipboardCommand() ?? throw new InvalidOperationException(MissingToolMessage());
         using var process = new Process {
-            StartInfo = new ProcessStartInfo {
+            StartInfo = new() {
                 FileName = fileName,
                 Arguments = arguments,
                 RedirectStandardInput = true,
@@ -38,11 +35,9 @@ internal static class CliClipboard
         await process.StandardInput.FlushAsync(ct).ConfigureAwait(false);
         process.StandardInput.Close();
         await process.WaitForExitAsync(ct).ConfigureAwait(false);
-
         if (process.ExitCode != 0) {
             var err = await process.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
-            throw new InvalidOperationException(
-                $"Clipboard tool '{fileName}' exited with code {process.ExitCode}.{(string.IsNullOrWhiteSpace(err) ? "" : " " + err.Trim())}");
+            throw new InvalidOperationException($"Clipboard tool '{fileName}' exited with code {process.ExitCode}.{(string.IsNullOrWhiteSpace(err) ? "" : " " + err.Trim())}");
         }
     }
 
@@ -56,10 +51,13 @@ internal static class CliClipboard
 
         if (CommandExists("wl-copy"))
             return ("wl-copy", "");
+
         if (CommandExists("xclip"))
             return ("xclip", "-selection clipboard");
+
         if (CommandExists("xsel"))
             return ("xsel", "--clipboard --input");
+
         return null;
     }
 
@@ -67,8 +65,10 @@ internal static class CliClipboard
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return "Clipboard tool not found. Expected 'clip.exe' on PATH.";
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return "Clipboard tool not found. Expected 'pbcopy' on PATH.";
+
         return "Clipboard tool not found. Install one of: wl-copy (Wayland), xclip, or xsel.";
     }
 

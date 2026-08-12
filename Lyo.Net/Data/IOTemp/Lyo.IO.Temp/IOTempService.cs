@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using Lyo.Common.Extensions;
 using Lyo.Common.Pathing;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
@@ -9,7 +10,6 @@ using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-
 
 namespace Lyo.IO.Temp;
 
@@ -342,7 +342,7 @@ public sealed class IOTempService : IIOTempService
     private string ResolveServicePath(string? name, bool isDirectory)
     {
         string path;
-        if (!string.IsNullOrWhiteSpace(name)) {
+        if (!name.IsNullOrWhitespace()) {
             var combined = PathHelpers.Combine(_storage.PathStyle, ServiceDirectory, name);
             path = EnsurePathWithinDirectory(ServiceDirectory, combined, nameof(name));
         }

@@ -131,6 +131,7 @@ public static class SetupMapster
             config.NewConfig<DateTime, TimeOnlyModel>().MapWith(src => TimeOnlyModel.FromDateTime(src));
             config.NewConfig<TimeOnly, DateTime>()
                 .MapWith(t => DateTime.MinValue.AddHours(t.Hour).AddMinutes(t.Minute).AddSeconds(t.Second).AddTicks(t.Ticks % TimeSpan.TicksPerSecond));
+
             config.NewConfig<DateTime, TimeOnly>().MapWith(src => TimeOnly.FromDateTime(src));
             config.NewConfig<DateTimeOffset, DateTime>().MapWith(src => src.UtcDateTime);
             config.NewConfig<DateTimeOffset, DateTime?>().MapWith(src => src.UtcDateTime);

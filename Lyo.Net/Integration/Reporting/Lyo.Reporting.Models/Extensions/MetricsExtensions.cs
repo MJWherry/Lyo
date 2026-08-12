@@ -2,7 +2,6 @@ using System.Text.Json;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Lyo.Reporting.Models.Builders;
-using Lyo.Reporting.Models;
 
 namespace Lyo.Reporting.Models.Extensions;
 

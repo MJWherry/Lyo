@@ -68,7 +68,7 @@ public class JobRunLifecycleFixTests
         var (result, error) = await _fixture.JobService.CancelJobRun(runId);
         Assert.Null(error);
         Assert.NotNull(result);
-        Assert.Equal(JobState.Finished, result!.State);
+        Assert.Equal(JobState.Finished, result.State);
         Assert.Equal(JobRunResultEnum.Cancelled, result.Result);
         var published = _fixture.FakePublisher.Published.Skip(publishCountBefore).ToList();
         Assert.Contains(published, e => e.Event == "RunCancelled" && e.RunId == runId);
@@ -92,7 +92,7 @@ public class JobRunLifecycleFixTests
         var (result, error) = await _fixture.JobService.RequeueJobRun(runId);
         Assert.Null(error);
         Assert.NotNull(result);
-        Assert.Equal(JobState.Queued, result!.State);
+        Assert.Equal(JobState.Queued, result.State);
         var run = await GetRunAsync(runId);
         Assert.Equal(JobState.Queued, run.State);
         Assert.Null(run.StartedTimestamp);
@@ -193,7 +193,7 @@ public class JobRunLifecycleFixTests
 
         // A copied key would resolve back to the original run (or violate the unique index) instead of creating a new one.
         Assert.NotNull(rerun);
-        Assert.True(rerun!.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
+        Assert.True(rerun.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
         Assert.NotEqual(original.Data.Id, rerun.Data!.Id);
         Assert.Null(rerun.Data.IdempotencyKey);
         Assert.Equal(original.Data.Id, (await GetRunAsync(rerun.Data.Id)).ReRanFromJobRunId);

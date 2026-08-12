@@ -22,8 +22,7 @@ internal static class CliEncryption
             "xchacha20poly1305" or "xchacha" => EncryptionAlgorithm.XChaCha20Poly1305,
             "aesccm" or "aes-ccm" or "ccm" => EncryptionAlgorithm.AesCcm,
             "aessiv" or "aes-siv" or "siv" => EncryptionAlgorithm.AesSiv,
-            var _ => throw new ArgumentException(
-                $"Unknown encryption algorithm '{name}'. Use aesgcm, chacha20poly1305, xchacha20poly1305, aesccm, or aessiv.")
+            var _ => throw new ArgumentException($"Unknown encryption algorithm '{name}'. Use aesgcm, chacha20poly1305, xchacha20poly1305, aesccm, or aessiv.")
         };
     }
 
@@ -40,7 +39,7 @@ internal static class CliEncryption
     {
         var keyStore = new LocalKeyStore();
         return algorithm switch {
-            EncryptionAlgorithm.AesGcm => new AesGcmEncryptionService(keyStore, AesGcmKeySizeBits.Bits256),
+            EncryptionAlgorithm.AesGcm => new AesGcmEncryptionService(keyStore),
             EncryptionAlgorithm.ChaCha20Poly1305 => new ChaCha20Poly1305EncryptionService(keyStore),
             EncryptionAlgorithm.AesCcm => new AesCcmEncryptionService(keyStore, AesGcmKeySizeBits.Bits256),
             EncryptionAlgorithm.AesSiv => new AesSivEncryptionService(keyStore, AesSivKeySizeBits.Bits256),

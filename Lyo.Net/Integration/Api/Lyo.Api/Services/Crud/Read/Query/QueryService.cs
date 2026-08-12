@@ -798,9 +798,9 @@ public class QueryService<TContext>(
             Amount = source.Amount,
             Options = new() { TotalCountMode = source.Options.TotalCountMode, IncludeFilterMode = source.Options.IncludeFilterMode },
             WhereClause = source.WhereClause,
-            Include = [..source.Include],
-            Keys = [..source.Keys.Select(i => i.ToArray())],
-            SortBy = [..source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
+            Include = [.. source.Include],
+            Keys = [.. source.Keys.Select(i => i.ToArray())],
+            SortBy = [.. source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
         };
 
     private List<ApiError> ValidateCommonQueryGuardrails(QueryConcreteReq queryRequest)

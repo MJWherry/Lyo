@@ -19,7 +19,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
         var match = _byId.Values.FirstOrDefault(l
             => l.IsActive && string.Equals(l.Provider, provider, StringComparison.Ordinal) && string.Equals(l.Subject, subject, StringComparison.Ordinal));
 
-        return Task.FromResult(match);
+        return Task.FromResult<LinkedIdentity?>(match);
     }
 
     /// <inheritdoc />

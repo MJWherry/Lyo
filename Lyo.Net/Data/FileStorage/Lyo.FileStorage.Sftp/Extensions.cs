@@ -33,6 +33,7 @@ public static class Extensions
             var scan = sp.GetService<IFileMalwareScanner>();
             return new(opts, metadataStore, sftp, loggerFactory, compression, encryption, metrics, op, auditHandlers, policy, scan);
         });
+
         services.AddScoped<IFileStorageService>(sp => sp.GetRequiredService<SftpFileStorageService>());
     }
 
@@ -69,6 +70,7 @@ public static class Extensions
             var section = configuration.GetSection(sectionName);
             if (section.Exists())
                 section.Bind(options);
+
             return services.AddSftpFileStorageService(options);
         }
     }

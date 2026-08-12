@@ -1,6 +1,8 @@
 # Lyo.Cli
 
-dotnet tool (`PackAsTool`, command name `lyo`) that wraps Lyo libraries. **crypt** is encryption (Lyo.Encryption); **enc** is binary/charset encoding (Lyo.TextEncoding). **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx** cover the rest. No dedicated CLI test project — parsing uses System.CommandLine; library behavior is covered by package tests.
+dotnet tool (`PackAsTool`, command name `lyo`) that wraps Lyo libraries. **crypt** is encryption (Lyo.Encryption); **enc** is binary/charset encoding (Lyo.TextEncoding).
+**compress**/ **decompress**, **hash**/ **checksum**, **id**, **query build|exec**, and **csv**/ **xlsx** cover the rest. No dedicated CLI test project — parsing uses
+System.CommandLine; library behavior is covered by package tests.
 
 ## Features
 
@@ -61,11 +63,13 @@ lyo crypt encrypt secret.bin -o - --key 'passphrase' | lyo crypt decrypt - --key
 
 ## Pack / install
 
-Library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack this tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then `dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
+Library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack this tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then
+`dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
 
 ## Clipboard (`-c/--copy`)
 
-Available on `id` and `hash`/`checksum` text results. Uses native OS tools via Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy package. Bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
+Available on `id` and `hash`/`checksum` text results. Uses native OS tools via Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy
+package. Bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
 
 ## Dependencies
 

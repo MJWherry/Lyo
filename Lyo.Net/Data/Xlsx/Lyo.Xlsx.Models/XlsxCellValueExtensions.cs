@@ -6,6 +6,5 @@ namespace Lyo.Xlsx.Models;
 public static class XlsxCellValueExtensions
 {
     /// <summary>Builds a string-based data table cell (value + spans only).</summary>
-    public static IDataTableCell ToDataTableCell(this XlsxCellValue cell)
-        => DataTableCell.FromValue(cell.Value, cell.ColSpan, cell.RowSpan);
+    public static IDataTableCell ToDataTableCell(this XlsxCellValue cell) => DataTableCell.FromValue(cell.Value, cell.ColSpan, cell.RowSpan);
 }

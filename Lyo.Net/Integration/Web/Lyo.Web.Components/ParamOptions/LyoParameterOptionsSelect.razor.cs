@@ -8,16 +8,16 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Web.Components.ParamOptions;
 
 /// <summary>
-/// MudSelect fed by definition parameter <c>Options</c> JSON (static items or root <c>/Query</c>) or JSON-array
-/// <c>AllowedValues</c>. Selected key(s) bind to <see cref="Value" /> (multi = JSON array via <see cref="ParameterListJson" />).
+/// MudSelect fed by definition parameter <c>Options</c> JSON (static items or root <c>/Query</c>) or JSON-array <c>AllowedValues</c>. Selected key(s) bind to
+/// <see cref="Value" /> (multi = JSON array via <see cref="ParameterListJson" />).
 /// </summary>
 public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
 {
     private readonly List<ParameterOptionsItem> _items = [];
     private string? _helper;
-    private bool _loading;
     private string? _lastLoadFingerprint;
     private CancellationTokenSource? _loadCts;
+    private bool _loading;
 
     /// <summary>API client used for root query option loads.</summary>
     [Parameter]
@@ -59,8 +59,16 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
     [Inject]
     private ILogger<LyoParameterOptionsSelect>? Logger { get; set; }
 
-    private IReadOnlyCollection<string> SelectedValues
-        => ParameterListJson.Parse(Value);
+    private IReadOnlyCollection<string> SelectedValues => ParameterListJson.Parse(Value);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_loadCts is not null) {
+            await _loadCts.CancelAsync();
+            _loadCts.Dispose();
+            _loadCts = null;
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -70,15 +78,6 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
 
         _lastLoadFingerprint = fingerprint;
         await ReloadAsync();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_loadCts is not null) {
-            await _loadCts.CancelAsync();
-            _loadCts.Dispose();
-            _loadCts = null;
-        }
     }
 
     private async Task OnValueChanged(string? value)
@@ -98,14 +97,11 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
             await ValueChanged.InvokeAsync(Value);
     }
 
-    private static string MultiText(IReadOnlyList<string?>? selected)
-        => string.Join(", ", (selected ?? []).Where(s => !string.IsNullOrWhiteSpace(s)));
+    private static string MultiText(IReadOnlyList<string?>? selected) => string.Join(", ", (selected ?? []).Where(s => !string.IsNullOrWhiteSpace(s)));
 
     private string BuildFingerprint()
     {
-        var sib = SiblingValues is null
-            ? ""
-            : string.Join(";", SiblingValues.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => $"{kv.Key}={kv.Value}"));
+        var sib = SiblingValues is null ? "" : string.Join(";", SiblingValues.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => $"{kv.Key}={kv.Value}"));
         return $"{OptionsJson}\n{AllowedValues}\n{ListKind}\n{sib}";
     }
 
@@ -115,12 +111,10 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
         _loadCts?.Dispose();
         _loadCts = new();
         var ct = _loadCts.Token;
-
         _items.Clear();
         _helper = null;
         _loading = true;
         await InvokeAsync(StateHasChanged);
-
         try {
             if (ParameterOptionsJson.TryDeserialize(OptionsJson, out var options) && options is not null) {
                 switch (options.Kind) {
@@ -135,12 +129,10 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
                         break;
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(OptionsJson)) {
+            else if (!string.IsNullOrWhiteSpace(OptionsJson))
                 _helper = "Invalid Options JSON.";
-            }
-            else {
+            else
                 _items.AddRange(ParameterOptionsBinder.FromAllowedValues(AllowedValues));
-            }
 
             PruneStaleSelection();
         }
@@ -149,9 +141,7 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
         }
         catch (ApiException ex) {
             Logger?.LogWarning(ex, "Failed to load parameter options ({Status})", ex.StatusCode);
-            _helper = string.IsNullOrWhiteSpace(ex.Detail)
-                ? $"Options query failed ({ex.StatusCode})."
-                : ex.Detail;
+            _helper = string.IsNullOrWhiteSpace(ex.Detail) ? $"Options query failed ({ex.StatusCode})." : ex.Detail;
             _items.Clear();
         }
         catch (Exception ex) {
@@ -187,7 +177,7 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
 
         foreach (var row in res.Items ?? []) {
             if (ParameterOptionsBinder.TryReadKeyValue(row, bound.Select, out var key, out var label))
-                _items.Add(new ParameterOptionsItem(key, string.IsNullOrEmpty(label) ? key : label));
+                _items.Add(new(key, string.IsNullOrEmpty(label) ? key : label));
         }
 
         if (_items.Count == 0)
@@ -205,6 +195,7 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
             var joined = ParameterListJson.Serialize(kept, ListKind);
             if (!string.Equals(joined, Value, StringComparison.Ordinal))
                 _ = ValueChanged.InvokeAsync(joined);
+
             Value = joined;
         }
         else if (!keys.Contains(Value)) {

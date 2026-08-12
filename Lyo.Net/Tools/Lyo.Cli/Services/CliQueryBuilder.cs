@@ -5,7 +5,6 @@ using Lyo.Exceptions;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
-using FromClause = Lyo.Query.Models.Common.Request.FromClause;
 
 namespace Lyo.Cli.Services;
 
@@ -54,19 +53,15 @@ internal static class CliQueryBuilder
         return JsonSerializer.Serialize(request, request.GetType(), options);
     }
 
-    private static QueryConcreteReq BuildConcrete(
-        WhereClause? where,
-        IEnumerable<string>? includes,
-        IEnumerable<string>? sorts,
-        int? start,
-        int? amount,
-        IEnumerable<string>? keys)
+    private static QueryConcreteReq BuildConcrete(WhereClause? where, IEnumerable<string>? includes, IEnumerable<string>? sorts, int? start, int? amount, IEnumerable<string>? keys)
     {
         var b = QueryConcreteReqBuilder.New();
         if (where is not null)
             b.AddWhere(where);
+
         foreach (var i in includes ?? [])
             b.AddIncludes(i);
+
         foreach (var s in sorts ?? []) {
             var (field, dir) = ParseSort(s);
             b.AddSort(field, dir);
@@ -74,8 +69,10 @@ internal static class CliQueryBuilder
 
         if (start is not null || amount is not null)
             b.SetPagination(start ?? 0, amount ?? 20);
+
         foreach (var k in keys ?? [])
             b.AddKey(k);
+
         return b.Build();
     }
 
@@ -91,8 +88,10 @@ internal static class CliQueryBuilder
         var b = ProjectionQueryReqBuilder.New();
         if (where is not null)
             b.AddWhere(where);
+
         foreach (var i in includes ?? [])
             b.AddIncludes(i);
+
         foreach (var s in sorts ?? []) {
             var (field, dir) = ParseSort(s);
             b.AddSort(field, dir);
@@ -100,10 +99,13 @@ internal static class CliQueryBuilder
 
         if (start is not null || amount is not null)
             b.SetPagination(start ?? 0, amount ?? 20);
+
         foreach (var k in keys ?? [])
             b.AddKey(k);
+
         foreach (var sel in selects ?? [])
             b.AddSelects(sel);
+
         return b.Build();
     }
 
@@ -120,6 +122,7 @@ internal static class CliQueryBuilder
         var b = QueryReqBuilder.New();
         if (where is not null)
             b.AddWhere(where);
+
         foreach (var s in sorts ?? []) {
             var (field, dir) = ParseSort(s);
             b.AddSort(field, dir);
@@ -127,14 +130,17 @@ internal static class CliQueryBuilder
 
         if (start is not null || amount is not null)
             b.SetPagination(start ?? 0, amount ?? 20);
+
         foreach (var k in keys ?? [])
             b.AddKey(k);
+
         foreach (var sel in selects ?? [])
             b.AddSelects(sel);
+
         if (!string.IsNullOrWhiteSpace(from)) {
             var parts = from.Split(':', 2, StringSplitOptions.TrimEntries);
             ArgumentHelpers.ThrowIf(parts.Length != 2, "--from must be ALIAS:ENTITY");
-            b.From(new FromClause { Alias = parts[0], EntityType = parts[1] });
+            b.From(new() { Alias = parts[0], EntityType = parts[1] });
         }
 
         _ = includes; // root queries use From/Joins; includes ignored
@@ -192,7 +198,6 @@ internal static class CliQueryBuilder
         var field = flag[..first];
         var op = flag[(first + 1)..second];
         var value = flag[(second + 1)..];
-
         switch (op.ToLowerInvariant()) {
             case "eq" or "equals":
                 b.Equals(field, Coerce(value));
@@ -222,7 +227,7 @@ internal static class CliQueryBuilder
                 b.EndsWith(field, value);
                 break;
             case "in":
-                b.In(field, value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Coerce).ToArray<object?>());
+                b.In(field, value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Coerce).ToArray());
                 break;
             default:
                 throw new ArgumentException($"Unknown where operator '{op}' in '{flag}'.");
@@ -233,12 +238,16 @@ internal static class CliQueryBuilder
     {
         if (value.Equals("null", StringComparison.OrdinalIgnoreCase))
             return null;
+
         if (bool.TryParse(value, out var b))
             return b;
+
         if (long.TryParse(value, out var l))
             return l;
+
         if (decimal.TryParse(value, out var d))
             return d;
+
         return value;
     }
 }

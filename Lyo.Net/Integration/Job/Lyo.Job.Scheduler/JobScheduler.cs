@@ -322,7 +322,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             var latest = await _apiClient.PostAsAsync<List<Guid>, List<JobDefinitionLatestRunsRes>>(BuildUri(Constants.Rest.Job.DefinitionsLatestRuns), ids, null, ct)
                 .ConfigureAwait(false);
 
-            return latest?.ToDictionary(l => l.JobDefinitionId);
+            return latest.ToDictionary(l => l.JobDefinitionId);
         }
         catch (ApiException ex) {
             _logger.LogWarning(ex, "Batch latest-runs endpoint unavailable; falling back to per-definition queries");
@@ -594,7 +594,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             null, ct);
 
         await Task.WhenAll(lastRunTask, lastSuccessTask, lastFailedTask).ConfigureAwait(false);
-        return new(definition, lastRunTask.Result.Items?.FirstOrDefault(), lastSuccessTask.Result.Items?.FirstOrDefault(), lastFailedTask.Result?.Items?.FirstOrDefault());
+        return new(definition, lastRunTask.Result.Items?.FirstOrDefault(), lastSuccessTask.Result.Items?.FirstOrDefault(), lastFailedTask.Result.Items?.FirstOrDefault());
     }
 
     private async Task ProcessScheduledJobDefinitionAsync(JobDefinitionRes definition, JobScheduleRes schedule, DateTime scheduledSlot, CancellationToken ct)
@@ -604,9 +604,10 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
     private async Task<bool> CreateScheduledRunAsync(JobInfo jobInfo, JobScheduleRes schedule, DateTime scheduledSlot, CancellationToken ct)
     {
         var definition = jobInfo.Definition;
-        if (!_jobs.TryGetValue(definition.Id, out jobInfo))
+        if (!_jobs.TryGetValue(definition.Id, out var currentJobInfo))
             return false;
 
+        jobInfo = currentJobInfo;
         var runReq = BuildRunRequest(definition.Id, schedule, null, null);
         runReq.JobScheduleId = schedule.Id;
         runReq.ScheduledSlotUtc = scheduledSlot;
@@ -620,7 +621,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 return true;
             }
 
-            if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true) {
+            if (created.Error?.Errors.Any(e => e.Code == ApiErrorCodes.Conflict) == true) {
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
                 _logger.LogDebug("Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
                 MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
@@ -628,7 +629,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             }
 
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
-            _logger.LogWarning("Failed to create job run: {Error}", created?.Error);
+            _logger.LogWarning("Failed to create job run: {Error}", created.Error);
             MarkSlotAttempted(definition.Id, jobInfo, scheduledSlot);
             return false;
         }
@@ -775,7 +776,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 await delayedMq.SendToQueueDelayed(queue, bytes, TimeSpan.FromSeconds(backoffSeconds)).ConfigureAwait(false);
             }
         }
-        else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
+        else if (created.Error?.Errors.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
         else {
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
@@ -916,7 +917,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
                 _logger.LogInformation("Created triggered job run {JobRunId}", created.Data.Id);
             }
-            else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
+            else if (created.Error?.Errors.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
             else {
                 _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);

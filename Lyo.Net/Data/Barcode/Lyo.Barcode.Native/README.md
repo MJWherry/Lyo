@@ -1,16 +1,22 @@
 # Lyo.Barcode.Native
 
-Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to **BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net + ImageSharp) through **`ReadFromImageAsync`**.
+Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to
+**BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net +
+ImageSharp) through **`ReadFromImageAsync`**.
 
 ## Features
 
 - **Encode:** Code 128 subset B end-to-end (start/checksum/stop computed in `Code128Encoder`); other symbologies return `BARCODE_UNSUPPORTED_SYMBOLOGY`.
 - **Render:** **BMP** (`BarcodeFormat.Bmp`) and **SVG** (`BarcodeFormat.Svg`) via `BarcodeImageRenderer`.
 - **Quiet zone:** clamped to at least the ISO minimum (10 modules).
-- **Caption:** when `BarcodeOptions.ShowHumanReadableTextBelow` is set, BMP output draws the payload below the bars using `BarcodeBmpCaptionRenderer` (`SixLabors.Fonts` / `SixLabors.ImageSharp.Drawing`).
-- **Border:** `BarcodeOptions.ShowBorder` + `BorderWidthPixels` + `BorderColorHex` add a frame; output grows by `2 × BorderWidthPixels` on each axis. SVG draws an outer fill plus inner background rect; BMP composites strips. Width is clamped between `BarcodeServiceOptions.MinBorderWidthPixels` and `MaxBorderWidthPixels` (defaults **1–64**). `BorderColorHex` must be `#RGB` or `#RRGGBB`.
+- **Caption:** when `BarcodeOptions.ShowHumanReadableTextBelow` is set, BMP output draws the payload below the bars using `BarcodeBmpCaptionRenderer` (`SixLabors.Fonts` /
+  `SixLabors.ImageSharp.Drawing`).
+- **Border:** `BarcodeOptions.ShowBorder` + `BorderWidthPixels` + `BorderColorHex` add a frame; output grows by `2 × BorderWidthPixels` on each axis. SVG draws an outer fill plus
+  inner background rect; BMP composites strips. Width is clamped between `BarcodeServiceOptions.MinBorderWidthPixels` and `MaxBorderWidthPixels` (defaults **1–64**).
+  `BorderColorHex` must be `#RGB` or `#RRGGBB`.
 - **Decode:** `ReadFromImageAsync(byte[])` delegates to **`BarcodeZxingRead.Decode`** (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).
-- **Metrics / logging / cancellation:** when `BarcodeServiceOptions.EnableMetrics` is true and an `IMetrics` is registered, generation timings and success/failure/cancellation counters under `Lyo.Barcode.Constants.Metrics` are emitted.
+- **Metrics / logging / cancellation:** when `BarcodeServiceOptions.EnableMetrics` is true and an `IMetrics` is registered, generation timings and success/failure/cancellation
+  counters under `Lyo.Barcode.Constants.Metrics` are emitted.
 
 ## Examples
 
@@ -56,7 +62,8 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 ## DI registration
 
 - `AddNativeBarcodeService(BarcodeServiceOptions options)` — explicit options instance.
-- `AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?)` — binds `BarcodeServiceOptions` from the **`BarcodeService`** section by default (`BarcodeServiceOptions.SectionName`); skipped if the options were already registered.
+- `AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?)` — binds `BarcodeServiceOptions` from the **`BarcodeService`** section by default
+  (`BarcodeServiceOptions.SectionName`); skipped if the options were already registered.
 
 ## Dependencies
 

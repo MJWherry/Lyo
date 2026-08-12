@@ -1,2 +1,2068 @@
-window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };
-window.LyoBench.reports["compression"] = {"type": "micro", "groups": [{"name": "AlgorithmComparisonBenchmarks", "description": "Compresses and decompresses the same seeded deterministic (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded input buffer (100 MiB, 250 MiB, 500 MiB); data is incompressible so ratio is not meaningful here."}], "measurements": [{"method": "GZip_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 1916259898.5714285, "stdDevNs": 25618352.60517705, "allocatedBytes": 373319000, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 54.719926080053824, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": -3.1825450210795956, "deltaAllocPct": 3.428704241879312e-05}, {"method": "Deflate_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 1903528768.6666667, "stdDevNs": 20158344.76818488, "allocatedBytes": 373318952, "ratioToBaseline": 0.9933562613744342, "isBaseline": false, "throughputMbps": 55.08590241767025, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": -0.6529538973440643, "deltaAllocPct": 3.428704682729848e-05}, {"method": "Zstd_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 40035935.5, "stdDevNs": 920750.876184158, "allocatedBytes": 210128744, "ratioToBaseline": 0.020892748175676372, "isBaseline": false, "throughputMbps": 2619.087044937416, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 5.549790761504882, "deltaAllocPct": 6.091507308076497e-05}, {"method": "Snappier_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 45575866.9375, "stdDevNs": 633484.7711009285, "allocatedBytes": 227206136, "ratioToBaseline": 0.023783760736983958, "isBaseline": false, "throughputMbps": 2300.7263941637225, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 9.227656733743824, "deltaAllocPct": 5.633653842463532e-05}, {"method": "LZ4_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 96786636.26470588, "stdDevNs": 1938011.2318628833, "allocatedBytes": 374284776, "ratioToBaseline": 0.05050809461538088, "isBaseline": false, "throughputMbps": 1083.3892368489849, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 5.431556504961037, "deltaAllocPct": 3.4198570709210596e-05}, {"method": "LZMA_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 31065041922.633335, "stdDevNs": 480687547.65041006, "allocatedBytes": 376248256, "ratioToBaseline": 16.21128843002576, "isBaseline": false, "throughputMbps": 3.3754211650879173, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU.", "deltaMeanPct": 0.8502858988798406, "deltaAllocPct": 9.780785799387664e-05}, {"method": "BZip2_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 14861734174.785715, "stdDevNs": 188193892.35911372, "allocatedBytes": 69549090288, "ratioToBaseline": 7.755594210297432, "isBaseline": false, "throughputMbps": 7.055542695542251, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation.", "deltaMeanPct": 8.411492041539551, "deltaAllocPct": -0.0025934159799155232}, {"method": "XZ_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 45786304809.14286, "stdDevNs": 252925999.55021334, "allocatedBytes": 373300392, "ratioToBaseline": 23.893577715254878, "isBaseline": false, "throughputMbps": 2.290152053918565, "slaTarget": ">= 30 MB/s", "slaResult": "Miss", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 2.536445653181784, "deltaAllocPct": 3.428875153434127e-05}, {"method": "GZip_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 37146409.53278688, "stdDevNs": 1661436.1564473768, "allocatedBytes": 209748280, "ratioToBaseline": 0.019384849393591926, "isBaseline": false, "throughputMbps": 2822.8192527584274, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 2.268327428399092, "deltaAllocPct": 0.0}, {"method": "Deflate_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 34662749.8, "stdDevNs": 1199135.4714531163, "allocatedBytes": 209748232, "ratioToBaseline": 0.018088751857637406, "isBaseline": false, "throughputMbps": 3025.0802548850297, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 2.3089658917426403, "deltaAllocPct": 0.0}, {"method": "Zstd_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 38976821.53658537, "stdDevNs": 1402351.804364424, "allocatedBytes": 209718512, "ratioToBaseline": 0.020340049679922114, "isBaseline": false, "throughputMbps": 2690.2552816313155, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 5.392072012354253, "deltaAllocPct": 0.0}, {"method": "Snappier_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 40693340.32, "stdDevNs": 1055310.2265063152, "allocatedBytes": 209728992, "ratioToBaseline": 0.021235814802750337, "isBaseline": false, "throughputMbps": 2576.775442257427, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 5.642899158222887, "deltaAllocPct": 0.0}, {"method": "LZ4_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 48115731.571428575, "stdDevNs": 1747501.8399584494, "allocatedBytes": 209722896, "ratioToBaseline": 0.02510918879390987, "isBaseline": false, "throughputMbps": 2179.2789296851324, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 11.569367359748158, "deltaAllocPct": 0.0}, {"method": "LZMA_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 13401503617.8, "stdDevNs": 196222942.40231246, "allocatedBytes": 211237944, "ratioToBaseline": 6.993573067928217, "isBaseline": false, "throughputMbps": 7.824316061126691, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size.", "deltaMeanPct": -4.35556530606686, "deltaAllocPct": -0.0001590620790890742}, {"method": "BZip2_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 5453894868.571428, "stdDevNs": 28487404.702709794, "allocatedBytes": 214080672, "ratioToBaseline": 2.8461143880521145, "isBaseline": false, "throughputMbps": 19.226186519335307, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec.", "deltaMeanPct": 1.9432266339917883, "deltaAllocPct": 3.363219273488584e-05}, {"method": "XZ_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 58304291.39393939, "stdDevNs": 1802805.296292575, "allocatedBytes": 210770096, "ratioToBaseline": 0.0304260875246647, "isBaseline": false, "throughputMbps": 1798.454238840123, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 16.779273789524332, "deltaAllocPct": 1.8978027884568197e-05}, {"method": "Brotli_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 364986166.5423729, "stdDevNs": 16132824.786459818, "allocatedBytes": 373229584, "ratioToBaseline": 0.1904679875701986, "isBaseline": false, "throughputMbps": 287.2919842232613, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": -1.5875515335674606, "deltaAllocPct": 0.0}, {"method": "ZLib_Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 1917102222.2857144, "stdDevNs": 25603623.895182464, "allocatedBytes": 373318992, "ratioToBaseline": 1.0004395665300483, "isBaseline": false, "throughputMbps": 54.695883600291715, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 3.2426951960776536, "deltaAllocPct": 3.4287043153543936e-05}, {"method": "Brotli_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 38490620.50632911, "stdDevNs": 2000406.6815482986, "allocatedBytes": 209716352, "ratioToBaseline": 0.020086325730149582, "isBaseline": false, "throughputMbps": 2724.237713516673, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 2.2654556422596532, "deltaAllocPct": 9.870484697303586e-05}, {"method": "ZLib_Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 35552172, "stdDevNs": 970007.1379064891, "allocatedBytes": 209748360, "ratioToBaseline": 0.01855289672685012, "isBaseline": false, "throughputMbps": 2949.400672341482, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "deltaMeanPct": 0.9444378852933949, "deltaAllocPct": 4.1955053627330957e-05}, {"method": "GZip_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 4653366218.642858, "stdDevNs": 34380148.05686789, "allocatedBytes": 799088880, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 56.334272370347335, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Deflate_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 4657983459.7, "stdDevNs": 56804786.66577352, "allocatedBytes": 799088832, "ratioToBaseline": 1.0009922367680077, "isBaseline": false, "throughputMbps": 56.27843084202011, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Zstd_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 95498487.59523809, "stdDevNs": 2170932.5297694746, "allocatedBytes": 525319560, "ratioToBaseline": 0.020522452587686077, "isBaseline": false, "throughputMbps": 2745.006822632356, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Snappier_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 106093509.14285715, "stdDevNs": 2117750.3110339586, "allocatedBytes": 568012408, "ratioToBaseline": 0.022799303591841315, "isBaseline": false, "throughputMbps": 2470.8768907532085, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZ4_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 200608175.2, "stdDevNs": 2467119.1657779203, "allocatedBytes": 801064832, "ratioToBaseline": 0.043110334707012775, "isBaseline": false, "throughputMbps": 1306.7463463971533, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZMA_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 74838064981.53334, "stdDevNs": 764738349.5284032, "allocatedBytes": 804105208, "ratioToBaseline": 16.08256506477147, "isBaseline": false, "throughputMbps": 3.5028163818063085, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU."}, {"method": "BZip2_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 34161234020.966667, "stdDevNs": 208533733.49039578, "allocatedBytes": 173536366000, "ratioToBaseline": 7.341187522294281, "isBaseline": false, "throughputMbps": 7.673727472465061, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation."}, {"method": "XZ_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 113492486843.26666, "stdDevNs": 168642997.02242216, "allocatedBytes": 799030064, "ratioToBaseline": 24.389330542818627, "isBaseline": false, "throughputMbps": 2.309791663672163, "slaTarget": ">= 30 MB/s", "slaResult": "Miss", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "GZip_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 89422305.33333333, "stdDevNs": 1573828.798430197, "allocatedBytes": 524369080, "ratioToBaseline": 0.019216691988496258, "isBaseline": false, "throughputMbps": 2931.5280904783654, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Deflate_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 83258910.07142857, "stdDevNs": 1129775.4189840266, "allocatedBytes": 524369032, "ratioToBaseline": 0.017892189473045775, "isBaseline": false, "throughputMbps": 3148.539895310956, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Zstd_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 91929169.14285715, "stdDevNs": 2486785.1392952176, "allocatedBytes": 524294912, "ratioToBaseline": 0.01975541249570253, "isBaseline": false, "throughputMbps": 2851.5867427522426, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Snappier_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 97223805.95, "stdDevNs": 2157050.58795019, "allocatedBytes": 524320992, "ratioToBaseline": 0.020893220387531646, "isBaseline": false, "throughputMbps": 2696.294363695397, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZ4_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 111910341.96666667, "stdDevNs": 2006258.5551809713, "allocatedBytes": 524305296, "ratioToBaseline": 0.0240493304649693, "isBaseline": false, "throughputMbps": 2342.4465996009694, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZMA_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 35916659023.07143, "stdDevNs": 171748147.5714467, "allocatedBytes": 527945248, "ratioToBaseline": 7.71842518630447, "isBaseline": false, "throughputMbps": 7.298674407093633, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size."}, {"method": "BZip2_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 13494705735.5, "stdDevNs": 128039438.87199391, "allocatedBytes": 530601960, "ratioToBaseline": 2.8999879015401664, "isBaseline": false, "throughputMbps": 19.425692203898002, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec."}, {"method": "XZ_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 123308948.6875, "stdDevNs": 2245279.387485671, "allocatedBytes": 525350688, "ratioToBaseline": 0.02649887047219394, "isBaseline": false, "throughputMbps": 2125.9122131058593, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Brotli_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 937661358.8636364, "stdDevNs": 29700956.910832886, "allocatedBytes": 798951544, "ratioToBaseline": 0.2015017333273853, "isBaseline": false, "throughputMbps": 279.5721477929896, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "ZLib_Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 4652035519.142858, "stdDevNs": 34517155.59635212, "allocatedBytes": 799088872, "ratioToBaseline": 0.9997140350796658, "isBaseline": false, "throughputMbps": 56.350386604163404, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Brotli_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 92636103.325, "stdDevNs": 3290549.6511222776, "allocatedBytes": 524289232, "ratioToBaseline": 0.019907331375267748, "isBaseline": false, "throughputMbps": 2829.825420012614, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "ZLib_Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 86890704.28571428, "stdDevNs": 1411237.3607274943, "allocatedBytes": 524369072, "ratioToBaseline": 0.018672655493479674, "isBaseline": false, "throughputMbps": 3016.9395236804303, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "GZip_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 9370612595.785715, "stdDevNs": 44918135.836902894, "allocatedBytes": 1598183824, "ratioToBaseline": 1, "isBaseline": true, "throughputMbps": 55.95023747281904, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Deflate_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 9402566866.142857, "stdDevNs": 56664429.71523377, "allocatedBytes": 1598183776, "ratioToBaseline": 1.0034100513739639, "isBaseline": false, "throughputMbps": 55.760092692121916, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Zstd_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 193732761.3888889, "stdDevNs": 5354130.656704966, "allocatedBytes": 1050637432, "ratioToBaseline": 0.020674503337809222, "isBaseline": false, "throughputMbps": 2706.2433645261062, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Snappier_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 214198473.93333334, "stdDevNs": 2408262.821207539, "allocatedBytes": 1136023200, "ratioToBaseline": 0.022858534780283813, "isBaseline": false, "throughputMbps": 2447.6738343298293, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZ4_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 411171574.93333334, "stdDevNs": 2498103.4273165674, "allocatedBytes": 1602192920, "ratioToBaseline": 0.04387883617323496, "isBaseline": false, "throughputMbps": 1275.1075997532348, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZMA_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 152093055253.42856, "stdDevNs": 476682306.03979564, "allocatedBytes": 1606677976, "ratioToBaseline": 16.23085510138686, "isBaseline": false, "throughputMbps": 3.4471527916011224, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU."}, {"method": "BZip2_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 67553213548.166664, "stdDevNs": 266790000.83540365, "allocatedBytes": 347063245400, "ratioToBaseline": 7.209049873489344, "isBaseline": false, "throughputMbps": 7.76111116647579, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation."}, {"method": "XZ_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 227996648003.33334, "stdDevNs": 219173921.38769925, "allocatedBytes": 1598057976, "ratioToBaseline": 24.331029126726595, "isBaseline": false, "throughputMbps": 2.299542579206405, "slaTarget": ">= 30 MB/s", "slaResult": "Miss", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "GZip_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 179362295.85714287, "stdDevNs": 1847563.1530683395, "allocatedBytes": 1048737088, "ratioToBaseline": 0.019140935987238254, "isBaseline": false, "throughputMbps": 2923.0669550393186, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Deflate_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 167984688.2142857, "stdDevNs": 1565498.1534716983, "allocatedBytes": 1048737040, "ratioToBaseline": 0.017926756281636716, "isBaseline": false, "throughputMbps": 3121.046361863674, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Zstd_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 183754715.57142857, "stdDevNs": 4214182.952147694, "allocatedBytes": 1048588912, "ratioToBaseline": 0.019609680124228947, "isBaseline": false, "throughputMbps": 2853.1948057474497, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Snappier_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 194193747.06666666, "stdDevNs": 3523669.8720806786, "allocatedBytes": 1048640992, "ratioToBaseline": 0.020723698166115866, "isBaseline": false, "throughputMbps": 2699.8191647232184, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZ4_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 221998334.66666666, "stdDevNs": 1356632.5127173043, "allocatedBytes": 1048609296, "ratioToBaseline": 0.02369090946802207, "isBaseline": false, "throughputMbps": 2361.67537376902, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "LZMA_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 72347075899, "stdDevNs": 259057897.04913113, "allocatedBytes": 1055791112, "ratioToBaseline": 7.720634607340075, "isBaseline": false, "throughputMbps": 7.246844374635558, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size."}, {"method": "BZip2_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 27380533517.73077, "stdDevNs": 204078227.4616226, "allocatedBytes": 1058143712, "ratioToBaseline": 2.921957688235317, "isBaseline": false, "throughputMbps": 19.148202487014636, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds", "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec."}, {"method": "XZ_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 245268108.6521739, "stdDevNs": 5281699.661887429, "allocatedBytes": 1049651664, "ratioToBaseline": 0.026174180838772414, "isBaseline": false, "throughputMbps": 2137.611786877344, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Brotli_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 1834172004.65, "stdDevNs": 41490989.49666945, "allocatedBytes": 1597966600, "ratioToBaseline": 0.19573661656601724, "isBaseline": false, "throughputMbps": 285.84451113135685, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "ZLib_Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 9344200567.5, "stdDevNs": 96147091.31134039, "allocatedBytes": 1598183808, "ratioToBaseline": 0.997181397905875, "isBaseline": false, "throughputMbps": 56.108384683385594, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "Brotli_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 186224695.5, "stdDevNs": 4478474.372483962, "allocatedBytes": 1048577352, "ratioToBaseline": 0.019873268006378966, "isBaseline": false, "throughputMbps": 2815.3516298809036, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}, {"method": "ZLib_Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 174299203.7, "stdDevNs": 1766962.0194483604, "allocatedBytes": 1048737072, "ratioToBaseline": 0.018600619961430087, "isBaseline": false, "throughputMbps": 3007.9770238215956, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."}]}, {"name": "GZipCompressionBenchmarks", "description": "Buffered GZip compress/decompress of seeded deterministic (incompressible) buffers (100 / 250 / 500 MiB); decompress cases reuse output from setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Input size: 100, 250, or 500 MiB."}], "measurements": [{"method": "Compress", "parameters": {"DataSize": "104857600"}, "meanNs": 1905787092.8, "stdDevNs": 21402751.44445895, "allocatedBytes": 373319000, "isBaseline": false}, {"method": "Decompress", "parameters": {"DataSize": "104857600"}, "meanNs": 36860382.378787875, "stdDevNs": 1145986.4493753505, "allocatedBytes": 209748280, "isBaseline": false}, {"method": "Compress", "parameters": {"DataSize": "262144000"}, "meanNs": 4754701337.033334, "stdDevNs": 52790128.516458176, "allocatedBytes": 799088880, "isBaseline": false}, {"method": "Decompress", "parameters": {"DataSize": "262144000"}, "meanNs": 89597293.53846154, "stdDevNs": 727315.5838642324, "allocatedBytes": 524369080, "isBaseline": false}, {"method": "Compress", "parameters": {"DataSize": "524288000"}, "meanNs": 9386562196.5, "stdDevNs": 54236032.22563122, "allocatedBytes": 1598183824, "isBaseline": false}, {"method": "Decompress", "parameters": {"DataSize": "524288000"}, "meanNs": 178246457.14285713, "stdDevNs": 1915638.2908922434, "allocatedBytes": 1048737088, "isBaseline": false}]}, {"name": "LargeFileStreamingBenchmarks", "description": "Compress/decompress at 100 MiB\u20132 GiB with GZip and Zstd. Stream methods use DeterministicPayloadStream input and NullingStream output; file methods use IOTemp paths. Decompress setup reuses pre-compressed IOTemp files.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Input size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}], "measurements": [{"method": "CompressFile_GZip", "parameters": {"DataSize": "104857600"}, "meanNs": 1992006210.9375, "stdDevNs": 38736014.96100358, "allocatedBytes": 282840, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "104857600"}, "meanNs": 69940909.38043478, "stdDevNs": 4650802.622526374, "allocatedBytes": 295848, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "104857600"}, "meanNs": 85143885.03125, "stdDevNs": 5159244.832930696, "allocatedBytes": 390872, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "104857600"}, "meanNs": 65871370.15151515, "stdDevNs": 4103385.0240662065, "allocatedBytes": 385512, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "104857600"}, "meanNs": 2640371630.0333333, "stdDevNs": 26486669.21551054, "allocatedBytes": 104999624, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "104857600"}, "meanNs": 19429603.666666668, "stdDevNs": 522541.84589215874, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "104857600"}, "meanNs": 630174337.6333333, "stdDevNs": 7716437.278623479, "allocatedBytes": 104996872, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "104857600"}, "meanNs": 23285879.08163265, "stdDevNs": 2198465.6513638264, "allocatedBytes": 200496, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "262144000"}, "meanNs": 5008933000.428572, "stdDevNs": 23126133.887675006, "allocatedBytes": 592216, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "262144000"}, "meanNs": 161334877.06666666, "stdDevNs": 4706142.0739983795, "allocatedBytes": 556888, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "262144000"}, "meanNs": 206089818.7948718, "stdDevNs": 10631323.286907155, "allocatedBytes": 861272, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "262144000"}, "meanNs": 157605753.27586207, "stdDevNs": 6846011.199491629, "allocatedBytes": 846312, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "262144000"}, "meanNs": 6340469135.923077, "stdDevNs": 39862170.74071642, "allocatedBytes": 262497224, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "262144000"}, "meanNs": 50213223.030612245, "stdDevNs": 2915121.6304994407, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "262144000"}, "meanNs": 1576216512.2857144, "stdDevNs": 13548765.247591123, "allocatedBytes": 262491400, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "262144000"}, "meanNs": 50087514.65, "stdDevNs": 2227520.8856082307, "allocatedBytes": 498096, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "524288000"}, "meanNs": 10042777449.166666, "stdDevNs": 51193595.324886344, "allocatedBytes": 1103640, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "524288000"}, "meanNs": 303341382.93650794, "stdDevNs": 13732107.229607277, "allocatedBytes": 1166520, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "524288000"}, "meanNs": 409843507.6981132, "stdDevNs": 16807913.178891443, "allocatedBytes": 1645272, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "524288000"}, "meanNs": 313066897, "stdDevNs": 13948750.05896859, "allocatedBytes": 1614312, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "524288000"}, "meanNs": 12618054570.866667, "stdDevNs": 105666934.735106, "allocatedBytes": 524992904, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "524288000"}, "meanNs": 94121308.3030303, "stdDevNs": 2939001.4268561043, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "524288000"}, "meanNs": 3047267065.357143, "stdDevNs": 13283641.436320351, "allocatedBytes": 525375544, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "524288000"}, "meanNs": 96813721.78571428, "stdDevNs": 1480024.5347682808, "allocatedBytes": 994096, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "786432000"}, "meanNs": 15186449773.066668, "stdDevNs": 139728776.86890048, "allocatedBytes": 1616440, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "786432000"}, "meanNs": 460712250.375, "stdDevNs": 14306628.443889791, "allocatedBytes": 1645160, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "786432000"}, "meanNs": 634877501.1296296, "stdDevNs": 26295489.39867172, "allocatedBytes": 2429272, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "786432000"}, "meanNs": 458000611.55128205, "stdDevNs": 15803521.042288262, "allocatedBytes": 2382376, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "786432000"}, "meanNs": 18809500474.733334, "stdDevNs": 160761355.78474852, "allocatedBytes": 787488584, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "786432000"}, "meanNs": 140533859.125, "stdDevNs": 4287654.152862496, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "786432000"}, "meanNs": 4556996804.642858, "stdDevNs": 40426393.86206299, "allocatedBytes": 787473160, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "786432000"}, "meanNs": 146004344.45454547, "stdDevNs": 3405909.538364525, "allocatedBytes": 1490096, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "1073741824"}, "meanNs": 20844609957.566666, "stdDevNs": 197226755.10972732, "allocatedBytes": 2179192, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "1073741824"}, "meanNs": 655427572.4666667, "stdDevNs": 29317043.596322414, "allocatedBytes": 2241592, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "1073741824"}, "meanNs": 862270206.1666666, "stdDevNs": 23810596.451444414, "allocatedBytes": 3288600, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "1073741824"}, "meanNs": 636745955.6, "stdDevNs": 11628330.875199223, "allocatedBytes": 3224200, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "1073741824"}, "meanNs": 25581771630.214287, "stdDevNs": 162786292.3416715, "allocatedBytes": 1075325272, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "1073741824"}, "meanNs": 195847260.1111111, "stdDevNs": 6486057.468000015, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "1073741824"}, "meanNs": 6347994912.785714, "stdDevNs": 42179011.91654557, "allocatedBytes": 1075556776, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "1073741824"}, "meanNs": 201207705.1190476, "stdDevNs": 4773751.254888262, "allocatedBytes": 2033712, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "1610612736"}, "meanNs": 31028880263.214287, "stdDevNs": 228002632.60683048, "allocatedBytes": 3369248, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "1610612736"}, "meanNs": 985073650.2204301, "stdDevNs": 64927550.50632012, "allocatedBytes": 3355976, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "1610612736"}, "meanNs": 1281058242.9333334, "stdDevNs": 38176920.17778948, "allocatedBytes": 5287496, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "1610612736"}, "meanNs": 950394743.8979592, "stdDevNs": 37591072.98240762, "allocatedBytes": 4796968, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "1610612736"}, "meanNs": 38480528875.30769, "stdDevNs": 103908791.11253637, "allocatedBytes": 1612917840, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "1610612736"}, "meanNs": 284975451.78571427, "stdDevNs": 5026023.450916278, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "1610612736"}, "meanNs": 9521060538.033333, "stdDevNs": 125286931.75762255, "allocatedBytes": 1612744000, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "1610612736"}, "meanNs": 306712513.2916667, "stdDevNs": 7927915.572995559, "allocatedBytes": 3049520, "isBaseline": false}, {"method": "CompressFile_GZip", "parameters": {"DataSize": "2147483648"}, "meanNs": 41681526942.73333, "stdDevNs": 180101519.14849892, "allocatedBytes": 4417096, "isBaseline": false}, {"method": "DecompressFile_GZip", "parameters": {"DataSize": "2147483648"}, "meanNs": 1573131857.4756098, "stdDevNs": 689356662.771019, "allocatedBytes": 4536056, "isBaseline": false}, {"method": "CompressFile_Zstd", "parameters": {"DataSize": "2147483648"}, "meanNs": 1720141922.9333334, "stdDevNs": 29804282.566212162, "allocatedBytes": 6499928, "isBaseline": false}, {"method": "DecompressFile_Zstd", "parameters": {"DataSize": "2147483648"}, "meanNs": 1288076150.8508773, "stdDevNs": 55970003.67185214, "allocatedBytes": 6369864, "isBaseline": false}, {"method": "CompressStream_GZip", "parameters": {"DataSize": "2147483648"}, "meanNs": 51604284491.26667, "stdDevNs": 294641483.5405478, "allocatedBytes": 2150508568, "isBaseline": false}, {"method": "DecompressStream_GZip", "parameters": {"DataSize": "2147483648"}, "meanNs": 361502802.15217394, "stdDevNs": 8724117.677227745, "allocatedBytes": 2032, "isBaseline": false}, {"method": "CompressStream_Zstd", "parameters": {"DataSize": "2147483648"}, "meanNs": 12512079675.766666, "stdDevNs": 151613197.55341947, "allocatedBytes": 2150719672, "isBaseline": false}, {"method": "DecompressStream_Zstd", "parameters": {"DataSize": "2147483648"}, "meanNs": 370197368.125, "stdDevNs": 9600518.373001846, "allocatedBytes": 4065328, "isBaseline": false}]}], "comparison": {"baseline": "GZip", "description": "Compresses and decompresses the same seeded deterministic (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.", "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Size of the seeded input buffer (100 MiB, 250 MiB, 500 MiB); data is incompressible so ratio is not meaningful here."}], "groups": [{"axis": "Compress", "rows": [{"algorithm": "GZip", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 1916259898.5714285, "allocatedBytes": 373319000, "ratioToBaseline": 1, "throughputMbps": 54.719926080053824, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -3.1825450210795956, "deltaAllocPct": 3.428704241879312e-05}, {"algorithm": "Deflate", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 1903528768.6666667, "allocatedBytes": 373318952, "ratioToBaseline": 0.9933562613744342, "throughputMbps": 55.08590241767025, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -0.6529538973440643, "deltaAllocPct": 3.428704682729848e-05}, {"algorithm": "Zstd", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 40035935.5, "allocatedBytes": 210128744, "ratioToBaseline": 0.020892748175676372, "throughputMbps": 2619.087044937416, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 5.549790761504882, "deltaAllocPct": 6.091507308076497e-05}, {"algorithm": "Snappier", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 45575866.9375, "allocatedBytes": 227206136, "ratioToBaseline": 0.023783760736983958, "throughputMbps": 2300.7263941637225, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 9.227656733743824, "deltaAllocPct": 5.633653842463532e-05}, {"algorithm": "LZ4", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 96786636.26470588, "allocatedBytes": 374284776, "ratioToBaseline": 0.05050809461538088, "throughputMbps": 1083.3892368489849, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 5.431556504961037, "deltaAllocPct": 3.4198570709210596e-05}, {"algorithm": "LZMA", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 31065041922.633335, "allocatedBytes": 376248256, "ratioToBaseline": 16.21128843002576, "throughputMbps": 3.3754211650879173, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 0.8502858988798406, "deltaAllocPct": 9.780785799387664e-05}, {"algorithm": "BZip2", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 14861734174.785715, "allocatedBytes": 69549090288, "ratioToBaseline": 7.755594210297432, "throughputMbps": 7.055542695542251, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 8.411492041539551, "deltaAllocPct": -0.0025934159799155232}, {"algorithm": "XZ", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 45786304809.14286, "allocatedBytes": 373300392, "ratioToBaseline": 23.893577715254878, "throughputMbps": 2.290152053918565, "slaTarget": ">= 30 MB/s", "slaResult": "Miss", "deltaMeanPct": 2.536445653181784, "deltaAllocPct": 3.428875153434127e-05}, {"algorithm": "Brotli", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 364986166.5423729, "allocatedBytes": 373229584, "ratioToBaseline": 0.1904679875701986, "throughputMbps": 287.2919842232613, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -1.5875515335674606, "deltaAllocPct": 0.0}, {"algorithm": "ZLib", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 1917102222.2857144, "allocatedBytes": 373318992, "ratioToBaseline": 1.0004395665300483, "throughputMbps": 54.695883600291715, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 3.2426951960776536, "deltaAllocPct": 3.4287043153543936e-05}, {"algorithm": "GZip", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 4653366218.642858, "allocatedBytes": 799088880, "ratioToBaseline": 1, "throughputMbps": 56.334272370347335, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Deflate", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 4657983459.7, "allocatedBytes": 799088832, "ratioToBaseline": 1.0009922367680077, "throughputMbps": 56.27843084202011, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Zstd", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 95498487.59523809, "allocatedBytes": 525319560, "ratioToBaseline": 0.020522452587686077, "throughputMbps": 2745.006822632356, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Snappier", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 106093509.14285715, "allocatedBytes": 568012408, "ratioToBaseline": 0.022799303591841315, "throughputMbps": 2470.8768907532085, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZ4", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 200608175.2, "allocatedBytes": 801064832, "ratioToBaseline": 0.043110334707012775, "throughputMbps": 1306.7463463971533, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZMA", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 74838064981.53334, "allocatedBytes": 804105208, "ratioToBaseline": 16.08256506477147, "throughputMbps": 3.5028163818063085, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds"}, {"algorithm": "BZip2", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 34161234020.966667, "allocatedBytes": 173536366000, "ratioToBaseline": 7.341187522294281, "throughputMbps": 7.673727472465061, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds"}, {"algorithm": "XZ", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 113492486843.26666, "allocatedBytes": 799030064, "ratioToBaseline": 24.389330542818627, "throughputMbps": 2.309791663672163, "slaTarget": ">= 30 MB/s", "slaResult": "Miss"}, {"algorithm": "Brotli", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 937661358.8636364, "allocatedBytes": 798951544, "ratioToBaseline": 0.2015017333273853, "throughputMbps": 279.5721477929896, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "ZLib", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 4652035519.142858, "allocatedBytes": 799088872, "ratioToBaseline": 0.9997140350796658, "throughputMbps": 56.350386604163404, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "GZip", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 9370612595.785715, "allocatedBytes": 1598183824, "ratioToBaseline": 1, "throughputMbps": 55.95023747281904, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Deflate", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 9402566866.142857, "allocatedBytes": 1598183776, "ratioToBaseline": 1.0034100513739639, "throughputMbps": 55.760092692121916, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Zstd", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 193732761.3888889, "allocatedBytes": 1050637432, "ratioToBaseline": 0.020674503337809222, "throughputMbps": 2706.2433645261062, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Snappier", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 214198473.93333334, "allocatedBytes": 1136023200, "ratioToBaseline": 0.022858534780283813, "throughputMbps": 2447.6738343298293, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZ4", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 411171574.93333334, "allocatedBytes": 1602192920, "ratioToBaseline": 0.04387883617323496, "throughputMbps": 1275.1075997532348, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZMA", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 152093055253.42856, "allocatedBytes": 1606677976, "ratioToBaseline": 16.23085510138686, "throughputMbps": 3.4471527916011224, "slaTarget": ">= 2 MB/s", "slaResult": "Exceeds"}, {"algorithm": "BZip2", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 67553213548.166664, "allocatedBytes": 347063245400, "ratioToBaseline": 7.209049873489344, "throughputMbps": 7.76111116647579, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds"}, {"algorithm": "XZ", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 227996648003.33334, "allocatedBytes": 1598057976, "ratioToBaseline": 24.331029126726595, "throughputMbps": 2.299542579206405, "slaTarget": ">= 30 MB/s", "slaResult": "Miss"}, {"algorithm": "Brotli", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 1834172004.65, "allocatedBytes": 1597966600, "ratioToBaseline": 0.19573661656601724, "throughputMbps": 285.84451113135685, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "ZLib", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 9344200567.5, "allocatedBytes": 1598183808, "ratioToBaseline": 0.997181397905875, "throughputMbps": 56.108384683385594, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}]}, {"axis": "Decompress", "rows": [{"algorithm": "GZip", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 37146409.53278688, "allocatedBytes": 209748280, "ratioToBaseline": 1, "throughputMbps": 2822.8192527584274, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 2.268327428399092, "deltaAllocPct": 0.0}, {"algorithm": "Deflate", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 34662749.8, "allocatedBytes": 209748232, "ratioToBaseline": 0.9331386326693375, "throughputMbps": 3025.0802548850297, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 2.3089658917426403, "deltaAllocPct": 0.0}, {"algorithm": "Zstd", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 38976821.53658537, "allocatedBytes": 209718512, "ratioToBaseline": 1.0492756103973626, "throughputMbps": 2690.2552816313155, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 5.392072012354253, "deltaAllocPct": 0.0}, {"algorithm": "Snappier", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 40693340.32, "allocatedBytes": 209728992, "ratioToBaseline": 1.0954851581034355, "throughputMbps": 2576.775442257427, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 5.642899158222887, "deltaAllocPct": 0.0}, {"algorithm": "LZ4", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 48115731.571428575, "allocatedBytes": 209722896, "ratioToBaseline": 1.2952996582067975, "throughputMbps": 2179.2789296851324, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 11.569367359748158, "deltaAllocPct": 0.0}, {"algorithm": "LZMA", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 13401503617.8, "allocatedBytes": 211237944, "ratioToBaseline": 360.7752077888256, "throughputMbps": 7.824316061126691, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds", "deltaMeanPct": -4.35556530606686, "deltaAllocPct": -0.0001590620790890742}, {"algorithm": "BZip2", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 5453894868.571428, "allocatedBytes": 214080672, "ratioToBaseline": 146.8215888740904, "throughputMbps": 19.226186519335307, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 1.9432266339917883, "deltaAllocPct": 3.363219273488584e-05}, {"algorithm": "XZ", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 58304291.39393939, "allocatedBytes": 210770096, "ratioToBaseline": 1.5695808054470979, "throughputMbps": 1798.454238840123, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 16.779273789524332, "deltaAllocPct": 1.8978027884568197e-05}, {"algorithm": "Brotli", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 38490620.50632911, "allocatedBytes": 209716352, "ratioToBaseline": 1.0361868344868101, "throughputMbps": 2724.237713516673, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 2.2654556422596532, "deltaAllocPct": 9.870484697303586e-05}, {"algorithm": "ZLib", "parameters": {"DataSize": "104857600"}, "paramLabel": "100 MB", "meanNs": 35552172, "allocatedBytes": 209748360, "ratioToBaseline": 0.9570823249719533, "throughputMbps": 2949.400672341482, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds", "deltaMeanPct": 0.9444378852933949, "deltaAllocPct": 4.1955053627330957e-05}, {"algorithm": "GZip", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 89422305.33333333, "allocatedBytes": 524369080, "ratioToBaseline": 1, "throughputMbps": 2931.5280904783654, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Deflate", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 83258910.07142857, "allocatedBytes": 524369032, "ratioToBaseline": 0.931075415256519, "throughputMbps": 3148.539895310956, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Zstd", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 91929169.14285715, "allocatedBytes": 524294912, "ratioToBaseline": 1.02803398771905, "throughputMbps": 2851.5867427522426, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Snappier", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 97223805.95, "allocatedBytes": 524320992, "ratioToBaseline": 1.0872433403230386, "throughputMbps": 2696.294363695397, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZ4", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 111910341.96666667, "allocatedBytes": 524305296, "ratioToBaseline": 1.2514812892544678, "throughputMbps": 2342.4465996009694, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZMA", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 35916659023.07143, "allocatedBytes": 527945248, "ratioToBaseline": 401.6521257105527, "throughputMbps": 7.298674407093633, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds"}, {"algorithm": "BZip2", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 13494705735.5, "allocatedBytes": 530601960, "ratioToBaseline": 150.90983938735107, "throughputMbps": 19.425692203898002, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds"}, {"algorithm": "XZ", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 123308948.6875, "allocatedBytes": 525350688, "ratioToBaseline": 1.3789506793394533, "throughputMbps": 2125.9122131058593, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Brotli", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 92636103.325, "allocatedBytes": 524289232, "ratioToBaseline": 1.0359395564639808, "throughputMbps": 2829.825420012614, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "ZLib", "parameters": {"DataSize": "262144000"}, "paramLabel": "250 MB", "meanNs": 86890704.28571428, "allocatedBytes": 524369072, "ratioToBaseline": 0.9716893784142315, "throughputMbps": 3016.9395236804303, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "GZip", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 179362295.85714287, "allocatedBytes": 1048737088, "ratioToBaseline": 1, "throughputMbps": 2923.0669550393186, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Deflate", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 167984688.2142857, "allocatedBytes": 1048737040, "ratioToBaseline": 0.9365663358149746, "throughputMbps": 3121.046361863674, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Zstd", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 183754715.57142857, "allocatedBytes": 1048588912, "ratioToBaseline": 1.0244890917196117, "throughputMbps": 2853.1948057474497, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Snappier", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 194193747.06666666, "allocatedBytes": 1048640992, "ratioToBaseline": 1.0826899050251713, "throughputMbps": 2699.8191647232184, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZ4", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 221998334.66666666, "allocatedBytes": 1048609296, "ratioToBaseline": 1.2377090380437716, "throughputMbps": 2361.67537376902, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "LZMA", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 72347075899, "allocatedBytes": 1055791112, "ratioToBaseline": 403.3572136956947, "throughputMbps": 7.246844374635558, "slaTarget": ">= 4 MB/s", "slaResult": "Exceeds"}, {"algorithm": "BZip2", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 27380533517.73077, "allocatedBytes": 1058143712, "ratioToBaseline": 152.65490100293215, "throughputMbps": 19.148202487014636, "slaTarget": ">= 12 MB/s", "slaResult": "Exceeds"}, {"algorithm": "XZ", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 245268108.6521739, "allocatedBytes": 1049651664, "ratioToBaseline": 1.3674451895259148, "throughputMbps": 2137.611786877344, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "Brotli", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 186224695.5, "allocatedBytes": 1048577352, "ratioToBaseline": 1.038259989983195, "throughputMbps": 2815.3516298809036, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}, {"algorithm": "ZLib", "parameters": {"DataSize": "524288000"}, "paramLabel": "500 MB", "meanNs": 174299203.7, "allocatedBytes": 1048737072, "ratioToBaseline": 0.9717717030050982, "throughputMbps": 3007.9770238215956, "slaTarget": ">= 30 MB/s", "slaResult": "Exceeds"}]}]}, "slo": [{"area": "BZip2_Compress", "target": ">= 4 MB/s \u2014 BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation.", "latest": "14861.73 ms (7 MB/s)", "result": "Exceeds"}, {"area": "BZip2_Decompress", "target": ">= 12 MB/s \u2014 BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec.", "latest": "5453.89 ms (19 MB/s)", "result": "Exceeds"}, {"area": "Brotli_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "364.99 ms (287 MB/s)", "result": "Exceeds"}, {"area": "Brotli_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "38.49 ms (2724 MB/s)", "result": "Exceeds"}, {"area": "Deflate_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "1903.53 ms (55 MB/s)", "result": "Exceeds"}, {"area": "Deflate_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "34.66 ms (3025 MB/s)", "result": "Exceeds"}, {"area": "GZip_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "1916.26 ms (55 MB/s)", "result": "Exceeds"}, {"area": "GZip_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "37.15 ms (2823 MB/s)", "result": "Exceeds"}, {"area": "LZ4_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "96.79 ms (1083 MB/s)", "result": "Exceeds"}, {"area": "LZ4_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "48.12 ms (2179 MB/s)", "result": "Exceeds"}, {"area": "LZMA_Compress", "target": ">= 2 MB/s \u2014 LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU.", "latest": "31065.04 ms (3 MB/s)", "result": "Exceeds"}, {"area": "LZMA_Decompress", "target": ">= 4 MB/s \u2014 LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size.", "latest": "13401.5 ms (8 MB/s)", "result": "Exceeds"}, {"area": "Snappier_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "45.58 ms (2301 MB/s)", "result": "Exceeds"}, {"area": "Snappier_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "40.69 ms (2577 MB/s)", "result": "Exceeds"}, {"area": "XZ_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "45786.3 ms (2 MB/s)", "result": "Miss"}, {"area": "XZ_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "58.3 ms (1798 MB/s)", "result": "Exceeds"}, {"area": "ZLib_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "1917.1 ms (55 MB/s)", "result": "Exceeds"}, {"area": "ZLib_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "35.55 ms (2949 MB/s)", "result": "Exceeds"}, {"area": "Zstd_Compress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "40.04 ms (2619 MB/s)", "result": "Exceeds"}, {"area": "Zstd_Decompress", "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.", "latest": "38.98 ms (2690 MB/s)", "result": "Exceeds"}], "grades": [{"category": "AlgorithmComparisonBenchmarks", "grade": "C", "rationale": "57 exceed, 3 miss of 60 SLA targets vs declared standards"}], "schema": "lyo.bench/v1", "name": "compression", "title": "Compression", "description": "Compress/decompress throughput for Lyo.Compression across GZip, Deflate, Zstd, Snappier, LZ4, LZMA, BZip2, XZ (and Brotli/ZLib on net10.0). Buffered suites use seeded deterministic (incompressible) buffers at 100/250/500 MiB. Large suites (100 MiB\u20132 GiB) cover stream APIs (DeterministicPayloadStream \u2192 NullingStream) and file APIs (IOTemp paths). Ratio on random data is not meaningful \u2014 these measure speed and framing.", "runId": "BenchmarkRun-joined-2026-08-01-14-07-03", "generatedAt": "2026-08-01T14:07:04.1576317+00:00", "runStarted": "2026-08-01T03:38:36.7025328+00:00", "runEnded": "2026-08-01T14:07:04.1576317+00:00", "durationSeconds": 37707.4550989, "environment": {"tool": "BenchmarkDotNet", "toolVersion": "0.15.8", "runtime": ".NET 10.0.0", "cpu": "Intel(R) Core(TM) Ultra 7 155U", "os": "Ubuntu 24.04.3 LTS", "architecture": "X64", "logicalCores": 14, "physicalCores": 12, "memoryBytes": 6442450944, "gcMode": "Workstation", "configuration": "Release", "dotnetSdkVersion": "10.0.100", "dependencies": {"BenchmarkDotNet": "0.15.8", "EasyCompressor": "2.1.0", "EasyCompressor.LZ4": "2.1.0", "EasyCompressor.LZMA": "2.1.0", "EasyCompressor.Snappier": "2.1.0", "EasyCompressor.ZstdSharp": "2.1.0", "Joveler.Compression.XZ": "5.0.2", "Microsoft.Extensions.Configuration.Binder": "10.0.5", "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5", "Microsoft.Extensions.Hosting.Abstractions": "10.0.5", "Microsoft.Extensions.Logging.Abstractions": "10.0.5", "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5", "SharpZipLib": "1.4.2", "Testcontainers.Redis": "4.13.0"}}, "notes": [], "history": [{"file": "20260628T213618Z_BenchmarkRun-joined-2026-06-28-17-36-17.json", "runId": "BenchmarkRun-joined-2026-06-28-17-36-17", "runStarted": null, "runEnded": null, "generatedAt": "2026-06-28T21:36:18.0289835+00:00", "isCurrent": false, "measurementCount": 98, "medianMeanNs": 18113969.180208333}, {"file": "20260704T065212Z_BenchmarkRun-joined-2026-07-04-06-52-11.json", "runId": "BenchmarkRun-joined-2026-07-04-06-52-11", "runStarted": "2026-07-04T03:31:28.5906818+00:00", "runEnded": "2026-07-04T06:52:12.254106+00:00", "generatedAt": "2026-07-04T06:52:12.254106+00:00", "isCurrent": false, "measurementCount": 98, "medianMeanNs": 18671102.85}, {"file": "20260708T050706Z_BenchmarkRun-joined-2026-07-08-05-07-04.json", "runId": "BenchmarkRun-joined-2026-07-08-05-07-04", "runStarted": "2026-07-08T01:04:31.5342644+00:00", "runEnded": "2026-07-08T05:07:06.0676856+00:00", "generatedAt": "2026-07-08T05:07:06.0676856+00:00", "isCurrent": false, "measurementCount": 98, "medianMeanNs": 30744528.239583332}, {"file": "20260729T055436Z_BenchmarkRun-joined-2026-07-29-05-54-36.json", "runId": "BenchmarkRun-joined-2026-07-29-05-54-36", "runStarted": "2026-07-29T02:37:47.3432273+00:00", "runEnded": "2026-07-29T05:54:36.7409082+00:00", "generatedAt": "2026-07-29T05:54:36.7409082+00:00", "isCurrent": false, "measurementCount": 98, "medianMeanNs": 19540973.1953125}, {"file": "20260801T140704Z_BenchmarkRun-joined-2026-08-01-14-07-03.json", "runId": "BenchmarkRun-joined-2026-08-01-14-07-03", "runStarted": "2026-08-01T03:38:36.7025328+00:00", "runEnded": "2026-08-01T14:07:04.1576317+00:00", "generatedAt": "2026-08-01T14:07:04.1576317+00:00", "isCurrent": true, "measurementCount": 122, "medianMeanNs": 460712250.375}], "deltaBaseline": {"kind": "previousRun", "runId": "BenchmarkRun-joined-2026-07-29-05-54-36", "runStarted": "2026-07-29T02:37:47.3432273+00:00", "runEnded": "2026-07-29T05:54:36.7409082+00:00"}};
+window.LyoBench = window.LyoBench || {reports: {}, history: {}, historyIndex: {}};
+window.LyoBench.reports["compression"] = {
+    "type": "micro",
+    "groups": [{
+        "name": "AlgorithmComparisonBenchmarks",
+        "description": "Compresses and decompresses the same seeded deterministic (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.",
+        "parameters": [{
+            "name": "DataSize",
+            "unit": "bytes",
+            "description": "Size of the seeded input buffer (100 MiB, 250 MiB, 500 MiB); data is incompressible so ratio is not meaningful here."
+        }],
+        "measurements": [{
+            "method": "GZip_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1916259898.5714285,
+            "stdDevNs": 25618352.60517705,
+            "allocatedBytes": 373319000,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 54.719926080053824,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": -3.1825450210795956,
+            "deltaAllocPct": 3.428704241879312e-05
+        }, {
+            "method": "Deflate_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1903528768.6666667,
+            "stdDevNs": 20158344.76818488,
+            "allocatedBytes": 373318952,
+            "ratioToBaseline": 0.9933562613744342,
+            "isBaseline": false,
+            "throughputMbps": 55.08590241767025,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": -0.6529538973440643,
+            "deltaAllocPct": 3.428704682729848e-05
+        }, {
+            "method": "Zstd_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 40035935.5,
+            "stdDevNs": 920750.876184158,
+            "allocatedBytes": 210128744,
+            "ratioToBaseline": 0.020892748175676372,
+            "isBaseline": false,
+            "throughputMbps": 2619.087044937416,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 5.549790761504882,
+            "deltaAllocPct": 6.091507308076497e-05
+        }, {
+            "method": "Snappier_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 45575866.9375,
+            "stdDevNs": 633484.7711009285,
+            "allocatedBytes": 227206136,
+            "ratioToBaseline": 0.023783760736983958,
+            "isBaseline": false,
+            "throughputMbps": 2300.7263941637225,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 9.227656733743824,
+            "deltaAllocPct": 5.633653842463532e-05
+        }, {
+            "method": "LZ4_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 96786636.26470588,
+            "stdDevNs": 1938011.2318628833,
+            "allocatedBytes": 374284776,
+            "ratioToBaseline": 0.05050809461538088,
+            "isBaseline": false,
+            "throughputMbps": 1083.3892368489849,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 5.431556504961037,
+            "deltaAllocPct": 3.4198570709210596e-05
+        }, {
+            "method": "LZMA_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 31065041922.633335,
+            "stdDevNs": 480687547.65041006,
+            "allocatedBytes": 376248256,
+            "ratioToBaseline": 16.21128843002576,
+            "isBaseline": false,
+            "throughputMbps": 3.3754211650879173,
+            "slaTarget": ">= 2 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU.",
+            "deltaMeanPct": 0.8502858988798406,
+            "deltaAllocPct": 9.780785799387664e-05
+        }, {
+            "method": "BZip2_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 14861734174.785715,
+            "stdDevNs": 188193892.35911372,
+            "allocatedBytes": 69549090288,
+            "ratioToBaseline": 7.755594210297432,
+            "isBaseline": false,
+            "throughputMbps": 7.055542695542251,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation.",
+            "deltaMeanPct": 8.411492041539551,
+            "deltaAllocPct": -0.0025934159799155232
+        }, {
+            "method": "XZ_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 45786304809.14286,
+            "stdDevNs": 252925999.55021334,
+            "allocatedBytes": 373300392,
+            "ratioToBaseline": 23.893577715254878,
+            "isBaseline": false,
+            "throughputMbps": 2.290152053918565,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Miss",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 2.536445653181784,
+            "deltaAllocPct": 3.428875153434127e-05
+        }, {
+            "method": "GZip_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 37146409.53278688,
+            "stdDevNs": 1661436.1564473768,
+            "allocatedBytes": 209748280,
+            "ratioToBaseline": 0.019384849393591926,
+            "isBaseline": false,
+            "throughputMbps": 2822.8192527584274,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 2.268327428399092,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Deflate_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 34662749.8,
+            "stdDevNs": 1199135.4714531163,
+            "allocatedBytes": 209748232,
+            "ratioToBaseline": 0.018088751857637406,
+            "isBaseline": false,
+            "throughputMbps": 3025.0802548850297,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 2.3089658917426403,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Zstd_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 38976821.53658537,
+            "stdDevNs": 1402351.804364424,
+            "allocatedBytes": 209718512,
+            "ratioToBaseline": 0.020340049679922114,
+            "isBaseline": false,
+            "throughputMbps": 2690.2552816313155,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 5.392072012354253,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Snappier_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 40693340.32,
+            "stdDevNs": 1055310.2265063152,
+            "allocatedBytes": 209728992,
+            "ratioToBaseline": 0.021235814802750337,
+            "isBaseline": false,
+            "throughputMbps": 2576.775442257427,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 5.642899158222887,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "LZ4_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 48115731.571428575,
+            "stdDevNs": 1747501.8399584494,
+            "allocatedBytes": 209722896,
+            "ratioToBaseline": 0.02510918879390987,
+            "isBaseline": false,
+            "throughputMbps": 2179.2789296851324,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 11.569367359748158,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "LZMA_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 13401503617.8,
+            "stdDevNs": 196222942.40231246,
+            "allocatedBytes": 211237944,
+            "ratioToBaseline": 6.993573067928217,
+            "isBaseline": false,
+            "throughputMbps": 7.824316061126691,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size.",
+            "deltaMeanPct": -4.35556530606686,
+            "deltaAllocPct": -0.0001590620790890742
+        }, {
+            "method": "BZip2_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 5453894868.571428,
+            "stdDevNs": 28487404.702709794,
+            "allocatedBytes": 214080672,
+            "ratioToBaseline": 2.8461143880521145,
+            "isBaseline": false,
+            "throughputMbps": 19.226186519335307,
+            "slaTarget": ">= 12 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec.",
+            "deltaMeanPct": 1.9432266339917883,
+            "deltaAllocPct": 3.363219273488584e-05
+        }, {
+            "method": "XZ_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 58304291.39393939,
+            "stdDevNs": 1802805.296292575,
+            "allocatedBytes": 210770096,
+            "ratioToBaseline": 0.0304260875246647,
+            "isBaseline": false,
+            "throughputMbps": 1798.454238840123,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 16.779273789524332,
+            "deltaAllocPct": 1.8978027884568197e-05
+        }, {
+            "method": "Brotli_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 364986166.5423729,
+            "stdDevNs": 16132824.786459818,
+            "allocatedBytes": 373229584,
+            "ratioToBaseline": 0.1904679875701986,
+            "isBaseline": false,
+            "throughputMbps": 287.2919842232613,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": -1.5875515335674606,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "ZLib_Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1917102222.2857144,
+            "stdDevNs": 25603623.895182464,
+            "allocatedBytes": 373318992,
+            "ratioToBaseline": 1.0004395665300483,
+            "isBaseline": false,
+            "throughputMbps": 54.695883600291715,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 3.2426951960776536,
+            "deltaAllocPct": 3.4287043153543936e-05
+        }, {
+            "method": "Brotli_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 38490620.50632911,
+            "stdDevNs": 2000406.6815482986,
+            "allocatedBytes": 209716352,
+            "ratioToBaseline": 0.020086325730149582,
+            "isBaseline": false,
+            "throughputMbps": 2724.237713516673,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 2.2654556422596532,
+            "deltaAllocPct": 9.870484697303586e-05
+        }, {
+            "method": "ZLib_Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 35552172,
+            "stdDevNs": 970007.1379064891,
+            "allocatedBytes": 209748360,
+            "ratioToBaseline": 0.01855289672685012,
+            "isBaseline": false,
+            "throughputMbps": 2949.400672341482,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+            "deltaMeanPct": 0.9444378852933949,
+            "deltaAllocPct": 4.1955053627330957e-05
+        }, {
+            "method": "GZip_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4653366218.642858,
+            "stdDevNs": 34380148.05686789,
+            "allocatedBytes": 799088880,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 56.334272370347335,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Deflate_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4657983459.7,
+            "stdDevNs": 56804786.66577352,
+            "allocatedBytes": 799088832,
+            "ratioToBaseline": 1.0009922367680077,
+            "isBaseline": false,
+            "throughputMbps": 56.27843084202011,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Zstd_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 95498487.59523809,
+            "stdDevNs": 2170932.5297694746,
+            "allocatedBytes": 525319560,
+            "ratioToBaseline": 0.020522452587686077,
+            "isBaseline": false,
+            "throughputMbps": 2745.006822632356,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Snappier_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 106093509.14285715,
+            "stdDevNs": 2117750.3110339586,
+            "allocatedBytes": 568012408,
+            "ratioToBaseline": 0.022799303591841315,
+            "isBaseline": false,
+            "throughputMbps": 2470.8768907532085,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZ4_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 200608175.2,
+            "stdDevNs": 2467119.1657779203,
+            "allocatedBytes": 801064832,
+            "ratioToBaseline": 0.043110334707012775,
+            "isBaseline": false,
+            "throughputMbps": 1306.7463463971533,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZMA_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 74838064981.53334,
+            "stdDevNs": 764738349.5284032,
+            "allocatedBytes": 804105208,
+            "ratioToBaseline": 16.08256506477147,
+            "isBaseline": false,
+            "throughputMbps": 3.5028163818063085,
+            "slaTarget": ">= 2 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU."
+        }, {
+            "method": "BZip2_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 34161234020.966667,
+            "stdDevNs": 208533733.49039578,
+            "allocatedBytes": 173536366000,
+            "ratioToBaseline": 7.341187522294281,
+            "isBaseline": false,
+            "throughputMbps": 7.673727472465061,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation."
+        }, {
+            "method": "XZ_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 113492486843.26666,
+            "stdDevNs": 168642997.02242216,
+            "allocatedBytes": 799030064,
+            "ratioToBaseline": 24.389330542818627,
+            "isBaseline": false,
+            "throughputMbps": 2.309791663672163,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Miss",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "GZip_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 89422305.33333333,
+            "stdDevNs": 1573828.798430197,
+            "allocatedBytes": 524369080,
+            "ratioToBaseline": 0.019216691988496258,
+            "isBaseline": false,
+            "throughputMbps": 2931.5280904783654,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Deflate_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 83258910.07142857,
+            "stdDevNs": 1129775.4189840266,
+            "allocatedBytes": 524369032,
+            "ratioToBaseline": 0.017892189473045775,
+            "isBaseline": false,
+            "throughputMbps": 3148.539895310956,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Zstd_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 91929169.14285715,
+            "stdDevNs": 2486785.1392952176,
+            "allocatedBytes": 524294912,
+            "ratioToBaseline": 0.01975541249570253,
+            "isBaseline": false,
+            "throughputMbps": 2851.5867427522426,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Snappier_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 97223805.95,
+            "stdDevNs": 2157050.58795019,
+            "allocatedBytes": 524320992,
+            "ratioToBaseline": 0.020893220387531646,
+            "isBaseline": false,
+            "throughputMbps": 2696.294363695397,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZ4_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 111910341.96666667,
+            "stdDevNs": 2006258.5551809713,
+            "allocatedBytes": 524305296,
+            "ratioToBaseline": 0.0240493304649693,
+            "isBaseline": false,
+            "throughputMbps": 2342.4465996009694,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZMA_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 35916659023.07143,
+            "stdDevNs": 171748147.5714467,
+            "allocatedBytes": 527945248,
+            "ratioToBaseline": 7.71842518630447,
+            "isBaseline": false,
+            "throughputMbps": 7.298674407093633,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size."
+        }, {
+            "method": "BZip2_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 13494705735.5,
+            "stdDevNs": 128039438.87199391,
+            "allocatedBytes": 530601960,
+            "ratioToBaseline": 2.8999879015401664,
+            "isBaseline": false,
+            "throughputMbps": 19.425692203898002,
+            "slaTarget": ">= 12 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec."
+        }, {
+            "method": "XZ_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 123308948.6875,
+            "stdDevNs": 2245279.387485671,
+            "allocatedBytes": 525350688,
+            "ratioToBaseline": 0.02649887047219394,
+            "isBaseline": false,
+            "throughputMbps": 2125.9122131058593,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Brotli_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 937661358.8636364,
+            "stdDevNs": 29700956.910832886,
+            "allocatedBytes": 798951544,
+            "ratioToBaseline": 0.2015017333273853,
+            "isBaseline": false,
+            "throughputMbps": 279.5721477929896,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "ZLib_Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4652035519.142858,
+            "stdDevNs": 34517155.59635212,
+            "allocatedBytes": 799088872,
+            "ratioToBaseline": 0.9997140350796658,
+            "isBaseline": false,
+            "throughputMbps": 56.350386604163404,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Brotli_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 92636103.325,
+            "stdDevNs": 3290549.6511222776,
+            "allocatedBytes": 524289232,
+            "ratioToBaseline": 0.019907331375267748,
+            "isBaseline": false,
+            "throughputMbps": 2829.825420012614,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "ZLib_Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 86890704.28571428,
+            "stdDevNs": 1411237.3607274943,
+            "allocatedBytes": 524369072,
+            "ratioToBaseline": 0.018672655493479674,
+            "isBaseline": false,
+            "throughputMbps": 3016.9395236804303,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "GZip_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 9370612595.785715,
+            "stdDevNs": 44918135.836902894,
+            "allocatedBytes": 1598183824,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "throughputMbps": 55.95023747281904,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Deflate_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 9402566866.142857,
+            "stdDevNs": 56664429.71523377,
+            "allocatedBytes": 1598183776,
+            "ratioToBaseline": 1.0034100513739639,
+            "isBaseline": false,
+            "throughputMbps": 55.760092692121916,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Zstd_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 193732761.3888889,
+            "stdDevNs": 5354130.656704966,
+            "allocatedBytes": 1050637432,
+            "ratioToBaseline": 0.020674503337809222,
+            "isBaseline": false,
+            "throughputMbps": 2706.2433645261062,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Snappier_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 214198473.93333334,
+            "stdDevNs": 2408262.821207539,
+            "allocatedBytes": 1136023200,
+            "ratioToBaseline": 0.022858534780283813,
+            "isBaseline": false,
+            "throughputMbps": 2447.6738343298293,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZ4_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 411171574.93333334,
+            "stdDevNs": 2498103.4273165674,
+            "allocatedBytes": 1602192920,
+            "ratioToBaseline": 0.04387883617323496,
+            "isBaseline": false,
+            "throughputMbps": 1275.1075997532348,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZMA_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 152093055253.42856,
+            "stdDevNs": 476682306.03979564,
+            "allocatedBytes": 1606677976,
+            "ratioToBaseline": 16.23085510138686,
+            "isBaseline": false,
+            "throughputMbps": 3.4471527916011224,
+            "slaTarget": ">= 2 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU."
+        }, {
+            "method": "BZip2_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 67553213548.166664,
+            "stdDevNs": 266790000.83540365,
+            "allocatedBytes": 347063245400,
+            "ratioToBaseline": 7.209049873489344,
+            "isBaseline": false,
+            "throughputMbps": 7.76111116647579,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation."
+        }, {
+            "method": "XZ_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 227996648003.33334,
+            "stdDevNs": 219173921.38769925,
+            "allocatedBytes": 1598057976,
+            "ratioToBaseline": 24.331029126726595,
+            "isBaseline": false,
+            "throughputMbps": 2.299542579206405,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Miss",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "GZip_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 179362295.85714287,
+            "stdDevNs": 1847563.1530683395,
+            "allocatedBytes": 1048737088,
+            "ratioToBaseline": 0.019140935987238254,
+            "isBaseline": false,
+            "throughputMbps": 2923.0669550393186,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Deflate_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 167984688.2142857,
+            "stdDevNs": 1565498.1534716983,
+            "allocatedBytes": 1048737040,
+            "ratioToBaseline": 0.017926756281636716,
+            "isBaseline": false,
+            "throughputMbps": 3121.046361863674,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Zstd_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 183754715.57142857,
+            "stdDevNs": 4214182.952147694,
+            "allocatedBytes": 1048588912,
+            "ratioToBaseline": 0.019609680124228947,
+            "isBaseline": false,
+            "throughputMbps": 2853.1948057474497,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Snappier_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 194193747.06666666,
+            "stdDevNs": 3523669.8720806786,
+            "allocatedBytes": 1048640992,
+            "ratioToBaseline": 0.020723698166115866,
+            "isBaseline": false,
+            "throughputMbps": 2699.8191647232184,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZ4_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 221998334.66666666,
+            "stdDevNs": 1356632.5127173043,
+            "allocatedBytes": 1048609296,
+            "ratioToBaseline": 0.02369090946802207,
+            "isBaseline": false,
+            "throughputMbps": 2361.67537376902,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "LZMA_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 72347075899,
+            "stdDevNs": 259057897.04913113,
+            "allocatedBytes": 1055791112,
+            "ratioToBaseline": 7.720634607340075,
+            "isBaseline": false,
+            "throughputMbps": 7.246844374635558,
+            "slaTarget": ">= 4 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size."
+        }, {
+            "method": "BZip2_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 27380533517.73077,
+            "stdDevNs": 204078227.4616226,
+            "allocatedBytes": 1058143712,
+            "ratioToBaseline": 2.921957688235317,
+            "isBaseline": false,
+            "throughputMbps": 19.148202487014636,
+            "slaTarget": ">= 12 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec."
+        }, {
+            "method": "XZ_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 245268108.6521739,
+            "stdDevNs": 5281699.661887429,
+            "allocatedBytes": 1049651664,
+            "ratioToBaseline": 0.026174180838772414,
+            "isBaseline": false,
+            "throughputMbps": 2137.611786877344,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Brotli_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 1834172004.65,
+            "stdDevNs": 41490989.49666945,
+            "allocatedBytes": 1597966600,
+            "ratioToBaseline": 0.19573661656601724,
+            "isBaseline": false,
+            "throughputMbps": 285.84451113135685,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "ZLib_Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 9344200567.5,
+            "stdDevNs": 96147091.31134039,
+            "allocatedBytes": 1598183808,
+            "ratioToBaseline": 0.997181397905875,
+            "isBaseline": false,
+            "throughputMbps": 56.108384683385594,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "Brotli_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 186224695.5,
+            "stdDevNs": 4478474.372483962,
+            "allocatedBytes": 1048577352,
+            "ratioToBaseline": 0.019873268006378966,
+            "isBaseline": false,
+            "throughputMbps": 2815.3516298809036,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }, {
+            "method": "ZLib_Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 174299203.7,
+            "stdDevNs": 1766962.0194483604,
+            "allocatedBytes": 1048737072,
+            "ratioToBaseline": 0.018600619961430087,
+            "isBaseline": false,
+            "throughputMbps": 3007.9770238215956,
+            "slaTarget": ">= 30 MB/s",
+            "slaResult": "Exceeds",
+            "slaStandard": "General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio."
+        }]
+    }, {
+        "name": "GZipCompressionBenchmarks",
+        "description": "Buffered GZip compress/decompress of seeded deterministic (incompressible) buffers (100 / 250 / 500 MiB); decompress cases reuse output from setup.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Input size: 100, 250, or 500 MiB."}],
+        "measurements": [{
+            "method": "Compress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1905787092.8,
+            "stdDevNs": 21402751.44445895,
+            "allocatedBytes": 373319000,
+            "isBaseline": false
+        }, {
+            "method": "Decompress",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 36860382.378787875,
+            "stdDevNs": 1145986.4493753505,
+            "allocatedBytes": 209748280,
+            "isBaseline": false
+        }, {
+            "method": "Compress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 4754701337.033334,
+            "stdDevNs": 52790128.516458176,
+            "allocatedBytes": 799088880,
+            "isBaseline": false
+        }, {
+            "method": "Decompress",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 89597293.53846154,
+            "stdDevNs": 727315.5838642324,
+            "allocatedBytes": 524369080,
+            "isBaseline": false
+        }, {
+            "method": "Compress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 9386562196.5,
+            "stdDevNs": 54236032.22563122,
+            "allocatedBytes": 1598183824,
+            "isBaseline": false
+        }, {
+            "method": "Decompress",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 178246457.14285713,
+            "stdDevNs": 1915638.2908922434,
+            "allocatedBytes": 1048737088,
+            "isBaseline": false
+        }]
+    }, {
+        "name": "LargeFileStreamingBenchmarks",
+        "description": "Compress/decompress at 100 MiB\u20132 GiB with GZip and Zstd. Stream methods use DeterministicPayloadStream input and NullingStream output; file methods use IOTemp paths. Decompress setup reuses pre-compressed IOTemp files.",
+        "parameters": [{"name": "DataSize", "unit": "bytes", "description": "Input size: 100, 250, 500, 750 MiB, 1 GiB, 1.5 GiB, 2 GiB."}],
+        "measurements": [{
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 1992006210.9375,
+            "stdDevNs": 38736014.96100358,
+            "allocatedBytes": 282840,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 69940909.38043478,
+            "stdDevNs": 4650802.622526374,
+            "allocatedBytes": 295848,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 85143885.03125,
+            "stdDevNs": 5159244.832930696,
+            "allocatedBytes": 390872,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 65871370.15151515,
+            "stdDevNs": 4103385.0240662065,
+            "allocatedBytes": 385512,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 2640371630.0333333,
+            "stdDevNs": 26486669.21551054,
+            "allocatedBytes": 104999624,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 19429603.666666668,
+            "stdDevNs": 522541.84589215874,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 630174337.6333333,
+            "stdDevNs": 7716437.278623479,
+            "allocatedBytes": 104996872,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "104857600"},
+            "meanNs": 23285879.08163265,
+            "stdDevNs": 2198465.6513638264,
+            "allocatedBytes": 200496,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 5008933000.428572,
+            "stdDevNs": 23126133.887675006,
+            "allocatedBytes": 592216,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 161334877.06666666,
+            "stdDevNs": 4706142.0739983795,
+            "allocatedBytes": 556888,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 206089818.7948718,
+            "stdDevNs": 10631323.286907155,
+            "allocatedBytes": 861272,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 157605753.27586207,
+            "stdDevNs": 6846011.199491629,
+            "allocatedBytes": 846312,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 6340469135.923077,
+            "stdDevNs": 39862170.74071642,
+            "allocatedBytes": 262497224,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 50213223.030612245,
+            "stdDevNs": 2915121.6304994407,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 1576216512.2857144,
+            "stdDevNs": 13548765.247591123,
+            "allocatedBytes": 262491400,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "262144000"},
+            "meanNs": 50087514.65,
+            "stdDevNs": 2227520.8856082307,
+            "allocatedBytes": 498096,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 10042777449.166666,
+            "stdDevNs": 51193595.324886344,
+            "allocatedBytes": 1103640,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 303341382.93650794,
+            "stdDevNs": 13732107.229607277,
+            "allocatedBytes": 1166520,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 409843507.6981132,
+            "stdDevNs": 16807913.178891443,
+            "allocatedBytes": 1645272,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 313066897,
+            "stdDevNs": 13948750.05896859,
+            "allocatedBytes": 1614312,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 12618054570.866667,
+            "stdDevNs": 105666934.735106,
+            "allocatedBytes": 524992904,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 94121308.3030303,
+            "stdDevNs": 2939001.4268561043,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 3047267065.357143,
+            "stdDevNs": 13283641.436320351,
+            "allocatedBytes": 525375544,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "524288000"},
+            "meanNs": 96813721.78571428,
+            "stdDevNs": 1480024.5347682808,
+            "allocatedBytes": 994096,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 15186449773.066668,
+            "stdDevNs": 139728776.86890048,
+            "allocatedBytes": 1616440,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 460712250.375,
+            "stdDevNs": 14306628.443889791,
+            "allocatedBytes": 1645160,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 634877501.1296296,
+            "stdDevNs": 26295489.39867172,
+            "allocatedBytes": 2429272,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 458000611.55128205,
+            "stdDevNs": 15803521.042288262,
+            "allocatedBytes": 2382376,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 18809500474.733334,
+            "stdDevNs": 160761355.78474852,
+            "allocatedBytes": 787488584,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 140533859.125,
+            "stdDevNs": 4287654.152862496,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 4556996804.642858,
+            "stdDevNs": 40426393.86206299,
+            "allocatedBytes": 787473160,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "786432000"},
+            "meanNs": 146004344.45454547,
+            "stdDevNs": 3405909.538364525,
+            "allocatedBytes": 1490096,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 20844609957.566666,
+            "stdDevNs": 197226755.10972732,
+            "allocatedBytes": 2179192,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 655427572.4666667,
+            "stdDevNs": 29317043.596322414,
+            "allocatedBytes": 2241592,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 862270206.1666666,
+            "stdDevNs": 23810596.451444414,
+            "allocatedBytes": 3288600,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 636745955.6,
+            "stdDevNs": 11628330.875199223,
+            "allocatedBytes": 3224200,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 25581771630.214287,
+            "stdDevNs": 162786292.3416715,
+            "allocatedBytes": 1075325272,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 195847260.1111111,
+            "stdDevNs": 6486057.468000015,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 6347994912.785714,
+            "stdDevNs": 42179011.91654557,
+            "allocatedBytes": 1075556776,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "1073741824"},
+            "meanNs": 201207705.1190476,
+            "stdDevNs": 4773751.254888262,
+            "allocatedBytes": 2033712,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 31028880263.214287,
+            "stdDevNs": 228002632.60683048,
+            "allocatedBytes": 3369248,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 985073650.2204301,
+            "stdDevNs": 64927550.50632012,
+            "allocatedBytes": 3355976,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 1281058242.9333334,
+            "stdDevNs": 38176920.17778948,
+            "allocatedBytes": 5287496,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 950394743.8979592,
+            "stdDevNs": 37591072.98240762,
+            "allocatedBytes": 4796968,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 38480528875.30769,
+            "stdDevNs": 103908791.11253637,
+            "allocatedBytes": 1612917840,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 284975451.78571427,
+            "stdDevNs": 5026023.450916278,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 9521060538.033333,
+            "stdDevNs": 125286931.75762255,
+            "allocatedBytes": 1612744000,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "1610612736"},
+            "meanNs": 306712513.2916667,
+            "stdDevNs": 7927915.572995559,
+            "allocatedBytes": 3049520,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_GZip",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 41681526942.73333,
+            "stdDevNs": 180101519.14849892,
+            "allocatedBytes": 4417096,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_GZip",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1573131857.4756098,
+            "stdDevNs": 689356662.771019,
+            "allocatedBytes": 4536056,
+            "isBaseline": false
+        }, {
+            "method": "CompressFile_Zstd",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1720141922.9333334,
+            "stdDevNs": 29804282.566212162,
+            "allocatedBytes": 6499928,
+            "isBaseline": false
+        }, {
+            "method": "DecompressFile_Zstd",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 1288076150.8508773,
+            "stdDevNs": 55970003.67185214,
+            "allocatedBytes": 6369864,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_GZip",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 51604284491.26667,
+            "stdDevNs": 294641483.5405478,
+            "allocatedBytes": 2150508568,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_GZip",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 361502802.15217394,
+            "stdDevNs": 8724117.677227745,
+            "allocatedBytes": 2032,
+            "isBaseline": false
+        }, {
+            "method": "CompressStream_Zstd",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 12512079675.766666,
+            "stdDevNs": 151613197.55341947,
+            "allocatedBytes": 2150719672,
+            "isBaseline": false
+        }, {
+            "method": "DecompressStream_Zstd",
+            "parameters": {"DataSize": "2147483648"},
+            "meanNs": 370197368.125,
+            "stdDevNs": 9600518.373001846,
+            "allocatedBytes": 4065328,
+            "isBaseline": false
+        }]
+    }],
+    "comparison": {
+        "baseline": "GZip",
+        "description": "Compresses and decompresses the same seeded deterministic (incompressible) buffer with every supported algorithm to compare raw speed at each payload size. Decompress cases reuse output compressed once in setup.",
+        "parameters": [{
+            "name": "DataSize",
+            "unit": "bytes",
+            "description": "Size of the seeded input buffer (100 MiB, 250 MiB, 500 MiB); data is incompressible so ratio is not meaningful here."
+        }],
+        "groups": [{
+            "axis": "Compress",
+            "rows": [{
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 1916259898.5714285,
+                "allocatedBytes": 373319000,
+                "ratioToBaseline": 1,
+                "throughputMbps": 54.719926080053824,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -3.1825450210795956,
+                "deltaAllocPct": 3.428704241879312e-05
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 1903528768.6666667,
+                "allocatedBytes": 373318952,
+                "ratioToBaseline": 0.9933562613744342,
+                "throughputMbps": 55.08590241767025,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -0.6529538973440643,
+                "deltaAllocPct": 3.428704682729848e-05
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 40035935.5,
+                "allocatedBytes": 210128744,
+                "ratioToBaseline": 0.020892748175676372,
+                "throughputMbps": 2619.087044937416,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 5.549790761504882,
+                "deltaAllocPct": 6.091507308076497e-05
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 45575866.9375,
+                "allocatedBytes": 227206136,
+                "ratioToBaseline": 0.023783760736983958,
+                "throughputMbps": 2300.7263941637225,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 9.227656733743824,
+                "deltaAllocPct": 5.633653842463532e-05
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 96786636.26470588,
+                "allocatedBytes": 374284776,
+                "ratioToBaseline": 0.05050809461538088,
+                "throughputMbps": 1083.3892368489849,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 5.431556504961037,
+                "deltaAllocPct": 3.4198570709210596e-05
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 31065041922.633335,
+                "allocatedBytes": 376248256,
+                "ratioToBaseline": 16.21128843002576,
+                "throughputMbps": 3.3754211650879173,
+                "slaTarget": ">= 2 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 0.8502858988798406,
+                "deltaAllocPct": 9.780785799387664e-05
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 14861734174.785715,
+                "allocatedBytes": 69549090288,
+                "ratioToBaseline": 7.755594210297432,
+                "throughputMbps": 7.055542695542251,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 8.411492041539551,
+                "deltaAllocPct": -0.0025934159799155232
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 45786304809.14286,
+                "allocatedBytes": 373300392,
+                "ratioToBaseline": 23.893577715254878,
+                "throughputMbps": 2.290152053918565,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Miss",
+                "deltaMeanPct": 2.536445653181784,
+                "deltaAllocPct": 3.428875153434127e-05
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 364986166.5423729,
+                "allocatedBytes": 373229584,
+                "ratioToBaseline": 0.1904679875701986,
+                "throughputMbps": 287.2919842232613,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -1.5875515335674606,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 1917102222.2857144,
+                "allocatedBytes": 373318992,
+                "ratioToBaseline": 1.0004395665300483,
+                "throughputMbps": 54.695883600291715,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 3.2426951960776536,
+                "deltaAllocPct": 3.4287043153543936e-05
+            }, {
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 4653366218.642858,
+                "allocatedBytes": 799088880,
+                "ratioToBaseline": 1,
+                "throughputMbps": 56.334272370347335,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 4657983459.7,
+                "allocatedBytes": 799088832,
+                "ratioToBaseline": 1.0009922367680077,
+                "throughputMbps": 56.27843084202011,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 95498487.59523809,
+                "allocatedBytes": 525319560,
+                "ratioToBaseline": 0.020522452587686077,
+                "throughputMbps": 2745.006822632356,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 106093509.14285715,
+                "allocatedBytes": 568012408,
+                "ratioToBaseline": 0.022799303591841315,
+                "throughputMbps": 2470.8768907532085,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 200608175.2,
+                "allocatedBytes": 801064832,
+                "ratioToBaseline": 0.043110334707012775,
+                "throughputMbps": 1306.7463463971533,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 74838064981.53334,
+                "allocatedBytes": 804105208,
+                "ratioToBaseline": 16.08256506477147,
+                "throughputMbps": 3.5028163818063085,
+                "slaTarget": ">= 2 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 34161234020.966667,
+                "allocatedBytes": 173536366000,
+                "ratioToBaseline": 7.341187522294281,
+                "throughputMbps": 7.673727472465061,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 113492486843.26666,
+                "allocatedBytes": 799030064,
+                "ratioToBaseline": 24.389330542818627,
+                "throughputMbps": 2.309791663672163,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Miss"
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 937661358.8636364,
+                "allocatedBytes": 798951544,
+                "ratioToBaseline": 0.2015017333273853,
+                "throughputMbps": 279.5721477929896,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 4652035519.142858,
+                "allocatedBytes": 799088872,
+                "ratioToBaseline": 0.9997140350796658,
+                "throughputMbps": 56.350386604163404,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 9370612595.785715,
+                "allocatedBytes": 1598183824,
+                "ratioToBaseline": 1,
+                "throughputMbps": 55.95023747281904,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 9402566866.142857,
+                "allocatedBytes": 1598183776,
+                "ratioToBaseline": 1.0034100513739639,
+                "throughputMbps": 55.760092692121916,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 193732761.3888889,
+                "allocatedBytes": 1050637432,
+                "ratioToBaseline": 0.020674503337809222,
+                "throughputMbps": 2706.2433645261062,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 214198473.93333334,
+                "allocatedBytes": 1136023200,
+                "ratioToBaseline": 0.022858534780283813,
+                "throughputMbps": 2447.6738343298293,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 411171574.93333334,
+                "allocatedBytes": 1602192920,
+                "ratioToBaseline": 0.04387883617323496,
+                "throughputMbps": 1275.1075997532348,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 152093055253.42856,
+                "allocatedBytes": 1606677976,
+                "ratioToBaseline": 16.23085510138686,
+                "throughputMbps": 3.4471527916011224,
+                "slaTarget": ">= 2 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 67553213548.166664,
+                "allocatedBytes": 347063245400,
+                "ratioToBaseline": 7.209049873489344,
+                "throughputMbps": 7.76111116647579,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 227996648003.33334,
+                "allocatedBytes": 1598057976,
+                "ratioToBaseline": 24.331029126726595,
+                "throughputMbps": 2.299542579206405,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Miss"
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 1834172004.65,
+                "allocatedBytes": 1597966600,
+                "ratioToBaseline": 0.19573661656601724,
+                "throughputMbps": 285.84451113135685,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 9344200567.5,
+                "allocatedBytes": 1598183808,
+                "ratioToBaseline": 0.997181397905875,
+                "throughputMbps": 56.108384683385594,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }]
+        }, {
+            "axis": "Decompress",
+            "rows": [{
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 37146409.53278688,
+                "allocatedBytes": 209748280,
+                "ratioToBaseline": 1,
+                "throughputMbps": 2822.8192527584274,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 2.268327428399092,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 34662749.8,
+                "allocatedBytes": 209748232,
+                "ratioToBaseline": 0.9331386326693375,
+                "throughputMbps": 3025.0802548850297,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 2.3089658917426403,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 38976821.53658537,
+                "allocatedBytes": 209718512,
+                "ratioToBaseline": 1.0492756103973626,
+                "throughputMbps": 2690.2552816313155,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 5.392072012354253,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 40693340.32,
+                "allocatedBytes": 209728992,
+                "ratioToBaseline": 1.0954851581034355,
+                "throughputMbps": 2576.775442257427,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 5.642899158222887,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 48115731.571428575,
+                "allocatedBytes": 209722896,
+                "ratioToBaseline": 1.2952996582067975,
+                "throughputMbps": 2179.2789296851324,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 11.569367359748158,
+                "deltaAllocPct": 0.0
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 13401503617.8,
+                "allocatedBytes": 211237944,
+                "ratioToBaseline": 360.7752077888256,
+                "throughputMbps": 7.824316061126691,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": -4.35556530606686,
+                "deltaAllocPct": -0.0001590620790890742
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 5453894868.571428,
+                "allocatedBytes": 214080672,
+                "ratioToBaseline": 146.8215888740904,
+                "throughputMbps": 19.226186519335307,
+                "slaTarget": ">= 12 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 1.9432266339917883,
+                "deltaAllocPct": 3.363219273488584e-05
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 58304291.39393939,
+                "allocatedBytes": 210770096,
+                "ratioToBaseline": 1.5695808054470979,
+                "throughputMbps": 1798.454238840123,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 16.779273789524332,
+                "deltaAllocPct": 1.8978027884568197e-05
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 38490620.50632911,
+                "allocatedBytes": 209716352,
+                "ratioToBaseline": 1.0361868344868101,
+                "throughputMbps": 2724.237713516673,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 2.2654556422596532,
+                "deltaAllocPct": 9.870484697303586e-05
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "104857600"},
+                "paramLabel": "100 MB",
+                "meanNs": 35552172,
+                "allocatedBytes": 209748360,
+                "ratioToBaseline": 0.9570823249719533,
+                "throughputMbps": 2949.400672341482,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds",
+                "deltaMeanPct": 0.9444378852933949,
+                "deltaAllocPct": 4.1955053627330957e-05
+            }, {
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 89422305.33333333,
+                "allocatedBytes": 524369080,
+                "ratioToBaseline": 1,
+                "throughputMbps": 2931.5280904783654,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 83258910.07142857,
+                "allocatedBytes": 524369032,
+                "ratioToBaseline": 0.931075415256519,
+                "throughputMbps": 3148.539895310956,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 91929169.14285715,
+                "allocatedBytes": 524294912,
+                "ratioToBaseline": 1.02803398771905,
+                "throughputMbps": 2851.5867427522426,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 97223805.95,
+                "allocatedBytes": 524320992,
+                "ratioToBaseline": 1.0872433403230386,
+                "throughputMbps": 2696.294363695397,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 111910341.96666667,
+                "allocatedBytes": 524305296,
+                "ratioToBaseline": 1.2514812892544678,
+                "throughputMbps": 2342.4465996009694,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 35916659023.07143,
+                "allocatedBytes": 527945248,
+                "ratioToBaseline": 401.6521257105527,
+                "throughputMbps": 7.298674407093633,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 13494705735.5,
+                "allocatedBytes": 530601960,
+                "ratioToBaseline": 150.90983938735107,
+                "throughputMbps": 19.425692203898002,
+                "slaTarget": ">= 12 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 123308948.6875,
+                "allocatedBytes": 525350688,
+                "ratioToBaseline": 1.3789506793394533,
+                "throughputMbps": 2125.9122131058593,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 92636103.325,
+                "allocatedBytes": 524289232,
+                "ratioToBaseline": 1.0359395564639808,
+                "throughputMbps": 2829.825420012614,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "262144000"},
+                "paramLabel": "250 MB",
+                "meanNs": 86890704.28571428,
+                "allocatedBytes": 524369072,
+                "ratioToBaseline": 0.9716893784142315,
+                "throughputMbps": 3016.9395236804303,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "GZip",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 179362295.85714287,
+                "allocatedBytes": 1048737088,
+                "ratioToBaseline": 1,
+                "throughputMbps": 2923.0669550393186,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Deflate",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 167984688.2142857,
+                "allocatedBytes": 1048737040,
+                "ratioToBaseline": 0.9365663358149746,
+                "throughputMbps": 3121.046361863674,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Zstd",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 183754715.57142857,
+                "allocatedBytes": 1048588912,
+                "ratioToBaseline": 1.0244890917196117,
+                "throughputMbps": 2853.1948057474497,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Snappier",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 194193747.06666666,
+                "allocatedBytes": 1048640992,
+                "ratioToBaseline": 1.0826899050251713,
+                "throughputMbps": 2699.8191647232184,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZ4",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 221998334.66666666,
+                "allocatedBytes": 1048609296,
+                "ratioToBaseline": 1.2377090380437716,
+                "throughputMbps": 2361.67537376902,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "LZMA",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 72347075899,
+                "allocatedBytes": 1055791112,
+                "ratioToBaseline": 403.3572136956947,
+                "throughputMbps": 7.246844374635558,
+                "slaTarget": ">= 4 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "BZip2",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 27380533517.73077,
+                "allocatedBytes": 1058143712,
+                "ratioToBaseline": 152.65490100293215,
+                "throughputMbps": 19.148202487014636,
+                "slaTarget": ">= 12 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "XZ",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 245268108.6521739,
+                "allocatedBytes": 1049651664,
+                "ratioToBaseline": 1.3674451895259148,
+                "throughputMbps": 2137.611786877344,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "Brotli",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 186224695.5,
+                "allocatedBytes": 1048577352,
+                "ratioToBaseline": 1.038259989983195,
+                "throughputMbps": 2815.3516298809036,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }, {
+                "algorithm": "ZLib",
+                "parameters": {"DataSize": "524288000"},
+                "paramLabel": "500 MB",
+                "meanNs": 174299203.7,
+                "allocatedBytes": 1048737072,
+                "ratioToBaseline": 0.9717717030050982,
+                "throughputMbps": 3007.9770238215956,
+                "slaTarget": ">= 30 MB/s",
+                "slaResult": "Exceeds"
+            }]
+        }]
+    },
+    "slo": [{
+        "area": "BZip2_Compress",
+        "target": ">= 4 MB/s \u2014 BZip2 (Burrows-Wheeler) favors ratio over speed; a few MB/s is expected. NOTE: the current SharpZipLib compressor also allocates ~700x the input on compress (decompress is normal) - see the BZip2 allocation investigation.",
+        "latest": "14861.73 ms (7 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "BZip2_Decompress",
+        "target": ">= 12 MB/s \u2014 BZip2 decode (inverse Burrows-Wheeler) is bounded by its block transform; ~15 MB/s is the expected range for this high-ratio codec.",
+        "latest": "5453.89 ms (19 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Brotli_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "364.99 ms (287 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Brotli_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "38.49 ms (2724 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Deflate_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "1903.53 ms (55 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Deflate_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "34.66 ms (3025 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "GZip_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "1916.26 ms (55 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "GZip_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "37.15 ms (2823 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "LZ4_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "96.79 ms (1083 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "LZ4_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "48.12 ms (2179 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "LZMA_Compress",
+        "target": ">= 2 MB/s \u2014 LZMA is a high-ratio dictionary codec tuned for size, not speed; single-digit MB/s on incompressible data is expected. Choose it when storage/bandwidth savings outweigh CPU.",
+        "latest": "31065.04 ms (3 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "LZMA_Decompress",
+        "target": ">= 4 MB/s \u2014 LZMA decode is range-coder bound and runs single-digit MB/s; acceptable for a high-ratio codec chosen for size.",
+        "latest": "13401.5 ms (8 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Snappier_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "45.58 ms (2301 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Snappier_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "40.69 ms (2577 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "XZ_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "45786.3 ms (2 MB/s)",
+        "result": "Miss"
+    }, {
+        "area": "XZ_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "58.3 ms (1798 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "ZLib_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "1917.1 ms (55 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "ZLib_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "35.55 ms (2949 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Zstd_Compress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "40.04 ms (2619 MB/s)",
+        "result": "Exceeds"
+    }, {
+        "area": "Zstd_Decompress",
+        "target": ">= 30 MB/s \u2014 General-purpose codecs (GZip/Deflate/Zstd/LZ4/Snappy/Brotli/ZLib) should sustain >= 30 MB/s on bulk (>= 100 MiB) data. High-ratio codecs (LZMA/XZ/BZip2) declare their own, lower per-method floors because they trade speed for ratio.",
+        "latest": "38.98 ms (2690 MB/s)",
+        "result": "Exceeds"
+    }],
+    "grades": [{"category": "AlgorithmComparisonBenchmarks", "grade": "C", "rationale": "57 exceed, 3 miss of 60 SLA targets vs declared standards"}],
+    "schema": "lyo.bench/v1",
+    "name": "compression",
+    "title": "Compression",
+    "description": "Compress/decompress throughput for Lyo.Compression across GZip, Deflate, Zstd, Snappier, LZ4, LZMA, BZip2, XZ (and Brotli/ZLib on net10.0). Buffered suites use seeded deterministic (incompressible) buffers at 100/250/500 MiB. Large suites (100 MiB\u20132 GiB) cover stream APIs (DeterministicPayloadStream \u2192 NullingStream) and file APIs (IOTemp paths). Ratio on random data is not meaningful \u2014 these measure speed and framing.",
+    "runId": "BenchmarkRun-joined-2026-08-01-14-07-03",
+    "generatedAt": "2026-08-01T14:07:04.1576317+00:00",
+    "runStarted": "2026-08-01T03:38:36.7025328+00:00",
+    "runEnded": "2026-08-01T14:07:04.1576317+00:00",
+    "durationSeconds": 37707.4550989,
+    "environment": {
+        "tool": "BenchmarkDotNet",
+        "toolVersion": "0.15.8",
+        "runtime": ".NET 10.0.0",
+        "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+        "os": "Ubuntu 24.04.3 LTS",
+        "architecture": "X64",
+        "logicalCores": 14,
+        "physicalCores": 12,
+        "memoryBytes": 6442450944,
+        "gcMode": "Workstation",
+        "configuration": "Release",
+        "dotnetSdkVersion": "10.0.100",
+        "dependencies": {
+            "BenchmarkDotNet": "0.15.8",
+            "EasyCompressor": "2.1.0",
+            "EasyCompressor.LZ4": "2.1.0",
+            "EasyCompressor.LZMA": "2.1.0",
+            "EasyCompressor.Snappier": "2.1.0",
+            "EasyCompressor.ZstdSharp": "2.1.0",
+            "Joveler.Compression.XZ": "5.0.2",
+            "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+            "SharpZipLib": "1.4.2",
+            "Testcontainers.Redis": "4.13.0"
+        }
+    },
+    "notes": [],
+    "history": [{
+        "file": "20260628T213618Z_BenchmarkRun-joined-2026-06-28-17-36-17.json",
+        "runId": "BenchmarkRun-joined-2026-06-28-17-36-17",
+        "runStarted": null,
+        "runEnded": null,
+        "generatedAt": "2026-06-28T21:36:18.0289835+00:00",
+        "isCurrent": false,
+        "measurementCount": 98,
+        "medianMeanNs": 18113969.180208333
+    }, {
+        "file": "20260704T065212Z_BenchmarkRun-joined-2026-07-04-06-52-11.json",
+        "runId": "BenchmarkRun-joined-2026-07-04-06-52-11",
+        "runStarted": "2026-07-04T03:31:28.5906818+00:00",
+        "runEnded": "2026-07-04T06:52:12.254106+00:00",
+        "generatedAt": "2026-07-04T06:52:12.254106+00:00",
+        "isCurrent": false,
+        "measurementCount": 98,
+        "medianMeanNs": 18671102.85
+    }, {
+        "file": "20260708T050706Z_BenchmarkRun-joined-2026-07-08-05-07-04.json",
+        "runId": "BenchmarkRun-joined-2026-07-08-05-07-04",
+        "runStarted": "2026-07-08T01:04:31.5342644+00:00",
+        "runEnded": "2026-07-08T05:07:06.0676856+00:00",
+        "generatedAt": "2026-07-08T05:07:06.0676856+00:00",
+        "isCurrent": false,
+        "measurementCount": 98,
+        "medianMeanNs": 30744528.239583332
+    }, {
+        "file": "20260729T055436Z_BenchmarkRun-joined-2026-07-29-05-54-36.json",
+        "runId": "BenchmarkRun-joined-2026-07-29-05-54-36",
+        "runStarted": "2026-07-29T02:37:47.3432273+00:00",
+        "runEnded": "2026-07-29T05:54:36.7409082+00:00",
+        "generatedAt": "2026-07-29T05:54:36.7409082+00:00",
+        "isCurrent": false,
+        "measurementCount": 98,
+        "medianMeanNs": 19540973.1953125
+    }, {
+        "file": "20260801T140704Z_BenchmarkRun-joined-2026-08-01-14-07-03.json",
+        "runId": "BenchmarkRun-joined-2026-08-01-14-07-03",
+        "runStarted": "2026-08-01T03:38:36.7025328+00:00",
+        "runEnded": "2026-08-01T14:07:04.1576317+00:00",
+        "generatedAt": "2026-08-01T14:07:04.1576317+00:00",
+        "isCurrent": true,
+        "measurementCount": 122,
+        "medianMeanNs": 460712250.375
+    }],
+    "deltaBaseline": {
+        "kind": "previousRun",
+        "runId": "BenchmarkRun-joined-2026-07-29-05-54-36",
+        "runStarted": "2026-07-29T02:37:47.3432273+00:00",
+        "runEnded": "2026-07-29T05:54:36.7409082+00:00"
+    }
+};

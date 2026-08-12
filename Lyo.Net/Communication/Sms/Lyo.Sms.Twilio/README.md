@@ -380,11 +380,10 @@ if (!result.IsSuccess)
 
 #### Using Configuration Binding
 
-`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name;
-both register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus
-the cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance.
-On `net6.0`+ targets an `IHttpClient` keyed `"lyo-twilio-sms"` is also registered so Twilio reuses the
-shared `IHttpClientFactory` pool (resilient policies layered via the application's `IHttpClientFactory`
+`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name; both register the same singletons: `TwilioOptions`,
+`TwilioOptionsValidator`, `TwilioSmsService`, plus the cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance. On `net6.0`+ targets an
+`IHttpClient` keyed `"lyo-twilio-sms"` is also registered so Twilio reuses the shared `IHttpClientFactory` pool (resilient policies layered via the application's
+`IHttpClientFactory`
 configuration apply automatically).
 
 ## Sending Bulk Messages
@@ -415,8 +414,8 @@ Fired after a bulk send operation completes:
 
 #### Complete Event Example
 
-**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or
-failure. This is useful for monitoring, logging, and user notifications.
+**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or failure. This is useful for monitoring, logging, and user
+notifications.
 
 ## Twilio-Specific Features — Error Codes
 
@@ -443,7 +442,8 @@ if (!result.IsSuccess && result is TwilioSmsResult twilioResult)
 
 ## Resilience
 
-The library does not include built-in retry or timeout logic. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience) with `AddLyoResilienceHandler` on the HttpClient, or by wrapping `ISmsService` calls) as needed.
+The library does not include built-in retry or timeout logic. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience)
+with `AddLyoResilienceHandler` on the HttpClient, or by wrapping `ISmsService` calls) as needed.
 
 ## Rate Limiting
 
@@ -461,15 +461,15 @@ The library does not include built-in retry or timeout logic. Apply resilience a
 
 ## TwilioOptions Properties
 
-| Property | Type | Required | Default | Description |
-| ------------------------- | --------- | -------- | ------- | ------------------------------------- |
-| `AccountSid` | `string` | Yes | - | Your Twilio Account SID |
-| `AuthToken` | `string` | Yes | - | Your Twilio Auth Token |
-| `DefaultFromPhoneNumber` | `string?` | No | - | Default sender phone number |
-| `BulkSmsConcurrencyLimit` | `int` | No | 10 | Max concurrent bulk SMS requests |
-| `MaxMessageBodyLength` | `int` | No | 1600 | Max message body length in characters |
-| `MaxBulkSmsLimit` | `int` | No | 1000 | Max messages per bulk operation |
-| `EnableMetrics` | `bool` | No | false | Enable metrics collection |
+| Property                  | Type      | Required | Default | Description                           |
+|---------------------------|-----------|----------|---------|---------------------------------------|
+| `AccountSid`              | `string`  | Yes      | -       | Your Twilio Account SID               |
+| `AuthToken`               | `string`  | Yes      | -       | Your Twilio Auth Token                |
+| `DefaultFromPhoneNumber`  | `string?` | No       | -       | Default sender phone number           |
+| `BulkSmsConcurrencyLimit` | `int`     | No       | 10      | Max concurrent bulk SMS requests      |
+| `MaxMessageBodyLength`    | `int`     | No       | 1600    | Max message body length in characters |
+| `MaxBulkSmsLimit`         | `int`     | No       | 1000    | Max messages per bulk operation       |
+| `EnableMetrics`           | `bool`    | No       | false   | Enable metrics collection             |
 
 ## Logging
 

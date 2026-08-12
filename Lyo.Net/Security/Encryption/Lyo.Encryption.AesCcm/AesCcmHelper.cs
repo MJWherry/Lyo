@@ -15,8 +15,8 @@ internal static class AesCcmHelper
     public const int TagSize = 16;
 
     /// <summary>
-    /// Maximum single-packet plaintext length for a 12-byte nonce (RFC 3610: <c>q = 15 - nonceLen = 3</c> → <c>2^(8q) - 1</c>).
-    /// Larger payloads must use the streaming APIs (per-chunk CCM packets).
+    /// Maximum single-packet plaintext length for a 12-byte nonce (RFC 3610: <c>q = 15 - nonceLen = 3</c> → <c>2^(8q) - 1</c>). Larger payloads must use the streaming APIs
+    /// (per-chunk CCM packets).
     /// </summary>
     public const int MaxPlaintextLength = (1 << 24) - 1; // 16_777_215
 
@@ -32,8 +32,7 @@ internal static class AesCcmHelper
     {
         if (plaintextLength > MaxPlaintextLength) {
             throw new ArgumentOutOfRangeException(
-                paramName,
-                plaintextLength,
+                paramName, plaintextLength,
                 $"AES-CCM with a {NonceSize}-byte nonce supports at most {MaxPlaintextLength} bytes per packet (~16 MiB). Use EncryptToStreamAsync / file streaming for larger payloads.");
         }
     }
@@ -50,19 +49,14 @@ internal static class AesCcmHelper
         => Encrypt(plaintext.AsSpan(), key, nonce, associatedData);
 
     /// <summary>Encrypts into caller-provided <paramref name="ciphertext" /> and <paramref name="tag" /> (BC emits ct‖tag; results are split into the destinations).</summary>
-    public static void Encrypt(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        ReadOnlySpan<byte> nonce,
-        Span<byte> ciphertext,
-        Span<byte> tag,
-        byte[]? associatedData = null)
+    public static void Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, ReadOnlySpan<byte> nonce, Span<byte> ciphertext, Span<byte> tag, byte[]? associatedData = null)
     {
         ValidatePlaintextLength(plaintext.Length);
-        ArgumentHelpers.ThrowIf(ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+        ArgumentHelpers.ThrowIf(
+            ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
-
         var cipher = new CcmBlockCipher(new AesEngine());
         cipher.Init(true, new AeadParameters(new(key), 128, nonce.ToArray(), associatedData is { Length: > 0 } ? associatedData : null));
         byte[] packed;
@@ -75,7 +69,7 @@ internal static class AesCcmHelper
                 packed = cipher.ProcessPacket(pb, 0, plaintext.Length);
             }
             finally {
-                ArrayPool<byte>.Shared.Return(pb, clearArray: true);
+                ArrayPool<byte>.Shared.Return(pb, true);
             }
         }
 
@@ -93,15 +87,11 @@ internal static class AesCcmHelper
     }
 
     /// <summary>Decrypts into caller-provided <paramref name="plaintext" /> (must be sized to ciphertext length).</summary>
-    public static void Decrypt(
-        ReadOnlySpan<byte> ciphertext,
-        ReadOnlySpan<byte> tag,
-        byte[] key,
-        ReadOnlySpan<byte> nonce,
-        Span<byte> plaintext,
-        byte[]? associatedData = null)
+    public static void Decrypt(ReadOnlySpan<byte> ciphertext, ReadOnlySpan<byte> tag, byte[] key, ReadOnlySpan<byte> nonce, Span<byte> plaintext, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIf(plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+        ArgumentHelpers.ThrowIf(
+            plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
         try {
@@ -116,7 +106,7 @@ internal static class AesCcmHelper
                 decrypted.AsSpan(0, plaintext.Length).CopyTo(plaintext);
             }
             finally {
-                ArrayPool<byte>.Shared.Return(combined, clearArray: true);
+                ArrayPool<byte>.Shared.Return(combined, true);
             }
         }
         catch (InvalidCipherTextException ex) {

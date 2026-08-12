@@ -1,10 +1,12 @@
 # Lyo.Authentication.Postgres
 
-PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, and `IExternalIdentityStore`.
+PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, and
+`IExternalIdentityStore`.
 
 Owns the `[user]` schema. Four tables in this lib:
 
-- `[user].[user]` — Lyo internal users - `[user].[token]` — Format-B opaque API tokens - `[user].[linked_identity]` — external OIDC identity links - `[user].[event]` — auth audit events (`UserEventEntity`)
+- `[user].[user]` — Lyo internal users - `[user].[token]` — Format-B opaque API tokens - `[user].[linked_identity]` — external OIDC identity links - `[user].[event]` — auth audit
+  events (`UserEventEntity`)
 
 `__EFMigrationsHistory` lives inside the `[user]` schema.
 

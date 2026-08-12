@@ -3,12 +3,15 @@
 <TemplateColumn T="object?"
                 Title="@Title"
                 Sortable="@Sortable"
-                SortFunc="@GetSortValue"
+                SortBy="@GetSortValue"
                 InitialDirection="@InitialDirection"
                 Hideable="@Hideable"
                 Resizable="@Resizable"
-                Align="@Align"
                 Tag="@GetApiSortKey()"
+                HeaderStyle="@EffectiveHeaderStyle"
+                HeaderClass="@HeaderClass"
+                CellStyle="@EffectiveCellStyle"
+                CellClass="@CellClass"
                 Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
                 HiddenChanged="@OnHiddenChanged">
     <CellTemplate Context="cell">
@@ -78,6 +81,22 @@
     [Parameter]
     public Align Align { get; set; } = Align.Inherit;
 
+    /// <summary>Inline style for the header cell.</summary>
+    [Parameter]
+    public string? HeaderStyle { get; set; }
+
+    /// <summary>CSS class for the header cell.</summary>
+    [Parameter]
+    public string? HeaderClass { get; set; }
+
+    /// <summary>Inline style for body cells.</summary>
+    [Parameter]
+    public string? CellStyle { get; set; }
+
+    /// <summary>CSS class for body cells.</summary>
+    [Parameter]
+    public string? CellClass { get; set; }
+
     /// <summary>When true, the column starts hidden (and stays out of the query select) until the user shows it, unless visibility was restored from the client store.</summary>
     [Parameter]
     public bool HiddenByDefault { get; set; }
@@ -103,5 +122,19 @@
     private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
 
     internal string GetApiSortKey() => SortKey ?? Field;
+
+    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
+
+    private static string MergeAlignStyle(string? style, Align align)
+        => align switch {
+            Align.Center => AppendStyle(style, "text-align: center;"),
+            Align.Right => AppendStyle(style, "text-align: right;"),
+            Align.Left => AppendStyle(style, "text-align: left;"),
+            var _ => style ?? string.Empty
+        };
+
+    private static string AppendStyle(string? style, string snippet) => string.IsNullOrEmpty(style) ? snippet : $"{style.TrimEnd()} {snippet}";
 
 }

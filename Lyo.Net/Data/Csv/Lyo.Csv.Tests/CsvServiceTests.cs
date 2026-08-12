@@ -4,7 +4,6 @@ using System.Text;
 using Lyo.Csv.Converters;
 using Lyo.Csv.Models;
 using Lyo.Csv.Tests.TestModels;
-using Lyo.DataTable.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
@@ -122,7 +121,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     public void ParseStreamAsDataTable_WithoutHeader_UsesColumnN()
     {
         var svc = new CsvService(_logger);
-        svc.SetOptions(new CsvOptions { HasHeaderRecord = false });
+        svc.SetOptions(new() { HasHeaderRecord = false });
         var csv = "a,b\n1,2\n";
         using var ms = StringToStream(csv);
         var result = svc.ParseStreamAsDataTable(ms);
@@ -177,7 +176,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     public void ParseBytesAsDataTable_with_pooling_shares_duplicate_values()
     {
         var csv = "V\ndup\ndup\n";
-        var options = new CsvOptions { Pooling = new DataTablePoolingOptions { PoolValues = true, PoolingCellThreshold = 0 } };
+        var options = new CsvOptions { Pooling = new() { PoolValues = true, PoolingCellThreshold = 0 } };
         var svc = new CsvService(_logger, options: options);
         var dt = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv)).ValueOrThrow();
         Assert.Same(dt.Rows[0][0].DisplayValue, dt.Rows[1][0].DisplayValue);
@@ -1108,7 +1107,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         dt.AddRow().SetCell(0, "1").SetCell(1, "2");
         dt.SetFooter(0, "Total").SetFooter(1, "2");
         var csv = svc.ExportToCsvStringFromDataTable(dt);
-        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), hasHeaderRow: true, hasFooterRow: true).ValueOrThrow();
+        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), true, true).ValueOrThrow();
         Assert.Single(parsed.Rows);
         Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
         Assert.Equal("Total", parsed.Footer[0].DisplayValue);
@@ -1152,8 +1151,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
             [1] = new Dictionary<int, string> { [0] = "a", [1] = "b" },
             [2] = new Dictionary<int, string> { [0] = "Total", [1] = "1" }
         };
-        var csv = svc.ExportToCsvStringFromDictionary(data, hasHeaderRow: true, hasFooterRow: true);
-        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), hasHeaderRow: true, hasFooterRow: true).ValueOrThrow();
+
+        var csv = svc.ExportToCsvStringFromDictionary(data, true, true);
+        var parsed = svc.ParseBytesAsDataTable(Encoding.UTF8.GetBytes(csv), true, true).ValueOrThrow();
         Assert.Single(parsed.Rows);
         Assert.Equal("a", parsed.Rows[0][0].DisplayValue);
         Assert.Equal("Total", parsed.Footer[0].DisplayValue);

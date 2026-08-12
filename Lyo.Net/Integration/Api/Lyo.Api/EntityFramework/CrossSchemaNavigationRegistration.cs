@@ -20,6 +20,6 @@ public sealed class CrossSchemaNavigationRegistration
     /// <summary>When true, the related type is already mapped on the context; only the relationship is added.</summary>
     public bool SameContext { get; init; }
 
-    /// <summary>Applies table mapping (when cross-schema) and <c>HasOne</c> relationship to <paramref name="modelBuilder" />.</summary>
+    /// <summary>Applies table mapping (when cross-schema) and <c>HasOne</c> relationship via <see cref="Apply" />.</summary>
     public required Action<ModelBuilder> Apply { get; init; }
 }

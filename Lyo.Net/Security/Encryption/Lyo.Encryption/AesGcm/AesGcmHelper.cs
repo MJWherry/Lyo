@@ -37,15 +37,11 @@ public static class AesGcmHelper
     }
 
     /// <summary>Encrypts into caller-provided <paramref name="ciphertext" /> and <paramref name="tag" /> buffers (must be sized to plaintext length and <see cref="TagSize" />).</summary>
-    public static void Encrypt(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        ReadOnlySpan<byte> nonce,
-        Span<byte> ciphertext,
-        Span<byte> tag,
-        byte[]? associatedData = null)
+    public static void Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, ReadOnlySpan<byte> nonce, Span<byte> ciphertext, Span<byte> tag, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIf(ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+        ArgumentHelpers.ThrowIf(
+            ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
 #if NET10_0_OR_GREATER
@@ -89,15 +85,11 @@ public static class AesGcmHelper
     }
 
     /// <summary>Decrypts into caller-provided <paramref name="plaintext" /> (must be sized to ciphertext length).</summary>
-    public static void Decrypt(
-        ReadOnlySpan<byte> ciphertext,
-        ReadOnlySpan<byte> tag,
-        byte[] key,
-        ReadOnlySpan<byte> nonce,
-        Span<byte> plaintext,
-        byte[]? associatedData = null)
+    public static void Decrypt(ReadOnlySpan<byte> ciphertext, ReadOnlySpan<byte> tag, byte[] key, ReadOnlySpan<byte> nonce, Span<byte> plaintext, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIf(plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+        ArgumentHelpers.ThrowIf(
+            plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce.Length != NonceSize, $"Nonce length ({nonce.Length}) must be {NonceSize}.", nameof(nonce));
 #if NET10_0_OR_GREATER

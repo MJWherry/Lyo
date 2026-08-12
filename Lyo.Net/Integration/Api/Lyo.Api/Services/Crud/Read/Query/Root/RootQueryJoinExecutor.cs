@@ -82,9 +82,8 @@ internal static class RootQueryJoinExecutor
 
             var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [joinClr], joinSet.Expression, Expression.Quote(Expression.Lambda(onEqual, innerP)));
             Expression collection;
-            if (joinPlan.Type == JoinType.Left) {
+            if (joinPlan.Type == JoinType.Left)
                 collection = Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall);
-            }
             else
                 collection = whereCall;
 

@@ -7,16 +7,15 @@ namespace Lyo.Cli.Services;
 /// <summary>ID generation and parse helpers over <see cref="Lyo.Common.Identifiers" />.</summary>
 internal static class CliIdentifiers
 {
-    public static IReadOnlyList<string> GenerateUlid(int count)
-        => count <= 1 ? [Ulid.Create()] : Ulid.CreateBulk(count);
+    public static IReadOnlyList<string> GenerateUlid(int count) => count <= 1 ? [Ulid.Create()] : Ulid.CreateBulk(count);
 
-    public static IReadOnlyList<string> GenerateKsuid(int count)
-        => count <= 1 ? [Ksuid.Create()] : Ksuid.CreateBulk(count);
+    public static IReadOnlyList<string> GenerateKsuid(int count) => count <= 1 ? [Ksuid.Create()] : Ksuid.CreateBulk(count);
 
     public static IReadOnlyList<string> GenerateNanoId(int count, int size, string? alphabet)
     {
         if (!string.IsNullOrEmpty(alphabet))
             return count <= 1 ? [NanoId.Create(alphabet, size)] : NanoId.CreateBulk(count, alphabet, size);
+
         return count <= 1 ? [NanoId.Create(size)] : NanoId.CreateBulk(count, size);
     }
 
@@ -36,15 +35,17 @@ internal static class CliIdentifiers
 
         if (count <= 1)
             return [LyoGuid.Create(version).ToString("D")];
+
         return LyoGuid.CreateBulk(version, count).Select(g => g.ToString("D")).ToArray();
     }
 
     public static IReadOnlyList<string> GenerateSnowflake(int count, int machineId)
     {
-        var gen = machineId == 0 ? SnowflakeGenerator.Shared : new SnowflakeGenerator(machineId);
+        var gen = machineId == 0 ? SnowflakeGenerator.Shared : new(machineId);
         var list = new List<string>(count);
         for (var i = 0; i < count; i++)
             list.Add(gen.Next().ToString());
+
         return list;
     }
 
@@ -87,6 +88,5 @@ internal static class CliIdentifiers
             var _ => throw new ArgumentException($"Unknown namespace '{ns}'. Use dns, url, oid, x500, or a GUID.")
         };
 
-    public static Task EmitAsync(IReadOnlyList<string> lines, string? output, bool copy, bool quiet, CancellationToken ct)
-        => CliIO.EmitTextAsync(lines, output, copy, quiet, ct);
+    public static Task EmitAsync(IReadOnlyList<string> lines, string? output, bool copy, bool quiet, CancellationToken ct) => CliIO.EmitTextAsync(lines, output, copy, quiet, ct);
 }

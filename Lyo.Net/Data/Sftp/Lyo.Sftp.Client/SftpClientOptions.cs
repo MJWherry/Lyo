@@ -59,19 +59,17 @@ public sealed class SftpClientOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(Username);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootRemoteDirectory);
         FormatHelpers.ThrowIfInvalidPort(Port);
-        FormatHelpers.ThrowIfNotInRange(MaxPooledClients, min: 1);
-
+        FormatHelpers.ThrowIfNotInRange(MaxPooledClients, 1);
         var hasPassword = !string.IsNullOrEmpty(Password);
         var hasPem = !string.IsNullOrWhiteSpace(PrivateKeyPem);
         var hasKeyPath = !string.IsNullOrWhiteSpace(PrivateKeyPath);
-        if (!hasPassword && !hasPem && !hasKeyPath)
-            throw new InvalidFormatException(
-                "SFTP authentication requires Password, PrivateKeyPem, or PrivateKeyPath.", nameof(Password), null,
-                "password or private key");
+        if (!hasPassword && !hasPem && !hasKeyPath) {
+            throw new InvalidFormatException("SFTP authentication requires Password, PrivateKeyPem, or PrivateKeyPath.", nameof(Password), null, "password or private key");
+        }
 
-        if (HostKeyPolicy == SftpHostKeyPolicy.FingerprintAllowList && (AllowedHostKeyFingerprints is null || AllowedHostKeyFingerprints.Count == 0))
+        if (HostKeyPolicy == SftpHostKeyPolicy.FingerprintAllowList && (AllowedHostKeyFingerprints is null || AllowedHostKeyFingerprints.Count == 0)) {
             throw new InvalidFormatException(
-                "AllowedHostKeyFingerprints is required when HostKeyPolicy is FingerprintAllowList.", nameof(AllowedHostKeyFingerprints), null,
-                "one or more fingerprints");
+                "AllowedHostKeyFingerprints is required when HostKeyPolicy is FingerprintAllowList.", nameof(AllowedHostKeyFingerprints), null, "one or more fingerprints");
+        }
     }
 }

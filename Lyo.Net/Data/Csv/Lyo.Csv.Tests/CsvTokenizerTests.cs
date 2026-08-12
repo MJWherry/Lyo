@@ -41,7 +41,7 @@ public class CsvTokenizerTests
     [Fact]
     public void Parse_SemicolonDelimiter_RoundTrip()
     {
-        var svc = new CsvService(options: new CsvOptions { Delimiter = ";" });
+        var svc = new CsvService(options: new() { Delimiter = ";" });
         PersonRow[] data = [new() { Id = 1, Name = "A;B" }];
         var bytes = svc.ExportToCsvBytes(data);
         using var ms = new MemoryStream(bytes);
@@ -66,7 +66,7 @@ public class CsvTokenizerTests
     public void Parse_AllowComments_SkipsHashLines()
     {
         var csv = "# comment\nId,Name\n1,Ok\n# trailing\n2,Two\n";
-        var svc = new CsvService(options: new CsvOptions { AllowComments = true });
+        var svc = new CsvService(options: new() { AllowComments = true });
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var rows = svc.ParseStream<PersonRow>(ms).ToList();
         Assert.Equal(2, rows.Count);
@@ -78,7 +78,7 @@ public class CsvTokenizerTests
     public void Parse_CommentChar_MidField_NotSkipped()
     {
         var csv = "Id,Name\n1,#notacomment\n";
-        var svc = new CsvService(options: new CsvOptions { AllowComments = true });
+        var svc = new CsvService(options: new() { AllowComments = true });
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var rows = svc.ParseStream<PersonRow>(ms).ToList();
         Assert.Single(rows);
@@ -140,9 +140,11 @@ public class CsvTokenizerTests
     public async Task ExportToCsvAsync_FromAsyncEnumerable_RoundTrip()
     {
         var svc = new CsvService();
+
         async IAsyncEnumerable<PersonRow> Source()
         {
             yield return new() { Id = 1, Name = "A" };
+
             await Task.Yield();
             yield return new() { Id = 2, Name = "B" };
         }
@@ -158,6 +160,7 @@ public class CsvTokenizerTests
     private sealed class PersonRow
     {
         public int Id { get; set; }
+
         public string? Name { get; set; }
     }
 }

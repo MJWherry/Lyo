@@ -368,7 +368,7 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
         foreach (var excl in _options.ExcludedWords)
             combined.Remove(excl);
 
-        return [..combined.Values];
+        return [.. combined.Values];
     }
 
     private async Task<List<ProfanityEntry>> LoadEntriesForLanguageAsync(LanguageCodeInfo language, CancellationToken ct)
@@ -424,7 +424,7 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
         foreach (var excl in _options.ExcludedWords)
             combined.Remove(excl);
 
-        return [..combined.Values];
+        return [.. combined.Values];
     }
 
     private static async Task<string> ReadAllTextAsync(string path, Encoding encoding, CancellationToken ct)

@@ -61,11 +61,13 @@ Requires a registered **`IKeyStore`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.m
 
 ## Keyed two-key (recommended for file storage)
 
-Registers **`AesCcmEncryptionService`**, **`IEncryptionService`**, and **`ITwoKeyEncryptionService`** under the same key. See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Encryption area `README.md`](../README.md) for mixed DEK/KEK algorithms and RSA registration.
+Registers **`AesCcmEncryptionService`**, **`IEncryptionService`**, and **`ITwoKeyEncryptionService`** under the same key. See [`Lyo.Encryption`](../Lyo.Encryption/README.md)
+and [Encryption area `README.md`](../README.md) for mixed DEK/KEK algorithms and RSA registration.
 
 ## Performance
 
-BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).
+BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Full
+tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md).
 
 ## Dependencies
 

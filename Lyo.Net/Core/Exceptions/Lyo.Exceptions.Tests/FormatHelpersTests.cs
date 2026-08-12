@@ -157,12 +157,12 @@ public class FormatHelpersTests
     }
 
     [Fact]
-    public void ThrowIfNotInRange_InRange_DoesNotThrow() => FormatHelpers.ThrowIfNotInRange(4, min: 1);
+    public void ThrowIfNotInRange_InRange_DoesNotThrow() => FormatHelpers.ThrowIfNotInRange(4, 1);
 
     [Fact]
     public void ThrowIfNotInRange_MinOnly_OutOfRange_ThrowsWithExpectedFormat()
     {
-        var ex = Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotInRange(0, min: 1));
+        var ex = Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotInRange(0, 1));
         Assert.Equal("0", ex.InvalidValue);
         Assert.Contains(">= 1", ex.ValidFormats);
     }

@@ -1,6 +1,7 @@
 # Lyo.FileStorage.Ftp
 
-Physical-IO provider for Lyo.FileStorage over FTP/FTPS. Supports save/read/delete/copy/move and DEK header rotation. Presigned URLs, multipart, and staged upload are not supported in v1 (base NotSupportedException).
+Physical-IO provider for Lyo.FileStorage over FTP/FTPS. Supports save/read/delete/copy/move and DEK header rotation. Presigned URLs, multipart, and staged upload are not supported
+in v1 (base NotSupportedException).
 
 ## Features
 

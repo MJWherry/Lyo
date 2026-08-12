@@ -5,8 +5,8 @@ using Lyo.Exceptions;
 namespace Lyo.TextEncoding;
 
 /// <summary>
-/// Write-through stream that decodes written bytes with <see cref="From" /> and encodes to <see cref="To" /> on the inner stream.
-/// Read is not supported (v1). Suitable for nesting ahead of compression or other write sinks.
+/// Write-through stream that decodes written bytes with <see cref="From" /> and encodes to <see cref="To" /> on the inner stream. Read is not supported (v1). Suitable for
+/// nesting ahead of compression or other write sinks.
 /// </summary>
 public sealed class CharsetConvertingStream : Stream
 {
@@ -156,11 +156,12 @@ public sealed class CharsetConvertingStream : Stream
             var outLen = _encoder.GetBytes(_charBuf.AsSpan(0, chars), _byteOut, flush: false);
 #else
             var tmp = chunk.ToArray();
-            var chars = _decoder.GetChars(tmp, 0, tmp.Length, _charBuf, 0, flush: false);
-            var outLen = _encoder.GetBytes(_charBuf, 0, chars, _byteOut, 0, flush: false);
+            var chars = _decoder.GetChars(tmp, 0, tmp.Length, _charBuf, 0, false);
+            var outLen = _encoder.GetBytes(_charBuf, 0, chars, _byteOut, 0, false);
 #endif
             if (outLen > 0)
                 _inner.Write(_byteOut, 0, outLen);
+
             offset += take;
         }
     }
@@ -171,8 +172,8 @@ public sealed class CharsetConvertingStream : Stream
         var chars = _decoder.GetChars(ReadOnlySpan<byte>.Empty, _charBuf, flush: true);
         var outLen = _encoder.GetBytes(_charBuf.AsSpan(0, chars), _byteOut, flush: true);
 #else
-        var chars = _decoder.GetChars([], 0, 0, _charBuf, 0, flush: true);
-        var outLen = _encoder.GetBytes(_charBuf, 0, chars, _byteOut, 0, flush: true);
+        var chars = _decoder.GetChars([], 0, 0, _charBuf, 0, true);
+        var outLen = _encoder.GetBytes(_charBuf, 0, chars, _byteOut, 0, true);
 #endif
         if (outLen > 0)
             _inner.Write(_byteOut, 0, outLen);

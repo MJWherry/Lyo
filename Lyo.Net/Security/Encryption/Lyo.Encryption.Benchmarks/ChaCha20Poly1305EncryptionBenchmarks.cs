@@ -6,8 +6,7 @@ using Lyo.KeyStore;
 
 namespace Lyo.Encryption.Benchmarks;
 
-[BenchmarkDescription(
-    "ChaCha20-Poly1305 encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
+[BenchmarkDescription("ChaCha20-Poly1305 encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, or 500 MiB.")]
 public class ChaCha20Poly1305EncryptionBenchmarks : LyoBenchmarkBase
 {

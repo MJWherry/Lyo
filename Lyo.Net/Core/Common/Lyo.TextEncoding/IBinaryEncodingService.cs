@@ -1,8 +1,8 @@
 namespace Lyo.TextEncoding;
 
 /// <summary>
-/// Injectable façade for binary↔text codecs (Base64, Base64Url, Hex) over buffers, streams, and files.
-/// Prefer <see cref="BinaryEncoding" /> for static call sites; inject when defaults or test doubles matter.
+/// Injectable façade for binary↔text codecs (Base64, Base64Url, Hex) over buffers, streams, and files. Prefer <see cref="BinaryEncoding" /> for static call sites; inject
+/// when defaults or test doubles matter.
 /// </summary>
 /// <remarks>Stream overloads do not close the stream.</remarks>
 public interface IBinaryEncodingService

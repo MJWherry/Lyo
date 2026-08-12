@@ -10,13 +10,15 @@ public class FtpIOTempStorageProviderTests
     [Fact]
     public void PathStyle_IsPosix()
     {
-        using var client = new FtpClient(new FtpClientOptions {
-            Host = "localhost",
-            Username = "u",
-            Password = "p",
-            RootRemoteDirectory = "/upload",
-            EncryptionMode = FtpEncryptionMode.None
-        });
+        using var client = new FtpClient(
+            new() {
+                Host = "localhost",
+                Username = "u",
+                Password = "p",
+                RootRemoteDirectory = "/upload",
+                EncryptionMode = FtpEncryptionMode.None
+            });
+
         var provider = new FtpIOTempStorageProvider(client);
         Assert.Equal(PathStyle.Posix, provider.PathStyle);
         Assert.Equal("/upload", provider.RootPath);

@@ -44,7 +44,7 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
     public GroupClause(GroupOperatorEnum op, IEnumerable<WhereClause> children, string? description = null)
     {
         Operator = op;
-        Children = [..children];
+        Children = [.. children];
         Description = description;
     }
 

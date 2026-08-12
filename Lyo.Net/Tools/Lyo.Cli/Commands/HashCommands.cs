@@ -16,6 +16,7 @@ internal static class HashCommands
         var hash = new Command("hash", "Content digests and HMAC (Lyo.Hashing)");
         foreach (var algo in new[] { "sha256", "sha384", "sha512", "md5" })
             hash.Subcommands.Add(CreateDigest(algo));
+
         hash.Subcommands.Add(CreateHmac());
         hash.Subcommands.Add(CreateFingerprint());
         return hash;
@@ -26,6 +27,7 @@ internal static class HashCommands
         var checksum = new Command("checksum", "Non-cryptographic checksums (CRC/Adler)");
         foreach (var algo in new[] { "crc32", "crc32c", "crc64", "adler32" })
             checksum.Subcommands.Add(CreateChecksum(algo));
+
         return checksum;
     }
 
@@ -55,6 +57,7 @@ internal static class HashCommands
 
             await CliIO.EmitTextAsync(hex, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -76,6 +79,7 @@ internal static class HashCommands
                     await input.DisposeAsync().ConfigureAwait(false);
             }
         });
+
         return cmd;
     }
 
@@ -101,6 +105,7 @@ internal static class HashCommands
                     await input.DisposeAsync().ConfigureAwait(false);
             }
         });
+
         return cmd;
     }
 
@@ -114,20 +119,16 @@ internal static class HashCommands
             var hex = await CliHashing.FingerprintFileAsync(pr.GetValue(inputArg)!, pr.GetValue(upperOpt), ct).ConfigureAwait(false);
             await CliIO.EmitTextAsync(hex, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
-    private static void AddEmitOptions(
-        Command cmd,
-        out Option<string?> outputOpt,
-        out Option<bool> copyOpt,
-        out Option<bool> quietOpt,
-        out Option<bool> upperOpt)
+    private static void AddEmitOptions(Command cmd, out Option<string?> outputOpt, out Option<bool> copyOpt, out Option<bool> quietOpt, out Option<bool> upperOpt)
     {
-        outputOpt = new Option<string?>("--output", "-o");
-        copyOpt = new Option<bool>("--copy", "-c") { Description = "Copy result to system clipboard" };
-        quietOpt = new Option<bool>("--quiet", "-q") { Description = "Suppress stdout" };
-        upperOpt = new Option<bool>("--upper") { Description = "Uppercase hex" };
+        outputOpt = new("--output", "-o");
+        copyOpt = new("--copy", "-c") { Description = "Copy result to system clipboard" };
+        quietOpt = new("--quiet", "-q") { Description = "Suppress stdout" };
+        upperOpt = new("--upper") { Description = "Uppercase hex" };
         cmd.Options.Add(outputOpt);
         cmd.Options.Add(copyOpt);
         cmd.Options.Add(quietOpt);

@@ -15,13 +15,17 @@ internal static class CliCsv
         var options = new CsvOptions();
         if (delimiter is not null)
             options.Delimiter = delimiter.Value.ToString();
+
         if (quote is not null)
             options.Quote = quote.Value;
+
         if (!string.IsNullOrWhiteSpace(encodingName))
             options.Encoding = Encoding.GetEncoding(encodingName);
+
         if (hasHeader is not null)
             options.HasHeaderRecord = hasHeader.Value;
-        return new CsvService(options: options);
+
+        return new(options: options);
     }
 
     public static async Task MergeAsync(IEnumerable<string> files, string output, bool includeHeaders, CsvService csv, CancellationToken ct)
@@ -54,7 +58,7 @@ internal static class CliCsv
             rows.Add(dict);
         }
 
-        await csv.AppendToCsvAsync(rows, target, includeHeaderIfMissing: true, ct).ConfigureAwait(false);
+        await csv.AppendToCsvAsync(rows, target, true, ct).ConfigureAwait(false);
     }
 
     public static async Task<string> StatsAsync(string? input, CsvService csv, CancellationToken ct)
@@ -78,15 +82,14 @@ internal static class CliCsv
             stats.RowCount,
             stats.ColumnCount,
             stats.Headers,
-            InferredColumnTypes = stats.InferredColumnTypes.ToDictionary(
-                kv => kv.Key.ToString(),
-                kv => kv.Value.Name),
+            InferredColumnTypes = stats.InferredColumnTypes.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value.Name),
             stats.FileSizeBytes,
             DetectedEncoding = stats.DetectedEncoding.WebName,
             DetectedDelimiter = stats.DetectedDelimiter?.ToString(),
             stats.HasHeaderRow,
             stats.SampleRows
         };
+
         return JsonSerializer.Serialize(payload, LyoJsonSerializerOptions.Create(o => o.WriteIndented = true));
     }
 

@@ -1,15 +1,12 @@
 # Configuration
 
-This page documents the environment-level configuration used by the repo's
-tooling — chiefly the containerized benchmark/test runner driven by
-[`docker-compose.yml`](../docker-compose.yml). Per-library runtime configuration
-(connection strings, DI options, secrets) is documented in each package's own
+This page documents the environment-level configuration used by the repo's tooling — chiefly the containerized benchmark/test runner driven by
+[`docker-compose.yml`](../docker-compose.yml). Per-library runtime configuration (connection strings, DI options, secrets) is documented in each package's own
 `README.md`.
 
 ## The `.env` file
 
-The docker runner reads an optional `.env` at the repo root. Copy the template
-and adjust:
+The docker runner reads an optional `.env` at the repo root. Copy the template and adjust:
 
 ```bash
 cp .env.example .env
@@ -35,8 +32,7 @@ cp .env.example .env
 | `TESTCONTAINERS_HOST_OVERRIDE` | Host that Testcontainers advertises to sibling containers reached over the mounted Docker socket.                                           | `host.docker.internal` |
 
 The wrapper script [`scripts/docker/run.py`](../scripts/docker/run.py) sets
-`TARGET` and a per-target `RUN_IMAGE` for you, so prefer it over editing those
-two by hand. To set ownership to your user in one step:
+`TARGET` and a per-target `RUN_IMAGE` for you, so prefer it over editing those two by hand. To set ownership to your user in one step:
 
 ```bash
 echo "HOST_UID=$(id -u)" >> .env && echo "HOST_GID=$(id -g)" >> .env
@@ -44,16 +40,11 @@ echo "HOST_UID=$(id -u)" >> .env && echo "HOST_GID=$(id -g)" >> .env
 
 ## Caveats
 
-- The source is baked into the image at build time, so **code changes require a
-  rebuild** (`python3 scripts/docker/run.py --build-only <target>` or
+- The source is baked into the image at build time, so **code changes require a rebuild** (`python3 scripts/docker/run.py --build-only <target>` or
   `docker compose build run`). `docs/benchmarks/data` and `docs/benchmarks/history`
   are mounted back to the host.
-- Containers that Testcontainers spawns via the mounted Docker socket run on the
-  **host** and are **not** limited by `CPU_LIMIT` / `MEM_LIMIT` (those bound only
-  the runner container).
-- Constraining CPU changes absolute BenchmarkDotNet numbers; keep the limits
-  fixed for run-to-run comparability.
+- Containers that Testcontainers spawns via the mounted Docker socket run on the **host** and are **not** limited by `CPU_LIMIT` / `MEM_LIMIT` (those bound only the runner
+  container).
+- Constraining CPU changes absolute BenchmarkDotNet numbers; keep the limits fixed for run-to-run comparability.
 
-See [Deployment](deployment.md) and [Testing](testing.md) for how these values
-are used in practice, and [`docker/README.md`](../docker/README.md) for the full
-runner reference.
+See [Deployment](deployment.md) and [Testing](testing.md) for how these values are used in practice, and [`docker/README.md`](../docker/README.md) for the full runner reference.

@@ -13,17 +13,14 @@ public static class CharsetEncoding
     private const int DetectSampleSize = 4096;
 
     private static readonly Regex DeclarationRegex = new(
-        @"(?:encoding|charset)\s*=\s*[""']?(?<name>[A-Za-z0-9_\-.:]+)[""']?",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+        @"(?:encoding|charset)\s*=\s*[""']?(?<name>[A-Za-z0-9_\-.:]+)[""']?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
 #if NET7_0_OR_GREATER
         | RegexOptions.NonBacktracking
 #endif
-        ,
-        TimeSpan.FromMilliseconds(250));
+        , TimeSpan.FromMilliseconds(250));
 
     /// <summary>Ensure code pages provider is registered (idempotent).</summary>
-    public static void EnsureCodePagesRegistered()
-        => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    public static void EnsureCodePagesRegistered() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
     /// <summary>Resolve by web/.NET name or numeric code-page string. Throws if unknown.</summary>
     public static Encoding GetEncoding(string nameOrCodePage, CharsetEncodingOptions? options = null)
@@ -148,14 +145,13 @@ public static class CharsetEncoding
     }
 
     /// <summary>
-    /// Detect from stream preamble. Seekable streams are rewound after peek (<see cref="CharsetDetectionResult.ConsumedPrefix" /> empty).
-    /// Non-seekable streams leave the sample in <see cref="CharsetDetectionResult.ConsumedPrefix" /> — use <see cref="CreateReplayStream" />.
+    /// Detect from stream preamble. Seekable streams are rewound after peek (<see cref="CharsetDetectionResult.ConsumedPrefix" /> empty). Non-seekable streams leave the sample
+    /// in <see cref="CharsetDetectionResult.ConsumedPrefix" /> — use <see cref="CreateReplayStream" />.
     /// </summary>
     public static CharsetDetectionResult DetectEncoding(Stream stream, CharsetEncodingOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(stream);
         options ??= CharsetEncodingOptions.Default;
-
         var buffer = ArrayPool<byte>.Shared.Rent(DetectSampleSize);
         try {
             long? pos = stream.CanSeek ? stream.Position : null;
@@ -260,6 +256,7 @@ public static class CharsetEncoding
             DeclaredName = name,
             ConsumedPrefix = []
         };
+
         return true;
     }
 
@@ -320,6 +317,7 @@ public static class CharsetEncoding
         var bytes = encoding.GetBytes(text.ToString());
         if (destination.Length < bytes.Length)
             return false;
+
         bytes.CopyTo(destination);
         bytesWritten = bytes.Length;
         return true;
@@ -372,6 +370,7 @@ public static class CharsetEncoding
         var s = encoding.GetString(bytes.ToArray());
         if (destination.Length < s.Length)
             return false;
+
         s.AsSpan().CopyTo(destination);
         charsWritten = s.Length;
         return true;
@@ -390,7 +389,6 @@ public static class CharsetEncoding
         ArgumentHelpers.ThrowIfFileNotFound(path);
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-
 #if NET5_0_OR_GREATER
         await using var fs = File.OpenRead(path);
 #else
@@ -469,7 +467,7 @@ public static class CharsetEncoding
         ArgumentHelpers.ThrowIfNull(stream);
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-        using var reader = new StreamReader(stream, encoding, detectEncodingFromBom, StreamBufferSize, leaveOpen: true);
+        using var reader = new StreamReader(stream, encoding, detectEncodingFromBom, StreamBufferSize, true);
 #if NET5_0_OR_GREATER
         return await reader.ReadToEndAsync(ct).ConfigureAwait(false);
 #else
@@ -514,6 +512,7 @@ public static class CharsetEncoding
 #endif
         if (!leaveOpen)
             await stream.FlushAsync().ConfigureAwait(false);
+
         _ = leaveOpen;
     }
 
@@ -563,12 +562,7 @@ public static class CharsetEncoding
         => Convert(bytes, GetEncoding(fromNameOrCodePage, options), GetEncoding(toNameOrCodePage, options), options);
 
     /// <summary>Streaming convert with stateful encoder/decoder (sync). Does not close streams.</summary>
-    public static void Convert(
-        Stream input,
-        Stream output,
-        Encoding from,
-        Encoding to,
-        CharsetEncodingOptions? options = null)
+    public static void Convert(Stream input, Stream output, Encoding from, Encoding to, CharsetEncodingOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
@@ -577,7 +571,6 @@ public static class CharsetEncoding
         options ??= CharsetEncodingOptions.Default;
         from = ApplyFallbacks(from, options);
         to = ApplyFallbacks(to, options);
-
         var decoder = from.GetDecoder();
         var encoder = to.GetEncoder();
         var byteIn = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
@@ -586,13 +579,13 @@ public static class CharsetEncoding
         try {
             int read;
             while ((read = input.Read(byteIn, 0, StreamBufferSize)) > 0) {
-                var chars = decoder.GetChars(byteIn, 0, read, charBuf, 0, flush: false);
-                var outLen = encoder.GetBytes(charBuf, 0, chars, byteOut, 0, flush: false);
+                var chars = decoder.GetChars(byteIn, 0, read, charBuf, 0, false);
+                var outLen = encoder.GetBytes(charBuf, 0, chars, byteOut, 0, false);
                 output.Write(byteOut, 0, outLen);
             }
 
-            var flushChars = decoder.GetChars(byteIn, 0, 0, charBuf, 0, flush: true);
-            var flushOut = encoder.GetBytes(charBuf, 0, flushChars, byteOut, 0, flush: true);
+            var flushChars = decoder.GetChars(byteIn, 0, 0, charBuf, 0, true);
+            var flushOut = encoder.GetBytes(charBuf, 0, flushChars, byteOut, 0, true);
             if (flushOut > 0)
                 output.Write(byteOut, 0, flushOut);
         }
@@ -608,13 +601,7 @@ public static class CharsetEncoding
         => Convert(input, output, GetEncoding(from, options), GetEncoding(to, options), options);
 
     /// <summary>Streaming convert with stateful encoder/decoder. Does not close streams.</summary>
-    public static async Task ConvertAsync(
-        Stream input,
-        Stream output,
-        Encoding from,
-        Encoding to,
-        CharsetEncodingOptions? options = null,
-        CancellationToken ct = default)
+    public static async Task ConvertAsync(Stream input, Stream output, Encoding from, Encoding to, CharsetEncodingOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
@@ -623,7 +610,6 @@ public static class CharsetEncoding
         options ??= CharsetEncodingOptions.Default;
         from = ApplyFallbacks(from, options);
         to = ApplyFallbacks(to, options);
-
         var decoder = from.GetDecoder();
         var encoder = to.GetEncoder();
         var byteIn = ArrayPool<byte>.Shared.Rent(StreamBufferSize);
@@ -636,8 +622,8 @@ public static class CharsetEncoding
 #else
             while ((read = await input.ReadAsync(byteIn, 0, StreamBufferSize, ct).ConfigureAwait(false)) > 0) {
 #endif
-                var chars = decoder.GetChars(byteIn, 0, read, charBuf, 0, flush: false);
-                var outLen = encoder.GetBytes(charBuf, 0, chars, byteOut, 0, flush: false);
+                var chars = decoder.GetChars(byteIn, 0, read, charBuf, 0, false);
+                var outLen = encoder.GetBytes(charBuf, 0, chars, byteOut, 0, false);
 #if NET5_0_OR_GREATER
                 await output.WriteAsync(byteOut.AsMemory(0, outLen), ct).ConfigureAwait(false);
 #else
@@ -645,8 +631,8 @@ public static class CharsetEncoding
 #endif
             }
 
-            var flushChars = decoder.GetChars(byteIn, 0, 0, charBuf, 0, flush: true);
-            var flushOut = encoder.GetBytes(charBuf, 0, flushChars, byteOut, 0, flush: true);
+            var flushChars = decoder.GetChars(byteIn, 0, 0, charBuf, 0, true);
+            var flushOut = encoder.GetBytes(charBuf, 0, flushChars, byteOut, 0, true);
             if (flushOut > 0) {
 #if NET5_0_OR_GREATER
                 await output.WriteAsync(byteOut.AsMemory(0, flushOut), ct).ConfigureAwait(false);
@@ -689,7 +675,13 @@ public static class CharsetEncoding
     }
 
     /// <summary>Convert file using charset catalog entries.</summary>
-    public static Task ConvertFileAsync(string inputPath, string outputPath, CharsetInfo from, CharsetInfo to, CharsetEncodingOptions? options = null, CancellationToken ct = default)
+    public static Task ConvertFileAsync(
+        string inputPath,
+        string outputPath,
+        CharsetInfo from,
+        CharsetInfo to,
+        CharsetEncodingOptions? options = null,
+        CancellationToken ct = default)
         => ConvertFileAsync(inputPath, outputPath, GetEncoding(from, options), GetEncoding(to, options), options, ct);
 
     /// <summary>Convert file using name/code-page strings.</summary>
@@ -711,8 +703,10 @@ public static class CharsetEncoding
         var clone = (Encoding)encoding.Clone();
         if (options.EncoderFallback is { } ef)
             clone.EncoderFallback = ef;
+
         if (options.DecoderFallback is { } df)
             clone.DecoderFallback = df;
+
         return clone;
     }
 

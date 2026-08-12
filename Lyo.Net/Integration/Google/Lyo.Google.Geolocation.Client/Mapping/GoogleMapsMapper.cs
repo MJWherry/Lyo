@@ -1,4 +1,5 @@
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Addresses;
@@ -52,8 +53,8 @@ internal static class GoogleMapsMapper
             GeocodeConfidence = MapConfidence(googleResult.Geometry?.LocationType)
         };
 
-        if (!string.IsNullOrWhiteSpace(googleResult.PlaceId))
-            address.Source = EntitySourceRecord.From(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId), DateTime.UtcNow);
+        if (!googleResult.PlaceId.IsNullOrWhitespace())
+            address.Source = EntitySourceRecord.From(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId!), DateTime.UtcNow);
 
         foreach (var component in addressComponents) {
             var types = component.Types ?? [];
@@ -77,13 +78,13 @@ internal static class GoogleMapsMapper
                 address.County = component.LongName;
         }
 
-        if (string.IsNullOrEmpty(address.StreetAddress) && !string.IsNullOrEmpty(googleResult.FormattedAddress)) {
-            var parts = googleResult.FormattedAddress.Split(',');
+        if (address.StreetAddress.IsNullOrEmpty() && !googleResult.FormattedAddress.IsNullOrEmpty()) {
+            var parts = googleResult.FormattedAddress!.Split(',');
             if (parts.Length > 0)
                 address.StreetAddress = parts[0].Trim();
         }
 
-        if (string.IsNullOrEmpty(address.StreetAddress))
+        if (address.StreetAddress.IsNullOrEmpty())
             address.StreetAddress = googleResult.FormattedAddress;
 
         return address;
@@ -153,10 +154,10 @@ internal static class GoogleMapsMapper
 
     private static ManeuverType MapManeuver(string? maneuver)
     {
-        if (string.IsNullOrEmpty(maneuver))
+        if (maneuver.IsNullOrEmpty())
             return ManeuverType.Straight;
 
-        return maneuver.ToLowerInvariant() switch {
+        return maneuver!.ToLowerInvariant() switch {
             "turn-left" => ManeuverType.TurnLeft,
             "turn-right" => ManeuverType.TurnRight,
             "turn-slight-left" => ManeuverType.TurnSlightLeft,

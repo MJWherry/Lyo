@@ -1,8 +1,10 @@
 # Lyo.Authentication.OpenIdConnect
 
-OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment. After a successful external login, the API either:
+OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment. After
+a successful external login, the API either:
 
-- issues tokens directly as JSON (for **API clients** calling `/auth/login/{provider}?mode=api`), or - mints a single-use **handoff code** and 302-redirects the browser to a whitelisted consumer origin which then exchanges that code server-to-server for the tokens (for **browser clients** via `Lyo.Authentication.Client`).
+- issues tokens directly as JSON (for **API clients** calling `/auth/login/{provider}?mode=api`), or - mints a single-use **handoff code** and 302-redirects the browser to a
+  whitelisted consumer origin which then exchanges that code server-to-server for the tokens (for **browser clients** via `Lyo.Authentication.Client`).
 
 ## Examples
 
@@ -24,27 +26,29 @@ services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 - `OidcAuthorizationUrlBuilder` — composes the `/authorize` URL with `code_challenge`, `state`, `nonce`
 - `OidcTokenExchangeClient` — typed `HttpClient` that POSTs the authorization code back for tokens
 - `OidcIdTokenValidator` — validates issuer, audience, nonce, exp, signature
-- `IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator` — wraps the whole flow: discover-or-link-or-create the Lyo user, refresh `linked_identity.scopes_json`, and call `ILyoJwtIssuer.IssueAsync`. Emits `AuthAuditEventKind.{ExternalLoginSucceeded,ExternalLoginRejected,UserProvisioned,IdentityLinked}` along the way.
+- `IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator` — wraps the whole flow: discover-or-link-or-create the Lyo user, refresh `linked_identity.scopes_json`, and call
+  `ILyoJwtIssuer.IssueAsync`. Emits `AuthAuditEventKind.{ExternalLoginSucceeded,ExternalLoginRejected,UserProvisioned,IdentityLinked}` along the way.
 - `IHandoffCodeStore` / `InMemoryHandoffCodeStore` — single-use, TTL-bounded handoff codes (browser handoff path)
 
 ## Endpoints
 
 `app.MapLyoAuthEndpoints()` wires:
 
-| Method | Path | Purpose |
-| ------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET | `/auth/login/{provider}?returnUrl=...&mode=browser\ | api` |
-| GET | `/auth/callback/{provider}` | IdP redirects back here. Browser mode → mint handoff code + 302 to `{returnUrl}?lyo_handoff=lyoh_...`. API mode → 200 OK with `{access_token, refresh_token, expires_in, token_type}`. |
-| POST | `/auth/handoff/exchange` | Body `{ code }`. Consumes a handoff code once, returns tokens. Audited as `HandoffCodeConsumed` / `HandoffCodeRejected`. |
-| POST | `/auth/token` | Reserved for first-party API client grants. |
-| POST | `/auth/refresh` | Body `{ refresh_token }`. Returns a rotated `{access_token, refresh_token, expires_in}`. |
-| POST | `/auth/logout` | Body `{ refresh_token }`. Revokes the token; audited as `TokenRevoked` + `SignedOut`. |
-| GET | `/auth/me` | Returns the principal for the bearer access token. |
-| GET | `/auth/users/{id}` | Returns the same shape as `/auth/me` for an arbitrary user id. Requires the `auth.users.read` scope (policy `scope:auth.users.read`). `Scopes` reflects the target user's baseline scopes, not the caller's. |
+| Method | Path                                                | Purpose                                                                                                                                                                                                      |
+|--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | `/auth/login/{provider}?returnUrl=...&mode=browser\ | api`                                                                                                                                                                                                         |
+| GET    | `/auth/callback/{provider}`                         | IdP redirects back here. Browser mode → mint handoff code + 302 to `{returnUrl}?lyo_handoff=lyoh_...`. API mode → 200 OK with `{access_token, refresh_token, expires_in, token_type}`.                       |
+| POST   | `/auth/handoff/exchange`                            | Body `{ code }`. Consumes a handoff code once, returns tokens. Audited as `HandoffCodeConsumed` / `HandoffCodeRejected`.                                                                                     |
+| POST   | `/auth/token`                                       | Reserved for first-party API client grants.                                                                                                                                                                  |
+| POST   | `/auth/refresh`                                     | Body `{ refresh_token }`. Returns a rotated `{access_token, refresh_token, expires_in}`.                                                                                                                     |
+| POST   | `/auth/logout`                                      | Body `{ refresh_token }`. Revokes the token; audited as `TokenRevoked` + `SignedOut`.                                                                                                                        |
+| GET    | `/auth/me`                                          | Returns the principal for the bearer access token.                                                                                                                                                           |
+| GET    | `/auth/users/{id}`                                  | Returns the same shape as `/auth/me` for an arbitrary user id. Requires the `auth.users.read` scope (policy `scope:auth.users.read`). `Scopes` reflects the target user's baseline scopes, not the caller's. |
 
 ## Registration
 
-That call binds two option sections: - `LyoExternalLogin` — `Sealing.{Purpose,DefaultExpiration}` and cookie name for the PKCE/state envelope. - `LyoOidcBff` — see [BFF options](#bff-options) below. The per-provider packages register their `IOpenIdConnectProvider` implementation under their canonical name (`google`, `keycloak:<realm>`).
+That call binds two option sections: - `LyoExternalLogin` — `Sealing.{Purpose,DefaultExpiration}` and cookie name for the PKCE/state envelope. - `LyoOidcBff` —
+see [BFF options](#bff-options) below. The per-provider packages register their `IOpenIdConnectProvider` implementation under their canonical name (`google`, `keycloak:<realm>`).
 
 ## BFF options
 
@@ -70,18 +74,18 @@ name — `JwtIssued`, `HandoffCodeIssued`, …); otherwise they hit whatever `IA
 come from the registered `IAuthAuditContextAccessor` — call `services.AddLyoApiTokenAuthentication()` (or `services.AddLyoAuthHttpContextAccessor()` standalone) on an ASP.NET host
 to swap in `HttpAuthAuditContextAccessor`.
 
-| Kind | When |
-| -------------------------------------- | ---------------------------------------------------------------- |
-| `ExternalLoginSucceeded` | Callback validated, tokens minted. |
-| `ExternalLoginRejected` | State/nonce/signature/policy failure. Carries a stable `reason`. |
-| `UserProvisioned` | First-time JIT user creation. |
-| `IdentityLinked` | New `(provider, subject)` linked to a user. |
-| `HandoffCodeIssued` | Mint succeeded; included in the browser redirect. |
-| `HandoffCodeConsumed` | Successful `/auth/handoff/exchange`. |
-| `HandoffCodeRejected` | Wrong origin, expired, unknown, or already consumed. |
-| `JwtIssued` | Access token minted. |
-| `RefreshSucceeded` / `RefreshRejected` | `/auth/refresh` outcome. |
-| `TokenRevoked` / `SignedOut` | `/auth/logout` outcome. |
+| Kind                                   | When                                                             |
+|----------------------------------------|------------------------------------------------------------------|
+| `ExternalLoginSucceeded`               | Callback validated, tokens minted.                               |
+| `ExternalLoginRejected`                | State/nonce/signature/policy failure. Carries a stable `reason`. |
+| `UserProvisioned`                      | First-time JIT user creation.                                    |
+| `IdentityLinked`                       | New `(provider, subject)` linked to a user.                      |
+| `HandoffCodeIssued`                    | Mint succeeded; included in the browser redirect.                |
+| `HandoffCodeConsumed`                  | Successful `/auth/handoff/exchange`.                             |
+| `HandoffCodeRejected`                  | Wrong origin, expired, unknown, or already consumed.             |
+| `JwtIssued`                            | Access token minted.                                             |
+| `RefreshSucceeded` / `RefreshRejected` | `/auth/refresh` outcome.                                         |
+| `TokenRevoked` / `SignedOut`           | `/auth/logout` outcome.                                          |
 
 ## Talking to it
 

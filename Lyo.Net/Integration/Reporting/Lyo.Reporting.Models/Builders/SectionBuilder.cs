@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Reporting.Models;
 
 namespace Lyo.Reporting.Models.Builders;
 

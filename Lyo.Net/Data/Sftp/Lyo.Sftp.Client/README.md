@@ -1,6 +1,9 @@
 # Lyo.Sftp.Client
 
-Thin SFTP wrapper over SSH.NET for Lyo hosts and storage adapters (`Lyo.IO.Temp.Sftp`, `Lyo.FileStorage.Sftp`). Canonical APIs are `*Async` (`Task` + `CancellationToken`) backed by SSH.NET async methods and await-safe pool/per-client gates. Sync methods remain as thin blockers. Provides connection pooling with leases, POSIX path jail via `Lyo.Common.Pathing.PathHelpers`, host-key allow lists, optional password/private-key auth, `ILogger` diagnostics, and `sftp.*` metrics. Thread-safe for concurrent callers up to `MaxPooledClients`; do not share one leased `Stream` across threads.
+Thin SFTP wrapper over SSH.NET for Lyo hosts and storage adapters (`Lyo.IO.Temp.Sftp`, `Lyo.FileStorage.Sftp`). Canonical APIs are `*Async` (`Task` + `CancellationToken`) backed by
+SSH.NET async methods and await-safe pool/per-client gates. Sync methods remain as thin blockers. Provides connection pooling with leases, POSIX path jail via
+`Lyo.Common.Pathing.PathHelpers`, host-key allow lists, optional password/private-key auth, `ILogger` diagnostics, and `sftp.*` metrics. Thread-safe for concurrent callers up to
+`MaxPooledClients`; do not share one leased `Stream` across threads.
 
 ## Features
 

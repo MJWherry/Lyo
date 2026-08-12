@@ -694,9 +694,10 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Failed to send delayed message to queue {QueueName} via {WaitQueue}", queueName, waitQueue);
-            if (_options.EnableMetrics)
+            if (_options.EnableMetrics) {
                 _metrics.IncrementCounter(
                     Constants.Metrics.SendToQueueFailure, 1, [(Constants.Metrics.Tags.Queue, queueName), (Constants.Metrics.Tags.Reason, "delayed_exception")]);
+            }
 
             return false;
         }

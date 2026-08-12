@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Testing;
@@ -129,6 +128,5 @@ public sealed class PostgresApiTokenStoreTests
 
     private static ApiTokenRecord NewToken(string id, Guid? userId = null, IReadOnlyList<string>? scopes = null, string? rotatedFromId = null)
         => new(
-            id, TestData.Create(32), ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], null, DateTime.UtcNow, null, null, null, null, null,
-            rotatedFromId);
+            id, TestData.Create(32), ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], null, DateTime.UtcNow, null, null, null, null, null, rotatedFromId);
 }

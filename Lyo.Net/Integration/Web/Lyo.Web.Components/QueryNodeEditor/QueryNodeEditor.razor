@@ -20,7 +20,6 @@
                                ValueChanged="@(value => OnGroupOperatorChanged(value))"
                                Label="Operator"
                                Variant="Variant.Outlined"
-                               Dense
                                Margin="Margin.Dense">
                         <MudSelectItem Value="GroupOperatorEnum.And">And</MudSelectItem>
                         <MudSelectItem Value="GroupOperatorEnum.Or">Or</MudSelectItem>
@@ -130,7 +129,6 @@
                                       ValueChanged="@OnFieldChanged"
                                       Label="Field (e.g., DocketCharges.Code)"
                                       Variant="Variant.Outlined"
-                                      Dense
                                       Margin="Margin.Dense"
                                       HelperText="Enter field name, supports nested paths"/>
                     </LyoValidationWrapper>
@@ -141,7 +139,6 @@
                                ValueChanged="@(value => OnComparisonChanged(value))"
                                Label="Operator"
                                Variant="Variant.Outlined"
-                               Dense
                                Margin="Margin.Dense">
                         @foreach (var comparator in Enum.GetValues<ComparisonOperatorEnum>()) {
                             <MudSelectItem Value="@comparator">@comparator.GetDescription()</MudSelectItem>
@@ -176,7 +173,6 @@
                                ValueChanged="@(value => OnBoolValueChanged(value))"
                                Label="Value"
                                Variant="Variant.Outlined"
-                               Dense
                                Margin="Margin.Dense">
                         <MudSelectItem T="bool?" Value="true">True</MudSelectItem>
                         <MudSelectItem T="bool?" Value="false">False</MudSelectItem>
@@ -190,7 +186,6 @@
                         ValueChanged="@(value => OnNumberValueChanged(value))"
                         Label="Value"
                         Variant="Variant.Outlined"
-                        Dense
                         Margin="Margin.Dense"/>
                 }
                 else if (conditionNode.Value is DateTime) {
@@ -198,7 +193,6 @@
                                    DateChanged="@(value => OnDateValueChanged(value))"
                                    Label="Value"
                                    Variant="Variant.Outlined"
-                                   Dense
                                    Margin="Margin.Dense"/>
                 }
                 else {

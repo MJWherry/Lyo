@@ -56,7 +56,10 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     /// <inheritdoc
     ///     cref='M:Lyo.Xlsx.Models.IXlsxDocumentWriter.AddSheetFromDictionary(System.String,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean,System.Threading.CancellationToken)' />
     public void AddSheetFromDictionary(
-        string sheetName, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false,
+        string sheetName,
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool useHeaderRow = true,
+        bool useFooterRow = false,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);

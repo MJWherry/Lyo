@@ -6,7 +6,10 @@ namespace Lyo.Webhook;
 /// <summary>Fluent registration of verified webhook endpoints on <see cref="IEndpointRouteBuilder" /> (including <c>WebApplication</c>).</summary>
 public static class WebhookEndpointRouteBuilderExtensions
 {
-    /// <summary>Maps a webhook route that accepts POST by default. Chain <see cref="WebhookEndpointMappingBuilder.Verify" /> then <see cref="VerifiedWebhookEndpointBuilder.Handle" />.</summary>
+    /// <summary>
+    /// Maps a webhook route that accepts POST by default. Chain <see cref="WebhookEndpointMappingBuilder.Verify" /> then
+    /// <see cref="VerifiedWebhookEndpointBuilder.Handle(Func{WebhookHandlerContext, Task})" />.
+    /// </summary>
     public static WebhookEndpointMappingBuilder MapWebhook(this IEndpointRouteBuilder endpoints, string pattern)
     {
         ArgumentNullException.ThrowIfNull(endpoints);

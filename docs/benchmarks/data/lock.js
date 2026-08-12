@@ -1,2 +1,240 @@
-window.LyoBench = window.LyoBench || { reports: {}, history: {}, historyIndex: {} };
-window.LyoBench.reports["lock"] = {"type": "micro", "groups": [{"name": "LocalLockBenchmarks", "description": "In-process LocalLockService: a baseline uncontended acquire/release on a unique key, and a bounded contended scenario where N contenders execute-with-lock on one shared key (directional coordination-overhead signal, not throughput).", "parameters": [{"name": "Contenders", "unit": "tasks", "description": "Number of concurrent tasks contending for the single shared key in the contended case (2 or 8)."}], "measurements": [{"method": "Uncontended_AcquireRelease", "parameters": {"Contenders": "2"}, "meanNs": 555.2458885192871, "stdDevNs": 9.14814700233485, "allocatedBytes": 448, "ratioToBaseline": 1, "isBaseline": true, "slaTarget": "<= 10 \u00b5s", "slaResult": "Exceeds", "slaStandard": "An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.", "deltaMeanPct": 2.641663554577998, "deltaAllocPct": 0.0}, {"method": "Contended_SingleKey", "parameters": {"Contenders": "2"}, "meanNs": 408.9924198332287, "stdDevNs": 9.697225537386647, "allocatedBytes": 848, "ratioToBaseline": 0.7365969353216056, "isBaseline": false, "deltaMeanPct": 0.2182053402146937, "deltaAllocPct": 0.0}, {"method": "Uncontended_AcquireRelease", "parameters": {"Contenders": "8"}, "meanNs": 551.4935975392659, "stdDevNs": 8.779242501818429, "allocatedBytes": 448, "ratioToBaseline": 1, "isBaseline": true, "slaTarget": "<= 10 \u00b5s", "slaResult": "Exceeds", "slaStandard": "An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.", "deltaMeanPct": 0.7687472474852773, "deltaAllocPct": 0.0}, {"method": "Contended_SingleKey", "parameters": {"Contenders": "8"}, "meanNs": 1484.7244598388672, "stdDevNs": 23.608242576739954, "allocatedBytes": 3104, "ratioToBaseline": 2.6921880262320834, "isBaseline": false, "deltaMeanPct": 2.1679150642764364, "deltaAllocPct": 0.0}]}, {"name": "LockComparisonBenchmarks", "description": "Uncontended acquire/release and execute-with-lock on a unique key, comparing in-process LocalLockService against distributed RedisLockService (throwaway Docker Redis). Isolates per-operation lock cost.", "parameters": [], "measurements": [{"method": "Local_AcquireRelease", "parameters": {}, "meanNs": 566.8809045862268, "stdDevNs": 14.778887744304138, "allocatedBytes": 440, "ratioToBaseline": 1, "isBaseline": true, "slaTarget": "<= 10 \u00b5s", "slaResult": "Exceeds", "slaStandard": "An uncontended in-process lock acquire/release should be a few microseconds (no network).", "deltaMeanPct": 2.9993818663619014, "deltaAllocPct": 0.0}, {"method": "Redis_AcquireRelease", "parameters": {}, "meanNs": 158290.16251953124, "stdDevNs": 4209.322720352268, "allocatedBytes": 2624, "ratioToBaseline": 279.23001328659876, "isBaseline": false, "slaTarget": "<= 5 ms", "slaResult": "Exceeds", "slaStandard": "A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.", "deltaMeanPct": 13.609363183562417, "deltaAllocPct": 0.0}, {"method": "Local_ExecuteWithLock", "parameters": {}, "meanNs": 574.8065472330366, "stdDevNs": 9.006953943827645, "allocatedBytes": 480, "ratioToBaseline": 1.0139811423928535, "isBaseline": false, "slaTarget": "<= 15 \u00b5s", "slaResult": "Exceeds", "slaStandard": "In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.", "deltaMeanPct": -3.1254721941831223, "deltaAllocPct": 0.0}, {"method": "Redis_ExecuteWithLock", "parameters": {}, "meanNs": 198612.88880859374, "stdDevNs": 43229.98444541496, "allocatedBytes": 2880, "ratioToBaseline": 350.3608733364615, "isBaseline": false, "slaTarget": "<= 5 ms", "slaResult": "Exceeds", "slaStandard": "Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.", "deltaMeanPct": 42.60964604804391, "deltaAllocPct": 0.0}]}], "slo": [{"area": "Local_AcquireRelease", "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release should be a few microseconds (no network).", "latest": "566.88 ns", "result": "Exceeds"}, {"area": "Local_ExecuteWithLock", "target": "<= 15 \u00b5s \u2014 In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.", "latest": "574.81 ns", "result": "Exceeds"}, {"area": "Redis_AcquireRelease", "target": "<= 5 ms \u2014 A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.", "latest": "158.29 \u00b5s", "result": "Exceeds"}, {"area": "Redis_ExecuteWithLock", "target": "<= 5 ms \u2014 Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.", "latest": "198.61 \u00b5s", "result": "Exceeds"}, {"area": "Uncontended_AcquireRelease", "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.", "latest": "555.25 ns", "result": "Exceeds"}], "grades": [{"category": "LocalLockBenchmarks", "grade": "A", "rationale": "2 exceed of 2 SLA targets vs declared standards"}, {"category": "LockComparisonBenchmarks", "grade": "A", "rationale": "4 exceed of 4 SLA targets vs declared standards"}], "schema": "lyo.bench/v1", "name": "lock", "title": "Locking", "description": "Distributed-lock primitives for Lyo.Lock: uncontended acquire/release and execute-with-lock for the in-process LocalLockService vs the distributed RedisLockService (throwaway Docker Redis), plus a bounded contended local scenario. Each operation uses a unique key (GUID) so cases are uncontended unless stated; the contended case measures coordination overhead under N contenders, not raw throughput.", "runId": "BenchmarkRun-joined-2026-08-01-03-37-55", "generatedAt": "2026-08-01T03:37:55.4519096+00:00", "runStarted": "2026-08-01T03:34:31.9453835+00:00", "runEnded": "2026-08-01T03:37:55.4519096+00:00", "durationSeconds": 203.5065261, "environment": {"tool": "BenchmarkDotNet", "toolVersion": "0.15.8", "runtime": ".NET 10.0.0", "cpu": "Intel(R) Core(TM) Ultra 7 155U", "os": "Ubuntu 24.04.3 LTS", "architecture": "X64", "logicalCores": 14, "physicalCores": 12, "memoryBytes": 6442450944, "gcMode": "Workstation", "configuration": "Release", "dotnetSdkVersion": "10.0.100", "dependencies": {"BenchmarkDotNet": "0.15.8", "Microsoft.Extensions.Configuration.Binder": "10.0.5", "Microsoft.Extensions.DependencyInjection": "10.0.5", "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5", "Microsoft.Extensions.Hosting.Abstractions": "10.0.5", "Microsoft.Extensions.Logging.Abstractions": "10.0.5", "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5", "StackExchange.Redis": "2.12.0", "Testcontainers.Redis": "4.13.0"}}, "notes": [], "history": [{"file": "20260628T144124Z_BenchmarkRun-joined-2026-06-28-10-41-24.json", "runId": "BenchmarkRun-joined-2026-06-28-10-41-24", "runStarted": null, "runEnded": null, "generatedAt": "2026-06-28T14:41:24.4518484+00:00", "isCurrent": false, "measurementCount": 8, "medianMeanNs": 634.5403794740375}, {"file": "20260704T030053Z_BenchmarkRun-joined-2026-07-04-03-00-53.json", "runId": "BenchmarkRun-joined-2026-07-04-03-00-53", "runStarted": "2026-07-04T02:54:05.6338987+00:00", "runEnded": "2026-07-04T03:00:53.3121765+00:00", "generatedAt": "2026-07-04T03:00:53.3121765+00:00", "isCurrent": false, "measurementCount": 8, "medianMeanNs": 592.4152133151738}, {"file": "20260704T033056Z_BenchmarkRun-joined-2026-07-04-03-30-56.json", "runId": "BenchmarkRun-joined-2026-07-04-03-30-56", "runStarted": "2026-07-04T03:27:52.6282646+00:00", "runEnded": "2026-07-04T03:30:56.7049437+00:00", "generatedAt": "2026-07-04T03:30:56.7049437+00:00", "isCurrent": false, "measurementCount": 8, "medianMeanNs": 558.1642298698425}, {"file": "20260708T010245Z_BenchmarkRun-joined-2026-07-08-01-02-45.json", "runId": "BenchmarkRun-joined-2026-07-08-01-02-45", "runStarted": "2026-07-08T00:57:05.8653134+00:00", "runEnded": "2026-07-08T01:02:45.8463811+00:00", "generatedAt": "2026-07-08T01:02:45.8463811+00:00", "isCurrent": false, "measurementCount": 8, "medianMeanNs": 567.255423949315}, {"file": "20260729T023713Z_BenchmarkRun-joined-2026-07-29-02-37-13.json", "runId": "BenchmarkRun-joined-2026-07-29-02-37-13", "runStarted": "2026-07-29T02:33:39.8012825+00:00", "runEnded": "2026-07-29T02:37:13.2601146+00:00", "generatedAt": "2026-07-29T02:37:13.2601146+00:00", "isCurrent": false, "measurementCount": 8, "medianMeanNs": 593.3515860693796}, {"file": "20260801T033755Z_BenchmarkRun-joined-2026-08-01-03-37-55.json", "runId": "BenchmarkRun-joined-2026-08-01-03-37-55", "runStarted": "2026-08-01T03:34:31.9453835+00:00", "runEnded": "2026-08-01T03:37:55.4519096+00:00", "generatedAt": "2026-08-01T03:37:55.4519096+00:00", "isCurrent": true, "measurementCount": 8, "medianMeanNs": 574.8065472330366}], "deltaBaseline": {"kind": "previousRun", "runId": "BenchmarkRun-joined-2026-07-29-02-37-13", "runStarted": "2026-07-29T02:33:39.8012825+00:00", "runEnded": "2026-07-29T02:37:13.2601146+00:00"}};
+window.LyoBench = window.LyoBench || {reports: {}, history: {}, historyIndex: {}};
+window.LyoBench.reports["lock"] = {
+    "type": "micro",
+    "groups": [{
+        "name": "LocalLockBenchmarks",
+        "description": "In-process LocalLockService: a baseline uncontended acquire/release on a unique key, and a bounded contended scenario where N contenders execute-with-lock on one shared key (directional coordination-overhead signal, not throughput).",
+        "parameters": [{"name": "Contenders", "unit": "tasks", "description": "Number of concurrent tasks contending for the single shared key in the contended case (2 or 8)."}],
+        "measurements": [{
+            "method": "Uncontended_AcquireRelease",
+            "parameters": {"Contenders": "2"},
+            "meanNs": 555.2458885192871,
+            "stdDevNs": 9.14814700233485,
+            "allocatedBytes": 448,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "slaTarget": "<= 10 \u00b5s",
+            "slaResult": "Exceeds",
+            "slaStandard": "An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.",
+            "deltaMeanPct": 2.641663554577998,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Contended_SingleKey",
+            "parameters": {"Contenders": "2"},
+            "meanNs": 408.9924198332287,
+            "stdDevNs": 9.697225537386647,
+            "allocatedBytes": 848,
+            "ratioToBaseline": 0.7365969353216056,
+            "isBaseline": false,
+            "deltaMeanPct": 0.2182053402146937,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Uncontended_AcquireRelease",
+            "parameters": {"Contenders": "8"},
+            "meanNs": 551.4935975392659,
+            "stdDevNs": 8.779242501818429,
+            "allocatedBytes": 448,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "slaTarget": "<= 10 \u00b5s",
+            "slaResult": "Exceeds",
+            "slaStandard": "An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.",
+            "deltaMeanPct": 0.7687472474852773,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Contended_SingleKey",
+            "parameters": {"Contenders": "8"},
+            "meanNs": 1484.7244598388672,
+            "stdDevNs": 23.608242576739954,
+            "allocatedBytes": 3104,
+            "ratioToBaseline": 2.6921880262320834,
+            "isBaseline": false,
+            "deltaMeanPct": 2.1679150642764364,
+            "deltaAllocPct": 0.0
+        }]
+    }, {
+        "name": "LockComparisonBenchmarks",
+        "description": "Uncontended acquire/release and execute-with-lock on a unique key, comparing in-process LocalLockService against distributed RedisLockService (throwaway Docker Redis). Isolates per-operation lock cost.",
+        "parameters": [],
+        "measurements": [{
+            "method": "Local_AcquireRelease",
+            "parameters": {},
+            "meanNs": 566.8809045862268,
+            "stdDevNs": 14.778887744304138,
+            "allocatedBytes": 440,
+            "ratioToBaseline": 1,
+            "isBaseline": true,
+            "slaTarget": "<= 10 \u00b5s",
+            "slaResult": "Exceeds",
+            "slaStandard": "An uncontended in-process lock acquire/release should be a few microseconds (no network).",
+            "deltaMeanPct": 2.9993818663619014,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Redis_AcquireRelease",
+            "parameters": {},
+            "meanNs": 158290.16251953124,
+            "stdDevNs": 4209.322720352268,
+            "allocatedBytes": 2624,
+            "ratioToBaseline": 279.23001328659876,
+            "isBaseline": false,
+            "slaTarget": "<= 5 ms",
+            "slaResult": "Exceeds",
+            "slaStandard": "A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.",
+            "deltaMeanPct": 13.609363183562417,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Local_ExecuteWithLock",
+            "parameters": {},
+            "meanNs": 574.8065472330366,
+            "stdDevNs": 9.006953943827645,
+            "allocatedBytes": 480,
+            "ratioToBaseline": 1.0139811423928535,
+            "isBaseline": false,
+            "slaTarget": "<= 15 \u00b5s",
+            "slaResult": "Exceeds",
+            "slaStandard": "In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.",
+            "deltaMeanPct": -3.1254721941831223,
+            "deltaAllocPct": 0.0
+        }, {
+            "method": "Redis_ExecuteWithLock",
+            "parameters": {},
+            "meanNs": 198612.88880859374,
+            "stdDevNs": 43229.98444541496,
+            "allocatedBytes": 2880,
+            "ratioToBaseline": 350.3608733364615,
+            "isBaseline": false,
+            "slaTarget": "<= 5 ms",
+            "slaResult": "Exceeds",
+            "slaStandard": "Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.",
+            "deltaMeanPct": 42.60964604804391,
+            "deltaAllocPct": 0.0
+        }]
+    }],
+    "slo": [{
+        "area": "Local_AcquireRelease",
+        "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release should be a few microseconds (no network).",
+        "latest": "566.88 ns",
+        "result": "Exceeds"
+    }, {
+        "area": "Local_ExecuteWithLock",
+        "target": "<= 15 \u00b5s \u2014 In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.",
+        "latest": "574.81 ns",
+        "result": "Exceeds"
+    }, {
+        "area": "Redis_AcquireRelease",
+        "target": "<= 5 ms \u2014 A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.",
+        "latest": "158.29 \u00b5s",
+        "result": "Exceeds"
+    }, {
+        "area": "Redis_ExecuteWithLock",
+        "target": "<= 5 ms \u2014 Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.",
+        "latest": "198.61 \u00b5s",
+        "result": "Exceeds"
+    }, {
+        "area": "Uncontended_AcquireRelease",
+        "target": "<= 10 \u00b5s \u2014 An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.",
+        "latest": "555.25 ns",
+        "result": "Exceeds"
+    }],
+    "grades": [{"category": "LocalLockBenchmarks", "grade": "A", "rationale": "2 exceed of 2 SLA targets vs declared standards"}, {
+        "category": "LockComparisonBenchmarks",
+        "grade": "A",
+        "rationale": "4 exceed of 4 SLA targets vs declared standards"
+    }],
+    "schema": "lyo.bench/v1",
+    "name": "lock",
+    "title": "Locking",
+    "description": "Distributed-lock primitives for Lyo.Lock: uncontended acquire/release and execute-with-lock for the in-process LocalLockService vs the distributed RedisLockService (throwaway Docker Redis), plus a bounded contended local scenario. Each operation uses a unique key (GUID) so cases are uncontended unless stated; the contended case measures coordination overhead under N contenders, not raw throughput.",
+    "runId": "BenchmarkRun-joined-2026-08-01-03-37-55",
+    "generatedAt": "2026-08-01T03:37:55.4519096+00:00",
+    "runStarted": "2026-08-01T03:34:31.9453835+00:00",
+    "runEnded": "2026-08-01T03:37:55.4519096+00:00",
+    "durationSeconds": 203.5065261,
+    "environment": {
+        "tool": "BenchmarkDotNet",
+        "toolVersion": "0.15.8",
+        "runtime": ".NET 10.0.0",
+        "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+        "os": "Ubuntu 24.04.3 LTS",
+        "architecture": "X64",
+        "logicalCores": 14,
+        "physicalCores": 12,
+        "memoryBytes": 6442450944,
+        "gcMode": "Workstation",
+        "configuration": "Release",
+        "dotnetSdkVersion": "10.0.100",
+        "dependencies": {
+            "BenchmarkDotNet": "0.15.8",
+            "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+            "Microsoft.Extensions.DependencyInjection": "10.0.5",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+            "StackExchange.Redis": "2.12.0",
+            "Testcontainers.Redis": "4.13.0"
+        }
+    },
+    "notes": [],
+    "history": [{
+        "file": "20260628T144124Z_BenchmarkRun-joined-2026-06-28-10-41-24.json",
+        "runId": "BenchmarkRun-joined-2026-06-28-10-41-24",
+        "runStarted": null,
+        "runEnded": null,
+        "generatedAt": "2026-06-28T14:41:24.4518484+00:00",
+        "isCurrent": false,
+        "measurementCount": 8,
+        "medianMeanNs": 634.5403794740375
+    }, {
+        "file": "20260704T030053Z_BenchmarkRun-joined-2026-07-04-03-00-53.json",
+        "runId": "BenchmarkRun-joined-2026-07-04-03-00-53",
+        "runStarted": "2026-07-04T02:54:05.6338987+00:00",
+        "runEnded": "2026-07-04T03:00:53.3121765+00:00",
+        "generatedAt": "2026-07-04T03:00:53.3121765+00:00",
+        "isCurrent": false,
+        "measurementCount": 8,
+        "medianMeanNs": 592.4152133151738
+    }, {
+        "file": "20260704T033056Z_BenchmarkRun-joined-2026-07-04-03-30-56.json",
+        "runId": "BenchmarkRun-joined-2026-07-04-03-30-56",
+        "runStarted": "2026-07-04T03:27:52.6282646+00:00",
+        "runEnded": "2026-07-04T03:30:56.7049437+00:00",
+        "generatedAt": "2026-07-04T03:30:56.7049437+00:00",
+        "isCurrent": false,
+        "measurementCount": 8,
+        "medianMeanNs": 558.1642298698425
+    }, {
+        "file": "20260708T010245Z_BenchmarkRun-joined-2026-07-08-01-02-45.json",
+        "runId": "BenchmarkRun-joined-2026-07-08-01-02-45",
+        "runStarted": "2026-07-08T00:57:05.8653134+00:00",
+        "runEnded": "2026-07-08T01:02:45.8463811+00:00",
+        "generatedAt": "2026-07-08T01:02:45.8463811+00:00",
+        "isCurrent": false,
+        "measurementCount": 8,
+        "medianMeanNs": 567.255423949315
+    }, {
+        "file": "20260729T023713Z_BenchmarkRun-joined-2026-07-29-02-37-13.json",
+        "runId": "BenchmarkRun-joined-2026-07-29-02-37-13",
+        "runStarted": "2026-07-29T02:33:39.8012825+00:00",
+        "runEnded": "2026-07-29T02:37:13.2601146+00:00",
+        "generatedAt": "2026-07-29T02:37:13.2601146+00:00",
+        "isCurrent": false,
+        "measurementCount": 8,
+        "medianMeanNs": 593.3515860693796
+    }, {
+        "file": "20260801T033755Z_BenchmarkRun-joined-2026-08-01-03-37-55.json",
+        "runId": "BenchmarkRun-joined-2026-08-01-03-37-55",
+        "runStarted": "2026-08-01T03:34:31.9453835+00:00",
+        "runEnded": "2026-08-01T03:37:55.4519096+00:00",
+        "generatedAt": "2026-08-01T03:37:55.4519096+00:00",
+        "isCurrent": true,
+        "measurementCount": 8,
+        "medianMeanNs": 574.8065472330366
+    }],
+    "deltaBaseline": {
+        "kind": "previousRun",
+        "runId": "BenchmarkRun-joined-2026-07-29-02-37-13",
+        "runStarted": "2026-07-29T02:33:39.8012825+00:00",
+        "runEnded": "2026-07-29T02:37:13.2601146+00:00"
+    }
+};

@@ -6,7 +6,7 @@ namespace Lyo.Compression;
 
 /// <summary>
 /// Dispatches compress/decompress to a specific <see cref="CompressionAlgorithm" /> using registered <see cref="ICompressorFactory" /> instances. Default implementation:
-/// <see cref="CompressionService" /> (register via <see cref="Extensions.AddCompressionService" /> or <see cref="Extensions.AddCompressionResolver" />). Uses
+/// <see cref="CompressionService" /> (register via <see cref="Extensions.AddCompressionService()" /> or <see cref="Extensions.AddCompressionResolver()" />). Uses
 /// <see cref="CompressionServiceOptions.Default" /> when constructed without explicit options.
 /// </summary>
 public interface ICompressionResolver

@@ -1,6 +1,7 @@
 # Lyo.Streams
 
-Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).
+Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **
+`HashingStream`**).
 
 ## Features
 
@@ -8,7 +9,8 @@ Common stream implementations including **TeeStream**, **CountingStream**, **Pro
 - **CountingStream** – Track bytes read or written
 - **ProgressStream** – Report progress during stream operations
 - **ConcatenatedStream** – Sequentially read from multiple streams
-- **DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`
+- **DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with
+  `Lyo.Testing.TestData` and `BenchmarkData`
 - **NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)
 - **StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)
 - **StreamChunkSizeHelper** – Determine optimal buffer size for stream operations

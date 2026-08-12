@@ -6,8 +6,7 @@
 ---
 
 **Lyo** is a production-ready API framework for .NET that gives you 17 fully-featured endpoints from a single builder call. Dynamic queries, **SQL-aware field projection** (
-`QueryProject`), full CRUD, bulk operations, caching,
-auth, and observability — all wired together, all out of the box.
+`QueryProject`), full CRUD, bulk operations, caching, auth, and observability — all wired together, all out of the box.
 
 ```csharp
 app.CreateBuilder<AppDbContext, PersonEntity, PersonRequest, PersonResponse>("person")
@@ -295,63 +294,63 @@ Use it in background jobs, data pipelines, report generation — anywhere you fi
 ## Performance
 
 Benchmarked on a laptop (Intel Core Ultra 7 155U, 62 GB RAM) with API, PostgreSQL, and the load generator all running on the same machine. Latest archived k6 suite: **July 2026**
-(`k6/framework-person/results/20260726-235847/`), the full 12-suite matrix (QueryConcrete / QueryProject / root `/Query` × load/stress/spike/soak, **~1.35M requests** total).
-**`CacheOptions:QueryCacheTagGranularity`** was **`Broad`** (non-granular tags, default) and the harness bypasses caches. See `K6_BENCHMARK_ANALYSIS.md` for methodology and
-caveats. Production deployments on dedicated infrastructure would perform better.
+(`k6/framework-person/results/20260726-235847/`), the full 12-suite matrix (QueryConcrete / QueryProject / root `/Query` × load/stress/spike/soak, **~1.35M requests** total). **
+`CacheOptions:QueryCacheTagGranularity`** was **`Broad`** (non-granular tags, default) and the harness bypasses caches. See `K6_BENCHMARK_ANALYSIS.md` for methodology and caveats.
+Production deployments on dedicated infrastructure would perform better.
 
 ### Lightweight Queries (projections, root joins, computed fields)
 
 QueryProject and root `/Query` suites under load/spike/soak (July 2026 archive):
 
-| Metric          | Result (July 2026 archive)                                     |
-|-----------------|----------------------------------------------------------------|
-| Scenario spread | **~12–23 ms** avg (root load → projection spike)               |
-| p95 latency     | **~31–65 ms** (scenario-dependent; medians **~8–13 ms**)       |
-| p99 latency     | **~42–84 ms**                                                  |
-| Throughput      | 7–60 req/s sustained (arrival-rate capped)                     |
-| Success rate    | **100%**                                                       |
+| Metric          | Result (July 2026 archive)                               |
+|-----------------|----------------------------------------------------------|
+| Scenario spread | **~12–23 ms** avg (root load → projection spike)         |
+| p95 latency     | **~31–65 ms** (scenario-dependent; medians **~8–13 ms**) |
+| p99 latency     | **~42–84 ms**                                            |
+| Throughput      | 7–60 req/s sustained (arrival-rate capped)               |
+| Success rate    | **100%**                                                 |
 
-Root flat select averages **~3 ms**; scalar computed projection (`fullName`) **~4 ms**; a chained three-table root join with exact count stays **~23 ms** avg under load — on
-shared laptop hardware with cache-bypassing pagination.
+Root flat select averages **~3 ms**; scalar computed projection (`fullName`) **~4 ms**; a chained three-table root join with exact count stays **~23 ms** avg under load — on shared
+laptop hardware with cache-bypassing pagination.
 
 ### Heavy Navigation Queries (full entities, 1–3 include branches, 100–300 rows)
 
 Full-entity `QueryConcrete` suites, `realistic_include`/`heavy_include` cases (person → contact_addresses → address, up to 3 include branches):
 
-| Metric                     | Result (July 2026 archive)                       |
-|----------------------------|--------------------------------------------------|
-| Steady-state average       | **~96–119 ms** (spike/soak)                      |
-| Steady-state p95           | ~224–233 ms                                      |
-| Stress (ramp to 40 VUs)    | ~659 ms avg / ~1.79 s p95                        |
-| Throughput                 | **71 req/s** mixed-case stress (**34K** requests in the stress stage) |
-| Success rate               | status/shape **100%**; checks **99.98%** under stress |
+| Metric                  | Result (July 2026 archive)                                            |
+|-------------------------|-----------------------------------------------------------------------|
+| Steady-state average    | **~96–119 ms** (spike/soak)                                           |
+| Steady-state p95        | ~224–233 ms                                                           |
+| Stress (ramp to 40 VUs) | ~659 ms avg / ~1.79 s p95                                             |
+| Throughput              | **71 req/s** mixed-case stress (**34K** requests in the stress stage) |
+| Success rate            | status/shape **100%**; checks **99.98%** under stress                 |
 
 API, Postgres, and k6 share CPU under load, so the stress tail is pessimistic. Lighter `QueryConcrete` cases (baseline, filter+sort, subquery, QueryNode tree) stay **~14–22 ms
 p95** under load; see `K6_BENCHMARK_ANALYSIS.md` and the dashboard for per-case hotspots.
 
 ### Sustained Load (three 2-hour soak tests)
 
-| Metric          | Result (July 2026 archive)                                                     |
-|-----------------|--------------------------------------------------------------------------------|
-| Total requests  | **1,178,393** (340K Query · 406K QueryProject · 432K root Query)               |
-| Duration        | 3 × 2 hours (one soak per endpoint family)                                     |
-| Average latency | **12–45 ms** per endpoint family                                               |
-| Success rate    | **100%** (all k6 checks)                                                       |
-| Errors          | **0**                                                                          |
+| Metric          | Result (July 2026 archive)                                       |
+|-----------------|------------------------------------------------------------------|
+| Total requests  | **1,178,393** (340K Query · 406K QueryProject · 432K root Query) |
+| Duration        | 3 × 2 hours (one soak per endpoint family)                       |
+| Average latency | **12–45 ms** per endpoint family                                 |
+| Success rate    | **100%** (all k6 checks)                                         |
+| Errors          | **0**                                                            |
 
 Zero HTTP failures across all three soak windows. Mixed query cases with periodic heavy-include shapes; tail latency includes intentional heavy shapes — p95 stayed at **181 ms**
 (Query), **65 ms** (QueryProject), and **31 ms** (root Query).
 
 ### How This Compares
 
-| Framework                          | Typical dynamic read p95 (industry ballpark) | Notes                                 |
-|------------------------------------|----------------------------------------------|---------------------------------------|
+| Framework                          | Typical dynamic read p95 (industry ballpark)                                            | Notes                                 |
+|------------------------------------|-----------------------------------------------------------------------------------------|---------------------------------------|
 | **Lyo** (archived k6)              | **~31–65 ms** projection/root scenarios (medians ~8–13 ms; lightest shapes ~4–6 ms p95) | Expression trees + EF Core + Postgres |
-| Hasura / PostgREST                 | 5–30 ms                                      | No ORM — direct DB to JSON            |
-| Typical EF Core API (hand-written) | 50–200 ms                                    | Manual filter/sort implementation     |
-| Django REST Framework              | 50–300 ms                                    | Python ORM                            |
-| Spring Boot + JPA                  | 30–150 ms                                    | Hibernate                             |
-| Ruby on Rails                      | 80–400 ms                                    | ActiveRecord                          |
+| Hasura / PostgREST                 | 5–30 ms                                                                                 | No ORM — direct DB to JSON            |
+| Typical EF Core API (hand-written) | 50–200 ms                                                                               | Manual filter/sort implementation     |
+| Django REST Framework              | 50–300 ms                                                                               | Python ORM                            |
+| Spring Boot + JPA                  | 30–150 ms                                                                               | Hibernate                             |
+| Ruby on Rails                      | 80–400 ms                                                                               | ActiveRecord                          |
 
 Lyo stays in the **same order of magnitude** as thin Postgres-to-JSON gateways for comparable read shapes on this hardware, while keeping full EF Core mapping, navigation fixup,
 and the dynamic query surface.
@@ -471,5 +470,4 @@ Lyo works with your existing EF Core entities and DbContext. No base classes to 
 
 **Is it production-ready?**
 Yes. Benchmarked under sustained load (301K requests, 2 hours, zero HTTP failures), with OpenTelemetry instrumentation, structured logging, and clean error responses with
-trace/span
-IDs.
+trace/span IDs.

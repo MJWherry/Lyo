@@ -25,18 +25,13 @@ internal static class XChaCha20Poly1305Helper
         => Encrypt(plaintext.AsSpan(), key, nonce24, associatedData);
 
     /// <summary>Encrypts into caller-provided <paramref name="ciphertext" /> and <paramref name="tag" /> buffers.</summary>
-    public static void Encrypt(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        ReadOnlySpan<byte> nonce24,
-        Span<byte> ciphertext,
-        Span<byte> tag,
-        byte[]? associatedData = null)
+    public static void Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, ReadOnlySpan<byte> nonce24, Span<byte> ciphertext, Span<byte> tag, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIf(ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+        ArgumentHelpers.ThrowIf(
+            ciphertext.Length != plaintext.Length, $"Ciphertext span length ({ciphertext.Length}) must equal plaintext length ({plaintext.Length}).", nameof(ciphertext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce24.Length != NonceSize, $"Nonce length ({nonce24.Length}) must be {NonceSize}.", nameof(nonce24));
-
         var subkey = new byte[32];
         try {
             HChaCha20.Block(key, nonce24[..16], subkey);
@@ -56,7 +51,7 @@ internal static class XChaCha20Poly1305Helper
                         tlen = chacha.ProcessBytes(pb, 0, plaintext.Length, outBuf, 0);
                     }
                     finally {
-                        ArrayPool<byte>.Shared.Return(pb, clearArray: true);
+                        ArrayPool<byte>.Shared.Return(pb, true);
                     }
                 }
 
@@ -67,7 +62,7 @@ internal static class XChaCha20Poly1305Helper
                 outBuf.AsSpan(plaintext.Length, TagSize).CopyTo(tag);
             }
             finally {
-                ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+                ArrayPool<byte>.Shared.Return(outBuf, true);
             }
         }
         finally {
@@ -83,18 +78,13 @@ internal static class XChaCha20Poly1305Helper
     }
 
     /// <summary>Decrypts into caller-provided <paramref name="plaintext" /> (must be sized to ciphertext length).</summary>
-    public static void Decrypt(
-        ReadOnlySpan<byte> ciphertext,
-        ReadOnlySpan<byte> tag,
-        byte[] key,
-        ReadOnlySpan<byte> nonce24,
-        Span<byte> plaintext,
-        byte[]? associatedData = null)
+    public static void Decrypt(ReadOnlySpan<byte> ciphertext, ReadOnlySpan<byte> tag, byte[] key, ReadOnlySpan<byte> nonce24, Span<byte> plaintext, byte[]? associatedData = null)
     {
-        ArgumentHelpers.ThrowIf(plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+        ArgumentHelpers.ThrowIf(
+            plaintext.Length != ciphertext.Length, $"Plaintext span length ({plaintext.Length}) must equal ciphertext length ({ciphertext.Length}).", nameof(plaintext));
+
         ArgumentHelpers.ThrowIf(tag.Length != TagSize, $"Tag span length ({tag.Length}) must be {TagSize}.", nameof(tag));
         ArgumentHelpers.ThrowIf(nonce24.Length != NonceSize, $"Nonce length ({nonce24.Length}) must be {NonceSize}.", nameof(nonce24));
-
         var subkey = new byte[32];
         try {
             HChaCha20.Block(key, nonce24[..16], subkey);
@@ -116,7 +106,7 @@ internal static class XChaCha20Poly1305Helper
                         outBuf.AsSpan(0, len).CopyTo(plaintext);
                     }
                     finally {
-                        ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+                        ArrayPool<byte>.Shared.Return(outBuf, true);
                     }
                 }
                 catch (InvalidCipherTextException ex) {
@@ -124,7 +114,7 @@ internal static class XChaCha20Poly1305Helper
                 }
             }
             finally {
-                ArrayPool<byte>.Shared.Return(combined, clearArray: true);
+                ArrayPool<byte>.Shared.Return(combined, true);
             }
         }
         finally {

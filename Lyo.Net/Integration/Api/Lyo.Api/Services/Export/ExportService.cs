@@ -297,9 +297,9 @@ public class ExportService<TContext>(
             Amount = source.Amount,
             Options = new() { TotalCountMode = source.Options.TotalCountMode, IncludeFilterMode = source.Options.IncludeFilterMode },
             WhereClause = source.WhereClause,
-            Include = [..source.Include],
-            Keys = [..source.Keys.Select(k => k.ToArray())],
-            SortBy = [..source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
+            Include = [.. source.Include],
+            Keys = [.. source.Keys.Select(k => k.ToArray())],
+            SortBy = [.. source.SortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })]
         };
 
     private sealed record ExportColumnPlan(HashSet<string> RequiredSelects, List<ComputedField> ComputedFields, List<(string Header, string LookupKey)> ColumnMappings);

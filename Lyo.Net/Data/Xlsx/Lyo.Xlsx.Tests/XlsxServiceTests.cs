@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using ClosedXML.Excel;
 using ExcelDataReader;
 using Lyo.DataTable.Models;
 using Lyo.IO.Temp.Models;
@@ -98,7 +99,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     public void ParseXlsxBytesAsDataTableWithFormatting_UnstyledSheet_HasNoFormats()
     {
         EnsureCodePages();
-        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        using var workbook = new XLWorkbook();
         var ws = workbook.AddWorksheet("Sheet1");
         ws.Cell(1, 1).Value = "A";
         ws.Cell(1, 2).Value = "B";
@@ -107,9 +108,8 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         using var ms = new MemoryStream();
         workbook.SaveAs(ms);
         var bytes = ms.ToArray();
-
         var svc = new XlsxService(_logger);
-        var result = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, useHeaderRow: true);
+        var result = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, true);
         Assert.True(result.IsSuccess);
         Assert.False(result.ValueOrThrow().HasFormats);
     }
@@ -117,7 +117,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void BuildFromDataTable_thin_skips_headerFormats()
     {
-        var table = new Lyo.DataTable.Models.DataTable();
+        var table = new DataTable.Models.DataTable();
         table.SetHeader(0, "H");
         table.AddRow().SetCell(0, "v");
         var (_, _, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(table);
@@ -131,12 +131,12 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     {
         EnsureCodePages();
         var svc = new XlsxService(_logger);
-        var dt = new Lyo.DataTable.Models.DataTable();
+        var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "X").SetHeader(1, "Y");
         dt.AddRow().SetCell(0, "1").SetCell(1, "2");
         dt.SetFooter(0, "Total").SetFooter(1, "2");
         var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
-        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, true, true).ValueOrThrow();
         Assert.Single(parsed.Rows);
         Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
         Assert.Equal("Total", parsed.Footer[0].DisplayValue);
@@ -148,7 +148,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     {
         EnsureCodePages();
         var svc = new XlsxService(_logger);
-        var dt = new Lyo.DataTable.Models.DataTable();
+        var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "X").SetHeader(1, "Y");
         dt.AddRow().SetCell(0, "1").SetCell(1, "2");
         dt.SetFooter(0, "Total").SetFooter(1, "2");
@@ -164,10 +164,10 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     {
         EnsureCodePages();
         var svc = new XlsxService(_logger);
-        var withEmpty = new Lyo.DataTable.Models.DataTable();
+        var withEmpty = new DataTable.Models.DataTable();
         withEmpty.SetHeader(0, "A");
         withEmpty.AddRow().SetCell(0, "1");
-        var without = new Lyo.DataTable.Models.DataTable();
+        var without = new DataTable.Models.DataTable();
         without.SetHeader(0, "A");
         without.AddRow().SetCell(0, "1");
         var parsedEmpty = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytesFromDataTable(withEmpty)).ValueOrThrow();
@@ -186,8 +186,9 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
             [1] = new Dictionary<int, string> { [0] = "a", [1] = "b" },
             [2] = new Dictionary<int, string> { [0] = "Total", [1] = "1" }
         };
-        var bytes = svc.ExportToXlsxBytesFromDictionary(data, useHeaderRow: true, useFooterRow: true);
-        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+
+        var bytes = svc.ExportToXlsxBytesFromDictionary(data, true, true);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, true, true).ValueOrThrow();
         Assert.Single(parsed.Rows);
         Assert.Equal("a", parsed.Rows[0][0].DisplayValue);
         Assert.Equal("Total", parsed.Footer[0].DisplayValue);
@@ -199,12 +200,12 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     {
         EnsureCodePages();
         var svc = new XlsxService(_logger);
-        var dt = new Lyo.DataTable.Models.DataTable();
+        var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "X");
         dt.AddRow().SetCell(0, "1");
-        dt.SetFooter(0, "Total", new DataTableCellFormat(FontBold: true));
+        dt.SetFooter(0, "Total", new(FontBold: true));
         var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
-        var parsed = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, useHeaderRow: true, useFooterRow: true).ValueOrThrow();
+        var parsed = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, true, true).ValueOrThrow();
         Assert.Equal("Total", parsed.Footer[0].DisplayValue);
         Assert.True(parsed.GetFormat(-2, 0)?.FontBold == true);
     }
@@ -212,11 +213,11 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void CreatePartFromRows_CopiesFooterAndFormats()
     {
-        var source = new Lyo.DataTable.Models.DataTable();
+        var source = new DataTable.Models.DataTable();
         source.SetHeader(0, "H");
         source.AddRow().SetCell(0, "a");
         source.AddRow().SetCell(0, "b");
-        source.SetFooter(0, "Sum", new DataTableCellFormat(FontBold: true));
+        source.SetFooter(0, "Sum", new(FontBold: true));
         var part = XlsxService.CreatePartFromRows(source, 0, 1);
         Assert.Single(part.Rows);
         Assert.Equal("a", part.Rows[0][0].DisplayValue);
@@ -652,7 +653,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "A").SetHeader(1, "B").SetHeader(2, "C");
         // Row 0: "Merged" spans two columns; row 0-1: "Tall" spans two rows in column 2.
-        dt.SetCell(0, 0, new DataTableCell<string>("Merged", ColSpan: 2));
+        dt.SetCell(0, 0, new DataTableCell<string>("Merged", 2));
         dt.SetCell(0, 2, new DataTableCell<string>("Tall", RowSpan: 2));
         dt.SetCell(1, 0, "x");
         dt.SetCell(1, 1, "y");
@@ -1007,7 +1008,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var svc = new XlsxService(_logger);
         var spanned = new DataTable.Models.DataTable();
         spanned.SetHeader(0, "A").SetHeader(1, "B");
-        spanned.SetCell(0, 0, new DataTableCell<string>("wide", ColSpan: 2));
+        spanned.SetCell(0, 0, new DataTableCell<string>("wide", 2));
         using var ms = new MemoryStream();
         using (var doc = svc.CreateDocumentWriter(ms))
             doc.AddSheetFromDataTable("Spans", spanned, TestContext.Current.CancellationToken);

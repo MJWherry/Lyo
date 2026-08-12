@@ -19,20 +19,18 @@ public sealed class BinaryEncodingTests
     }
 
     [Fact]
-    public void Encode_Empty_ReturnsEmptyString()
-        => Assert.Equal(string.Empty, BinaryEncoding.Encode(BinaryEncodingKind.Base64, ReadOnlySpan<byte>.Empty));
+    public void Encode_Empty_ReturnsEmptyString() => Assert.Equal(string.Empty, BinaryEncoding.Encode(BinaryEncodingKind.Base64, ReadOnlySpan<byte>.Empty));
 
     [Fact]
     public void TryEncode_DestinationTooSmall_ReturnsFalse()
     {
         var data = TestData.Create(8);
         Span<char> dest = stackalloc char[2];
-        Assert.False(BinaryEncoding.TryEncode(BinaryEncodingKind.Hex, data, dest, out _));
+        Assert.False(BinaryEncoding.TryEncode(BinaryEncodingKind.Hex, data, dest, out var _));
     }
 
     [Fact]
-    public void TryDecode_InvalidHex_ReturnsFalse()
-        => Assert.False(BinaryEncoding.TryDecode(BinaryEncodingKind.Hex, "zz", out byte[]? _));
+    public void TryDecode_InvalidHex_ReturnsFalse() => Assert.False(BinaryEncoding.TryDecode(BinaryEncodingKind.Hex, "zz", out var _));
 
     [Fact]
     public void Encode_Base64Url_OmitsPaddingAndUsesUrlAlphabet()
@@ -95,7 +93,7 @@ public sealed class BinaryEncodingTests
             Assert.Equal(data, await File.ReadAllBytesAsync(outBin, TestContext.Current.CancellationToken));
         }
         finally {
-            Directory.Delete(dir, recursive: true);
+            Directory.Delete(dir, true);
         }
     }
 
@@ -110,7 +108,7 @@ public sealed class BinaryEncodingTests
     public void Namespace_AllowsSystemTextEncodingWithoutAlias()
     {
         // Compiles in Lyo.TextEncoding.Tests without TextEncoding alias — Encoding means BCL.
-        Encoding utf8 = Encoding.UTF8;
+        var utf8 = Encoding.UTF8;
         Assert.Equal(65001, utf8.CodePage);
     }
 }

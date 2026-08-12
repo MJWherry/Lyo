@@ -22,14 +22,14 @@ public class ApiClient : IApiClient
     private const string Put = "PUT";
     private const string Patch = "PATCH";
     private const string Delete = "DELETE";
-
-    //Save type:property converters based on attribute so we don't need to recreate
-    private readonly ConcurrentDictionary<string, JsonConverter> _savedConverters = new();
     protected readonly ApiClientOptions BaseOptions;
 
     protected readonly HttpClient HttpClient;
     protected readonly ILogger Logger;
     public readonly JsonSerializerOptions SerializerOptions;
+
+    //Save type:property converters based on attribute so we don't need to recreate
+    private readonly ConcurrentDictionary<string, JsonConverter> _savedConverters = new();
 
     public ApiClient(ILogger? logger = null, HttpClient? httpClient = null, JsonSerializerOptions? serializerOptions = null, ApiClientOptions? options = null)
     {

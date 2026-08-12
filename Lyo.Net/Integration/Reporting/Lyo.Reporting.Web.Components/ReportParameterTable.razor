@@ -1,7 +1,3 @@
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ChipInput
-@using Lyo.Web.Components.ParamOptions
-
 <MudStack Spacing="2">
     <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.h6">@Title</MudText>
@@ -88,41 +84,41 @@
                 <tr>
                     <td colspan="6">
                         <MudPaper Outlined="true" Class="pa-3" Elevation="0">
-                        <MudStack Spacing="2">
-                            <MudStack Row Spacing="3" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
-                                <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))"
-                                             Label="Required" Dense="true" Class="ma-0 mt-2"/>
-                                <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))"
-                                             Label="Allow multiple" Dense="true" Class="ma-0 mt-2"/>
-                                <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 220px;">
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">Allowed values</MudText>
-                                    <LyoChipInput Values="@ParameterListJson.Parse(row.AllowedValues)"
-                                                  ValuesChanged="@(v => Set(() => row.AllowedValues = ParameterListJson.Serialize(v, ToListKind(row.Type))))"
-                                                  Placeholder="Type and press Enter"/>
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
-                                        Optional server validation list; also used as a simple select when Options is empty
-                                    </MudText>
+                            <MudStack Spacing="2">
+                                <MudStack Row Spacing="3" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
+                                    <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))"
+                                                 Label="Required" Dense="true" Class="ma-0 mt-2"/>
+                                    <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))"
+                                                 Label="Allow multiple" Dense="true" Class="ma-0 mt-2"/>
+                                    <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 220px;">
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">Allowed values</MudText>
+                                        <LyoChipInput Values="@ParameterListJson.Parse(row.AllowedValues)"
+                                                      ValuesChanged="@(v => Set(() => row.AllowedValues = ParameterListJson.Serialize(v, ToListKind(row.Type))))"
+                                                      Placeholder="Type and press Enter"/>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                                            Optional server validation list; also used as a simple select when Options is empty
+                                        </MudText>
+                                    </MudStack>
                                 </MudStack>
+                                <MudSelect T="ParameterOptionsKind?"
+                                           Value="@ParameterOptionsJson.TryGetKind(row.Options)"
+                                           ValueChanged="@(v => SetOptionsKind(row, v))"
+                                           Label="Options kind"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           Dense="true"
+                                           Clearable="true"
+                                           HelperText="Leave empty for no picker (typed Value input only)"
+                                           Style="max-width: 280px;">
+                                    <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
+                                    <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+                                </MudSelect>
+                                @if (ParameterOptionsJson.TryGetKind(row.Options) is not null) {
+                                    <LyoParameterOptionsEditor ShowKindSelect="false"
+                                                               OptionsJson="@row.Options"
+                                                               OptionsJsonChanged="@(v => Set(() => row.Options = v))"/>
+                                }
                             </MudStack>
-                            <MudSelect T="ParameterOptionsKind?"
-                                       Value="@ParameterOptionsJson.TryGetKind(row.Options)"
-                                       ValueChanged="@(v => SetOptionsKind(row, v))"
-                                       Label="Options kind"
-                                       Variant="Variant.Outlined"
-                                       Margin="Margin.Dense"
-                                       Dense="true"
-                                       Clearable="true"
-                                       HelperText="Leave empty for no picker (typed Value input only)"
-                                       Style="max-width: 280px;">
-                                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
-                                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
-                            </MudSelect>
-                            @if (ParameterOptionsJson.TryGetKind(row.Options) is not null) {
-                                <LyoParameterOptionsEditor ShowKindSelect="false"
-                                                           OptionsJson="@row.Options"
-                                                           OptionsJsonChanged="@(v => Set(() => row.Options = v))"/>
-                            }
-                        </MudStack>
                         </MudPaper>
                     </td>
                 </tr>
@@ -149,11 +145,9 @@
 
     private readonly HashSet<ReportParameterEditRow> _expanded = [];
 
-    private Dictionary<string, string?> SiblingMap
-        => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string?> SiblingMap => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
 
-    private static bool HasPicker(ReportParameterEditRow row)
-        => !string.IsNullOrWhiteSpace(row.Options) || !string.IsNullOrWhiteSpace(row.AllowedValues);
+    private static bool HasPicker(ReportParameterEditRow row) => !string.IsNullOrWhiteSpace(row.Options) || !string.IsNullOrWhiteSpace(row.AllowedValues);
 
     private static ParameterListJsonKind ToListKind(ReportParameterType type)
         => type switch {
@@ -187,7 +181,13 @@
 
     private async Task AddRow()
     {
-        var row = new ReportParameterEditRow { IsNew = true, Key = $"Param{Items.Count + 1}", Type = ReportParameterType.String, Required = true };
+        var row = new ReportParameterEditRow {
+            IsNew = true,
+            Key = $"Param{Items.Count + 1}",
+            Type = ReportParameterType.String,
+            Required = true
+        };
+
         Items.Add(row);
         _expanded.Add(row);
         if (OnChanged.HasDelegate)

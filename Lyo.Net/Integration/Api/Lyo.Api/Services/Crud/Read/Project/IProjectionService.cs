@@ -14,7 +14,7 @@ public sealed record ProjectedFilterConditions(IReadOnlyList<ProjectedFilterCond
 public interface IProjectionService
 {
     /// <summary>Resolves and normalizes requested field paths for an entity type.</summary>
-    /// <returns>Normalized specs, or an empty spec list with <paramref name="PathErrors" /> when one or more paths fail normalization (all failures are collected).</returns>
+    /// <returns>Normalized specs, or an empty spec list with path errors when one or more paths fail normalization (all failures are collected).</returns>
     (IReadOnlyList<ProjectedFieldSpec> Specs, IReadOnlyList<ApiError> PathErrors) ResolveProjectedFields<TDbModel>(
         IEnumerable<string> requestedFields,
         bool allowSelectWildcards = true,

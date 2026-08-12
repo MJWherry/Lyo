@@ -83,7 +83,7 @@ public static class Extensions
         BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
     };
 
-    /// <summary>Maps Discord REST endpoints (query, CRUD, export). Call after <see cref="AddPostgresDiscord" />.</summary>
+    /// <summary>Maps Discord REST endpoints (query, CRUD, export). Call after <see cref="AddPostgresDiscord(Action{PostgresDiscordOptions})" />.</summary>
     public static WebApplication BuildDiscordGroup(this WebApplication app)
     {
         app.CreateBuilder<DiscordDbContext, DiscordUser, DiscordUserReq, DiscordUserRes, long>(Constants.Rest.Discord.Users, "Discord")

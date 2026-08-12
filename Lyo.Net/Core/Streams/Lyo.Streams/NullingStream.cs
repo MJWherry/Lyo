@@ -3,8 +3,8 @@ using Lyo.Exceptions;
 namespace Lyo.Streams;
 
 /// <summary>
-/// A write-only sink that accepts bytes and discards them (like <c>/dev/null</c>). Use as the consumer for stream encrypt/compress throughput paths when the output need not be
-/// retained.
+/// A write-only sink that accepts bytes and discards them (like <c>/dev/null</c>). Use as the consumer for stream encrypt/compress throughput paths when the output need not
+/// be retained.
 /// </summary>
 public sealed class NullingStream : Stream
 {

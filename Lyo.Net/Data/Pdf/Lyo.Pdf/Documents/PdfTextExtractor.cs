@@ -1950,12 +1950,9 @@ public sealed class PdfTextExtractor : ITextExtractor
             return DataTableCell.FromValue(text);
 
         var format = new DataTableCellFormat(
-            FontSize: firstWithFormat.FontSize,
-            FontName: firstWithFormat.FontName,
-            FontBold: firstWithFormat.FontBold ? true : null,
-            FontItalic: firstWithFormat.FontItalic ? true : null,
-            FontUnderline: firstWithFormat.FontUnderline ? true : null,
-            FontColor: firstWithFormat.FontColor);
+            firstWithFormat.FontSize, firstWithFormat.FontName, firstWithFormat.FontBold ? true : null, firstWithFormat.FontItalic ? true : null,
+            firstWithFormat.FontUnderline ? true : null, FontColor: firstWithFormat.FontColor);
+
         return new PdfFormattedCell(text, format.HasAny() ? format : null);
     }
 
@@ -1970,18 +1967,6 @@ public sealed class PdfTextExtractor : ITextExtractor
         var value = a.DisplayValue + " " + b.DisplayValue;
         var format = (a as PdfFormattedCell)?.Format ?? (b as PdfFormattedCell)?.Format;
         return format != null ? new PdfFormattedCell(value, format) : DataTableCell.FromValue(value);
-    }
-
-    /// <summary>Carries optional format through PDF table extraction until applied on the DataTable map.</summary>
-    private sealed class PdfFormattedCell(string value, DataTableCellFormat? format) : IDataTableCell
-    {
-        public string DisplayValue { get; } = value;
-
-        public int ColSpan => 1;
-
-        public int RowSpan => 1;
-
-        public DataTableCellFormat? Format { get; } = format;
     }
 
     private static bool IsHeaderEchoRowFormatted(Dictionary<string, IDataTableCell> row, ColumnHeader[] headers)
@@ -2150,6 +2135,18 @@ public sealed class PdfTextExtractor : ITextExtractor
         }
 
         return list;
+    }
+
+    /// <summary>Carries optional format through PDF table extraction until applied on the DataTable map.</summary>
+    private sealed class PdfFormattedCell(string value, DataTableCellFormat? format) : IDataTableCell
+    {
+        public DataTableCellFormat? Format { get; } = format;
+
+        public string DisplayValue { get; } = value;
+
+        public int ColSpan => 1;
+
+        public int RowSpan => 1;
     }
 
     private readonly record struct KeySpan(string Key, int StartWordIdx, int EndWordIdx);

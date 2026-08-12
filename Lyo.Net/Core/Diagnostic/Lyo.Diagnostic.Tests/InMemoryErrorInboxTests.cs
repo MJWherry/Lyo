@@ -15,9 +15,9 @@ public sealed class InMemoryErrorInboxTests
         await inbox.RecordAsync(r1, TestContext.Current.CancellationToken);
         await inbox.RecordAsync(r2, TestContext.Current.CancellationToken);
         await inbox.RecordAsync(r3, TestContext.Current.CancellationToken);
-        Assert.False(inbox.TryGetOccurrence(r1.OccurrenceId, out _));
-        Assert.True(inbox.TryGetOccurrence(r2.OccurrenceId, out _));
-        Assert.True(inbox.TryGetOccurrence(r3.OccurrenceId, out _));
+        Assert.False(inbox.TryGetOccurrence(r1.OccurrenceId, out var _));
+        Assert.True(inbox.TryGetOccurrence(r2.OccurrenceId, out var _));
+        Assert.True(inbox.TryGetOccurrence(r3.OccurrenceId, out var _));
     }
 
     [Fact]
@@ -25,25 +25,13 @@ public sealed class InMemoryErrorInboxTests
     {
         var inbox = new InMemoryErrorInbox();
         var ct = TestContext.Current.CancellationToken;
-        await inbox.RecordAsync(Sample("x", ExceptionKind.Unknown), ct);
-        await inbox.RecordAsync(Sample("y", ExceptionKind.Unknown), ct);
+        await inbox.RecordAsync(Sample("x"), ct);
+        await inbox.RecordAsync(Sample("y"), ct);
         var groups = inbox.ListGroups(TimeSpan.FromHours(1));
         Assert.Single(groups);
         Assert.Equal(2, groups[0].OccurrenceCount);
     }
 
     private static ErrorOccurrenceRecord Sample(string occurrenceId, ExceptionKind kind = ExceptionKind.Unknown)
-        => new(
-            occurrenceId,
-            "FP",
-            kind.ToString(),
-            "Svc",
-            ExceptionSeverity.High,
-            DateTimeOffset.UtcNow,
-            null,
-            null,
-            "msg",
-            "test",
-            0,
-            null);
+        => new(occurrenceId, "FP", kind.ToString(), "Svc", ExceptionSeverity.High, DateTimeOffset.UtcNow, null, null, "msg", "test", 0, null);
 }

@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.Text;
 using Lyo.Cli.Services;
 using Lyo.Common.Enums;
-using Lyo.TextEncoding;
 
 namespace Lyo.Cli.Commands;
 
@@ -13,8 +12,8 @@ internal static class EncCommands
         var enc = new Command("enc", "Binary and charset encoding (Lyo.TextEncoding). Not crypto — use 'crypt' for that.");
         foreach (var kind in new[] { "base64", "base64url", "hex" }) {
             var kindCmd = new Command(kind, $"Binary {kind} codec");
-            kindCmd.Subcommands.Add(CreateBinary("encode", kind, encode: true));
-            kindCmd.Subcommands.Add(CreateBinary("decode", kind, encode: false));
+            kindCmd.Subcommands.Add(CreateBinary("encode", kind, true));
+            kindCmd.Subcommands.Add(CreateBinary("decode", kind, false));
             enc.Subcommands.Add(kindCmd);
         }
 
@@ -105,6 +104,7 @@ internal static class EncCommands
                     await input.DisposeAsync().ConfigureAwait(false);
             }
         });
+
         return cmd;
     }
 
@@ -124,6 +124,7 @@ internal static class EncCommands
                     await input.DisposeAsync().ConfigureAwait(false);
             }
         });
+
         return cmd;
     }
 }

@@ -4,13 +4,10 @@ using Lyo.Streams;
 namespace Lyo.Testing;
 
 /// <summary>
-/// Seeded, reproducible byte payloads for xUnit suites. Prefer this over unseeded <see cref="Random" /> or
-/// <see cref="System.Security.Cryptography.RandomNumberGenerator" /> so tests stay consistent across runs.
+/// Seeded, reproducible byte payloads for xUnit suites. Prefer this over unseeded <see cref="Random" /> or <see cref="System.Security.Cryptography.RandomNumberGenerator" />
+/// so tests stay consistent across runs.
 /// </summary>
-/// <remarks>
-/// <see cref="Seed" /> matches <c>Lyo.Benchmark.Data.BenchmarkData.PayloadSeed</c> and
-/// <see cref="DeterministicPayloadStream.DefaultSeed" />.
-/// </remarks>
+/// <remarks><see cref="Seed" /> matches <c>Lyo.Benchmark.Data.BenchmarkData.PayloadSeed</c> and <see cref="DeterministicPayloadStream.DefaultSeed" />.</remarks>
 public static class TestData
 {
     /// <summary>Shared payload seed (<c>0x4C594F42</c> / "LYOB"). Same value as benchmark suites.</summary>

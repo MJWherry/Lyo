@@ -31,8 +31,8 @@ public sealed class YesNoBoolCsvConverter : ICsvValueConverter
             int i => i switch {
                 0 => "no",
                 1 => "yes",
-                _ => ""
+                var _ => ""
             },
-            _ => ""
+            var _ => ""
         };
 }

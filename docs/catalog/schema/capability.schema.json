@@ -3,32 +3,56 @@
   "$id": "https://lyo.local/catalog/capability.schema.json",
   "title": "Lyo capability / deep-dive entry",
   "type": "object",
-  "required": ["id", "title", "summary"],
+  "required": [
+    "id",
+    "title",
+    "summary"
+  ],
   "additionalProperties": false,
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "title": { "type": "string" },
-    "summary": { "type": "string" },
-    "kicker": { "type": "string" },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "kicker": {
+      "type": "string"
+    },
     "packages": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "links": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "href"],
+        "required": [
+          "label",
+          "href"
+        ],
         "additionalProperties": false,
         "properties": {
-          "label": { "type": "string" },
-          "href": { "type": "string" }
+          "label": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          }
         }
       }
     },
     "sections": {
       "type": "array",
-      "items": { "$ref": "section.schema.json" }
+      "items": {
+        "$ref": "section.schema.json"
+      }
     }
   }
 }

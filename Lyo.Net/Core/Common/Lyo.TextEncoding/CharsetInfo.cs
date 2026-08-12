@@ -1,5 +1,5 @@
-using System.Text;
 using System.Reflection;
+using System.Text;
 using Lyo.Exceptions;
 #if NET5_0_OR_GREATER
 using System.Collections.Frozen;
@@ -8,8 +8,8 @@ using System.Collections.Frozen;
 namespace Lyo.TextEncoding;
 
 /// <summary>
-/// Curated charset metadata (well-known statics + custom instances).
-/// Does not replace <see cref="Encoding" /> — use <see cref="ToEncoding" /> / service resolve for the BCL type.
+/// Curated charset metadata (well-known statics + custom instances). Does not replace <see cref="Encoding" /> — use <see cref="ToEncoding" /> / service resolve for the BCL
+/// type.
 /// </summary>
 public sealed record CharsetInfo(string Name, string WebName, int? CodePage, string Description, IReadOnlyList<string>? Aliases = null)
 {
@@ -58,8 +58,6 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
     /// <summary>Central European (Windows).</summary>
     public static readonly CharsetInfo Windows1250 = new("Windows1250", "windows-1250", 1250, "Central European (Windows)", ["cp1250"]);
 
-    private static readonly IReadOnlyList<CharsetInfo> WellKnownList = BuildWellKnown();
-
 #if NET5_0_OR_GREATER
     private static readonly FrozenDictionary<string, CharsetInfo> ByName = BuildNameMap();
     private static readonly FrozenDictionary<int, CharsetInfo> ByCodePage = BuildCodePageMap();
@@ -69,7 +67,7 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
 #endif
 
     /// <summary>All well-known static entries for UI/config pickers. Custom instances are not included.</summary>
-    public static IReadOnlyList<CharsetInfo> WellKnown => WellKnownList;
+    public static IReadOnlyList<CharsetInfo> WellKnown { get; } = BuildWellKnown();
 
     /// <summary>Create a custom charset entry (not limited to the well-known set). Resolve at runtime via <see cref="ToEncoding" />.</summary>
     public static CharsetInfo Custom(string name, string webName, int? codePage = null, string? description = null, IReadOnlyList<string>? aliases = null)
@@ -104,8 +102,7 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
     }
 
     /// <summary>Lookup a well-known entry by code page. Returns null if not in the catalog.</summary>
-    public static CharsetInfo? FromCodePage(int codePage)
-        => ByCodePage.TryGetValue(codePage, out var info) ? info : null;
+    public static CharsetInfo? FromCodePage(int codePage) => ByCodePage.TryGetValue(codePage, out var info) ? info : null;
 
     /// <summary>Map a BCL encoding to a well-known entry when possible; otherwise a <see cref="Custom" /> instance.</summary>
     public static CharsetInfo FromEncoding(Encoding encoding)
@@ -121,8 +118,7 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
     }
 
     private static IReadOnlyList<CharsetInfo> BuildWellKnown()
-        => typeof(CharsetInfo)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
+        => typeof(CharsetInfo).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.FieldType == typeof(CharsetInfo))
             .Select(f => (CharsetInfo)f.GetValue(null)!)
             .ToArray();
@@ -134,11 +130,12 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
 #endif
     {
         var map = new Dictionary<string, CharsetInfo>(StringComparer.OrdinalIgnoreCase);
-        foreach (var info in WellKnownList) {
+        foreach (var info in WellKnown) {
             map[Normalize(info.Name)] = info;
             map[Normalize(info.WebName)] = info;
             if (info.Aliases is null)
                 continue;
+
             foreach (var alias in info.Aliases)
                 map[Normalize(alias)] = info;
         }
@@ -157,7 +154,7 @@ public sealed record CharsetInfo(string Name, string WebName, int? CodePage, str
 #endif
     {
         var map = new Dictionary<int, CharsetInfo>();
-        foreach (var info in WellKnownList) {
+        foreach (var info in WellKnown) {
             if (info.CodePage is { } cp)
                 map[cp] = info;
         }

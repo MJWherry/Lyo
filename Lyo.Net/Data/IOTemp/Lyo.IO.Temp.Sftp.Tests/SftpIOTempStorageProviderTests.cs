@@ -10,13 +10,15 @@ public class SftpIOTempStorageProviderTests
     [Fact]
     public void PathStyle_IsPosix()
     {
-        using var client = new SftpClient(new SftpClientOptions {
-            Host = "localhost",
-            Username = "u",
-            Password = "p",
-            RootRemoteDirectory = "/upload",
-            HostKeyPolicy = SftpHostKeyPolicy.AcceptAny
-        });
+        using var client = new SftpClient(
+            new() {
+                Host = "localhost",
+                Username = "u",
+                Password = "p",
+                RootRemoteDirectory = "/upload",
+                HostKeyPolicy = SftpHostKeyPolicy.AcceptAny
+            });
+
         var provider = new SftpIOTempStorageProvider(client);
         Assert.Equal(PathStyle.Posix, provider.PathStyle);
         Assert.Equal("/upload", provider.RootPath);

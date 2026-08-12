@@ -57,7 +57,7 @@ internal static partial class RootQueryComputedFields
                     set.Add(ph);
             }
 
-            deps = [..set];
+            deps = [.. set];
         }
 
         var added = new List<string>();

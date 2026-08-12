@@ -1,14 +1,13 @@
 using Lyo.Common.Extensions;
+using Microsoft.Extensions.Logging;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Result;
-using Microsoft.Extensions.Logging;
-#if !NETSTANDARD2_0
-using System.Reflection;
+
 #if NET10_0_OR_GREATER
+using System.Reflection;
 using System.Runtime.CompilerServices;
-#endif
 #endif
 
 namespace Lyo.Csv;
@@ -20,6 +19,7 @@ internal sealed class CsvReader : ICsvReader
     private readonly ILogger _logger;
 
     private CsvOptions Options => _getOptions();
+
     private DataTablePoolingOptions Pooling => _getPooling();
 
     internal CsvReader(Func<CsvOptions> getOptions, ILogger logger, Func<DataTablePoolingOptions>? getPooling = null)
@@ -36,7 +36,7 @@ internal sealed class CsvReader : ICsvReader
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as {ParsingType}", csvFilePath, typeof(T).FullName);
         var options = Options;
-        using var reader = new StreamReader(csvFilePath, options.Encoding, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(csvFilePath, options.Encoding, true);
         return ParseReader<T>(reader, options);
     }
 
@@ -59,7 +59,7 @@ internal sealed class CsvReader : ICsvReader
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as dictionary", csvFilePath);
         var options = Options;
-        using var reader = new StreamReader(csvFilePath, options.Encoding, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(csvFilePath, options.Encoding, true);
         return ParseReaderAsDictionary(reader, options);
     }
 
@@ -82,7 +82,7 @@ internal sealed class CsvReader : ICsvReader
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
         var options = Options;
-        using var reader = new StreamReader(csvFilePath, options.Encoding, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(csvFilePath, options.Encoding, true);
         return ParseReaderAsDataTable(reader, options, hasHeaderRow, hasFooterRow);
     }
 
@@ -164,17 +164,19 @@ internal sealed class CsvReader : ICsvReader
         return result;
     }
 
-    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(TextReader reader, CsvOptions options, bool? hasHeaderRow, bool hasFooterRow = false, DataTablePoolingOptions? pooling = null)
+    private Result<DataTable.Models.DataTable> ParseReaderAsDataTable(
+        TextReader reader,
+        CsvOptions options,
+        bool? hasHeaderRow,
+        bool hasFooterRow = false,
+        DataTablePoolingOptions? pooling = null)
     {
         var dict = ParseReaderAsDictionary(reader, options);
         var dt = DictToDataTable(dict, hasHeaderRow ?? options.HasHeaderRecord, hasFooterRow, pooling);
         return Result<DataTable.Models.DataTable>.Success(dt);
     }
 
-    /// <summary>
-    /// Builds a DataTable from a row/column dictionary.
-    /// Cell-count estimate is <c>cols × (rows + 1)</c> after the full CSV has been buffered (no mid-parse pooling flip).
-    /// </summary>
+    /// <summary>Builds a DataTable from a row/column dictionary. Cell-count estimate is <c>cols × (rows + 1)</c> after the full CSV has been buffered (no mid-parse pooling flip).</summary>
     private DataTable.Models.DataTable DictToDataTable(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> dict,
         bool useFirstRowAsHeader,
@@ -236,8 +238,7 @@ internal sealed class CsvReader : ICsvReader
         return dt;
     }
 
-    private static StreamReader CreateStreamReader(Stream csvStream, CsvOptions options)
-        => new(csvStream, options.Encoding, detectEncodingFromByteOrderMarks: true, bufferSize: 8192, leaveOpen: true);
+    private static StreamReader CreateStreamReader(Stream csvStream, CsvOptions options) => new(csvStream, options.Encoding, true, 8192, true);
 
 #if !NETSTANDARD2_0
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsync``1(System.String,System.Threading.CancellationToken)' />
@@ -305,7 +306,11 @@ internal sealed class CsvReader : ICsvReader
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(
+        string csvFilePath,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
@@ -315,7 +320,11 @@ internal sealed class CsvReader : ICsvReader
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTableAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(
+        Stream csvStream,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
@@ -329,7 +338,11 @@ internal sealed class CsvReader : ICsvReader
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] csvBytes,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
@@ -352,7 +365,10 @@ internal sealed class CsvReader : ICsvReader
         return await ParseStreamAsDictionaryAsync(ms, ct).ConfigureAwait(false);
     }
 
-    private async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseReaderAsDictionaryAsync(TextReader reader, CsvOptions options, CancellationToken ct = default)
+    private async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseReaderAsDictionaryAsync(
+        TextReader reader,
+        CsvOptions options,
+        CancellationToken ct = default)
     {
         using var csv = new CsvTextReader(reader, options);
         var result = new Dictionary<int, IReadOnlyDictionary<int, string>>();
@@ -430,12 +446,7 @@ internal sealed class CsvReader : ICsvReader
                 record = BindRecord<T>(csvOptions, headers, map, fields);
 
             if (parseException != null) {
-                var error = new CsvParseError {
-                    RowNumber = rowNumber + 1,
-                    RawRecord = csv.RawRecord,
-                    Exception = parseException
-                };
-
+                var error = new CsvParseError { RowNumber = rowNumber + 1, RawRecord = csv.RawRecord, Exception = parseException };
                 options?.OnError?.Invoke(error);
                 continue;
             }
@@ -450,6 +461,7 @@ internal sealed class CsvReader : ICsvReader
             }
 
             yield return record;
+
             rowNumber++;
         }
     }
@@ -538,12 +550,7 @@ internal sealed class CsvReader : ICsvReader
                 }
             }
             catch (Exception ex) when (options?.ContinueOnError == true) {
-                var error = new CsvParseError {
-                    RowNumber = rowNumber + 1,
-                    RawRecord = csv.RawRecord,
-                    Exception = ex
-                };
-
+                var error = new CsvParseError { RowNumber = rowNumber + 1, RawRecord = csv.RawRecord, Exception = ex };
                 options.OnError?.Invoke(error);
             }
             catch when (options?.ContinueOnError != true) {
@@ -573,12 +580,7 @@ internal sealed class CsvReader : ICsvReader
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
         var options = Options;
-        var stats = new CsvStatistics {
-            DetectedEncoding = options.Encoding,
-            DetectedDelimiter = options.Delimiter[0],
-            HasHeaderRow = options.HasHeaderRecord
-        };
-
+        var stats = new CsvStatistics { DetectedEncoding = options.Encoding, DetectedDelimiter = options.Delimiter[0], HasHeaderRow = options.HasHeaderRecord };
         using var reader = CreateStreamReader(csvStream, options);
         using var csv = new CsvTextReader(reader, options);
         var firstRow = await csv.ReadRowAsync(ct).ConfigureAwait(false);
@@ -586,7 +588,7 @@ internal sealed class CsvReader : ICsvReader
             return stats;
 
         if (stats.HasHeaderRow) {
-            stats.Headers = [..firstRow];
+            stats.Headers = [.. firstRow];
             stats.ColumnCount = firstRow.Count;
         }
         else {
@@ -622,11 +624,11 @@ internal sealed class CsvReader : ICsvReader
             var value = i < fields.Count ? fields[i] : string.Empty;
             rowDict[header] = value;
             if (!stats.InferredColumnTypes.ContainsKey(i)) {
-                if (int.TryParse(value, out _))
+                if (int.TryParse(value, out var _))
                     stats.InferredColumnTypes[i] = typeof(int);
-                else if (decimal.TryParse(value, out _))
+                else if (decimal.TryParse(value, out var _))
                     stats.InferredColumnTypes[i] = typeof(decimal);
-                else if (DateTime.TryParse(value, out _))
+                else if (DateTime.TryParse(value, out var _))
                     stats.InferredColumnTypes[i] = typeof(DateTime);
                 else
                     stats.InferredColumnTypes[i] = typeof(string);
@@ -705,7 +707,7 @@ internal sealed class CsvReader : ICsvReader
             if (headerRow is null)
                 return new(false, ["CSV file is empty"]);
 
-            headers = [..headerRow];
+            headers = [.. headerRow];
         }
         else {
             var firstRow = await csv.ReadRowAsync(ct).ConfigureAwait(false);
@@ -787,7 +789,7 @@ internal sealed class CsvReader : ICsvReader
             if (headerRow is null)
                 return records;
 
-            headers = [..headerRow];
+            headers = [.. headerRow];
         }
         else {
             var firstRow = await csv.ReadRowAsync(ct).ConfigureAwait(false);

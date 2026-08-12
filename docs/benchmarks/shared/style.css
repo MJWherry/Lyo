@@ -78,10 +78,9 @@ body {
     font-family: var(--font-body);
     font-size: 1.05rem;
     line-height: 1.65;
-    background:
-        radial-gradient(1100px 520px at 8% -8%, var(--hero-wash-a), transparent 55%),
-        radial-gradient(800px 420px at 92% 0%, var(--hero-wash-b), transparent 50%),
-        var(--bg);
+    background: radial-gradient(1100px 520px at 8% -8%, var(--hero-wash-a), transparent 55%),
+    radial-gradient(800px 420px at 92% 0%, var(--hero-wash-b), transparent 50%),
+    var(--bg);
 }
 
 a {

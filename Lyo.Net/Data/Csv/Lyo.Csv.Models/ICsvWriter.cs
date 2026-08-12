@@ -139,10 +139,18 @@ public interface ICsvWriter
         CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to a CSV string.</summary>
-    Task<string> ExportToCsvStringFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
+    Task<string> ExportToCsvStringFromDictionaryAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to CSV bytes.</summary>
-    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false, CancellationToken ct = default);
+    Task<byte[]> ExportToCsvBytesFromDictionaryAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously exports a Lyo data table to <paramref name="csvFilePath" />.</summary>
     Task ExportToCsvFromDataTableAsync(DataTable.Models.DataTable dataTable, string csvFilePath, CancellationToken ct = default);

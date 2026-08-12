@@ -1,6 +1,7 @@
 # Lyo.Testing
 
-Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.
+Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based
+asynchronous assertions, and an `ITestOutputHelper`-backed logger.
 
 ## Features
 
@@ -43,7 +44,9 @@ PollAssert.NoException(() => probe.Ping(), TimeSpan.FromSeconds(5));
 - **Ordering / ranges (where `T : IComparable<T>`)** — `ShouldBeGreaterThan`, `ShouldBeGreaterThanOrEqualTo`, `ShouldBeLessThan`, `ShouldBeLessThanOrEqualTo`, `ShouldBeBetween`.
 - **Time** — `DateTime.ShouldBeCloseTo(expected, tolerance)`, `TimeSpan.ShouldBeCloseTo(expected, tolerance)`.
 - **Strings** — `ShouldStartWith`, `ShouldEndWith`, `ShouldContain(substring)`, `ShouldNotContain`, `ShouldMatch(pattern)`, `ShouldNotMatch`, `ShouldBeEmpty`, `ShouldNotBeEmpty`.
-- **Collections** — `ShouldBeEmpty`, `ShouldNotBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`, `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`, `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections.
+- **Collections** — `ShouldBeEmpty`, `ShouldNotBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`,
+  `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`,
+  `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections.
 
 ## Exceptions
 
@@ -60,11 +63,14 @@ All overloads accept an optional `pollInterval` (defaults to `100 ms`) and an op
 
 ## Logging
 
-`XunitLoggerProvider(ITestOutputHelper output)` is an `ILoggerProvider` that forwards `ILogger` calls to `ITestOutputHelper.WriteLine` with `HH:mm:ss.fff` timestamps and `TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL|NONE` level tags. Wire it up via `services.AddLogging(b => b.AddProvider(new XunitLoggerProvider(output)))` when using `Xunit.DependencyInjection`. Errors writing to the output helper are swallowed (the runner can be torn down before final log flushes).
+`XunitLoggerProvider(ITestOutputHelper output)` is an `ILoggerProvider` that forwards `ILogger` calls to `ITestOutputHelper.WriteLine` with `HH:mm:ss.fff` timestamps and
+`TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL|NONE` level tags. Wire it up via `services.AddLogging(b => b.AddProvider(new XunitLoggerProvider(output)))` when using
+`Xunit.DependencyInjection`. Errors writing to the output helper are swallowed (the runner can be torn down before final log flushes).
 
 ## Utilities
 
-`Lyo.Testing.Utilities.AppendBytesToFile(string path, long sizeInBytes)` grows (or creates) a file by the requested number of bytes, creating parent directories as needed. Useful for size-based filesystem tests.
+`Lyo.Testing.Utilities.AppendBytesToFile(string path, long sizeInBytes)` grows (or creates) a file by the requested number of bytes, creating parent directories as needed. Useful
+for size-based filesystem tests.
 
 ## Dependencies
 

@@ -26,11 +26,11 @@ public static class StringExtensions
         /// <summary>Builds a shortened string with a leading segment, an ellipsis run, and optionally a trailing segment—useful for masking secrets in logs.</summary>
         /// <param name="start">Maximum number of characters to keep from the start; if <see langword="null" />, the start segment is omitted.</param>
         /// <param name="end">
-        /// Zero-based index in <paramref name="s" /> where the trailing segment begins; if <see langword="null" /> or past the last character, no trailing segment is
-        /// appended after the ellipses (unless the whole string fits in the start segment).
+        /// Zero-based index in the receiver string where the trailing segment begins; if <see langword="null" /> or past the last character, no trailing segment is appended
+        /// after the ellipses (unless the whole string fits in the start segment).
         /// </param>
         /// <param name="ellipsesLength">Number of <c>'.'</c> characters in the ellipsis between segments.</param>
-        /// <returns>An empty string when <paramref name="s" /> is null or empty; otherwise the masked form.</returns>
+        /// <returns>An empty string when the receiver is null or empty; otherwise the masked form.</returns>
         public string Truncated(in int? start = 4, in int? end = null, in int ellipsesLength = 3)
         {
             if (value.IsNullOrEmpty())
@@ -50,7 +50,7 @@ public static class StringExtensions
             return $"{startPart}{ellipses}{endPart}";
         }
 
-        /// <summary>Truncates <paramref name="s" /> to at most <paramref name="maxLength" /> characters, appending an ellipsis when shortened.</summary>
+        /// <summary>Truncates the receiver to at most <paramref name="maxLength" /> characters, appending an ellipsis when shortened.</summary>
         /// <param name="maxLength">Maximum length of the returned string (including the ellipsis suffix).</param>
         /// <returns>
         /// The original string when it fits; otherwise a prefix plus an ellipsis. When <paramref name="maxLength" /> is divisible by 3, the suffix is three ASCII periods (<c>...</c>

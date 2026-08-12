@@ -14,7 +14,7 @@ public static class QueryRequestClone
             Amount = source.Amount,
             Options = new() { TotalCountMode = sourceOptions.TotalCountMode, IncludeFilterMode = sourceOptions.IncludeFilterMode },
             WhereClause = source.WhereClause,
-            Include = [..source.Include],
+            Include = [.. source.Include],
             Keys = CloneKeys(source.Keys),
             SortBy = CloneSortBy(source.SortBy)
         };
@@ -34,9 +34,9 @@ public static class QueryRequestClone
                     ZipSiblingCollectionSelections = sourceOptions.ZipSiblingCollectionSelections
                 },
             WhereClause = source.WhereClause,
-            Include = [..source.Include],
-            Select = [..source.Select],
-            ComputedFields = [..source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
+            Include = [.. source.Include],
+            Select = [.. source.Select],
+            ComputedFields = [.. source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
             Keys = CloneKeys(source.Keys),
             SortBy = CloneSortBy(source.SortBy)
         };
@@ -56,13 +56,13 @@ public static class QueryRequestClone
                     ZipSiblingCollectionSelections = sourceOptions.ZipSiblingCollectionSelections
                 },
             WhereClause = source.WhereClause,
-            Include = [..source.Include],
-            Select = [..source.Select],
-            ComputedFields = [..source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
+            Include = [.. source.Include],
+            Select = [.. source.Select],
+            ComputedFields = [.. source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
             Keys = CloneKeys(source.Keys),
             SortBy = CloneSortBy(source.SortBy),
             From = CloneFromClause(source.From),
-            Joins = [..source.Joins.Select(CloneJoinClause)]
+            Joins = [.. source.Joins.Select(CloneJoinClause)]
         };
     }
 
@@ -75,10 +75,10 @@ public static class QueryRequestClone
             var _ => throw new ArgumentException($"Unsupported query request type: {source.GetType().Name}", nameof(source))
         };
 
-    private static List<object[]> CloneKeys(List<object[]> keys) => [..keys.Select(i => i.ToArray())];
+    private static List<object[]> CloneKeys(List<object[]> keys) => [.. keys.Select(i => i.ToArray())];
 
     private static List<SortBy> CloneSortBy(List<SortBy> sortBy)
-        => [..sortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })];
+        => [.. sortBy.Select(s => new SortBy { PropertyName = s.PropertyName, Direction = s.Direction, Priority = s.Priority })];
 
     private static FromClause CloneFromClause(FromClause source) => new() { Alias = source.Alias, EntityType = source.EntityType, Query = CloneSourceQueryScope(source.Query) };
 
@@ -89,7 +89,7 @@ public static class QueryRequestClone
             Query = CloneSourceQueryScope(source.Query),
             Type = source.Type,
             As = source.As,
-            On = [..source.On.Select(o => new JoinOn { From = o.From, To = o.To })]
+            On = [.. source.On.Select(o => new JoinOn { From = o.From, To = o.To })]
         };
 
     private static SourceQueryScope? CloneSourceQueryScope(SourceQueryScope? source)

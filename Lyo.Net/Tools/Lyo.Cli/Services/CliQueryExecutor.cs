@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Common;
@@ -34,23 +33,23 @@ internal static class CliQueryExecutor
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(baseUrl);
         var uri = BuildUri(mode, basePath, route);
-
         var services = new ServiceCollection();
         services.AddLyoApiClient(optionsOverride: o => o.BaseUrl = baseUrl.TrimEnd('/'), propagateCorrelationId: false);
         await using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<IApiClient>();
-
         try {
             var result = await client.PostAsAsync<object, JsonElement>(
-                uri, body, before: req => {
-                    if (!string.IsNullOrWhiteSpace(token))
-                        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    foreach (var h in headers ?? []) {
-                        var idx = h.IndexOf(':');
-                        ArgumentHelpers.ThrowIf(idx <= 0, $"Invalid --header '{h}'. Expected NAME:VALUE.");
-                        req.Headers.TryAddWithoutValidation(h[..idx].Trim(), h[(idx + 1)..].Trim());
-                    }
-                }, ct).ConfigureAwait(false);
+                    uri, body, req => {
+                        if (!string.IsNullOrWhiteSpace(token))
+                            req.Headers.Authorization = new("Bearer", token);
+
+                        foreach (var h in headers ?? []) {
+                            var idx = h.IndexOf(':');
+                            ArgumentHelpers.ThrowIf(idx <= 0, $"Invalid --header '{h}'. Expected NAME:VALUE.");
+                            req.Headers.TryAddWithoutValidation(h[..idx].Trim(), h[(idx + 1)..].Trim());
+                        }
+                    }, ct)
+                .ConfigureAwait(false);
 
             if (raw)
                 return result.GetRawText();
@@ -61,6 +60,7 @@ internal static class CliQueryExecutor
             await Console.Error.WriteLineAsync($"API error {ex.StatusCode}: {ex.Message}").ConfigureAwait(false);
             if (ex.ProblemDetails is not null)
                 await Console.Error.WriteLineAsync(JsonSerializer.Serialize(ex.ProblemDetails, LyoJsonSerializerOptions.Create(o => o.WriteIndented = true))).ConfigureAwait(false);
+
             throw;
         }
     }

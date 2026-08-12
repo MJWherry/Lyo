@@ -1,7 +1,4 @@
 @using System.Globalization
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ChipInput
-
 @if (AllowMultiple && Type is not ReportParameterType.Bool and not ReportParameterType.Json and not ReportParameterType.Xml) {
     <LyoChipInput Values="@ChipValues"
                   ValuesChanged="OnChipValuesChanged"
@@ -94,8 +91,7 @@ else {
 
     private TimeSpan? TimeOnlyValue => TimeOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t) ? t.ToTimeSpan() : null;
 
-    private async Task OnChipValuesChanged(IEnumerable<string> values)
-        => await SetValue(ParameterListJson.Serialize(values, ToListKind(Type)));
+    private async Task OnChipValuesChanged(IEnumerable<string> values) => await SetValue(ParameterListJson.Serialize(values, ToListKind(Type)));
 
     private static ParameterListJsonKind ToListKind(ReportParameterType type)
         => type switch {

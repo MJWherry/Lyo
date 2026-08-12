@@ -11,13 +11,13 @@ namespace Lyo.Typecast.Client;
 /// <summary>Typecast API client for text-to-speech and voice management.</summary>
 public class TypecastClient : ApiClient
 {
-    private readonly TypecastClientOptions _options;
-
     /// <summary>Text-to-speech operations manager.</summary>
     public readonly TextToSpeechManager TextToSpeech;
 
     /// <summary>Voice operations manager.</summary>
     public readonly VoiceManager Voices;
+
+    private readonly TypecastClientOptions _options;
 
     /// <summary>Initializes a new instance of the TypecastClient class.</summary>
     /// <param name="options">The Typecast client options. Must not be null.</param>

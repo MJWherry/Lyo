@@ -1,4 +1,3 @@
-using Lyo.Reporting.Models.Enums;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
@@ -13,7 +12,7 @@ public static class ReportColorHelper
             ReportGenerationStatus.Failed => Color.Error,
             ReportGenerationStatus.Running => Color.Info,
             ReportGenerationStatus.Pending => Color.Warning,
-            _ => Color.Default
+            var _ => Color.Default
         };
 
     /// <summary>Chip color for report format.</summary>
@@ -24,6 +23,6 @@ public static class ReportColorHelper
             ReportFormat.Xlsx => Color.Info,
             ReportFormat.Json => Color.Secondary,
             ReportFormat.Html => Color.Primary,
-            _ => Color.Default
+            var _ => Color.Default
         };
 }

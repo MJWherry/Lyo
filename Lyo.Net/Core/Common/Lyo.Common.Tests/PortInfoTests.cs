@@ -54,7 +54,7 @@ public class PortInfoTests
     }
 
     [Fact]
-    public void TryFromPort_Unknown_ReturnsFalse() => Assert.False(PortInfo.TryFromPort(9999, out _));
+    public void TryFromPort_Unknown_ReturnsFalse() => Assert.False(PortInfo.TryFromPort(9999, out var _));
 
     [Theory]
     [InlineData("ssh")]

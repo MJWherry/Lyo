@@ -55,7 +55,7 @@ public static class AutomationPlanInterpolation
         if (formatter != null && !formatter.TryValidateTemplate(work, out var err))
             throw new InvalidOperationException($"Automation plan template is invalid: {err}");
 
-        foreach (var m in SingleBraceToken.Matches(work).Cast<Match>().OrderByDescending(static x => x.Index)) {
+        foreach (var m in SingleBraceToken.Matches(work).OrderByDescending(static x => x.Index)) {
             var inner = m.Groups["inner"].Value;
             var colon = inner.IndexOf(':');
             var selector = (colon >= 0 ? inner[..colon] : inner).Trim();

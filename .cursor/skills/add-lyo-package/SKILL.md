@@ -64,13 +64,17 @@ Folder mirrors assembly: `{Area}/{Group}/Lyo.{X}/Lyo.{X}.csproj`. Standard suffi
 
 Variations: Blazor components use `Microsoft.NET.Sdk.Razor` + `net10.0` + `<FrameworkReference Include="Microsoft.AspNetCore.App"/>`; hosts/tests/benchmarks target `net10.0` only.
 
-**Package docs (required for libraries):** create `{project}/docs.json` beside the README (copy [`docs/catalog/templates/package.template.json`](docs/catalog/templates/package.template.json) as a starting point). Fill `id`, `name`, `area`, `tagline`, `description`, `features`, `examples`, optional `benchmarks` / `sections`, and set `readmePath` to the project README. Schema: [`docs/catalog/schema/package.schema.json`](docs/catalog/schema/package.schema.json). Then run:
+**Package docs (required for libraries):** create `{project}/docs.json` beside the README (copy [
+`docs/catalog/templates/package.template.json`](docs/catalog/templates/package.template.json) as a starting point). Fill `id`, `name`, `area`, `tagline`, `description`, `features`,
+`examples`, optional `benchmarks` / `sections`, and set `readmePath` to the project README. Schema: [
+`docs/catalog/schema/package.schema.json`](docs/catalog/schema/package.schema.json). Then run:
 
 ```bash
 python3 scripts/docs/project-docs.py render
 ```
 
-That regenerates the package `README.md`, root README package list, portfolio content, and Blazor `wwwroot/catalog`. **`docs.json` is the only source of truth** — never hand-edit generated READMEs, and never run `extract` (it overwrites JSON from README and is lossy).
+That regenerates the package `README.md`, root README package list, portfolio content, and Blazor `wwwroot/catalog`. **`docs.json` is the only source of truth** — never hand-edit
+generated READMEs, and never run `extract` (it overwrites JSON from README and is lossy).
 
 ### 4. Register in Lyo.slnx
 

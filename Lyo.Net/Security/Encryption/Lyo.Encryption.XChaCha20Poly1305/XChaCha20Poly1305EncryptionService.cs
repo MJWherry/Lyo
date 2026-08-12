@@ -88,7 +88,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         var versionString = keyVersion ?? "";
         var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4 + XChaCha20Poly1305Helper.NonceSize;
         var result = new byte[prefixLen + XChaCha20Poly1305Helper.TagSize + plaintext.Length];
-
         var o = 0;
         result[o++] = formatVersion;
         BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
@@ -164,7 +163,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         var tag = encrypted.Slice(o, XChaCha20Poly1305Helper.TagSize);
         o += XChaCha20Poly1305Helper.TagSize;
         var ciphertext = encrypted[o..];
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;

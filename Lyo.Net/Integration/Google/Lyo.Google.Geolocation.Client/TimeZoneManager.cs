@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Coordinates;
 using Lyo.Google.Geolocation.Client.Models;
@@ -12,7 +13,7 @@ public sealed class TimeZoneManager(GoogleMapsClient client)
         var url = client.BuildTimeZoneUrl(coordinate);
         var response = await client.GetAsAsync<GoogleTimeZoneResponse>(url, ct: ct).ConfigureAwait(false);
         GoogleMapsApiStatus.EnsureOk(response?.Status, response?.ErrorMessage);
-        if (string.IsNullOrEmpty(response?.TimeZoneId))
+        if (response is null || response.TimeZoneId.IsNullOrEmpty())
             throw new NotFoundException($"No time zone found for coordinates: {coordinate.Latitude}, {coordinate.Longitude}");
 
         return response.TimeZoneId;

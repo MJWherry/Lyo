@@ -114,7 +114,7 @@ public class JobRunParameterExtensionsTests
         var parameters = Params(("Pattern", @"^\d+$"));
         var regex = parameters.GetRegex("Pattern");
         Assert.NotNull(regex);
-        Assert.Matches(regex!, "12345");
+        Assert.Matches(regex, "12345");
     }
 
     [Fact]

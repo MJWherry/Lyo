@@ -1,6 +1,7 @@
 # Lyo.ChangeTracker.Postgres
 
-PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional actor.
+PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change history using `Lyo.EntityReference.Models.EntityRef` for both the target entity and the optional
+actor.
 
 ## Features
 
@@ -34,23 +35,26 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 The package layers registration helpers so hosts can pick the level of integration they need:
 
-| Extension | What it adds |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)` | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`). |
+| Extension                                                              | What it adds                                                                                                                                            |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`).                                              |
 | `AddChangeTrackerDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresChangeTrackerOptions` from `"PostgresChangeTracker"` (override the section via the optional `configSectionName`) and registers as above. |
-| `AddChangeTrackerDbContext(connectionString)` | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`. |
-| `AddChangeTrackerDbContext(Action<DbContextOptionsBuilder>)` | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing). |
-| `AddPostgresChangeTracker(options)` / `(Action<…>)` | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton. |
-| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration. |
+| `AddChangeTrackerDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`.                                      |
+| `AddChangeTrackerDbContext(Action<DbContextOptionsBuilder>)`           | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing).                                                  |
+| `AddPostgresChangeTracker(options)` / `(Action<…>)`                    | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton.                                       |
+| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)`         | Same as the options overload, binding from configuration.                                                                                               |
 
 ## Health
 
-`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs `Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve `IEnumerable<IHealth>`.
+`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs
+`Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve
+`IEnumerable<IHealth>`.
 
 ## Schema
 
 - All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`,
+  JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
 
 ## Tenancy
 

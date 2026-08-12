@@ -5,7 +5,8 @@
         try {
             var stored = localStorage.getItem(KEY);
             if (stored === "light" || stored === "dark") return stored;
-        } catch (e) { /* ignore */ }
+        } catch (e) { /* ignore */
+        }
         return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
 
@@ -21,7 +22,10 @@
         if (!btn) return;
         btn.addEventListener("click", function () {
             var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-            try { localStorage.setItem(KEY, next); } catch (e) { /* ignore */ }
+            try {
+                localStorage.setItem(KEY, next);
+            } catch (e) { /* ignore */
+            }
             apply(next);
         });
     }

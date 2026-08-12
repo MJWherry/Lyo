@@ -1,8 +1,7 @@
 using System.Text.Json;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
-using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Parameters;
@@ -24,21 +23,21 @@ public static class ParameterOptionsJson
     /// <summary>Parses JSON into <see cref="ParameterOptions" />. Returns null for null/whitespace. Throws on invalid JSON.</summary>
     public static ParameterOptions? Deserialize(string? json)
     {
-        if (string.IsNullOrWhiteSpace(json))
+        if (json.IsNullOrWhitespace())
             return null;
 
-        return JsonSerializer.Deserialize<ParameterOptions>(json, SerializerOptions);
+        return JsonSerializer.Deserialize<ParameterOptions>(json!, SerializerOptions);
     }
 
     /// <summary>Parses JSON; returns false (and null options) when empty or invalid.</summary>
     public static bool TryDeserialize(string? json, out ParameterOptions? options)
     {
         options = null;
-        if (string.IsNullOrWhiteSpace(json))
+        if (json.IsNullOrWhitespace())
             return false;
 
         try {
-            options = JsonSerializer.Deserialize<ParameterOptions>(json, SerializerOptions);
+            options = JsonSerializer.Deserialize<ParameterOptions>(json!, SerializerOptions);
             return options is not null;
         }
         catch (JsonException) {
@@ -47,12 +46,11 @@ public static class ParameterOptionsJson
     }
 
     /// <summary>Reads <see cref="ParameterOptions.Kind" /> from Options JSON, or null when empty/invalid.</summary>
-    public static ParameterOptionsKind? TryGetKind(string? json)
-        => TryDeserialize(json, out var options) && options is not null ? options.Kind : null;
+    public static ParameterOptionsKind? TryGetKind(string? json) => TryDeserialize(json, out var options) && options is not null ? options.Kind : null;
 
     /// <summary>
-    /// Builds default Options JSON for a kind selection in the definition editor (static placeholder item or root query template).
-    /// Returns null when <paramref name="kind" /> is null.
+    /// Builds default Options JSON for a kind selection in the definition editor (static placeholder item or root query template). Returns null when <paramref name="kind" /> is
+    /// null.
     /// </summary>
     public static string? CreateDefaultForKind(ParameterOptionsKind? kind)
     {
@@ -60,20 +58,16 @@ public static class ParameterOptionsJson
             return null;
 
         if (kind == ParameterOptionsKind.Static) {
-            return Serialize(
-                new ParameterOptions {
-                    Kind = ParameterOptionsKind.Static,
-                    Items = [new ParameterOptionsItem("key", "label")]
-                });
+            return Serialize(new() { Kind = ParameterOptionsKind.Static, Items = [new("key", "label")] });
         }
 
         return Serialize(
-            new ParameterOptions {
+            new() {
                 Kind = ParameterOptionsKind.Query,
-                Query = new QueryReq {
-                    From = new FromClause { Alias = "c", EntityType = "" },
+                Query = new() {
+                    From = new() { Alias = "c", EntityType = "" },
                     Select = ["c.Id", "c.Name"],
-                    ComputedFields = [new ComputedField("Key", "{c.Id}"), new ComputedField("Value", "{c.Name}")],
+                    ComputedFields = [new("Key", "{c.Id}"), new("Value", "{c.Name}")],
                     Amount = 200,
                     Options = new() { TotalCountMode = QueryTotalCountMode.None }
                 }
@@ -88,14 +82,18 @@ public static class ParameterOptionsJson
             case ParameterOptionsKind.Static:
                 if (options.Items.Count == 0)
                     throw new ArgumentException("Static parameter options require at least one item.", nameof(options));
+
                 break;
             case ParameterOptionsKind.Query:
                 if (options.Query is null)
                     throw new ArgumentException("Query parameter options require a QueryReq template.", nameof(options));
+
                 if (string.IsNullOrWhiteSpace(options.Query.From.EntityType))
                     throw new ArgumentException("Query parameter options require From.EntityType.", nameof(options));
+
                 if (options.Query.Select.Count == 0)
                     throw new ArgumentException("Query parameter options require at least one Select path.", nameof(options));
+
                 break;
             default:
                 throw new ArgumentException($"Unknown parameter options kind '{options.Kind}'.", nameof(options));

@@ -10,17 +10,14 @@ using Lyo.KeyStore;
 namespace Lyo.Encryption.Benchmarks;
 
 /// <summary>Benchmarks comparing bulk symmetric authenticated-encryption algorithms at large buffer sizes.</summary>
-/// <remarks>
-/// AES-CCM is omitted: with a 12-byte nonce a single CCM packet is capped at ~16 MiB. See <see cref="AesCcmEncryptionBenchmarks"/> for CCM at legal sizes.
-/// </remarks>
+/// <remarks>AES-CCM is omitted: with a 12-byte nonce a single CCM packet is capped at ~16 MiB. See <see cref="AesCcmEncryptionBenchmarks" /> for CCM at legal sizes.</remarks>
 [ComparisonSuite(Baseline = "AesGcm")]
 [BenchmarkDescription(
     "Encrypts and decrypts the same seeded deterministic buffer with AES-GCM, AES-SIV, ChaCha20-Poly1305, and XChaCha20-Poly1305 to compare throughput at each payload size. Decrypt cases reuse a ciphertext produced once in setup. AES-CCM is covered separately (packet-size limit).")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the seeded plaintext/ciphertext buffer (100 MiB, 250 MiB, 500 MiB).")]
 [BenchmarkSla(
     MinThroughputMbps = 300, SizeParam = "DataSize", MinThroughputSizeBytes = BenchmarkData.BufferedSize100MiB,
-    Standard =
-        "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.")]
+    Standard = "Single-pass AEAD with hardware acceleration (AES-GCM, ChaCha20-Poly1305) should sustain >= 300 MB/s for bulk (>= 100 MiB) payloads.")]
 public class AlgorithmComparisonBenchmarks : LyoBenchmarkBase
 {
     private AesGcmEncryptionService _aesGcmService = null!;

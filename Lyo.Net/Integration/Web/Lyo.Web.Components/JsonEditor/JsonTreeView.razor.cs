@@ -17,10 +17,10 @@ public partial class JsonTreeView : IAsyncDisposable
     private string? _activeSearchPath;
     private int _activeSearchRowIndex = -1;
     private string? _copiedPath;
-    private string? _editingKeyPath;
-    private string? _editingPath;
     private string _editKey = "";
     private string _editValue = "";
+    private string? _editingKeyPath;
+    private string? _editingPath;
     private JsonEditorJsInterop? _jsInterop;
     private int _lastNotifiedCurrent = -1;
     private int _lastNotifiedTotal = -1;

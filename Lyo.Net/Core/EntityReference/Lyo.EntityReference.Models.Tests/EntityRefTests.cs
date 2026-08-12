@@ -72,7 +72,7 @@ public class EntityRefTests
     public void For_WithEntityAndSelector_SelectorReturnsNull_Throws()
     {
         var docket = new TestDocket { Id = Guid.NewGuid() };
-        Assert.Throws<ArgumentNullException>(() => EntityRef.For(docket, _ => null));
+        Assert.Throws<ArgumentNullException>(() => EntityRef.For(docket, _ => (object?)null));
     }
 
     [Fact]

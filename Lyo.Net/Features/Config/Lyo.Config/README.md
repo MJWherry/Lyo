@@ -1,26 +1,30 @@
 # Lyo.Config
 
-Typed, definition-driven configuration for **per-entity** values (e.g. a Discord guild, a tenant). The abstract API lives here; **PostgreSQL** persistence is in `Lyo.Config.Postgres`.
+Typed, definition-driven configuration for **per-entity** values (e.g. a Discord guild, a tenant). The abstract API lives here; **PostgreSQL** persistence is in
+`Lyo.Config.Postgres`.
 
 ## Concepts
 
-| Piece | Role |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`ConfigDefinitionRecord`** | Declares an allowed key for an `ForEntityType` (CLR type name string), the CLR value type, optional default, `IsRequired`, and metadata. |
-| **`ConfigBindingRecord`** | Stores the actual value for one **entity instance** (`EntityRef`: type + id) under a definition. |
-| **`ConfigValue`** | Wrapper: CLR type name + JSON payload. Serialize/deserialize with **`ConfigJsonSerializerOptions.Default`** when you do not pass custom `JsonSerializerOptions`. |
-| **`ResolvedConfigRecord`** | Produced by **`LoadConfigAsync`**: every definition for that entity type, each with optional binding; **`Value`** is `binding ?? default`. |
+| Piece                        | Role                                                                                                                                                             |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`ConfigDefinitionRecord`** | Declares an allowed key for an `ForEntityType` (CLR type name string), the CLR value type, optional default, `IsRequired`, and metadata.                         |
+| **`ConfigBindingRecord`**    | Stores the actual value for one **entity instance** (`EntityRef`: type + id) under a definition.                                                                 |
+| **`ConfigValue`**            | Wrapper: CLR type name + JSON payload. Serialize/deserialize with **`ConfigJsonSerializerOptions.Default`** when you do not pass custom `JsonSerializerOptions`. |
+| **`ResolvedConfigRecord`**   | Produced by **`LoadConfigAsync`**: every definition for that entity type, each with optional binding; **`Value`** is `binding ?? default`.                       |
 
-Definitions are unique per `(ForEntityType, Key)`. Bindings are unique per `(DefinitionId, ForEntityType, ForEntityId)`. In PostgreSQL, `config_binding` has a `value_type` column (
-same CLR type name as `config_definition.for_value_type`, denormalized for querying and exports).
+Definitions are unique per `(ForEntityType, Key)`. Bindings are unique per `(DefinitionId, ForEntityType, ForEntityId)`. In PostgreSQL, `config_binding` has a `value_type` column
+(same CLR type name as `config_definition.for_value_type`, denormalized for querying and exports).
 
 ## JSON
 
-**`ConfigJsonSerializerOptions.Default`** is used whenever `ConfigValue` callers pass `null` for options: camelCase property names, case-insensitive deserialization, omit nulls when writing. Keeps API JSON and stored `value_json` aligned.
+**`ConfigJsonSerializerOptions.Default`** is used whenever `ConfigValue` callers pass `null` for options: camelCase property names, case-insensitive deserialization, omit nulls
+when writing. Keeps API JSON and stored `value_json` aligned.
 
 ## `IsRequired`
 
-If **`IsRequired`** is true and the definition has **no** default (`DefaultValue` null), each entity must have a **binding** for that key. - **`LoadConfigAsync`** calls **`ResolvedConfigRecord.ValidateRequired()`** and throws if any required key has no resolved value. - **`DeleteBindingAsync` / `DeleteBindingsAsync`** refuse to remove a binding that would violate that rule. If **`IsRequired`** is true and a **default** exists, the default supplies the resolved value when no binding exists (deleting the binding is allowed).
+If **`IsRequired`** is true and the definition has **no** default (`DefaultValue` null), each entity must have a **binding** for that key. - **`LoadConfigAsync`** calls **
+`ResolvedConfigRecord.ValidateRequired()`** and throws if any required key has no resolved value. - **`DeleteBindingAsync` / `DeleteBindingsAsync`** refuse to remove a binding that
+would violate that rule. If **`IsRequired`** is true and a **default** exists, the default supplies the resolved value when no binding exists (deleting the binding is allowed).
 
 ## Deleting definitions
 
@@ -32,7 +36,10 @@ There are two different “version” stories:
 
 ## Versioning — 1. CLR / definition type changes
 
-Each definition’s **`ForValueType`** is the CLR type name for the stored JSON, same convention as **`ForEntityType`**: `Type.FullName` (same form as `ConfigValue.TypeName`; use `ConfigValue.GetTypeName(typeof(T))` when seeding). If you rename types, split types, or change the JSON shape incompatibly: - Update the **definition** (and seeders) so `ForValueType` matches the new type. - **Migrate** existing `value_json` (or delete bindings and recreate), or introduce a **new key** and deprecate the old one. The `Lyo.Config` layer does not auto-migrate arbitrary payloads.
+Each definition’s **`ForValueType`** is the CLR type name for the stored JSON, same convention as **`ForEntityType`**: `Type.FullName` (same form as `ConfigValue.TypeName`; use
+`ConfigValue.GetTypeName(typeof(T))` when seeding). If you rename types, split types, or change the JSON shape incompatibly: - Update the **definition** (and seeders) so
+`ForValueType` matches the new type. - **Migrate** existing `value_json` (or delete bindings and recreate), or introduce a **new key** and deprecate the old one. The `Lyo.Config`
+layer does not auto-migrate arbitrary payloads.
 
 ## Versioning — 2. Document schema version inside the JSON (optional pattern)
 
@@ -69,7 +76,8 @@ at deploy time.
 ## API routing helper — `AppConfigEntity`
 
 - `AppEntityType = "App"` (the stored `EntityRef.EntityType` for app-scoped definitions and bindings).
-- `ToEntityRef(string appKind, string appId)` / `TryCreate(...)` — URI-decode each segment, lowercase, validate the slug character set (`a-z`, `0-9`, `-`, `_`, `.`, length ≤ 128), and produce `new EntityRef("App", $"{kindNorm}:{idNorm}")`. This is the compound-id shape that `ConfigBindingRecord.ForEntityId` is sized for (string, not `Guid`).
+- `ToEntityRef(string appKind, string appId)` / `TryCreate(...)` — URI-decode each segment, lowercase, validate the slug character set (`a-z`, `0-9`, `-`, `_`, `.`, length ≤ 128),
+  and produce `new EntityRef("App", $"{kindNorm}:{idNorm}")`. This is the compound-id shape that `ConfigBindingRecord.ForEntityId` is sized for (string, not `Guid`).
 
 ## See also
 

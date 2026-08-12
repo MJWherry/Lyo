@@ -112,12 +112,7 @@ internal static class ConfigEndpoints
         {
             group.MapMethods(
                 "/{appKind}/{appId}", [HttpMethods.Get, HttpMethods.Head], async Task<IResult> (
-                    HttpContext http,
-                    string appKind,
-                    string appId,
-                    IConfigStore store,
-                    IOptions<ConfigApiHostingOptions> hostOptions,
-                    CancellationToken ct) => {
+                    HttpContext http, string appKind, string appId, IConfigStore store, IOptions<ConfigApiHostingOptions> hostOptions, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
                         return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
@@ -126,12 +121,7 @@ internal static class ConfigEndpoints
 
             group.MapPost(
                 "/{appKind}/{appId}", async Task<IResult> (
-                    HttpContext http,
-                    string appKind,
-                    string appId,
-                    IConfigStore store,
-                    IOptions<ConfigApiHostingOptions> hostOptions,
-                    CancellationToken ct) => {
+                    HttpContext http, string appKind, string appId, IConfigStore store, IOptions<ConfigApiHostingOptions> hostOptions, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
                         return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
@@ -234,11 +224,7 @@ internal static class ConfigEndpoints
 
             manage.MapGet(
                 "/apps/{appKind}/{appId}/bindings/{key}/revisions", async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, ProblemHttpResult>> (
-                    string appKind,
-                    string appId,
-                    string key,
-                    IConfigStore store,
-                    CancellationToken ct) => {
+                    string appKind, string appId, string key, IConfigStore store, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
                         return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 
@@ -250,12 +236,7 @@ internal static class ConfigEndpoints
 
             manage.MapPost(
                     "/apps/{appKind}/{appId}/bindings/{key}/revert", async Task<Results<NoContent, ProblemHttpResult>> (
-                        string appKind,
-                        string appId,
-                        string key,
-                        RevertRevisionDto body,
-                        IConfigStore store,
-                        CancellationToken ct) => {
+                        string appKind, string appId, string key, RevertRevisionDto body, IConfigStore store, CancellationToken ct) => {
                         if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
                             return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
 

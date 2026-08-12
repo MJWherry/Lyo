@@ -12,8 +12,7 @@ namespace Lyo.Xlsx;
 public static class Extensions
 {
     /// <summary>Adds XLSX service with default options (pooling enabled above the default cell threshold).</summary>
-    public static IServiceCollection AddXlsxService(this IServiceCollection services)
-        => services.AddXlsxService(new XlsxOptions());
+    public static IServiceCollection AddXlsxService(this IServiceCollection services) => services.AddXlsxService(new XlsxOptions());
 
     /// <summary>Adds XLSX service configured by the given action.</summary>
     public static IServiceCollection AddXlsxService(this IServiceCollection services, Action<XlsxOptions> configure)
@@ -52,7 +51,7 @@ public static class Extensions
         services.AddSingleton<XlsxService>(provider => {
             var logger = provider.GetService<ILogger<XlsxService>>();
             var opts = provider.GetService<IOptions<XlsxOptions>>()?.Value ?? options;
-            return new(logger, excelDataTableConfiguration: null, opts);
+            return new(logger, null, opts);
         });
 
         services.AddSingleton<IXlsxService>(sp => sp.GetRequiredService<XlsxService>());

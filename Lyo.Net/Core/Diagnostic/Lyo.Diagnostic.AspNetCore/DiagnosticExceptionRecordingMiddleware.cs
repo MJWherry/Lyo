@@ -10,8 +10,8 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Diagnostic.AspNetCore;
 
 /// <summary>
-/// Catches exceptions from later middleware, records <see cref="ErrorOccurrenceRecord" />, optionally logs via <see cref="IStructuredLogEnricher" />, then rethrows.
-/// Register <b>after</b> outer middleware such as <c>LoggingMiddleware</c> in the pipeline so this sits closer to route handlers and runs first on unwind.
+/// Catches exceptions from later middleware, records <see cref="ErrorOccurrenceRecord" />, optionally logs via <see cref="IStructuredLogEnricher" />, then rethrows. Register
+/// <b>after</b> outer middleware such as <c>LoggingMiddleware</c> in the pipeline so this sits closer to route handlers and runs first on unwind.
 /// </summary>
 public sealed class DiagnosticExceptionRecordingMiddleware(RequestDelegate next)
 {

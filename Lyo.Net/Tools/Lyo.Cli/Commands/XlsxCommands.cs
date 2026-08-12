@@ -33,6 +33,7 @@ internal static class XlsxCommands
             var json = CliXlsx.Stats(pr.GetValue(input), pr.GetValue(sheet), hasHeader, CliXlsx.Create());
             await CliIO.WriteTextAsync(pr.GetValue(output), json, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -45,6 +46,7 @@ internal static class XlsxCommands
             foreach (var name in CliXlsx.ListSheets(pr.GetValue(file)!, CliXlsx.Create()))
                 Console.WriteLine(name);
         });
+
         return cmd;
     }
 
@@ -60,6 +62,7 @@ internal static class XlsxCommands
         cmd.SetAction(pr => {
             CliXlsx.Merge(pr.GetValue(files)!, pr.GetValue(output)!, CliXlsx.ParseMode(pr.GetValue(mode)), CliXlsx.Create());
         });
+
         return cmd;
     }
 
@@ -81,6 +84,7 @@ internal static class XlsxCommands
             foreach (var p in paths)
                 Console.WriteLine(p);
         });
+
         return cmd;
     }
 
@@ -107,6 +111,7 @@ internal static class XlsxCommands
         cmd.SetAction(async (pr, ct) => {
             await CliTabularConvert.CsvToXlsxAsync(pr.GetValue(input), pr.GetValue(output)!, CliCsv.Create(), CliXlsx.Create(), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 }

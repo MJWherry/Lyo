@@ -5,6 +5,7 @@ using Lyo.Comic.Api.Models.Response;
 using Lyo.Comment;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 using Lyo.EntityReference.Models;
 using Lyo.Favorite;
 using Lyo.Favorite.Postgres.Database;
@@ -167,9 +168,18 @@ public sealed class ComicEnrichmentService
         var favoriteCountsTask = _favoriteStore.GetFavoriteCountsForEntitiesAsync(SeriesEntityType, seriesGuids, ct: ct);
         var favoritedTask = callerRef.HasValue ? QueryFavoritedSeriesIdsAsync(callerRef.Value, seriesGuids, ct) : Task.FromResult(new HashSet<Guid>());
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountsTask, favoritedTask).ConfigureAwait(false);
-        var tagsByEntityId = (await tagsTask).GroupBy(t => t.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
-        var ratingsByEntityId = (await ratingsTask).GroupBy(r => r.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
-        var commentCountsByEntityId = (await commentsTask).GroupBy(c => c.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Count());
+        var tagsByEntityId = (await tagsTask).Where(t => !t.SubjectEntityId.IsNullOrWhitespace())
+            .GroupBy(t => t.SubjectEntityId!)
+            .ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
+
+        var ratingsByEntityId = (await ratingsTask).Where(r => !r.SubjectEntityId.IsNullOrWhitespace())
+            .GroupBy(r => r.SubjectEntityId!)
+            .ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
+
+        var commentCountsByEntityId = (await commentsTask).Where(c => !c.SubjectEntityId.IsNullOrWhitespace())
+            .GroupBy(c => c.SubjectEntityId!)
+            .ToDictionary(static g => g.Key, static g => g.Count());
+
         var favoriteCounts = await favoriteCountsTask;
         var favoritedLookup = await favoritedTask;
         var results = new ComicSeriesRes[items.Count];

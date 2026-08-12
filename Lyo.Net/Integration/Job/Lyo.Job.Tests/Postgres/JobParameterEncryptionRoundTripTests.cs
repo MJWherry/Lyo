@@ -77,7 +77,7 @@ public class JobParameterEncryptionRoundTripTests
         await FinishRunAsync(sp, created.Data!.Id);
         var rerun = await jobService.RerunJob(created.Data.Id);
         Assert.NotNull(rerun);
-        Assert.True(rerun!.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
+        Assert.True(rerun.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
         await using var db = await CreateDbContextAsync(sp);
         var cloned = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == rerun.Data!.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
 

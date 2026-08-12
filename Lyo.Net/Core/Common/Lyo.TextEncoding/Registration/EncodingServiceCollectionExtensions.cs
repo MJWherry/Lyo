@@ -9,8 +9,8 @@ public static class EncodingServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Adds <see cref="IBinaryEncodingService" />: uses <see cref="BinaryEncodingService.Shared" /> when <paramref name="configure" /> is null;
-        /// otherwise registers a configured singleton.
+        /// Adds <see cref="IBinaryEncodingService" />: uses <see cref="BinaryEncodingService.Shared" /> when <paramref name="configure" /> is null; otherwise registers a configured
+        /// singleton.
         /// </summary>
         public IServiceCollection AddLyoBinaryEncoding(Action<BinaryEncodingOptions>? configure = null)
         {
@@ -25,6 +25,7 @@ public static class EncodingServiceCollectionExtensions
                 configure(o);
                 return o;
             });
+
             services.AddSingleton<IBinaryEncodingService, BinaryEncodingService>();
             return services;
         }
@@ -40,8 +41,8 @@ public static class EncodingServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Adds <see cref="ICharsetEncodingService" />: uses <see cref="CharsetEncodingService.Shared" /> when <paramref name="configure" /> is null;
-        /// otherwise registers a configured singleton.
+        /// Adds <see cref="ICharsetEncodingService" />: uses <see cref="CharsetEncodingService.Shared" /> when <paramref name="configure" /> is null; otherwise registers a
+        /// configured singleton.
         /// </summary>
         public IServiceCollection AddLyoCharsetEncoding(Action<CharsetEncodingOptions>? configure = null)
         {
@@ -56,6 +57,7 @@ public static class EncodingServiceCollectionExtensions
                 configure(o);
                 return o;
             });
+
             services.AddSingleton<ICharsetEncodingService, CharsetEncodingService>();
             return services;
         }

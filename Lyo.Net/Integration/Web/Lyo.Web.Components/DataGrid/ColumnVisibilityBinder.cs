@@ -63,7 +63,7 @@ public sealed class ColumnVisibilityBinder
             _ = _onChanged(this);
     }
 
-    public HashSet<string> GetHiddenFields() => [.._hiddenFields];
+    public HashSet<string> GetHiddenFields() => [.. _hiddenFields];
 
     public IEnumerable<string> GetVisibleFieldNames(IEnumerable<string> allFields)
         => allFields.Where(f => !string.IsNullOrWhiteSpace(f) && !_hiddenFields.Contains(f.Trim())).Select(f => f!.Trim());

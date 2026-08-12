@@ -298,7 +298,7 @@ public class MetricsService : IMetrics, IDisposable
             Histograms = _histograms.ToDictionary(
                 kvp => kvp.Key,
                 kvp => new HistogramData {
-                    Name = kvp.Value.Name, Values = [..kvp.Value.Values], Tags = kvp.Value.Tags != null ? new Dictionary<string, string>(kvp.Value.Tags) : null
+                    Name = kvp.Value.Name, Values = [.. kvp.Value.Values], Tags = kvp.Value.Tags != null ? new Dictionary<string, string>(kvp.Value.Tags) : null
                 }),
             TotalMetricsRecorded = TotalMetricsRecorded,
             ExportTime = DateTime.UtcNow
@@ -343,7 +343,7 @@ public class MetricsService : IMetrics, IDisposable
         lock (lockInfo.Lock) {
             lockInfo.LastAccessed = DateTime.UtcNow;
             // Return a snapshot to ensure thread safety when caller iterates
-            return new() { Name = histogram.Name, Values = [..histogram.Values], Tags = histogram.Tags != null ? new Dictionary<string, string>(histogram.Tags) : null };
+            return new() { Name = histogram.Name, Values = [.. histogram.Values], Tags = histogram.Tags != null ? new Dictionary<string, string>(histogram.Tags) : null };
         }
     }
 

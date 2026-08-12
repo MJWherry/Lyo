@@ -14,7 +14,10 @@
         "Subfeature A",
         {
           "title": "Subfeature B",
-          "items": ["Detail one", "Detail two"]
+          "items": [
+            "Detail one",
+            "Detail two"
+          ]
         }
       ]
     }

@@ -340,9 +340,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         return Decrypt(chunk, keyId, key, associatedData);
     }
 
-    /// <summary>
-    /// Byte count of a <see cref="BinaryWriter.Write(string)" /> payload (7-bit encoded UTF-8 length + UTF-8 bytes). Used by single-shot framing to pre-size output buffers.
-    /// </summary>
+    /// <summary>Byte count of a <see cref="BinaryWriter.Write(string)" /> payload (7-bit encoded UTF-8 length + UTF-8 bytes). Used by single-shot framing to pre-size output buffers.</summary>
     protected static int GetBinaryWriterStringByteCount(string value)
     {
         var utf8Len = Encoding.UTF8.GetByteCount(value);

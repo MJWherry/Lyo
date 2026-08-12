@@ -7,7 +7,7 @@ internal static class JobRouteBuilder
         if (string.IsNullOrWhiteSpace(routePrefix))
             return relativePath;
 
-        return $"{routePrefix.TrimEnd('/')}/{relativePath}";
+        return $"{routePrefix!.TrimEnd('/')}/{relativePath}";
     }
 
     public static string WithIncludes(string route, IEnumerable<string>? includes)

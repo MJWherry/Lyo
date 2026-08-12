@@ -1,16 +1,15 @@
 # Lyo Encryption Library
 
-A production-ready .NET encryption library providing secure, authenticated encryption with support for multiple
-algorithms, key management, and envelope encryption patterns.
+A production-ready .NET encryption library providing secure, authenticated encryption with support for multiple algorithms, key management, and envelope encryption patterns.
 
 ## Documentation map (this folder)
 
-| Document | Scope |
+| Document                                                       | Scope                                                                                                                                                      |
 |----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`README.md` (this file)** | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions. |
-| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)** | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
-| **[`Lyo.KeyStore/README.md`](Lyo.KeyStore/README.md)** | **`Lyo.KeyStore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts. |
-| **[`Lyo.KeyStore.Aws/README.md`](Lyo.KeyStore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation. |
+| **`README.md` (this file)**                                    | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions.                                                     |
+| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)**     | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
+| **[`Lyo.KeyStore/README.md`](Lyo.KeyStore/README.md)**         | **`Lyo.KeyStore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts.                                          |
+| **[`Lyo.KeyStore.Aws/README.md`](Lyo.KeyStore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation.                                                                                                                 |
 
 Start here for narrative and threat-modeling context; use the per-project READMEs when you only care about one package’s surface area.
 
@@ -87,14 +86,14 @@ within this stack, not a single industry-wide “AES-GCM file” or “RSA file�
 **Lyo.Encryption** multi-targets **`net10.0`** and **`netstandard2.0`**. The **supported algorithms and acceptable key material sizes are the same** on both: blobs encrypted on one
 target decrypt on the other when keys and formats match.
 
-| Algorithm (typical service) | Key / IV sizes | `net10.0` | `netstandard2.0` |
+| Algorithm (typical service)                                                                                                 | Key / IV sizes                                                                                                                                                                                             | `net10.0`                                                                                                         | `netstandard2.0`                                                                |
 |-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit) | `System.Security.Cryptography.AesGcm` | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout) |
-| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`) | **32-byte** key; **12-byte** nonce; **16-byte** tag | `System.Security.Cryptography.ChaCha20Poly1305` | BouncyCastle (**same** sizes and layout) |
-| **AES-CCM** (`AesCcmEncryptionService`) | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag | BouncyCastle | BouncyCastle |
-| **AES-SIV** (`AesSivEncryptionService`) | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297) | Dorssel.Security.Cryptography.AesExtra | Dorssel.Security.Cryptography.AesExtra |
-| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`) | **32-byte** key; **24-byte** nonce; **16-byte** tag | BouncyCastle | BouncyCastle |
-| **RSA** (`RsaEncryptor` / `RsaDecryptor`, RSA leg of `AesGcmRsaEncryptionService`) | **≥ 2048-bit** RSA modulus (enforced by `RsaEncryptor` / `RsaDecryptor`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
+| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit)                                                                                               | `System.Security.Cryptography.AesGcm`                                                                             | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout)                    |
+| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`)                                                                 | **32-byte** key; **12-byte** nonce; **16-byte** tag                                                                                                                                                        | `System.Security.Cryptography.ChaCha20Poly1305`                                                                   | BouncyCastle (**same** sizes and layout)                                        |
+| **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                             | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                           | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
+| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                                        | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **RSA** (`RsaEncryptor` / `RsaDecryptor`, RSA leg of `AesGcmRsaEncryptionService`)                                          | **≥ 2048-bit** RSA modulus (enforced by `RsaEncryptor` / `RsaDecryptor`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
 
 **Interop:** File extensions, stream headers, and chunk framing are **not** TFM-specific.
 
@@ -258,8 +257,7 @@ var decrypted = service.Decrypt(encrypted);
 
 ### 5. Two-Key (Envelope) Encryption
 
-Envelope encryption pattern where each encryption uses a unique Data Encryption Key (DEK) that is encrypted with a Key
-Encryption Key (KEK) from the KeyStore.
+Envelope encryption pattern where each encryption uses a unique Data Encryption Key (DEK) that is encrypted with a Key Encryption Key (KEK) from the KeyStore.
 
 ```csharp
 using Lyo.Encryption.TwoKey;
@@ -700,12 +698,12 @@ Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.KeySto
 
 #### Registration overview (encryption)
 
-| Step | Extension | What is registered |
+| Step                 | Extension                                                               | What is registered                                                      |
 |----------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| Keys | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore` |
-| Envelope (prod) | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed` | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
-| Single alg (unkeyed) | `AddAesCcmEncryption()` etc. | Concrete algorithm service only |
-| Interface default | `AddDefaultEncryptionService<T>()` | Unkeyed `IEncryptionService` → `T` |
+| Keys                 | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore`                                            |
+| Envelope (prod)      | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed`              | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
+| Single alg (unkeyed) | `AddAesCcmEncryption()` etc.                                            | Concrete algorithm service only                                         |
+| Interface default    | `AddDefaultEncryptionService<T>()`                                      | Unkeyed `IEncryptionService` → `T`                                      |
 
 Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship
 `AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.KeyStore` DI section](Lyo.KeyStore/README.md#dependency-injection)).
@@ -899,15 +897,15 @@ Stream format: `[FormatVersion: 1 byte][AlgorithmId: 1 byte][Reserved: 2 bytes][
 
 ##### `EncryptionAlgorithm` enum IDs
 
-| Value | Name | Notes |
+| Value | Name                | Notes                                              |
 |------:|---------------------|----------------------------------------------------|
-| 0 | `AesGcm` | Default DEK algorithm; `.ag` extension. |
-| 1 | `ChaCha20Poly1305` | `.chacha`. |
-| 2 | `AesGcmRsa` | Hybrid: AES-GCM payload + RSA-wrapped DEK; `.agr`. |
-| 3 | `Rsa` | Pure RSA-OAEP; `.rsa`. |
-| 4 | `AesCcm` | AES-CCM authenticated encryption. |
-| 5 | `AesSiv` | AES-SIV (RFC 5297). |
-| 6 | `XChaCha20Poly1305` | Extended 24-byte nonce variant. |
+|     0 | `AesGcm`            | Default DEK algorithm; `.ag` extension.            |
+|     1 | `ChaCha20Poly1305`  | `.chacha`.                                         |
+|     2 | `AesGcmRsa`         | Hybrid: AES-GCM payload + RSA-wrapped DEK; `.agr`. |
+|     3 | `Rsa`               | Pure RSA-OAEP; `.rsa`.                             |
+|     4 | `AesCcm`            | AES-CCM authenticated encryption.                  |
+|     5 | `AesSiv`            | AES-SIV (RFC 5297).                                |
+|     6 | `XChaCha20Poly1305` | Extended 24-byte nonce variant.                    |
 
 #### Two-Key Encryption Service
 
@@ -949,8 +947,7 @@ The `EncryptToStreamAsync` and `DecryptToStreamAsync` methods use **single-pass 
 - **Memory Efficient**: Data flows through the pipeline without buffering entire files
 - **No Temp Files**: All processing happens in memory using `MemoryStream` for intermediate stages
 - **Single Pass**: Data is read once and processed through compression → encryption → output in one pass
-- **Header Support**: The `EncryptionHeader` helper class (`Lyo.Encryption`) provides easy reading/writing of the stream
-  header
+- **Header Support**: The `EncryptionHeader` helper class (`Lyo.Encryption`) provides easy reading/writing of the stream header
 - **Version Management**: `StreamFormatVersion` enum ensures type-safe version handling
 
 #### Using EncryptionHeader Helper
@@ -1031,40 +1028,40 @@ run **June 14, 2026 @ 19:02**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 
 
 ### Benchmark coverage
 
-| Algorithm / pattern | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
+| Algorithm / pattern                          | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
 |----------------------------------------------|:---------------:|:-----------------------------------:|
-| **AES-GCM** | | |
-| **ChaCha20-Poly1305** | | |
-| **AES-CCM** | | |
-| **AES-SIV** | | |
-| **XChaCha20-Poly1305** | | |
-| **RSA** (2048 OAEP-SHA256) | | |
-| **AES-GCM-RSA hybrid** | | |
-| **Two-key envelope** (AES or ChaCha DEK/KEK) | | (incl. mixed DEK/KEK combos) |
-| **Large-file streaming** | | — |
+| **AES-GCM**                                  |                 |                                     |
+| **ChaCha20-Poly1305**                        |                 |                                     |
+| **AES-CCM**                                  |                 |                                     |
+| **AES-SIV**                                  |                 |                                     |
+| **XChaCha20-Poly1305**                       |                 |                                     |
+| **RSA** (2048 OAEP-SHA256)                   |                 |                                     |
+| **AES-GCM-RSA hybrid**                       |                 |                                     |
+| **Two-key envelope** (AES or ChaCha DEK/KEK) |                 |    (incl. mixed DEK/KEK combos)     |
+| **Large-file streaming**                     |                 |                  —                  |
 
 ### Benchmark highlights (June 2026, this hardware)
 
 **Symmetric @ 1 MB (in-memory, encrypt / decrypt):**
 
-| Algorithm | Encrypt | Decrypt | vs AES-GCM (encrypt) |
+| Algorithm              |                Encrypt |    Decrypt | vs AES-GCM (encrypt) |
 |------------------------|-----------------------:|-----------:|---------------------:|
-| **AES-GCM** | **667 µs** (~1.5 GB/s) | **621 µs** | 1.00× |
-| **ChaCha20-Poly1305** | 920 µs | 899 µs | 1.38× |
-| **XChaCha20-Poly1305** | 2.54 ms | 2.34 ms | 3.8× |
-| **AES-CCM** | 12.2 ms | 11.1 ms | 18× |
-| **AES-SIV** | 17.0 ms | 16.4 ms | 25× |
+| **AES-GCM**            | **667 µs** (~1.5 GB/s) | **621 µs** |                1.00× |
+| **ChaCha20-Poly1305**  |                 920 µs |     899 µs |                1.38× |
+| **XChaCha20-Poly1305** |                2.54 ms |    2.34 ms |                 3.8× |
+| **AES-CCM**            |                12.2 ms |    11.1 ms |                  18× |
+| **AES-SIV**            |                17.0 ms |    16.4 ms |                  25× |
 
 **Other patterns:**
 
-| Workload | Result | Notes |
+| Workload                        | Result                 | Notes                 |
 |---------------------------------|------------------------|-----------------------|
-| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms |
-| Two-key encrypt 1 MB (AES-GCM) | **880 µs** | ~1.3× single-key |
-| Two-key encrypt 1 KB | **7.0 µs** | ~2.7× single-key |
-| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs** | Near pure GCM |
-| Hybrid decrypt 1 KB | **468 µs** | RSA unwrap dominates |
-| RSA decrypt 1 MB | **2.51 s** | Chunked; not for bulk |
+| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms         |
+| Two-key encrypt 1 MB (AES-GCM)  | **880 µs**             | ~1.3× single-key      |
+| Two-key encrypt 1 KB            | **7.0 µs**             | ~2.7× single-key      |
+| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs**             | Near pure GCM         |
+| Hybrid decrypt 1 KB             | **468 µs**             | RSA unwrap dominates  |
+| RSA decrypt 1 MB                | **2.51 s**             | Chunked; not for bulk |
 
 On systems **with AES-NI**, **AES-GCM is the default production choice** for bulk data. ChaCha20-Poly1305 is ~30–40% slower here. XChaCha, CCM, and SIV trade throughput for
 nonce/protocol properties. RSA and hybrid are for key wrapping and small secrets — use hybrid (AES-GCM-RSA) when encrypting large blobs to a public key.
@@ -1080,8 +1077,8 @@ The library includes comprehensive test coverage. See `Lyo.Encryption.Tests` for
 
 ## Thread Safety
 
-All encryption services are **thread-safe**. Multiple threads can safely call methods concurrently on the same instance.
-Each operation uses its own cryptographic context (nonce, key material).
+All encryption services are **thread-safe**. Multiple threads can safely call methods concurrently on the same instance. Each operation uses its own cryptographic context (nonce,
+key material).
 
 ## Important Notes
 
@@ -1176,12 +1173,12 @@ Built with security best practices in mind, following:
 
 ### NuGet packages
 
-| Package | Version | Notes |
+| Package                                                 | Version  | Notes                 |
 |---------------------------------------------------------|----------|-----------------------|
-| `BouncyCastle.Cryptography` | `2.6.2` | *netstandard2.0 only* |
-| `Microsoft.Bcl.AsyncInterfaces` | `10.0.0` | *netstandard2.0 only* |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` | |
-| `System.Threading.Tasks.Extensions` | `4.6.3` | *netstandard2.0 only* |
+| `BouncyCastle.Cryptography`                             | `2.6.2`  | *netstandard2.0 only* |
+| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` | *netstandard2.0 only* |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |                       |
+| `System.Threading.Tasks.Extensions`                     | `4.6.3`  | *netstandard2.0 only* |
 
 ### Related / optional packages
 

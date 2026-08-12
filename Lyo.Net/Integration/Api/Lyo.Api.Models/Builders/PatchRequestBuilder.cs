@@ -29,7 +29,7 @@ public class PatchRequestBuilder
     public PatchRequestBuilder WithKey(object key, params object[] extraKeys)
     {
         ArgumentHelpers.ThrowIfNull(key);
-        _keys.Add(extraKeys.Length == 0 ? [key] : [key, ..extraKeys]);
+        _keys.Add(extraKeys.Length == 0 ? [key] : [key, .. extraKeys]);
         return this;
     }
 
@@ -102,7 +102,7 @@ public class PatchRequestBuilder
     {
         OperationHelpers.ThrowIf(_identifiers.Count == 0 && _keys.Count == 0, "At least one identifier or one key must be specified");
         OperationHelpers.ThrowIf(_properties.Count == 0, "At least one property to update must be specified");
-        var identifiersNode = _identifiers.Count == 0 ? null : _identifiers.Count == 1 ? (WhereClause)_identifiers[0] : new GroupClause(GroupOperatorEnum.And, [.._identifiers]);
+        var identifiersNode = _identifiers.Count == 0 ? null : _identifiers.Count == 1 ? (WhereClause)_identifiers[0] : new GroupClause(GroupOperatorEnum.And, [.. _identifiers]);
         return new() {
             Query = identifiersNode,
             Keys = _keys,

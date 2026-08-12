@@ -36,8 +36,7 @@ internal static class CliCompression
     public static CompressionAlgorithm ParseAlgorithm(string? name)
     {
         name = string.IsNullOrWhiteSpace(name) ? "brotli" : name.Trim();
-        var algo = CompressionAlgorithm.TryFromName(name)
-            ?? CompressionAlgorithm.TryFromName(char.ToUpperInvariant(name[0]) + name[1..].ToLowerInvariant());
+        var algo = CompressionAlgorithm.TryFromName(name) ?? CompressionAlgorithm.TryFromName(char.ToUpperInvariant(name[0]) + name[1..].ToLowerInvariant());
         if (algo is not null)
             return algo;
 
@@ -55,6 +54,7 @@ internal static class CliCompression
             "xz" => XzCompressionAlgorithm.Instance,
             var _ => null
         };
+
         ArgumentHelpers.ThrowIf(algo is null, $"Unknown compression algorithm '{name}'.");
         return algo!;
     }
@@ -62,14 +62,14 @@ internal static class CliCompression
     public static async Task CompressAsync(Stream input, Stream output, CompressionAlgorithm algorithm, CancellationToken ct)
     {
         var service = CreateService(algorithm);
-        await service.CompressAsync(input, output, algorithm: algorithm, ct: ct).ConfigureAwait(false);
+        await service.CompressAsync(input, output, algorithm, ct: ct).ConfigureAwait(false);
     }
 
     public static async Task DecompressAsync(Stream input, Stream output, CompressionAlgorithm? algorithm, CancellationToken ct)
     {
         var service = CreateService(algorithm ?? CompressionAlgorithm.Brotli);
         if (algorithm is not null)
-            await service.DecompressAsync(input, output, algorithm: algorithm, ct: ct).ConfigureAwait(false);
+            await service.DecompressAsync(input, output, algorithm, ct: ct).ConfigureAwait(false);
         else
             await service.DecompressAsync(input, output, ct: ct).ConfigureAwait(false);
     }

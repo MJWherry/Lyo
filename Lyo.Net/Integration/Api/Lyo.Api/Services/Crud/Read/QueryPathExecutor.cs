@@ -37,7 +37,6 @@ public interface IQueryPathExecutor
 /// <summary>Builds the base queryable for a query. Shared by QueryService.</summary>
 public sealed class QueryPathExecutor(
     IWhereClauseService filterService,
-    IEntityLoaderService loaderService,
     IQueryPagingHelper pagingHelper,
     ITypeConversionService typeConversion,
     ILogger<QueryPathExecutor> logger) : IQueryPathExecutor

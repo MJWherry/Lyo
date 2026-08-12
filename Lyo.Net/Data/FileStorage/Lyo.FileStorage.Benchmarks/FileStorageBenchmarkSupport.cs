@@ -22,9 +22,7 @@ internal static class FileStorageBenchmarkSupport
     }
 
     internal static CompressionService CreateCompressionService()
-        => new(
-            [new GZipCompressorFactory(), new DeflateCompressorFactory()],
-            options: new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
+        => new([new GZipCompressorFactory(), new DeflateCompressorFactory()], options: new() { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
 
     internal static ITwoKeyEncryptionService CreateTwoKeyEncryptionService(LocalKeyStore keyStore)
     {

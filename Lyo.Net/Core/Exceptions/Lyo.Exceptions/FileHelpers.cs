@@ -79,7 +79,8 @@ public static class FileHelpers
         if (string.IsNullOrWhiteSpace(value))
             return "";
 
-        return value.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
+        // BCL IsNullOrWhiteSpace does not narrow on netstandard2.0.
+        return value!.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
     }
 
     /// <summary>
@@ -98,12 +99,14 @@ public static class FileHelpers
         if (string.IsNullOrWhiteSpace(value))
             return;
 
+        // BCL IsNullOrWhiteSpace does not narrow on netstandard2.0.
+        var prefix = value!;
         ArgumentHelpers.ThrowIf(
-            value.Contains("..") || value.Contains("//") || value.Contains("\\\\") || value.IndexOf('\0') >= 0,
-            $"Path prefix '{value}' contains a traversal pattern ('..', '//', '\\\\', or NULL).", paramName);
+            prefix.Contains("..") || prefix.Contains("//") || prefix.Contains("\\\\") || prefix.IndexOf('\0') >= 0,
+            $"Path prefix '{prefix}' contains a traversal pattern ('..', '//', '\\\\', or NULL).", paramName);
 
-        foreach (var segment in value.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
-            ArgumentHelpers.ThrowIf(string.Equals(segment, "..", StringComparison.Ordinal), $"Path prefix '{value}' has a segment equal to '..'.", paramName);
+        foreach (var segment in prefix.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
+            ArgumentHelpers.ThrowIf(string.Equals(segment, "..", StringComparison.Ordinal), $"Path prefix '{prefix}' has a segment equal to '..'.", paramName);
     }
 
     /// <summary>

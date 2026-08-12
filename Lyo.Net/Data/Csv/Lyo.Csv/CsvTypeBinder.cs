@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
+using Lyo.Csv.Converters;
 using Lyo.Csv.Models;
 
 namespace Lyo.Csv;
@@ -16,19 +17,18 @@ internal static class CsvTypeBinder
 
     static CsvTypeBinder()
     {
-        RegisterConverter(typeof(int), new Converters.Int32CsvConverter());
-        RegisterConverter(typeof(int?), new Converters.Int32CsvConverter());
-        RegisterConverter(typeof(long), new Converters.Int64CsvConverter());
-        RegisterConverter(typeof(long?), new Converters.Int64CsvConverter());
-        RegisterConverter(typeof(decimal), new Converters.DecimalCsvConverter());
-        RegisterConverter(typeof(decimal?), new Converters.DecimalCsvConverter());
-        RegisterConverter(typeof(bool), new Converters.YesNoBoolCsvConverter());
-        RegisterConverter(typeof(bool?), new Converters.YesNoBoolCsvConverter());
+        RegisterConverter(typeof(int), new Int32CsvConverter());
+        RegisterConverter(typeof(int?), new Int32CsvConverter());
+        RegisterConverter(typeof(long), new Int64CsvConverter());
+        RegisterConverter(typeof(long?), new Int64CsvConverter());
+        RegisterConverter(typeof(decimal), new DecimalCsvConverter());
+        RegisterConverter(typeof(decimal?), new DecimalCsvConverter());
+        RegisterConverter(typeof(bool), new YesNoBoolCsvConverter());
+        RegisterConverter(typeof(bool?), new YesNoBoolCsvConverter());
     }
 
     /// <summary>Registers a converter for <paramref name="type" /> (overrides defaults).</summary>
-    public static void RegisterConverter(Type type, ICsvValueConverter converter)
-        => Converters[type] = converter;
+    public static void RegisterConverter(Type type, ICsvValueConverter converter) => Converters[type] = converter;
 
     public static TypeMap GetMap(Type type) => Maps.GetOrAdd(type, BuildMap);
 
@@ -88,15 +88,16 @@ internal static class CsvTypeBinder
     private static int[] GetHeaderIndices(TypeMap map, IReadOnlyList<string> headers)
     {
         var key = BuildHeaderKey(headers);
-        return HeaderIndexCache.GetOrAdd((map.Type, key), static tuple => {
-            var typeMap = Maps[tuple.Type];
-            var hdrs = tuple.HeaderKey.Split('\u001f');
-            var indices = new int[typeMap.Columns.Length];
-            for (var i = 0; i < typeMap.Columns.Length; i++)
-                indices[i] = FindHeaderIndex(hdrs, typeMap.Columns[i].HeaderName);
+        return HeaderIndexCache.GetOrAdd(
+            (map.Type, key), static tuple => {
+                var typeMap = Maps[tuple.Type];
+                var hdrs = tuple.HeaderKey.Split('\u001f');
+                var indices = new int[typeMap.Columns.Length];
+                for (var i = 0; i < typeMap.Columns.Length; i++)
+                    indices[i] = FindHeaderIndex(hdrs, typeMap.Columns[i].HeaderName);
 
-            return indices;
-        });
+                return indices;
+            });
     }
 
     private static string BuildHeaderKey(IReadOnlyList<string> headers)
@@ -131,8 +132,7 @@ internal static class CsvTypeBinder
     }
 
     /// <summary>Used by compiled writers for uncommon property types.</summary>
-    public static string FormatForWrite(Type sourceType, object? value, CultureInfo culture)
-        => ConvertFrom(sourceType, value, culture);
+    public static string FormatForWrite(Type sourceType, object? value, CultureInfo culture) => ConvertFrom(sourceType, value, culture);
 
     private static object? ConvertTo(Type targetType, string? text, CultureInfo culture)
     {
@@ -151,7 +151,7 @@ internal static class CsvTypeBinder
 
         if (underlying.IsEnum) {
             try {
-                return Enum.Parse(underlying, text, ignoreCase: true);
+                return Enum.Parse(underlying, text, true);
             }
             catch {
                 return null;
@@ -181,10 +181,7 @@ internal static class CsvTypeBinder
 
     private static TypeMap BuildMap(Type type)
     {
-        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-            .ToArray();
-
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.GetIndexParameters().Length == 0).ToArray();
         var columns = new List<ColumnMap>();
         foreach (var prop in props) {
             var attr = prop.GetCustomAttribute<CsvColumnAttribute>();
@@ -207,8 +204,7 @@ internal static class CsvTypeBinder
         if (ctor != null)
             return Expression.Lambda<Func<object>>(Expression.Convert(Expression.New(ctor), typeof(object))).Compile();
 
-        return () => Activator.CreateInstance(type)
-            ?? throw new InvalidOperationException($"Type {type.FullName} cannot be constructed.");
+        return () => Activator.CreateInstance(type) ?? throw new InvalidOperationException($"Type {type.FullName} cannot be constructed.");
     }
 
     private static Action<object, string?, CultureInfo> CompileSetter(Type declaringType, PropertyInfo prop, string headerName)
@@ -218,10 +214,7 @@ internal static class CsvTypeBinder
         var cultureParam = Expression.Parameter(typeof(CultureInfo), "culture");
         var typed = Expression.Convert(objParam, declaringType);
         var convert = Expression.Call(
-            typeof(CsvTypeBinder).GetMethod(nameof(ConvertToChecked))!,
-            Expression.Constant(prop.PropertyType, typeof(Type)),
-            textParam,
-            cultureParam,
+            typeof(CsvTypeBinder).GetMethod(nameof(ConvertToChecked))!, Expression.Constant(prop.PropertyType, typeof(Type)), textParam, cultureParam,
             Expression.Constant(headerName));
 
         var isNonNullable = prop.PropertyType.IsValueType && Nullable.GetUnderlyingType(prop.PropertyType) is null;
@@ -229,20 +222,14 @@ internal static class CsvTypeBinder
         if (isNonNullable) {
             var valueVar = Expression.Variable(typeof(object), "value");
             var assignVar = Expression.Assign(valueVar, convert);
-            var setProp = Expression.Assign(
-                Expression.Property(typed, prop),
-                Expression.Convert(valueVar, prop.PropertyType));
+            var setProp = Expression.Assign(Expression.Property(typed, prop), Expression.Convert(valueVar, prop.PropertyType));
             var ifNotNull = Expression.IfThen(Expression.ReferenceNotEqual(valueVar, Expression.Constant(null)), setProp);
             body = Expression.Block([valueVar], assignVar, ifNotNull);
         }
         else {
             var valueVar = Expression.Variable(typeof(object), "value");
             body = Expression.Block(
-                [valueVar],
-                Expression.Assign(valueVar, convert),
-                Expression.Assign(
-                    Expression.Property(typed, prop),
-                    Expression.Convert(valueVar, prop.PropertyType)));
+                [valueVar], Expression.Assign(valueVar, convert), Expression.Assign(Expression.Property(typed, prop), Expression.Convert(valueVar, prop.PropertyType)));
         }
 
         return Expression.Lambda<Action<object, string?, CultureInfo>>(body, objParam, textParam, cultureParam).Compile();
@@ -258,7 +245,6 @@ internal static class CsvTypeBinder
         var propType = prop.PropertyType;
         var underlying = Nullable.GetUnderlyingType(propType) ?? propType;
         var isNullable = Nullable.GetUnderlyingType(propType) != null;
-
         Expression textExpr;
         if (propType == typeof(string))
             textExpr = propAccess;
@@ -268,9 +254,7 @@ internal static class CsvTypeBinder
             textExpr = CompileFormattableText(propAccess, propType, isNullable, toString, cultureParam);
         else {
             textExpr = Expression.Call(
-                typeof(CsvTypeBinder).GetMethod(nameof(FormatForWrite))!,
-                Expression.Constant(propType, typeof(Type)),
-                Expression.Convert(propAccess, typeof(object)),
+                typeof(CsvTypeBinder).GetMethod(nameof(FormatForWrite))!, Expression.Constant(propType, typeof(Type)), Expression.Convert(propAccess, typeof(object)),
                 cultureParam);
         }
 
@@ -279,25 +263,17 @@ internal static class CsvTypeBinder
     }
 
     private static bool UsesYesNoBool(Type propType, Type underlying)
-        => (Converters.TryGetValue(propType, out var conv) || Converters.TryGetValue(underlying, out conv))
-            && conv is Converters.YesNoBoolCsvConverter;
+        => (Converters.TryGetValue(propType, out var conv) || Converters.TryGetValue(underlying, out conv)) && conv is YesNoBoolCsvConverter;
 
     private static Expression CompileYesNoText(Expression propAccess, Type propType, bool isNullable)
     {
         if (!isNullable) {
-            return Expression.Condition(
-                propAccess,
-                Expression.Constant("yes"),
-                Expression.Constant("no"));
+            return Expression.Condition(propAccess, Expression.Constant("yes"), Expression.Constant("no"));
         }
 
         return Expression.Condition(
             Expression.Property(propAccess, nameof(Nullable<bool>.HasValue)),
-            Expression.Condition(
-                Expression.Property(propAccess, nameof(Nullable<bool>.Value)),
-                Expression.Constant("yes"),
-                Expression.Constant("no")),
-            Expression.Constant(""));
+            Expression.Condition(Expression.Property(propAccess, nameof(Nullable<bool>.Value)), Expression.Constant("yes"), Expression.Constant("no")), Expression.Constant(""));
     }
 
     private static bool TryGetFormattableToString(Type underlying, out MethodInfo? toString)
@@ -310,12 +286,7 @@ internal static class CsvTypeBinder
         return toString != null && typeof(IFormattable).IsAssignableFrom(underlying);
     }
 
-    private static Expression CompileFormattableText(
-        Expression propAccess,
-        Type propType,
-        bool isNullable,
-        MethodInfo toString,
-        Expression cultureParam)
+    private static Expression CompileFormattableText(Expression propAccess, Type propType, bool isNullable, MethodInfo toString, Expression cultureParam)
     {
         Expression Format(Expression value)
         {
@@ -329,14 +300,19 @@ internal static class CsvTypeBinder
             return Expression.Coalesce(Format(propAccess), Expression.Constant(""));
 
         var formatted = Format(Expression.Property(propAccess, "Value"));
-        return Expression.Condition(
-            Expression.Property(propAccess, "HasValue"),
-            Expression.Coalesce(formatted, Expression.Constant("")),
-            Expression.Constant(""));
+        return Expression.Condition(Expression.Property(propAccess, "HasValue"), Expression.Coalesce(formatted, Expression.Constant("")), Expression.Constant(""));
     }
 
     internal sealed class TypeMap
     {
+        public Type Type { get; }
+
+        public ColumnMap[] Columns { get; }
+
+        public Func<object> Factory { get; }
+
+        public string[] Headers { get; }
+
         public TypeMap(Type type, ColumnMap[] columns, Func<object> factory)
         {
             Type = type;
@@ -348,22 +324,16 @@ internal static class CsvTypeBinder
 
             Headers = headers;
         }
-
-        public Type Type { get; }
-        public ColumnMap[] Columns { get; }
-        public Func<object> Factory { get; }
-        public string[] Headers { get; }
     }
 
-    internal sealed class ColumnMap(
-        PropertyInfo property,
-        string headerName,
-        Action<object, string?, CultureInfo> setter,
-        Action<object, CsvTextWriter, CultureInfo> writer)
+    internal sealed class ColumnMap(PropertyInfo property, string headerName, Action<object, string?, CultureInfo> setter, Action<object, CsvTextWriter, CultureInfo> writer)
     {
         public PropertyInfo Property { get; } = property;
+
         public string HeaderName { get; } = headerName;
+
         public Action<object, string?, CultureInfo> Setter { get; } = setter;
+
         public Action<object, CsvTextWriter, CultureInfo> Writer { get; } = writer;
     }
 }

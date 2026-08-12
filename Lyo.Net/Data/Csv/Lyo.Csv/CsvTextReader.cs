@@ -5,28 +5,34 @@ using Lyo.Csv.Models;
 namespace Lyo.Csv;
 
 /// <summary>
-/// Pull-based CSV field reader over a <see cref="TextReader" />.
-/// Parses from a rented char buffer; <see cref="ReadRow"/> / <see cref="ReadRowAsync"/> return a reused list
+/// Pull-based CSV field reader over a <see cref="TextReader" />. Parses from a rented char buffer; <see cref="ReadRow" /> / <see cref="ReadRowAsync" /> return a reused list
 /// valid only until the next read.
 /// </summary>
-internal sealed class CsvTextReader : IDisposable
+internal sealed class CsvTextReader
+    : IDisposable
 #if !NETSTANDARD2_0
-    , IAsyncDisposable
+        , IAsyncDisposable
 #endif
 {
     private const int DefaultBufferSize = 64 * 1024;
-
-    private readonly TextReader _reader;
-    private readonly CsvOptions _options;
+    private readonly char[] _buffer;
     private readonly char _delimiter;
     private readonly StringBuilder _field = new(128);
+    private readonly CsvOptions _options;
+
+    private readonly TextReader _reader;
     private readonly List<string> _row = [];
-    private readonly char[] _buffer;
-    private int _bufPos;
     private int _bufLen;
-    private int? _expectedColumnCount;
+    private int _bufPos;
     private bool _disposed;
     private bool _eof;
+    private int? _expectedColumnCount;
+
+    /// <summary>Best-effort raw record for error reporting (joined fields; not built on the hot path).</summary>
+    public string? RawRecord => _row.Count == 0 ? null : string.Join(_options.Delimiter, _row);
+
+    /// <summary>1-based physical row counter (increments on each successful data row).</summary>
+    public int RowNumber { get; private set; }
 
     public CsvTextReader(TextReader reader, CsvOptions options, int bufferSize = DefaultBufferSize)
     {
@@ -36,17 +42,25 @@ internal sealed class CsvTextReader : IDisposable
         _buffer = ArrayPool<char>.Shared.Rent(Math.Max(bufferSize, 1024));
     }
 
-    /// <summary>Best-effort raw record for error reporting (joined fields; not built on the hot path).</summary>
-    public string? RawRecord
-        => _row.Count == 0 ? null : string.Join(_options.Delimiter, _row);
+#if !NETSTANDARD2_0
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+#endif
 
-    /// <summary>1-based physical row counter (increments on each successful data row).</summary>
-    public int RowNumber { get; private set; }
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
 
-    /// <summary>
-    /// Reads the next data row. Returns the internal field list (reused on the next call), or null at EOF.
-    /// Copy the list if you need to retain it across reads.
-    /// </summary>
+        _disposed = true;
+        ArrayPool<char>.Shared.Return(_buffer);
+        _reader.Dispose();
+    }
+
+    /// <summary>Reads the next data row. Returns the internal field list (reused on the next call), or null at EOF. Copy the list if you need to retain it across reads.</summary>
     public IReadOnlyList<string>? ReadRow()
     {
         while (true) {
@@ -65,9 +79,7 @@ internal sealed class CsvTextReader : IDisposable
     }
 
 #if !NETSTANDARD2_0
-    /// <summary>
-    /// Asynchronously reads the next data row. Returns the internal field list (reused on the next call), or null at EOF.
-    /// </summary>
+    /// <summary>Asynchronously reads the next data row. Returns the internal field list (reused on the next call), or null at EOF.</summary>
     public async Task<IReadOnlyList<string>?> ReadRowAsync(CancellationToken ct = default)
     {
         while (true) {
@@ -97,9 +109,9 @@ internal sealed class CsvTextReader : IDisposable
             return;
         }
 
-        if (_row.Count != _expectedColumnCount.Value)
-            throw new CsvBadDataException(
-                $"Inconsistent number of columns at row {RowNumber + 1}: expected {_expectedColumnCount}, found {_row.Count}.");
+        if (_row.Count != _expectedColumnCount.Value) {
+            throw new CsvBadDataException($"Inconsistent number of columns at row {RowNumber + 1}: expected {_expectedColumnCount}, found {_row.Count}.");
+        }
     }
 
     private bool ReadRowSync()
@@ -108,7 +120,6 @@ internal sealed class CsvTextReader : IDisposable
         var fieldStarted = false;
         var any = false;
         var atLineStart = true;
-
         while (true) {
             var ch = ReadChar();
             if (ch < 0) {
@@ -120,7 +131,6 @@ internal sealed class CsvTextReader : IDisposable
             }
 
             any = true;
-
             if (atLineStart && !inQuotes && _options.AllowComments) {
                 if (ch is ' ' or '\t') {
                     // keep scanning
@@ -205,7 +215,6 @@ internal sealed class CsvTextReader : IDisposable
         var fieldStarted = false;
         var any = false;
         var atLineStart = true;
-
         while (true) {
             if (_bufPos >= _bufLen && !_eof) {
                 _bufLen = await _reader.ReadAsync(_buffer.AsMemory(0, _buffer.Length), ct).ConfigureAwait(false);
@@ -224,7 +233,6 @@ internal sealed class CsvTextReader : IDisposable
             }
 
             any = true;
-
             if (atLineStart && !inQuotes && _options.AllowComments) {
                 if (ch is ' ' or '\t') {
                     // keep scanning
@@ -406,22 +414,4 @@ internal sealed class CsvTextReader : IDisposable
 
         return _buffer[_bufPos];
     }
-
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        ArrayPool<char>.Shared.Return(_buffer);
-        _reader.Dispose();
-    }
-
-#if !NETSTANDARD2_0
-    public ValueTask DisposeAsync()
-    {
-        Dispose();
-        return ValueTask.CompletedTask;
-    }
-#endif
 }

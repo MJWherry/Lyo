@@ -5,8 +5,7 @@ namespace Lyo.FileStorage.Ftp.Tests;
 public class FtpFileStorageOptionsTests
 {
     [Fact]
-    public void SectionName_IsFtpFileStorage()
-        => Assert.Equal("FtpFileStorage", FtpFileStorageOptions.SectionName);
+    public void SectionName_IsFtpFileStorage() => Assert.Equal("FtpFileStorage", FtpFileStorageOptions.SectionName);
 
     [Fact]
     public void Ftp_NestedOptions_Validate()
@@ -20,6 +19,7 @@ public class FtpFileStorageOptionsTests
                 EncryptionMode = FtpEncryptionMode.None
             }
         };
+
         o.Ftp.Validate();
         Assert.Equal("/files", o.Ftp.RootRemoteDirectory);
     }

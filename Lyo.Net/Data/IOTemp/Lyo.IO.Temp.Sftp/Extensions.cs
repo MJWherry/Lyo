@@ -12,8 +12,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="SftpIOTempStorageProvider" /> as the singleton <see cref="IIOTempStorageProvider" />.
-        /// Call before <c>AddIOTempService</c>. Also registers <see cref="ISftpClient" /> when options are supplied.
+        /// Registers <see cref="SftpIOTempStorageProvider" /> as the singleton <see cref="IIOTempStorageProvider" />. Call before <c>AddIOTempService</c>. Also registers
+        /// <see cref="ISftpClient" /> when options are supplied.
         /// </summary>
         public IServiceCollection AddIOTempSftpStorageProvider(Action<SftpClientOptions> configure)
         {

@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
-using Lyo.FileStorage.Models;
 using Lyo.KeyStore;
 using Lyo.Streams;
 
@@ -37,9 +36,8 @@ public class LocalFileStorageBenchmarks : LyoBenchmarkBase
     {
         var storageRoot = Temp.CreateDirectory("filestorage");
         _keyStore = FileStorageBenchmarkSupport.CreateKeyStore();
-        _storage = new LocalFileStorageService(
-            new DiskFileStorageOptions { RootDirectoryPath = storageRoot, EnableMetrics = false },
-            compressionService: FileStorageBenchmarkSupport.CreateCompressionService(),
+        _storage = new(
+            new() { RootDirectoryPath = storageRoot, EnableMetrics = false }, compressionService: FileStorageBenchmarkSupport.CreateCompressionService(),
             twoKeyEncryptionService: FileStorageBenchmarkSupport.CreateTwoKeyEncryptionService(_keyStore));
 
         _getFileId = SavePayloadAsync().GetAwaiter().GetResult();
@@ -89,13 +87,7 @@ public class LocalFileStorageBenchmarks : LyoBenchmarkBase
     private async Task<Guid> SavePayloadAsync()
     {
         await using var input = new DeterministicPayloadStream(DataSize, BenchmarkData.PayloadSeed);
-        var result = await _storage.SaveFromStreamAsync(
-            input,
-            DataSize,
-            originalFileName: "bench.bin",
-            compress: Compress,
-            encrypt: Encrypt,
-            keyId: Encrypt ? FileStorageBenchmarkSupport.KeyId : null);
+        var result = await _storage.SaveFromStreamAsync(input, DataSize, "bench.bin", Compress, Encrypt, Encrypt ? FileStorageBenchmarkSupport.KeyId : null);
         return result.Id;
     }
 }

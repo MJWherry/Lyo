@@ -13,9 +13,7 @@ public static class DiagnosticHttpContextExtensions
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(options);
-
         var correlation = ResolveCorrelationId(context, options);
-
         var path = context.Request.Path.HasValue ? context.Request.Path.Value : null;
         var query = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : null;
         var user = context.User?.Identity is { IsAuthenticated: true } ? context.User.Identity?.Name : null;
@@ -28,9 +26,9 @@ public static class DiagnosticHttpContextExtensions
     }
 
     /// <summary>
-    /// Walks <paramref name="options"/>.<see cref="DiagnosticWebOptions.CorrelationIdHeaders"/> against the inbound <paramref name="context"/>, then falls back to
-    /// <see cref="HttpContext.TraceIdentifier"/>, then <see cref="Activity.Current"/>'s id, then a fresh hex GUID. Shared with <c>HttpContextCorrelationIdResolver</c> so the
-    /// diagnostic enricher, the auth audit, and outbound stamping all agree on which header is authoritative.
+    /// Walks <paramref name="options" />.<see cref="DiagnosticWebOptions.CorrelationIdHeaders" /> against the inbound <paramref name="context" />, then falls back to
+    /// <see cref="HttpContext.TraceIdentifier" />, then <see cref="Activity.Current" />'s id, then a fresh hex GUID. Shared with <c>HttpContextCorrelationIdResolver</c> so the diagnostic
+    /// enricher, the auth audit, and outbound stamping all agree on which header is authoritative.
     /// </summary>
     internal static string ResolveCorrelationId(HttpContext context, DiagnosticWebOptions options)
     {

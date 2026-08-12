@@ -4,8 +4,10 @@ namespace Lyo.TextEncoding;
 public sealed class EncodingException : Exception
 {
     /// <summary>Create with a message.</summary>
-    public EncodingException(string message) : base(message) { }
+    public EncodingException(string message)
+        : base(message) { }
 
     /// <summary>Create with a message and inner exception.</summary>
-    public EncodingException(string message, Exception innerException) : base(message, innerException) { }
+    public EncodingException(string message, Exception innerException)
+        : base(message, innerException) { }
 }

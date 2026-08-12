@@ -53,7 +53,6 @@ public class AesCcmEncryptionServiceTests
         var key = Key32("raw");
         // 12-byte nonce → q=3 → max packet 2^24-1; 16 MiB must fail one-shot encrypt.
         var tooBig = new byte[16 * 1024 * 1024];
-
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() => svc.Encrypt(tooBig, key: key));
         Assert.Contains("AES-CCM", ex.Message, StringComparison.Ordinal);
     }

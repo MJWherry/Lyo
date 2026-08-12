@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.Common.Extensions;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -160,11 +161,11 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     }
 
     private static ChangeRecord ToRecord(ChangeEntryEntity entity)
-        => new(new(entity.SubjectEntityType, entity.SubjectEntityId), DeserializeDict(entity.OldValuesJson), DeserializeDict(entity.ChangedPropertiesJson)) {
+        => new(new(entity.SubjectEntityType!, entity.SubjectEntityId!), DeserializeDict(entity.OldValuesJson), DeserializeDict(entity.ChangedPropertiesJson)) {
             Id = entity.Id,
             Timestamp = entity.Timestamp,
-            FromEntity = !string.IsNullOrWhiteSpace(entity.ActorEntityType) && !string.IsNullOrWhiteSpace(entity.ActorEntityId)
-                ? new EntityRef(entity.ActorEntityType, entity.ActorEntityId)
+            FromEntity = !entity.ActorEntityType.IsNullOrWhitespace() && !entity.ActorEntityId.IsNullOrWhitespace()
+                ? new EntityRef(entity.ActorEntityType!, entity.ActorEntityId!)
                 : null,
             TenantId = entity.TenantId,
             ChangeType = entity.ChangeType,

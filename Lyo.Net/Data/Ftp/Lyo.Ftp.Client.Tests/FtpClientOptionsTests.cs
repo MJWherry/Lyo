@@ -44,11 +44,12 @@ public class FtpClientOptionsTests
         Assert.Equal("/data/lyo/a/b", client.ResolvePath("a/b"));
     }
 
-    private static FtpClientOptions ValidBase() => new() {
-        Host = "localhost",
-        Username = "foo",
-        Password = "pass",
-        RootRemoteDirectory = "/data/lyo",
-        EncryptionMode = FtpEncryptionMode.None
-    };
+    private static FtpClientOptions ValidBase()
+        => new() {
+            Host = "localhost",
+            Username = "foo",
+            Password = "pass",
+            RootRemoteDirectory = "/data/lyo",
+            EncryptionMode = FtpEncryptionMode.None
+        };
 }

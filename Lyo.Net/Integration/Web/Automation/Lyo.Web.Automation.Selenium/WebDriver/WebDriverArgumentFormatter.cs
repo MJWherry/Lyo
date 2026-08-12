@@ -2,10 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Web.Automation.Selenium.WebDriver;
 
-/// <summary>
-/// Formats driver command-line switches: Chromium-style <c>--key=value</c> when <paramref name="value" /> is set; flag-only (e.g. <c>-headless</c>) when value is null or
-/// whitespace.
-/// </summary>
+/// <summary>Formats driver command-line switches: Chromium-style <c>--key=value</c> when a value is set; flag-only (e.g. <c>-headless</c>) when value is null or whitespace.</summary>
 public static class WebDriverArgumentFormatter
 {
     /// <summary>

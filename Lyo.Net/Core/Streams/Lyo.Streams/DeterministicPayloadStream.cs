@@ -7,8 +7,8 @@ namespace Lyo.Streams;
 /// allocated. Suitable for large streaming benchmarks and tests.
 /// </summary>
 /// <remarks>
-/// Seeking to an arbitrary position resets the PRNG and skips forward; prefer sequential reads and <c>Seek(0)</c> for best performance. The same length and seed always yield the
-/// same sequence.
+/// Seeking to an arbitrary position resets the PRNG and skips forward; prefer sequential reads and <c>Seek(0)</c> for best performance. The same length and seed always yield
+/// the same sequence.
 /// </remarks>
 public sealed class DeterministicPayloadStream : Stream
 {
@@ -38,7 +38,7 @@ public sealed class DeterministicPayloadStream : Stream
         ArgumentHelpers.ThrowIfNegative(length);
         _length = length;
         _seed = seed;
-        _rng = new Random(seed);
+        _rng = new(seed);
     }
 
     /// <summary>Fills <paramref name="buffer" /> with deterministic bytes from <paramref name="seed" /> (defaults to <see cref="DefaultSeed" />).</summary>
@@ -144,14 +144,14 @@ public sealed class DeterministicPayloadStream : Stream
             SeekOrigin.Begin => offset,
             SeekOrigin.Current => _position + offset,
             SeekOrigin.End => _length + offset,
-            _ => throw new ArgumentOutOfRangeException(nameof(origin))
+            var _ => throw new ArgumentOutOfRangeException(nameof(origin))
         };
 
         if (target < 0 || target > _length)
             throw new IOException("Attempted to seek outside the stream bounds.");
 
         if (target < _position) {
-            _rng = new Random(_seed);
+            _rng = new(_seed);
             Skip(target);
         }
         else if (target > _position)

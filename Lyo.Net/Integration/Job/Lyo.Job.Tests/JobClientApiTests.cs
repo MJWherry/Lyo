@@ -24,7 +24,7 @@ public class JobRunClientTests
     public async Task StartAsync_UsesRelativeRouteByDefault()
     {
         var runId = Guid.NewGuid();
-        await _relativeClient.StartAsync(runId, ["JobRunParameters"]);
+        await _relativeClient.StartAsync(runId, ["JobRunParameters"], TestContext.Current.CancellationToken);
         Assert.Equal($"Job/Run/{runId}/Started?include=JobRunParameters", _api.LastUri);
     }
 
@@ -32,7 +32,7 @@ public class JobRunClientTests
     public async Task StartAsync_UsesPrefixedRouteWhenConfigured()
     {
         var runId = Guid.NewGuid();
-        await _prefixedClient.StartAsync(runId);
+        await _prefixedClient.StartAsync(runId, ct: TestContext.Current.CancellationToken);
         Assert.Equal($"https://localhost:5074/Job/Run/{runId}/Started", _api.LastUri);
     }
 
@@ -41,7 +41,7 @@ public class JobRunClientTests
     {
         var runId = Guid.NewGuid();
         var results = new[] { new JobRunResultReq("Result", JobRunResult.Success) };
-        await _relativeClient.FinishAsync(runId, results);
+        await _relativeClient.FinishAsync(runId, results, TestContext.Current.CancellationToken);
         Assert.Equal($"Job/Run/{runId}/Finished", _api.LastUri);
         Assert.NotNull(_api.LastBody);
     }
@@ -49,7 +49,7 @@ public class JobRunClientTests
     [Fact]
     public async Task CreateAsync_PostsToRunsCreateNotRunsRoot()
     {
-        await _relativeClient.CreateAsync(new(Guid.NewGuid(), "tester", false));
+        await _relativeClient.CreateAsync(new(Guid.NewGuid(), "tester", false), TestContext.Current.CancellationToken);
         Assert.Equal("Job/Run/Create", _api.LastUri);
         Assert.IsType<JobRunReq>(_api.LastBody);
     }
@@ -58,7 +58,7 @@ public class JobRunClientTests
     public async Task PatchProgressAsync_PatchesRunEntity()
     {
         var runId = Guid.NewGuid();
-        await _relativeClient.PatchProgressAsync(runId, 42, "halfway");
+        await _relativeClient.PatchProgressAsync(runId, 42, "halfway", TestContext.Current.CancellationToken);
         Assert.Equal($"Job/Run/{runId}", _api.LastUri);
         Assert.IsType<PatchRequest>(_api.LastBody);
     }
@@ -79,7 +79,7 @@ public class JobWorkerInstanceClientTests
                 State = JobWorkerInstanceState.Running,
                 StartedTimestamp = DateTime.UtcNow,
                 LastHeartbeatUtc = DateTime.UtcNow
-            });
+            }, TestContext.Current.CancellationToken);
 
         Assert.Equal("https://api.test/Job/WorkerInstance", api.LastUri);
         Assert.IsType<JobWorkerInstanceReq>(api.LastBody);
@@ -91,7 +91,7 @@ public class JobWorkerInstanceClientTests
         var api = new RecordingApiClient();
         var client = new JobWorkerInstanceClient(api);
         var id = Guid.NewGuid();
-        await client.HeartbeatAsync(id, 3);
+        await client.HeartbeatAsync(id, 3, TestContext.Current.CancellationToken);
         Assert.Equal("Job/WorkerInstance", api.LastUri);
         var patch = Assert.IsType<PatchRequest>(api.LastBody);
         Assert.NotNull(patch.Keys);

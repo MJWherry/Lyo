@@ -11,7 +11,7 @@ namespace Lyo.Encryption.AesCcm;
 
 /// <summary>
 /// AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.
-/// Single-shot buffer encrypt is capped at <see cref="AesCcmHelper.MaxPlaintextLength"/> (~16 MiB); use streaming APIs for larger payloads.
+/// Single-shot buffer encrypt is capped at <see cref="AesCcmHelper.MaxPlaintextLength" /> (~16 MiB); use streaming APIs for larger payloads.
 /// </summary>
 public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
@@ -98,7 +98,6 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var versionString = keyVersion ?? "";
         var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4 + AesCcmHelper.NonceSize;
         var result = new byte[prefixLen + AesCcmHelper.TagSize + plaintext.Length];
-
         var o = 0;
         result[o++] = formatVersion;
         BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
@@ -163,8 +162,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var nonceLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
         o += 4;
         ArgumentHelpers.ThrowIfNotInRange(
-            nonceLength, AesCcmHelper.NonceSize, AesCcmHelper.NonceSize, nameof(encrypted),
-            $"Invalid nonce length: {nonceLength}. Expected {AesCcmHelper.NonceSize} bytes.");
+            nonceLength, AesCcmHelper.NonceSize, AesCcmHelper.NonceSize, nameof(encrypted), $"Invalid nonce length: {nonceLength}. Expected {AesCcmHelper.NonceSize} bytes.");
 
         if (encrypted.Length - o < nonceLength + AesCcmHelper.TagSize)
             throw new InvalidDataException("Invalid encrypted data format: truncated nonce or tag.");
@@ -174,7 +172,6 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var tag = encrypted.Slice(o, AesCcmHelper.TagSize);
         o += AesCcmHelper.TagSize;
         var ciphertext = encrypted[o..];
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;

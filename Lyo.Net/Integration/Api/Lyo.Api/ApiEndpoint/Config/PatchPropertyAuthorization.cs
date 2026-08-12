@@ -10,8 +10,8 @@ namespace Lyo.Api.ApiEndpoint.Config;
 /// <summary>
 /// Optional per-patch rules: which JSON property names may be updated for the current user. Pair with <see cref="EndpointAuth" /> on the same endpoint for typical APIs. When
 /// <see cref="Custom" /> is set, it replaces <see cref="PolicyAllowedProperties" />. Otherwise, allowed names are the union of property sets from each
-/// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync" />. Use <c>"*"</c> in a policy's set to allow every key present
-/// in <see cref="PatchRequest.Properties" /> when that policy succeeds.
+/// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync(ClaimsPrincipal, string)" />. Use <c>"*"</c> in a policy's set to
+/// allow every key present in <see cref="PatchRequest.Properties" /> when that policy succeeds.
 /// </summary>
 public sealed record PatchPropertyAuthorization
 {

@@ -1,8 +1,8 @@
 namespace Lyo.DataTable.Models;
 
 /// <summary>
-/// Fluent builder for a thin <see cref="IDataTableCell" /> plus optional <see cref="DataTableCellFormat" />.
-/// Call <see cref="Build" /> for the cell and <see cref="BuildFormat" /> / <see cref="Format" /> for formatting to apply on the table map.
+/// Fluent builder for a thin <see cref="IDataTableCell" /> plus optional <see cref="DataTableCellFormat" />. Call <see cref="Build" /> for the cell and
+/// <see cref="BuildFormat" /> / <see cref="Format" /> for formatting to apply on the table map.
 /// </summary>
 public sealed class DataTableCellBuilder
 {
@@ -28,11 +28,11 @@ public sealed class DataTableCellBuilder
     private string? _verticalAlignment;
     private bool? _wrapText;
 
-    /// <summary>Creates a cell builder with the given value.</summary>
-    public DataTableCellBuilder(object? value) => _value = value;
-
     /// <summary>The accumulated format, or null when no formatting fields were set.</summary>
     public DataTableCellFormat? Format => BuildFormat();
+
+    /// <summary>Creates a cell builder with the given value.</summary>
+    public DataTableCellBuilder(object? value) => _value = value;
 
     /// <summary>Sets the value.</summary>
     public DataTableCellBuilder WithValue(object? value)
@@ -198,8 +198,9 @@ public sealed class DataTableCellBuilder
     public DataTableCellFormat? BuildFormat()
     {
         var format = new DataTableCellFormat(
-            _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment, _verticalAlignment,
-            _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor);
+            _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment, _verticalAlignment, _numberFormat,
+            _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor);
+
         return format.HasAny() ? format : null;
     }
 }

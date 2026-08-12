@@ -363,7 +363,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 fields.Add(placeholder);
         }
 
-        return [..fields];
+        return [.. fields];
     }
 
     /// <inheritdoc />

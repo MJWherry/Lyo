@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using Lyo.Diagnostic.Correlation;
 using Lyo.Exceptions;
@@ -8,10 +7,10 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Diagnostic.AspNetCore.Correlation;
 
 /// <summary>
-/// ASP.NET Core <see cref="ICorrelationIdResolver"/>. Walks <see cref="DiagnosticWebOptions.CorrelationIdHeaders"/> against the inbound <see cref="HttpRequest"/>, then falls back
-/// (in order) to <see cref="HttpContext.TraceIdentifier"/>, <see cref="Activity.Current"/>'s id, and finally a fresh hex GUID when no <see cref="HttpContext"/> is in scope.
-/// Reading from the same options object as <see cref="DiagnosticHttpContextExtensions.ToDiagnosticRequestMetadata"/> guarantees that the diagnostic enricher, the auth audit, and
-/// any outbound stamping all agree on which header is authoritative.
+/// ASP.NET Core <see cref="ICorrelationIdResolver" />. Walks <see cref="DiagnosticWebOptions.CorrelationIdHeaders" /> against the inbound <see cref="HttpRequest" />, then
+/// falls back (in order) to <see cref="HttpContext.TraceIdentifier" />, <see cref="Activity.Current" />'s id, and finally a fresh hex GUID when no <see cref="HttpContext" /> is in
+/// scope. Reading from the same options object as <see cref="DiagnosticHttpContextExtensions.ToDiagnosticRequestMetadata" /> guarantees that the diagnostic enricher, the auth audit,
+/// and any outbound stamping all agree on which header is authoritative.
 /// </summary>
 public sealed class HttpContextCorrelationIdResolver : ICorrelationIdResolver
 {
@@ -27,7 +26,7 @@ public sealed class HttpContextCorrelationIdResolver : ICorrelationIdResolver
         _options = options;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string Resolve()
     {
         var ctx = _httpContextAccessor.HttpContext;

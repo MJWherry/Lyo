@@ -14,17 +14,16 @@ public sealed class DiagnosticMiddlewareIntegrationTests
     [Fact]
     public async Task UseDiagnosticExceptionRecording_RecordsInbox_OnUnhandledException()
     {
-        using var host = await new HostBuilder()
-            .ConfigureWebHost(web => {
+        using var host = await new HostBuilder().ConfigureWebHost(web => {
                 web.UseTestServer();
                 web.ConfigureServices(services => {
                     services.AddLogging();
                     services.AddLyoDiagnosticsWeb();
                 });
+
                 web.Configure(app => {
                     app.UseDiagnosticExceptionRecording();
-                    app.Use(async (HttpContext _, RequestDelegate _) =>
-                    {
+                    app.Use(async (HttpContext _, RequestDelegate _) => {
                         throw new InvalidOperationException("boom");
                     });
                 });
@@ -34,7 +33,6 @@ public sealed class DiagnosticMiddlewareIntegrationTests
         var client = host.GetTestServer().CreateClient();
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync("/", TestContext.Current.CancellationToken));
         Assert.Equal("boom", ex.Message);
-
         var inbox = host.Services.GetRequiredService<InMemoryErrorInbox>();
         var groups = inbox.ListGroups(TimeSpan.FromMinutes(1));
         Assert.NotEmpty(groups);

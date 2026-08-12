@@ -11,7 +11,7 @@
             </MudText>
         </div>
 
-        <MudTabs Elevation="0" Rounded="true" PanelClass="pt-4">
+        <MudTabs Elevation="0" Rounded="true" TabPanelsClass="pt-4">
 
             <!-- ── UUID / GUID ─────────────────────────────────────────── -->
             <MudTabPanel Text="UUID / GUID">
@@ -20,7 +20,7 @@
                         <MudStack Spacing="3">
                             <MudGrid>
                                 <MudItem xs="12" md="4">
-                                    <MudSelect T="GuidVersion" Label="Version" @bind-Value="_guidVersion" Dense="true">
+                                    <MudSelect T="GuidVersion" Label="Version" @bind-Value="_guidVersion" Margin="Margin.Dense">
                                         <MudSelectItem Value="GuidVersion.V4">V4 — Random</MudSelectItem>
                                         <MudSelectItem Value="GuidVersion.V7">V7 — Unix-ms ordered (recommended for DBs)</MudSelectItem>
                                         <MudSelectItem Value="GuidVersion.V6">V6 — Gregorian ordered</MudSelectItem>
@@ -45,7 +45,7 @@
                             @if (_guidVersion is GuidVersion.V3 or GuidVersion.V5) {
                                 <MudGrid>
                                     <MudItem xs="12" md="3">
-                                        <MudSelect T="string" Label="Namespace" @bind-Value="_guidNamespace" Dense="true">
+                                        <MudSelect T="string" Label="Namespace" @bind-Value="_guidNamespace" Margin="Margin.Dense">
                                             <MudSelectItem Value="@("DNS")">DNS</MudSelectItem>
                                             <MudSelectItem Value="@("URL")">URL</MudSelectItem>
                                             <MudSelectItem Value="@("OID")">OID</MudSelectItem>
@@ -131,7 +131,7 @@
                         <MudStack Spacing="2">
                             <MudGrid>
                                 <MudItem xs="12" md="5">
-                                    <MudTextField Label="Alphabet" @bind-Value="_nanoAlphabet" Dense="true"/>
+                                    <MudTextField Label="Alphabet" @bind-Value="_nanoAlphabet" Margin="Margin.Dense"/>
                                 </MudItem>
                                 <MudItem xs="6" md="2">
                                     <MudNumericField T="int" Label="Size (chars)" @bind-Value="_nanoSize" Min="1" Max="256"/>
@@ -189,7 +189,7 @@
                         <MudStack Spacing="2">
                             <MudGrid>
                                 <MudItem xs="12" md="3">
-                                    <MudSelect T="string" Label="Type" @bind-Value="_autoType" Dense="true">
+                                    <MudSelect T="string" Label="Type" @bind-Value="_autoType" Margin="Margin.Dense">
                                         <MudSelectItem Value="@("int")">int</MudSelectItem>
                                         <MudSelectItem Value="@("long")">long</MudSelectItem>
                                         <MudSelectItem Value="@("uint")">uint</MudSelectItem>

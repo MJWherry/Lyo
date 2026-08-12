@@ -1,5 +1,3 @@
-using Lyo.Reporting.Models.Enums;
-
 namespace Lyo.Reporting.Web.Components;
 
 /// <summary>Editable row for report definition parameters in <see cref="ReportParameterTable" />.</summary>

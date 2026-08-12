@@ -22,8 +22,8 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
     private readonly IAuthAuditContextAccessor _auditContext;
     private readonly OidcAuthorizationUrlBuilder _authzBuilder;
     private readonly OidcTokenExchangeClient _exchange;
-    private readonly IExternalIdentityStore _identities;
     private readonly OidcIdTokenValidator _idTokenValidator;
+    private readonly IExternalIdentityStore _identities;
     private readonly ILyoJwtIssuer _jwtIssuer;
     private readonly ILogger<DefaultExternalLoginCoordinator> _logger;
     private readonly ExternalLoginOptions _options;

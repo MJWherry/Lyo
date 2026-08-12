@@ -8,25 +8,19 @@ internal static class IdCommands
     public static Command Create()
     {
         var id = new Command("id", "Generate and parse identifiers (ULID, KSUID, NanoID, GUID, Snowflake)");
-
         var ulid = CreateSimpleGenerate("ulid", CliIdentifiers.GenerateUlid);
         ulid.Subcommands.Add(CreateParseCommand(CliIdentifiers.ParseUlidTimestamp));
         id.Subcommands.Add(ulid);
-
         var ksuid = CreateSimpleGenerate("ksuid", CliIdentifiers.GenerateKsuid);
         ksuid.Subcommands.Add(CreateParseCommand(CliIdentifiers.ParseKsuidTimestamp));
         id.Subcommands.Add(ksuid);
-
         id.Subcommands.Add(CreateNanoId());
-
         var guid = CreateGuid();
         guid.Subcommands.Add(CreateTimestampCommand());
         id.Subcommands.Add(guid);
-
         var snow = CreateSnowflake();
         snow.Subcommands.Add(CreateParseCommand(CliIdentifiers.ParseSnowflakeTimestamp));
         id.Subcommands.Add(snow);
-
         return id;
     }
 
@@ -38,6 +32,7 @@ internal static class IdCommands
             var lines = gen(Math.Max(1, pr.GetValue(countOpt)));
             await CliIdentifiers.EmitAsync(lines, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -53,6 +48,7 @@ internal static class IdCommands
             var lines = CliIdentifiers.GenerateNanoId(Math.Max(1, pr.GetValue(countOpt)), pr.GetValue(sizeOpt), pr.GetValue(alphabetOpt));
             await CliIdentifiers.EmitAsync(lines, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -76,9 +72,11 @@ internal static class IdCommands
                 Guid? ns = null;
                 if (ver is "v3" or "v5")
                     ns = CliIdentifiers.ParseNamespace(pr.GetValue(nsOpt)!);
+
                 var lines = CliIdentifiers.GenerateGuid(version, Math.Max(1, pr.GetValue(countOpt)), ns, pr.GetValue(nameOpt));
                 await CliIdentifiers.EmitAsync(lines, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
             });
+
             cmd.Subcommands.Add(sub);
         }
 
@@ -95,6 +93,7 @@ internal static class IdCommands
             var lines = CliIdentifiers.GenerateSnowflake(Math.Max(1, pr.GetValue(countOpt)), pr.GetValue(machineOpt));
             await CliIdentifiers.EmitAsync(lines, pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -102,12 +101,13 @@ internal static class IdCommands
     {
         var cmd = new Command("parse", "Parse timestamp from id");
         var idArg = new Argument<string>("id");
-        AddEmitOptions(cmd, out _, out var outputOpt, out var copyOpt, out var quietOpt, includeCount: false);
+        AddEmitOptions(cmd, out var _, out var outputOpt, out var copyOpt, out var quietOpt, false);
         cmd.Arguments.Add(idArg);
         cmd.SetAction(async (pr, ct) => {
             var text = parse(pr.GetValue(idArg)!);
             await CliIdentifiers.EmitAsync([text], pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -115,12 +115,13 @@ internal static class IdCommands
     {
         var cmd = new Command("timestamp", "Extract timestamp from v6/v7 GUID");
         var idArg = new Argument<string>("guid");
-        AddEmitOptions(cmd, out _, out var outputOpt, out var copyOpt, out var quietOpt, includeCount: false);
+        AddEmitOptions(cmd, out var _, out var outputOpt, out var copyOpt, out var quietOpt, false);
         cmd.Arguments.Add(idArg);
         cmd.SetAction(async (pr, ct) => {
             var text = CliIdentifiers.ParseGuidTimestamp(pr.GetValue(idArg)!);
             await CliIdentifiers.EmitAsync([text], pr.GetValue(outputOpt), pr.GetValue(copyOpt), pr.GetValue(quietOpt), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -132,15 +133,13 @@ internal static class IdCommands
         out Option<bool> quietOpt,
         bool includeCount = true)
     {
-        countOpt = new Option<int>("--count", "-n") {
-            DefaultValueFactory = _ => 1,
-            Description = "Number of IDs to generate (one per line)"
-        };
-        outputOpt = new Option<string?>("--output", "-o");
-        copyOpt = new Option<bool>("--copy", "-c") { Description = "Copy result to system clipboard" };
-        quietOpt = new Option<bool>("--quiet", "-q") { Description = "Suppress stdout" };
+        countOpt = new("--count", "-n") { DefaultValueFactory = _ => 1, Description = "Number of IDs to generate (one per line)" };
+        outputOpt = new("--output", "-o");
+        copyOpt = new("--copy", "-c") { Description = "Copy result to system clipboard" };
+        quietOpt = new("--quiet", "-q") { Description = "Suppress stdout" };
         if (includeCount)
             cmd.Options.Add(countOpt);
+
         cmd.Options.Add(outputOpt);
         cmd.Options.Add(copyOpt);
         cmd.Options.Add(quietOpt);

@@ -255,9 +255,8 @@ public static class Extensions
                     },
                     BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
                     BeforeDelete = ctx => {
-                        if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id)) {
+                        if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
                             throw new ConflictException($"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
-                        }
 
                         ctx.DbContext.JobBlackoutWindows.RemoveRange(ctx.DbContext.JobBlackoutWindows.Where(w => w.JobBlackoutCalendarId == ctx.Entity.Id).ToList());
                     }

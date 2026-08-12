@@ -9,7 +9,8 @@
                 InitialDirection="@InitialDirection"
                 Hideable="@Hideable"
                 Resizable="@Resizable"
-                Align="@Align"
+                HeaderStyle="@EffectiveHeaderStyle"
+                CellStyle="@EffectiveCellStyle"
                 Hidden="@_hidden"
                 HiddenChanged="@(h => _hidden = h)">
     <CellTemplate Context="cell">
@@ -76,5 +77,19 @@
         if (!string.IsNullOrEmpty(QuickSearchPropertyName))
             ColumnRegistry?.Register("", Title, QuickSearchPropertyName);
     }
+
+    private string EffectiveHeaderStyle => MergeAlignStyle(null, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(null, Align);
+
+    private static string MergeAlignStyle(string? style, Align align)
+        => align switch {
+            Align.Center => AppendStyle(style, "text-align: center;"),
+            Align.Right => AppendStyle(style, "text-align: right;"),
+            Align.Left => AppendStyle(style, "text-align: left;"),
+            var _ => style ?? string.Empty
+        };
+
+    private static string AppendStyle(string? style, string snippet) => string.IsNullOrEmpty(style) ? snippet : $"{style.TrimEnd()} {snippet}";
 
 }

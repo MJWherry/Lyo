@@ -7,7 +7,6 @@
                           @bind-Value="_newProperty"
                           Label="Property"
                           Variant="Variant.Outlined"
-                          Dense
                           Immediate
                           Margin="Margin.Dense"
                           OnKeyDown="@OnKeyDown"
@@ -16,7 +15,6 @@
                        @bind-Value="_newDirection"
                        Label="Direction"
                        Variant="Variant.Outlined"
-                       Dense
                        Margin="Margin.Dense"
                        Style="min-width: 80px;">
                 <MudSelectItem Value="@SortDirectionEnum.Asc">Asc</MudSelectItem>
@@ -26,7 +24,6 @@
                              @bind-Value="_newPriority"
                              Label="Priority"
                              Variant="Variant.Outlined"
-                             Dense
                              Margin="Margin.Dense"
                              Min="0"
                              Style="min-width: 60px;"/>
@@ -35,7 +32,7 @@
                            Size="Size.Small"
                            OnClick="@AddSort"
                            Disabled="@string.IsNullOrWhiteSpace(_newProperty)"
-                           Title="Add sort"/>
+                           aria-label="Add sort"/>
         </MudStack>
 
         @if (Items.Any()) {

@@ -104,11 +104,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapPost(
                 "files/{fileId:guid}/access-links", async (
-                    Guid fileId,
-                    [FromBody] CreateDownloadAccessLinkRequest request,
-                    HttpContext http,
-                    IServiceProvider services,
-                    CancellationToken ct) => {
+                    Guid fileId, [FromBody] CreateDownloadAccessLinkRequest request, HttpContext http, IServiceProvider services, CancellationToken ct) => {
                     var accessService = GetDownloadAccessService(services);
                     var tenantId = request.TenantId ?? http.Request.Headers["X-Tenant-Id"].FirstOrDefault();
                     var result = await accessService.CreateLinkAsync(
@@ -122,18 +118,9 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapPost(
                     "files/save-stream", async (
-                        IFormFile file,
-                        [FromQuery] string? originalFileName,
-                        [FromQuery] bool compress,
-                        [FromQuery] bool encrypt,
-                        [FromQuery] string? keyId,
-                        [FromQuery] string? pathPrefix,
-                        [FromQuery] int? chunkSize,
-                        [FromQuery] string? contentType,
-                        [FromQuery] string? tenantId,
-                        IServiceProvider services,
-                        ICacheService cache,
-                        CancellationToken ct) => {
+                        IFormFile file, [FromQuery] string? originalFileName, [FromQuery] bool compress, [FromQuery] bool encrypt, [FromQuery] string? keyId,
+                        [FromQuery] string? pathPrefix, [FromQuery] int? chunkSize, [FromQuery] string? contentType, [FromQuery] string? tenantId, IServiceProvider services,
+                        ICacheService cache, CancellationToken ct) => {
                         var fileStorage = GetFileStorage(services);
                         return await SaveStreamFromFormAsync(
                             file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);
@@ -142,13 +129,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapGet(
                 "files/{fileId:guid}/presigned-read", async (
-                    Guid fileId,
-                    double? expiresHours,
-                    string? pathPrefix,
-                    string? contentDisposition,
-                    string? contentType,
-                    IServiceProvider services,
-                    CancellationToken ct) => {
+                    Guid fileId, double? expiresHours, string? pathPrefix, string? contentDisposition, string? contentType, IServiceProvider services, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
                     var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
                     var opts = BuildPreSignedReadUrlOptions(contentDisposition, contentType);
@@ -168,11 +149,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapPost(
                 "direct-upload/{fileId:guid}/complete", async (
-                    Guid fileId,
-                    [FromBody] DirectUploadCompleteRequest? request,
-                    IServiceProvider services,
-                    ICacheService cache,
-                    CancellationToken ct) => {
+                    Guid fileId, [FromBody] DirectUploadCompleteRequest? request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
                     var result = await fileStorage.CompleteDirectUploadAsync(fileId, request, ct);
                     await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
@@ -229,11 +206,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapPost(
                 "stage/{stageId:guid}/commit", async (
-                    Guid stageId,
-                    [FromBody] StagedUploadCommitRequest request,
-                    IServiceProvider services,
-                    ICacheService cache,
-                    CancellationToken ct) => {
+                    Guid stageId, [FromBody] StagedUploadCommitRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
                     var staged = GetStagedFileUploadService(services);
                     var result = await staged.CommitAsync(stageId, request, ct);
                     await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
@@ -341,11 +314,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapGet(
                 "files/{fileId:guid}/metadata", async (
-                    Guid fileId,
-                    IServiceProvider services,
-                    IDbContextFactory<FileMetadataStoreDbContext> dbFactory,
-                    CancellationToken ct,
-                    bool? includeDeleted) => {
+                    Guid fileId, IServiceProvider services, IDbContextFactory<FileMetadataStoreDbContext> dbFactory, CancellationToken ct, bool? includeDeleted) => {
                     if (includeDeleted == true) {
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var entity = await db.FileMetadata.AsNoTracking().FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
@@ -414,13 +383,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapGet(
                 "files/access/{token}/presigned-read", async (
-                    string token,
-                    double? expiresHours,
-                    string? contentDisposition,
-                    string? contentType,
-                    IServiceProvider services,
-                    HttpContext http,
-                    CancellationToken ct) => {
+                    string token, double? expiresHours, string? contentDisposition, string? contentType, IServiceProvider services, HttpContext http, CancellationToken ct) => {
                     var accessService = GetDownloadAccessService(services);
                     var access = await accessService.ValidateAndConsumeDownloadAsync(token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
                     if (!access.IsAllowed || access.FileId == null)
@@ -465,12 +428,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
             group.MapGet(
                 "files/search", async (
-                    string? searchText,
-                    string? keyId,
-                    string? keyVersion,
-                    int? take,
-                    IDbContextFactory<FileMetadataStoreDbContext> dbFactory,
-                    CancellationToken ct) => {
+                    string? searchText, string? keyId, string? keyVersion, int? take, IDbContextFactory<FileMetadataStoreDbContext> dbFactory, CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct);
                     var query = db.FileMetadata.AsNoTracking().AsQueryable().Where(e => e.DeletedAt == null);
                     if (!string.IsNullOrWhiteSpace(searchText)) {
@@ -618,18 +576,9 @@ public static class SetupFileStorageWorkbenchEndpoints
         {
             app.MapPost(
                     Constants.DirectFileUpload.FilePath, async (
-                        IFormFile file,
-                        [FromQuery] string? originalFileName,
-                        [FromQuery] bool compress,
-                        [FromQuery] bool encrypt,
-                        [FromQuery] string? keyId,
-                        [FromQuery] string? pathPrefix,
-                        [FromQuery] int? chunkSize,
-                        [FromQuery] string? contentType,
-                        [FromQuery] string? tenantId,
-                        IServiceProvider services,
-                        ICacheService cache,
-                        CancellationToken ct) => {
+                        IFormFile file, [FromQuery] string? originalFileName, [FromQuery] bool compress, [FromQuery] bool encrypt, [FromQuery] string? keyId,
+                        [FromQuery] string? pathPrefix, [FromQuery] int? chunkSize, [FromQuery] string? contentType, [FromQuery] string? tenantId, IServiceProvider services,
+                        ICacheService cache, CancellationToken ct) => {
                         var fileStorage = GetFileStorage(services);
                         return await SaveStreamFromFormAsync(
                             file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);

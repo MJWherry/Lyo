@@ -21,17 +21,20 @@ internal static class QueryCommands
         var cmd = new Command("build", "Compose a query request JSON body");
         var modeArg = new Argument<string>("mode") { Description = "concrete | project | root" };
         AddBuildOptions(
-            cmd, out var whereOpt, out var whereFileOpt, out var includeOpt, out var sortOpt, out var startOpt, out var amountOpt, out var keyOpt,
-            out var selectOpt, out var fromOpt, out var outputOpt);
+            cmd, out var whereOpt, out var whereFileOpt, out var includeOpt, out var sortOpt, out var startOpt, out var amountOpt, out var keyOpt, out var selectOpt,
+            out var fromOpt, out var outputOpt);
+
         cmd.Arguments.Add(modeArg);
         cmd.SetAction(async (pr, ct) => {
             var mode = CliQueryBuilder.ParseMode(pr.GetValue(modeArg)!);
             var whereFile = await ReadOptionalTextAsync(pr.GetValue(whereFileOpt), ct).ConfigureAwait(false);
             var body = CliQueryBuilder.Build(
-                mode, pr.GetValue(whereOpt), whereFile, pr.GetValue(includeOpt), pr.GetValue(sortOpt), pr.GetValue(startOpt), pr.GetValue(amountOpt),
-                pr.GetValue(keyOpt), pr.GetValue(selectOpt), pr.GetValue(fromOpt));
+                mode, pr.GetValue(whereOpt), whereFile, pr.GetValue(includeOpt), pr.GetValue(sortOpt), pr.GetValue(startOpt), pr.GetValue(amountOpt), pr.GetValue(keyOpt),
+                pr.GetValue(selectOpt), pr.GetValue(fromOpt));
+
             await CliIO.WriteTextAsync(pr.GetValue(outputOpt), CliQueryBuilder.Serialize(body), ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -47,8 +50,9 @@ internal static class QueryCommands
         var headerOpt = new Option<string[]>("--header") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
         var rawOpt = new Option<bool>("--raw");
         AddBuildOptions(
-            cmd, out var whereOpt, out var whereFileOpt, out var includeOpt, out var sortOpt, out var startOpt, out var amountOpt, out var keyOpt,
-            out var selectOpt, out var fromOpt, out var outputOpt);
+            cmd, out var whereOpt, out var whereFileOpt, out var includeOpt, out var sortOpt, out var startOpt, out var amountOpt, out var keyOpt, out var selectOpt,
+            out var fromOpt, out var outputOpt);
+
         cmd.Arguments.Add(modeArg);
         cmd.Options.Add(baseUrlOpt);
         cmd.Options.Add(basePathOpt);
@@ -57,7 +61,6 @@ internal static class QueryCommands
         cmd.Options.Add(tokenOpt);
         cmd.Options.Add(headerOpt);
         cmd.Options.Add(rawOpt);
-
         cmd.SetAction(async (pr, ct) => {
             var mode = CliQueryBuilder.ParseMode(pr.GetValue(modeArg)!);
             var baseUrl = pr.GetValue(baseUrlOpt) ?? Environment.GetEnvironmentVariable("LYO_API_BASE_URL");
@@ -66,16 +69,15 @@ internal static class QueryCommands
 
             object body;
             var bodyPath = pr.GetValue(bodyOpt);
-            var hasBuildFlags = (pr.GetValue(whereOpt)?.Length ?? 0) > 0 || !string.IsNullOrWhiteSpace(pr.GetValue(whereFileOpt)) ||
-                (pr.GetValue(includeOpt)?.Length ?? 0) > 0 || (pr.GetValue(sortOpt)?.Length ?? 0) > 0 || pr.GetValue(startOpt) is not null ||
-                pr.GetValue(amountOpt) is not null || (pr.GetValue(keyOpt)?.Length ?? 0) > 0 || (pr.GetValue(selectOpt)?.Length ?? 0) > 0 ||
-                !string.IsNullOrWhiteSpace(pr.GetValue(fromOpt));
+            var hasBuildFlags = (pr.GetValue(whereOpt)?.Length ?? 0) > 0 || !string.IsNullOrWhiteSpace(pr.GetValue(whereFileOpt)) || (pr.GetValue(includeOpt)?.Length ?? 0) > 0 ||
+                (pr.GetValue(sortOpt)?.Length ?? 0) > 0 || pr.GetValue(startOpt) is not null || pr.GetValue(amountOpt) is not null || (pr.GetValue(keyOpt)?.Length ?? 0) > 0 ||
+                (pr.GetValue(selectOpt)?.Length ?? 0) > 0 || !string.IsNullOrWhiteSpace(pr.GetValue(fromOpt));
 
             if (hasBuildFlags && string.IsNullOrWhiteSpace(bodyPath)) {
                 var whereFile = await ReadOptionalTextAsync(pr.GetValue(whereFileOpt), ct).ConfigureAwait(false);
                 body = CliQueryBuilder.Build(
-                    mode, pr.GetValue(whereOpt), whereFile, pr.GetValue(includeOpt), pr.GetValue(sortOpt), pr.GetValue(startOpt), pr.GetValue(amountOpt),
-                    pr.GetValue(keyOpt), pr.GetValue(selectOpt), pr.GetValue(fromOpt));
+                    mode, pr.GetValue(whereOpt), whereFile, pr.GetValue(includeOpt), pr.GetValue(sortOpt), pr.GetValue(startOpt), pr.GetValue(amountOpt), pr.GetValue(keyOpt),
+                    pr.GetValue(selectOpt), pr.GetValue(fromOpt));
             }
             else {
                 var json = await CliIO.ReadAllTextAsync(bodyPath, ct).ConfigureAwait(false);
@@ -85,14 +87,16 @@ internal static class QueryCommands
             var token = pr.GetValue(tokenOpt) ?? Environment.GetEnvironmentVariable("LYO_API_TOKEN");
             try {
                 var response = await CliQueryExecutor.ExecAsync(
-                    mode, baseUrl!, pr.GetValue(basePathOpt), pr.GetValue(routeOpt), body!, token, pr.GetValue(headerOpt), pr.GetValue(rawOpt), ct)
+                        mode, baseUrl!, pr.GetValue(basePathOpt), pr.GetValue(routeOpt), body!, token, pr.GetValue(headerOpt), pr.GetValue(rawOpt), ct)
                     .ConfigureAwait(false);
+
                 await CliIO.WriteTextAsync(pr.GetValue(outputOpt), response, ct).ConfigureAwait(false);
             }
             catch (ApiException) {
                 Environment.ExitCode = 1;
             }
         });
+
         return cmd;
     }
 
@@ -109,16 +113,16 @@ internal static class QueryCommands
         out Option<string?> fromOpt,
         out Option<string?> outputOpt)
     {
-        whereOpt = new Option<string[]>("--where") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [], Description = "FIELD:OP:VALUE" };
-        whereFileOpt = new Option<string?>("--where-file");
-        includeOpt = new Option<string[]>("--include") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
-        sortOpt = new Option<string[]>("--sort") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [], Description = "FIELD[:asc|desc]" };
-        startOpt = new Option<int?>("--start");
-        amountOpt = new Option<int?>("--amount");
-        keyOpt = new Option<string[]>("--key") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
-        selectOpt = new Option<string[]>("--select") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
-        fromOpt = new Option<string?>("--from") { Description = "ALIAS:ENTITY (root)" };
-        outputOpt = new Option<string?>("--output", "-o");
+        whereOpt = new("--where") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [], Description = "FIELD:OP:VALUE" };
+        whereFileOpt = new("--where-file");
+        includeOpt = new("--include") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
+        sortOpt = new("--sort") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [], Description = "FIELD[:asc|desc]" };
+        startOpt = new("--start");
+        amountOpt = new("--amount");
+        keyOpt = new("--key") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
+        selectOpt = new("--select") { AllowMultipleArgumentsPerToken = true, DefaultValueFactory = _ => [] };
+        fromOpt = new("--from") { Description = "ALIAS:ENTITY (root)" };
+        outputOpt = new("--output", "-o");
         cmd.Options.Add(whereOpt);
         cmd.Options.Add(whereFileOpt);
         cmd.Options.Add(includeOpt);
@@ -135,6 +139,7 @@ internal static class QueryCommands
     {
         if (string.IsNullOrWhiteSpace(path))
             return null;
+
         return await CliIO.ReadAllTextAsync(path, ct).ConfigureAwait(false);
     }
 }

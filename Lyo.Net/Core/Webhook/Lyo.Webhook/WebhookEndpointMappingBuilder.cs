@@ -10,8 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Webhook;
 
 /// <summary>
-/// Starts a fluent webhook route. Call <see cref="Verify" /> then <see cref="VerifiedWebhookEndpointBuilder.Handle" /> or
-/// <see cref="VerifiedWebhookEndpointBuilder.HandleJson{TRequest}" />.
+/// Starts a fluent webhook route. Call <see cref="Verify" /> then <see cref="VerifiedWebhookEndpointBuilder.Handle(Func{WebhookHandlerContext, Task})" /> or
+/// <see cref="VerifiedWebhookEndpointBuilder.HandleJson{TRequest}(Func{WebhookRequestContext{TRequest}, Task}, JsonSerializerOptions?)" />.
 /// </summary>
 public sealed class WebhookEndpointMappingBuilder
 {

@@ -103,9 +103,9 @@ public class SeleniumBrowserOptions
     /// <summary>Creates a deep copy for an independent browser session or scoped <c>SeleniumBrowser</c> instance.</summary>
     public virtual SeleniumBrowserOptions Clone()
         => new() {
-            UserAgents = [..UserAgents],
-            WebDriverArguments = [..WebDriverArguments],
-            StartupScripts = [..StartupScripts],
+            UserAgents = [.. UserAgents],
+            WebDriverArguments = [.. WebDriverArguments],
+            StartupScripts = [.. StartupScripts],
             EnablePerformanceLogging = EnablePerformanceLogging,
             BrowserKind = BrowserKind,
             Headless = Headless,

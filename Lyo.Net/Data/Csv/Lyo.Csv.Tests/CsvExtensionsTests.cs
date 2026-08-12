@@ -28,6 +28,7 @@ public class CsvExtensionsTests
             o.Pooling.PoolValues = true;
             o.Pooling.PoolingCellThreshold = 0;
         });
+
         var provider = services.BuildServiceProvider();
         Assert.True(provider.GetRequiredService<IOptions<CsvOptions>>().Value.Pooling.PoolValues);
     }

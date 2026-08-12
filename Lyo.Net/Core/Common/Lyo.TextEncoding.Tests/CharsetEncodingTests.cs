@@ -41,11 +41,9 @@ public sealed class CharsetEncodingTests
         using var input1 = new MemoryStream(utf16);
         using var out1 = new MemoryStream();
         CharsetEncoding.Convert(input1, out1, CharsetInfo.Utf16Le, CharsetInfo.Utf8);
-
         using var input2 = new MemoryStream(utf16);
         using var out2 = new MemoryStream();
         await CharsetEncoding.ConvertAsync(input2, out2, CharsetInfo.Utf16Le, CharsetInfo.Utf8, ct: TestContext.Current.CancellationToken);
-
         Assert.Equal(out1.ToArray(), out2.ToArray());
         Assert.Equal(text, Encoding.UTF8.GetString(out1.ToArray()));
     }
@@ -100,8 +98,7 @@ public sealed class CharsetEncodingTests
     }
 
     [Fact]
-    public void CharsetInfo_FromWebName_Alias_ReturnsWellKnown()
-        => Assert.Same(CharsetInfo.Windows1252, CharsetInfo.FromWebName("cp1252"));
+    public void CharsetInfo_FromWebName_Alias_ReturnsWellKnown() => Assert.Same(CharsetInfo.Windows1252, CharsetInfo.FromWebName("cp1252"));
 
     [Fact]
     public void CharsetInfo_Custom_NotInWellKnown_ButResolves()
@@ -112,15 +109,12 @@ public sealed class CharsetEncodingTests
     }
 
     [Fact]
-    public void GetEncoding_UnknownName_ThrowsEncodingException()
-        => Assert.Throws<EncodingException>(() => CharsetEncoding.GetEncoding("not-a-real-charset-xyz"));
+    public void GetEncoding_UnknownName_ThrowsEncodingException() => Assert.Throws<EncodingException>(() => CharsetEncoding.GetEncoding("not-a-real-charset-xyz"));
 
     [Fact]
     public void DecoderFallback_Replacement_DoesNotThrow()
     {
-        var options = new CharsetEncodingOptions {
-            DecoderFallback = DecoderFallback.ReplacementFallback
-        };
+        var options = new CharsetEncodingOptions { DecoderFallback = DecoderFallback.ReplacementFallback };
         var encoding = CharsetEncoding.GetEncoding(CharsetInfo.Utf8, options);
         byte[] bad = [0x80];
         var s = encoding.GetString(bad);
@@ -131,9 +125,7 @@ public sealed class CharsetEncodingTests
     [Fact]
     public void ExceptionFallback_InvalidUtf8_Throws()
     {
-        var options = new CharsetEncodingOptions {
-            DecoderFallback = DecoderFallback.ExceptionFallback
-        };
+        var options = new CharsetEncodingOptions { DecoderFallback = DecoderFallback.ExceptionFallback };
         var encoding = CharsetEncoding.GetEncoding(CharsetInfo.Utf8, options);
         byte[] bad = [0x80];
         Assert.ThrowsAny<ArgumentException>(() => encoding.GetString(bad));
@@ -145,7 +137,7 @@ public sealed class CharsetEncodingTests
     {
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
         try {
-            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, emitBom: true, ct: TestContext.Current.CancellationToken);
+            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, true, ct: TestContext.Current.CancellationToken);
             var bytes = await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken);
             Assert.Equal(0xEF, bytes[0]);
             Assert.Equal(0xBB, bytes[1]);
@@ -161,7 +153,7 @@ public sealed class CharsetEncodingTests
     {
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
         try {
-            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, emitBom: false, ct: TestContext.Current.CancellationToken);
+            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, false, ct: TestContext.Current.CancellationToken);
             var bytes = await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken);
             Assert.Equal((byte)'h', bytes[0]);
         }
@@ -197,19 +189,20 @@ public sealed class CharsetEncodingTests
             Assert.Equal(text, Encoding.UTF8.GetString(await File.ReadAllBytesAsync(output, TestContext.Current.CancellationToken)));
         }
         finally {
-            Directory.Delete(dir, recursive: true);
+            Directory.Delete(dir, true);
         }
     }
 
-    private sealed class NonSeekableMemoryStream(byte[] data) : MemoryStream(data)
+    private sealed class NonSeekableMemoryStream(byte[] data)
+        : MemoryStream(data)
     {
         public override bool CanSeek => false;
-
-        public override long Seek(long offset, SeekOrigin loc) => throw new NotSupportedException();
 
         public override long Position {
             get => throw new NotSupportedException();
             set => throw new NotSupportedException();
         }
+
+        public override long Seek(long offset, SeekOrigin loc) => throw new NotSupportedException();
     }
 }

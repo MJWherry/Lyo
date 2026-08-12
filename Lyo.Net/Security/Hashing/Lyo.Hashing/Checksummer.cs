@@ -3,6 +3,10 @@ using System.Buffers.Binary;
 using Lyo.Exceptions;
 using Lyo.Hashing.Internal;
 
+#if NET5_0_OR_GREATER
+using System.IO.Hashing;
+#endif
+
 namespace Lyo.Hashing;
 
 /// <summary>
@@ -31,9 +35,9 @@ public static class Checksummer
 #if NET5_0_OR_GREATER
         switch (algorithm) {
             case ChecksumAlgorithm.Crc32:
-                return System.IO.Hashing.Crc32.HashToUInt32(data);
+                return Crc32.HashToUInt32(data);
             case ChecksumAlgorithm.Crc64:
-                return System.IO.Hashing.Crc64.HashToUInt64(data);
+                return Crc64.HashToUInt64(data);
         }
 #endif
         var calculator = ChecksumCalculator.Create(algorithm);

@@ -6,7 +6,7 @@ using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
-/// <summary>IFrame / nested browsing context switching with optional stack via <see cref="EnterFrame" /> scopes.</summary>
+/// <summary>IFrame / nested browsing context switching with optional stack via <see cref="EnterFrame(IWebElement)" /> scopes.</summary>
 public sealed class FrameNavigator
 {
     private readonly SeleniumBrowser _scraper;

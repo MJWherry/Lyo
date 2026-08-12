@@ -6,8 +6,7 @@ using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Benchmarks;
 
-[BenchmarkDescription(
-    "Buffered GZip compress/decompress of seeded deterministic (incompressible) buffers (100 / 250 / 500 MiB); decompress cases reuse output from setup.")]
+[BenchmarkDescription("Buffered GZip compress/decompress of seeded deterministic (incompressible) buffers (100 / 250 / 500 MiB); decompress cases reuse output from setup.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Input size: 100, 250, or 500 MiB.")]
 public class GZipCompressionBenchmarks : LyoBenchmarkBase
 {
@@ -22,7 +21,7 @@ public class GZipCompressionBenchmarks : LyoBenchmarkBase
     protected override void OnGlobalSetup()
     {
         ICompressorFactory[] factories = [new GZipCompressorFactory()];
-        _compressionService = new(factories, options: new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
+        _compressionService = new(factories, options: new() { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
         _testData = BenchmarkData.DeterministicBytes(DataSize);
     }
 

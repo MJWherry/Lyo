@@ -5,8 +5,7 @@ namespace Lyo.FileStorage.Sftp.Tests;
 public class SftpFileStorageOptionsTests
 {
     [Fact]
-    public void SectionName_IsSftpFileStorage()
-        => Assert.Equal("SftpFileStorage", SftpFileStorageOptions.SectionName);
+    public void SectionName_IsSftpFileStorage() => Assert.Equal("SftpFileStorage", SftpFileStorageOptions.SectionName);
 
     [Fact]
     public void Sftp_NestedOptions_Validate()
@@ -20,6 +19,7 @@ public class SftpFileStorageOptionsTests
                 RootRemoteDirectory = "/files"
             }
         };
+
         o.Sftp.Validate();
         Assert.Equal("/files", o.Sftp.RootRemoteDirectory);
     }

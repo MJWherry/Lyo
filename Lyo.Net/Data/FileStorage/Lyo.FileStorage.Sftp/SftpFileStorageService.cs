@@ -23,8 +23,8 @@ namespace Lyo.FileStorage.Sftp;
 /// <summary>SFTP-backed <see cref="IFileStorageService" /> (physical IO only; presigned/multipart unsupported).</summary>
 public sealed class SftpFileStorageService : FileStorageServiceBase
 {
-    private readonly ISftpClient _sftp;
     private readonly string _root;
+    private readonly ISftpClient _sftp;
 
     /// <summary>Creates an SFTP file storage service.</summary>
     public SftpFileStorageService(
@@ -41,8 +41,8 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         IFileMalwareScanner? malwareScanner = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService),
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<SftpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics,
-            operationContextAccessor, auditHandlers, contentPolicy, malwareScanner)
+            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<SftpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
+            auditHandlers, contentPolicy, malwareScanner)
     {
         ArgumentHelpers.ThrowIfNull(sftpClient);
         _sftp = sftpClient;
@@ -72,6 +72,7 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, path);
         if (!string.IsNullOrEmpty(parent))
             await _sftp.CreateDirectoryAsync(parent, ct).ConfigureAwait(false);
+
         return await _sftp.OpenCreateAsync(path, ct).ConfigureAwait(false);
     }
 
@@ -79,9 +80,7 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
     protected override async Task<long> GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
         var path = GetFilePath(fileId, extension, pathPrefix);
-        return await _sftp.FileExistsAsync(path, ct).ConfigureAwait(false)
-            ? await _sftp.GetLengthAsync(path, ct).ConfigureAwait(false)
-            : 0L;
+        return await _sftp.FileExistsAsync(path, ct).ConfigureAwait(false) ? await _sftp.GetLengthAsync(path, ct).ConfigureAwait(false) : 0L;
     }
 
     /// <inheritdoc />
@@ -97,6 +96,7 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         var path = await FindFilePathAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
         if (path is null)
             return false;
+
         await _sftp.DeleteFileAsync(path, ct).ConfigureAwait(false);
         Logger.LogDebug("Deleted SFTP file {FileId} at {Path}", fileId, path);
         return true;
@@ -108,9 +108,10 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         var path = GetFilePath(fileId, extension, pathPrefix);
         if (!await _sftp.FileExistsAsync(path, ct).ConfigureAwait(false))
             throw new FileNotFoundException($"SFTP file not found for {fileId}", path);
+
         await using var stream = await _sftp.OpenReadAsync(path, ct).ConfigureAwait(false);
         var header = EncryptionHeader.Read(stream);
-        return new EncryptionHeaderInfo(header.EncryptedDataEncryptionKey, header.KeyId, header.KeyVersion, header.DekKeyMaterialBytes);
+        return new(header.EncryptedDataEncryptionKey, header.KeyId, header.KeyVersion, header.DekKeyMaterialBytes);
     }
 
     /// <inheritdoc />
@@ -124,14 +125,13 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         if (bytes.Length < 13)
             throw new InvalidDataException($"File {fileId} has a truncated or invalid encryption header ({bytes.Length} bytes); cannot rotate DEK.");
 
-        await using var read = new MemoryStream(bytes, writable: false);
+        await using var read = new MemoryStream(bytes, false);
         var oldHeader = EncryptionHeader.Read(read);
         var oldHeaderSize = (int)read.Position;
         var updated = oldHeader.With(targetKeyId, targetKeyVersion, newEncryptedDek);
         using var headerMs = new MemoryStream(updated.GetHeaderSize());
         updated.Write(headerMs);
         var newHeaderBytes = headerMs.ToArray();
-
         await using var dest = new MemoryStream();
 #if NETSTANDARD2_0
         await dest.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
@@ -224,6 +224,7 @@ public sealed class SftpFileStorageService : FileStorageServiceBase
         var candidates = new List<string>();
         if (CompressionService != null)
             candidates.Add(basePath + CompressionService.FileExtension);
+
         if (TwoKeyEncryptionService != null) {
             candidates.Add(basePath + TwoKeyEncryptionService.FileExtension);
             if (CompressionService != null)

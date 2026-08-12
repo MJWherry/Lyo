@@ -2,7 +2,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithCreate" />.</summary>
+/// <summary>
+/// Fluent config for
+/// <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithCreate(Action{CreateEndpointConfigBuilder{TRequest,TDbEntity,TDbContext}})" />.
+/// </summary>
 public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -47,7 +50,7 @@ public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
         };
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet" />.</summary>
+/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet(Action{GetEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class GetEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -78,7 +81,10 @@ public sealed class GetEndpointConfigBuilder<TEntity, TDbContext>
     public GetConfig<TEntity, TDbContext> Build() => new() { Before = BeforeAction, After = AfterAction, Auth = AuthPolicy };
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithUpdate" />.</summary>
+/// <summary>
+/// Fluent config for
+/// <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithUpdate(Action{UpdateEndpointConfigBuilder{TRequest,TDbEntity,TDbContext}})" />.
+/// </summary>
 public sealed class UpdateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -109,7 +115,7 @@ public sealed class UpdateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
     public UpdateConfig<TRequest, TEntity, TDbContext> Build() => new() { Before = BeforeAction, After = AfterAction, Auth = AuthPolicy };
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithPatch" />.</summary>
+/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithPatch(Action{PatchEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class PatchEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -168,7 +174,7 @@ public sealed class PatchEndpointConfigBuilder<TEntity, TDbContext>
         };
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithDelete" />.</summary>
+/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithDelete(Action{DeleteEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -222,7 +228,10 @@ public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
         };
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithUpsert" />.</summary>
+/// <summary>
+/// Fluent config for
+/// <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithUpsert(Action{UpsertEndpointConfigBuilder{TRequest,TDbEntity,TDbContext}})" />.
+/// </summary>
 public sealed class UpsertEndpointConfigBuilder<TRequest, TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -309,8 +318,8 @@ public sealed class UpsertEndpointConfigBuilder<TRequest, TEntity, TDbContext>
 }
 
 /// <summary>
-/// Fluent options for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithQuery" /> (group name and default order are set by the endpoint
-/// builder).
+/// Fluent options for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithQuery(Action{QueryEndpointConfigBuilder{TDbEntity}})" /> (group name
+/// and default order are set by the endpoint builder).
 /// </summary>
 public sealed class QueryEndpointConfigBuilder<TDbEntity>
 {
@@ -380,7 +389,7 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
     }
 }
 
-/// <summary>Fluent options for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithExport" />.</summary>
+/// <summary>Fluent options for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithExport(Action{ExportEndpointConfigBuilder{TDbEntity}})" />.</summary>
 public sealed class ExportEndpointConfigBuilder<TDbEntity>
 {
     public EndpointAuth? AuthPolicy { get; private set; }
@@ -392,7 +401,10 @@ public sealed class ExportEndpointConfigBuilder<TDbEntity>
     }
 }
 
-/// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithMetadata" />.</summary>
+/// <summary>
+/// Fluent config for
+/// <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithMetadata(Action{MetadataEndpointConfigBuilder{TDbContext,TDbEntity}})" />.
+/// </summary>
 public sealed class MetadataEndpointConfigBuilder<TDbContext, TDbEntity>
     where TDbContext : DbContext where TDbEntity : class
 {

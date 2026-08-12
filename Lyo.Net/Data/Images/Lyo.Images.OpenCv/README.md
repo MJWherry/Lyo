@@ -15,7 +15,9 @@ Failure codes: **`OpenCvInpaint.DecodeFailed`**, **`OpenCvInpaint.InpaintError`*
 
 ## Native runtimes (NuGet)
 
-This package references **`OpenCvSharp4.official.runtime.linux-x64`**, suitable for Linux CI and local Linux development. On **Windows** (or other RIDs), add a matching official runtime package to the **executable** project (e.g. Gateway) or to this library’s `.csproj`, for example search NuGet for `OpenCvSharp4.official.runtime` for your OS. If native libraries fail to load at runtime, verify the correct runtime package is restored and copied next to the app output.
+This package references **`OpenCvSharp4.official.runtime.linux-x64`**, suitable for Linux CI and local Linux development. On **Windows** (or other RIDs), add a matching official
+runtime package to the **executable** project (e.g. Gateway) or to this library’s `.csproj`, for example search NuGet for `OpenCvSharp4.official.runtime` for your OS. If native
+libraries fail to load at runtime, verify the correct runtime package is restored and copied next to the app output.
 
 ## Tests
 

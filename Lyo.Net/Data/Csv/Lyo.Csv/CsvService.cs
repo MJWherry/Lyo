@@ -100,7 +100,11 @@ public sealed class CsvService : ICsvService
 
     /// <inheritdoc
     ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Boolean)' />
-    public void ExportToCsvStreamFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream csvStream, bool hasHeaderRow = true, bool hasFooterRow = false)
+    public void ExportToCsvStreamFromDictionary(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        Stream csvStream,
+        bool hasHeaderRow = true,
+        bool hasFooterRow = false)
         => _writer.ExportToCsvStreamFromDictionary(data, csvStream, hasHeaderRow, hasFooterRow);
 
     /// <inheritdoc
@@ -138,16 +142,20 @@ public sealed class CsvService : ICsvService
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseStreamAsDictionary(Stream csvStream) => _reader.ParseStreamAsDictionary(csvStream);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseFileAsDataTable(System.String,System.Nullable{System.Boolean},System.Boolean)' />
-    public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false) => _reader.ParseFileAsDataTable(csvFilePath, hasHeaderRow, hasFooterRow);
+    public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false)
+        => _reader.ParseFileAsDataTable(csvFilePath, hasHeaderRow, hasFooterRow);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseStreamAsDataTable(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean)' />
-    public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false) => _reader.ParseStreamAsDataTable(csvStream, hasHeaderRow, hasFooterRow);
+    public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false)
+        => _reader.ParseStreamAsDataTable(csvStream, hasHeaderRow, hasFooterRow);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean},System.Boolean)' />
-    public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false) => _reader.ParseBytesAsDataTable(csvBytes, hasHeaderRow, hasFooterRow);
+    public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false)
+        => _reader.ParseBytesAsDataTable(csvBytes, hasHeaderRow, hasFooterRow);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToHtmlTable(System.Byte[],System.Nullable{System.Boolean},System.Boolean)' />
-    public string ExportToHtmlTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false) => DataTableToHtml.ToHtmlDocument(ParseBytesAsDataTable(csvBytes, hasHeaderRow, hasFooterRow).ValueOrThrow());
+    public string ExportToHtmlTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false)
+        => DataTableToHtml.ToHtmlDocument(ParseBytesAsDataTable(csvBytes, hasHeaderRow, hasFooterRow).ValueOrThrow());
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseBytes``1(System.Byte[])' />
     public IEnumerable<T> ParseBytes<T>(byte[] csvBytes) => _reader.ParseBytes<T>(csvBytes);
@@ -170,7 +178,11 @@ public sealed class CsvService : ICsvService
         => BatchParseFilesAsDataTableAsync(csvFilePaths, hasHeaderRow, hasFooterRow).GetAwaiter().GetResult();
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseFromUrlAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public async Task<Result<DataTable.Models.DataTable>> ParseFromUrlAsDataTableAsync(string url, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public async Task<Result<DataTable.Models.DataTable>> ParseFromUrlAsDataTableAsync(
+        string url,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
     {
         var bytes = await FetchBytesFromUrlAsync(url, ct).ConfigureAwait(false);
         return _reader.ParseBytesAsDataTable(bytes, hasHeaderRow, hasFooterRow);
@@ -397,15 +409,27 @@ public sealed class CsvService : ICsvService
         => _reader.ParseStreamAsDictionaryAsync(csvStream, ct);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseFileAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(
+        string csvFilePath,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
         => _reader.ParseFileAsDataTableAsync(csvFilePath, hasHeaderRow, hasFooterRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseStreamAsDataTableAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(
+        Stream csvStream,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
         => _reader.ParseStreamAsDataTableAsync(csvStream, hasHeaderRow, hasFooterRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseBytesAsDataTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] csvBytes,
+        bool? hasHeaderRow = null,
+        bool hasFooterRow = false,
+        CancellationToken ct = default)
         => _reader.ParseBytesAsDataTableAsync(csvBytes, hasHeaderRow, hasFooterRow, ct);
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToHtmlTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Boolean,System.Threading.CancellationToken)' />
@@ -674,13 +698,13 @@ public sealed class CsvService : ICsvService
     {
         ArgumentHelpers.ThrowIfNull(csvBytes);
         var partStreams = new List<MemoryStream>();
-        await using var inputStream = new MemoryStream(csvBytes, writable: false);
+        await using var inputStream = new MemoryStream(csvBytes, false);
         await SplitCsvStreamAsync(
                 inputStream, rowsPerFile, _ => {
                     var partStream = new MemoryStream();
                     partStreams.Add(partStream);
                     return partStream;
-                }, leaveOpen: true, ct)
+                }, true, ct)
             .ConfigureAwait(false);
 
         var parts = new List<byte[]>(partStreams.Count);

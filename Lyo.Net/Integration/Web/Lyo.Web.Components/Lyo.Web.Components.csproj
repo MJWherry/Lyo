@@ -4,6 +4,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <Description>Blazor components library for the Lyo web UI framework with MudBlazor integration.</Description>
         <PackageTags>blazor components web ui mudblazor</PackageTags>
+        <!-- Razor compiler emits #nullable disable in .g.cs while project has Nullable=enable (dotnet/razor#8720). -->
+        <NoWarn>$(NoWarn);CS8669</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

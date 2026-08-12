@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Exceptions;
@@ -7,10 +8,7 @@ using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Query.Models.Parameters;
 
-/// <summary>
-/// Binds sibling parameter values into a root <see cref="QueryReq" /> template (<c>{{ParamKey}}</c> placeholders) and
-/// extracts key/label pairs from projected query rows.
-/// </summary>
+/// <summary>Binds sibling parameter values into a root <see cref="QueryReq" /> template (<c>{{ParamKey}}</c> placeholders) and extracts key/label pairs from projected query rows.</summary>
 public static class ParameterOptionsBinder
 {
     private static readonly Regex PlaceholderRegex = new(@"\{\{([^{}]+)\}\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -24,18 +22,18 @@ public static class ParameterOptionsBinder
         CollectPlaceholders(query.From.Query?.WhereClause, keys);
         foreach (var join in query.Joins)
             CollectPlaceholders(join.Query?.WhereClause, keys);
+
         return keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     /// <summary>
-    /// Clones <paramref name="template" />, substitutes <c>{{Key}}</c> placeholders from <paramref name="siblingValues" />,
-    /// and returns false when any placeholder lacks a non-whitespace sibling value.
+    /// Clones <paramref name="template" />, substitutes <c>{{Key}}</c> placeholders from <paramref name="siblingValues" />, and returns false when any placeholder lacks a
+    /// non-whitespace sibling value.
     /// </summary>
     public static bool TryBind(QueryReq template, IReadOnlyDictionary<string, string?> siblingValues, out QueryReq? bound, out IReadOnlyList<string> missingKeys)
     {
         ArgumentHelpers.ThrowIfNull(template);
         ArgumentHelpers.ThrowIfNull(siblingValues);
-
         var map = ToIgnoreCaseMap(siblingValues);
         var required = GetInputParameterKeys(template);
         var missing = required.Where(k => !map.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v)).ToList();
@@ -61,8 +59,8 @@ public static class ParameterOptionsBinder
     }
 
     /// <summary>
-    /// Reads picker key/label from a projected row. Prefers columns named <c>Key</c>/<c>Value</c>; otherwise uses the
-    /// property names of the first two <paramref name="selectPaths" /> (alias stripped).
+    /// Reads picker key/label from a projected row. Prefers columns named <c>Key</c>/<c>Value</c>; otherwise uses the property names of the first two
+    /// <paramref name="selectPaths" /> (alias stripped).
     /// </summary>
     public static bool TryReadKeyValue(object? row, IReadOnlyList<string>? selectPaths, out string key, out string label)
     {
@@ -115,6 +113,7 @@ public static class ParameterOptionsBinder
             case GroupClause group:
                 foreach (var child in group.Children)
                     CollectPlaceholders(child, keys);
+
                 CollectPlaceholders(group.SubClause, keys);
                 break;
             default:
@@ -129,10 +128,12 @@ public static class ParameterOptionsBinder
             case string s:
                 foreach (Match m in PlaceholderRegex.Matches(s))
                     keys.Add(m.Groups[1].Value.Trim());
+
                 break;
             case IEnumerable enumerable when value is not string:
                 foreach (var item in enumerable)
                     CollectFromValue(item, keys);
+
                 break;
         }
     }
@@ -140,12 +141,10 @@ public static class ParameterOptionsBinder
     private static WhereClause? BindWhereClause(WhereClause? clause, IReadOnlyDictionary<string, string?> siblingValues)
         => clause switch {
             null => null,
-            ConditionClause condition => new ConditionClause(
-                condition.Field, condition.Comparison, BindValue(condition.Value, siblingValues), condition.Description) {
+            ConditionClause condition => new ConditionClause(condition.Field, condition.Comparison, BindValue(condition.Value, siblingValues), condition.Description) {
                 SubClause = BindWhereClause(condition.SubClause, siblingValues)
             },
-            GroupClause group => new GroupClause(
-                group.Operator, group.Children.Select(c => BindWhereClause(c, siblingValues)!).ToList(), group.Description) {
+            GroupClause group => new GroupClause(group.Operator, group.Children.Select(c => BindWhereClause(c, siblingValues)!).ToList(), group.Description) {
                 SubClause = BindWhereClause(group.SubClause, siblingValues)
             },
             var _ => clause
@@ -164,6 +163,7 @@ public static class ParameterOptionsBinder
         var result = new List<object?>(list.Count);
         foreach (var item in list)
             result.Add(BindValue(item, siblingValues));
+
         return result;
     }
 
@@ -214,6 +214,7 @@ public static class ParameterOptionsBinder
                 foreach (var prop in el.EnumerateObject()) {
                     if (!string.Equals(prop.Name, name, StringComparison.OrdinalIgnoreCase))
                         continue;
+
                     value = prop.Value.ValueKind switch {
                         JsonValueKind.String => prop.Value.GetString(),
                         JsonValueKind.Number => prop.Value.ToString(),
@@ -222,6 +223,7 @@ public static class ParameterOptionsBinder
                         JsonValueKind.Null => null,
                         var _ => prop.Value.ToString()
                     };
+
                     return true;
                 }
 
@@ -246,6 +248,7 @@ public static class ParameterOptionsBinder
         foreach (var kv in dict) {
             if (!string.Equals(kv.Key, name, StringComparison.OrdinalIgnoreCase))
                 continue;
+
             value = kv.Value;
             return true;
         }
@@ -259,7 +262,7 @@ public static class ParameterOptionsBinder
             null => "",
             string s => s,
             JsonElement el => el.ValueKind == JsonValueKind.String ? el.GetString() ?? "" : el.ToString(),
-            IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture) ?? "",
+            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture) ?? "",
             var _ => value.ToString() ?? ""
         };
 }

@@ -22,13 +22,8 @@ public class TwoKeyEncryptionBenchmarks : LyoBenchmarkBase
     private string _plaintextPath = null!;
 
     [Params(
-        BenchmarkData.StreamingSize100MiB,
-        BenchmarkData.StreamingSize250MiB,
-        BenchmarkData.StreamingSize500MiB,
-        BenchmarkData.StreamingSize750MiB,
-        BenchmarkData.StreamingSize1GiB,
-        BenchmarkData.StreamingSize15GiB,
-        BenchmarkData.StreamingSize2GiB)]
+        BenchmarkData.StreamingSize100MiB, BenchmarkData.StreamingSize250MiB, BenchmarkData.StreamingSize500MiB, BenchmarkData.StreamingSize750MiB, BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB, BenchmarkData.StreamingSize2GiB)]
     public long DataSize { get; set; }
 
     /// <inheritdoc />
@@ -41,7 +36,6 @@ public class TwoKeyEncryptionBenchmarks : LyoBenchmarkBase
         var chachaDek = new ChaCha20Poly1305EncryptionService(_keyStore);
         var chachaKek = new ChaCha20Poly1305EncryptionService(_keyStore);
         _chachaService = new(chachaDek, chachaKek, _keyStore);
-
         _plaintextPath = CreateSeededFilePath(DataSize);
     }
 
@@ -50,8 +44,8 @@ public class TwoKeyEncryptionBenchmarks : LyoBenchmarkBase
     {
         EnsureGlobalSetup();
         _encryptedAesGcmPath = CreateTempOutputPath();
-using var input = File.OpenRead(_plaintextPath);
-_aesGcmService.EncryptToFileAsync(input, _encryptedAesGcmPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
+        using var input = File.OpenRead(_plaintextPath);
+        _aesGcmService.EncryptToFileAsync(input, _encryptedAesGcmPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
     [GlobalSetup(Targets = [nameof(DecryptStream_ChaCha), nameof(DecryptFile_ChaCha)])]
@@ -59,8 +53,8 @@ _aesGcmService.EncryptToFileAsync(input, _encryptedAesGcmPath, EncryptionBenchma
     {
         EnsureGlobalSetup();
         _encryptedChachaPath = CreateTempOutputPath();
-using var input = File.OpenRead(_plaintextPath);
-_chachaService.EncryptToFileAsync(input, _encryptedChachaPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
+        using var input = File.OpenRead(_plaintextPath);
+        _chachaService.EncryptToFileAsync(input, _encryptedChachaPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
     [Benchmark]

@@ -3,13 +3,12 @@ using System.Text;
 namespace Lyo.TextEncoding;
 
 /// <summary>
-/// Injectable façade for character-set encode/decode/convert over buffers, streams, and files.
-/// Resolves any encoding registered with <see cref="Encoding" /> (CodePages included when enabled).
-/// Prefer <see cref="CharsetEncoding" /> for static call sites; inject when defaults or test doubles matter.
+/// Injectable façade for character-set encode/decode/convert over buffers, streams, and files. Resolves any encoding registered with <see cref="Encoding" /> (CodePages
+/// included when enabled). Prefer <see cref="CharsetEncoding" /> for static call sites; inject when defaults or test doubles matter.
 /// </summary>
 /// <remarks>
-/// Code pages are registered on construction when options allow. Stream overloads do not close the stream
-/// unless noted. Charset names accept web names, .NET names, or numeric code-page strings (e.g. "1252").
+/// Code pages are registered on construction when options allow. Stream overloads do not close the stream unless noted. Charset names accept web names, .NET names, or
+/// numeric code-page strings (e.g. "1252").
 /// </remarks>
 public interface ICharsetEncodingService
 {

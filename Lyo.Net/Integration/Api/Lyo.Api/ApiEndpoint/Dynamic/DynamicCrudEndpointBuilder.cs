@@ -62,6 +62,9 @@ public static class DynamicCrudEndpointBuilder
     /// Maps root From/Joins <c>POST {baseRoute}/Query</c> for a DbContext without requiring full dynamic CRUD. Use when typed <c>CreateBuilder</c> already owns entity routes
     /// (e.g. Person) but you still want Option A root Query. Pass <paramref name="baseRoute" /> empty for <c>POST /Query</c>.
     /// </summary>
+    /// <param name="webApp">The web application to map endpoints on.</param>
+    /// <param name="baseRoute">Route prefix before <c>/Query</c>; empty for <c>POST /Query</c>.</param>
+    /// <param name="allowlistedEntityTypes">Optional entity types to expose; defaults to all DbSet entity types on <typeparamref name="TContext" />.</param>
     /// <param name="configure">Optional endpoint conventions (e.g. <c>b => b.RequireAuthorization()</c>).</param>
     public static WebApplication MapRootQueryEndpoints<TContext>(
         this WebApplication webApp,
@@ -85,8 +88,8 @@ public static class DynamicCrudEndpointBuilder
             .WithName($"RootQuery{typeof(TContext).Name}{(string.IsNullOrEmpty(baseRoute) ? "" : "_" + baseRoute.Replace('/', '_'))}")
             .Produces<ProjectedQueryRes<object?>>()
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
-        configure?.Invoke(endpoint);
 
+        configure?.Invoke(endpoint);
         return webApp;
     }
 
@@ -151,10 +154,7 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapPost(
                     $"{entityRoute}/QueryConcrete",
                     async (
-                        [FromRoute] string entityType,
-                        [FromBody] QueryConcreteReq queryRequest,
-                        [FromServices] IQueryService<TContext> queryService,
-                        HttpContext httpContext,
+                        [FromRoute] string entityType, [FromBody] QueryConcreteReq queryRequest, [FromServices] IQueryService<TContext> queryService, HttpContext httpContext,
                         CancellationToken ct) => await HandleQuery(registry, entityType, queryRequest, queryService, httpContext, SortDirection.Desc, ct))
                 .WithTags("Dynamic")
                 .Produces<QueryRes<object>>()
@@ -164,10 +164,7 @@ public static class DynamicCrudEndpointBuilder
             var enableComputedFields = defaults.Features.Contains(ApiFeature.ProjectionComputedFields);
             webApp.MapPost(
                     $"{entityRoute}/QueryProject", async (
-                        [FromRoute] string entityType,
-                        [FromBody] ProjectionQueryReq queryRequest,
-                        [FromServices] IQueryService<TContext> queryService,
-                        HttpContext httpContext,
+                        [FromRoute] string entityType, [FromBody] ProjectionQueryReq queryRequest, [FromServices] IQueryService<TContext> queryService, HttpContext httpContext,
                         CancellationToken ct) => {
                         if (!enableComputedFields && queryRequest.ComputedFields.Count > 0) {
                             var error = ApiErrorResponseFactory.CreateForError(
@@ -193,12 +190,8 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapGet(
                     $"{entityRoute}/{{id}}",
                     async (
-                        [FromRoute] string entityType,
-                        [FromRoute] string id,
-                        [FromQuery] string[] include,
-                        [FromServices] IQueryService<TContext> queryService,
-                        HttpContext httpContext,
-                        CancellationToken ct) => await HandleGet(registry, entityType, id, include, queryService, httpContext, ct))
+                        [FromRoute] string entityType, [FromRoute] string id, [FromQuery] string[] include, [FromServices] IQueryService<TContext> queryService,
+                        HttpContext httpContext, CancellationToken ct) => await HandleGet(registry, entityType, id, include, queryService, httpContext, ct))
                 .WithTags("Dynamic")
                 .Produces<object>()
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
@@ -218,10 +211,7 @@ public static class DynamicCrudEndpointBuilder
                 webApp.MapPost(
                         $"{entityRoute}/Bulk",
                         async (
-                                [FromRoute] string entityType,
-                                HttpRequest request,
-                                [FromServices] ICreateService<TContext> createService,
-                                HttpContext httpContext,
+                                [FromRoute] string entityType, HttpRequest request, [FromServices] ICreateService<TContext> createService, HttpContext httpContext,
                                 CancellationToken ct)
                             => await HandleCreateBulk(registry, entityType, request, createService, httpContext, jsonOptions, ct))
                     .WithTags("Dynamic")
@@ -235,10 +225,7 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapPatch(
                     $"{entityRoute}",
                     async (
-                        [FromRoute] string entityType,
-                        [FromBody] PatchRequest patchRequest,
-                        [FromServices] IPatchService<TContext> patchService,
-                        HttpContext httpContext,
+                        [FromRoute] string entityType, [FromBody] PatchRequest patchRequest, [FromServices] IPatchService<TContext> patchService, HttpContext httpContext,
                         CancellationToken ct) => await HandlePatch(registry, entityType, patchRequest, patchService, httpContext, ct))
                 .WithTags("Dynamic")
                 .Produces<PatchResult<object>>()
@@ -249,10 +236,7 @@ public static class DynamicCrudEndpointBuilder
                 webApp.MapPatch(
                         $"{entityRoute}/Bulk",
                         async (
-                            [FromRoute] string entityType,
-                            [FromBody] List<PatchRequest> requests,
-                            [FromServices] IPatchService<TContext> patchService,
-                            HttpContext httpContext,
+                            [FromRoute] string entityType, [FromBody] List<PatchRequest> requests, [FromServices] IPatchService<TContext> patchService, HttpContext httpContext,
                             CancellationToken ct) => await HandlePatchBulk(registry, entityType, requests, patchService, httpContext, ct))
                     .WithTags("Dynamic")
                     .Produces<PatchBulkResult<object>>()
@@ -265,11 +249,9 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapPost(
                     $"{entityRoute}/Update",
                     async (
-                        [FromRoute] string entityType,
-                        [FromBody] JsonNode? body,
-                        [FromServices] IUpdateService<TContext> updateService,
-                        HttpContext httpContext,
-                        CancellationToken ct) => await HandleUpdate(registry, entityType, body, updateService, httpContext, jsonOptions, ct))
+                            [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpdateService<TContext> updateService, HttpContext httpContext,
+                            CancellationToken ct)
+                        => await HandleUpdate(registry, entityType, body, updateService, httpContext, jsonOptions, ct))
                 .WithTags("Dynamic")
                 .Produces<UpdateResult<object>>()
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
@@ -279,10 +261,7 @@ public static class DynamicCrudEndpointBuilder
                 webApp.MapPost(
                         $"{entityRoute}/Bulk/Update",
                         async (
-                            [FromRoute] string entityType,
-                            [FromBody] JsonNode? body,
-                            [FromServices] IUpdateService<TContext> updateService,
-                            HttpContext httpContext,
+                            [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpdateService<TContext> updateService, HttpContext httpContext,
                             CancellationToken ct) => await HandleUpdateBulk(registry, entityType, body, updateService, httpContext, jsonOptions, ct))
                     .WithTags("Dynamic")
                     .Produces<UpdateBulkResult<object>>()
@@ -295,11 +274,9 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapPost(
                     $"{entityRoute}/Upsert",
                     async (
-                        [FromRoute] string entityType,
-                        [FromBody] JsonNode? body,
-                        [FromServices] IUpsertService<TContext> upsertService,
-                        HttpContext httpContext,
-                        CancellationToken ct) => await HandleUpsert(registry, entityType, body, upsertService, httpContext, jsonOptions, ct))
+                            [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpsertService<TContext> upsertService, HttpContext httpContext,
+                            CancellationToken ct)
+                        => await HandleUpsert(registry, entityType, body, upsertService, httpContext, jsonOptions, ct))
                 .WithTags("Dynamic")
                 .Produces<UpsertResult<object>>()
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
@@ -309,10 +286,7 @@ public static class DynamicCrudEndpointBuilder
                 webApp.MapPost(
                         $"{entityRoute}/Bulk/Upsert",
                         async (
-                            [FromRoute] string entityType,
-                            [FromBody] JsonNode? body,
-                            [FromServices] IUpsertService<TContext> upsertService,
-                            HttpContext httpContext,
+                            [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpsertService<TContext> upsertService, HttpContext httpContext,
                             CancellationToken ct) => await HandleUpsertBulk(registry, entityType, body, upsertService, httpContext, jsonOptions, ct))
                     .WithTags("Dynamic")
                     .Produces<UpsertBulkResult<object>>()
@@ -325,10 +299,7 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapDelete(
                     $"{entityRoute}",
                     async (
-                        [FromRoute] string entityType,
-                        [FromBody] DeleteRequest deleteRequest,
-                        [FromServices] IDeleteService<TContext> deleteService,
-                        HttpContext httpContext,
+                        [FromRoute] string entityType, [FromBody] DeleteRequest deleteRequest, [FromServices] IDeleteService<TContext> deleteService, HttpContext httpContext,
                         CancellationToken ct) => await HandleDeleteByRequest(registry, entityType, deleteRequest, deleteService, httpContext, ct))
                 .WithTags("Dynamic")
                 .Produces<DeleteResult<object>>()
@@ -338,10 +309,7 @@ public static class DynamicCrudEndpointBuilder
             webApp.MapDelete(
                     $"{entityRoute}/{{id}}",
                     async (
-                            [FromRoute] string entityType,
-                            [FromRoute] string id,
-                            [FromServices] IDeleteService<TContext> deleteService,
-                            HttpContext httpContext,
+                            [FromRoute] string entityType, [FromRoute] string id, [FromServices] IDeleteService<TContext> deleteService, HttpContext httpContext,
                             CancellationToken ct)
                         => await HandleDelete(registry, entityType, id, deleteService, httpContext, ct))
                 .WithTags("Dynamic")
@@ -352,10 +320,7 @@ public static class DynamicCrudEndpointBuilder
                 webApp.MapDelete(
                         $"{entityRoute}/Bulk",
                         async (
-                            [FromRoute] string entityType,
-                            [FromBody] List<DeleteRequest> requests,
-                            [FromServices] IDeleteService<TContext> deleteService,
-                            HttpContext httpContext,
+                            [FromRoute] string entityType, [FromBody] List<DeleteRequest> requests, [FromServices] IDeleteService<TContext> deleteService, HttpContext httpContext,
                             CancellationToken ct) => await HandleDeleteBulk(registry, entityType, requests, deleteService, httpContext, ct))
                     .WithTags("Dynamic")
                     .Produces<DeleteBulkResult<object>>()

@@ -5,12 +5,9 @@ namespace Lyo.Sftp.Client.Tests;
 
 internal static class SftpTestHost
 {
-    public static async Task<(IContainer Container, SftpClientOptions Options)?> TryStartAsync(
-        CancellationToken ct,
-        int maxPooledClients = 4)
+    public static async Task<(IContainer Container, SftpClientOptions Options)?> TryStartAsync(CancellationToken ct, int maxPooledClients = 4)
     {
-        var container = new ContainerBuilder("atmoz/sftp:alpine")
-            .WithPortBinding(22, true)
+        var container = new ContainerBuilder("atmoz/sftp:alpine").WithPortBinding(22, true)
             .WithCommand("foo:pass:1001:100:upload")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server listening"))
             .Build();
@@ -34,6 +31,7 @@ internal static class SftpTestHost
             MaxPooledClients = maxPooledClients,
             EnableMetrics = false
         };
+
         return (container, options);
     }
 }

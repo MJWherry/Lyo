@@ -85,8 +85,7 @@ public static class DataTableToHtml
     }
 
     /// <summary>Renders a single header/footer row honoring ColSpan (RowSpan is ignored: the section is one row tall).</summary>
-    private static void AppendSingleRow(
-        StringBuilder sb, DataTable data, IReadOnlyDictionary<int, IDataTableCell> cells, int maxCol, string tag, int formatRow)
+    private static void AppendSingleRow(StringBuilder sb, DataTable data, IReadOnlyDictionary<int, IDataTableCell> cells, int maxCol, string tag, int formatRow)
     {
         var col = 0;
         while (col <= maxCol) {

@@ -1,25 +1,25 @@
-@namespace Lyo.Web.Components.Catalog
 @using System.Net.Http.Json
-@using Microsoft.Extensions.Logging
 @using Lyo.Exceptions
+@using Microsoft.Extensions.Logging
+@namespace Lyo.Web.Components.Catalog
 @inject HttpClient Http
 @inject ILogger<PackageDoc> Logger
 
-@if (_loading)
-{
+@if (_loading) {
     <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+
     return;
 }
 
-@if (!string.IsNullOrEmpty(_error))
-{
+@if (!string.IsNullOrEmpty(_error)) {
     <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+
     return;
 }
 
-@if (_doc is null)
-{
+@if (_doc is null) {
     <MudAlert Severity="Severity.Info">No catalog entry for <code>@PackageId</code>.</MudAlert>
+
     return;
 }
 
@@ -32,24 +32,21 @@
 
     <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@_doc.Description</MudText>
 
-    @if (_doc.Features.Count > 0)
-    {
+    @if (_doc.Features.Count > 0) {
         <MudPaper Class="pa-4" Outlined="true">
             <MudText Typo="Typo.h6" Class="mb-2">Features</MudText>
             <ul class="lyo-catalog-list">
-                @foreach (var f in _doc.Features)
-                {
+                @foreach (var f in _doc.Features) {
                     <li>@f</li>
                 }
             </ul>
         </MudPaper>
     }
 
-    @if (_doc.Examples.Count > 0)
-    {
+    @if (_doc.Examples.Count > 0) {
         <MudText Typo="Typo.h5">Examples</MudText>
-        @foreach (var ex in _doc.Examples)
-        {
+
+        @foreach (var ex in _doc.Examples) {
             <div>
                 <MudText Typo="Typo.h6" Class="mb-2">@ex.Title</MudText>
                 <MudPaper Class="pa-3 mud-background-gray" Elevation="0" Outlined="true">
@@ -59,25 +56,20 @@
         }
     }
 
-    @if (_doc.Benchmarks is not null)
-    {
+    @if (_doc.Benchmarks is not null) {
         <MudPaper Class="pa-4" Outlined="true">
             <MudText Typo="Typo.h6" Class="mb-2">Benchmarks</MudText>
-            @if (!string.IsNullOrWhiteSpace(_doc.Benchmarks.Headline))
-            {
+            @if (!string.IsNullOrWhiteSpace(_doc.Benchmarks.Headline)) {
                 <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_doc.Benchmarks.Headline</MudText>
             }
-            @if (!string.IsNullOrWhiteSpace(_doc.Benchmarks.Suite))
-            {
+            @if (!string.IsNullOrWhiteSpace(_doc.Benchmarks.Suite)) {
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">suite: @_doc.Benchmarks.Suite</MudChip>
             }
             <ul class="lyo-catalog-list">
-                @foreach (var item in _doc.Benchmarks.Items)
-                {
+                @foreach (var item in _doc.Benchmarks.Items) {
                     <li>
                         <strong>@item.Label</strong>
-                        @if (!string.IsNullOrWhiteSpace(item.Note))
-                        {
+                        @if (!string.IsNullOrWhiteSpace(item.Note)) {
                             <span> — @item.Note</span>
                         }
                         <div class="mud-text-secondary" style="font-size:0.8rem;">@item.Href</div>
@@ -89,13 +81,11 @@
 
     <CatalogSectionList Sections="_doc.Sections"/>
 
-    @if (_doc.Links.Count > 0)
-    {
+    @if (_doc.Links.Count > 0) {
         <MudPaper Class="pa-4" Outlined="true">
             <MudText Typo="Typo.h6" Class="mb-2">Links</MudText>
             <ul class="lyo-catalog-list">
-                @foreach (var link in _doc.Links)
-                {
+                @foreach (var link in _doc.Links) {
                     <li><a href="@link.Href" target="_blank" rel="noopener noreferrer">@link.Label</a></li>
                 }
             </ul>
@@ -104,14 +94,12 @@
 </MudStack>
 
 @code {
+
     /// <summary>Package id (e.g. <c>Lyo.Cache</c>). Loads <c>_content/Lyo.Web.Components/catalog/packages/{id}.json</c>.</summary>
-    [Parameter, EditorRequired]
+    [Parameter][EditorRequired]
     public string PackageId { get; set; } = "";
 
-    /// <summary>
-    /// Optional base path override. Default uses RCL static assets:
-    /// <c>_content/Lyo.Web.Components/catalog</c>.
-    /// </summary>
+    /// <summary>Optional base path override. Default uses RCL static assets: <c>_content/Lyo.Web.Components/catalog</c>.</summary>
     [Parameter]
     public string CatalogBasePath { get; set; } = "_content/Lyo.Web.Components/catalog";
 
@@ -120,30 +108,25 @@
     private string? _error;
 
     /// <inheritdoc />
-    protected override async Task OnParametersSetAsync()
-    {
-        await LoadAsync();
-    }
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
 
     private async Task LoadAsync()
     {
         _loading = true;
         _error = null;
         _doc = null;
-        try
-        {
+        try {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(PackageId);
             var url = $"{CatalogBasePath.TrimEnd('/')}/packages/{Uri.EscapeDataString(PackageId)}.json";
             _doc = await Http.GetFromJsonAsync<CatalogPackageDoc>(url, CatalogJson.Options);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Logger.LogWarning(ex, "Failed to load catalog package {PackageId}", PackageId);
             _error = $"Could not load docs for {PackageId}.";
         }
-        finally
-        {
+        finally {
             _loading = false;
         }
     }
+
 }

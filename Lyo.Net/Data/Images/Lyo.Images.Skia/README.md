@@ -1,6 +1,7 @@
 # Lyo.Images.Skia
 
-**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.
+**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression,
+metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.
 
 ## Examples
 
@@ -36,25 +37,26 @@ services.AddSkiaImageService(); // overrides IImageService with Skia
 
 ## When to use Skia vs ImageSharp
 
-| | **Lyo.Images.Skia** | **Lyo.Images (ImageSharp)** |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Platforms** | Strong on Linux/mobile; native Skia assets. | Pure managed; broad format support. |
-| **EXIF** | Extended EXIF via MetadataExtractor where wired. | Rich EXIF via ImageSharp metadata APIs. |
+|                | **Lyo.Images.Skia**                                                                                                                                                                                                                                                 | **Lyo.Images (ImageSharp)**                                              |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Platforms**  | Strong on Linux/mobile; native Skia assets.                                                                                                                                                                                                                         | Pure managed; broad format support.                                      |
+| **EXIF**       | Extended EXIF via MetadataExtractor where wired.                                                                                                                                                                                                                    | Rich EXIF via ImageSharp metadata APIs.                                  |
 | **Decoration** | Inherits the ImageSharp-backed `IImageDecorationService` primitives via `ImageServiceBase`; `AddSkiaImageService` does **not** auto-register `IImageDecorationService` separately. Add `AddImageSharpImageService` first if you want it resolvable as its own type. | `AddImageSharpImageService` registers `IImageDecorationService` as well. |
 
 ## Public API
 
-| Type | Description |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`SkiaImageService`** | `IImageService` implementation using SkiaSharp bitmap decode/encode. |
-| **`Extensions`** | **`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `"ImageService"` section as ImageSharp. |
-| **`Constants.Metrics`** | Metric name strings for Skia operation timings. |
+| Type                    | Description                                                                                                                                      |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`SkiaImageService`**  | `IImageService` implementation using SkiaSharp bitmap decode/encode.                                                                             |
+| **`Extensions`**        | **`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `"ImageService"` section as ImageSharp. |
+| **`Constants.Metrics`** | Metric name strings for Skia operation timings.                                                                                                  |
 
 Internal helpers (**`SkiaExifExtractor`**, etc.) are not part of the supported public contract.
 
 ## Decoration primitives
 
-`SkiaImageService` inherits the ImageSharp-backed `IImageDecorationService` primitives (`OverlayAsync`, `AddFrameAsync`, `AddCaptionAsync`, `AddOuterPaddingAsync`, plus the `Pipeline(...)` fluent API) through `ImageServiceBase`. To resolve `IImageDecorationService` as its own DI registration alongside Skia, add the ImageSharp registration first:
+`SkiaImageService` inherits the ImageSharp-backed `IImageDecorationService` primitives (`OverlayAsync`, `AddFrameAsync`, `AddCaptionAsync`, `AddOuterPaddingAsync`, plus the
+`Pipeline(...)` fluent API) through `ImageServiceBase`. To resolve `IImageDecorationService` as its own DI registration alongside Skia, add the ImageSharp registration first:
 
 ## Advantages of SkiaSharp
 

@@ -52,6 +52,6 @@ public static class Extensions
     {
         var loggerFactory = sp.GetService<ILoggerFactory>();
         var metrics = options.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-        return new SftpClient(options, loggerFactory, metrics);
+        return new(options, loggerFactory, metrics);
     }
 }

@@ -14,13 +14,8 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
     private Stream _data = null!;
 
     [Params(
-        BenchmarkData.StreamingSize100MiB,
-        BenchmarkData.StreamingSize250MiB,
-        BenchmarkData.StreamingSize500MiB,
-        BenchmarkData.StreamingSize750MiB,
-        BenchmarkData.StreamingSize1GiB,
-        BenchmarkData.StreamingSize15GiB,
-        BenchmarkData.StreamingSize2GiB)]
+        BenchmarkData.StreamingSize100MiB, BenchmarkData.StreamingSize250MiB, BenchmarkData.StreamingSize500MiB, BenchmarkData.StreamingSize750MiB, BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB, BenchmarkData.StreamingSize2GiB)]
     public long DataSize { get; set; }
 
     /// <inheritdoc />

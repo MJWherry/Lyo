@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 
@@ -45,7 +46,7 @@ internal static class FileStorageDuplicateProfile
             parts.Add($"algorithm={algorithm.Name}");
 
         parts.Add($"encrypt={encrypt}");
-        if (encrypt && !string.IsNullOrWhiteSpace(keyId))
+        if (encrypt && !keyId.IsNullOrWhitespace())
             parts.Add($"keyId={keyId.Trim()}");
 
         return string.Join(", ", parts);

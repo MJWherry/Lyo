@@ -1,7 +1,3 @@
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ChipInput
-@using Lyo.Web.Components.ParamOptions
-
 <MudStack Spacing="2">
     <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.h6">@Title</MudText>
@@ -92,53 +88,54 @@
                 <tr>
                     <td colspan="@ColSpan">
                         <MudPaper Outlined="true" Class="pa-3" Elevation="0">
-                        <MudStack Spacing="2">
-                            <MudStack Row Spacing="3" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
-                                @if (ShowRequired) {
-                                    <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))"
-                                                 Label="Required" Dense="true" Class="ma-0 mt-2"/>
-                                }
-                                @if (ShowAllowMultiple) {
-                                    <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))"
-                                                 Label="Allow multiple" Dense="true" Class="ma-0 mt-2"/>
-                                }
-                                @if (ShowEnabled) {
-                                    <MudCheckBox T="bool" Value="@row.Enabled" ValueChanged="@(v => Set(() => row.Enabled = v))"
-                                                 Label="Enabled" Dense="true" Class="ma-0 mt-2"/>
-                                }
+                            <MudStack Spacing="2">
+                                <MudStack Row Spacing="3" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
+                                    @if (ShowRequired) {
+                                        <MudCheckBox T="bool" Value="@row.Required" ValueChanged="@(v => Set(() => row.Required = v))"
+                                                     Label="Required" Dense="true" Class="ma-0 mt-2"/>
+                                    }
+                                    @if (ShowAllowMultiple) {
+                                        <MudCheckBox T="bool" Value="@row.AllowMultiple" ValueChanged="@(v => Set(() => row.AllowMultiple = v))"
+                                                     Label="Allow multiple" Dense="true" Class="ma-0 mt-2"/>
+                                    }
+                                    @if (ShowEnabled) {
+                                        <MudCheckBox T="bool" Value="@row.Enabled" ValueChanged="@(v => Set(() => row.Enabled = v))"
+                                                     Label="Enabled" Dense="true" Class="ma-0 mt-2"/>
+                                    }
+                                    @if (ShowOptionsEditor) {
+                                        <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 220px;">
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">Allowed values</MudText>
+                                            <LyoChipInput Values="@ParameterListJson.Parse(row.AllowedValues)"
+                                                          ValuesChanged="@(v => Set(() => row.AllowedValues = ParameterListJson.Serialize(v, ToListKind(row.Type))))"
+                                                          Placeholder="Type and press Enter"/>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                                                Optional server validation list; also used as a simple select when Options is empty
+                                            </MudText>
+                                        </MudStack>
+                                    }
+                                </MudStack>
                                 @if (ShowOptionsEditor) {
-                                    <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 220px;">
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">Allowed values</MudText>
-                                        <LyoChipInput Values="@ParameterListJson.Parse(row.AllowedValues)"
-                                                      ValuesChanged="@(v => Set(() => row.AllowedValues = ParameterListJson.Serialize(v, ToListKind(row.Type))))"
-                                                      Placeholder="Type and press Enter"/>
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
-                                            Optional server validation list; also used as a simple select when Options is empty
-                                        </MudText>
-                                    </MudStack>
+                                    <MudSelect T="ParameterOptionsKind?"
+                                               Value="@ParameterOptionsJson.TryGetKind(row.Options)"
+                                               ValueChanged="@(v => SetOptionsKind(row, v))"
+                                               Label="Options kind"
+                                               Variant="Variant.Outlined"
+                                               Margin="Margin.Dense"
+                                               Dense="true"
+                                               Clearable="true"
+                                               HelperText="Leave empty for no picker (typed Value input only)"
+                                               Style="max-width: 280px;">
+                                        <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
+                                        <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+                                    </MudSelect>
+
+                                    @if (ParameterOptionsJson.TryGetKind(row.Options) is not null) {
+                                        <LyoParameterOptionsEditor ShowKindSelect="false"
+                                                                   OptionsJson="@row.Options"
+                                                                   OptionsJsonChanged="@(v => Set(() => row.Options = v))"/>
+                                    }
                                 }
                             </MudStack>
-                            @if (ShowOptionsEditor) {
-                                <MudSelect T="ParameterOptionsKind?"
-                                           Value="@ParameterOptionsJson.TryGetKind(row.Options)"
-                                           ValueChanged="@(v => SetOptionsKind(row, v))"
-                                           Label="Options kind"
-                                           Variant="Variant.Outlined"
-                                           Margin="Margin.Dense"
-                                           Dense="true"
-                                           Clearable="true"
-                                           HelperText="Leave empty for no picker (typed Value input only)"
-                                           Style="max-width: 280px;">
-                                    <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
-                                    <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
-                                </MudSelect>
-                                @if (ParameterOptionsJson.TryGetKind(row.Options) is not null) {
-                                    <LyoParameterOptionsEditor ShowKindSelect="false"
-                                                               OptionsJson="@row.Options"
-                                                               OptionsJsonChanged="@(v => Set(() => row.Options = v))"/>
-                                }
-                            }
-                        </MudStack>
                         </MudPaper>
                     </td>
                 </tr>
@@ -160,8 +157,8 @@
     public List<JobParameterEditRow> Items { get; set; } = [];
 
     /// <summary>
-    /// Show Required in the expansion panel (definition parameters). Marks the param as required at run time only;
-    /// the definition Value/default picker is never validated as required here.
+    /// Show Required in the expansion panel (definition parameters). Marks the param as required at run time only; the definition Value/default picker is never validated as
+    /// required here.
     /// </summary>
     [Parameter]
     public bool ShowRequired { get; set; }
@@ -192,11 +189,9 @@
 
     private int ColSpan => (HasDetails ? 1 : 0) + 5;
 
-    private Dictionary<string, string?> SiblingMap
-        => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string?> SiblingMap => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
 
-    private static bool HasPicker(JobParameterEditRow row)
-        => !string.IsNullOrWhiteSpace(row.Options) || !string.IsNullOrWhiteSpace(row.AllowedValues);
+    private static bool HasPicker(JobParameterEditRow row) => !string.IsNullOrWhiteSpace(row.Options) || !string.IsNullOrWhiteSpace(row.AllowedValues);
 
     private static ParameterListJsonKind ToListKind(JobParameterType type)
         => type switch {
@@ -234,6 +229,7 @@
         Items.Add(row);
         if (HasDetails)
             _expanded.Add(row);
+
         if (OnChanged.HasDelegate)
             await OnChanged.InvokeAsync();
     }

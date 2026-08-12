@@ -20,8 +20,8 @@ public class CsvParseOptions
     public int? MaxRows { get; set; }
 
     /// <summary>
-    /// Pooling options for CSV → DataTable imports (value interning). Format pooling is unused for CSV.
-    /// Defaults match <see cref="CsvOptions.CreateDefaultPooling" /> (<c>PoolValues=false</c>).
+    /// Pooling options for CSV → DataTable imports (value interning). Format pooling is unused for CSV. Defaults match <see cref="CsvOptions.CreateDefaultPooling" /> (
+    /// <c>PoolValues=false</c>).
     /// </summary>
     public DataTablePoolingOptions Pooling { get; set; } = CsvOptions.CreateDefaultPooling();
 

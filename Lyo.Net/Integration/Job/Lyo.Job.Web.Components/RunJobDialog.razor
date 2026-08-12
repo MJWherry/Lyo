@@ -1,6 +1,4 @@
 @using Lyo.Common.Extensions
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ParamOptions
 @inject ISnackbar Snackbar
 
 <LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel">
@@ -43,7 +41,8 @@
                     <MudItem xs="12" md="@(p.Param.Type is JobParameterType.Json or JobParameterType.Xml ? 12 : 6)">
                         <MudStack Spacing="0">
                             @if (p.Encrypted) {
-                                <MudTextField T="string" Value="@p.Value" ValueChanged="@(v => SetParamValue(p, v))" Label="@ParamLabel(p)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                <MudTextField T="string" Value="@p.Value" ValueChanged="@(v => SetParamValue(p, v))" Label="@ParamLabel(p)" Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
                                               InputType="InputType.Password" Required="@p.Param.Required"/>
                             }
                             else if (HasOptions(p.Param)) {
@@ -121,8 +120,7 @@
 
     private static string ParamLabel(ParamModel p) => p.Param.Required ? $"{p.Param.Key} *" : p.Param.Key;
 
-    private static bool HasOptions(JobParameterRes p)
-        => !string.IsNullOrWhiteSpace(p.Options) || !string.IsNullOrWhiteSpace(p.AllowedValues);
+    private static bool HasOptions(JobParameterRes p) => !string.IsNullOrWhiteSpace(p.Options) || !string.IsNullOrWhiteSpace(p.AllowedValues);
 
     private static ParameterListJsonKind ToListKind(JobParameterType type)
         => type switch {
@@ -140,11 +138,7 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
-                Param = p,
-                Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null
-            })
-            .ToList();
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null }).ToList();
         RebuildSiblingMap();
     }
 
@@ -154,8 +148,7 @@
         RebuildSiblingMap();
     }
 
-    private void RebuildSiblingMap()
-        => _siblingMap = _paramModels.ToDictionary(p => p.Param.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
+    private void RebuildSiblingMap() => _siblingMap = _paramModels.ToDictionary(p => p.Param.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
 
     private bool IsValid()
     {
@@ -178,23 +171,26 @@
                     var parts = ParameterListJson.Parse(p.Value);
                     if (parts.Count > 0) {
                         foreach (var part in parts) {
-                            runParams.Add(new JobRunParameterReq {
-                                Key = p.Param.Key,
-                                Type = p.Param.Type,
-                                Value = part,
-                                Description = p.Param.Description
-                            });
+                            runParams.Add(
+                                new() {
+                                    Key = p.Param.Key,
+                                    Type = p.Param.Type,
+                                    Value = part,
+                                    Description = p.Param.Description
+                                });
                         }
+
                         continue;
                     }
                 }
 
-                runParams.Add(new JobRunParameterReq {
-                    Key = p.Param.Key,
-                    Type = p.Param.Type,
-                    Value = p.Value,
-                    Description = p.Param.Description
-                });
+                runParams.Add(
+                    new() {
+                        Key = p.Param.Key,
+                        Type = p.Param.Type,
+                        Value = p.Value,
+                        Description = p.Param.Description
+                    });
             }
 
             var req = new JobRunReq {

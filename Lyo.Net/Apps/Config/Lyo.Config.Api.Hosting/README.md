@@ -1,8 +1,11 @@
 # Lyo.Config.Api.Hosting
 
-Bridges **`IConfigApiClient`** ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared **`ResolvedConfigRecord`** ledger (ETags + **304** polling), then **one definition key JSON blob** binds each **`IOptionsMonitor<TOptions>`**.
+Bridges **`IConfigApiClient`** ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into **`Microsoft.Extensions.DependencyInjection`** and **
+`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared **`ResolvedConfigRecord`** ledger (ETags + **304** polling), then **one definition key JSON blob** binds
+each **`IOptionsMonitor<TOptions>`**.
 
-Prefer **`IOptionsMonitor<TOptions>.CurrentValue`** (or **`OnChange`**) for values that reload at runtime. **`IOptions<TOptions>`** is not registered here and would not observe remote updates anyway.
+Prefer **`IOptionsMonitor<TOptions>.CurrentValue`** (or **`OnChange`**) for values that reload at runtime. **`IOptions<TOptions>`** is not registered here and would not observe
+remote updates anyway.
 
 ## Examples
 
@@ -50,30 +53,31 @@ Reference the project `Lyo.Config.Api.Hosting` from your worker/API host (`Micro
 ## Configuration
 
 - **`StartupTimeout`** — omit or **`null`** to wait indefinitely for the first **200**.
-- **`RequireSuccessOnStartup`** — **`false`** allows the host to start after **`StartupTimeout`** even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer keeping **`true`** unless you tolerate cold-start without remote config).
+- **`RequireSuccessOnStartup`** — **`false`** allows the host to start after **`StartupTimeout`** even if no snapshot arrived (ledger stays empty unless you later reload manually;
+  prefer keeping **`true`** unless you tolerate cold-start without remote config).
 
 ## Polling enabled vs disabled
 
 `ConfigApiPollingOptions.Enabled` (defaults to `true`) gates the entire background poller:
 
-| `Enabled` | `ConfigApiPollingHostedService` behavior | `ConfigApiResolvedLedger.Current` at startup | Behavior of `IOptionsMonitor<T>` from `AddConfigApiOptions<T>` |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `true` | `StartAsync` validates `AppKind` / `AppId` and **blocks until the first 200** (or `StartupTimeout` if set). `ExecuteAsync` then loops `ResolveForAppAsync` with the latest ETag and `DelayWhenNotModified`. Errors retry after fixed back-offs and are logged. | Populated with the first successful payload after `StartAsync` returns. | `CurrentValue` returns the bound `TOptions`. `OnChange` fires after each ledger swap. |
-| `false` | `StartAsync` skips validation and the first probe; `ExecuteAsync` returns immediately. The hosted service stays in the DI container but does not touch the network. **No ledger updates from the network ever occur.** Some other code path (typically tests) may still call `ConfigApiResolvedLedger.SetResolved` manually. | `null` unless something else calls `SetResolved` directly. | Materialization sees a `null` ledger and falls back to `ConfigApiMissingDefinitionKeyBehavior`: `Throw` raises `InvalidOperationException`; `UseDefaultInstance` returns `new TOptions()`. |
+| `Enabled` | `ConfigApiPollingHostedService` behavior                                                                                                                                                                                                                                                                                     | `ConfigApiResolvedLedger.Current` at startup                            | Behavior of `IOptionsMonitor<T>` from `AddConfigApiOptions<T>`                                                                                                                             |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `true`    | `StartAsync` validates `AppKind` / `AppId` and **blocks until the first 200** (or `StartupTimeout` if set). `ExecuteAsync` then loops `ResolveForAppAsync` with the latest ETag and `DelayWhenNotModified`. Errors retry after fixed back-offs and are logged.                                                               | Populated with the first successful payload after `StartAsync` returns. | `CurrentValue` returns the bound `TOptions`. `OnChange` fires after each ledger swap.                                                                                                      |
+| `false`   | `StartAsync` skips validation and the first probe; `ExecuteAsync` returns immediately. The hosted service stays in the DI container but does not touch the network. **No ledger updates from the network ever occur.** Some other code path (typically tests) may still call `ConfigApiResolvedLedger.SetResolved` manually. | `null` unless something else calls `SetResolved` directly.              | Materialization sees a `null` ledger and falls back to `ConfigApiMissingDefinitionKeyBehavior`: `Throw` raises `InvalidOperationException`; `UseDefaultInstance` returns `new TOptions()`. |
 
 > The polling service performs the **only** writes to `ConfigApiResolvedLedger` in production. With `Enabled == false`, every options monitor is effectively driven by
 > `missingDefinitionKeyBehavior`. Use that mode for test hosts or for services that consume config exclusively via REST.
 
 ## `ConfigApiResolvedLedger` — the in-process resolved-config cache
 
-[`ConfigApiResolvedLedger`](./ConfigApiResolvedLedger.cs) is the shared in-process snapshot that ties the background poller to all `IOptionsMonitor<T>` instances. It is
-registered as a **singleton** by `AddConfigApiPolling` (and also `TryAddSingleton`-ed by `AddConfigApiOptions<T>`, so you can register options without polling).
+[`ConfigApiResolvedLedger`](./ConfigApiResolvedLedger.cs) is the shared in-process snapshot that ties the background poller to all `IOptionsMonitor<T>` instances. It is registered
+as a **singleton** by `AddConfigApiPolling` (and also `TryAddSingleton`-ed by `AddConfigApiOptions<T>`, so you can register options without polling).
 
-| Surface | Purpose |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ResolvedConfigRecord? Current` | Latest payload. `null` until the first successful resolve. Thread-safe getter (lock-protected). |
-| `string? CurrentEtag` | Opaque ETag from the last successful 200 response. Passed back to the server as `If-None-Match` on every subsequent probe. |
-| `IChangeToken GetReloadToken()` | Returns a `CancellationChangeToken` invalidated on the next swap. Used by `ConfigApiOptionsMonitor<T>` to rebuild its cached `TOptions`. |
+| Surface                                                         | Purpose                                                                                                                                                       |
+|-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ResolvedConfigRecord? Current`                                 | Latest payload. `null` until the first successful resolve. Thread-safe getter (lock-protected).                                                               |
+| `string? CurrentEtag`                                           | Opaque ETag from the last successful 200 response. Passed back to the server as `If-None-Match` on every subsequent probe.                                    |
+| `IChangeToken GetReloadToken()`                                 | Returns a `CancellationChangeToken` invalidated on the next swap. Used by `ConfigApiOptionsMonitor<T>` to rebuild its cached `TOptions`.                      |
 | `void SetResolved(ResolvedConfigRecord resolved, string? etag)` | Atomically updates `Current` + `CurrentEtag`, cancels the previous reload token (notifying every subscriber), and disposes the old `CancellationTokenSource`. |
 
 `ConfigApiOptionsMonitor<T>` subscribes to `GetReloadToken` via `ChangeToken.OnChange`, so every successful ledger swap triggers re-materialization of *all* registered options
@@ -84,20 +88,25 @@ types in lock-step.
 Materialization runs through `ConfigApiResolvedLedger.Current.TryGetValue(definitionKey, …)` and then `configValue.GetValue<T>(ConfigJsonSerializerOptions.Default)`. The
 `ConfigApiMissingDefinitionKeyBehavior` selected at registration controls the failure modes:
 
-| Condition | `Throw` (default) | `UseDefaultInstance` |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------- |
-| Ledger is empty (`Current == null`). | `InvalidOperationException("No Config API snapshot is available yet (ledger empty). …")` | `new TOptions()` |
-| Definition key absent from the resolved payload, or its JSON value is `null`. | `InvalidOperationException("Definition key '<key>' is missing from resolved Config API payload …")` | `new TOptions()` |
-| Key present, JSON not assignable to `TOptions` (deserialize returns `null`). | `InvalidOperationException("JSON for definition key '<key>' did not deserialize to <TOptions>.")` | `new TOptions()` |
+| Condition                                                                     | `Throw` (default)                                                                                   | `UseDefaultInstance` |
+|-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|----------------------|
+| Ledger is empty (`Current == null`).                                          | `InvalidOperationException("No Config API snapshot is available yet (ledger empty). …")`            | `new TOptions()`     |
+| Definition key absent from the resolved payload, or its JSON value is `null`. | `InvalidOperationException("Definition key '<key>' is missing from resolved Config API payload …")` | `new TOptions()`     |
+| Key present, JSON not assignable to `TOptions` (deserialize returns `null`).  | `InvalidOperationException("JSON for definition key '<key>' did not deserialize to <TOptions>.")`   | `new TOptions()`     |
 
 Choose `UseDefaultInstance` for features that may have no bindings yet; keep `Throw` for required configuration so misconfiguration fails fast at startup.
 
 ## Limitations
 
-- **No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return the cached `CurrentValue`, **anything else throws `InvalidOperationException`**. There is no way to map several names onto different definition keys through this monitor.
-- **One definition key per `TOptions` type per host.** `AddConfigApiOptions<TOptions>(definitionKey, …)` registers an unkeyed singleton `IOptionsMonitor<TOptions>`. Calling it twice with the same `TOptions` and different `definitionKey` values **replaces** the prior registration (last call wins); you cannot bind one POCO to two definition keys in the same host. Use distinct `TOptions` types (or sub-records) for each definition key.
-- **`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics — see the table above.
-- **`IOptions<T>` and `IOptionsSnapshot<T>` are not registered** by this package. Inject `IOptionsMonitor<T>` (or, in scoped consumers, `IOptionsSnapshot<T>` if you register your own adapter) so changes from the polling service propagate.
+- **No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return
+  the cached `CurrentValue`, **anything else throws `InvalidOperationException`**. There is no way to map several names onto different definition keys through this monitor.
+- **One definition key per `TOptions` type per host.** `AddConfigApiOptions<TOptions>(definitionKey, …)` registers an unkeyed singleton `IOptionsMonitor<TOptions>`. Calling it
+  twice with the same `TOptions` and different `definitionKey` values **replaces** the prior registration (last call wins); you cannot bind one POCO to two definition keys in the
+  same host. Use distinct `TOptions` types (or sub-records) for each definition key.
+- **`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options
+  monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics — see the table above.
+- **`IOptions<T>` and `IOptionsSnapshot<T>` are not registered** by this package. Inject `IOptionsMonitor<T>` (or, in scoped consumers, `IOptionsSnapshot<T>` if you register your
+  own adapter) so changes from the polling service propagate.
 
 ## Runtime behaviour summary
 

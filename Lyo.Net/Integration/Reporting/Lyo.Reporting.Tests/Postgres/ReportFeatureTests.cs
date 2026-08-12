@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Lyo.Api.Reporting;
-using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models;
+using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres;

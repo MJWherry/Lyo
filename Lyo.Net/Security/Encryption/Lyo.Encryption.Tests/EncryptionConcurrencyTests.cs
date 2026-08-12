@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Security.Cryptography;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.KeyStore;

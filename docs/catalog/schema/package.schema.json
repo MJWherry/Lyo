@@ -25,7 +25,9 @@
         },
         {
           "type": "object",
-          "required": ["title"],
+          "required": [
+            "title"
+          ],
           "additionalProperties": false,
           "properties": {
             "title": {
@@ -38,7 +40,9 @@
             },
             "items": {
               "type": "array",
-              "items": { "$ref": "#/$defs/featureNode" },
+              "items": {
+                "$ref": "#/$defs/featureNode"
+              },
               "description": "Nested bullets / subfeatures."
             }
           }
@@ -47,9 +51,17 @@
     }
   },
   "properties": {
-    "$schema": { "type": "string" },
-    "id": { "type": "string", "minLength": 1 },
-    "name": { "type": "string", "minLength": 1 },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
     "area": {
       "type": "string",
       "enum": [
@@ -74,18 +86,30 @@
     },
     "features": {
       "type": "array",
-      "items": { "$ref": "#/$defs/featureNode" }
+      "items": {
+        "$ref": "#/$defs/featureNode"
+      }
     },
     "examples": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["title", "language", "code"],
+        "required": [
+          "title",
+          "language",
+          "code"
+        ],
         "additionalProperties": false,
         "properties": {
-          "title": { "type": "string" },
-          "language": { "type": "string" },
-          "code": { "type": "string" }
+          "title": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
         }
       }
     },
@@ -93,7 +117,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "headline": { "type": "string" },
+        "headline": {
+          "type": "string"
+        },
         "suite": {
           "type": "string",
           "description": "Portfolio benchmark suite id (e.g. compression)."
@@ -102,10 +128,15 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["label", "href"],
+            "required": [
+              "label",
+              "href"
+            ],
             "additionalProperties": false,
             "properties": {
-              "label": { "type": "string" },
+              "label": {
+                "type": "string"
+              },
               "href": {
                 "type": "string",
                 "description": "Portfolio path (e.g. /benchmarks/csv) or relative docs path."
@@ -124,7 +155,9 @@
               },
               "params": {
                 "type": "object",
-                "additionalProperties": { "type": "string" },
+                "additionalProperties": {
+                  "type": "string"
+                },
                 "description": "Micro suite: [Params] key/values that must match the measurement (e.g. {\"RowCount\":\"100000\"})."
               },
               "scenario": {
@@ -133,7 +166,12 @@
               },
               "primary": {
                 "type": "string",
-                "enum": ["mean", "throughput", "p95", "checks"],
+                "enum": [
+                  "mean",
+                  "throughput",
+                  "p95",
+                  "checks"
+                ],
                 "description": "Which live figure is the hero number. Defaults: throughput|mean (micro), p95 (load)."
               }
             }
@@ -143,22 +181,43 @@
     },
     "sections": {
       "type": "array",
-      "items": { "$ref": "section.schema.json" }
+      "items": {
+        "$ref": "section.schema.json"
+      }
     },
     "dependencies": {
       "type": "array",
       "description": "Generated from ProjectReference / PackageReference (project graph model).",
       "items": {
         "type": "object",
-        "required": ["name", "kind", "tags"],
+        "required": [
+          "name",
+          "kind",
+          "tags"
+        ],
         "additionalProperties": false,
         "properties": {
-          "name": { "type": "string" },
-          "kind": { "type": "string", "enum": ["lyo", "package"] },
-          "version": { "type": ["string", "null"] },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "lyo",
+              "package"
+            ]
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "tags": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "direct|transitive, lyo|microsoft|third-party, plus TFMs like net10.0 / netstandard2.0"
           }
         }
@@ -167,20 +226,31 @@
     "targetFrameworks": {
       "type": "array",
       "description": "TargetFramework / TargetFrameworks from the project csproj.",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "links": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "href"],
+        "required": [
+          "label",
+          "href"
+        ],
         "additionalProperties": false,
         "properties": {
-          "label": { "type": "string" },
-          "href": { "type": "string" }
+          "label": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          }
         }
       }
     },
-    "readmePath": { "type": "string" }
+    "readmePath": {
+      "type": "string"
+    }
   }
 }

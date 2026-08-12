@@ -44,7 +44,10 @@ public interface IXlsxWriter
     /// <typeparam name="T">Row type.</typeparam>
     byte[] ExportToXlsxBytes<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets);
 
-    /// <summary>Writes a row/column dictionary map to <paramref name="xlsxFilePath" />; <paramref name="useHeaderRow" /> controls whether the first row is treated as headers; <paramref name="useFooterRow" /> writes the last ordered row as a trailing footer.</summary>
+    /// <summary>
+    /// Writes a row/column dictionary map to <paramref name="xlsxFilePath" />; <paramref name="useHeaderRow" /> controls whether the first row is treated as headers;
+    /// <paramref name="useFooterRow" /> writes the last ordered row as a trailing footer.
+    /// </summary>
     void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string xlsxFilePath, bool useHeaderRow = true, bool useFooterRow = false);
 
     /// <summary>Writes a row/column dictionary map to <paramref name="xlsxStream" />.</summary>
@@ -145,7 +148,8 @@ public interface IXlsxWriter
         CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to XLSX bytes.</summary>
-    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow = false, CancellationToken ct = default);
+    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow =
+ false, CancellationToken ct = default);
 
     /// <summary>Asynchronously exports a Lyo data table to <paramref name="xlsxFilePath" />.</summary>
     Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, string xlsxFilePath, CancellationToken ct = default);

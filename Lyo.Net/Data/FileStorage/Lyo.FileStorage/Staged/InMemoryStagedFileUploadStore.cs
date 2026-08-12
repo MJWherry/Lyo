@@ -20,11 +20,7 @@ public sealed class InMemoryStagedFileUploadStore : IStagedFileUploadStore
     }
 
     /// <inheritdoc />
-    public Task<StagedFileUploadRecord?> GetAsync(Guid stageId, CancellationToken ct = default)
-    {
-        _records.TryGetValue(stageId, out var record);
-        return Task.FromResult(record);
-    }
+    public Task<StagedFileUploadRecord?> GetAsync(Guid stageId, CancellationToken ct = default) => Task.FromResult(_records.TryGetValue(stageId, out var record) ? record : null);
 
     /// <inheritdoc />
     public Task UpdateAsync(StagedFileUploadRecord record, CancellationToken ct = default)

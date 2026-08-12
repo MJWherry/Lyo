@@ -36,14 +36,14 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 ## Registration
 
-| Extension | What it adds |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `AddAuditDbContextFactory(options)` / `(Action<…>)` | Registers `IDbContextFactory<AuditDbContext>` and the migrations helper (`AddPostgresMigrations`). |
+| Extension                                                      | What it adds                                                                                                                        |
+|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `AddAuditDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<AuditDbContext>` and the migrations helper (`AddPostgresMigrations`).                                  |
 | `AddAuditDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresAuditOptions` from `"PostgresAudit"` (override section via the optional `configSectionName`) and registers as above. |
-| `AddAuditDbContext(connectionString)` | Builds options from a raw connection string, registers the factory, and exposes a scoped `AuditDbContext`. |
-| `AddAuditDbContext(Action<DbContextOptionsBuilder>)` | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing). |
-| `AddPostgresAuditRecorder(options)` / `(Action<…>)` | Calls `AddAuditDbContextFactory` and registers `IAuditRecorder` → `PostgresAuditRecorder` as a singleton. |
-| `AddPostgresAuditRecorderFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration. |
+| `AddAuditDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `AuditDbContext`.                          |
+| `AddAuditDbContext(Action<DbContextOptionsBuilder>)`           | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing).                              |
+| `AddPostgresAuditRecorder(options)` / `(Action<…>)`            | Calls `AddAuditDbContextFactory` and registers `IAuditRecorder` → `PostgresAuditRecorder` as a singleton.                           |
+| `AddPostgresAuditRecorderFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration.                                                                           |
 
 ## Quick Start
 
@@ -51,12 +51,15 @@ Need just the factory (e.g. to share with downstream services or run migrations 
 
 ## Health
 
-`PostgresAuditRecorder` implements `Lyo.Health.IHealth` with `HealthCheckName = "audit-postgres"`. The probe opens an `AuditDbContext` and runs `Database.CanConnectAsync`, surfacing connection failures through `HealthResult.Unhealthy` so the recorder contributes to host health endpoints that resolve `IEnumerable<IHealth>`.
+`PostgresAuditRecorder` implements `Lyo.Health.IHealth` with `HealthCheckName = "audit-postgres"`. The probe opens an `AuditDbContext` and runs `Database.CanConnectAsync`,
+surfacing connection failures through `HealthResult.Unhealthy` so the recorder contributes to host health endpoints that resolve `IEnumerable<IHealth>`.
 
 ## Schema
 
-- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
-- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` ( uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
+- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid),
+  `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
+- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?`
+  (uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
 
 ## Tenancy
 

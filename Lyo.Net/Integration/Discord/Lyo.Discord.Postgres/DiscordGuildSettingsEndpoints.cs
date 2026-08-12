@@ -28,10 +28,7 @@ public static class DiscordGuildSettingsEndpoints
 
         app.MapPut(
                 $"{Constants.Rest.Discord.Guilds}/{{guildId:long}}/GuildSettings", async Task<IResult> (
-                    long guildId,
-                    [FromBody] DiscordGuildSettings body,
-                    [FromServices] IConfigStore store,
-                    [FromServices] IDbContextFactory<DiscordDbContext> dbFactory,
+                    long guildId, [FromBody] DiscordGuildSettings body, [FromServices] IConfigStore store, [FromServices] IDbContextFactory<DiscordDbContext> dbFactory,
                     CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                     if (await db.DiscordGuilds.FindAsync([guildId], ct).ConfigureAwait(false) == null)
@@ -70,11 +67,7 @@ public static class DiscordGuildSettingsEndpoints
 
         app.MapPost(
                 $"{Constants.Rest.Discord.Guilds}/{{guildId:long}}/GuildSettings/Revert/{{revision:int}}", async Task<IResult> (
-                    long guildId,
-                    int revision,
-                    [FromServices] IConfigStore store,
-                    [FromServices] IDbContextFactory<DiscordDbContext> dbFactory,
-                    CancellationToken ct) => {
+                    long guildId, int revision, [FromServices] IConfigStore store, [FromServices] IDbContextFactory<DiscordDbContext> dbFactory, CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                     if (await db.DiscordGuilds.FindAsync([guildId], ct).ConfigureAwait(false) == null)
                         return Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Discord guild", guildId.ToString()).Build());

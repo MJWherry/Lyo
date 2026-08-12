@@ -1,5 +1,3 @@
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ParamOptions
 @inject ISnackbar Snackbar
 
 <LyoDialog Busy="@_busy" OnSave="Submit" SaveDisabled="@(_selected is null || !IsValid())" SaveText="Generate" CloseText="Cancel">
@@ -114,16 +112,12 @@
 
         public string? StringValue { get; set; }
 
-        public bool IsEmpty()
-            => Param.Type == ReportParameterType.Bool
-                ? false
-                : string.IsNullOrWhiteSpace(StringValue);
+        public bool IsEmpty() => Param.Type == ReportParameterType.Bool ? false : string.IsNullOrWhiteSpace(StringValue);
     }
 
     private static string ParamLabel(ParamModel p) => p.Param.Required ? $"{p.Param.Key} *" : p.Param.Key;
 
-    private static bool HasOptions(ReportDefinitionParameterRes p)
-        => !string.IsNullOrWhiteSpace(p.Options) || !string.IsNullOrWhiteSpace(p.AllowedValues);
+    private static bool HasOptions(ReportDefinitionParameterRes p) => !string.IsNullOrWhiteSpace(p.Options) || !string.IsNullOrWhiteSpace(p.AllowedValues);
 
     private static ParameterListJsonKind ToListKind(ReportParameterType type)
         => type switch {
@@ -141,15 +135,7 @@
     private void OnDefinitionChanged(ReportDefinitionRes? def)
     {
         _selected = def;
-        _paramModels = (def?.Parameters ?? []).Select(p => new ParamModel {
-                Param = p,
-                StringValue = !string.IsNullOrEmpty(p.Value)
-                    ? p.Value
-                    : p.Type == ReportParameterType.Bool
-                        ? "false"
-                        : null
-            })
-            .ToList();
+        _paramModels = (def?.Parameters ?? []).Select(p => new ParamModel { Param = p, StringValue = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == ReportParameterType.Bool ? "false" : null }).ToList();
         RebuildSiblingMap();
     }
 
@@ -159,8 +145,7 @@
         RebuildSiblingMap();
     }
 
-    private void RebuildSiblingMap()
-        => _siblingMap = _paramModels.ToDictionary(p => p.Param.Key, p => p.StringValue, StringComparer.OrdinalIgnoreCase);
+    private void RebuildSiblingMap() => _siblingMap = _paramModels.ToDictionary(p => p.Param.Key, p => p.StringValue, StringComparer.OrdinalIgnoreCase);
 
     private bool IsValid() => _selected is not null && _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
 
@@ -178,23 +163,26 @@
                     var parts = ParameterListJson.Parse(value);
                     if (parts.Count > 0) {
                         foreach (var part in parts) {
-                            parameters.Add(new ReportGenerationParameterReq {
-                                Key = p.Param.Key,
-                                Type = p.Param.Type,
-                                Value = part,
-                                Description = p.Param.Description
-                            });
+                            parameters.Add(
+                                new() {
+                                    Key = p.Param.Key,
+                                    Type = p.Param.Type,
+                                    Value = part,
+                                    Description = p.Param.Description
+                                });
                         }
+
                         continue;
                     }
                 }
 
-                parameters.Add(new ReportGenerationParameterReq {
-                    Key = p.Param.Key,
-                    Type = p.Param.Type,
-                    Value = value,
-                    Description = p.Param.Description
-                });
+                parameters.Add(
+                    new() {
+                        Key = p.Param.Key,
+                        Type = p.Param.Type,
+                        Value = value,
+                        Description = p.Param.Description
+                    });
             }
 
             var req = new GenerateReportReq {

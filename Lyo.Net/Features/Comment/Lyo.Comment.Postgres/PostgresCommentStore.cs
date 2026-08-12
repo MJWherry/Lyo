@@ -273,7 +273,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             c.DeletedAt = utc;
 
         var idSet = ids.Select(i => i.ToString()).ToHashSet();
-        var reactionsToDelete = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && idSet.Contains(r.SubjectEntityId))
+        var reactionsToDelete = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && r.SubjectEntityId != null && idSet.Contains(r.SubjectEntityId))
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -304,7 +304,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             c.DeletedAt = utc;
 
         var commentIds = comments.Select(c => c.Id.ToString()).ToHashSet();
-        var reactions = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && commentIds.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var reactions = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && r.SubjectEntityId != null && commentIds.Contains(r.SubjectEntityId))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         context.CommentReactions.RemoveRange(reactions);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in comments)

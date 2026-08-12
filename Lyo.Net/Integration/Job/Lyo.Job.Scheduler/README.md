@@ -1,8 +1,12 @@
 # Lyo.Job.Scheduler
 
-Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (with misfire catch-up, blackout calendars, and per-schedule time zones), creates job runs via `IApiClient`, listens to `IJobEventPublisher` for definition updates and run completions, fires triggers, schedules retries with linear or **exponential backoff**, aggregates batch parent progress, trips/resets per-definition circuit breakers, and publishes failure/circuit-breaker alerts.
+Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (with misfire catch-up, blackout calendars, and per-schedule time zones), creates job runs
+via `IApiClient`, listens to `IJobEventPublisher` for definition updates and run completions, fires triggers, schedules retries with linear or **exponential backoff**, aggregates
+batch parent progress, trips/resets per-definition circuit breakers, and publishes failure/circuit-breaker alerts.
 
-Optional **`JobWorkflowEngine`** advances multi-step workflow runs when constituent job runs finish. Step runs are created with dispatch suppressed and only published after the run is linked to its workflow run step, so a fast worker cannot finish a step run before the engine knows which step it belongs to. Completion-message processing failures use a bounded counted requeue (like `QueueWorkerBase`) instead of requeueing forever, so a poison message cannot loop indefinitely.
+Optional **`JobWorkflowEngine`** advances multi-step workflow runs when constituent job runs finish. Step runs are created with dispatch suppressed and only published after the run
+is linked to its workflow run step, so a fast worker cannot finish a step run before the engine knows which step it belongs to. Completion-message processing failures use a bounded
+counted requeue (like `QueueWorkerBase`) instead of requeueing forever, so a poison message cannot loop indefinitely.
 
 Designed for multi-instance deployment: run creation uses the `(JobScheduleId, ScheduledSlotUtc)` unique constraint to keep duplicate slot creations idempotent.
 
@@ -50,46 +54,48 @@ public interface IJobScheduler
 
 ## Registration
 
-Requires `IApiClient`, `IFormatterService`, and `IJobEventPublisher`. For scheduler/worker hosts register the non-EF publisher via `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + optional `IJobClient`). Do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` — that path pulls EF. `IMetrics` and `IMqService` are optional for the scheduler itself (MQ is required for the publisher).
+Requires `IApiClient`, `IFormatterService`, and `IJobEventPublisher`. For scheduler/worker hosts register the non-EF publisher via `Lyo.Job.Client.AddMqJobEventPublisher()` /
+`AddMqJobEventPublisherFromConfiguration()` (`IMqService` + optional `IJobClient`). Do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` — that path pulls EF. `IMetrics` and
+`IMqService` are optional for the scheduler itself (MQ is required for the publisher).
 
 ## `JobSchedulerOptions` (`JobSchedulerOptions.SectionName` = `"JobScheduler"`)
 
-| Property | Type | Default | Notes |
-| ---------------------------------- | --------------- | ------------- | ---------------------------------------------------------- |
-| `ApiBaseUrl` | `string` | _required_ | Base URL of the Job API. |
-| `TimeZone` | `TimeZoneInfo?` | `null` (UTC) | Default zone when a schedule has no `TimeZoneId`. |
-| `DefinitionRefreshIntervalSeconds` | `int` | `30` | Definition + calendar refresh cadence. |
-| `ScheduleCheckIntervalSeconds` | `int` | `10` | Schedule evaluation cadence. |
-| `CreatedBy` | `string` | `"Scheduler"` | Stamped on scheduler-created runs. |
-| `EnableMisfireCatchUp` | `bool` | `true` | Global default; per-schedule `MisfirePolicy` can override. |
-| `MisfireLookbackMinutes` | `int` | `1440` | Max age of missed slots eligible for `RunOnce` catch-up. |
+| Property                           | Type            | Default       | Notes                                                      |
+|------------------------------------|-----------------|---------------|------------------------------------------------------------|
+| `ApiBaseUrl`                       | `string`        | _required_    | Base URL of the Job API.                                   |
+| `TimeZone`                         | `TimeZoneInfo?` | `null` (UTC)  | Default zone when a schedule has no `TimeZoneId`.          |
+| `DefinitionRefreshIntervalSeconds` | `int`           | `30`          | Definition + calendar refresh cadence.                     |
+| `ScheduleCheckIntervalSeconds`     | `int`           | `10`          | Schedule evaluation cadence.                               |
+| `CreatedBy`                        | `string`        | `"Scheduler"` | Stamped on scheduler-created runs.                         |
+| `EnableMisfireCatchUp`             | `bool`          | `true`        | Global default; per-schedule `MisfirePolicy` can override. |
+| `MisfireLookbackMinutes`           | `int`           | `1440`        | Max age of missed slots eligible for `RunOnce` catch-up.   |
 
 `TimeZone` binds from configuration using IANA / Windows identifiers (e.g. `"America/New_York"`, `"UTC"`).
 
 ## `JobWorkflowEngineOptions` (`JobWorkflowEngineOptions.SectionName` = `"JobWorkflowEngine"`)
 
-| Property | Default | Notes |
-| ------------ | ------------------ | ------------------------------ |
-| `ApiBaseUrl` | _required_ | Job API base URL. |
-| `CreatedBy` | `"WorkflowEngine"` | Stamped on workflow-run steps. |
+| Property     | Default            | Notes                          |
+|--------------|--------------------|--------------------------------|
+| `ApiBaseUrl` | _required_         | Job API base URL.              |
+| `CreatedBy`  | `"WorkflowEngine"` | Stamped on workflow-run steps. |
 
 ## Metrics (`job.scheduler.*`)
 
-| Metric | Description |
-| --------------------------------------- | ------------------------------- |
-| `job.scheduler.definitions.loaded` | Count after refresh |
-| `job.scheduler.refresh.duration` | Refresh timer |
-| `job.scheduler.refresh.error` | Refresh failures |
-| `job.scheduler.check.duration` | Schedule check timer |
-| `job.scheduler.check.error` | Check failures |
-| `job.scheduler.runs.created` | Runs created |
-| `job.scheduler.runs.create.failed` | API create failures |
-| `job.scheduler.slot.conflicts` | Benign duplicate-slot conflicts |
-| `job.scheduler.triggers.fired` | Trigger-driven runs |
-| `job.scheduler.retries.scheduled` | Post-failure retry runs |
-| `job.scheduler.circuit_breaker.tripped` | Definitions disabled |
-| `job.scheduler.misfires.caught_up` | Misfire `RunOnce` runs |
-| `job.scheduler.misfires.skipped` | Missed slots skipped |
+| Metric                                  | Description                     |
+|-----------------------------------------|---------------------------------|
+| `job.scheduler.definitions.loaded`      | Count after refresh             |
+| `job.scheduler.refresh.duration`        | Refresh timer                   |
+| `job.scheduler.refresh.error`           | Refresh failures                |
+| `job.scheduler.check.duration`          | Schedule check timer            |
+| `job.scheduler.check.error`             | Check failures                  |
+| `job.scheduler.runs.created`            | Runs created                    |
+| `job.scheduler.runs.create.failed`      | API create failures             |
+| `job.scheduler.slot.conflicts`          | Benign duplicate-slot conflicts |
+| `job.scheduler.triggers.fired`          | Trigger-driven runs             |
+| `job.scheduler.retries.scheduled`       | Post-failure retry runs         |
+| `job.scheduler.circuit_breaker.tripped` | Definitions disabled            |
+| `job.scheduler.misfires.caught_up`      | Misfire `RunOnce` runs          |
+| `job.scheduler.misfires.skipped`        | Missed slots skipped            |
 
 ## Runtime flow
 
@@ -141,11 +147,14 @@ completion cannot create duplicate retries. Trigger firing is deduplicated the s
 
 ## Runtime flow — Multi-instance completion semantics
 
-`job.run.complete` is a competing-consumer queue: each completion is processed by exactly one scheduler instance. Correctness across instances relies on idempotency keys (retries, triggers) and the `(JobScheduleId, ScheduledSlotUtc)` unique constraint (scheduled slots), not on instance affinity. Completion processing takes the definition lock before mutating the in-memory `JobInfo` cache, so concurrent refreshes cannot interleave with circuit-breaker counter updates.
+`job.run.complete` is a competing-consumer queue: each completion is processed by exactly one scheduler instance. Correctness across instances relies on idempotency keys (retries,
+triggers) and the `(JobScheduleId, ScheduledSlotUtc)` unique constraint (scheduled slots), not on instance affinity. Completion processing takes the definition lock before mutating
+the in-memory `JobInfo` cache, so concurrent refreshes cannot interleave with circuit-breaker counter updates.
 
 ## Runtime flow — Parallel restrictions
 
-When a definition has `JobParallelRestriction` rows, `CheckSchedulesAsync` skips creating a run if any restricted definition (same or cross-definition link) already has a `Queued` or `Running` run. This complements per-definition `MaxConcurrentRuns` enforced in `JobService`.
+When a definition has `JobParallelRestriction` rows, `CheckSchedulesAsync` skips creating a run if any restricted definition (same or cross-definition link) already has a `Queued`
+or `Running` run. This complements per-definition `MaxConcurrentRuns` enforced in `JobService`.
 
 ## `IJobScheduler` surface
 

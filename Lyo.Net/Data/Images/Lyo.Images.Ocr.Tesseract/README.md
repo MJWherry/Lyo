@@ -1,6 +1,7 @@
 # Lyo.Images.Ocr.Tesseract
 
-**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.
+**Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely
+concurrent.
 
 ## Examples
 
@@ -48,8 +49,8 @@ from `libtesseract5` alone.
 1. Update package lists: `sudo apt-get update`
 2. Install native libraries:
     - **Tesseract:** `sudo apt-get install -y libtesseract5`
-    - **Leptonica** (required by the NuGet interop; package name varies): `sudo apt-get install -y libleptonica6` 
-      If that package does not exist on your release: `sudo apt-get install -y libleptonica-dev` 
+    - **Leptonica** (required by the NuGet interop; package name varies): `sudo apt-get install -y libleptonica6`
+      If that package does not exist on your release: `sudo apt-get install -y libleptonica-dev`
       **`libleptonica-dev` only installs `libleptonica.so` / `libleptonica.so.*` — it never creates `libleptonica-1.82.0.so`.** You still need the symlink in the subsection below.
 3. Install **English traineddata** (pick one):
     - Minimal: `sudo apt-get install -y tesseract-ocr-eng`
@@ -75,8 +76,8 @@ does not install `libleptonica-1.82.0.so`.**
 
 - **`Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/`** — this is what **`dotnet test`** builds (output: **`.../bin/Debug/net10.0/`**).
 
-Do **not** confuse it with a nested **`Lyo.Images.Ocr.Tesseract/Lyo.Images.Ocr.Tesseract.Tests/`** folder; that path is not the SDK layout and is often created accidentally (
-sometimes **`root`**-owned). Remove it with **`sudo rm -rf`** if it appears.
+Do **not** confuse it with a nested **`Lyo.Images.Ocr.Tesseract/Lyo.Images.Ocr.Tesseract.Tests/`** folder; that path is not the SDK layout and is often created accidentally
+(sometimes **`root`**-owned). Remove it with **`sudo rm -rf`** if it appears.
 
 **`libdl.so`:** **`InteropDotNet`** loads the library name **`libdl`**. Glibc only provides **`libdl.so.2`** (often under **`/lib/x86_64-linux-gnu/`**), so **`libdl.so` is missing
 ** unless you add a symlink. The setup script drops **`libdl.so` → libdl.so.2** next to **`$(OutputPath)`** (same folder as your **`*.dll`**), which is one of the paths .NET
@@ -129,7 +130,8 @@ ln -sf "$(readlink -f /lib/$ARCH/libdl.so.2)" "$OUT/libdl.so"
 
 ## 2. Language data (`traineddata`) — manual / custom layout
 
-- If you use distro packages (Linux/macOS above), **`TessdataDirectory`** should be the **`tessdata`** folder that contains **`eng.traineddata`** (tests auto-detect common Linux paths and any **`/usr/share/tesseract-ocr/*/tessdata`** directory).
+- If you use distro packages (Linux/macOS above), **`TessdataDirectory`** should be the **`tessdata`** folder that contains **`eng.traineddata`** (tests auto-detect common Linux
+  paths and any **`/usr/share/tesseract-ocr/*/tessdata`** directory).
 - Otherwise ship or download **`eng.traineddata`** into a folder you control (other languages = more `*.traineddata` files).
 - Manual download (English **fast** model): [tessdata_fast — eng.traineddata](https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata)
 - Point **`TesseractOcrEngineOptions.TessdataDirectory`** at the **directory that contains** `eng.traineddata`, not the parent of `tessdata`.
@@ -144,16 +146,21 @@ ln -sf "$(readlink -f /lib/$ARCH/libdl.so.2)" "$OUT/libdl.so"
 
 - Install **library + language data** as above (`tesseract-ocr-eng` or `tesseract-ocr` on Debian/Ubuntu).
 - Enable OCR integration either way:
-- **Recommended:** set **`OcrTesseractTests:RunIntegration`** to **`true`** in **`appsettings.Development.json`**, or edit **`appsettings.json`** locally (don’t commit `true` if CI must stay off).
+- **Recommended:** set **`OcrTesseractTests:RunIntegration`** to **`true`** in **`appsettings.Development.json`**, or edit **`appsettings.json`** locally (don’t commit `true` if CI
+  must stay off).
 - **Alternate:** **`LYO_RUN_TESSERACT_INTEGRATION=1`** (still supported; overrides/appsettings merge via **`AddEnvironmentVariables`**).
-- Tessdata path resolution (first match wins): **`OcrTesseractTests:TessdataDirectory`**, then **`OcrEngine:Tesseract:TessdataDirectory`**, then output **`tessdata/`**, * *`LYO_TESSDATA_DIRECTORY`**, then distro paths under **`/usr/share/tesseract-ocr`**.
+- Tessdata path resolution (first match wins): **`OcrTesseractTests:TessdataDirectory`**, then **`OcrEngine:Tesseract:TessdataDirectory`**, then output **`tessdata/`**, * *
+  `LYO_TESSDATA_DIRECTORY`**, then distro paths under **`/usr/share/tesseract-ocr`**.
 - Run: **`dotnet test Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/`**
-- Native integration tests (**`ReadAsync_*`** with real Tesseract) use **`Assert.SkipUnless` / `Assert.SkipWhen`**: they show as **skipped** (not passed) when integration is off, **`eng.traineddata`** cannot be resolved, or native libraries are missing (**`OCR_NATIVE_LIBRARY_NOT_FOUND`**). The always-on tests (**`ReadAsync_missing_tessdata_*`**, configuration tests) still run.
+- Native integration tests (**`ReadAsync_*`** with real Tesseract) use **`Assert.SkipUnless` / `Assert.SkipWhen`**: they show as **skipped** (not passed) when integration is off,
+  **`eng.traineddata`** cannot be resolved, or native libraries are missing (**`OCR_NATIVE_LIBRARY_NOT_FOUND`**). The always-on tests (**`ReadAsync_missing_tessdata_*`**,
+  configuration tests) still run.
 - If assertions mention missing tessdata, confirm **`find /usr/share/tesseract-ocr -name eng.traineddata`** — **`ldconfig`** showing **`libtesseract.so.5`** alone is not enough.
 
 ## Dependency injection
 
-Or from configuration: With **appsettings.json**: If **`OcrEngineOptions`** was already registered (e.g. via **`AddOcrEngineOptionsFromConfiguration`**), use **`AddTesseractOcrEngine`** **without** the `configureShared` delegate so shared options are not registered twice.
+Or from configuration: With **appsettings.json**: If **`OcrEngineOptions`** was already registered (e.g. via **`AddOcrEngineOptionsFromConfiguration`**), use **
+`AddTesseractOcrEngine`** **without** the `configureShared` delegate so shared options are not registered twice.
 
 ## Coordinate space
 

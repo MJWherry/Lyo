@@ -7,16 +7,12 @@ internal static class FtpTestHost
 {
     private static int _passiveBase = 21000;
 
-    public static async Task<(IContainer Container, FtpClientOptions Options)?> TryStartAsync(
-        CancellationToken ct,
-        int maxPooledClients = 4)
+    public static async Task<(IContainer Container, FtpClientOptions Options)?> TryStartAsync(CancellationToken ct, int maxPooledClients = 4)
     {
         // Unique host-bound PASV range per container so parallel integration tests do not collide.
         var passiveMin = Interlocked.Add(ref _passiveBase, 20) - 20;
         var passiveMax = passiveMin + 10;
-
-        var builder = new ContainerBuilder("delfer/alpine-ftp-server")
-            .WithPortBinding(21, true)
+        var builder = new ContainerBuilder("delfer/alpine-ftp-server").WithPortBinding(21, true)
             .WithEnvironment("USERS", "foo|pass|/ftp/foo")
             .WithEnvironment("MIN_PORT", passiveMin.ToString())
             .WithEnvironment("MAX_PORT", passiveMax.ToString())
@@ -27,7 +23,6 @@ internal static class FtpTestHost
             builder = builder.WithPortBinding(p, p);
 
         var container = builder.Build();
-
         try {
             await container.StartAsync(ct);
         }
@@ -49,6 +44,7 @@ internal static class FtpTestHost
             PassivePortRange = (passiveMin, passiveMax),
             EnableMetrics = false
         };
+
         return (container, options);
     }
 }

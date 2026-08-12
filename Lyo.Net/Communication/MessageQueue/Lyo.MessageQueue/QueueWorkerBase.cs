@@ -127,12 +127,12 @@ internal static class QueueWorkerHelpers
 public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisposable, IHealth
     where TResult : ResultBase
 {
-    private readonly string? _dlqName;
-    private readonly int? _maxRequeueCount;
     protected readonly ILogger Logger;
     protected readonly IMetrics Metrics;
     protected readonly IMqService MqService;
     protected readonly JsonSerializerOptions SerializerOptions;
+    private readonly string? _dlqName;
+    private readonly int? _maxRequeueCount;
     private CancellationTokenSource? _cancellationTokenSource;
     private bool _disposed;
 
@@ -305,9 +305,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         Interlocked.Increment(ref _inFlight);
         using var timer = Metrics.StartTimer("queue.worker.message.processing.duration", [("queue", QueueName)]);
         Metrics.IncrementCounter("queue.worker.messages.received", tags: [("queue", QueueName)]);
-        QueueMessageEnvelope<TRequest>? envelope = null;
         try {
-            if (!QueueWorkerHelpers.TryDeserializeMessage<TRequest>(messageBytes, SerializerOptions, out var payload, out envelope) || payload is null) {
+            if (!QueueWorkerHelpers.TryDeserializeMessage<TRequest>(messageBytes, SerializerOptions, out var payload, out var envelope) || payload is null) {
                 Metrics.IncrementCounter("queue.worker.messages.deserialization.failed", tags: [("queue", QueueName)]);
                 await HandlePoisonMessageAsync(messageBytes, "deserialization failed after envelope autocorrect").ConfigureAwait(false);
                 return false;

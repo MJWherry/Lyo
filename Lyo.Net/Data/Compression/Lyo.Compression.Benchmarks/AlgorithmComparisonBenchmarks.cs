@@ -128,22 +128,6 @@ public class AlgorithmComparisonBenchmarks : LyoBenchmarkBase
         _ = _xzService.Compress(_testData, out _compressedXZ);
     }
 
-#if !NETSTANDARD2_0
-    [GlobalSetup(Target = nameof(Brotli_Decompress))]
-    public void SetupBrotliDecompress()
-    {
-        EnsureGlobalSetup();
-        _ = _brotliService.Compress(_testData, out _compressedBrotli);
-    }
-
-    [GlobalSetup(Target = nameof(ZLib_Decompress))]
-    public void SetupZLibDecompress()
-    {
-        EnsureGlobalSetup();
-        _ = _zlibService.Compress(_testData, out _compressedZlib);
-    }
-#endif
-
     // Compression Benchmarks
     [Benchmark(Baseline = true)]
     [ComparisonAxis("Compress")]
@@ -287,6 +271,22 @@ public class AlgorithmComparisonBenchmarks : LyoBenchmarkBase
         _ = _xzService.Decompress(_compressedXZ, out var decompressed);
         return decompressed;
     }
+
+#if !NETSTANDARD2_0
+    [GlobalSetup(Target = nameof(Brotli_Decompress))]
+    public void SetupBrotliDecompress()
+    {
+        EnsureGlobalSetup();
+        _ = _brotliService.Compress(_testData, out _compressedBrotli);
+    }
+
+    [GlobalSetup(Target = nameof(ZLib_Decompress))]
+    public void SetupZLibDecompress()
+    {
+        EnsureGlobalSetup();
+        _ = _zlibService.Compress(_testData, out _compressedZlib);
+    }
+#endif
 #if !NETSTANDARD2_0
     private CompressionService _brotliService = null!;
     private CompressionService _zlibService = null!;

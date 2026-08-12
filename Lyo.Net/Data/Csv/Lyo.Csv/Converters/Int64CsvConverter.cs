@@ -16,6 +16,5 @@ public sealed class Int64CsvConverter : ICsvValueConverter
     }
 
     /// <inheritdoc />
-    public string ConvertToString(object? value, CultureInfo culture)
-        => value is IFormattable f ? f.ToString(null, culture) ?? "" : value?.ToString() ?? "";
+    public string ConvertToString(object? value, CultureInfo culture) => value is IFormattable f ? f.ToString(null, culture) ?? "" : value?.ToString() ?? "";
 }

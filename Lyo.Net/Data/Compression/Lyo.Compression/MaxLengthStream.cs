@@ -10,14 +10,6 @@ internal sealed class MaxLengthStream : Stream
     private readonly Stream _inner;
     private readonly long _maxLength;
 
-    /// <param name="inner">Destination stream that receives all writes.</param>
-    /// <param name="maxLength">Maximum cumulative bytes that may be written before the stream throws.</param>
-    public MaxLengthStream(Stream inner, long maxLength)
-    {
-        _inner = inner;
-        _maxLength = maxLength;
-    }
-
     /// <summary>Total bytes written through this wrapper so far.</summary>
     public long BytesWritten { get; private set; }
 
@@ -32,6 +24,14 @@ internal sealed class MaxLengthStream : Stream
     public override long Position {
         get => BytesWritten;
         set => throw new NotSupportedException();
+    }
+
+    /// <param name="inner">Destination stream that receives all writes.</param>
+    /// <param name="maxLength">Maximum cumulative bytes that may be written before the stream throws.</param>
+    public MaxLengthStream(Stream inner, long maxLength)
+    {
+        _inner = inner;
+        _maxLength = maxLength;
     }
 
     public override void Flush() => _inner.Flush();
@@ -62,6 +62,13 @@ internal sealed class MaxLengthStream : Stream
         _inner.WriteByte(value);
     }
 
+    private void EnsureWithinLimit(int count)
+    {
+        BytesWritten += count;
+        if (BytesWritten > _maxLength)
+            throw new InvalidDataException($"Decompressed size exceeds maximum allowed input size ({_maxLength} bytes). Possible decompression bomb.");
+    }
+
 #if !NETSTANDARD2_0
     public override void Write(ReadOnlySpan<byte> buffer)
     {
@@ -75,11 +82,4 @@ internal sealed class MaxLengthStream : Stream
         await _inner.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
     }
 #endif
-
-    private void EnsureWithinLimit(int count)
-    {
-        BytesWritten += count;
-        if (BytesWritten > _maxLength)
-            throw new InvalidDataException($"Decompressed size exceeds maximum allowed input size ({_maxLength} bytes). Possible decompression bomb.");
-    }
 }

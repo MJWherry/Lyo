@@ -1,6 +1,9 @@
 # Lyo.Ftp.Client
 
-Thin FTP/FTPS wrapper over FluentFTP for Lyo hosts and storage adapters (`Lyo.IO.Temp.Ftp`, `Lyo.FileStorage.Ftp`). Canonical APIs are `*Async` (`Task` + `CancellationToken`) backed by FluentFTP async methods and await-safe pool/per-client gates. Sync methods remain as thin blockers. Provides connection pooling with leases, POSIX path jail via `Lyo.Common.Pathing.PathHelpers`, optional FTPS encryption, `ILogger` diagnostics, and `ftp.*` metrics. Thread-safe for concurrent callers up to `MaxPooledClients`; do not share one leased `Stream` across threads.
+Thin FTP/FTPS wrapper over FluentFTP for Lyo hosts and storage adapters (`Lyo.IO.Temp.Ftp`, `Lyo.FileStorage.Ftp`). Canonical APIs are `*Async` (`Task` + `CancellationToken`)
+backed by FluentFTP async methods and await-safe pool/per-client gates. Sync methods remain as thin blockers. Provides connection pooling with leases, POSIX path jail via
+`Lyo.Common.Pathing.PathHelpers`, optional FTPS encryption, `ILogger` diagnostics, and `ftp.*` metrics. Thread-safe for concurrent callers up to `MaxPooledClients`; do not share
+one leased `Stream` across threads.
 
 ## Features
 

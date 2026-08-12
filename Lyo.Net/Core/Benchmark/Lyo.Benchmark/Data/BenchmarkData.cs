@@ -85,10 +85,10 @@ public static class BenchmarkData
     /// Fills <paramref name="buffer" /> with deterministic bytes from <see cref="PayloadSeed" />. The same seed and length always produce the same sequence so suite results are
     /// comparable across runs and algorithms.
     /// </summary>
-    public static void FillDeterministic(Span<byte> buffer) => DeterministicPayloadStream.Fill(buffer, PayloadSeed);
+    public static void FillDeterministic(Span<byte> buffer) => DeterministicPayloadStream.Fill(buffer);
 
     /// <summary>Allocates a buffer of <paramref name="sizeBytes" /> filled via <see cref="FillDeterministic" />.</summary>
-    public static byte[] DeterministicBytes(int sizeBytes) => DeterministicPayloadStream.CreateBytes(sizeBytes, PayloadSeed);
+    public static byte[] DeterministicBytes(int sizeBytes) => DeterministicPayloadStream.CreateBytes(sizeBytes);
 
     /// <summary>
     /// Writes exactly <paramref name="size" /> deterministic bytes (from <see cref="PayloadSeed" />) to <paramref name="stream" /> using a reusable chunk buffer. Suitable for

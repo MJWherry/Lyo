@@ -3,16 +3,17 @@ using Lyo.Csv.Models;
 namespace Lyo.Csv;
 
 /// <summary>Writes CSV fields/rows using <see cref="CsvOptions" /> delimiter, quote, and escape rules.</summary>
-internal sealed class CsvTextWriter : IDisposable
+internal sealed class CsvTextWriter
+    : IDisposable
 #if !NETSTANDARD2_0
-    , IAsyncDisposable
+        , IAsyncDisposable
 #endif
 {
-    private readonly TextWriter _writer;
-    private readonly CsvOptions _options;
     private readonly char _delimiter;
-    private readonly char _quote;
     private readonly char _escape;
+    private readonly CsvOptions _options;
+    private readonly char _quote;
+    private readonly TextWriter _writer;
     private bool _disposed;
     private bool _fieldOnRow;
 
@@ -23,6 +24,22 @@ internal sealed class CsvTextWriter : IDisposable
         _delimiter = options.Delimiter[0];
         _quote = options.Quote;
         _escape = options.Escape;
+    }
+
+#if !NETSTANDARD2_0
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+#endif
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
     }
 
     public void WriteField(string? value)
@@ -47,32 +64,6 @@ internal sealed class CsvTextWriter : IDisposable
     }
 
     public void Flush() => _writer.Flush();
-
-#if !NETSTANDARD2_0
-    /// <summary>Writes a field using sync I/O (preferred for memory/file streams).</summary>
-    public Task WriteFieldAsync(string? value, CancellationToken ct = default)
-    {
-        ct.ThrowIfCancellationRequested();
-        WriteField(value);
-        return Task.CompletedTask;
-    }
-
-    public Task WriteFieldsAsync(IEnumerable<string?> values, CancellationToken ct = default)
-    {
-        ct.ThrowIfCancellationRequested();
-        WriteFields(values);
-        return Task.CompletedTask;
-    }
-
-    public Task NextRecordAsync(CancellationToken ct = default)
-    {
-        ct.ThrowIfCancellationRequested();
-        NextRecord();
-        return Task.CompletedTask;
-    }
-
-    public Task FlushAsync(CancellationToken ct = default) => _writer.FlushAsync(ct);
-#endif
 
     private void WriteEscaped(string? s)
     {
@@ -114,19 +105,29 @@ internal sealed class CsvTextWriter : IDisposable
         _writer.Write(_quote);
     }
 
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-    }
-
 #if !NETSTANDARD2_0
-    public ValueTask DisposeAsync()
+    /// <summary>Writes a field using sync I/O (preferred for memory/file streams).</summary>
+    public Task WriteFieldAsync(string? value, CancellationToken ct = default)
     {
-        Dispose();
-        return ValueTask.CompletedTask;
+        ct.ThrowIfCancellationRequested();
+        WriteField(value);
+        return Task.CompletedTask;
     }
+
+    public Task WriteFieldsAsync(IEnumerable<string?> values, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        WriteFields(values);
+        return Task.CompletedTask;
+    }
+
+    public Task NextRecordAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        NextRecord();
+        return Task.CompletedTask;
+    }
+
+    public Task FlushAsync(CancellationToken ct = default) => _writer.FlushAsync(ct);
 #endif
 }

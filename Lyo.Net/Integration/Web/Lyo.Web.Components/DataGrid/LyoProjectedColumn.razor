@@ -1,15 +1,14 @@
 <TemplateColumn T="object?"
                 Title="@Title"
                 Sortable="@Sortable"
-                SortFunc="@GetSortValue"
+                SortBy="@GetSortValue"
                 InitialDirection="@InitialDirection"
                 Hideable="@Hideable"
                 Resizable="@Resizable"
-                Align="@Align"
                 Tag="@GetApiSortKey()"
-                HeaderStyle="@HeaderStyle"
+                HeaderStyle="@EffectiveHeaderStyle"
                 HeaderClass="@HeaderClass"
-                CellStyle="@CellStyle"
+                CellStyle="@EffectiveCellStyle"
                 CellClass="@CellClass"
                 Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
                 HiddenChanged="@OnHiddenChanged">
@@ -120,5 +119,19 @@
     private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
 
     internal string GetApiSortKey() => SortKey ?? Field;
+
+    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
+
+    private static string MergeAlignStyle(string? style, Align align)
+        => align switch {
+            Align.Center => AppendStyle(style, "text-align: center;"),
+            Align.Right => AppendStyle(style, "text-align: right;"),
+            Align.Left => AppendStyle(style, "text-align: left;"),
+            var _ => style ?? string.Empty
+        };
+
+    private static string AppendStyle(string? style, string snippet) => string.IsNullOrEmpty(style) ? snippet : $"{style.TrimEnd()} {snippet}";
 
 }

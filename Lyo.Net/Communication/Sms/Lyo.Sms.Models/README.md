@@ -1,22 +1,25 @@
 # Lyo.Sms.Models
 
-Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in provider packages (`Lyo.Sms.Twilio`, etc.).
+Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in
+provider packages (`Lyo.Sms.Twilio`, etc.).
 
 ---
 
 ## **`SmsRequest`**
 
-Canonical wire shape for outbound SMS/MMS: - **`To`** / **`From`** — E.164 preferred; builders and services normalize many US-centric inputs. - **`Body`** — text; combined length validated against **`SmsServiceOptions.MaxMessageBodyLength`** in the core library. - **`MediaUrls`** — `List<Uri>` for MMS attachments (empty for plain SMS). `ToString()` truncates bodies for **`DebuggerDisplay`**-friendly diagnostics. ---
+Canonical wire shape for outbound SMS/MMS: - **`To`** / **`From`** — E.164 preferred; builders and services normalize many US-centric inputs. - **`Body`** — text; combined length
+validated against **`SmsServiceOptions.MaxMessageBodyLength`** in the core library. - **`MediaUrls`** — `List<Uri>` for MMS attachments (empty for plain SMS). `ToString()`
+truncates bodies for **`DebuggerDisplay`**-friendly diagnostics. ---
 
 ## **`SmsMessageQueryFilter`** / **`SmsMessageQueryResults<T>`**
 
 **Cursor-based listing** used by **`ISmsService.GetMessagesAsync`**:
 
-| Field | Role |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`From`**, **`To`** | Narrow by participant (E.164). |
+| Field                                     | Role                                                                                                                                                                        |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`From`**, **`To`**                      | Narrow by participant (E.164).                                                                                                                                              |
 | **`DateSentAfter`**, **`DateSentBefore`** | Inclusive-ish window (provider maps to APIs). **`DateSentBefore`** doubles as **next-page cursor**: copy **`NextCursor`** from the previous page into **`DateSentBefore`**. |
-| **`PageSize`** | 1–1000 (default 50). |
+| **`PageSize`**                            | 1–1000 (default 50).                                                                                                                                                        |
 
 `SmsMessageQueryResults<T>` exposes **`Items`**, **`HasMore`**, **`NextCursor`**, plus legacy **`Start`**, **`Amount`**, **`Total`** fields for callers that assumed offset
 pagination.
@@ -32,7 +35,9 @@ pagination.
 
 ## **`PhoneNumber`**
 
-Static helpers aligned with **`Lyo.Sms` builders**: - **`Normalize`** strips formatting; 10-digit US numbers get **`+1`**; aligns with permissive-but-predictable behavior in the stack. - **`IsValid`** / **`Regex`** / **`ValidFormats`** — paired with **`InvalidFormatException`** when validation fails aggressively. Treat **`Normalize`** as "best effort" for display and routing—not a substitute for full libphonenumber validation if compliance requires it. ---
+Static helpers aligned with **`Lyo.Sms` builders**: - **`Normalize`** strips formatting; 10-digit US numbers get **`+1`**; aligns with permissive-but-predictable behavior in the
+stack. - **`IsValid`** / **`Regex`** / **`ValidFormats`** — paired with **`InvalidFormatException`** when validation fails aggressively. Treat **`Normalize`** as "best effort" for
+display and routing—not a substitute for full libphonenumber validation if compliance requires it. ---
 
 ## **`Direction`**
 
@@ -40,7 +45,9 @@ Twilio-aligned string values (**`StringValue`**) for message direction enums (`i
 
 ## **Event argument records**
 
-These pair with **`SmsServiceBase`** events: - **`SmsSendingEventArgs`**, **`SmsSentEventArgs`** - **`SmsBulkSendingEventArgs`**, **`BulkSmsSentEventArgs`** Subscribers receive **`SmsRequest`** / `Result<SmsRequest>` / `BulkResult<SmsRequest>` snapshots suitable for auditing (but **persist** via [ `Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md) or app code if durability matters). ---
+These pair with **`SmsServiceBase`** events: - **`SmsSendingEventArgs`**, **`SmsSentEventArgs`** - **`SmsBulkSendingEventArgs`**, **`BulkSmsSentEventArgs`** Subscribers receive **
+`SmsRequest`** / `Result<SmsRequest>` / `BulkResult<SmsRequest>` snapshots suitable for auditing (but **persist** via [ `Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md) or app
+code if durability matters). ---
 
 ## Dependencies
 

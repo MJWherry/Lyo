@@ -35,7 +35,9 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-`AddLz4Compressor()` only registers a factory. Pair with [`Lyo.Compression`](../Lyo.Compression/README.md) for `AddCompressionService`, `AddDefaultCompressionService<CompressionService>()`, and keyed registration. **File storage reads:** register this factory if any stored files may have `CompressionAlgorithm` = LZ4; [ `ICompressionResolver`](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) dispatches by metadata on `GetFileAsync` / `GetFileStreamAsync`.
+`AddLz4Compressor()` only registers a factory. Pair with [`Lyo.Compression`](../Lyo.Compression/README.md) for `AddCompressionService`,
+`AddDefaultCompressionService<CompressionService>()`, and keyed registration. **File storage reads:** register this factory if any stored files may have `CompressionAlgorithm` =
+LZ4; [ `ICompressionResolver`](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) dispatches by metadata on `GetFileAsync` / `GetFileStreamAsync`.
 
 ## Dependencies
 

@@ -2,7 +2,8 @@
 
 ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:
 
-- `LyoApiToken` — validates Format-B opaque tokens (`lyo_pat_live_...`) - `LyoJwt` — validates Lyo-signed Ed25519 JWTs (`ey...`) - `LyoBearer` (the default) — sniffs the `Authorization`/`X-Api-Key` header and forwards to one of the above
+- `LyoApiToken` — validates Format-B opaque tokens (`lyo_pat_live_...`) - `LyoJwt` — validates Lyo-signed Ed25519 JWTs (`ey...`) - `LyoBearer` (the default) — sniffs the
+  `Authorization`/`X-Api-Key` header and forwards to one of the above
 
 ```csharp services.AddLyoAuthentication(configuration); services.AddInMemoryAuthenticationStores(); services.AddLyoApiTokenAuthentication();
 

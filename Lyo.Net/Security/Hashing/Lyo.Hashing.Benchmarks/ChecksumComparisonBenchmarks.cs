@@ -6,7 +6,8 @@ namespace Lyo.Hashing.Benchmarks;
 
 /// <summary>Benchmarks comparing the non-cryptographic checksum algorithms exposed by <see cref="Checksummer" />.</summary>
 [ComparisonSuite(Baseline = "Crc32")]
-[BenchmarkDescription("Checksums the same seeded deterministic byte buffer with CRC-32, CRC-32C, CRC-64/ECMA-182 and Adler-32 to compare non-cryptographic throughput at each payload size.")]
+[BenchmarkDescription(
+    "Checksums the same seeded deterministic byte buffer with CRC-32, CRC-32C, CRC-64/ECMA-182 and Adler-32 to compare non-cryptographic throughput at each payload size.")]
 [BenchmarkParameter("DataSize", Unit = "bytes", Description = "Size of the seeded input buffer being checksummed (1 KB, 1 MB, 10 MB).")]
 [BenchmarkSla(
     MinThroughputMbps = 300, SizeParam = "DataSize",

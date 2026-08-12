@@ -1,24 +1,33 @@
 # Lyo.Web.Components
 
-Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff viewer, identifier workbench, and several smaller inputs. Targets `net10.0` (Razor SDK) and depends on `Blazored.LocalStorage` and `MudBlazor >= 9.3`.
+Blazor / MudBlazor component library for the Lyo web UI. Provides the data-grid + query-builder stack, change-tracking form, file upload, rich-text editor, JSON editor, text-diff
+viewer, identifier workbench, and several smaller inputs. Targets `net10.0` (Razor SDK) and depends on `Blazored.LocalStorage` and `MudBlazor >= 9.3`.
 
-Every visual component participates in the `LyoElementRoot` element-id scheme, so each rendered control gets a deterministic DOM id derived from the component's `ElementId` parameter — useful for testing and analytics.
+Every visual component participates in the `LyoElementRoot` element-id scheme, so each rendered control gets a deterministic DOM id derived from the component's `ElementId`
+parameter — useful for testing and analytics.
 
 ## Data grid (`DataGrid/`)
 
-- **`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.
-- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.
+- **`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility
+  menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via
+  `Blazored.LocalStorage`.
+- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and
+  `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.
 - **`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.
 - **`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid.
 
 ## Query builder UI
 
-- **Query node editor (`QueryNodeEditor/`)** — visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `FilterPropertyType` via the internal `Extensions.GetAvailableComparisonOperators`, with `In` / `NotIn` flagged through `IsMultiValueComparisonOperator`.
-- **Query request builder (`QueryRequestBuilder/`)** — full-form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm` plus the umbrella `QueryRequestBuilder` component that renders the live query score.
+- **Query node editor (`QueryNodeEditor/`)** — visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and
+  `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `FilterPropertyType` via the internal `Extensions.GetAvailableComparisonOperators`,
+  with `In` / `NotIn` flagged through `IsMultiValueComparisonOperator`.
+- **Query request builder (`QueryRequestBuilder/`)** — full-form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`,
+  `StartAmountFields`, and `QueryReqForm` plus the umbrella `QueryRequestBuilder` component that renders the live query score.
 
 ## Forms (`Form/`)
 
-- **`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.
+- **`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for
+  collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.
 - **`LyoFormInput`** — change-tracked single-value input that participates in the cascaded form.
 - **`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker.
 
@@ -52,21 +61,25 @@ Completed chips always render the shortened display name (not the raw full name 
 - **`CheckSelect/LyoCheckSelect`** — multi-select dropdown backed by `LyoSelectOption`.
 - **`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).
 - **`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).
-- **`ParamOptions/LyoParameterOptionsSelect`** — MudSelect from definition parameter `Options` JSON (static items or root `/Query`) or pipe `AllowedValues`, with `{{SiblingKey}}` live input binding.
+- **`ParamOptions/LyoParameterOptionsSelect`** — MudSelect from definition parameter `Options` JSON (static items or root `/Query`) or pipe `AllowedValues`, with `{{SiblingKey}}`
+  live input binding.
 - **`ParamOptions/LyoParameterOptionsEditor`** — edits static key/label lists or root `QueryReq` via `QueryRootForm` for the `Options` column.
 - **`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.
-- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [ `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
+- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [
+  `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
 - **`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component.
 
 ## Identifier workbench (`Identifiers/`)
 
-- **`IdWorkbench`** — interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Identifiers`.
+- **`IdWorkbench`** — interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses
+  `Lyo.Common.Identifiers`.
 - **`IdResultPanel`** + **`IdEntry`** — supporting result display.
 
 ## Other top-level pieces
 
 - **`ClientStore`** — `Blazored.LocalStorage`-backed key/value store used by the grid + form state binders.
-- **`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId` and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).
+- **`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId`
+  and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).
 - **`IJsInterop` / `JsInterop`** — small JS bridge for clipboard / focus operations.
 - **`LyoResultErrorFormatter`** — renders `Lyo.Result` errors consistently across components.
 
@@ -79,7 +92,9 @@ Completed chips always render the shortened display name (not the raw full name 
 
 ## Internal helpers (`Extensions`)
 
-Internal `Extensions` provides shared visual helpers — `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(FilterPropertyType)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. These power the consistent status badges and operator menus used across the grid, query editor, and form.
+Internal `Extensions` provides shared visual helpers — `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`,
+`GetAvailableComparisonOperators(FilterPropertyType)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. These power the consistent status badges and
+operator menus used across the grid, query editor, and form.
 
 ## Dependencies
 

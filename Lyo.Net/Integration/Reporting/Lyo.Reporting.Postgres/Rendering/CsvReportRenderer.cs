@@ -45,7 +45,6 @@ public sealed class CsvReportRenderer(ICsvService csvService) : IReportRenderer
 
         await csvService.ExportToCsvFromDictionaryAsync(dict, request.OutputFilePath, true, false, ct).ConfigureAwait(false);
         var fileName = request.SuggestedFileName ?? "report.csv";
-        
         return new() {
             FilePath = request.OutputFilePath,
             ContentType = "text/csv; charset=utf-8",

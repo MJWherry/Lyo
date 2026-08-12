@@ -1,14 +1,12 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading;
 
 namespace Lyo.DataTable.Models;
 
 /// <summary>
-/// Mutable data table with headers, rows, and footer.
-/// Cell values are thin (value + spans); optional formatting is stored in a sparse map keyed by (row, col).
-/// Row indices: <c>-1</c> header, <c>-2</c> footer, <c>≥0</c> body.
-/// The format map and its accessors are thread-safe; concurrent mutation of cell structure still requires external synchronization.
+/// Mutable data table with headers, rows, and footer. Cell values are thin (value + spans); optional formatting is stored in a sparse map keyed by (row, col). Row indices:
+/// <c>-1</c> header, <c>-2</c> footer, <c>≥0</c> body. The format map and its accessors are thread-safe; concurrent mutation of cell structure still requires external
+/// synchronization.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class DataTable
@@ -35,10 +33,7 @@ public sealed class DataTable
         }
     }
 
-    /// <summary>
-    /// Snapshot of the sparse format map. Absent key means no format for that cell.
-    /// Enumeration is a copy so concurrent <see cref="SetFormat" /> does not tear the view.
-    /// </summary>
+    /// <summary>Snapshot of the sparse format map. Absent key means no format for that cell. Enumeration is a copy so concurrent <see cref="SetFormat" /> does not tear the view.</summary>
     public IReadOnlyDictionary<(int Row, int Col), DataTableCellFormat> Formats {
         get {
             var formats = Volatile.Read(ref _formats);
@@ -95,10 +90,7 @@ public sealed class DataTable
         return formats.TryGetValue((row, col), out var format) ? format : null;
     }
 
-    /// <summary>
-    /// Sets or clears format at (row, col). Null removes the key (no format entry is stored).
-    /// Thread-safe with other format map operations.
-    /// </summary>
+    /// <summary>Sets or clears format at (row, col). Null removes the key (no format entry is stored). Thread-safe with other format map operations.</summary>
     public DataTable SetFormat(int row, int col, DataTableCellFormat? format)
     {
         if (format == null) {
@@ -114,7 +106,7 @@ public sealed class DataTable
     public DataTable ClearFormat(int row, int col)
     {
         var formats = Volatile.Read(ref _formats);
-        formats?.TryRemove((row, col), out _);
+        formats?.TryRemove((row, col), out var _);
         return this;
     }
 
@@ -145,8 +137,7 @@ public sealed class DataTable
     public DataTable SetHeader(int col, string value) => SetHeader(col, DataTableCell.FromValue(value));
 
     /// <summary>Sets the header value and optional format.</summary>
-    public DataTable SetHeader(int col, string value, DataTableCellFormat? format)
-        => SetHeader(col, DataTableCell.FromValue(value), format);
+    public DataTable SetHeader(int col, string value, DataTableCellFormat? format) => SetHeader(col, DataTableCell.FromValue(value), format);
 
     /// <summary>Sets the footer at the given column index.</summary>
     public DataTable SetFooter(int col, IDataTableCell cell)
@@ -167,8 +158,7 @@ public sealed class DataTable
     public DataTable SetFooter(int col, string value) => SetFooter(col, DataTableCell.FromValue(value));
 
     /// <summary>Sets the footer value and optional format.</summary>
-    public DataTable SetFooter(int col, string value, DataTableCellFormat? format)
-        => SetFooter(col, DataTableCell.FromValue(value), format);
+    public DataTable SetFooter(int col, string value, DataTableCellFormat? format) => SetFooter(col, DataTableCell.FromValue(value), format);
 
     /// <summary>Sets the cell at the given row and column.</summary>
     public DataTable SetCell(int row, int col, IDataTableCell cell)
@@ -190,8 +180,7 @@ public sealed class DataTable
     public DataTable SetCell(int row, int col, string value) => SetCell(row, col, DataTableCell.FromValue(value));
 
     /// <summary>Sets the cell value and optional format.</summary>
-    public DataTable SetCell(int row, int col, string value, DataTableCellFormat? format)
-        => SetCell(row, col, DataTableCell.FromValue(value), format);
+    public DataTable SetCell(int row, int col, string value, DataTableCellFormat? format) => SetCell(row, col, DataTableCell.FromValue(value), format);
 
     /// <summary>Removes the body cell and its format at (row, col). Header/footer use row -1 / -2.</summary>
     public DataTable ClearCell(int row, int col)

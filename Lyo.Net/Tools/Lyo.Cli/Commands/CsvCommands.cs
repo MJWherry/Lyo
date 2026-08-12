@@ -19,10 +19,10 @@ internal static class CsvCommands
 
     private static void AddDialect(Command cmd, out Option<char?> delim, out Option<char?> quote, out Option<string?> encoding, out Option<bool> noHeader)
     {
-        delim = new Option<char?>("--delimiter");
-        quote = new Option<char?>("--quote");
-        encoding = new Option<string?>("--encoding");
-        noHeader = new Option<bool>("--no-header");
+        delim = new("--delimiter");
+        quote = new("--quote");
+        encoding = new("--encoding");
+        noHeader = new("--no-header");
         cmd.Options.Add(delim);
         cmd.Options.Add(quote);
         cmd.Options.Add(encoding);
@@ -41,8 +41,9 @@ internal static class CsvCommands
         cmd.Options.Add(noHeaders);
         cmd.SetAction(async (pr, ct) => {
             var svc = CliCsv.Create(pr.GetValue(delim), pr.GetValue(quote), pr.GetValue(encoding), pr.GetValue(noHeader) ? false : null);
-            await CliCsv.MergeAsync(pr.GetValue(files)!, pr.GetValue(output)!, includeHeaders: !pr.GetValue(noHeaders), svc, ct).ConfigureAwait(false);
+            await CliCsv.MergeAsync(pr.GetValue(files)!, pr.GetValue(output)!, !pr.GetValue(noHeaders), svc, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -62,6 +63,7 @@ internal static class CsvCommands
             foreach (var p in paths)
                 await Console.Out.WriteLineAsync(p).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -78,6 +80,7 @@ internal static class CsvCommands
             var xlsx = CliXlsx.Create();
             await CliTabularConvert.CsvToXlsxAsync(pr.GetValue(input), pr.GetValue(output)!, csv, xlsx, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -93,6 +96,7 @@ internal static class CsvCommands
             var svc = CliCsv.Create(pr.GetValue(delim), pr.GetValue(quote), pr.GetValue(encoding), pr.GetValue(noHeader) ? false : null);
             await CliCsv.AppendAsync(pr.GetValue(target)!, pr.GetValue(rows)!, svc, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -109,6 +113,7 @@ internal static class CsvCommands
             var json = await CliCsv.StatsAsync(pr.GetValue(input), svc, ct).ConfigureAwait(false);
             await CliIO.WriteTextAsync(pr.GetValue(output), json, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 
@@ -122,6 +127,7 @@ internal static class CsvCommands
             var svc = CliCsv.Create(pr.GetValue(delim), pr.GetValue(quote), pr.GetValue(encoding), pr.GetValue(noHeader) ? false : null);
             Environment.ExitCode = await CliCsv.ValidateAsync(pr.GetValue(input), svc, ct).ConfigureAwait(false);
         });
+
         return cmd;
     }
 }

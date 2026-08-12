@@ -40,9 +40,8 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             Seed(ctx);
         }
 
-        using (var ctx = _services.GetRequiredService<IDbContextFactory<RootQueryTestDbContext>>().CreateDbContext()) {
+        using (var ctx = _services.GetRequiredService<IDbContextFactory<RootQueryTestDbContext>>().CreateDbContext())
             _registry = RootQueryEntityRegistry.FromDbContext(ctx, [typeof(PersonEntity), typeof(ContactAddressEntity), typeof(AddressEntity)]);
-        }
 
         _service = _services.GetRequiredService<IRootQueryService<RootQueryTestDbContext>>();
     }

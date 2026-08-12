@@ -8,8 +8,8 @@ internal static class CryptCommands
     public static Command Create()
     {
         var crypt = new Command("crypt", "Encrypt and decrypt (Lyo.Encryption). Not the same as 'enc' (encoding).");
-        crypt.Subcommands.Add(CreateTransform("encrypt", encrypt: true));
-        crypt.Subcommands.Add(CreateTransform("decrypt", encrypt: false));
+        crypt.Subcommands.Add(CreateTransform("encrypt", true));
+        crypt.Subcommands.Add(CreateTransform("decrypt", false));
         return crypt;
     }
 
@@ -26,7 +26,6 @@ internal static class CryptCommands
         cmd.Options.Add(keyOpt);
         cmd.Options.Add(keyFileOpt);
         cmd.Options.Add(algoOpt);
-
         cmd.SetAction(async (pr, ct) => {
             var algo = CliEncryption.ParseAlgorithm(pr.GetValue(algoOpt));
             var key = await KeyMaterial.ResolveForLengthAsync(pr.GetValue(keyOpt), pr.GetValue(keyFileOpt), CliEncryption.RequiredKeyBytes(algo), ct).ConfigureAwait(false);
@@ -34,9 +33,7 @@ internal static class CryptCommands
             var (input, leaveIn, inPath) = CliIO.OpenInput(inputPath);
             try {
                 var ext = CliEncryption.FileExtension(algo);
-                var (output, leaveOut, _) = CliIO.OpenOutput(
-                    pr.GetValue(outputOpt), inPath,
-                    p => encrypt ? CliIO.AppendExtension(p, ext) : CliIO.StripExtension(p, ext));
+                var (output, leaveOut, _) = CliIO.OpenOutput(pr.GetValue(outputOpt), inPath, p => encrypt ? CliIO.AppendExtension(p, ext) : CliIO.StripExtension(p, ext));
                 try {
                     if (encrypt)
                         await CliEncryption.EncryptAsync(input, output, algo, key, ct).ConfigureAwait(false);

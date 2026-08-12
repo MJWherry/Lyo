@@ -1,8 +1,8 @@
 namespace Lyo.Common.Pathing;
 
 /// <summary>
-/// Selects path separator and normalization rules for <see cref="PathHelpers" />.
-/// Use <see cref="Host" /> for real OS filesystems; use <see cref="Posix" /> for virtual or remote roots (in-memory, SFTP) that always use <c>/</c>.
+/// Selects path separator and normalization rules for <see cref="PathHelpers" />. Use <see cref="Host" /> for real OS filesystems; use <see cref="Posix" /> for virtual or
+/// remote roots (in-memory, SFTP) that always use <c>/</c>.
 /// </summary>
 public enum PathStyle
 {

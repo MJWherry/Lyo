@@ -37,8 +37,8 @@ public partial class FileStoreFilesTab : ComponentBase
     private string? _saveOriginalFileName;
     private string _savePathPrefix = string.Empty;
     private IIOTempSession? _stagingSession;
-    private LocalBrowserFilePath? _uploadedFile;
     private string _uploadStatus = "No file selected.";
+    private LocalBrowserFilePath? _uploadedFile;
 
     [CascadingParameter]
     public FileStorageWorkbench Workbench { get; set; } = default!;

@@ -14,20 +14,6 @@ public sealed class FakeFileStorageService : IFileStorageService
 
     public string HealthCheckName => nameof(FakeFileStorageService);
 
-    public event EventHandler<FileSavedResult>? FileSaved;
-
-    public event EventHandler<FileRetrievedResult>? FileRetrieved;
-
-    public event EventHandler<FileDeletedResult>? FileDeleted;
-
-    public event EventHandler<FileMovedResult>? FileMoved;
-
-    public event EventHandler<FileRenamedResult>? FileRenamed;
-
-    public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
-
-    public event EventHandler<FileAuditEventArgs>? FileAuditOccurred;
-
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
 
     public Task<FileStoreResult> SaveFileAsync(
@@ -138,4 +124,20 @@ public sealed class FakeFileStorageService : IFileStorageService
         => new(
             id, name, size, [], name ?? "x.bin", size, [], false, null, null, null, false, null, null, null, null, null, null, null, null, DateTime.UtcNow, pathPrefix, null,
             contentType);
+
+#pragma warning disable CS0067 // Events required by IFileStorageService
+    public event EventHandler<FileSavedResult>? FileSaved;
+
+    public event EventHandler<FileRetrievedResult>? FileRetrieved;
+
+    public event EventHandler<FileDeletedResult>? FileDeleted;
+
+    public event EventHandler<FileMovedResult>? FileMoved;
+
+    public event EventHandler<FileRenamedResult>? FileRenamed;
+
+    public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
+
+    public event EventHandler<FileAuditEventArgs>? FileAuditOccurred;
+#pragma warning restore CS0067
 }

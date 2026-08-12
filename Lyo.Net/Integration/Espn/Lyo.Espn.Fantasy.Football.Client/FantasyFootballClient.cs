@@ -12,12 +12,11 @@ namespace Lyo.Espn.Fantasy.Football.Client;
 /// <summary>Client for ESPN fantasy football league data.</summary>
 public class FantasyFootballClient : ApiClient
 {
-    private readonly FantasyFootballClientOptions _options;
-
     public readonly CommunicationManager Communication;
     public readonly LeagueManager League;
     public readonly PlayerManager Players;
     public readonly TransactionsManager Transactions;
+    private readonly FantasyFootballClientOptions _options;
 
     public FantasyFootballClient(FantasyFootballClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(

@@ -204,7 +204,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
 
     /// <summary>
     /// Policy-based allowed patch properties (same as <see cref="PatchPropertyAuthorization.ForPolicies" />). For a custom delegate, pass a built
-    /// <see cref="PatchPropertyAuthorization" /> to the other overload.
+    /// <see cref="T:PatchPropertyAuthorization" /> to the other overload.
     /// </summary>
     public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> PatchPropertyAuthorization(Action<PatchPropertyAuthorizationBuilder> configure)
     {

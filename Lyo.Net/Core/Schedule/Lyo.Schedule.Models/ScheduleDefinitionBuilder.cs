@@ -1,11 +1,10 @@
-using System.Diagnostics;
-using Lyo.Common.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
-
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Enums;
 
 namespace Lyo.Schedule.Models;
 
@@ -22,8 +21,8 @@ public sealed class ScheduleDefinitionBuilder
     private int? _intervalMinutes;
     private MonthFlags _monthFlags = MonthFlags.EveryMonth;
     private TimeOnly? _startTime;
-    private List<TimeOnly>? _times;
     private TimeZoneInfo? _timeZone;
+    private List<TimeOnly>? _times;
     private ScheduleType _type;
 
     /// <summary>Sets the description.</summary>

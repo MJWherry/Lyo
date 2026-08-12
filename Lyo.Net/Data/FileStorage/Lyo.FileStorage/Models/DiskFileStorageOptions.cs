@@ -1,5 +1,3 @@
-using Lyo.FileStorage.Abstractions;
-
 namespace Lyo.FileStorage.Models;
 
 public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
@@ -11,7 +9,10 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
 
     public string RootDirectoryPath { get; set; } = null!;
 
-    /// <summary>When true, <see cref="IFileStorageService.GetPreSignedReadUrlAsync" /> returns a file:// URI for local testing. Do not enable in untrusted environments.</summary>
+    /// <summary>
+    /// When true, <see cref="LocalFileStorageService.GetPreSignedReadUrlAsync(System.Guid, System.TimeSpan?, string?, System.Threading.CancellationToken)" /> returns a file://
+    /// URI for local testing. Do not enable in untrusted environments.
+    /// </summary>
     public bool AllowFileUriPresignedUrls { get; set; }
 
     /// <summary>

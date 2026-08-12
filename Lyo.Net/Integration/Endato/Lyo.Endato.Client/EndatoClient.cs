@@ -7,11 +7,10 @@ namespace Lyo.Endato.Client;
 
 public class EndatoClient : ApiClient
 {
-    private readonly EndatoClientOptions _options;
-
     public readonly EnrichmentManager Enrichment;
 
     public readonly PersonManager Persons;
+    private readonly EndatoClientOptions _options;
 
     public EndatoClient(EndatoClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), httpClient, EndatoJsonSerializerOptions.Create(), options)

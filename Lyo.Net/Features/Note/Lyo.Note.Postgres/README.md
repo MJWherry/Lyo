@@ -1,6 +1,7 @@
 # Lyo.Note.Postgres
 
-PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists notes to the `note.note` table (schema constant: `PostgresNoteOptions.Schema = "note"`) with migrations support. Notes have **subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
+PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists notes to the `note.note` table (schema constant: `PostgresNoteOptions.Schema = "note"`) with
+migrations support. Notes have **subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
 
 `PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "note-postgres"`), so registering the store also wires up a liveness probe.
 
@@ -59,7 +60,8 @@ dotnet ef migrations add MigrationName --project Features/Note/Lyo.Note.Postgres
 ## DI extensions
 
 - `AddNoteDbContextFactory(Action<PostgresNoteOptions>)` / `AddNoteDbContextFactory(PostgresNoteOptions)` — register only the `IDbContextFactory<NoteDbContext>`.
-- `AddNoteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` — same, bound from configuration (default section: `PostgresNote`).
+- `AddNoteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` — same, bound from configuration (default section:
+  `PostgresNote`).
 - `AddPostgresNoteStore(Action<PostgresNoteOptions>)` / `AddPostgresNoteStore(PostgresNoteOptions)` — register the DbContext factory **and** the `INoteStore` singleton.
 - `AddPostgresNoteStoreFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` — register the store using configuration binding.
 
@@ -84,17 +86,16 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Schema
 
-- **note.note** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus note-specific `content` and `updated_timestamp`.
+- **note.note** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar
+  128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus note-specific `content` and
+  `updated_timestamp`.
 
 ## Tenancy
 
-`PostgresNoteStore` accepts an optional `Guid? tenantId` on every read/write
-method and resolves it through `TenancyResolver` under the policy configured in
-`PostgresNoteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
-unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
-`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store
-construction. The store applies a `WhereTenant` filter on every query so notes
-from one tenant cannot leak into another. See
+`PostgresNoteStore` accepts an optional `Guid? tenantId` on every read/write method and resolves it through `TenancyResolver` under the policy configured in
+`PostgresNoteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
+`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store construction. The store applies a `WhereTenant` filter on every query so notes from one tenant cannot leak
+into another. See
 [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
 for the full policy matrix and `appsettings.json` snippet.
 

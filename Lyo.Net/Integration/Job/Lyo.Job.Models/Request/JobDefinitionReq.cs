@@ -10,7 +10,7 @@ public sealed class JobDefinitionReq
 
     public string? Description { get; set; }
 
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     public string WorkerType { get; set; } = null!;
 

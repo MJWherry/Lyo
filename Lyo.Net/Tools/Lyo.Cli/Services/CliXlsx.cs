@@ -15,8 +15,7 @@ internal static class CliXlsx
 
     public static XlsxService Create() => new();
 
-    public static IReadOnlyList<string> ListSheets(string file, XlsxService xlsx)
-        => xlsx.ListSheetNames(file);
+    public static IReadOnlyList<string> ListSheets(string file, XlsxService xlsx) => xlsx.ListSheetNames(file);
 
     public static void Merge(IEnumerable<string> files, string output, XlsxMergeMode mode, XlsxService xlsx)
     {
@@ -46,15 +45,14 @@ internal static class CliXlsx
     }
 
     /// <summary>
-    /// Workbook statistics as JSON (file size, sheet list, per-sheet row/column/header/sample/types).
-    /// Optional <paramref name="sheet" /> limits output to one sheet (name or 0-based index).
+    /// Workbook statistics as JSON (file size, sheet list, per-sheet row/column/header/sample/types). Optional <paramref name="sheet" /> limits output to one sheet (name or
+    /// 0-based index).
     /// </summary>
     public static string Stats(string? input, string? sheet, bool? hasHeader, XlsxService xlsx)
     {
         long? fileSize = null;
         IReadOnlyDictionary<string, DataTableModel> sheets;
         IReadOnlyList<string> sheetNames;
-
         if (!string.IsNullOrWhiteSpace(input) && input != "-") {
             ArgumentHelpers.ThrowIf(!File.Exists(input), $"Input file not found: {input}");
             fileSize = new FileInfo(input).Length;
@@ -85,21 +83,18 @@ internal static class CliXlsx
                 SheetNames = new[] { one.Name },
                 Sheets = new[] { one }
             };
+
             return JsonSerializer.Serialize(payload, LyoJsonSerializerOptions.Create(o => o.WriteIndented = true));
         }
 
-        var sheetStats = sheetNames
-            .Select(name => sheets.TryGetValue(name, out var dt)
-                ? BuildSheetStats(name, dt)
-                : BuildSheetStats(name, new DataTableModel()))
-            .ToArray();
-
+        var sheetStats = sheetNames.Select(name => sheets.TryGetValue(name, out var dt) ? BuildSheetStats(name, dt) : BuildSheetStats(name, new())).ToArray();
         var all = new {
             FileSizeBytes = fileSize,
             SheetCount = sheetNames.Count,
             SheetNames = sheetNames,
             Sheets = sheetStats
         };
+
         return JsonSerializer.Serialize(all, LyoJsonSerializerOptions.Create(o => o.WriteIndented = true));
     }
 
@@ -110,10 +105,7 @@ internal static class CliXlsx
             var _ => throw new ArgumentException($"Unknown merge mode '{mode}'. Use preserve or concat.")
         };
 
-    private static SheetStats ResolveSheet(
-        IReadOnlyDictionary<string, DataTableModel> sheets,
-        IReadOnlyList<string> sheetNames,
-        string sheet)
+    private static SheetStats ResolveSheet(IReadOnlyDictionary<string, DataTableModel> sheets, IReadOnlyList<string> sheetNames, string sheet)
     {
         if (int.TryParse(sheet, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index)) {
             ArgumentHelpers.ThrowIf(index < 0 || index >= sheetNames.Count, $"Sheet index {index} out of range (0..{sheetNames.Count - 1}).");
@@ -127,10 +119,7 @@ internal static class CliXlsx
 
     private static SheetStats BuildSheetStats(string name, DataTableModel table)
     {
-        var colIndexes = table.Headers.Count > 0
-            ? table.Headers.Keys.OrderBy(i => i).ToArray()
-            : table.Rows.SelectMany(r => r.Cells.Keys).Distinct().OrderBy(i => i).ToArray();
-
+        var colIndexes = table.Headers.Count > 0 ? table.Headers.Keys.OrderBy(i => i).ToArray() : table.Rows.SelectMany(r => r.Cells.Keys).Distinct().OrderBy(i => i).ToArray();
         var headers = new List<string>(colIndexes.Length);
         foreach (var col in colIndexes) {
             var header = table.Headers.TryGetValue(col, out var cell) ? cell.DisplayValue : null;
@@ -163,6 +152,7 @@ internal static class CliXlsx
                     var key = i.ToString(CultureInfo.InvariantCulture);
                     if (inferred.ContainsKey(key))
                         continue;
+
                     var value = row[colIndexes[i]].DisplayValue ?? string.Empty;
                     if (!string.IsNullOrWhiteSpace(value))
                         inferred[key] = InferTypeName(value);
@@ -176,27 +166,24 @@ internal static class CliXlsx
                 inferred[key] = nameof(String);
         }
 
-        return new SheetStats(
-            name,
-            table.Rows.Count,
-            colIndexes.Length,
-            headers,
-            inferred,
-            table.Footer.Count > 0,
-            samples);
+        return new(name, table.Rows.Count, colIndexes.Length, headers, inferred, table.Footer.Count > 0, samples);
     }
 
     private static string InferTypeName(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return nameof(String);
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var _))
             return nameof(Int32);
-        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out _))
+
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var _))
             return nameof(Decimal);
-        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out _)
-            || DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out _))
+
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var _) || DateTime.TryParse(
+            value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var _))
             return nameof(DateTime);
+
         return nameof(String);
     }
 

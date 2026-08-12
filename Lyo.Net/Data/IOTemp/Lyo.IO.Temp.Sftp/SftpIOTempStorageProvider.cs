@@ -6,7 +6,7 @@ using Lyo.Sftp.Client;
 
 namespace Lyo.IO.Temp.Sftp;
 
-/// <summary>SFTP-backed <see cref="IIOTempStorageProvider" /> with <see cref="PathStyle.Posix" />.</summary>
+/// <summary>SFTP-backed <see cref="IIOTempStorageProvider" /> with <see cref="Common.Pathing.PathStyle.Posix" />.</summary>
 // ReSharper disable once InconsistentNaming
 public sealed class SftpIOTempStorageProvider : IIOTempStorageProvider
 {
@@ -64,8 +64,7 @@ public sealed class SftpIOTempStorageProvider : IIOTempStorageProvider
     public void WriteAllBytes(string path, byte[] data) => _client.Upload(path, data);
 
     /// <inheritdoc />
-    public void WriteAllText(string path, string text, Encoding encoding)
-        => WriteAllBytes(path, encoding.GetBytes(text));
+    public void WriteAllText(string path, string text, Encoding encoding) => WriteAllBytes(path, encoding.GetBytes(text));
 
     /// <inheritdoc />
     public void AppendAllText(string path, string text, Encoding encoding)
@@ -109,12 +108,10 @@ public sealed class SftpIOTempStorageProvider : IIOTempStorageProvider
     public DateTimeOffset GetFileCreationTimeUtc(string path) => _client.GetLastWriteTimeUtc(path);
 
     /// <inheritdoc />
-    public Task WriteAllBytesAsync(string path, byte[] data, CancellationToken ct)
-        => _client.UploadAsync(path, data, ct);
+    public Task WriteAllBytesAsync(string path, byte[] data, CancellationToken ct) => _client.UploadAsync(path, data, ct);
 
     /// <inheritdoc />
-    public Task WriteAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
-        => WriteAllBytesAsync(path, encoding.GetBytes(text), ct);
+    public Task WriteAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct) => WriteAllBytesAsync(path, encoding.GetBytes(text), ct);
 
     /// <inheritdoc />
     public async Task AppendAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
@@ -147,6 +144,5 @@ public sealed class SftpIOTempStorageProvider : IIOTempStorageProvider
     }
 
     /// <inheritdoc />
-    public Task CopyFileAsync(string source, string dest, CancellationToken ct)
-        => _client.CopyFileAsync(source, dest, ct);
+    public Task CopyFileAsync(string source, string dest, CancellationToken ct) => _client.CopyFileAsync(source, dest, ct);
 }

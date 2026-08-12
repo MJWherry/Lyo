@@ -317,7 +317,10 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
             .ConfigureAwait(false);
 
         var ratingIds = entities.Select(e => e.Id.ToString()).ToHashSet();
-        var reactions = await context.RatingReactions.Where(r => r.SubjectEntityType == "Rating" && ratingIds.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var reactions = await context.RatingReactions.Where(r => r.SubjectEntityType == "Rating" && r.SubjectEntityId != null && ratingIds.Contains(r.SubjectEntityId))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         context.RatingReactions.RemoveRange(reactions);
         var utc = DateTime.UtcNow;
         foreach (var e in entities)
@@ -345,7 +348,10 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
             .ConfigureAwait(false);
 
         var ratingIds = entities.Select(e => e.Id.ToString()).ToHashSet();
-        var reactions = await context.RatingReactions.Where(r => r.SubjectEntityType == "Rating" && ratingIds.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var reactions = await context.RatingReactions.Where(r => r.SubjectEntityType == "Rating" && r.SubjectEntityId != null && ratingIds.Contains(r.SubjectEntityId))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         context.RatingReactions.RemoveRange(reactions);
         var utc = DateTime.UtcNow;
         foreach (var e in entities)

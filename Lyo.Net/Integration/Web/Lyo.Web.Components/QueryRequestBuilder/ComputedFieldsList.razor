@@ -5,7 +5,6 @@
                           @bind-Value="_newName"
                           Label="Name"
                           Variant="Variant.Outlined"
-                          Dense
                           Immediate
                           Margin="Margin.Dense"
                           OnKeyDown="@OnKeyDown"
@@ -14,7 +13,6 @@
                           @bind-Value="_newTemplate"
                           Label="Template"
                           Variant="Variant.Outlined"
-                          Dense
                           Immediate
                           Margin="Margin.Dense"
                           OnKeyDown="@OnKeyDown"
@@ -25,7 +23,7 @@
                            Size="Size.Small"
                            OnClick="@AddField"
                            Disabled="@(string.IsNullOrWhiteSpace(_newName) || string.IsNullOrWhiteSpace(_newTemplate))"
-                           Title="Add computed field"/>
+                           aria-label="Add computed field"/>
         </MudStack>
 
         @if (Items.Count > 0) {

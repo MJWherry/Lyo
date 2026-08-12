@@ -28,13 +28,8 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
     private AesSivEncryptionService _sivService = null!;
 
     [Params(
-        BenchmarkData.StreamingSize100MiB,
-        BenchmarkData.StreamingSize250MiB,
-        BenchmarkData.StreamingSize500MiB,
-        BenchmarkData.StreamingSize750MiB,
-        BenchmarkData.StreamingSize1GiB,
-        BenchmarkData.StreamingSize15GiB,
-        BenchmarkData.StreamingSize2GiB)]
+        BenchmarkData.StreamingSize100MiB, BenchmarkData.StreamingSize250MiB, BenchmarkData.StreamingSize500MiB, BenchmarkData.StreamingSize750MiB, BenchmarkData.StreamingSize1GiB,
+        BenchmarkData.StreamingSize15GiB, BenchmarkData.StreamingSize2GiB)]
     public long DataSize { get; set; }
 
     /// <inheritdoc />
@@ -45,7 +40,6 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
         _chachaService = new(_keyStore);
         _sivService = new(_keyStore, AesSivKeySizeBits.Bits512);
         _sivKey = BenchmarkData.DeterministicBytes(64);
-
         _plaintextPath = CreateSeededFilePath(DataSize);
     }
 
@@ -54,7 +48,7 @@ public class LargeFileStreamingBenchmarks : LyoBenchmarkBase
     {
         EnsureGlobalSetup();
         _encryptedAesGcmPath = CreateTempOutputPath();
-_aesGcmService.EncryptFileAsync(_plaintextPath, _encryptedAesGcmPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
+        _aesGcmService.EncryptFileAsync(_plaintextPath, _encryptedAesGcmPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
     [GlobalSetup(Targets = [nameof(DecryptStream_ChaCha), nameof(DecryptFile_ChaCha)])]
@@ -62,7 +56,7 @@ _aesGcmService.EncryptFileAsync(_plaintextPath, _encryptedAesGcmPath, Encryption
     {
         EnsureGlobalSetup();
         _encryptedChachaPath = CreateTempOutputPath();
-_chachaService.EncryptFileAsync(_plaintextPath, _encryptedChachaPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
+        _chachaService.EncryptFileAsync(_plaintextPath, _encryptedChachaPath, EncryptionBenchmarkSupport.KeyId).GetAwaiter().GetResult();
     }
 
     [GlobalSetup(Targets = [nameof(DecryptStream_AesSiv512), nameof(DecryptFile_AesSiv512)])]
@@ -70,7 +64,7 @@ _chachaService.EncryptFileAsync(_plaintextPath, _encryptedChachaPath, Encryption
     {
         EnsureGlobalSetup();
         _encryptedSivPath = CreateTempOutputPath();
-_sivService.EncryptFileAsync(_plaintextPath, _encryptedSivPath, key: _sivKey).GetAwaiter().GetResult();
+        _sivService.EncryptFileAsync(_plaintextPath, _encryptedSivPath, key: _sivKey).GetAwaiter().GetResult();
     }
 
     [Benchmark]
@@ -93,13 +87,11 @@ _sivService.EncryptFileAsync(_plaintextPath, _encryptedSivPath, key: _sivKey).Ge
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task EncryptFile_AesGcm()
-        => await _aesGcmService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
+    public async Task EncryptFile_AesGcm() => await _aesGcmService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task DecryptFile_AesGcm()
-        => await _aesGcmService.DecryptFileAsync(_encryptedAesGcmPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
+    public async Task DecryptFile_AesGcm() => await _aesGcmService.DecryptFileAsync(_encryptedAesGcmPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
 
     [Benchmark]
     [BenchmarkCategory("Stream")]
@@ -121,13 +113,11 @@ _sivService.EncryptFileAsync(_plaintextPath, _encryptedSivPath, key: _sivKey).Ge
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task EncryptFile_ChaCha()
-        => await _chachaService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
+    public async Task EncryptFile_ChaCha() => await _chachaService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task DecryptFile_ChaCha()
-        => await _chachaService.DecryptFileAsync(_encryptedChachaPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
+    public async Task DecryptFile_ChaCha() => await _chachaService.DecryptFileAsync(_encryptedChachaPath, CreateIterationOutputPath(), EncryptionBenchmarkSupport.KeyId);
 
     [Benchmark]
     [BenchmarkCategory("Stream")]
@@ -149,11 +139,9 @@ _sivService.EncryptFileAsync(_plaintextPath, _encryptedSivPath, key: _sivKey).Ge
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task EncryptFile_AesSiv512()
-        => await _sivService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), key: _sivKey);
+    public async Task EncryptFile_AesSiv512() => await _sivService.EncryptFileAsync(_plaintextPath, CreateIterationOutputPath(), key: _sivKey);
 
     [Benchmark]
     [BenchmarkCategory("File")]
-    public async Task DecryptFile_AesSiv512()
-        => await _sivService.DecryptFileAsync(_encryptedSivPath, CreateIterationOutputPath(), key: _sivKey);
+    public async Task DecryptFile_AesSiv512() => await _sivService.DecryptFileAsync(_encryptedSivPath, CreateIterationOutputPath(), key: _sivKey);
 }

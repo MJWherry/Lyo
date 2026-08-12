@@ -1,6 +1,7 @@
 # Lyo.Web.Automation.Selenium
 
-Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session isolation, polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.
+Selenium WebDriver implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: browser launch (Chrome / Edge / Firefox / Safari + Selenium Grid), session isolation,
+polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.
 
 ## Examples
 
@@ -36,32 +37,33 @@ await session.Browser.NavigateAsync("https://example.com");
 [`SeleniumBrowserOptions`](Configuration/SeleniumBrowserOptions.cs) holds application-wide defaults; `SeleniumSessionOptions` is the per-session subclass passed to
 `CreateSession`. Configuration section: `"SeleniumBrowserOptions"`.
 
-| Property | Default | Notes |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BrowserKind` | `Chrome` | `SeleniumBrowserKind`: `Chrome`, `Edge`, `Firefox`, `Safari`. |
-| `Headless` | `false` | Headless mode where supported. |
-| `RemoteWebDriverUri` | `null` | When set, drives `RemoteWebDriver` against a Selenium Grid / standalone server. |
-| `UserAgents` | 4 desktop UAs | Round-robined for stealth. |
-| `WebDriverArguments` | `disable-infobars`, `disable-extensions`, `disable-gpu`, `disable-dev-shm-usage`, `no-sandbox` | Use `AddArgument(key, value?)` to append `key=value` (or bare key) entries. |
-| `StartupScripts` | `[]` | JS injected via CDP `Page.addScriptToEvaluateOnNewDocument` (Chrome/Edge only) — bypass bot-detection traps. |
-| `EnablePerformanceLogging` | `true` | Required for CDP-based network observation in `IWebAutomationNavigator.NavigateAsync`. Disable on sites that detect CDP, then provide a JS interception script in `StartupScripts`. |
-| `BrowserWindowWidth/Height` | `1280` × `1024` | Initial window size. |
-| `PageLoadTimeoutSeconds` | `30` | Page-load timeout. |
-| `ImplicitWaitSeconds` | `10` | WebDriver implicit wait. |
-| `ScriptTimeoutSeconds` | `30` | Async-script timeout. |
-| `SeleniumMaxWaitSeconds` | `15` | Wrapper for explicit waits. |
-| `EnableMetrics` | `true` | Emit `IMetrics` instrumentation when an `IMetrics` is registered. |
-| `MaskSensitiveUrlsInLogs` | `false` | Strip query/fragment in log lines. |
-| `ServiceRootDirectory` | `{tmp}/lyo-selenium` | Each session creates `session-{id}/` with `browser-profile/`, `artifacts/`, `downloads/`. |
-| `BrowserUserDataDirectory` / `DownloadDirectory` / `ArtifactsDirectory` | derived under session dir | Override individually if needed. |
-| `PollingMaxAttempts` / `PollingDelayBetweenAttempts` | `5` / `500 ms` | Outer-loop control for `SeleniumBrowser.PollFor`. |
-| `Clone()` | — | Deep copy used to derive session-specific options. |
+| Property                                                                | Default                                                                                        | Notes                                                                                                                                                                               |
+|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `BrowserKind`                                                           | `Chrome`                                                                                       | `SeleniumBrowserKind`: `Chrome`, `Edge`, `Firefox`, `Safari`.                                                                                                                       |
+| `Headless`                                                              | `false`                                                                                        | Headless mode where supported.                                                                                                                                                      |
+| `RemoteWebDriverUri`                                                    | `null`                                                                                         | When set, drives `RemoteWebDriver` against a Selenium Grid / standalone server.                                                                                                     |
+| `UserAgents`                                                            | 4 desktop UAs                                                                                  | Round-robined for stealth.                                                                                                                                                          |
+| `WebDriverArguments`                                                    | `disable-infobars`, `disable-extensions`, `disable-gpu`, `disable-dev-shm-usage`, `no-sandbox` | Use `AddArgument(key, value?)` to append `key=value` (or bare key) entries.                                                                                                         |
+| `StartupScripts`                                                        | `[]`                                                                                           | JS injected via CDP `Page.addScriptToEvaluateOnNewDocument` (Chrome/Edge only) — bypass bot-detection traps.                                                                        |
+| `EnablePerformanceLogging`                                              | `true`                                                                                         | Required for CDP-based network observation in `IWebAutomationNavigator.NavigateAsync`. Disable on sites that detect CDP, then provide a JS interception script in `StartupScripts`. |
+| `BrowserWindowWidth/Height`                                             | `1280` × `1024`                                                                                | Initial window size.                                                                                                                                                                |
+| `PageLoadTimeoutSeconds`                                                | `30`                                                                                           | Page-load timeout.                                                                                                                                                                  |
+| `ImplicitWaitSeconds`                                                   | `10`                                                                                           | WebDriver implicit wait.                                                                                                                                                            |
+| `ScriptTimeoutSeconds`                                                  | `30`                                                                                           | Async-script timeout.                                                                                                                                                               |
+| `SeleniumMaxWaitSeconds`                                                | `15`                                                                                           | Wrapper for explicit waits.                                                                                                                                                         |
+| `EnableMetrics`                                                         | `true`                                                                                         | Emit `IMetrics` instrumentation when an `IMetrics` is registered.                                                                                                                   |
+| `MaskSensitiveUrlsInLogs`                                               | `false`                                                                                        | Strip query/fragment in log lines.                                                                                                                                                  |
+| `ServiceRootDirectory`                                                  | `{tmp}/lyo-selenium`                                                                           | Each session creates `session-{id}/` with `browser-profile/`, `artifacts/`, `downloads/`.                                                                                           |
+| `BrowserUserDataDirectory` / `DownloadDirectory` / `ArtifactsDirectory` | derived under session dir                                                                      | Override individually if needed.                                                                                                                                                    |
+| `PollingMaxAttempts` / `PollingDelayBetweenAttempts`                    | `5` / `500 ms`                                                                                 | Outer-loop control for `SeleniumBrowser.PollFor`.                                                                                                                                   |
+| `Clone()`                                                               | —                                                                                              | Deep copy used to derive session-specific options.                                                                                                                                  |
 
 `SeleniumBrowserOptionsBuilder` is a fluent builder over the options record.
 
 ## Surface — Typed element controls ([`Controls/`](Controls))
 
-Wrappers over `IWebElement` for typed interactions: `WebElementControl` (base), `InputControl` (`Value`, `SendKeys`), `TextAreaControl`, `ButtonControl`, `LinkControl`, `SelectControl`, `CheckboxControl`. Resolve via `SeleniumBrowser` element APIs and hold them across explicit waits.
+Wrappers over `IWebElement` for typed interactions: `WebElementControl` (base), `InputControl` (`Value`, `SendKeys`), `TextAreaControl`, `ButtonControl`, `LinkControl`,
+`SelectControl`, `CheckboxControl`. Resolve via `SeleniumBrowser` element APIs and hold them across explicit waits.
 
 ## Surface — WebDriver / Automation ([`WebDriver/`](WebDriver), [`Automation/ElementLocatorMapping.cs`](Automation/ElementLocatorMapping.cs))
 
@@ -71,15 +73,15 @@ Driver-factory helpers (Chrome / Edge / Firefox / Safari + Remote) and the locat
 
 All registrations are extension methods on `IServiceCollection`:
 
-| Method | Registers |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `AddSeleniumBrowser(Action<SeleniumBrowserOptions>?)` | Singleton `SeleniumBrowserOptions`, scoped `SeleniumBrowser` for direct injection (legacy style). |
-| `AddSeleniumBrowser(Action<SeleniumBrowserOptionsBuilder>)` | Same, with options built fluently. |
-| `AddSeleniumBrowser(SeleniumBrowserOptions)` | Same, with explicit options instance. |
-| `AddSeleniumBrowserService(Action<SeleniumBrowserOptions>?)` | Above + singleton `ISeleniumBrowserService` (use this for session-based usage via `CreateSession`). |
-| `AddSeleniumBrowserService(Action<SeleniumBrowserOptionsBuilder>)` | Same, fluent options. |
-| `AddSeleniumBrowserService(SeleniumBrowserOptions)` | Same, explicit options. |
-| `AddSeleniumBrowserServiceFromConfiguration(IConfiguration, sectionName?)` | Binds options from configuration (default section `"SeleniumBrowserOptions"`). |
+| Method                                                                     | Registers                                                                                           |
+|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `AddSeleniumBrowser(Action<SeleniumBrowserOptions>?)`                      | Singleton `SeleniumBrowserOptions`, scoped `SeleniumBrowser` for direct injection (legacy style).   |
+| `AddSeleniumBrowser(Action<SeleniumBrowserOptionsBuilder>)`                | Same, with options built fluently.                                                                  |
+| `AddSeleniumBrowser(SeleniumBrowserOptions)`                               | Same, with explicit options instance.                                                               |
+| `AddSeleniumBrowserService(Action<SeleniumBrowserOptions>?)`               | Above + singleton `ISeleniumBrowserService` (use this for session-based usage via `CreateSession`). |
+| `AddSeleniumBrowserService(Action<SeleniumBrowserOptionsBuilder>)`         | Same, fluent options.                                                                               |
+| `AddSeleniumBrowserService(SeleniumBrowserOptions)`                        | Same, explicit options.                                                                             |
+| `AddSeleniumBrowserServiceFromConfiguration(IConfiguration, sectionName?)` | Binds options from configuration (default section `"SeleniumBrowserOptions"`).                      |
 
 ## Dependencies
 

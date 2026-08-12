@@ -20,51 +20,52 @@ public static class MathExtensions
     extension(HistogramData? histogram)
     {
         public DescriptiveStatisticsResult? Describe(bool sample = false)
-            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Describe([..histogram.Values], sample);
+            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Describe([.. histogram.Values], sample);
 
-        public QuartilesResult? Quartiles() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Quartiles([..histogram.Values]);
+        public QuartilesResult? Quartiles() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Quartiles([.. histogram.Values]);
 
-        public double? InterquartileRange() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.InterquartileRange([..histogram.Values]);
+        public double? InterquartileRange() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.InterquartileRange([.. histogram.Values]);
 
-        public double? Percentile(double percentile) => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Percentile([..histogram.Values], percentile);
+        public double? Percentile(double percentile) => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.Percentile([.. histogram.Values], percentile);
 
         public double[] MovingAverage(int windowSize)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.MovingAverage([..histogram.Values], windowSize);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.MovingAverage([.. histogram.Values], windowSize);
 
         public double[] ExponentialMovingAverage(double smoothingFactor)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.ExponentialMovingAverage([..histogram.Values], smoothingFactor);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.ExponentialMovingAverage([.. histogram.Values], smoothingFactor);
 
         public double[] RollingStandardDeviation(int windowSize, bool sample = true)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingStandardDeviation([..histogram.Values], windowSize, sample);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingStandardDeviation([.. histogram.Values], windowSize, sample);
 
         public double[] RollingMedian(int windowSize)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMedian([..histogram.Values], windowSize);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMedian([.. histogram.Values], windowSize);
 
         public double[] RollingMinimum(int windowSize)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMinimum([..histogram.Values], windowSize);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMinimum([.. histogram.Values], windowSize);
 
         public double[] RollingMaximum(int windowSize)
-            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMaximum([..histogram.Values], windowSize);
+            => histogram == null || histogram.Values.Count == 0 ? [] : StatisticsFunctions.RollingMaximum([.. histogram.Values], windowSize);
 
-        public double? MedianAbsoluteDeviation() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.MedianAbsoluteDeviation([..histogram.Values]);
+        public double? MedianAbsoluteDeviation() => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.MedianAbsoluteDeviation([.. histogram.Values]);
 
-        public double? LatestZScore(bool sample = true) => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.LatestZScore([..histogram.Values], sample);
+        public double? LatestZScore(bool sample = true)
+            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.LatestZScore([.. histogram.Values], sample);
 
         public bool? IsLatestValueAnomalous(double threshold = 3d, bool sample = true)
-            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.IsAnomalyByZScore([..histogram.Values], threshold, sample);
+            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.IsAnomalyByZScore([.. histogram.Values], threshold, sample);
 
         public bool? IsLatestValueAnomalousByMad(double threshold = 3.5d)
-            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.IsAnomalyByMad([..histogram.Values], threshold);
+            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.IsAnomalyByMad([.. histogram.Values], threshold);
 
         public ConfidenceIntervalResult? MeanConfidenceInterval(double confidenceLevel = 0.95d, bool sample = true)
-            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.MeanConfidenceInterval([..histogram.Values], confidenceLevel, sample);
+            => histogram == null || histogram.Values.Count == 0 ? null : StatisticsFunctions.MeanConfidenceInterval([.. histogram.Values], confidenceLevel, sample);
 
         public double? PearsonCorrelation(HistogramData? other)
         {
             if (histogram == null || other == null || histogram.Values.Count == 0 || other.Values.Count == 0)
                 return null;
 
-            return StatisticsFunctions.PearsonCorrelation([..histogram.Values], [..other.Values]);
+            return StatisticsFunctions.PearsonCorrelation([.. histogram.Values], [.. other.Values]);
         }
     }
 

@@ -6,8 +6,8 @@ namespace Lyo.Cli.Services;
 internal static class CliIO
 {
     /// <summary>
-    /// Opens an input stream. Path opens a file; <c>-</c> or omitted with redirected stdin uses standard input.
-    /// Caller must dispose the returned stream (except when it is stdin — use <see cref="OpenInput" /> result's <c>LeaveOpen</c>).
+    /// Opens an input stream. Path opens a file; <c>-</c> or omitted with redirected stdin uses standard input. Caller must dispose the returned stream (except when it is stdin
+    /// — use <see cref="OpenInput" /> result's <c>LeaveOpen</c>).
     /// </summary>
     public static (Stream Stream, bool LeaveOpen, string? PathOrNull) OpenInput(string? path)
     {
@@ -23,8 +23,8 @@ internal static class CliIO
     }
 
     /// <summary>
-    /// Opens an output stream. Explicit <paramref name="output" /> (or <c>-</c>) wins; otherwise stdout when redirected or when input was a pipe;
-    /// when input was a file and stdout is a TTY, writes <paramref name="defaultSiblingPath" />.
+    /// Opens an output stream. Explicit <paramref name="output" /> (or <c>-</c>) wins; otherwise stdout when redirected or when input was a pipe; when input was a file and
+    /// stdout is a TTY, writes <paramref name="defaultSiblingPath" />.
     /// </summary>
     public static (Stream Stream, bool LeaveOpen, string? PathOrNull) OpenOutput(string? output, string? inputPath, Func<string, string>? defaultSiblingPath)
     {
@@ -32,6 +32,7 @@ internal static class CliIO
             var dir = Path.GetDirectoryName(Path.GetFullPath(output));
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
+
             return (File.Create(output), false, output);
         }
 
@@ -43,6 +44,7 @@ internal static class CliIO
         var siblingDir = Path.GetDirectoryName(Path.GetFullPath(sibling));
         if (!string.IsNullOrEmpty(siblingDir))
             Directory.CreateDirectory(siblingDir);
+
         return (File.Create(sibling), false, sibling);
     }
 
@@ -53,6 +55,7 @@ internal static class CliIO
             var dir = Path.GetDirectoryName(Path.GetFullPath(output));
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
+
             await File.WriteAllTextAsync(output, text, ct).ConfigureAwait(false);
             return;
         }
@@ -62,15 +65,8 @@ internal static class CliIO
             await Console.Out.WriteLineAsync().ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Emits one or more text lines: optional <paramref name="output" /> file, optional clipboard copy, and stdout unless <paramref name="quiet" />.
-    /// </summary>
-    public static async Task EmitTextAsync(
-        IReadOnlyList<string> lines,
-        string? output,
-        bool copy,
-        bool quiet,
-        CancellationToken ct = default)
+    /// <summary>Emits one or more text lines: optional <paramref name="output" /> file, optional clipboard copy, and stdout unless <paramref name="quiet" />.</summary>
+    public static async Task EmitTextAsync(IReadOnlyList<string> lines, string? output, bool copy, bool quiet, CancellationToken ct = default)
     {
         var text = string.Join('\n', lines);
         if (lines.Count > 0)
@@ -80,6 +76,7 @@ internal static class CliIO
             var dir = Path.GetDirectoryName(Path.GetFullPath(output!));
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
+
             await File.WriteAllTextAsync(output!, text, ct).ConfigureAwait(false);
         }
 
@@ -91,8 +88,7 @@ internal static class CliIO
     }
 
     /// <summary>Same as <see cref="EmitTextAsync(IReadOnlyList{string}, string?, bool, bool, CancellationToken)" /> for a single line.</summary>
-    public static Task EmitTextAsync(string text, string? output, bool copy, bool quiet, CancellationToken ct = default)
-        => EmitTextAsync([text], output, copy, quiet, ct);
+    public static Task EmitTextAsync(string text, string? output, bool copy, bool quiet, CancellationToken ct = default) => EmitTextAsync([text], output, copy, quiet, ct);
 
     /// <summary>Reads all text from a path, <c>-</c>, or redirected stdin.</summary>
     public static async Task<string> ReadAllTextAsync(string? path, CancellationToken ct = default)
@@ -112,6 +108,7 @@ internal static class CliIO
     {
         if (!extension.StartsWith('.'))
             extension = "." + extension;
+
         return path.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? path : path + extension;
     }
 
@@ -119,8 +116,7 @@ internal static class CliIO
     {
         if (!extension.StartsWith('.'))
             extension = "." + extension;
-        return path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
-            ? path[..^extension.Length]
-            : path;
+
+        return path.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? path[..^extension.Length] : path;
     }
 }

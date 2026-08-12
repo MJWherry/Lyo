@@ -12,19 +12,18 @@ using FluentEncryptionMode = FluentFTP.FtpEncryptionMode;
 namespace Lyo.Ftp.Client;
 
 /// <summary>
-/// Pooled FluentFTP client with logging and metrics. Async methods are canonical; sync methods block on them.
-/// Thread-safe for concurrent callers up to <see cref="FtpClientOptions.MaxPooledClients" />.
+/// Pooled FluentFTP client with logging and metrics. Async methods are canonical; sync methods block on them. Thread-safe for concurrent callers up to
+/// <see cref="FtpClientOptions.MaxPooledClients" />.
 /// </summary>
 public sealed class FtpClient : IFtpClient
 {
-    private readonly ConcurrentBag<PooledConnection> _pool = new();
-    private readonly SemaphoreSlim _poolGate;
-    private readonly FtpClientOptions _options;
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
-    private readonly string _root;
-    private int _leased;
+    private readonly FtpClientOptions _options;
+    private readonly ConcurrentBag<PooledConnection> _pool = new();
+    private readonly SemaphoreSlim _poolGate;
     private bool _disposed;
+    private int _leased;
 
     /// <summary>Creates a client from validated options.</summary>
     public FtpClient(FtpClientOptions options, ILoggerFactory? loggerFactory = null, IMetrics? metrics = null)
@@ -32,28 +31,26 @@ public sealed class FtpClient : IFtpClient
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
         _options = options;
-        _root = PathHelpers.GetFullPath(PathStyle.Posix, options.RootRemoteDirectory);
+        RootRemoteDirectory = PathHelpers.GetFullPath(PathStyle.Posix, options.RootRemoteDirectory);
         _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger("Lyo.Ftp.Client");
         _metrics = options.EnableMetrics ? metrics ?? NullMetrics.Instance : NullMetrics.Instance;
-        _poolGate = new SemaphoreSlim(options.MaxPooledClients, options.MaxPooledClients);
+        _poolGate = new(options.MaxPooledClients, options.MaxPooledClients);
         _logger.LogInformation(
-            "FTP client configured for {Host}:{Port} user {User} root {Root} (max pool {Max}, encryption {Enc})", options.Host, options.Port,
-            options.Username, _root, options.MaxPooledClients, options.EncryptionMode);
+            "FTP client configured for {Host}:{Port} user {User} root {Root} (max pool {Max}, encryption {Enc})", options.Host, options.Port, options.Username, RootRemoteDirectory,
+            options.MaxPooledClients, options.EncryptionMode);
     }
 
     /// <inheritdoc />
-    public string RootRemoteDirectory => _root;
+    public string RootRemoteDirectory { get; }
 
     /// <inheritdoc />
     public string ResolvePath(string path)
     {
         ThrowIfDisposed();
         PathHelpers.ThrowIfNullOrWhiteSpace(path);
-        var combined = PathHelpers.IsPathRooted(PathStyle.Posix, path)
-            ? path
-            : PathHelpers.Combine(PathStyle.Posix, _root, path);
+        var combined = PathHelpers.IsPathRooted(PathStyle.Posix, path) ? path : PathHelpers.Combine(PathStyle.Posix, RootRemoteDirectory, path);
         var full = PathHelpers.GetFullPath(PathStyle.Posix, combined);
-        PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, _root, full);
+        PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, RootRemoteDirectory, full);
         return full;
     }
 
@@ -88,10 +85,11 @@ public sealed class FtpClient : IFtpClient
     /// <inheritdoc />
     public async Task CreateDirectoryAsync(string path, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "mkdir", async (c, token) => {
-                await c.CreateDirectory(ResolvePath(path), true, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "mkdir", async (c, token) => {
+                    await c.CreateDirectory(ResolvePath(path), true, token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void DeleteDirectory(string path, bool recursive = true) => SyncWait(DeleteDirectoryAsync(path, recursive));
@@ -99,16 +97,19 @@ public sealed class FtpClient : IFtpClient
     /// <inheritdoc />
     public async Task DeleteDirectoryAsync(string path, bool recursive = true, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "rmdir", async (c, token) => {
-                var p = ResolvePath(path);
-                if (!await c.DirectoryExists(p, token).ConfigureAwait(false))
+                "rmdir", async (c, token) => {
+                    var p = ResolvePath(path);
+                    if (!await c.DirectoryExists(p, token).ConfigureAwait(false))
+                        return 0;
+
+                    if (recursive)
+                        await DeleteRecursiveAsync(c, p, token).ConfigureAwait(false);
+                    else
+                        await c.DeleteDirectory(p, token).ConfigureAwait(false);
+
                     return 0;
-                if (recursive)
-                    await DeleteRecursiveAsync(c, p, token).ConfigureAwait(false);
-                else
-                    await c.DeleteDirectory(p, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void DeleteFile(string path) => SyncWait(DeleteFileAsync(path));
@@ -116,12 +117,14 @@ public sealed class FtpClient : IFtpClient
     /// <inheritdoc />
     public async Task DeleteFileAsync(string path, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "delete", async (c, token) => {
-                var p = ResolvePath(path);
-                if (await c.FileExists(p, token).ConfigureAwait(false))
-                    await c.DeleteFile(p, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "delete", async (c, token) => {
+                    var p = ResolvePath(path);
+                    if (await c.FileExists(p, token).ConfigureAwait(false))
+                        await c.DeleteFile(p, token).ConfigureAwait(false);
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public IReadOnlyList<FtpEntryInfo> ListDirectory(string path) => SyncWait(ListDirectoryAsync(path));
@@ -136,11 +139,13 @@ public sealed class FtpClient : IFtpClient
                 foreach (var entry in items) {
                     if (entry.Name is "." or "..")
                         continue;
+
                     var full = string.IsNullOrWhiteSpace(entry.FullName)
                         ? PathHelpers.Combine(PathStyle.Posix, p, entry.Name)
                         : PathHelpers.GetFullPath(PathStyle.Posix, entry.FullName.Replace('\\', '/'));
-                    PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, _root, full);
-                    var modified = entry.Modified == default ? DateTimeOffset.UtcNow : new DateTimeOffset(DateTime.SpecifyKind(entry.Modified.ToUniversalTime(), DateTimeKind.Utc));
+
+                    PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, RootRemoteDirectory, full);
+                    var modified = entry.Modified == default ? DateTimeOffset.UtcNow : new(DateTime.SpecifyKind(entry.Modified.ToUniversalTime(), DateTimeKind.Utc));
                     list.Add(new(full, entry.Type == FtpObjectType.Directory, entry.Size < 0 ? 0 : entry.Size, modified));
                 }
 
@@ -154,7 +159,7 @@ public sealed class FtpClient : IFtpClient
     public async Task UploadAsync(string path, byte[] data, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
-        using var ms = new MemoryStream(data, writable: false);
+        using var ms = new MemoryStream(data, false);
         await UploadAsync(path, ms, ct).ConfigureAwait(false);
         _metrics.IncrementCounter("ftp.bytes", data.Length, [("direction", "up")]);
     }
@@ -167,13 +172,15 @@ public sealed class FtpClient : IFtpClient
     {
         ArgumentHelpers.ThrowIfNull(data);
         await WithLeaseAsync(
-            "upload", async (c, token) => {
-                var p = ResolvePath(path);
-                var status = await c.UploadStream(data, p, FtpRemoteExists.Overwrite, true, null, token).ConfigureAwait(false);
-                if (status == FtpStatus.Failed)
-                    throw new FtpException($"FTP upload failed for '{p}'.");
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "upload", async (c, token) => {
+                    var p = ResolvePath(path);
+                    var status = await c.UploadStream(data, p, FtpRemoteExists.Overwrite, true, null, token).ConfigureAwait(false);
+                    if (status == FtpStatus.Failed)
+                        throw new FtpException($"FTP upload failed for '{p}'.");
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -197,12 +204,14 @@ public sealed class FtpClient : IFtpClient
     {
         ArgumentHelpers.ThrowIfNull(destination);
         await WithLeaseAsync(
-            "download", async (c, token) => {
-                var status = await c.DownloadStream(destination, ResolvePath(path), 0, null, token).ConfigureAwait(false);
-                if (!status)
-                    throw new FtpException($"FTP download failed for '{path}'.");
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "download", async (c, token) => {
+                    var status = await c.DownloadStream(destination, ResolvePath(path), 0, null, token).ConfigureAwait(false);
+                    if (!status)
+                        throw new FtpException($"FTP download failed for '{path}'.");
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -211,17 +220,20 @@ public sealed class FtpClient : IFtpClient
     /// <inheritdoc />
     public async Task RenameAsync(string source, string dest, CancellationToken ct = default)
         => await WithLeaseAsync(
-            "rename", async (c, token) => {
-                var s = ResolvePath(source);
-                var d = ResolvePath(dest);
-                var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, d);
-                if (!string.IsNullOrEmpty(parent))
-                    await c.CreateDirectory(parent!, true, token).ConfigureAwait(false);
-                var ok = await c.MoveFile(s, d, FtpRemoteExists.Overwrite, token).ConfigureAwait(false);
-                if (!ok)
-                    throw new FtpException($"FTP rename/move failed from '{s}' to '{d}'.");
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "rename", async (c, token) => {
+                    var s = ResolvePath(source);
+                    var d = ResolvePath(dest);
+                    var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, d);
+                    if (!string.IsNullOrEmpty(parent))
+                        await c.CreateDirectory(parent, true, token).ConfigureAwait(false);
+
+                    var ok = await c.MoveFile(s, d, FtpRemoteExists.Overwrite, token).ConfigureAwait(false);
+                    if (!ok)
+                        throw new FtpException($"FTP rename/move failed from '{s}' to '{d}'.");
+
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void CopyFile(string source, string dest) => SyncWait(CopyFileAsync(source, dest));
@@ -276,6 +288,7 @@ public sealed class FtpClient : IFtpClient
         catch (Exception ex) {
             if (gateTaken)
                 lease.Gate.Release();
+
             ReleaseLease(lease);
             _metrics.RecordError("ftp.errors", ex, [("operation", "open_read")]);
             _logger.LogError(ex, "FTP open_read failed on {Host}", _options.Host);
@@ -304,9 +317,7 @@ public sealed class FtpClient : IFtpClient
     {
         ThrowIfDisposed();
         var resolved = ResolvePath(path);
-        var existing = await FileExistsAsync(resolved, ct).ConfigureAwait(false)
-            ? await DownloadBytesAsync(resolved, ct).ConfigureAwait(false)
-            : [];
+        var existing = await FileExistsAsync(resolved, ct).ConfigureAwait(false) ? await DownloadBytesAsync(resolved, ct).ConfigureAwait(false) : [];
         var stream = new CommitOnCloseStream(bytes => SyncWait(UploadAsync(resolved, bytes, CancellationToken.None)));
         if (existing.Length <= 0)
             return stream;
@@ -319,16 +330,18 @@ public sealed class FtpClient : IFtpClient
     /// <inheritdoc />
     public async Task HealthPingAsync(CancellationToken ct = default)
         => await WithLeaseAsync(
-            "health", async (c, token) => {
-                _ = await c.GetListing(_root, token).ConfigureAwait(false);
-                return 0;
-            }, ct).ConfigureAwait(false);
+                "health", async (c, token) => {
+                    _ = await c.GetListing(RootRemoteDirectory, token).ConfigureAwait(false);
+                    return 0;
+                }, ct)
+            .ConfigureAwait(false);
 
     /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed)
             return;
+
         _disposed = true;
         while (_pool.TryTake(out var item)) {
             try {
@@ -367,6 +380,7 @@ public sealed class FtpClient : IFtpClient
         finally {
             if (gateTaken)
                 lease.Gate.Release();
+
             ReleaseLease(lease);
         }
     }
@@ -433,7 +447,7 @@ public sealed class FtpClient : IFtpClient
             ApplyConfig(client);
             await client.Connect(ct).ConfigureAwait(false);
             _logger.LogInformation("Connected FTP to {Host}:{Port}", _options.Host, _options.Port);
-            return new PooledConnection(client, new SemaphoreSlim(1, 1));
+            return new(client, new(1, 1));
         }
         catch (Exception ex) when (ex is not OperationCanceledException) {
             _metrics.RecordError("ftp.errors", ex, [("operation", "connect")]);
@@ -451,8 +465,9 @@ public sealed class FtpClient : IFtpClient
         client.Config.EncryptionMode = _options.EncryptionMode switch {
             FtpEncryptionMode.Explicit => FluentEncryptionMode.Explicit,
             FtpEncryptionMode.Implicit => FluentEncryptionMode.Implicit,
-            _ => FluentEncryptionMode.None
+            var _ => FluentEncryptionMode.None
         };
+
         if (_options.TlsPolicy == FtpTlsPolicy.AcceptAny) {
             client.Config.ValidateAnyCertificate = true;
             if (_options.EncryptionMode != FtpEncryptionMode.None)
@@ -464,6 +479,7 @@ public sealed class FtpClient : IFtpClient
     {
         if (client.IsConnected)
             return;
+
         _logger.LogDebug("Reconnecting FTP client to {Host}", _options.Host);
         await client.Connect(ct).ConfigureAwait(false);
     }
@@ -474,9 +490,8 @@ public sealed class FtpClient : IFtpClient
         foreach (var entry in items) {
             if (entry.Name is "." or "..")
                 continue;
-            var child = string.IsNullOrWhiteSpace(entry.FullName)
-                ? PathHelpers.Combine(PathStyle.Posix, path, entry.Name)
-                : entry.FullName.Replace('\\', '/');
+
+            var child = string.IsNullOrWhiteSpace(entry.FullName) ? PathHelpers.Combine(PathStyle.Posix, path, entry.Name) : entry.FullName.Replace('\\', '/');
             if (entry.Type == FtpObjectType.Directory)
                 await DeleteRecursiveAsync(client, child, ct).ConfigureAwait(false);
             else
@@ -499,6 +514,7 @@ public sealed class FtpClient : IFtpClient
     private sealed class PooledConnection(FluentAsyncFtpClient client, SemaphoreSlim gate)
     {
         public FluentAsyncFtpClient Client { get; } = client;
+
         public SemaphoreSlim Gate { get; } = gate;
     }
 
@@ -507,14 +523,26 @@ public sealed class FtpClient : IFtpClient
         private bool _released;
 
         public override bool CanRead => inner.CanRead;
+
         public override bool CanSeek => inner.CanSeek;
+
         public override bool CanWrite => inner.CanWrite;
+
         public override long Length => inner.Length;
-        public override long Position { get => inner.Position; set => inner.Position = value; }
+
+        public override long Position {
+            get => inner.Position;
+            set => inner.Position = value;
+        }
+
         public override void Flush() => inner.Flush();
+
         public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
         public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+
         public override void SetLength(long value) => inner.SetLength(value);
+
         public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
 
         protected override void Dispose(bool disposing)

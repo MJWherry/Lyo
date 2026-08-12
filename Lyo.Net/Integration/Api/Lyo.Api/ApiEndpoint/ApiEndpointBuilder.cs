@@ -883,10 +883,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/QueryConcrete", async (
-                    [FromBody] QueryConcreteReq queryRequest,
-                    [FromServices] IQueryService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] QueryConcreteReq queryRequest, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig);
                     if (queryPolicyErrors.Count > 0) {
                         var problem = LyoProblemDetailsBuilder.CreateWithActivity()
@@ -914,10 +911,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         ApplyAuthorization(routeBuilder, _queryConfig.Auth);
         var projectedRouteBuilder = app.MapPost(
                 $"{baseRoute}/QueryProject", async (
-                    [FromBody] ProjectionQueryReq queryRequest,
-                    [FromServices] IQueryService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] ProjectionQueryReq queryRequest, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig);
                     if (queryPolicyErrors.Count > 0) {
                         var problem = LyoProblemDetailsBuilder.CreateWithActivity()
@@ -1025,10 +1019,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Export", async (
-                    [FromBody] ExportRequest request,
-                    [FromServices] IExportService<TDbContext> exportService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] ExportRequest request, [FromServices] IExportService<TDbContext> exportService, HttpContext httpContext, CancellationToken ct = default) => {
                     var deniedErrors = DeniedSelectFieldPolicy.ValidateExport(request, _exportConfig.DeniedSelectFields);
                     if (deniedErrors.Count > 0) {
                         var problem = LyoProblemDetailsBuilder.CreateWithActivity()
@@ -1066,11 +1057,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapGet(
                 $"{baseRoute}{ApiEndpointBuilderExtensions.GetDefaultEndpoint<TKey>()}", async (
-                    TKey id,
-                    [FromQuery] string[] include,
-                    [FromServices] IQueryService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    TKey id, [FromQuery] string[] include, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     try {
                         var result = await basicService.Get<TDbEntity, TResponse>([id!], include, _getConfig.Before, _getConfig.After, ct).ConfigureAwait(false);
                         if (result is not null)
@@ -1144,10 +1131,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Update", async (
-                    [FromBody] UpdateRequest<TRequest> request,
-                    [FromServices] IUpdateService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] UpdateRequest<TRequest> request, [FromServices] IUpdateService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
+                => {
                     var result = await basicService.UpdateAsync<TRequest, TDbEntity, TResponse>(request, _updateConfig.Before, _updateConfig.After, ct).ConfigureAwait(false);
                     if (result.Result != UpdateResultEnum.Failed)
                         return Results.Ok(result);
@@ -1171,9 +1156,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Bulk/Update", async (
-                    [FromBody] List<UpdateRequest<TRequest>> requests,
-                    [FromServices] IUpdateService<TDbContext> basicService,
-                    CancellationToken ct = default) => {
+                    [FromBody] List<UpdateRequest<TRequest>> requests, [FromServices] IUpdateService<TDbContext> basicService, CancellationToken ct = default) => {
                     var result = await basicService.UpdateBulkAsync<TRequest, TDbEntity, TResponse>(requests, _updateBulkConfig.Before, _updateBulkConfig.After, ct)
                         .ConfigureAwait(false);
 
@@ -1193,10 +1176,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPatch(
                 $"{baseRoute}", async (
-                        [FromBody] PatchRequest request,
-                        [FromServices] IPatchService<TDbContext> basicService,
-                        HttpContext httpContext,
-                        CancellationToken ct = default)
+                        [FromBody] PatchRequest request, [FromServices] IPatchService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
                     => {
                     var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(_patchConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), request, ct)
                         .ConfigureAwait(false);
@@ -1231,10 +1211,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPatch(
                 $"{baseRoute}/Bulk", async (
-                    [FromBody] List<PatchRequest> request,
-                    [FromServices] IPatchService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] List<PatchRequest> request, [FromServices] IPatchService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     if (_patchBulkConfig.PropertyAuthorization != null) {
                         var sanitized = new List<PatchRequest>(request.Count);
                         foreach (var patchRequest in request) {
@@ -1270,10 +1247,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Upsert", async (
-                    [FromBody] UpsertRequest<TRequest> request,
-                    [FromServices] IUpsertService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] UpsertRequest<TRequest> request, [FromServices] IUpsertService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
+                => {
                     var result = await basicService.UpsertAsync<TRequest, TDbEntity, TResponse>(
                             request, _upsertConfig.Before, _upsertConfig.After, _upsertConfig.BeforeCreate, _upsertConfig.AfterCreate, _upsertConfig.BeforeUpdate,
                             _upsertConfig.AfterUpdate, ct)
@@ -1301,9 +1276,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Bulk/Upsert", async (
-                    [FromBody] List<UpsertRequest<TRequest>> requests,
-                    [FromServices] IUpsertService<TDbContext> basicService,
-                    CancellationToken ct = default) => {
+                    [FromBody] List<UpsertRequest<TRequest>> requests, [FromServices] IUpsertService<TDbContext> basicService, CancellationToken ct = default) => {
                     var result = await basicService.UpsertBulkAsync<TRequest, TDbEntity, TResponse>(
                         requests, _upsertBulkConfig.Before, _upsertBulkConfig.After, _upsertBulkConfig.BeforeCreate, _upsertBulkConfig.AfterCreate, _upsertBulkConfig.BeforeUpdate,
                         _upsertBulkConfig.AfterUpdate, ct);
@@ -1324,10 +1297,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder1 = app.MapDelete(
                 $"{baseRoute}{ApiEndpointBuilderExtensions.GetDefaultEndpoint<TKey>()}", async (
-                    [FromRoute] TKey id,
-                    [FromServices] IDeleteService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromRoute] TKey id, [FromServices] IDeleteService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
                             [id!], _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);
@@ -1347,10 +1317,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         ApplyAuthorization(routeBuilder1, _deleteConfig.Auth);
         var routeBuilder2 = app.MapDelete(
                 $"{baseRoute}", async (
-                    [FromBody] DeleteRequest request,
-                    [FromServices] IDeleteService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] DeleteRequest request, [FromServices] IDeleteService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
                     var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
                             request, _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
                         .ConfigureAwait(false);

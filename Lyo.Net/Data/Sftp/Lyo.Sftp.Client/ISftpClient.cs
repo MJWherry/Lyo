@@ -1,16 +1,11 @@
 namespace Lyo.Sftp.Client;
 
-/// <summary>
-/// Pooled SFTP operations over SSH.NET. Paths are POSIX-style and constrained under <see cref="RootRemoteDirectory" /> via
-/// <see cref="Lyo.Common.Pathing.PathHelpers" />.
-/// </summary>
+/// <summary>Pooled SFTP operations over SSH.NET. Paths are POSIX-style and constrained under <see cref="RootRemoteDirectory" /> via <see cref="Lyo.Common.Pathing.PathHelpers" />.</summary>
 /// <remarks>
+/// <para>Prefer <c>*Async</c> methods from hosts and adapters. Sync methods block the calling thread by waiting on the async implementation.</para>
 /// <para>
-/// Prefer <c>*Async</c> methods from hosts and adapters. Sync methods block the calling thread by waiting on the async implementation.
-/// </para>
-/// <para>
-/// Thread-safe for concurrent callers: up to <see cref="SftpClientOptions.MaxPooledClients" /> operations run in parallel.
-/// Do not use the same leased <see cref="Stream" /> from multiple threads.
+/// Thread-safe for concurrent callers: up to <see cref="SftpClientOptions.MaxPooledClients" /> operations run in parallel. Do not use the same leased <see cref="Stream" /> from
+/// multiple threads.
 /// </para>
 /// </remarks>
 public interface ISftpClient : IDisposable

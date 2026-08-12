@@ -23,7 +23,7 @@ public sealed class IOTempSession : IIOTempSession
     private const int DisposeRetryCount = 3;
     private const int DisposeRetryDelayMs = 150;
 
-    /// <summary>UTF-8 without BOM so written bytes match <see cref="Encoding.GetByteCount" /> and stream roundtrips.</summary>
+    /// <summary>UTF-8 without BOM so written bytes match <see cref="Encoding.GetByteCount(string)" /> and stream roundtrips.</summary>
     private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static long _nameSequence;
@@ -263,8 +263,8 @@ public sealed class IOTempSession : IIOTempSession
             var sep = PathHelpers.GetDirectorySeparator(_storage.PathStyle);
             OperationHelpers.ThrowIf(
                 string.Equals(
-                    PathHelpers.TrimTrailingSeparators(safePath, _storage.PathStyle),
-                    PathHelpers.TrimTrailingSeparators(SessionDirectory, _storage.PathStyle), GetPathComparison()), "Cannot delete the session root directory.");
+                    PathHelpers.TrimTrailingSeparators(safePath, _storage.PathStyle), PathHelpers.TrimTrailingSeparators(SessionDirectory, _storage.PathStyle),
+                    GetPathComparison()), "Cannot delete the session root directory.");
 
             if (!_storage.DirectoryExists(safePath)) {
                 _directories.Remove(safePath);

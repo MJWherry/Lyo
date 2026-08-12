@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using Lyo.Compression;
 using Lyo.Compression.Compressors;

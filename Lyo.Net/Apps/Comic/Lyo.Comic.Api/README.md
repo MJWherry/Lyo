@@ -1,6 +1,7 @@
 # Lyo.Comic.Api
 
-ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with optional **compression and envelope encryption**, and **enriched reads** that batch-load related data through **`Lyo.Api`** query services.
+ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file
+upload/download** with optional **compression and envelope encryption**, and **enriched reads** that batch-load related data through **`Lyo.Api`** query services.
 
 ## Examples
 
@@ -18,12 +19,12 @@ app.BuildComicApiEndpoints(); // Lyo.Api CRUD + Query for comic entities
 
 ## Responsibilities
 
-| Area | What this project does |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **DI** | **`AddComicApi`** wires Postgres stores, **`ComicEnrichmentService`**, local cache, **`AddLyoQueryServices`** / CRUD services per DbContext, **`ComicLyoMapper`**, and a **keyed** comic file storage pipeline. |
-| **Routes** | **`MapComicApi`** registers enriched route groups under a prefix (default **`/api/comic`**) and **`MapFilesEndpoints`** at **`/files`**. |
-| **CRUD + query** | **`BuildComicApiEndpoints`** registers standard **`Lyo.Api`** endpoint builders for each entity; series/volume/chapter **plain GET** is omitted where an enriched GET exists. |
-| **Files** | GUID-addressed storage via **`IFileStorageService`** keyed as **`comic-files`**: metadata in Postgres, bytes on disk, optional **two-key** encryption. |
+| Area             | What this project does                                                                                                                                                                                          |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **DI**           | **`AddComicApi`** wires Postgres stores, **`ComicEnrichmentService`**, local cache, **`AddLyoQueryServices`** / CRUD services per DbContext, **`ComicLyoMapper`**, and a **keyed** comic file storage pipeline. |
+| **Routes**       | **`MapComicApi`** registers enriched route groups under a prefix (default **`/api/comic`**) and **`MapFilesEndpoints`** at **`/files`**.                                                                        |
+| **CRUD + query** | **`BuildComicApiEndpoints`** registers standard **`Lyo.Api`** endpoint builders for each entity; series/volume/chapter **plain GET** is omitted where an enriched GET exists.                                   |
+| **Files**        | GUID-addressed storage via **`IFileStorageService`** keyed as **`comic-files`**: metadata in Postgres, bytes on disk, optional **two-key** encryption.                                                          |
 
 ## Registration
 
@@ -31,111 +32,120 @@ Call **`AddComicApi`** before building the host. Map routes after **`app.Build()
 
 ## Postgres
 
-Uses the same configuration patterns as other Lyo Postgres apps: **`AddPostgresComicStoreFromConfiguration`**, tag/comment/rating/favorite stores, and * *`AddFileMetadataStoreDbContextFactoryFromConfiguration`**. See each package’s README for connection keys and migrations.
+Uses the same configuration patterns as other Lyo Postgres apps: **`AddPostgresComicStoreFromConfiguration`**, tag/comment/rating/favorite stores, and * *
+`AddFileMetadataStoreDbContextFactoryFromConfiguration`**. See each package’s README for connection keys and migrations.
 
 ## Comic file storage (`AddComicFileStorage`)
 
-| Key | Purpose |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **`ComicFileStorage:RootDirectoryPath`** | Root directory for **`LocalFileStorageService`** (default **`./comic-files`**). |
-| **`ComicFileEncryption:Encrypt`** | When true, files are stored through the **keyed** two-key encryption stack (default **true**). |
-| **`ComicFileEncryption:Compress`** | Passed to **`SaveFromStreamAsync`** (default **false**). |
-| **`ComicFileEncryption:KeyId`** | Logical key id in **`LocalKeyStore`** (default **`comic-images`**). |
-| **`ComicFileEncryption:KeySecret`** | Passphrase material for **`AddKeyFromString`** (default **`change-me-in-production`** — **override in production**). |
+| Key                                      | Purpose                                                                                                              |
+|------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| **`ComicFileStorage:RootDirectoryPath`** | Root directory for **`LocalFileStorageService`** (default **`./comic-files`**).                                      |
+| **`ComicFileEncryption:Encrypt`**        | When true, files are stored through the **keyed** two-key encryption stack (default **true**).                       |
+| **`ComicFileEncryption:Compress`**       | Passed to **`SaveFromStreamAsync`** (default **false**).                                                             |
+| **`ComicFileEncryption:KeyId`**          | Logical key id in **`LocalKeyStore`** (default **`comic-images`**).                                                  |
+| **`ComicFileEncryption:KeySecret`**      | Passphrase material for **`AddKeyFromString`** (default **`change-me-in-production`** — **override in production**). |
 
 The keyed **`IKeyStore`** / **`LocalKeyStore`** / encryption services isolate comic file crypto from any other keyed encryption in the same container (**`FileStorageKey`** = *
 *`"comic-files"`**).
 
 ## Upload policy
 
-**`ComicFileUploadOptions`** (**`Encrypt`**, **`Compress`**, **`KeyId`**) is registered as a **keyed singleton** so **`UploadFile`** reads the same flags the API was configured with.
+**`ComicFileUploadOptions`** (**`Encrypt`**, **`Compress`**, **`KeyId`**) is registered as a **keyed singleton** so **`UploadFile`** reads the same flags the API was configured
+with.
 
 ## HTTP surface
 
-Default prefix is **`/api/comic`**. CRUD and `POST /QueryConcrete` are generated by **`BuildComicApiEndpoints`** via **`ApiEndpointBuilder`** (plain `GET /{id}` is suppressed for series, volumes, and chapters because **enriched** GETs are mounted by `MapSeriesEndpoints` / `MapVolumeEndpoints` / `MapChapterEndpoints`). Pages and characters include the plain GET.
+Default prefix is **`/api/comic`**. CRUD and `POST /QueryConcrete` are generated by **`BuildComicApiEndpoints`** via **`ApiEndpointBuilder`** (plain `GET /{id}` is suppressed for
+series, volumes, and chapters because **enriched** GETs are mounted by `MapSeriesEndpoints` / `MapVolumeEndpoints` / `MapChapterEndpoints`). Pages and characters include the plain
+GET.
 
 ## HTTP surface — Series (`MapSeriesEndpoints` + builder, tagged **Series**)
 
-| Method | Path | Source | Description |
-| ------ | ------------------------------------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET | **`/api/comic/series/{id:guid}`** | `SeriesEndpoints.GetSeriesById` | Enriched series fetch via **`ComicEnrichmentService.EnrichSeriesAsync`** (tags / ratings / counts). |
-| GET | **`/api/comic/series/slug/{slug}`** | `SeriesEndpoints.GetSeriesBySlug` | Enriched series fetch by URL-friendly slug. |
-| POST | **`/api/comic/series/search`** | `SeriesEndpoints.Search` | Body: **`Lyo.Comic.ComicSeriesQuery`**. When `Tags` are provided, they are AND-intersected through `ITagStore` before delegating to `IComicStore.SearchSeriesAsync`; results pass through **`EnrichSeriesListAsync`**. |
-| GET | **`/api/comic/series/{id:guid}/chapters`** | `SeriesEndpoints.GetChapters` | `IComicStore.GetChaptersBySeriesAsync` (raw domain objects, no enrichment). Optional `?language=` filter. |
-| GET | **`/api/comic/series/{id:guid}/volumes`** | `SeriesEndpoints.GetVolumes` | Volumes for the series, enriched via `EnrichVolumeListAsync`. |
-| GET | **`/api/comic/series/tags`** | `SeriesEndpoints.GetAllTags` | All tags applied to the `ComicSeries` entity type (`ITagStore.GetAllTagsForEntityTypeAsync`). |
-| GET | **`/api/comic/series/{id:guid}/tags`** | `SeriesEndpoints.GetTags` | Tag name list for one series. |
-| POST | **`/api/comic/series/{id:guid}/tags`** | `SeriesEndpoints.AddTag` | Body: `AddTagReq`. 204 No Content. |
-| DELETE | **`/api/comic/series/{id:guid}/tags/{tag}`** | `SeriesEndpoints.RemoveTag` | Query: `?tagType=&slug=`. 204 No Content. |
-| GET | **`/api/comic/series/{id:guid}/ratings`** | `SeriesEndpoints.GetRatings` | `IRatingStore.GetForEntityAsync`. |
-| POST | **`/api/comic/series/{id:guid}/ratings`** | `SeriesEndpoints.AddRating` | Body: `AddRatingReq`. 204 No Content. |
-| GET | **`/api/comic/series/{id:guid}/comments`** | `SeriesEndpoints.GetComments` | Optional `?includeReplies=true`. `ICommentStore.GetForEntityAsync`. |
-| POST | **`/api/comic/series/{id:guid}/comments`** | `SeriesEndpoints.AddComment` | Body: `AddCommentReq`. 204 No Content. |
-| POST | **`/api/comic/series/{id:guid}/favorites`** | `SeriesEndpoints.AddFavorite` | Body: `AddFavoriteReq`. 204 No Content. |
-| DELETE | **`/api/comic/series/{id:guid}/favorites`** | `SeriesEndpoints.RemoveFavorite` | Body: `RemoveFavoriteReq`. 204 No Content. |
-| POST | **`/api/comic/series`** | `BuildComicApiEndpoints` (`Create`) | Create. `ComicSeriesReq` (initial `Tags` applied via `AddTagAsync` after create). |
-| POST | **`/api/comic/series/Update`** | `BuildComicApiEndpoints` (`Update`) | Update. `BeforeUpdate` hook replaces the `AlternateTitles` collection in-place. |
-| POST | **`/api/comic/series/Upsert`** | `BuildComicApiEndpoints` (`Upsert`) | `BeforeUpsert` hook replaces `AlternateTitles`. `ComicSeriesReq.Tags` is **ignored** on update / upsert. |
-| DELETE | **`/api/comic/series/{id}`** / **`/api/comic/series`** | `BuildComicApiEndpoints` (`Delete`) | Single or body-shaped delete. |
-| POST | **`/api/comic/series/QueryConcrete`** | `BuildComicApiEndpoints` (`Query`) | Lyo.Api query. `POST /QueryProject` is also registered. |
-| POST | **`/api/comic/series/Bulk[/Update\ | /Upsert]`** *(if feature enabled)* | `BuildComicApiEndpoints` |
+| Method | Path                                                   | Source                              | Description                                                                                                                                                                                                            |
+|--------|--------------------------------------------------------|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | **`/api/comic/series/{id:guid}`**                      | `SeriesEndpoints.GetSeriesById`     | Enriched series fetch via **`ComicEnrichmentService.EnrichSeriesAsync`** (tags / ratings / counts).                                                                                                                    |
+| GET    | **`/api/comic/series/slug/{slug}`**                    | `SeriesEndpoints.GetSeriesBySlug`   | Enriched series fetch by URL-friendly slug.                                                                                                                                                                            |
+| POST   | **`/api/comic/series/search`**                         | `SeriesEndpoints.Search`            | Body: **`Lyo.Comic.ComicSeriesQuery`**. When `Tags` are provided, they are AND-intersected through `ITagStore` before delegating to `IComicStore.SearchSeriesAsync`; results pass through **`EnrichSeriesListAsync`**. |
+| GET    | **`/api/comic/series/{id:guid}/chapters`**             | `SeriesEndpoints.GetChapters`       | `IComicStore.GetChaptersBySeriesAsync` (raw domain objects, no enrichment). Optional `?language=` filter.                                                                                                              |
+| GET    | **`/api/comic/series/{id:guid}/volumes`**              | `SeriesEndpoints.GetVolumes`        | Volumes for the series, enriched via `EnrichVolumeListAsync`.                                                                                                                                                          |
+| GET    | **`/api/comic/series/tags`**                           | `SeriesEndpoints.GetAllTags`        | All tags applied to the `ComicSeries` entity type (`ITagStore.GetAllTagsForEntityTypeAsync`).                                                                                                                          |
+| GET    | **`/api/comic/series/{id:guid}/tags`**                 | `SeriesEndpoints.GetTags`           | Tag name list for one series.                                                                                                                                                                                          |
+| POST   | **`/api/comic/series/{id:guid}/tags`**                 | `SeriesEndpoints.AddTag`            | Body: `AddTagReq`. 204 No Content.                                                                                                                                                                                     |
+| DELETE | **`/api/comic/series/{id:guid}/tags/{tag}`**           | `SeriesEndpoints.RemoveTag`         | Query: `?tagType=&slug=`. 204 No Content.                                                                                                                                                                              |
+| GET    | **`/api/comic/series/{id:guid}/ratings`**              | `SeriesEndpoints.GetRatings`        | `IRatingStore.GetForEntityAsync`.                                                                                                                                                                                      |
+| POST   | **`/api/comic/series/{id:guid}/ratings`**              | `SeriesEndpoints.AddRating`         | Body: `AddRatingReq`. 204 No Content.                                                                                                                                                                                  |
+| GET    | **`/api/comic/series/{id:guid}/comments`**             | `SeriesEndpoints.GetComments`       | Optional `?includeReplies=true`. `ICommentStore.GetForEntityAsync`.                                                                                                                                                    |
+| POST   | **`/api/comic/series/{id:guid}/comments`**             | `SeriesEndpoints.AddComment`        | Body: `AddCommentReq`. 204 No Content.                                                                                                                                                                                 |
+| POST   | **`/api/comic/series/{id:guid}/favorites`**            | `SeriesEndpoints.AddFavorite`       | Body: `AddFavoriteReq`. 204 No Content.                                                                                                                                                                                |
+| DELETE | **`/api/comic/series/{id:guid}/favorites`**            | `SeriesEndpoints.RemoveFavorite`    | Body: `RemoveFavoriteReq`. 204 No Content.                                                                                                                                                                             |
+| POST   | **`/api/comic/series`**                                | `BuildComicApiEndpoints` (`Create`) | Create. `ComicSeriesReq` (initial `Tags` applied via `AddTagAsync` after create).                                                                                                                                      |
+| POST   | **`/api/comic/series/Update`**                         | `BuildComicApiEndpoints` (`Update`) | Update. `BeforeUpdate` hook replaces the `AlternateTitles` collection in-place.                                                                                                                                        |
+| POST   | **`/api/comic/series/Upsert`**                         | `BuildComicApiEndpoints` (`Upsert`) | `BeforeUpsert` hook replaces `AlternateTitles`. `ComicSeriesReq.Tags` is **ignored** on update / upsert.                                                                                                               |
+| DELETE | **`/api/comic/series/{id}`** / **`/api/comic/series`** | `BuildComicApiEndpoints` (`Delete`) | Single or body-shaped delete.                                                                                                                                                                                          |
+| POST   | **`/api/comic/series/QueryConcrete`**                  | `BuildComicApiEndpoints` (`Query`)  | Lyo.Api query. `POST /QueryProject` is also registered.                                                                                                                                                                |
+| POST   | **`/api/comic/series/Bulk[/Update\                     | /Upsert]`** *(if feature enabled)*  | `BuildComicApiEndpoints`                                                                                                                                                                                               |
 
 ## HTTP surface — Volumes (`MapVolumeEndpoints` + builder, tagged **Volumes**)
 
-| Method | Path | Source | Description |
-| ------------------- | -------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- |
-| GET | **`/api/comic/volumes/{id:guid}`** | `VolumeEndpoints.GetVolumeById` | Enriched fetch via `EnrichVolumeAsync`. |
-| GET | **`/api/comic/volumes/{id:guid}/chapters`** | `VolumeEndpoints.GetChaptersForVolume` | Optional `?language=`. Returns enriched chapters (`EnrichChapterListAsync`). |
-| GET / POST / DELETE | **`/api/comic/volumes/{id:guid}/{tags,ratings,comments,favorites}`** | `VolumeEndpoints` | Same cross-domain shape as series. |
-| POST / DELETE | **`/api/comic/volumes[, /Update, /Upsert, /QueryConcrete, /{id}]`** | `BuildComicApiEndpoints` (`All & ~Get`) | CRUD + Query (no special update hook). |
+| Method              | Path                                                                 | Source                                  | Description                                                                  |
+|---------------------|----------------------------------------------------------------------|-----------------------------------------|------------------------------------------------------------------------------|
+| GET                 | **`/api/comic/volumes/{id:guid}`**                                   | `VolumeEndpoints.GetVolumeById`         | Enriched fetch via `EnrichVolumeAsync`.                                      |
+| GET                 | **`/api/comic/volumes/{id:guid}/chapters`**                          | `VolumeEndpoints.GetChaptersForVolume`  | Optional `?language=`. Returns enriched chapters (`EnrichChapterListAsync`). |
+| GET / POST / DELETE | **`/api/comic/volumes/{id:guid}/{tags,ratings,comments,favorites}`** | `VolumeEndpoints`                       | Same cross-domain shape as series.                                           |
+| POST / DELETE       | **`/api/comic/volumes[, /Update, /Upsert, /QueryConcrete, /{id}]`**  | `BuildComicApiEndpoints` (`All & ~Get`) | CRUD + Query (no special update hook).                                       |
 
 ## HTTP surface — Chapters (`MapChapterEndpoints` + builder, tagged **Chapters**)
 
-| Method | Path | Source | Description |
-| ------------------- | --------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------- |
-| GET | **`/api/comic/chapters/{id:guid}`** | `ChapterEndpoints.GetChapterById` | Enriched fetch via `EnrichChapterAsync`. |
-| GET | **`/api/comic/chapters/{id:guid}/pages`** | `ChapterEndpoints.GetPages` | Raw `ComicPage` list (no enrichment). |
-| GET / POST / DELETE | **`/api/comic/chapters/{id:guid}/{tags,ratings,comments,favorites}`** | `ChapterEndpoints` | Same cross-domain shape. |
-| POST / DELETE | **`/api/comic/chapters[, /Update, /Upsert, /QueryConcrete, /{id}]`** | `BuildComicApiEndpoints` (`All & ~Get`) | CRUD + Query (no special update hook). |
+| Method              | Path                                                                  | Source                                  | Description                              |
+|---------------------|-----------------------------------------------------------------------|-----------------------------------------|------------------------------------------|
+| GET                 | **`/api/comic/chapters/{id:guid}`**                                   | `ChapterEndpoints.GetChapterById`       | Enriched fetch via `EnrichChapterAsync`. |
+| GET                 | **`/api/comic/chapters/{id:guid}/pages`**                             | `ChapterEndpoints.GetPages`             | Raw `ComicPage` list (no enrichment).    |
+| GET / POST / DELETE | **`/api/comic/chapters/{id:guid}/{tags,ratings,comments,favorites}`** | `ChapterEndpoints`                      | Same cross-domain shape.                 |
+| POST / DELETE       | **`/api/comic/chapters[, /Update, /Upsert, /QueryConcrete, /{id}]`**  | `BuildComicApiEndpoints` (`All & ~Get`) | CRUD + Query (no special update hook).   |
 
 ## HTTP surface — Pages and Characters (builder only)
 
-`BuildComicApiEndpoints` registers **`ApiFeatureFlag.All`** (CRUD + Query, including plain GET) for both groups under **`/api/comic/pages`** and **`/api/comic/characters`** — no async enrichment, so no separate enriched route group.
+`BuildComicApiEndpoints` registers **`ApiFeatureFlag.All`** (CRUD + Query, including plain GET) for both groups under **`/api/comic/pages`** and **`/api/comic/characters`** — no
+async enrichment, so no separate enriched route group.
 
 ## HTTP surface — Files (`MapFilesEndpoints`, tagged **Files**)
 
 `/files` is mounted at the app root (not under `/api/comic`). All endpoints resolve **`IFileStorageService`** through the keyed registration **`"comic-files"`**.
 
-| Method | Path | Body / Query | Returns |
-| ------ | ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET | **`/files/{id:guid}`** | — | Raw bytes with the stored `ContentType` (falls back to `application/octet-stream`). 404 on `FileNotFoundException`. |
-| POST | **`/files/batch`** | Body: **`FilesBatchReq { Ids: Guid[] }`** | `List<FileBatchEntry>` with `{ Id, ContentType, Data (base64) }`. Missing IDs are silently omitted (no error per id). |
-| POST | **`/files/upload`** | `IFormFile` (multipart). Optional query: **`seriesId`**, **`volumeId`**, **`chapterId`**. | `{ Id }`. **Antiforgery disabled.** Streamed via `SaveFromStreamAsync` using **`ComicFileUploadOptions.{Compress, Encrypt, KeyId}`** from the keyed singleton. |
-| DELETE | **`/files/{id:guid}`** | — | `200` if deleted, `404` if not. |
+| Method | Path                   | Body / Query                                                                              | Returns                                                                                                                                                        |
+|--------|------------------------|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | **`/files/{id:guid}`** | —                                                                                         | Raw bytes with the stored `ContentType` (falls back to `application/octet-stream`). 404 on `FileNotFoundException`.                                            |
+| POST   | **`/files/batch`**     | Body: **`FilesBatchReq { Ids: Guid[] }`**                                                 | `List<FileBatchEntry>` with `{ Id, ContentType, Data (base64) }`. Missing IDs are silently omitted (no error per id).                                          |
+| POST   | **`/files/upload`**    | `IFormFile` (multipart). Optional query: **`seriesId`**, **`volumeId`**, **`chapterId`**. | `{ Id }`. **Antiforgery disabled.** Streamed via `SaveFromStreamAsync` using **`ComicFileUploadOptions.{Compress, Encrypt, KeyId}`** from the keyed singleton. |
+| DELETE | **`/files/{id:guid}`** | —                                                                                         | `200` if deleted, `404` if not.                                                                                                                                |
 
 **Upload path-prefix resolution** (validated against the loaded entities; mismatches return `400`, missing parent entities return `404`):
 
-| Provided scope (non-empty) | Path prefix (via `ComicFileStoragePath`) |
+| Provided scope (non-empty)                                    | Path prefix (via `ComicFileStoragePath`)                                       |
 |---------------------------------------------------------------|--------------------------------------------------------------------------------|
 | **`chapterId`** (`seriesId` / `volumeId` consistency-checked) | `{seriesId}/{volumeId-or-Guid.Empty}/{chapterId}` (`BuildPathPrefix(chapter)`) |
-| **`volumeId`** (with optional `seriesId` check) | `{seriesId}/{volumeId}` (`BuildVolumePrefix(volume.SeriesId, volume.Id)`) |
-| **`seriesId`** only | `{seriesId}` (`BuildSeriesPrefix`) |
-| none / all `Guid.Empty` | `null` prefix → default `LocalFileStorageService` shard layout. |
+| **`volumeId`** (with optional `seriesId` check)               | `{seriesId}/{volumeId}` (`BuildVolumePrefix(volume.SeriesId, volume.Id)`)      |
+| **`seriesId`** only                                           | `{seriesId}` (`BuildSeriesPrefix`)                                             |
+| none / all `Guid.Empty`                                       | `null` prefix → default `LocalFileStorageService` shard layout.                |
 
 ## Enrichment (`ComicEnrichmentService`)
 
 Aggregates **tags, ratings, comments, favorites** (and related counts) for comic aggregates without N+1 queries: uses **`IQueryService<TContext>`** with **`QueryConcreteReqBuilder`
-** so
-list projections stay compatible with **`Lyo.Api`** query caching, and **chunked IN clauses** (size **400**) for large id sets. Favorite totals use store-level aggregation where
-available (`IFavoriteStore.GetCountForEntityAsync` / `GetFavoriteCountsForEntitiesAsync`).
+** so list projections stay compatible with **`Lyo.Api`** query caching, and **chunked IN clauses** (size **400**) for large id sets. Favorite totals use store-level aggregation
+where available (`IFavoriteStore.GetCountForEntityAsync` / `GetFavoriteCountsForEntitiesAsync`).
 
 The enrichment surface accepts an optional **`callerRef`** (`EntityRef?`) so per-caller `IsFavorited` can be filled in. **Every endpoint in this project passes
 `callerRef: null`**, so `ComicSeriesRes.IsFavorited` / `ComicVolumeRes.IsFavorited` / `ComicChapterRes.IsFavorited` are always `null` out of the box (see *Limitations* below).
 
 ## Limitations
 
-- **Authentication / authorization is not configured here.** Every `ApiEndpointBuilder` group in `BuildComicApiEndpoints` is registered with **`.AllowAnonymous()`**, and the endpoints in `Endpoints/*.cs` add no auth filters. The host application is expected to wrap the route group behind its own pipeline (e.g. an upstream JWT bearer scheme, policy-based authorization, an API-key middleware, or a reverse-proxy auth-gateway) **before exposing `/api/comic` or `/files` to the public internet**.
-- **No `IsFavorited` for the calling user.** All endpoints invoke `ComicEnrichmentService` with **`callerRef = null`**, because this project does not yet wire up a caller-ref accessor. To enable per-caller favorite state, the host must introduce an identity convention (for example, a `Lyo.HttpContext.ICallerRefAccessor`-style accessor populated from the auth middleware) and thread the resolved `EntityRef` into the `EnrichSeriesAsync` / `EnrichSeriesListAsync` / `EnrichVolumeAsync` / `EnrichVolumeListAsync` / `EnrichChapterAsync` / `EnrichChapterListAsync` calls. Until then, `IsFavorited` stays `null`, even when the user has favorited the entity.
+- **Authentication / authorization is not configured here.** Every `ApiEndpointBuilder` group in `BuildComicApiEndpoints` is registered with **`.AllowAnonymous()`**, and the
+  endpoints in `Endpoints/*.cs` add no auth filters. The host application is expected to wrap the route group behind its own pipeline (e.g. an upstream JWT bearer scheme,
+  policy-based authorization, an API-key middleware, or a reverse-proxy auth-gateway) **before exposing `/api/comic` or `/files` to the public internet**.
+- **No `IsFavorited` for the calling user.** All endpoints invoke `ComicEnrichmentService` with **`callerRef = null`**, because this project does not yet wire up a caller-ref
+  accessor. To enable per-caller favorite state, the host must introduce an identity convention (for example, a `Lyo.HttpContext.ICallerRefAccessor`-style accessor populated from
+  the auth middleware) and thread the resolved `EntityRef` into the `EnrichSeriesAsync` / `EnrichSeriesListAsync` / `EnrichVolumeAsync` / `EnrichVolumeListAsync` /
+  `EnrichChapterAsync` / `EnrichChapterListAsync` calls. Until then, `IsFavorited` stays `null`, even when the user has favorited the entity.
 - **`/files/upload` has `DisableAntiforgery()`**. Combine with auth before exposing it externally.
 
 ## Dependencies

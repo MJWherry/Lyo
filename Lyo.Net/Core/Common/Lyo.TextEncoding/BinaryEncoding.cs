@@ -19,8 +19,8 @@ public static class BinaryEncoding
             throw new ArgumentOutOfRangeException(nameof(byteCount));
 
         return kind switch {
-            BinaryEncodingKind.Base64 => ((byteCount + 2) / 3) * 4,
-            BinaryEncodingKind.Base64Url => ((byteCount + 2) / 3) * 4,
+            BinaryEncodingKind.Base64 => (byteCount + 2) / 3 * 4,
+            BinaryEncodingKind.Base64Url => (byteCount + 2) / 3 * 4,
             BinaryEncodingKind.Hex => checked(byteCount * 2),
             var _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
@@ -33,27 +33,23 @@ public static class BinaryEncoding
             throw new ArgumentOutOfRangeException(nameof(charCount));
 
         return kind switch {
-            BinaryEncodingKind.Base64 or BinaryEncodingKind.Base64Url => (charCount / 4) * 3 + 3,
+            BinaryEncodingKind.Base64 or BinaryEncodingKind.Base64Url => charCount / 4 * 3 + 3,
             BinaryEncodingKind.Hex => charCount / 2,
             var _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
     }
 
     /// <summary>Encode bytes to text. Empty input yields <see cref="string.Empty" />.</summary>
-    public static string Encode(
-        BinaryEncodingKind kind,
-        ReadOnlySpan<byte> data,
-        TextLetterCase hexLetterCase = TextLetterCase.Upper,
-        int lineLength = 0)
+    public static string Encode(BinaryEncodingKind kind, ReadOnlySpan<byte> data, TextLetterCase hexLetterCase = TextLetterCase.Upper, int lineLength = 0)
     {
         if (data.IsEmpty)
             return string.Empty;
 
         var max = GetMaxEncodedCharCount(kind, data.Length);
         char[]? rented = null;
-        Span<char> buffer = max <= 512 ? stackalloc char[max] : (rented = ArrayPool<char>.Shared.Rent(max));
+        var buffer = max <= 512 ? stackalloc char[max] : rented = ArrayPool<char>.Shared.Rent(max);
         try {
-            if (!TryEncode(kind, data, buffer, out var written, hexLetterCase, lineLength: 0))
+            if (!TryEncode(kind, data, buffer, out var written, hexLetterCase))
                 throw new EncodingException("Failed to encode binary payload.");
 
             return ApplyLineWrap(buffer[..written], lineLength, kind);
@@ -65,22 +61,14 @@ public static class BinaryEncoding
     }
 
     /// <inheritdoc cref="Encode(BinaryEncodingKind, ReadOnlySpan{byte}, TextLetterCase, int)" />
-    public static string Encode(
-        BinaryEncodingKind kind,
-        byte[] data,
-        TextLetterCase hexLetterCase = TextLetterCase.Upper,
-        int lineLength = 0)
+    public static string Encode(BinaryEncodingKind kind, byte[] data, TextLetterCase hexLetterCase = TextLetterCase.Upper, int lineLength = 0)
     {
         ArgumentHelpers.ThrowIfNull(data);
         return Encode(kind, data.AsSpan(), hexLetterCase, lineLength);
     }
 
     /// <summary>Encode stream to end (materializes). Does not close <paramref name="stream" />.</summary>
-    public static string Encode(
-        BinaryEncodingKind kind,
-        Stream stream,
-        TextLetterCase hexLetterCase = TextLetterCase.Upper,
-        int lineLength = 0)
+    public static string Encode(BinaryEncodingKind kind, Stream stream, TextLetterCase hexLetterCase = TextLetterCase.Upper, int lineLength = 0)
     {
         ArgumentHelpers.ThrowIfNull(stream);
         using var ms = new MemoryStream();
@@ -92,7 +80,10 @@ public static class BinaryEncoding
 #endif
     }
 
-    /// <summary>Try encode into <paramref name="destination" />. Line wrapping is not applied (use <see cref="Encode" /> for wrapped output).</summary>
+    /// <summary>
+    /// Try encode into <paramref name="destination" />. Line wrapping is not applied (use <see cref="Encode(BinaryEncodingKind, ReadOnlySpan{byte}, TextLetterCase, int)" /> for
+    /// wrapped output).
+    /// </summary>
     public static bool TryEncode(
         BinaryEncodingKind kind,
         ReadOnlySpan<byte> data,
@@ -107,8 +98,8 @@ public static class BinaryEncoding
             return true;
 
         return kind switch {
-            BinaryEncodingKind.Base64 => TryEncodeBase64(data, destination, out charsWritten, urlSafe: false),
-            BinaryEncodingKind.Base64Url => TryEncodeBase64(data, destination, out charsWritten, urlSafe: true),
+            BinaryEncodingKind.Base64 => TryEncodeBase64(data, destination, out charsWritten, false),
+            BinaryEncodingKind.Base64Url => TryEncodeBase64(data, destination, out charsWritten, true),
             BinaryEncodingKind.Hex => TryEncodeHex(data, destination, out charsWritten, hexLetterCase),
             var _ => false
         };
@@ -122,7 +113,7 @@ public static class BinaryEncoding
 
         var max = GetMaxDecodedByteCount(kind, encoded.Length);
         byte[]? rented = null;
-        Span<byte> buffer = max <= 512 ? stackalloc byte[max] : (rented = ArrayPool<byte>.Shared.Rent(max));
+        var buffer = max <= 512 ? stackalloc byte[max] : rented = ArrayPool<byte>.Shared.Rent(max);
         try {
             if (!TryDecode(kind, encoded, buffer, out var written))
                 throw new FormatException("Invalid encoded payload.");
@@ -150,8 +141,8 @@ public static class BinaryEncoding
             return true;
 
         return kind switch {
-            BinaryEncodingKind.Base64 => TryDecodeBase64(encoded, destination, out bytesWritten, urlSafe: false),
-            BinaryEncodingKind.Base64Url => TryDecodeBase64(encoded, destination, out bytesWritten, urlSafe: true),
+            BinaryEncodingKind.Base64 => TryDecodeBase64(encoded, destination, out bytesWritten, false),
+            BinaryEncodingKind.Base64Url => TryDecodeBase64(encoded, destination, out bytesWritten, true),
             BinaryEncodingKind.Hex => TryDecodeHex(encoded, destination, out bytesWritten),
             var _ => false
         };
@@ -168,7 +159,7 @@ public static class BinaryEncoding
 
         var max = GetMaxDecodedByteCount(kind, encoded.Length);
         byte[]? rented = null;
-        Span<byte> buffer = max <= 512 ? stackalloc byte[max] : (rented = ArrayPool<byte>.Shared.Rent(max));
+        var buffer = max <= 512 ? stackalloc byte[max] : rented = ArrayPool<byte>.Shared.Rent(max);
         try {
             if (!TryDecode(kind, encoded, buffer, out var written))
                 return false;
@@ -267,7 +258,6 @@ public static class BinaryEncoding
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
-
         if (kind is BinaryEncodingKind.Base64 or BinaryEncodingKind.Base64Url) {
             await EncodeBase64StreamAsync(kind == BinaryEncodingKind.Base64Url, input, output, lineLength, ct).ConfigureAwait(false);
             return;
@@ -305,7 +295,6 @@ public static class BinaryEncoding
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);
-
         if (kind is BinaryEncodingKind.Base64 or BinaryEncodingKind.Base64Url) {
             await DecodeBase64StreamAsync(kind == BinaryEncodingKind.Base64Url, input, output, ct).ConfigureAwait(false);
             return;
@@ -348,7 +337,6 @@ public static class BinaryEncoding
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
-
 #if NET5_0_OR_GREATER
         await using var input = File.OpenRead(inputPath);
         await using var output = new StreamWriter(outputPath, false, Encoding.ASCII);
@@ -381,7 +369,6 @@ public static class BinaryEncoding
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
-
 #if NET5_0_OR_GREATER
         using var input = new StreamReader(inputPath);
         await using var output = File.Create(outputPath);
@@ -396,7 +383,7 @@ public static class BinaryEncoding
     public static byte[] Decode(BinaryEncodingKind kind, Stream encodedStream)
     {
         ArgumentHelpers.ThrowIfNull(encodedStream);
-        using var reader = new StreamReader(encodedStream, Encoding.ASCII, detectEncodingFromByteOrderMarks: false, bufferSize: StreamBufferSize, leaveOpen: true);
+        using var reader = new StreamReader(encodedStream, Encoding.ASCII, false, StreamBufferSize, true);
         return Decode(kind, reader.ReadToEnd().AsSpan());
     }
 
@@ -411,6 +398,7 @@ public static class BinaryEncoding
         for (var i = 0; i < encoded.Length; i += lineLength) {
             if (i > 0)
                 sb.Append("\r\n");
+
             var len = Math.Min(lineLength, encoded.Length - i);
 #if NET5_0_OR_GREATER
             sb.Append(encoded.Slice(i, len));
@@ -425,7 +413,7 @@ public static class BinaryEncoding
     private static async Task EncodeBase64StreamAsync(bool urlSafe, Stream input, TextWriter output, int lineLength, CancellationToken ct)
     {
         var byteBuf = ArrayPool<byte>.Shared.Rent(StreamBufferSize + 2);
-        var charBuf = ArrayPool<char>.Shared.Rent(((StreamBufferSize + 2) / 3) * 4);
+        var charBuf = ArrayPool<char>.Shared.Rent((StreamBufferSize + 2) / 3 * 4);
         var carryLen = 0;
         var col = 0;
         try {
@@ -436,11 +424,12 @@ public static class BinaryEncoding
             while ((read = await input.ReadAsync(byteBuf, carryLen, StreamBufferSize, ct).ConfigureAwait(false)) > 0) {
 #endif
                 var total = carryLen + read;
-                var consumable = total - (total % 3);
+                var consumable = total - total % 3;
                 if (consumable > 0) {
                     var kind = urlSafe ? BinaryEncodingKind.Base64Url : BinaryEncodingKind.Base64;
                     if (!TryEncode(kind, byteBuf.AsSpan(0, consumable), charBuf, out var written))
                         throw new EncodingException("Base64 encode failed.");
+
                     col = await WriteWrappedAsync(output, charBuf, written, lineLength, col, ct).ConfigureAwait(false);
                 }
 
@@ -453,6 +442,7 @@ public static class BinaryEncoding
                 var kind = urlSafe ? BinaryEncodingKind.Base64Url : BinaryEncodingKind.Base64;
                 if (!TryEncode(kind, byteBuf.AsSpan(0, carryLen), charBuf, out var written))
                     throw new EncodingException("Base64 encode failed.");
+
                 _ = await WriteWrappedAsync(output, charBuf, written, lineLength, col, ct).ConfigureAwait(false);
             }
         }
@@ -525,7 +515,7 @@ public static class BinaryEncoding
                     if (qLen != 4)
                         continue;
 
-                    if (!TryDecodeBase64(quartet.AsSpan(0, 4), byteOut, out var written, urlSafe: false))
+                    if (!TryDecodeBase64(quartet.AsSpan(0, 4), byteOut, out var written, false))
                         throw new FormatException("Invalid Base64 payload.");
 #if NET5_0_OR_GREATER
                     await output.WriteAsync(byteOut.AsMemory(0, written), ct).ConfigureAwait(false);
@@ -541,7 +531,7 @@ public static class BinaryEncoding
                 while (qLen < 4)
                     quartet[qLen++] = '=';
 
-                if (!TryDecodeBase64(quartet.AsSpan(0, 4), byteOut, out var written, urlSafe: false))
+                if (!TryDecodeBase64(quartet.AsSpan(0, 4), byteOut, out var written, false))
                     throw new FormatException("Invalid Base64 payload.");
 #if NET5_0_OR_GREATER
                 await output.WriteAsync(byteOut.AsMemory(0, written), ct).ConfigureAwait(false);
@@ -576,9 +566,8 @@ public static class BinaryEncoding
                     if (v < 0)
                         throw new FormatException("Invalid hexadecimal character.");
 
-                    if (pending < 0) {
+                    if (pending < 0)
                         pending = v;
-                    }
                     else {
                         byteOut[outLen++] = (byte)((pending << 4) | v);
                         pending = -1;
@@ -606,7 +595,7 @@ public static class BinaryEncoding
     private static bool TryEncodeBase64(ReadOnlySpan<byte> data, Span<char> destination, out int charsWritten, bool urlSafe)
     {
         charsWritten = 0;
-        var needed = ((data.Length + 2) / 3) * 4;
+        var needed = (data.Length + 2) / 3 * 4;
         if (destination.Length < needed)
             return false;
 
@@ -617,10 +606,10 @@ public static class BinaryEncoding
         var s = Convert.ToBase64String(data.ToArray());
         if (destination.Length < s.Length)
             return false;
+
         s.AsSpan().CopyTo(destination);
         charsWritten = s.Length;
 #endif
-
         if (!urlSafe)
             return true;
 
@@ -660,12 +649,12 @@ public static class BinaryEncoding
                     var mod = paddedLen % 4;
                     if (mod == 1)
                         return false;
+
                     if (mod > 0)
                         paddedLen += 4 - mod;
                 }
-                else if (paddedLen % 4 != 0) {
+                else if (paddedLen % 4 != 0)
                     return false;
-                }
 
                 rented = ArrayPool<char>.Shared.Rent(paddedLen);
                 var span = rented.AsSpan(0, paddedLen);
@@ -674,6 +663,7 @@ public static class BinaryEncoding
                     var c = encoded[i];
                     if (char.IsWhiteSpace(c))
                         continue;
+
                     if (urlSafe) {
                         if (c == '-')
                             c = '+';
@@ -689,9 +679,8 @@ public static class BinaryEncoding
 
                 working = span;
             }
-            else {
+            else
                 working = encoded;
-            }
 
 #if NET5_0_OR_GREATER
             return Convert.TryFromBase64Chars(working, destination, out bytesWritten);
@@ -700,6 +689,7 @@ public static class BinaryEncoding
                 var bytes = Convert.FromBase64String(working.ToString());
                 if (destination.Length < bytes.Length)
                     return false;
+
                 bytes.CopyTo(destination);
                 bytesWritten = bytes.Length;
                 return true;
@@ -730,7 +720,6 @@ public static class BinaryEncoding
             return true;
         }
 #endif
-
         for (var i = 0; i < data.Length; i++) {
             var b = data[i];
             destination[i * 2] = letterCase == TextLetterCase.Upper ? NibbleToHexUpper(b >> 4) : NibbleToHexLower(b >> 4);
@@ -755,12 +744,12 @@ public static class BinaryEncoding
             if (v < 0)
                 return false;
 
-            if (pending < 0) {
+            if (pending < 0)
                 pending = v;
-            }
             else {
                 if (bytesWritten >= destination.Length)
                     return false;
+
                 destination[bytesWritten++] = (byte)((pending << 4) | v);
                 pending = -1;
             }
@@ -779,8 +768,10 @@ public static class BinaryEncoding
     {
         if (c is >= '0' and <= '9')
             return c - '0';
+
         if (c is >= 'a' and <= 'f')
             return c - 'a' + 10;
+
         return c is >= 'A' and <= 'F' ? c - 'A' + 10 : -1;
     }
 }

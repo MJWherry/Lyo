@@ -153,14 +153,8 @@ app.MapLyoAuthSignOut();
 // File Storage Workbench download: asks Test API for a time-limited storage URL when safe (plain files → e.g. S3 presigned), redirects the browser there so bytes never cross Gateway; otherwise streams decrypted output from Test API.
 app.MapGet(
         $"/{Constants.FileStorageWorkbench.ProxyDownloadRoute}/{{fileId:guid}}", async (
-            HttpContext http,
-            Guid fileId,
-            double? expiresHours,
-            IApiClient apiClient,
-            IHttpClientFactory httpClientFactory,
-            IOptions<FileStorageWorkbenchOptions> fsw,
-            IOptions<ApiClientOptions> apiOptions,
-            CancellationToken ct) => {
+            HttpContext http, Guid fileId, double? expiresHours, IApiClient apiClient, IHttpClientFactory httpClientFactory, IOptions<FileStorageWorkbenchOptions> fsw,
+            IOptions<ApiClientOptions> apiOptions, CancellationToken ct) => {
             if (!fsw.Value.UseRemoteApiServices)
                 return Results.Problem("File storage workbench is not configured to use Test API services.", statusCode: StatusCodes.Status400BadRequest);
 

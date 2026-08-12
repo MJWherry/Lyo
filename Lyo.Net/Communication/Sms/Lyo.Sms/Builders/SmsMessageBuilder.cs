@@ -121,7 +121,7 @@ public sealed class SmsMessageBuilder
             From = _request.From,
             To = _request.To,
             Body = _request.Body,
-            MediaUrls = [.._request.MediaUrls]
+            MediaUrls = [.. _request.MediaUrls]
         };
     }
 

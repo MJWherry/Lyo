@@ -23,14 +23,28 @@
             },
             "items": {
               "type": "array",
-              "items": { "$ref": "#/$defs/listItem" },
+              "items": {
+                "$ref": "#/$defs/listItem"
+              },
               "description": "Nested sub-bullets."
             }
           },
           "anyOf": [
-            { "required": ["text"] },
-            { "required": ["title"] },
-            { "required": ["items"] }
+            {
+              "required": [
+                "text"
+              ]
+            },
+            {
+              "required": [
+                "title"
+              ]
+            },
+            {
+              "required": [
+                "items"
+              ]
+            }
           ]
         }
       ]
@@ -39,69 +53,126 @@
   "oneOf": [
     {
       "type": "object",
-      "required": ["type", "text"],
+      "required": [
+        "type",
+        "text"
+      ],
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "paragraph" },
-        "title": { "type": "string" },
-        "text": { "type": "string" }
-      }
-    },
-    {
-      "type": "object",
-      "required": ["type", "items"],
-      "additionalProperties": false,
-      "properties": {
-        "type": { "const": "list" },
-        "title": { "type": "string" },
-        "ordered": { "type": "boolean" },
-        "items": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/listItem" }
+        "type": {
+          "const": "paragraph"
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       }
     },
     {
       "type": "object",
-      "required": ["type", "language", "code"],
+      "required": [
+        "type",
+        "items"
+      ],
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "code" },
-        "title": { "type": "string" },
-        "language": { "type": "string" },
-        "code": { "type": "string" }
+        "type": {
+          "const": "list"
+        },
+        "title": {
+          "type": "string"
+        },
+        "ordered": {
+          "type": "boolean"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/listItem"
+          }
+        }
       }
     },
     {
       "type": "object",
-      "required": ["type", "headers", "rows"],
+      "required": [
+        "type",
+        "language",
+        "code"
+      ],
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "table" },
-        "title": { "type": "string" },
+        "type": {
+          "const": "code"
+        },
+        "title": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "headers",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "table"
+        },
+        "title": {
+          "type": "string"
+        },
         "headers": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "rows": {
           "type": "array",
           "items": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "lead": { "type": "string" },
-        "trail": { "type": "string" }
+        "lead": {
+          "type": "string"
+        },
+        "trail": {
+          "type": "string"
+        }
       }
     },
     {
       "type": "object",
-      "required": ["type", "body"],
+      "required": [
+        "type",
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "markdown" },
-        "title": { "type": "string" },
-        "body": { "type": "string" }
+        "type": {
+          "const": "markdown"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
       }
     }
   ]

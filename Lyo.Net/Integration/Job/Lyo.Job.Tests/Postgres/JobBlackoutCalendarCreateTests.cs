@@ -88,7 +88,7 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         Assert.Equal(schedules[0].JobBlackoutCalendarId, schedules[1].JobBlackoutCalendarId);
         var calendar = schedules[0].JobBlackoutCalendar;
         Assert.NotNull(calendar);
-        Assert.Equal("Maintenance", calendar!.Name);
+        Assert.Equal("Maintenance", calendar.Name);
         Assert.True(calendar.Enabled);
         Assert.NotEqual(default, calendar.CreatedTimestamp);
         var window = Assert.Single(calendar.JobBlackoutWindows);

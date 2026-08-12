@@ -399,8 +399,7 @@ catch (Exception ex)
 
 ## Metric Types — Counters
 
-Counters are monotonic values that only increase (or decrease). They're perfect for tracking totals, rates, and
-occurrences.
+Counters are monotonic values that only increase (or decrease). They're perfect for tracking totals, rates, and occurrences.
 
 ```csharp
 // Increment by 1 (default)
@@ -418,8 +417,7 @@ metrics.IncrementCounter("requests.total", tags: [("method", "POST"), ("endpoint
 
 ## Metric Types — Gauges
 
-Gauges represent a current value at a point in time. They're perfect for tracking current state like cache size, queue
-length, or memory usage.
+Gauges represent a current value at a point in time. They're perfect for tracking current state like cache size, queue length, or memory usage.
 
 ```csharp
 // Record current value
@@ -434,8 +432,7 @@ metrics.RecordGauge("queue.length", 42, tags: [("queue_name", "email_queue")]);
 
 ## Metric Types — Histograms
 
-Histograms track the distribution of values. They're perfect for tracking response times, sizes, or any numeric
-distribution.
+Histograms track the distribution of values. They're perfect for tracking response times, sizes, or any numeric distribution.
 
 ```csharp
 // Record a value
@@ -479,7 +476,9 @@ Configure the behavior of `MetricsService`:
 
 ## Dependency Injection Configuration
 
-The `IServiceCollection` registrations live in `Lyo.Metrics.Extensions` and cover: parameterless, `Action<MetricsOptions>`, `Action<IServiceProvider, MetricsOptions>`, `Func<IServiceProvider, MetricsOptions>`, and `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = "MetricsOptions")`. `AddNullMetrics()` registers `NullMetrics` for the same `IMetrics` contract.
+The `IServiceCollection` registrations live in `Lyo.Metrics.Extensions` and cover: parameterless, `Action<MetricsOptions>`, `Action<IServiceProvider, MetricsOptions>`,
+`Func<IServiceProvider, MetricsOptions>`, and `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = "MetricsOptions")`. `AddNullMetrics()` registers
+`NullMetrics` for the same `IMetrics` contract.
 
 ## Implementations — MetricsService (In-Memory)
 
@@ -508,8 +507,7 @@ var metrics = new MetricsService(new MetricsOptions { ... });
 
 ## Implementations — OpenTelemetryMetrics
 
-Implementation that exports metrics to OpenTelemetry. Perfect for production deployments requiring distributed
-observability.
+Implementation that exports metrics to OpenTelemetry. Perfect for production deployments requiring distributed observability.
 
 ```csharp
 using Lyo.Metrics.OpenTelemetry;
@@ -543,8 +541,8 @@ See [Lyo.Metrics.OpenTelemetry README](../Lyo.Metrics.OpenTelemetry/README.md) f
 
 ## Implementations — NullMetrics
 
-No-op implementation for testing or when metrics are optional. The class is a singleton (`NullMetrics.Instance`) with a private constructor; use the DI extension or
-the static instance directly.
+No-op implementation for testing or when metrics are optional. The class is a singleton (`NullMetrics.Instance`) with a private constructor; use the DI extension or the static
+instance directly.
 
 ```csharp
 services.AddNullMetrics();

@@ -205,7 +205,7 @@ using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
 var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
-var twilio = sp.GetRequiredService<ISmsService>() as TwilioSmsService;
+var twilio = sp.GetRequiredService<ISmsService>() as TwilioSmsService ?? throw new InvalidOperationException("TwilioSmsService is not registered.");
 var results = await twilio.GetMessagesAsync(TwilioMessageQueryBuilder.New().Inbound().WithDateRange(new(2026, 7, 4, 0, 0, 0), new(2026, 7, 4, 23, 59, 59)).Build());
 //var pws = pw.CreateSession();
 //await pws.StartBrowserAsync();

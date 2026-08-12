@@ -1,8 +1,6 @@
-using System.Text;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.TextEncoding;
-using TextEncoding = System.Text.Encoding;
 
 namespace Lyo.Cli.Services;
 
@@ -17,12 +15,7 @@ internal static class CliEncoding
             var _ => throw new ArgumentException($"Unknown encoding kind '{name}'. Use base64, base64url, or hex.")
         };
 
-    public static async Task EncodeAsync(
-        BinaryEncodingKind kind,
-        Stream input,
-        TextWriter output,
-        TextLetterCase hexCase,
-        CancellationToken ct)
+    public static async Task EncodeAsync(BinaryEncodingKind kind, Stream input, TextWriter output, TextLetterCase hexCase, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(input);
         ArgumentHelpers.ThrowIfNull(output);

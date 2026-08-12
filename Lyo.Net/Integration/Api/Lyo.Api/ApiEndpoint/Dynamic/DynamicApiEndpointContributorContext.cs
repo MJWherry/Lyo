@@ -23,10 +23,7 @@ internal sealed class DynamicApiEndpointContributorContext<TContext>(
         webApp.MapPost(
                 $"{entityRoute}/Export",
                 async (
-                    [FromRoute] string entityType,
-                    [FromBody] ExportRequest request,
-                    [FromServices] IExportService<TContext> exportService,
-                    HttpContext httpContext,
+                    [FromRoute] string entityType, [FromBody] ExportRequest request, [FromServices] IExportService<TContext> exportService, HttpContext httpContext,
                     CancellationToken ct) => await DynamicCrudEndpointBuilder.HandleExport(
                     registry, config, entityType, request, exportService, httpContext, SortDirection.Desc, ct))
             .WithTags("Dynamic")

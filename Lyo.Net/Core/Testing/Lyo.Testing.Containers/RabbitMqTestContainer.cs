@@ -9,14 +9,14 @@ namespace Lyo.Testing.Containers;
 /// </summary>
 public sealed class RabbitMqTestContainer : IAsyncDisposable
 {
-    private static readonly int AmqpPort = PortInfo.Amqp;
-    private static readonly int ManagementPort = PortInfo.RabbitMqManagement;
-
     /// <summary>Username configured on the container.</summary>
     public const string DefaultUsername = "rabbitmq";
 
     /// <summary>Password configured on the container.</summary>
     public const string DefaultPassword = "rabbitmq";
+
+    private static readonly int AmqpPort = PortInfo.Amqp;
+    private static readonly int ManagementPort = PortInfo.RabbitMqManagement;
 
     private readonly RabbitMqContainer _container;
     private bool _started;

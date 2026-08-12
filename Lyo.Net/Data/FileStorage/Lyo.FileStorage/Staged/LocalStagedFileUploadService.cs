@@ -59,9 +59,10 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
 
     public async Task<StagedUploadBeginResult> BeginAsync(StagedUploadBeginRequest request, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(_options.DirectUploadReceiveBaseUri))
+        if (string.IsNullOrWhiteSpace(_options.DirectUploadReceiveBaseUri)) {
             throw new ConfigurationException(
                 "Local staged upload requires DiskFileStorageOptions.DirectUploadReceiveBaseUri.", nameof(DiskFileStorageOptions.DirectUploadReceiveBaseUri));
+        }
 
         var (result, _) = await _coordinator.BeginCoreAsync(request, ct).ConfigureAwait(false);
         return result;

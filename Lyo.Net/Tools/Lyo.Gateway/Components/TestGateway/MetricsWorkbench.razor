@@ -58,7 +58,7 @@
                     </MudAlert>
                 }
                 else {
-                    <MudTabs Rounded="true" PanelClass="pa-0">
+                    <MudTabs Rounded="true" TabPanelsClass="pa-0">
                         <MudTabPanel Text="@($"Counters ({FilteredCounters.Count})")">
                             @if (FilteredCounters.Count == 0) {
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">No counter metrics match the current filter.</MudText>

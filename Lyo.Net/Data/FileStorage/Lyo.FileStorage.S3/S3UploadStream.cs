@@ -26,8 +26,8 @@ internal sealed class S3UploadStream : Stream
     private string? _contentType = FileTypeInfo.Unknown.MimeType;
     private bool _disposed;
     private Stream _innerStream;
-    private bool _spooled;
     private string? _spoolPath;
+    private bool _spooled;
     private bool _uploaded;
 
     public override bool CanRead => _innerStream.CanRead;

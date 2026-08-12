@@ -23,7 +23,7 @@ internal sealed class AesCcmStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamC
 
     public void Encrypt(ReadOnlySpan<byte> plaintext, ReadOnlySpan<byte> nonce, Span<byte> ciphertextAndTag, ReadOnlySpan<byte> associatedData = default)
     {
-        AesCcmHelper.ValidatePlaintextLength(plaintext.Length, nameof(plaintext));
+        AesCcmHelper.ValidatePlaintextLength(plaintext.Length);
         nonce.CopyTo(_nonceBuffer);
         _cipher.Init(true, new AeadParameters(_key, AesCcmHelper.TagSize * 8, _nonceBuffer, associatedData.IsEmpty ? null : associatedData.ToArray()));
         EnsureBuffer(plaintext.Length);

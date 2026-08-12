@@ -1,4 +1,5 @@
 using System.Net;
+using Lyo.Common.Extensions;
 using Lyo.Diagnostic.Correlation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -33,8 +34,8 @@ public static class ServiceCollectionExtensions
             .ConfigureHttpClient((provider, client) => {
                 var options = provider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
                 ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
-                if (!string.IsNullOrWhiteSpace(options.BaseUrl))
-                    client.BaseAddress = new(options.BaseUrl.TrimEnd('/') + "/");
+                if (!options.BaseUrl.IsNullOrWhitespace())
+                    client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
             })
             .ConfigurePrimaryHttpMessageHandler(provider => {
                 var options = provider.GetRequiredService<IOptions<ApiClientOptions>>().Value;

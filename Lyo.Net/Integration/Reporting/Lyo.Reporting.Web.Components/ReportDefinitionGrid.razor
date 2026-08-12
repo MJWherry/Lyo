@@ -60,8 +60,7 @@
         <LyoProjectedColumn Field="IsActive" Title="Active" Align="Align.Center" HeaderStyle="width: 90px;">
             <CellContent Context="item">
                 @{
-                    var active = ProjectedValueHelper.GetValue(item, "IsActive") is true
-                                 || string.Equals(ProjectedValueHelper.GetDisplayValue(item, "IsActive"), "True", StringComparison.OrdinalIgnoreCase);
+                    var active = ProjectedValueHelper.GetValue(item, "IsActive") is true || string.Equals(ProjectedValueHelper.GetDisplayValue(item, "IsActive"), "True", StringComparison.OrdinalIgnoreCase);
                 }
                 <MudChip T="string" Size="Size.Small" Color="@(active ? Color.Success : Color.Default)">@(active ? "Active" : "Off")</MudChip>
             </CellContent>

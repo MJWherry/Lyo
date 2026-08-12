@@ -1,6 +1,7 @@
 # Lyo.ContactUs
 
-Core abstractions for contact-form submission. The interface (`IContactUsService`) and a `ContactUsServiceBase` that handles validation, error-code mapping, and logging live here; concrete storage implementations live in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).
+Core abstractions for contact-form submission. The interface (`IContactUsService`) and a `ContactUsServiceBase` that handles validation, error-code mapping, and logging live here;
+concrete storage implementations live in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).
 
 ## Examples
 
@@ -52,13 +53,15 @@ else
 
 ## Surface — `ContactUsServiceBase`
 
-- `ValidateRequest(ContactUsRequest)` (virtual; default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` … `Options.MaxMessageLength`).
+- `ValidateRequest(ContactUsRequest)` (virtual; default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` …
+  `Options.MaxMessageLength`).
 - `SubmitCoreAsync(ContactUsRequest, CancellationToken)` (abstract; actually persist the row).
 - `TestConnectionAsync(CancellationToken)` (abstract; probe the backend).
 
 ## Surface — Request / result models (`Lyo.ContactUs.Models`)
 
-- `ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional `Company` (≤ 200).
+- `ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional
+  `Company` (≤ 200).
 - `ContactUsServiceOptions`: `SectionName = "ContactUsOptions"`, `MaxMessageLength` (default `10000`), `MinMessageLength` (default `10`), `EnableMetrics` (default `false`).
 - `ContactUsSubmitResult` *(derives from `Lyo.Result.Result<Guid?>`)*: `SubmissionId`, `Message`, plus `FromSuccess` / `FromException` / `FromError` factories.
 
@@ -66,7 +69,8 @@ else
 
 - `services.AddContactUsService<TService, TOptions>(Action<TOptions>? configure = null)` — generic registration of a custom `IContactUsService` + options type.
 - `services.AddContactUsService<TService>(ContactUsServiceOptions options)` — same with a pre-built options instance.
-- `services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` — binds only the shared `ContactUsServiceOptions` (idempotent — skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service.
+- `services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` — binds only the shared `ContactUsServiceOptions`
+  (idempotent — skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service.
 
 ## Configuration
 

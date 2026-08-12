@@ -9,7 +9,7 @@
                 <MudText Typo="Typo.body2" Color="Color.Secondary">No where clause to display</MudText>
             }
             else {
-                <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" ApplyEffectsToContainer="true" PanelClass="pt-3">
+                <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" ApplyEffectsToContainer="true" TabPanelsClass="pt-3">
                     <MudTabPanel Text="Readable">
                         <pre class="where-clause-view-pre">@_readableText</pre>
                     </MudTabPanel>

@@ -70,6 +70,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <param name="metrics">Optional metrics.</param>
     /// <param name="maxRequeueCount">Max requeue attempts before the message is routed to the DLQ.</param>
     /// <param name="dlqName">Dead-letter queue name. When null, messages exceeding the requeue limit are dropped.</param>
+    /// <param name="parameterEncryption">Optional service for decrypting encrypted job run parameters.</param>
     protected JobWorkerBase(
         IMqService mqService,
         IJobClient jobClient,

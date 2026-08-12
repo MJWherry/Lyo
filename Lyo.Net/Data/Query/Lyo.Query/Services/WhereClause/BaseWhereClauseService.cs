@@ -68,11 +68,12 @@ public class BaseWhereClauseService : IWhereClauseService
         .Where(m => m.Name is "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending")
         .ToArray();
 
-    private readonly ILogger<BaseWhereClauseService> _logger;
-    private readonly IMetrics _metrics;
     protected readonly ICacheService Cache;
     protected readonly CacheOptions CacheOptions;
     protected readonly IValueConversionService ValueConversion;
+
+    private readonly ILogger<BaseWhereClauseService> _logger;
+    private readonly IMetrics _metrics;
 
     /// <summary>Initializes a new instance of <see cref="BaseWhereClauseService" />.</summary>
     /// <param name="cache">Cache for compiled predicates and matchers.</param>

@@ -30,7 +30,7 @@ public sealed class DeterministicPayloadStreamTests
     [Fact]
     public void Length_and_eof_are_honoured()
     {
-        using var stream = new DeterministicPayloadStream(5, seed: 1);
+        using var stream = new DeterministicPayloadStream(5, 1);
         Assert.Equal(5, stream.Length);
         var buf = new byte[8];
         Assert.Equal(5, stream.Read(buf, 0, 8));
@@ -41,7 +41,7 @@ public sealed class DeterministicPayloadStreamTests
     [Fact]
     public void Seek_zero_replays_sequence()
     {
-        using var stream = new DeterministicPayloadStream(64, seed: 7);
+        using var stream = new DeterministicPayloadStream(64, 7);
         var first = new byte[64];
         var second = new byte[64];
         _ = stream.Read(first, 0, 64);
@@ -53,10 +53,10 @@ public sealed class DeterministicPayloadStreamTests
     [Fact]
     public void Write_throws()
     {
-        using var stream = new DeterministicPayloadStream(1, seed: 0);
+        using var stream = new DeterministicPayloadStream(1, 0);
         Assert.Throws<NotSupportedException>(() => stream.Write([1], 0, 1));
     }
 
     [Fact]
-    public void Negative_length_throws() => Assert.ThrowsAny<ArgumentException>(() => new DeterministicPayloadStream(-1, seed: 0));
+    public void Negative_length_throws() => Assert.ThrowsAny<ArgumentException>(() => new DeterministicPayloadStream(-1, 0));
 }

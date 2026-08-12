@@ -105,7 +105,6 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         // prefix through nonceLen; SIV‖ciphertext written contiguously after that (tagSize=0).
         var prefixLen = 1 + 4 + keyIdBytes.Length + GetBinaryWriterStringByteCount(versionString) + 4;
         var result = new byte[prefixLen + SivSize + plaintext.Length];
-
         var o = 0;
         result[o++] = formatVersion;
         BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(o, 4), keyIdBytes.Length);
@@ -167,14 +166,12 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var nonceLength = BinaryPrimitives.ReadInt32LittleEndian(encrypted.Slice(o, 4));
         o += 4;
         ArgumentHelpers.ThrowIfNotInRange(nonceLength, SivSize, SivSize, nameof(encrypted), $"Invalid synthetic IV length: {nonceLength}. Expected {SivSize} bytes.");
-
         if (encrypted.Length - o < SivSize)
             throw new InvalidDataException("Invalid encrypted data format: truncated synthetic IV or ciphertext.");
 
         // Contiguous SIV‖body as required by Dorssel.
         var combined = encrypted[o..];
         var bodyLength = combined.Length - SivSize;
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;

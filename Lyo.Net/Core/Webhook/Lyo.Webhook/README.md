@@ -1,6 +1,7 @@
 # Lyo.Webhook
 
-Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and **structured logging** via `Microsoft.Extensions.Logging`.
+Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and
+counters**, and **structured logging** via `Microsoft.Extensions.Logging`.
 
 Provider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.
 
@@ -10,7 +11,8 @@ Provider-specific algorithms (e.g. Twilio) live in separate packages such as **L
 - **Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)
 - **ASP.NET Core**: read raw body, header dictionary, public URL, optional **form-urlencoded** parameters for signed form posts
 - **Fluent routes**: `MapWebhook("/path").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`
-- **Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors
+- **Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON
+  parse failures, handler errors
 - **Logging**: category **`Lyo.Webhook`** (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)
 
 ## Examples
@@ -43,7 +45,8 @@ app.MapWebhook("/webhooks/json-example")
 
 ## Registration
 
-Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used.
+Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **
+`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used.
 
 ## Fluent mapping
 
@@ -53,7 +56,8 @@ Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services)
 
 ## Manual verification (no fluent API)
 
-Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBodyAsync`, `ToWebhookHeaderDictionary`, `GetPublicRequestUrl`) to build a `WebhookVerificationContext` and call your `IWebhookSignatureVerifier` directly.
+Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBodyAsync`, `ToWebhookHeaderDictionary`, `GetPublicRequestUrl`) to build a `WebhookVerificationContext`
+and call your `IWebhookSignatureVerifier` directly.
 
 ## Target framework
 

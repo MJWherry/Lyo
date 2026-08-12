@@ -9,12 +9,10 @@ using System.Diagnostics;
 namespace Lyo.Common.Pathing;
 
 /// <summary>
-/// Path combine / normalize / jail helpers for host filesystems and POSIX-style virtual roots (in-memory, SFTP).
-/// Throw helpers mirror <see cref="UriHelpers" /> and use <see cref="InvalidFormatException" />.
+/// Path combine / normalize / jail helpers for host filesystems and POSIX-style virtual roots (in-memory, SFTP). Throw helpers mirror <see cref="UriHelpers" /> and use
+/// <see cref="InvalidFormatException" />.
 /// </summary>
-/// <remarks>
-/// Optional name parameters use <see cref="CallerArgumentExpressionAttribute" /> like <see cref="ArgumentHelpers" />.
-/// </remarks>
+/// <remarks>Optional name parameters use <see cref="CallerArgumentExpressionAttribute" /> like <see cref="ArgumentHelpers" />.</remarks>
 public static class PathHelpers
 {
     private const char PosixSeparator = '/';
@@ -27,8 +25,7 @@ public static class PathHelpers
         => throw new InvalidFormatException(message, paramName, invalidValue, expectedFormat);
 
     /// <summary>Returns the directory separator character for <paramref name="style" />.</summary>
-    public static char GetDirectorySeparator(PathStyle style)
-        => style == PathStyle.Host ? Path.DirectorySeparatorChar : PosixSeparator;
+    public static char GetDirectorySeparator(PathStyle style) => style == PathStyle.Host ? Path.DirectorySeparatorChar : PosixSeparator;
 
     /// <summary>Throws <see cref="ArgumentException" /> when <paramref name="path" /> is null, empty, or whitespace.</summary>
 #if NET6_0_OR_GREATER
@@ -49,6 +46,7 @@ public static class PathHelpers
             var invalid = Path.GetInvalidPathChars();
             if (path.IndexOfAny(invalid) >= 0)
                 ThrowInvalidFormat($"Path contains invalid characters: {path}", paramName, path, "Path without invalid path characters");
+
             return;
         }
 
@@ -61,13 +59,9 @@ public static class PathHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
-    public static void ThrowIfEscapesRoot(
-        PathStyle style,
-        string root,
-        [NotNull] string? candidate,
-        [CallerArgumentExpression("candidate")] string? paramName = null)
+    public static void ThrowIfEscapesRoot(PathStyle style, string root, [NotNull] string? candidate, [CallerArgumentExpression("candidate")] string? paramName = null)
     {
-        ThrowIfNullOrWhiteSpace(root, nameof(root));
+        ThrowIfNullOrWhiteSpace(root);
         ThrowIfNullOrWhiteSpace(candidate, paramName);
         if (!IsUnderRoot(style, root, candidate))
             ThrowInvalidFormat($"Path escapes root '{root}': {candidate}", paramName, candidate, $"Path under root {root}");
@@ -82,9 +76,7 @@ public static class PathHelpers
         var sep = GetDirectorySeparator(style);
         var fullRootTrimmed = TrimTrailingSeparators(GetFullPath(style, root), style);
         var fullCandidate = GetFullPath(style, candidate);
-        var comparison = style == PathStyle.Host && OperatingSystemIsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        var comparison = style == PathStyle.Host && OperatingSystemIsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         // POSIX filesystem root: every absolute path is under "/".
         if (style == PathStyle.Posix && fullRootTrimmed is "/")
@@ -111,6 +103,7 @@ public static class PathHelpers
         foreach (var segment in segments) {
             if (string.IsNullOrEmpty(segment))
                 continue;
+
             if (result is null) {
                 result = NormalizeSeparators(segment, PathStyle.Posix);
                 continue;
@@ -121,17 +114,15 @@ public static class PathHelpers
                 continue;
             }
 
-            result = TrimTrailingSeparators(result, PathStyle.Posix) + PosixSeparator
-                     + NormalizeSeparators(segment, PathStyle.Posix).TrimStart(PosixSeparator);
+            result = TrimTrailingSeparators(result, PathStyle.Posix) + PosixSeparator + NormalizeSeparators(segment, PathStyle.Posix).TrimStart(PosixSeparator);
         }
 
         return result ?? string.Empty;
     }
 
     /// <summary>
-    /// Normalizes <paramref name="path" /> and resolves <c>.</c> / <c>..</c> within <paramref name="style" /> semantics.
-    /// For <see cref="PathStyle.Host" />, delegates to <see cref="Path.GetFullPath(string)" />.
-    /// For <see cref="PathStyle.Posix" />, does not consult the OS; absolute paths start with <c>/</c>.
+    /// Normalizes <paramref name="path" /> and resolves <c>.</c> / <c>..</c> within <paramref name="style" /> semantics. For <see cref="PathStyle.Host" />, delegates to
+    /// <see cref="Path.GetFullPath(string)" />. For <see cref="PathStyle.Posix" />, does not consult the OS; absolute paths start with <c>/</c>.
     /// </summary>
     public static string GetFullPath(PathStyle style, string path)
     {
@@ -146,11 +137,13 @@ public static class PathHelpers
         foreach (var part in parts) {
             if (part is ".")
                 continue;
+
             if (part is "..") {
                 if (stack.Count > 0)
                     stack.RemoveAt(stack.Count - 1);
                 else if (!absolute)
                     stack.Add("..");
+
                 continue;
             }
 
@@ -180,8 +173,10 @@ public static class PathHelpers
         var idx = trimmed.LastIndexOf(PosixSeparator);
         if (idx < 0)
             return null;
+
         if (idx == 0)
             return PosixSeparator.ToString();
+
         return trimmed[..idx];
     }
 

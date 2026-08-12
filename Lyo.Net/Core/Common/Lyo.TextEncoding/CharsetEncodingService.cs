@@ -23,8 +23,7 @@ public sealed class CharsetEncodingService : ICharsetEncodingService
     public Encoding GetEncoding(string nameOrCodePage) => CharsetEncoding.GetEncoding(nameOrCodePage, _options);
 
     /// <inheritdoc />
-    public bool TryGetEncoding(string nameOrCodePage, out Encoding? encoding)
-        => CharsetEncoding.TryGetEncoding(nameOrCodePage, out encoding, _options);
+    public bool TryGetEncoding(string nameOrCodePage, out Encoding? encoding) => CharsetEncoding.TryGetEncoding(nameOrCodePage, out encoding, _options);
 
     /// <inheritdoc />
     public Encoding GetEncoding(int codePage) => CharsetEncoding.GetEncoding(codePage, _options);
@@ -45,8 +44,7 @@ public sealed class CharsetEncodingService : ICharsetEncodingService
     public CharsetDetectionResult DetectEncoding(Stream stream) => CharsetEncoding.DetectEncoding(stream, _options);
 
     /// <inheritdoc />
-    public Stream CreateReplayStream(Stream stream, CharsetDetectionResult detection, bool leaveOpen = true)
-        => CharsetEncoding.CreateReplayStream(stream, detection, leaveOpen);
+    public Stream CreateReplayStream(Stream stream, CharsetDetectionResult detection, bool leaveOpen = true) => CharsetEncoding.CreateReplayStream(stream, detection, leaveOpen);
 
     /// <inheritdoc />
     public CharsetConvertingStream CreateConvertingStream(Stream inner, Encoding from, Encoding to, bool leaveOpen = true)
@@ -57,15 +55,13 @@ public sealed class CharsetEncodingService : ICharsetEncodingService
         => CharsetEncoding.CreateConvertingStream(inner, from, to, leaveOpen, _options);
 
     /// <inheritdoc />
-    public Task<CharsetDetectionResult> DetectEncodingFileAsync(string path, CancellationToken ct = default)
-        => CharsetEncoding.DetectEncodingFileAsync(path, _options, ct);
+    public Task<CharsetDetectionResult> DetectEncodingFileAsync(string path, CancellationToken ct = default) => CharsetEncoding.DetectEncodingFileAsync(path, _options, ct);
 
     /// <inheritdoc />
     public CharsetDetectionResult DetectEncodingFromText(string text) => CharsetEncoding.DetectEncodingFromText(text, _options);
 
     /// <inheritdoc />
-    public bool TryDetectEncodingFromText(string text, out CharsetDetectionResult? result)
-        => CharsetEncoding.TryDetectEncodingFromText(text, out result, _options);
+    public bool TryDetectEncodingFromText(string text, out CharsetDetectionResult? result) => CharsetEncoding.TryDetectEncodingFromText(text, out result, _options);
 
     /// <inheritdoc />
     public byte[] GetBytes(string text, Encoding? encoding = null) => CharsetEncoding.GetBytes(text, encoding, _options);
@@ -118,28 +114,22 @@ public sealed class CharsetEncodingService : ICharsetEncodingService
         => CharsetEncoding.WriteAsync(stream, text, encoding, leaveOpen, emitBom, _options, ct);
 
     /// <inheritdoc />
-    public Task<byte[]> ReadAllBytesAsync(string path, CancellationToken ct = default)
-        => CharsetEncoding.ReadAllBytesAsync(path, ct);
+    public Task<byte[]> ReadAllBytesAsync(string path, CancellationToken ct = default) => CharsetEncoding.ReadAllBytesAsync(path, ct);
 
     /// <inheritdoc />
-    public byte[] Convert(ReadOnlySpan<byte> bytes, Encoding from, Encoding to)
-        => CharsetEncoding.Convert(bytes, from, to, _options);
+    public byte[] Convert(ReadOnlySpan<byte> bytes, Encoding from, Encoding to) => CharsetEncoding.Convert(bytes, from, to, _options);
 
     /// <inheritdoc />
-    public byte[] Convert(ReadOnlySpan<byte> bytes, CharsetInfo from, CharsetInfo to)
-        => CharsetEncoding.Convert(bytes, from, to, _options);
+    public byte[] Convert(ReadOnlySpan<byte> bytes, CharsetInfo from, CharsetInfo to) => CharsetEncoding.Convert(bytes, from, to, _options);
 
     /// <inheritdoc />
-    public byte[] Convert(byte[] bytes, Encoding from, Encoding to)
-        => CharsetEncoding.Convert(bytes, from, to, _options);
+    public byte[] Convert(byte[] bytes, Encoding from, Encoding to) => CharsetEncoding.Convert(bytes, from, to, _options);
 
     /// <inheritdoc />
-    public void Convert(Stream input, Stream output, Encoding from, Encoding to)
-        => CharsetEncoding.Convert(input, output, from, to, _options);
+    public void Convert(Stream input, Stream output, Encoding from, Encoding to) => CharsetEncoding.Convert(input, output, from, to, _options);
 
     /// <inheritdoc />
-    public void Convert(Stream input, Stream output, CharsetInfo from, CharsetInfo to)
-        => CharsetEncoding.Convert(input, output, from, to, _options);
+    public void Convert(Stream input, Stream output, CharsetInfo from, CharsetInfo to) => CharsetEncoding.Convert(input, output, from, to, _options);
 
     /// <inheritdoc />
     public Task ConvertAsync(Stream input, Stream output, Encoding from, Encoding to, CancellationToken ct = default)

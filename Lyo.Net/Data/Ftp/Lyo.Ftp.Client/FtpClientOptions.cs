@@ -1,6 +1,5 @@
 using Lyo.Common.Records;
 using Lyo.Exceptions;
-using Lyo.Exceptions.Models;
 
 namespace Lyo.Ftp.Client;
 
@@ -41,8 +40,8 @@ public sealed class FtpClientOptions
     public int MaxPooledClients { get; set; } = 4;
 
     /// <summary>
-    /// Optional passive data-port range advertised by the server (inclusive). When set, FluentFTP is configured for PASV and
-    /// callers should publish the same host ports (1:1) for NAT/Testcontainers.
+    /// Optional passive data-port range advertised by the server (inclusive). When set, FluentFTP is configured for PASV and callers should publish the same host ports (1:1) for
+    /// NAT/Testcontainers.
     /// </summary>
     public (int Min, int Max)? PassivePortRange { get; set; }
 
@@ -56,9 +55,8 @@ public sealed class FtpClientOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(Username);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootRemoteDirectory);
         FormatHelpers.ThrowIfInvalidPort(Port);
-        FormatHelpers.ThrowIfNotInRange(MaxPooledClients, min: 1);
+        FormatHelpers.ThrowIfNotInRange(MaxPooledClients, 1);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(Password);
-
         if (PassivePortRange is { } range) {
             FormatHelpers.ThrowIfInvalidPort(range.Min);
             FormatHelpers.ThrowIfInvalidPort(range.Max);

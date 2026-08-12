@@ -1,10 +1,8 @@
 # Architecture
 
-Lyo is a taxonomy-first monorepo: roughly one folder per NuGet-style package,
-grouped into top-level areas under [`Lyo.Net/`](../Lyo.Net/). A package's area is
-decided by *what kind of thing it is* (an archetype), not by which vendor it
-talks to. This page is the high-level map; the authoritative, detailed standard
-is [`Lyo.Net/docs/package-layout.md`](../Lyo.Net/docs/package-layout.md).
+Lyo is a taxonomy-first monorepo: roughly one folder per NuGet-style package, grouped into top-level areas under [`Lyo.Net/`](../Lyo.Net/). A package's area is decided by *what
+kind of thing it is* (an archetype), not by which vendor it talks to. This page is the high-level map; the authoritative, detailed standard is [
+`Lyo.Net/docs/package-layout.md`](../Lyo.Net/docs/package-layout.md).
 
 ## Areas
 
@@ -25,19 +23,15 @@ A live, interactive view of the actual project-reference graph is generated into
 
 ## Archetypes
 
-Every package is classified by archetype, which determines where it lives and
-how it may depend on other packages:
+Every package is classified by archetype, which determines where it lives and how it may depend on other packages:
 
-- **A — Lyo domain (canonical):** shared business model + persistence owned by
-  Lyo (e.g. `Lyo.People.Models`, `Lyo.Geolocation.Postgres`). Lives in
+- **A — Lyo domain (canonical):** shared business model + persistence owned by Lyo (e.g. `Lyo.People.Models`, `Lyo.Geolocation.Postgres`). Lives in
   `Core/{Domain}/`. Must not reference vendor SDKs or clients.
-- **B — Capability + provider:** one Lyo interface, many vendor implementations
-  (e.g. `ITranslationService` + `Lyo.Translation.Google`). Lives in
+- **B — Capability + provider:** one Lyo interface, many vendor implementations (e.g. `ITranslationService` + `Lyo.Translation.Google`). Lives in
   `Communication/{Capability}/` or `Security/{Capability}/`.
 - **C — Vendor client:** a thin HTTP/SDK wrapper (e.g. `Lyo.Endato.Client`,
   `Lyo.Google.Geolocation.Client`). Lives in `Integration/{Vendor}/`.
-- **D — Vendor product vertical:** the integration *is* the product, with its own
-  models/schema (e.g. `Lyo.Discord.*`). Lives in `Integration/{Vendor}/`.
+- **D — Vendor product vertical:** the integration *is* the product, with its own models/schema (e.g. `Lyo.Discord.*`). Lives in `Integration/{Vendor}/`.
 - **E — Platform:** cross-cutting app infrastructure (`Api`, `Web`, `Job`,
   `Data/*`, `Features/*`, `Tools/*`).
 
@@ -62,10 +56,8 @@ flowchart TD
 **Allowed**
 
 - `Communication` / `Security` -> `Core`
-- `Integration` vendor client -> `Core` (e.g. a vendor client maps onto a Core
-  domain's models)
-- A `Communication` / `Security` provider -> an `Integration` vendor client
-  (the Typecast pattern: `Lyo.Tts.Typecast` -> `Lyo.Typecast.Client`)
+- `Integration` vendor client -> `Core` (e.g. a vendor client maps onto a Core domain's models)
+- A `Communication` / `Security` provider -> an `Integration` vendor client (the Typecast pattern: `Lyo.Tts.Typecast` -> `Lyo.Typecast.Client`)
 
 **Forbidden**
 
@@ -73,9 +65,8 @@ flowchart TD
 - Moving Archetype B providers out of `Communication`/`Security` into
   `Integration/{Vendor}/`
 
-Hosts do the wiring: a vendor client's DTOs are mapped to Core stores
-(`IPeopleStore`, `IGeolocationStore`, ...) at ingest. External source-type strings
-are defined in the vendor/mapper package, never in Core.
+Hosts do the wiring: a vendor client's DTOs are mapped to Core stores (`IPeopleStore`, `IGeolocationStore`, ...) at ingest. External source-type strings are defined in the
+vendor/mapper package, never in Core.
 
 ## Adding a new package
 
@@ -83,9 +74,7 @@ are defined in the vendor/mapper package, never in Core.
    [`package-layout.md`](../Lyo.Net/docs/package-layout.md#classification-checklist).
 2. Pick the folder and assembly name from the naming table.
 3. Verify the project references obey the dependency law above.
-4. Add a row to the relevant inventory section in `package-layout.md` if the
-   package is Integration, Communication, or Security.
+4. Add a row to the relevant inventory section in `package-layout.md` if the package is Integration, Communication, or Security.
 
-See [`package-layout.md`](../Lyo.Net/docs/package-layout.md) for worked examples
-(People + Endato, Geolocation + Google, Translation, Typecast, ESPN, Discord) and
-the full per-area inventory.
+See [`package-layout.md`](../Lyo.Net/docs/package-layout.md) for worked examples (People + Endato, Geolocation + Google, Translation, Typecast, ESPN, Discord) and the full per-area
+inventory.

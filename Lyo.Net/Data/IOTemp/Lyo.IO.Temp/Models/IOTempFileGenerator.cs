@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
+using Lyo.Common.Extensions;
 using Lyo.Common.Pathing;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
@@ -586,7 +587,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
                 }
                 else {
                     var parentDir = PathHelpers.GetDirectoryName(style, entryDest);
-                    if (!string.IsNullOrEmpty(parentDir))
+                    if (!parentDir.IsNullOrEmpty())
                         _ctx.Storage.CreateDirectory(parentDir);
 
                     using var entryStream = entry.Open();

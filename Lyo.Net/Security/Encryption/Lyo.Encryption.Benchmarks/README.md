@@ -36,29 +36,29 @@ dotnet run -c Release --project Lyo.Encryption.Benchmarks -- --job short --filte
 
 ## Benchmark classes
 
-| Class | What it measures |
-|-----------------------------------------|----------------------------------------------------|
-| `AesGcmEncryptionBenchmarks` | AES-GCM encrypt/decrypt @ 100 / 250 / 500 MiB |
-| `ChaCha20Poly1305EncryptionBenchmarks` | ChaCha20-Poly1305 @ 100 / 250 / 500 MiB |
-| `AesCcmEncryptionBenchmarks` | AES-CCM @ 100 / 250 / 500 MiB |
-| `AesSivEncryptionBenchmarks` | AES-SIV @ 100 / 250 / 500 MiB |
-| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 100 / 250 / 500 MiB (explicit key) |
-| `RsaEncryptionBenchmarks` | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB (asymmetric path) |
-| `AesGcmRsaEncryptionBenchmarks` | Hybrid RSA + AES-GCM @ 100 / 250 / 500 MiB |
-| `TwoKeyEncryptionBenchmarks` | Envelope (DEK/KEK) AES + ChaCha @ 100 MiB–2 GiB streaming |
-| `LargeFileStreamingBenchmarks` | Stream API AES-GCM / ChaCha / AES-SIV @ 100 MiB–2 GiB |
-| `AlgorithmComparisonBenchmarks` | Side-by-side all five symmetric AEAD @ 100 / 250 / 500 MiB |
+| Class                                   | What it measures                                           |
+|-----------------------------------------|------------------------------------------------------------|
+| `AesGcmEncryptionBenchmarks`            | AES-GCM encrypt/decrypt @ 100 / 250 / 500 MiB              |
+| `ChaCha20Poly1305EncryptionBenchmarks`  | ChaCha20-Poly1305 @ 100 / 250 / 500 MiB                    |
+| `AesCcmEncryptionBenchmarks`            | AES-CCM @ 100 / 250 / 500 MiB                              |
+| `AesSivEncryptionBenchmarks`            | AES-SIV @ 100 / 250 / 500 MiB                              |
+| `XChaCha20Poly1305EncryptionBenchmarks` | XChaCha @ 100 / 250 / 500 MiB (explicit key)               |
+| `RsaEncryptionBenchmarks`               | RSA 2048 OAEP-SHA256 @ 1 KB, 64 KB, 1 MB (asymmetric path) |
+| `AesGcmRsaEncryptionBenchmarks`         | Hybrid RSA + AES-GCM @ 100 / 250 / 500 MiB                 |
+| `TwoKeyEncryptionBenchmarks`            | Envelope (DEK/KEK) AES + ChaCha @ 100 MiB–2 GiB streaming  |
+| `LargeFileStreamingBenchmarks`          | Stream API AES-GCM / ChaCha / AES-SIV @ 100 MiB–2 GiB      |
+| `AlgorithmComparisonBenchmarks`         | Side-by-side all five symmetric AEAD @ 100 / 250 / 500 MiB |
 
 ## Headline results (June 2026, this hardware)
 
-| Workload | Fastest | Notes |
+| Workload              | Fastest                        | Notes                                               |
 |-----------------------|--------------------------------|-----------------------------------------------------|
-| Encrypt 1 MB | **AES-GCM 667 µs** (~1.5 GB/s) | ChaCha 920 µs; XChaCha 2.5 ms; CCM 12 ms; SIV 17 ms |
-| Decrypt 1 MB | **AES-GCM 621 µs** (~1.6 GB/s) | ChaCha 899 µs |
-| Stream encrypt 100 MB | **AES-GCM 114 ms** (~873 MB/s) | ChaCha 133 ms |
-| Hybrid encrypt 1 MB | **692 µs** | Near pure GCM; RSA wrap amortized |
-| RSA decrypt 1 MB | **2.51 s** | Not for bulk data |
-| Two-key encrypt 1 MB | **880 µs** (AES) | ~1.3× single-key |
+| Encrypt 1 MB          | **AES-GCM 667 µs** (~1.5 GB/s) | ChaCha 920 µs; XChaCha 2.5 ms; CCM 12 ms; SIV 17 ms |
+| Decrypt 1 MB          | **AES-GCM 621 µs** (~1.6 GB/s) | ChaCha 899 µs                                       |
+| Stream encrypt 100 MB | **AES-GCM 114 ms** (~873 MB/s) | ChaCha 133 ms                                       |
+| Hybrid encrypt 1 MB   | **692 µs**                     | Near pure GCM; RSA wrap amortized                   |
+| RSA decrypt 1 MB      | **2.51 s**                     | Not for bulk data                                   |
+| Two-key encrypt 1 MB  | **880 µs** (AES)               | ~1.3× single-key                                    |
 
 See [HTML benchmark dashboard](../../../docs/benchmarks/encryption.html) for live tables, ratios, and recommendations (auto-generated from CSV artifacts).
 
@@ -92,7 +92,7 @@ Optional future runs may add `--exporters json`; v1 reads CSV reports.
 
 **Target framework:** `net10.0`
 
-| Package | Version |
+| Package           | Version  |
 |-------------------|----------|
 | `BenchmarkDotNet` | `0.15.8` |
 

@@ -68,7 +68,7 @@ public class UpsertRequestBuilder<T>
     {
         OperationHelpers.ThrowIfNull(_newData, "Data must be specified using WithData()");
         OperationHelpers.ThrowIf(_identifiers.Count == 0, "At least one identifier must be specified");
-        var identifiersNode = _identifiers.Count == 1 ? (WhereClause)_identifiers[0] : new GroupClause(GroupOperatorEnum.And, [.._identifiers]);
+        var identifiersNode = _identifiers.Count == 1 ? (WhereClause)_identifiers[0] : new GroupClause(GroupOperatorEnum.And, [.. _identifiers]);
         return new(_newData, identifiersNode) { IgnoredCompareProperties = _ignoredCompareProperties.ToList() };
     }
 

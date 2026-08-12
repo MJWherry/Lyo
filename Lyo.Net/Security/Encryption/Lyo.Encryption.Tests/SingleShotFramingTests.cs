@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesSiv;
@@ -19,17 +18,15 @@ public sealed class SingleShotFramingTests
     public void BinaryWriterString_MatchesBinaryWriterAndBinaryReader(string value)
     {
         using var ms = new MemoryStream();
-        using (var bw = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true))
+        using (var bw = new BinaryWriter(ms, Encoding.UTF8, true))
             bw.Write(value);
 
         var expected = ms.ToArray();
         Assert.Equal(expected.Length, FramingProbe.GetByteCount(value));
-
         var actual = new byte[expected.Length];
         var written = FramingProbe.Write(actual, value);
         Assert.Equal(expected.Length, written);
         Assert.Equal(expected, actual);
-
         var roundTrip = FramingProbe.Read(actual, out var consumed);
         Assert.Equal(expected.Length, consumed);
         Assert.Equal(value, roundTrip);
@@ -44,7 +41,6 @@ public sealed class SingleShotFramingTests
         var svc = new AesGcmEncryptionService(keyStore);
         var plaintext = Encoding.UTF8.GetBytes("single-shot framing probe");
         var encrypted = svc.Encrypt(plaintext, keyId);
-
         using var ms = new MemoryStream(encrypted);
         using var br = new BinaryReader(ms);
         Assert.Equal(1, br.ReadByte());
@@ -83,15 +79,11 @@ public sealed class SingleShotFramingTests
 
         // Warm paths / JIT so the measurement is not dominated by first-call noise.
         _ = svc.Encrypt(plaintext.AsSpan(0, 1024), keyId);
-
         var before = GC.GetAllocatedBytesForCurrentThread();
         var encrypted = svc.Encrypt(plaintext, keyId);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
         Assert.True(encrypted.Length > plaintext.Length);
-        Assert.True(
-            allocated < (long)(plaintext.Length * 1.25),
-            $"Expected encrypt alloc < 1.25× payload; got {allocated} bytes for {plaintext.Length}-byte plaintext.");
+        Assert.True(allocated < (long)(plaintext.Length * 1.25), $"Expected encrypt alloc < 1.25× payload; got {allocated} bytes for {plaintext.Length}-byte plaintext.");
     }
 
     /// <summary>Exposes <see cref="EncryptionServiceBase" /> BinaryWriter-string helpers for format compatibility asserts.</summary>
@@ -106,11 +98,9 @@ public sealed class SingleShotFramingTests
                     FileExtension = ".probe"
                 }) { }
 
-        public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
-            => throw new NotSupportedException();
+        public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null) => throw new NotSupportedException();
 
-        public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
-            => throw new NotSupportedException();
+        public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null) => throw new NotSupportedException();
 
         public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key) => throw new NotSupportedException();
 

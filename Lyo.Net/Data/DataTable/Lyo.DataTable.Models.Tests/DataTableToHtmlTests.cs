@@ -43,7 +43,7 @@ public sealed class DataTableToHtmlTests
         table.SetHeader(0, "A");
         table.SetHeader(1, "B");
         table.SetHeader(2, "C");
-        table.SetCell(0, 0, new DataTableCell<string>("Merged", ColSpan: 2));
+        table.SetCell(0, 0, new DataTableCell<string>("Merged", 2));
         table.SetCell(0, 2, "End");
         var html = DataTableToHtml.ToHtmlDocument(table);
         Assert.Contains("<td colspan=\"2\">Merged</td>", html);
@@ -73,7 +73,7 @@ public sealed class DataTableToHtmlTests
     public void ToHtmlDocument_emits_colspan_in_header()
     {
         var table = new DataTable();
-        table.SetHeader(0, new DataTableCell<string>("Wide", ColSpan: 2));
+        table.SetHeader(0, new DataTableCell<string>("Wide", 2));
         table.SetHeader(2, "C");
         table.SetCell(0, 0, "a");
         table.SetCell(0, 1, "b");

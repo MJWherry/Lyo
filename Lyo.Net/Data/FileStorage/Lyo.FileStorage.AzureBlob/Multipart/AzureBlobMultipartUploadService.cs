@@ -16,7 +16,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage.AzureBlob.Multipart;
 
-/// <summary>Multipart uploads using Azure block staging under <c>.multipart/{sessionId}/staging</c>, then streaming through <see cref="AzureBlobFileStorageService.SaveFromStreamAsync" />.</summary>
+/// <summary>
+/// Multipart uploads using Azure block staging under <c>.multipart/{sessionId}/staging</c>, then streaming through
+/// <see cref="AzureBlobFileStorageService.SaveFromStreamAsync" />.
+/// </summary>
 public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;

@@ -31,13 +31,13 @@
 @code {
 
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; }
+    IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
     public string? ElementId { get; set; }
 
     [Parameter]
-    public T Data { get; set; }
+    public T Data { get; set; } = default!;
 
     [Parameter]
     public string Title { get; set; } = "JSON Viewer";

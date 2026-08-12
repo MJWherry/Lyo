@@ -114,7 +114,7 @@ def _read_state_entry(state_file: Path, project_name: str) -> tuple[str, str]:
     last = ""
     for line in state_file.read_text(encoding="utf-8").splitlines():
         if line.startswith(prefix):
-            last = line[len(prefix) :]
+            last = line[len(prefix):]
     if not last:
         return "", ""
     if ":" in last:

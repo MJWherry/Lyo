@@ -1,4 +1,5 @@
 @using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.QueryNodeEditor
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-query-root-form">
     <MudStack Spacing="4">
         <MudPaper Elevation="1" Class="pa-4">
@@ -30,7 +31,6 @@
                                ValueChanged="@OnTotalCountModeChanged"
                                Label="Total Count Mode"
                                Variant="Variant.Outlined"
-                               Dense
                                Margin="Margin.Dense"
                                Style="min-width: 140px;">
                         <MudSelectItem Value="@QueryTotalCountMode.Exact">Exact</MudSelectItem>
@@ -49,7 +49,6 @@
                               ValueChanged="@OnFromAliasChanged"
                               Label="Alias"
                               Variant="Variant.Outlined"
-                              Dense
                               Margin="Margin.Dense"
                               Style="min-width: 100px;"/>
                 <MudTextField T="string"
@@ -57,7 +56,6 @@
                               ValueChanged="@OnFromEntityTypeChanged"
                               Label="EntityType"
                               Variant="Variant.Outlined"
-                              Dense
                               Margin="Margin.Dense"
                               Style="min-width: 180px;"/>
             </MudStack>
@@ -80,7 +78,6 @@
                                           ValueChanged="@(v => OnJoinAliasChanged(join, v))"
                                           Label="Alias"
                                           Variant="Variant.Outlined"
-                                          Dense
                                           Margin="Margin.Dense"
                                           Style="min-width: 90px;"/>
                             <MudTextField T="string"
@@ -88,7 +85,6 @@
                                           ValueChanged="@(v => OnJoinEntityTypeChanged(join, v))"
                                           Label="EntityType"
                                           Variant="Variant.Outlined"
-                                          Dense
                                           Margin="Margin.Dense"
                                           Style="min-width: 160px;"/>
                             <MudTextField T="string"
@@ -97,7 +93,6 @@
                                           Label="As (optional)"
                                           HelperText="Response bag name; defaults to Alias"
                                           Variant="Variant.Outlined"
-                                          Dense
                                           Margin="Margin.Dense"
                                           Style="min-width: 120px;"/>
                             <MudSelect T="JoinType"
@@ -105,13 +100,12 @@
                                        ValueChanged="@(t => OnJoinTypeChanged(join, t))"
                                        Label="Type"
                                        Variant="Variant.Outlined"
-                                       Dense
                                        Margin="Margin.Dense"
                                        Style="min-width: 110px;">
                                 <MudSelectItem Value="@JoinType.Left">Left</MudSelectItem>
                                 <MudSelectItem Value="@JoinType.Inner">Inner</MudSelectItem>
                             </MudSelect>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveJoin(join))" Title="Remove join"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveJoin(join))" aria-label="Remove join"/>
                         </MudStack>
                         <MudText Typo="Typo.caption">ON</MudText>
                         @foreach (var on in join.On.ToList()) {
@@ -121,7 +115,6 @@
                                               ValueChanged="@(v => OnOnFromChanged(on, v))"
                                               Label="From"
                                               Variant="Variant.Outlined"
-                                              Dense
                                               Margin="Margin.Dense"
                                               Style="min-width: 160px;"/>
                                 <MudText Typo="Typo.body2">=</MudText>
@@ -130,7 +123,6 @@
                                               ValueChanged="@(v => OnOnToChanged(on, v))"
                                               Label="To"
                                               Variant="Variant.Outlined"
-                                              Dense
                                               Margin="Margin.Dense"
                                               Style="min-width: 160px;"/>
                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="@(() => RemoveOn(join, on))"/>
@@ -169,12 +161,12 @@
 
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">Filter (From alias only)</MudText>
-            <QueryNodeEditorTree WhereClause="@Request.WhereClause"
-                                 PropertyDefinitions="@PropertyDefinitions"
-                                 WhereClauseChanged="@OnWhereClauseChanged"
-                                 SelectedNodeChanged="@OnSelectedWhereClauseChanged"
-                                 AllowDragDrop="@AllowFilterDragDrop"
-                                 AutoSelectNewNode="@AutoSelectNewFilterNode"/>
+            <QueryNodeEditorPanel WhereClause="@Request.WhereClause"
+                                  PropertyDefinitions="@PropertyDefinitions"
+                                  WhereClauseChanged="@OnWhereClauseChanged"
+                                  SelectedNodeChanged="@OnSelectedWhereClauseChanged"
+                                  AllowDragDrop="@AllowFilterDragDrop"
+                                  AutoSelectNewNode="@AutoSelectNewFilterNode"/>
         </MudPaper>
     </MudStack>
 </LyoElementRoot>

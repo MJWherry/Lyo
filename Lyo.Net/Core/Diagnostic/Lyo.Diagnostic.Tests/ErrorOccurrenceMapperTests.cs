@@ -13,9 +13,9 @@ public sealed class ErrorOccurrenceMapperTests
         var decoder = new StackTraceDecoder();
         var classifier = new ExceptionClassifier();
         var builder = new DiagnosticContextBuilder(decoder, classifier);
-        var ex = new Exception(new string('x', 100));
+        var ex = new Exception(new('x', 100));
         var ctx = builder.Build(ex, RequestMetadata.Empty);
-        var record = ErrorOccurrenceMapper.FromDiagnosticContext(ctx, null, null, maxExceptionMessageLength: 20);
+        var record = ErrorOccurrenceMapper.FromDiagnosticContext(ctx, null, null, 20);
         Assert.NotNull(record.ExceptionMessage);
         Assert.Equal(20, record.ExceptionMessage!.Length);
     }

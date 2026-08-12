@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using System.Reflection;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Common.Records;
 
 /// <summary>Well-known TCP/UDP port metadata with lookup by number, name, alias, or <see cref="PortCategory" />.</summary>
 /// <remarks>
-/// Curated common ports used by Lyo packages and typical infrastructure — not a full IANA registry.
-/// Implicitly converts to <see cref="int" /> for options defaults (e.g. <c>Port = PortInfo.Ssh</c>).
+/// Curated common ports used by Lyo packages and typical infrastructure — not a full IANA registry. Implicitly converts to <see cref="int" /> for options defaults (e.g.
+/// <c>Port = PortInfo.Ssh</c>).
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record PortInfo(int Port, string Name, string Description, PortCategory Category, string[] Aliases)
@@ -49,8 +50,7 @@ public sealed record PortInfo(int Port, string Name, string Description, PortCat
     public static readonly PortInfo Smtps = new(465, "SMTPS", "SMTP over TLS (implicit)", PortCategory.Mail, ["smtps"]);
 
     /// <summary>SMTP submission (587/tcp).</summary>
-    public static readonly PortInfo SmtpSubmission = new(
-        587, "SMTP Submission", "Message submission (STARTTLS)", PortCategory.Mail, ["submission", "smtp-submission"]);
+    public static readonly PortInfo SmtpSubmission = new(587, "SMTP Submission", "Message submission (STARTTLS)", PortCategory.Mail, ["submission", "smtp-submission"]);
 
     /// <summary>LDAPS (636/tcp).</summary>
     public static readonly PortInfo Ldaps = new(636, "LDAPS", "LDAP over TLS", PortCategory.Directory, ["ldaps"]);
@@ -147,7 +147,7 @@ public sealed record PortInfo(int Port, string Name, string Description, PortCat
     /// <summary>Finds a port by display name or alias (e.g. <c>ssh</c>, <c>postgres</c>, <c>SMTP Submission</c>).</summary>
     public static PortInfo FromName(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (name.IsNullOrWhitespace())
             return Unknown;
 
         return ByAlias.TryGetValue(Normalize(name), out var info) ? info : Unknown;
@@ -156,7 +156,7 @@ public sealed record PortInfo(int Port, string Name, string Description, PortCat
     /// <summary>Tries to find a port by display name or alias.</summary>
     public static bool TryFromName(string? name, out PortInfo info)
     {
-        if (string.IsNullOrWhiteSpace(name)) {
+        if (name.IsNullOrWhitespace()) {
             info = Unknown;
             return false;
         }

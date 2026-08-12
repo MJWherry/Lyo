@@ -9,10 +9,10 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Discord.Bot;
 
-/// <summary>Registers <see cref="LyoDiscordBotOptions" />, <see cref="IGuildDatabaseSyncService" />, <see cref="LyoDiscordClient" />, and <typeparamref name="TBot" />.</summary>
+/// <summary>Registers <see cref="LyoDiscordBotOptions" />, <see cref="IGuildDatabaseSyncService" />, and <see cref="LyoDiscordClient" />.</summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>Binds <see cref="LyoDiscordBotOptions" /> from configuration, registers <see cref="LyoDiscordClient" />, sync service, and the bot implementation (singleton).</summary>
+    /// <summary>Binds <see cref="LyoDiscordBotOptions" /> from configuration, registers <see cref="LyoDiscordClient" />, sync service, and <typeparamref name="TBot" /> (singleton).</summary>
     public static IServiceCollection AddLyoDiscordBot<TBot>(this IServiceCollection services, IConfiguration configuration, string sectionName = LyoDiscordBotOptions.SectionName)
         where TBot : LyoDiscordBotBase
     {

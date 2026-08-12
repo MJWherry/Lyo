@@ -9,9 +9,8 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditorPanel
 {
-    private WhereClause? _draggedNode;
-
     private WhereClause? _dragOverNode;
+    private WhereClause? _draggedNode;
 
     private QueryNodeEditor? _nodeEditorRef;
 

@@ -1,3 +1,4 @@
+using Lyo.Common.Enums;
 using Lyo.TextEncoding.Registration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +20,7 @@ public sealed class EncodingDiRegistrationTests
     public void AddLyoBinaryEncoding_WithOptions_UsesConfiguredHexCase()
     {
         var services = new ServiceCollection();
-        services.AddLyoBinaryEncoding(o => o.DefaultHexLetterCase = Lyo.Common.Enums.TextLetterCase.Lower);
+        services.AddLyoBinaryEncoding(o => o.DefaultHexLetterCase = TextLetterCase.Lower);
         using var sp = services.BuildServiceProvider();
         var svc = sp.GetRequiredService<IBinaryEncodingService>();
         Assert.Equal("ab", svc.Encode(BinaryEncodingKind.Hex, [0xAB]));

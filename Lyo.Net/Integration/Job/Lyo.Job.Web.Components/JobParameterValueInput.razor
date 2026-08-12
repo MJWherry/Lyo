@@ -1,7 +1,4 @@
 @using System.Globalization
-@using Lyo.Query.Models.Parameters
-@using Lyo.Web.Components.ChipInput
-
 @if (AllowMultiple && Type is not JobParameterType.Bool and not JobParameterType.Json and not JobParameterType.Xml) {
     <LyoChipInput Values="@ChipValues"
                   ValuesChanged="OnChipValuesChanged"
@@ -92,8 +89,7 @@ else {
 
     private TimeSpan? TimeOnlyValue => TimeOnly.TryParse(Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t) ? t.ToTimeSpan() : null;
 
-    private async Task OnChipValuesChanged(IEnumerable<string> values)
-        => await SetValue(ParameterListJson.Serialize(values, ToListKind(Type)));
+    private async Task OnChipValuesChanged(IEnumerable<string> values) => await SetValue(ParameterListJson.Serialize(values, ToListKind(Type)));
 
     private static ParameterListJsonKind ToListKind(JobParameterType type)
         => type switch {

@@ -83,7 +83,10 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="ICompressionResolver" /> backed by <see cref="CompressionService" />. Idempotent; already invoked by <see cref="AddCompressionService" />.</summary>
+        /// <summary>
+        /// Registers <see cref="ICompressionResolver" /> backed by <see cref="CompressionService" />. Idempotent; already invoked by
+        /// <see cref="Extensions.AddCompressionService()" />.
+        /// </summary>
         public IServiceCollection AddCompressionResolver()
         {
             ArgumentHelpers.ThrowIfNull(services);

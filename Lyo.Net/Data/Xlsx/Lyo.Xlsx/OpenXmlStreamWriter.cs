@@ -65,8 +65,8 @@ internal readonly struct XlsxCell
 
 /// <summary>
 /// Streams one or more worksheets straight into an XLSX package via <see cref="OpenXmlWriter" />, keeping memory bounded regardless of row count. Column widths are
-/// approximated from a bounded sample of the leading rows instead of ClosedXML's graphics-engine auto-fit.
-/// When cells carry <see cref="DataTableCellFormat" />, a style cache maps unique formats to stylesheet xf indices (capped to avoid pathological stylesheets).
+/// approximated from a bounded sample of the leading rows instead of ClosedXML's graphics-engine auto-fit. When cells carry <see cref="DataTableCellFormat" />, a style cache maps
+/// unique formats to stylesheet xf indices (capped to avoid pathological stylesheets).
 /// </summary>
 internal sealed class OpenXmlStreamWriter : IDisposable
 {
@@ -83,13 +83,13 @@ internal sealed class OpenXmlStreamWriter : IDisposable
     private const double MaxColumnWidth = 80d;
 
     private readonly SpreadsheetDocument _document;
-    private readonly Sheets _sheets;
-    private readonly WorkbookPart _workbookPart;
-    private readonly WorkbookStylesPart _stylesPart;
     private readonly Dictionary<DataTableCellFormat, uint> _formatStyles = new();
-    private uint _nextSheetId = 1;
+    private readonly Sheets _sheets;
+    private readonly WorkbookStylesPart _stylesPart;
+    private readonly WorkbookPart _workbookPart;
     private uint _nextCustomStyleIndex = 3;
     private uint _nextNumFmtId = 165;
+    private uint _nextSheetId = 1;
 
     public OpenXmlStreamWriter(Stream stream)
     {
@@ -110,11 +110,11 @@ internal sealed class OpenXmlStreamWriter : IDisposable
 
     /// <summary>Writes a worksheet: a bold header row followed by <paramref name="rows" />, with column widths approximated from the leading rows.</summary>
     public void WriteSheet(string sheetName, IReadOnlyList<string> headers, IEnumerable<XlsxCell[]> rows, CancellationToken ct = default)
-        => WriteSheet(sheetName, headers, rows, headerFormats: null, footer: null, footerFormats: null, ct);
+        => WriteSheet(sheetName, headers, rows, null, null, null, ct);
 
     /// <summary>
-    /// Writes a worksheet. When <paramref name="headerFormats" /> or cell <see cref="XlsxCell.Format" /> values are present, those styles are written into the stylesheet.
-    /// Header map formats win over the default bold-header style; missing header format keeps bold header.
+    /// Writes a worksheet. When <paramref name="headerFormats" /> or cell <see cref="XlsxCell.Format" /> values are present, those styles are written into the stylesheet. Header
+    /// map formats win over the default bold-header style; missing header format keeps bold header.
     /// </summary>
     public void WriteSheet(
         string sheetName,
@@ -122,11 +122,11 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         IEnumerable<XlsxCell[]> rows,
         IReadOnlyList<DataTableCellFormat?>? headerFormats,
         CancellationToken ct = default)
-        => WriteSheet(sheetName, headers, rows, headerFormats, footer: null, footerFormats: null, ct);
+        => WriteSheet(sheetName, headers, rows, headerFormats, null, null, ct);
 
     /// <summary>
-    /// Writes a worksheet with optional header/footer format maps and an optional trailing <paramref name="footer" /> row (bold by default, like the header).
-    /// Per-cell and <paramref name="footerFormats" /> win over the bold default.
+    /// Writes a worksheet with optional header/footer format maps and an optional trailing <paramref name="footer" /> row (bold by default, like the header). Per-cell and
+    /// <paramref name="footerFormats" /> win over the bold default.
     /// </summary>
     public void WriteSheet(
         string sheetName,
@@ -305,17 +305,18 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         var borders = stylesheet.Borders!;
         var cellFormats = stylesheet.CellFormats!;
         var numberingFormats = stylesheet.NumberingFormats ?? stylesheet.AppendChild(new NumberingFormats { Count = 0 });
-
         var fontId = (uint)fonts.ChildElements.Count;
         fonts.Append(BuildFont(format));
         fonts.Count = (uint)fonts.ChildElements.Count;
-
         uint fillId = 0;
         if (!string.IsNullOrEmpty(format.BackgroundColor)) {
             fillId = (uint)fills.ChildElements.Count;
-            fills.Append(new Fill(new PatternFill(
-                new ForegroundColor { Rgb = HexToRgb(format.BackgroundColor!) },
-                new BackgroundColor { Rgb = HexToRgb(format.BackgroundColor!) }) { PatternType = PatternValues.Solid }));
+            fills.Append(
+                new Fill(
+                    new PatternFill(new ForegroundColor { Rgb = HexToRgb(format.BackgroundColor!) }, new BackgroundColor { Rgb = HexToRgb(format.BackgroundColor!) }) {
+                        PatternType = PatternValues.Solid
+                    }));
+
             fills.Count = (uint)fills.ChildElements.Count;
         }
 
@@ -341,6 +342,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             BorderId = borderId,
             ApplyFont = true
         };
+
         if (fillId != 0)
             cellFormat.ApplyFill = true;
 
@@ -351,7 +353,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
             cellFormat.ApplyNumberFormat = true;
 
         if (!string.IsNullOrEmpty(format.HorizontalAlignment) || !string.IsNullOrEmpty(format.VerticalAlignment) || format.WrapText == true || format.TextRotation.HasValue) {
-            cellFormat.Alignment = new Alignment();
+            cellFormat.Alignment = new();
             if (!string.IsNullOrEmpty(format.HorizontalAlignment) && Enum.TryParse<HorizontalAlignmentValues>(format.HorizontalAlignment, true, out var h))
                 cellFormat.Alignment.Horizontal = h;
 
@@ -403,10 +405,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
     {
         var rgb = string.IsNullOrEmpty(format.BorderColor) ? null : HexToRgb(format.BorderColor!);
         return new(
-            MakeLeftBorder(format.BorderLeft, rgb),
-            MakeRightBorder(format.BorderRight, rgb),
-            MakeTopBorder(format.BorderTop, rgb),
-            MakeBottomBorder(format.BorderBottom, rgb),
+            MakeLeftBorder(format.BorderLeft, rgb), MakeRightBorder(format.BorderRight, rgb), MakeTopBorder(format.BorderTop, rgb), MakeBottomBorder(format.BorderBottom, rgb),
             new DiagonalBorder());
     }
 
@@ -445,7 +444,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
 
         edge.Style = borderStyle;
         if (rgb != null)
-            edge.Color = new Color { Rgb = rgb };
+            edge.Color = new() { Rgb = rgb };
     }
 
     private static string HexToRgb(string hex)
@@ -502,8 +501,7 @@ internal sealed class OpenXmlStreamWriter : IDisposable
         writer.WriteEndElement(); // Columns
     }
 
-    private void WriteHeaderRow(
-        OpenXmlWriter writer, IReadOnlyList<string> headers, string[] columnLetters, uint rowIndex, IReadOnlyList<DataTableCellFormat?>? headerFormats)
+    private void WriteHeaderRow(OpenXmlWriter writer, IReadOnlyList<string> headers, string[] columnLetters, uint rowIndex, IReadOnlyList<DataTableCellFormat?>? headerFormats)
     {
         writer.WriteStartElement(new Row { RowIndex = rowIndex });
         var rowRef = rowIndex.ToString(CultureInfo.InvariantCulture);
@@ -554,7 +552,8 @@ internal sealed class OpenXmlStreamWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a trailing footer row. Defaults to bold-header style like <see cref="WriteHeaderRow" />; per-cell or <paramref name="footerFormats" /> win. Preserves merges like data rows.
+    /// Writes a trailing footer row. Defaults to bold-header style like <see cref="WriteHeaderRow" />; per-cell or <paramref name="footerFormats" /> win. Preserves merges like
+    /// data rows.
     /// </summary>
     private void WriteFooterRow(
         OpenXmlWriter writer,
