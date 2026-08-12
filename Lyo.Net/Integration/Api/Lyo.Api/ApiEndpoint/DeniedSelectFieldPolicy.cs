@@ -34,12 +34,12 @@ public static class DeniedSelectFieldPolicy
         var errors = new List<ApiError>();
         foreach (var field in selectFields) {
             if (IsDeniedField(field, deniedFields))
-                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Select field '{field}' is not allowed on this endpoint."));
+                errors.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Select field '{field}' is not allowed on this endpoint."));
         }
 
         foreach (var computed in computedFields) {
             if (TemplateReferencesDeniedField(computed.Template, deniedFields))
-                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Computed field '{computed.Name}' references a field that is not allowed on this endpoint."));
+                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field '{computed.Name}' references a field that is not allowed on this endpoint."));
         }
 
         return errors;
@@ -59,7 +59,7 @@ public static class DeniedSelectFieldPolicy
 
             var isTemplate = value.Contains('{');
             if (isTemplate ? TemplateReferencesDeniedField(value, deniedFields) : IsDeniedField(value, deniedFields))
-                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Export column '{value}' references a field that is not allowed on this endpoint."));
+                errors.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Export column '{value}' references a field that is not allowed on this endpoint."));
         }
 
         return errors;

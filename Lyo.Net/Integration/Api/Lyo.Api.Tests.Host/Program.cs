@@ -50,6 +50,7 @@ builder.Services.AddCors(options => {
 });
 
 var app = builder.Build();
+app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
 app.UseCors();
 app.UseResponseCompression();
 app.UseRequestDecompression();

@@ -205,10 +205,8 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("GoogleAuth")["C
 if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("KeycloakAuth")["ClientId"]))
     builder.Services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 
-builder.Services.AddProblemDetails();
 var app = builder.Build();
-// Give bodiless 4xx/5xx responses (e.g. bare NotFound) an RFC 7807 problem details body.
-app.UseStatusCodePages();
+app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
     app.MapScalarApiReference();

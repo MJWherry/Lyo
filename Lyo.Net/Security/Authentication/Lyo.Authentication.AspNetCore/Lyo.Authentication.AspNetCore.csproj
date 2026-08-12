@@ -16,6 +16,7 @@
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

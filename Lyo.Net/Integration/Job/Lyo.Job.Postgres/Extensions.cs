@@ -338,7 +338,7 @@ public static class Extensions
                 $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/Stats", async (Guid id, int days, JobService jobService, CancellationToken ct) => {
                     days = days > 0 ? days : 30;
                     var stats = await jobService.GetDefinitionStats(id, days, ct).ConfigureAwait(false);
-                    return stats is null ? Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build()) : Results.Ok(stats);
+                    return stats is null ? throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build()) : Results.Ok(stats);
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
@@ -441,18 +441,16 @@ public static class Extensions
                         var children = await jobService.CreateChildRunsAsync(id, req, ct).ConfigureAwait(false);
                         return Results.Ok(children);
                     }
-                    catch (NotFoundException ex) {
-                        return Results.NotFound(LyoProblemDetailsBuilder.Create().WithMessage(ex.Message).Build());
-                    }
                     catch (InvalidOperationException ex) {
-                        return Results.BadRequest(LyoProblemDetailsBuilder.Create().WithMessage(ex.Message).Build());
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(Api.Models.Constants.ApiErrorCodes.InvalidRequest, ex.Message));
                     }
                 })
             .WithTags("Job")
             .WithName("CreateChildJobRuns");
     }
 
-    /// <summary>Problem response whose HTTP status matches <see cref="LyoProblemDetails.Status" />. Falls back to a generic 400 when no problem was produced.</summary>
+    /// <summary>Throws <see cref="ApiErrorException" /> so LoggingMiddleware writes and logs the problem. Falls back to a generic 400 when no problem was produced.</summary>
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
     private static IResult ProblemResult(LyoProblemDetails? error)
     {
         error ??= LyoProblemDetailsBuilder.CreateWithActivity()
@@ -460,7 +458,7 @@ public static class Extensions
             .WithMessage("The request could not be processed.")
             .Build();
 
-        return Results.Json(error, statusCode: error.Status);
+        throw ApiErrorException.From(error);
     }
 
     private static void EncryptJobParameterEntity(IServiceProvider services, JobParameter entity)

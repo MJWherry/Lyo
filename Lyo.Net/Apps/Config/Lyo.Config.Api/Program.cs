@@ -1,3 +1,4 @@
+using Lyo.Api.Middleware;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Common;
@@ -7,11 +8,9 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
-builder.Services.AddProblemDetails();
 builder.Services.AddConfigApi(builder.Configuration);
 var application = builder.Build();
-// Give bodiless 4xx/5xx responses (e.g. bare NotFound) an RFC 7807 problem details body.
-application.UseStatusCodePages();
+application.UseMiddleware<LoggingMiddleware>();
 if (application.Environment.IsDevelopment()) {
     application.MapOpenApi();
     application.MapScalarApiReference();

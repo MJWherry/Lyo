@@ -1,5 +1,6 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
+using Lyo.Api.Models.Error;
 using Lyo.Common.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Constants = Lyo.Reporting.Models.Constants;
 
 namespace Lyo.Api.Reporting;
@@ -216,12 +218,12 @@ public static class Extensions
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var generation = await db.ReportGenerations.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
                         if (generation is null)
-                            return Results.Problem($"Report generation '{id}' was not found.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, $"Report generation '{id}' was not found."));
 
                         if (generation.Status != nameof(ReportGenerationStatus.Succeeded) || generation.OutputFileId is not Guid outputFileId) {
-                            return Results.Problem(
-                                $"Generation {id} has no downloadable output (status {generation.Status}).", statusCode: StatusCodes.Status409Conflict,
-                                title: "Report output not available.");
+                            throw ApiErrorException.From(
+                                LyoProblemDetails.FromCode(
+                                    ApiErrorCodes.Conflict, $"Generation {id} has no downloadable output (status {generation.Status})."));
                         }
 
                         var stream = await downloadFactory(
@@ -236,7 +238,7 @@ public static class Extensions
                             .ConfigureAwait(false);
 
                         if (stream is null)
-                            return Results.Problem($"Report generation '{id}' output could not be located.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, $"Report generation '{id}' output could not be located."));
 
                         return Results.Stream(stream, generation.ContentType ?? "application/octet-stream", generation.OriginalFileName);
                     })
@@ -256,10 +258,10 @@ public static class Extensions
             return Results.Ok(await action().ConfigureAwait(false));
         }
         catch (ReportValidationException ex) {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status400BadRequest, title: "Invalid report request.");
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
         }
         catch (ReportBusyException ex) {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable, title: "Reporting is busy.");
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.ServiceUnavailable, ex.Message));
         }
     }
 

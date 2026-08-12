@@ -341,10 +341,6 @@ public class QueryService<TContext>(
                 apiErrors.AddRange(pagingErrors);
                 apiErrors.AddRange(guardrailErrors);
                 apiErrors.AddRange(queryModelValidationErrors.Select(e => new ApiError(e.Code, e.Message)));
-                Logger.LogWarning(
-                    "Query validation failed for {Entity}: {IssueCount} issue(s). {Details}", typeof(TDbModel).Name, apiErrors.Count,
-                    string.Join("; ", apiErrors.Select(static e => $"{e.Code}: {e.Description}")));
-
                 return ResultFactory.QueryFailure<TDbModel>(queryRequest, AggregatedValidationProblemDetails(apiErrors, "Invalid query."));
             }
 
@@ -469,7 +465,7 @@ public class QueryService<TContext>(
         aggregatedErrors.AddRange(ValidateCommonQueryGuardrails(ToQueryConcreteReq(queryRequest)));
         aggregatedErrors.AddRange(ValidateProjectedQueryGuardrails(queryRequest));
         if (queryRequest.Select.Count == 0)
-            aggregatedErrors.Add(new(ApiErrorCodes.InvalidQuery, "Projected query requires at least one selected field."));
+            aggregatedErrors.Add(new(ApiErrorCodes.InvalidSelectField, "Projected query requires at least one selected field."));
 
         IReadOnlyList<ProjectedFieldSpec>? projectedFieldSpecs = null;
         if (queryRequest.Select.Count > 0) {
@@ -483,13 +479,8 @@ public class QueryService<TContext>(
         if (computedFields.Count > 0)
             aggregatedErrors.AddRange(projectionService.ValidateComputedFieldTemplates(computedFields));
 
-        if (aggregatedErrors.Count > 0) {
-            Logger.LogWarning(
-                "Projected query validation failed for {Entity}: {IssueCount} issue(s). {Details}", typeof(TDbModel).Name, aggregatedErrors.Count,
-                string.Join("; ", aggregatedErrors.Select(static e => $"{e.Code}: {e.Description}")));
-
+        if (aggregatedErrors.Count > 0)
             return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, AggregatedValidationProblemDetails(aggregatedErrors, "Invalid projected query."));
-        }
 
         OperationHelpers.ThrowIfNull(projectedFieldSpecs, "Projected field specs must be resolved when Select is non-empty.");
         var effectiveIncludes = BuildQueryProjectEffectiveIncludes<TDbModel>(projectedFieldSpecs, queryRequest.WhereClause);
@@ -508,13 +499,8 @@ public class QueryService<TContext>(
                 sharedIncludeValidationAndSqlContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 
             aggregatedErrors.AddRange(CollectQueryModelErrors(sharedIncludeValidationAndSqlContext, effectiveIncludes).Select(e => new ApiError(e.Code, e.Message)));
-            if (aggregatedErrors.Count > 0) {
-                Logger.LogWarning(
-                    "Projected query validation failed for {Entity}: {IssueCount} issue(s). {Details}", typeof(TDbModel).Name, aggregatedErrors.Count,
-                    string.Join("; ", aggregatedErrors.Select(static e => $"{e.Code}: {e.Description}")));
-
+            if (aggregatedErrors.Count > 0)
                 return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, AggregatedValidationProblemDetails(aggregatedErrors, "Invalid projected query."));
-            }
 
             var cacheKeyProjection = CloneProjectionQueryReq(queryRequest);
             cacheKeyProjection.Include = effectiveIncludes;
@@ -807,7 +793,7 @@ public class QueryService<TContext>(
     {
         var errors = new List<ApiError>();
         if (queryRequest.Include.Count > queryOptions.MaxIncludePathCount)
-            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidInclude, $"Include path count ({queryRequest.Include.Count}) exceeds maximum allowed ({queryOptions.MaxIncludePathCount})."));
 
         if (queryRequest.Keys.Count > queryOptions.MaxKeySetCount)
             errors.Add(new(ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds maximum allowed ({queryOptions.MaxKeySetCount})."));
@@ -826,7 +812,7 @@ public class QueryService<TContext>(
         if (effectiveAmount <= queryOptions.MaxIncludePageSize)
             return errors;
 
-        errors.Add(new(ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds maximum allowed for include queries ({queryOptions.MaxIncludePageSize})."));
+        errors.Add(new(ApiErrorCodes.InvalidPaging, $"Page size ({effectiveAmount}) exceeds maximum allowed for include queries ({queryOptions.MaxIncludePageSize})."));
         return errors;
     }
 
@@ -834,18 +820,18 @@ public class QueryService<TContext>(
     {
         var errors = new List<ApiError>();
         if (queryRequest.Select.Count > queryOptions.MaxSelectFieldCount)
-            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidSelectField, $"Select field count ({queryRequest.Select.Count}) exceeds maximum allowed ({queryOptions.MaxSelectFieldCount})."));
 
         if (queryRequest.ComputedFields.Count > queryOptions.MaxComputedFieldCount) {
             errors.Add(
-                new(ApiErrorCodes.InvalidQuery, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
+                new(ApiErrorCodes.InvalidComputedField, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
         }
 
         foreach (var computedField in queryRequest.ComputedFields) {
             if (computedField.Template?.Length > queryOptions.MaxComputedTemplateLength) {
                 errors.Add(
                     new(
-                        ApiErrorCodes.InvalidQuery,
+                        ApiErrorCodes.InvalidComputedField,
                         $"Computed field '{computedField.Name}' template length ({computedField.Template.Length}) exceeds maximum allowed ({queryOptions.MaxComputedTemplateLength})."));
             }
         }

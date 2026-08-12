@@ -892,16 +892,14 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                             .AddErrors(queryPolicyErrors)
                             .Build();
 
-                        var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
-                        return Results.Json(policyError, statusCode: policyError.Status);
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
                     }
 
                     var result = await basicService.Query<TDbEntity, TResponse>(queryRequest, _queryConfig.DefaultOrder, SortDirection.Desc, ct).ConfigureAwait(false);
                     if (result.IsSuccess)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
                 })
             .WithName($"QueryConcrete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -920,26 +918,22 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                             .AddErrors(queryPolicyErrors)
                             .Build();
 
-                        var policyError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
-                        return Results.Json(policyError, statusCode: policyError.Status);
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
                     }
 
                     if (!_queryConfig.EnableComputedFields && queryRequest.ComputedFields.Count > 0) {
-                        var cfError = ApiErrorResponseFactory.CreateForError(
+                        return ApiErrorResponseFactory.ThrowForError(
                             httpContext,
                             LyoProblemDetails.FromCode(
-                                Constants.ApiErrorCodes.InvalidQuery,
+                                Constants.ApiErrorCodes.InvalidComputedField,
                                 "Computed fields are not enabled. Enable via ApiFeature.ProjectionComputedFields or WithProjectionComputedFields.", DateTime.UtcNow));
-
-                        return Results.Json(cfError, statusCode: cfError.Status);
                     }
 
                     var result = await basicService.QueryProjected(queryRequest, _queryConfig.DefaultOrder, SortDirection.Desc, ct).ConfigureAwait(false);
                     if (result.IsSuccess)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
                 })
             .WithName($"QueryProject{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -953,12 +947,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     {
         var errors = new List<ApiError>();
         if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
-            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
+            errors.Add(new(Constants.ApiErrorCodes.InvalidInclude, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
 
         if (queryConfig.MaxIncludePageSize is int maxIncludePageSize && queryRequest.Include.Count > 0) {
             var effectiveAmount = queryRequest.Amount ?? 0;
             if (effectiveAmount > maxIncludePageSize)
-                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
+                errors.Add(new(Constants.ApiErrorCodes.InvalidPaging, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
         }
 
         if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
@@ -971,29 +965,29 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     {
         var errors = new List<ApiError>();
         if (queryConfig.MaxIncludePathCount is int maxIncludes && queryRequest.Include.Count > maxIncludes)
-            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
+            errors.Add(new(Constants.ApiErrorCodes.InvalidInclude, $"Include path count ({queryRequest.Include.Count}) exceeds endpoint maximum ({maxIncludes})."));
 
         if (queryConfig.MaxIncludePageSize is int maxIncludePageSize && queryRequest.Include.Count > 0) {
             var effectiveAmount = queryRequest.Amount ?? 0;
             if (effectiveAmount > maxIncludePageSize)
-                errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
+                errors.Add(new(Constants.ApiErrorCodes.InvalidPaging, $"Page size ({effectiveAmount}) exceeds endpoint include-query maximum ({maxIncludePageSize})."));
         }
 
         if (queryConfig.MaxKeySetCount is int maxKeySets && queryRequest.Keys.Count > maxKeySets)
             errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Key set count ({queryRequest.Keys.Count}) exceeds endpoint maximum ({maxKeySets})."));
 
         if (queryConfig.MaxSelectFieldCount is int maxSelect && queryRequest.Select.Count > maxSelect)
-            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Select field count ({queryRequest.Select.Count}) exceeds endpoint maximum ({maxSelect})."));
+            errors.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Select field count ({queryRequest.Select.Count}) exceeds endpoint maximum ({maxSelect})."));
 
         if (queryConfig.MaxComputedFieldCount is int maxComputed && queryRequest.ComputedFields.Count > maxComputed)
-            errors.Add(new(Constants.ApiErrorCodes.InvalidQuery, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds endpoint maximum ({maxComputed})."));
+            errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds endpoint maximum ({maxComputed})."));
 
         if (queryConfig.MaxComputedTemplateLength is int maxTemplateLength) {
             foreach (var computed in queryRequest.ComputedFields) {
                 if (computed.Template.Length > maxTemplateLength) {
                     errors.Add(
                         new(
-                            Constants.ApiErrorCodes.InvalidQuery,
+                            Constants.ApiErrorCodes.InvalidComputedField,
                             $"Computed field '{computed.Name}' template length ({computed.Template.Length}) exceeds endpoint maximum ({maxTemplateLength})."));
                 }
             }
@@ -1028,19 +1022,13 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                             .AddErrors(deniedErrors)
                             .Build();
 
-                        var deniedError = ApiErrorResponseFactory.CreateForError(httpContext, problem);
-                        return Results.Json(deniedError, statusCode: deniedError.Status);
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
                     }
 
-                    try {
-                        var (stream, contentType, fileName) = await exportService.ExportAsync<TDbEntity, TResponse>(request, _exportConfig.DefaultOrder, SortDirection.Desc, ct)
-                            .ConfigureAwait(false);
+                    var (stream, contentType, fileName) = await exportService.ExportAsync<TDbEntity, TResponse>(request, _exportConfig.DefaultOrder, SortDirection.Desc, ct)
+                        .ConfigureAwait(false);
 
-                        return Results.File(stream, contentType, fileName);
-                    }
-                    catch (ApiErrorException ex) {
-                        return Results.Json(ApiErrorResponseFactory.CreateForError(httpContext, ex.ProblemDetails), statusCode: ex.ProblemDetails.Status);
-                    }
+                    return Results.File(stream, contentType, fileName);
                 })
             .WithName($"Export{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1058,18 +1046,11 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapGet(
                 $"{baseRoute}{ApiEndpointBuilderExtensions.GetDefaultEndpoint<TKey>()}", async (
                     TKey id, [FromQuery] string[] include, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
-                    try {
-                        var result = await basicService.Get<TDbEntity, TResponse>([id!], include, _getConfig.Before, _getConfig.After, ct).ConfigureAwait(false);
-                        if (result is not null)
-                            return Results.Ok(result);
+                    var result = await basicService.Get<TDbEntity, TResponse>([id!], include, _getConfig.Before, _getConfig.After, ct).ConfigureAwait(false);
+                    if (result is not null)
+                        return Results.Ok(result);
 
-                        var error = ApiErrorResponseFactory.CreateNotFound(httpContext, [id]);
-                        return Results.Json(error, statusCode: error.Status);
-                    }
-                    catch (ApiErrorException ex) {
-                        var error = ApiErrorResponseFactory.CreateForError(httpContext, ex.ProblemDetails);
-                        return Results.Json(error, statusCode: error.Status);
-                    }
+                    return ApiErrorResponseFactory.ThrowNotFound(httpContext, [id]);
                 })
             .WithName($"Get{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1093,8 +1074,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.IsSuccess)
                         return Results.Created($"{baseRoute}/{result.Data!.GetType().GetProperty("Id")?.GetValue(result.Data)}", result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
                 })
             .WithName($"Create{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1137,8 +1117,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.Result != UpdateResultEnum.Failed)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error, request.Keys);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, request.Keys);
                 })
             .WithName($"Update{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1182,8 +1161,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                         .ConfigureAwait(false);
 
                     if (!fieldAuth.Success) {
-                        var err = ApiErrorResponseFactory.CreateForError(httpContext, fieldAuth.Error);
-                        return Results.Json(err, statusCode: fieldAuth.Error!.Status);
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
                     }
 
                     request = fieldAuth.Request!;
@@ -1192,8 +1170,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.Result is PatchResultEnum.Updated or PatchResultEnum.NoChange)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error, keys);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, keys);
                 })
             .WithName($"Patch{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1220,8 +1197,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                                 .ConfigureAwait(false);
 
                             if (!fieldAuth.Success) {
-                                var err = ApiErrorResponseFactory.CreateForError(httpContext, fieldAuth.Error);
-                                return Results.Json(err, statusCode: fieldAuth.Error!.Status);
+                                return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
                             }
 
                             sanitized.Add(fieldAuth.Request!);
@@ -1257,8 +1233,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.Result != UpsertResultEnum.Failed)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
                 })
             .WithName($"Upsert{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1305,8 +1280,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.Error is null)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error, [id]);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, [id]);
                 })
             .WithName($"Delete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
@@ -1326,8 +1300,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     if (result.Error is null)
                         return Results.Ok(result);
 
-                    var error = ApiErrorResponseFactory.CreateForError(httpContext, result.Error, keys);
-                    return Results.Json(error, statusCode: error.Status);
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, keys);
                 })
             .WithName($"Delete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Request")
             .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))

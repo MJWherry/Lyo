@@ -1,3 +1,6 @@
+using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Config.Api.Infrastructure;
 using Lyo.EntityReference.Models;
@@ -25,7 +28,7 @@ internal static class ConfigEndpoints
             resolvedValue = await store.LoadConfigAsync(refs, null, ct).ConfigureAwait(false);
         }
         catch (InvalidOperationException ex) {
-            return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict, title: "Config validation failed.");
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, ex.Message));
         }
 
         var etagQuoted = ComputeQuotedEtag(resolvedValue);
@@ -114,7 +117,7 @@ internal static class ConfigEndpoints
                 "/{appKind}/{appId}", [HttpMethods.Get, HttpMethods.Head], async Task<IResult> (
                     HttpContext http, string appKind, string appId, IConfigStore store, IOptions<ConfigApiHostingOptions> hostOptions, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, errMsg));
 
                     return await FinishResolve(http, refs, HttpMethods.IsHead(http.Request.Method), store, hostOptions.Value, ct).ConfigureAwait(false);
                 });
@@ -123,7 +126,7 @@ internal static class ConfigEndpoints
                 "/{appKind}/{appId}", async Task<IResult> (
                     HttpContext http, string appKind, string appId, IConfigStore store, IOptions<ConfigApiHostingOptions> hostOptions, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.Problem(errMsg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, errMsg));
 
                     return await FinishResolve(http, refs, false, store, hostOptions.Value, ct).ConfigureAwait(false);
                 });
@@ -146,7 +149,7 @@ internal static class ConfigEndpoints
                         body.Validate();
                     }
                     catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or ArgumentNullException or FormatException) {
-                        return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["body"] = [ex.Message] });
+                        throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.ValidationFailed).WithMessage("One or more validation errors occurred.").AddApiError(ApiErrorCodes.InvalidField, $"body: {ex.Message}").Build());
                     }
 
                     await store.SaveDefinitionAsync(body, ct).ConfigureAwait(false);
@@ -157,7 +160,7 @@ internal static class ConfigEndpoints
                     "/definitions/{definitionId:guid}", async Task<Results<NoContent, NotFound>> (Guid definitionId, IConfigStore store, CancellationToken ct) => {
                         var existing = await store.GetDefinitionByIdAsync(definitionId, ct).ConfigureAwait(false);
                         if (existing is null)
-                            return TypedResults.NotFound();
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
                         await store.DeleteDefinitionAsync(definitionId, ct).ConfigureAwait(false);
                         return TypedResults.NoContent();
@@ -170,7 +173,7 @@ internal static class ConfigEndpoints
                         await store.SaveBindingAsync(binding, null, ct).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException ex) {
-                        return TypedResults.Problem(ex.Message, title: "Binding rejected", statusCode: StatusCodes.Status409Conflict);
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, ex.Message));
                     }
 
                     return TypedResults.NoContent();
@@ -180,13 +183,13 @@ internal static class ConfigEndpoints
                     "/bindings/{bindingId:guid}", async Task<Results<NoContent, NotFound, ProblemHttpResult>> (Guid bindingId, IConfigStore store, CancellationToken ct) => {
                         var existing = await store.GetBindingByIdAsync(bindingId, null, ct).ConfigureAwait(false);
                         if (existing is null)
-                            return TypedResults.NotFound();
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
                         try {
                             await store.DeleteBindingAsync(bindingId, null, ct).ConfigureAwait(false);
                         }
                         catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(ex.Message, title: "Delete rejected", statusCode: StatusCodes.Status409Conflict);
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, ex.Message));
                         }
 
                         return TypedResults.NoContent();
@@ -205,7 +208,7 @@ internal static class ConfigEndpoints
                             await store.RevertBindingToRevisionAsync(bindingId, body.Revision, null, ct).ConfigureAwait(false);
                         }
                         catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, ex.Message));
                         }
 
                         return TypedResults.NoContent();
@@ -216,7 +219,7 @@ internal static class ConfigEndpoints
                 "/apps/{appKind}/{appId}/bindings",
                 async Task<Results<Ok<IReadOnlyList<ConfigBindingRecord>>, ProblemHttpResult>> (string appKind, string appId, IConfigStore store, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                        return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, msg));
 
                     var list = await store.GetBindingsAsync(refs, null, ct).ConfigureAwait(false);
                     return TypedResults.Ok(list);
@@ -226,10 +229,10 @@ internal static class ConfigEndpoints
                 "/apps/{appKind}/{appId}/bindings/{key}/revisions", async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, ProblemHttpResult>> (
                     string appKind, string appId, string key, IConfigStore store, CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                        return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, msg));
 
                     if (string.IsNullOrWhiteSpace(key))
-                        return TypedResults.Problem("Key segment is required.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "Key segment is required."));
 
                     return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), null, ct).ConfigureAwait(false));
                 });
@@ -238,16 +241,16 @@ internal static class ConfigEndpoints
                     "/apps/{appKind}/{appId}/bindings/{key}/revert", async Task<Results<NoContent, ProblemHttpResult>> (
                         string appKind, string appId, string key, RevertRevisionDto body, IConfigStore store, CancellationToken ct) => {
                         if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                            return TypedResults.Problem(msg, statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, msg));
 
                         if (string.IsNullOrWhiteSpace(key))
-                            return TypedResults.Problem("Key segment is required.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request");
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "Key segment is required."));
 
                         try {
                             await store.RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, null, ct).ConfigureAwait(false);
                         }
                         catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, ex.Message));
                         }
 
                         return TypedResults.NoContent();

@@ -1,4 +1,5 @@
 using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Error;
 using Lyo.Config;
 using Lyo.Discord.Models;
 using Lyo.Discord.Postgres.Database;
@@ -32,7 +33,7 @@ public static class DiscordGuildSettingsEndpoints
                     CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                     if (await db.DiscordGuilds.FindAsync([guildId], ct).ConfigureAwait(false) == null)
-                        return Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Discord guild", guildId.ToString()).Build());
+                        throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Discord guild", guildId.ToString()).Build());
 
                     await DiscordGuildSettingsHelper.EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
                     body.Revision = null;
@@ -70,7 +71,7 @@ public static class DiscordGuildSettingsEndpoints
                     long guildId, int revision, [FromServices] IConfigStore store, [FromServices] IDbContextFactory<DiscordDbContext> dbFactory, CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                     if (await db.DiscordGuilds.FindAsync([guildId], ct).ConfigureAwait(false) == null)
-                        return Results.NotFound(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Discord guild", guildId.ToString()).Build());
+                        throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Discord guild", guildId.ToString()).Build());
 
                     await DiscordGuildSettingsHelper.EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
                     var r = DiscordGuildSettingsHelper.GuildRef(guildId);

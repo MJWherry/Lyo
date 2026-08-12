@@ -47,12 +47,8 @@ public class ExportService<TContext>(
         ArgumentNullException.ThrowIfNull(request.Query);
         var exportPagingErrors = QueryPagingBoundsValidator.Validate(request.Query, queryOptions, queryOptions.MaxExportSize);
         if (exportPagingErrors.Count > 0) {
-            logger?.LogWarning(
-                "Export paging validation failed: {IssueCount} issue(s). {Details}", exportPagingErrors.Count,
-                string.Join("; ", exportPagingErrors.Select(static e => $"{e.Code}: {e.Description}")));
-
             var problem = LyoProblemDetailsBuilder.CreateWithActivity()
-                .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                .WithErrorCode(Constants.ApiErrorCodes.InvalidPaging)
                 .WithMessage("Invalid export request.")
                 .AddErrors(exportPagingErrors)
                 .Build();
@@ -105,7 +101,6 @@ public class ExportService<TContext>(
                 if (!projectedResult.IsSuccess) {
                     _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
                     var err = projectedResult.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");
-                    logger?.LogError("Export query failed: {Error}", err);
                     throw new ApiErrorException(AsExportFailure(err));
                 }
 
@@ -120,7 +115,6 @@ public class ExportService<TContext>(
             if (!result.IsSuccess) {
                 _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
                 var err = result.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");
-                logger?.LogError("Export query failed: {Error}", err);
                 throw new ApiErrorException(AsExportFailure(err));
             }
 
@@ -130,7 +124,7 @@ public class ExportService<TContext>(
             _metrics.IncrementCounter("api.export.success", 1, ExportTags);
             return output2;
         }
-        catch (Exception ex) when (ex is not InvalidOperationException and not NotSupportedException) {
+        catch (Exception ex) when (ex is not InvalidOperationException and not NotSupportedException and not ApiErrorException) {
             _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
             _metrics.RecordError("api.export.duration", ex, ExportTags);
             throw;

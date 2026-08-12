@@ -6,6 +6,8 @@ using Lyo.Favorite;
 using Lyo.Rating;
 using Lyo.Tag;
 using Microsoft.AspNetCore.Mvc;
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Comic.Api.Endpoints;
 
@@ -40,7 +42,7 @@ public static class VolumeEndpoints
     {
         var volume = await store.GetVolumeByIdAsync(id, ct);
         if (volume == null)
-            return Results.NotFound();
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
         return Results.Ok(await enricher.EnrichVolumeAsync(volume, ct: ct));
     }

@@ -1,3 +1,5 @@
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using System.Globalization;
 using Blazored.LocalStorage;
 using Lyo.Api.Client;
@@ -155,12 +157,16 @@ app.MapGet(
         $"/{Constants.FileStorageWorkbench.ProxyDownloadRoute}/{{fileId:guid}}", async (
             HttpContext http, Guid fileId, double? expiresHours, IApiClient apiClient, IHttpClientFactory httpClientFactory, IOptions<FileStorageWorkbenchOptions> fsw,
             IOptions<ApiClientOptions> apiOptions, CancellationToken ct) => {
-            if (!fsw.Value.UseRemoteApiServices)
-                return Results.Problem("File storage workbench is not configured to use Test API services.", statusCode: StatusCodes.Status400BadRequest);
+            if (!fsw.Value.UseRemoteApiServices) {
+                var workbenchMisconfigured = LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "File storage workbench is not configured to use Test API services.");
+                return Results.Json(workbenchMisconfigured, statusCode: workbenchMisconfigured.Status, contentType: "application/problem+json");
+            }
 
             var baseUrl = apiOptions.Value.BaseUrl?.Trim().TrimEnd('/');
-            if (string.IsNullOrEmpty(baseUrl))
-                return Results.Problem("ApiClient:BaseUrl is not configured; cannot download via workbench.");
+            if (string.IsNullOrEmpty(baseUrl)) {
+                var missingBaseUrl = LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "ApiClient:BaseUrl is not configured; cannot download via workbench.");
+                return Results.Json(missingBaseUrl, statusCode: missingBaseUrl.Status, contentType: "application/problem+json");
+            }
 
             var prefix = fsw.Value.ApiRoutePrefix.Trim().Trim('/');
             FileStoreResult? metadata;
@@ -168,12 +174,14 @@ app.MapGet(
                 metadata = await apiClient.GetAsAsync<FileStoreResult>($"{prefix}/files/{fileId:D}/metadata?includeDeleted=false", ct: ct).ConfigureAwait(false);
             }
             catch {
-                return Results.NotFound();
+                var notFound = LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found.");
+                return Results.Json(notFound, statusCode: notFound.Status, contentType: "application/problem+json");
             }
 
-            if (metadata == null)
-                return Results.NotFound();
-
+            if (metadata == null) {
+                var notFound = LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found.");
+                return Results.Json(notFound, statusCode: notFound.Status, contentType: "application/problem+json");
+            }
             // Plain objects: use IFileStorageService time-limited read URL (S3/Azure presigned, etc.) so the browser loads directly from storage.
             if (!metadata.IsEncrypted && !metadata.IsCompressed) {
                 var presignedRel = $"{prefix}/files/{fileId:D}/presigned-read";
@@ -222,7 +230,8 @@ app.MapGet(
                 return Results.Bytes(content, fileType.MimeType);
             }
             catch {
-                return Results.NotFound();
+                var notFound = LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found.");
+                return Results.Json(notFound, statusCode: notFound.Status, contentType: "application/problem+json");
             }
         })
     .WithName("ComicFileProxy");

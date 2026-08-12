@@ -22,16 +22,16 @@ internal static partial class RootQueryComputedFields
     {
         var errors = new List<ApiError>();
         if (request.Select.Count > options.MaxSelectFieldCount)
-            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Select field count ({request.Select.Count}) exceeds maximum allowed ({options.MaxSelectFieldCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidSelectField, $"Select field count ({request.Select.Count}) exceeds maximum allowed ({options.MaxSelectFieldCount})."));
 
         if (request.ComputedFields.Count > options.MaxComputedFieldCount)
-            errors.Add(new(ApiErrorCodes.InvalidQuery, $"Computed field count ({request.ComputedFields.Count}) exceeds maximum allowed ({options.MaxComputedFieldCount})."));
+            errors.Add(new(ApiErrorCodes.InvalidComputedField, $"Computed field count ({request.ComputedFields.Count}) exceeds maximum allowed ({options.MaxComputedFieldCount})."));
 
         foreach (var computedField in request.ComputedFields) {
             if (computedField.Template?.Length > options.MaxComputedTemplateLength) {
                 errors.Add(
                     new(
-                        ApiErrorCodes.InvalidQuery,
+                        ApiErrorCodes.InvalidComputedField,
                         $"Computed field '{computedField.Name}' template length ({computedField.Template.Length}) exceeds maximum allowed ({options.MaxComputedTemplateLength})."));
             }
         }

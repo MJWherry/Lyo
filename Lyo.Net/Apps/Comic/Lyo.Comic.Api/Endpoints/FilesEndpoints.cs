@@ -1,9 +1,11 @@
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Error;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Storage;
 using Lyo.FileStorage.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Comic.Api.Endpoints;
 
@@ -30,7 +32,7 @@ public static class FilesEndpoints
             return Results.Bytes(bytes, metadata.ContentType ?? DefaultContentType);
         }
         catch (FileNotFoundException) {
-            return Results.NotFound();
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
         }
     }
 
@@ -40,7 +42,7 @@ public static class FilesEndpoints
         CancellationToken ct = default)
     {
         if (req.Ids is not { Count: > 0 })
-            return BadRequestProblem("At least one file ID is required.");
+            ThrowBadRequest("At least one file ID is required.");
 
         var entries = new List<FileBatchEntry>(req.Ids.Count);
         foreach (var id in req.Ids) {
@@ -62,20 +64,17 @@ public static class FilesEndpoints
         [FromKeyedServices(FileStorageKey)] ComicFileUploadOptions uploadOptions,
         CancellationToken ct = default)
     {
-        var prefixResult = await ResolveUploadPathPrefixAsync(comicStore, seriesId, volumeId, chapterId, ct);
-        if (prefixResult.Error is { } err)
-            return err;
-
+        var pathPrefix = await ResolveUploadPathPrefixAsync(comicStore, seriesId, volumeId, chapterId, ct).ConfigureAwait(false);
         await using var stream = file.OpenReadStream();
         var result = await fileStorage.SaveFromStreamAsync(
-            stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, prefixResult.PathPrefix, ct: ct);
+            stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, pathPrefix, ct: ct);
 
         return Results.Ok(new { result.Id });
     }
 
     private static bool HasScope(Guid? id) => id is { } g && g != Guid.Empty;
 
-    private static async Task<(string? PathPrefix, IResult? Error)> ResolveUploadPathPrefixAsync(
+    private static async Task<string?> ResolveUploadPathPrefixAsync(
         IComicStore comicStore,
         Guid? seriesId,
         Guid? volumeId,
@@ -83,59 +82,63 @@ public static class FilesEndpoints
         CancellationToken ct)
     {
         if (!HasScope(seriesId) && !HasScope(volumeId) && !HasScope(chapterId))
-            return (null, null);
+            return null;
 
         if (HasScope(chapterId)) {
             var chapter = await comicStore.GetChapterByIdAsync(chapterId!.Value, ct);
             if (chapter is null)
-                return (null, Results.NotFound());
+                throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
             if (HasScope(seriesId) && chapter.SeriesId != seriesId!.Value)
-                return (null, BadRequestProblem("seriesId does not match the chapter's series."));
+                ThrowBadRequest("seriesId does not match the chapter's series.");
 
             if (HasScope(volumeId)) {
                 var expectedVolume = chapter.VolumeId ?? Guid.Empty;
                 if (expectedVolume != volumeId!.Value)
-                    return (null, BadRequestProblem("volumeId does not match the chapter's volume."));
+                    ThrowBadRequest("volumeId does not match the chapter's volume.");
             }
 
-            return (ComicFileStoragePath.BuildPathPrefix(chapter), null);
+            return ComicFileStoragePath.BuildPathPrefix(chapter);
         }
 
         if (HasScope(volumeId)) {
             var volume = await comicStore.GetVolumeByIdAsync(volumeId!.Value, ct);
             if (volume is null)
-                return (null, Results.NotFound());
+                throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
             if (HasScope(seriesId) && volume.SeriesId != seriesId!.Value)
-                return (null, BadRequestProblem("seriesId does not match the volume's series."));
+                ThrowBadRequest("seriesId does not match the volume's series.");
 
-            return (ComicFileStoragePath.BuildVolumePrefix(volume.SeriesId, volume.Id), null);
+            return ComicFileStoragePath.BuildVolumePrefix(volume.SeriesId, volume.Id);
         }
 
         if (HasScope(seriesId)) {
             var series = await comicStore.GetSeriesByIdAsync(seriesId!.Value, ct);
             if (series is null)
-                return (null, Results.NotFound());
+                throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
-            return (ComicFileStoragePath.BuildSeriesPrefix(series.Id), null);
+            return ComicFileStoragePath.BuildSeriesPrefix(series.Id);
         }
 
-        return (null, BadRequestProblem("Invalid upload scope query parameters."));
+        ThrowBadRequest("Invalid upload scope query parameters.");
+        return null;
     }
 
-    /// <summary>400 with a <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> body so error responses stay RFC 7807 shaped.</summary>
-    private static IResult BadRequestProblem(string message)
-        => Results.BadRequest(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidRequest).WithMessage(message).Build());
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    private static void ThrowBadRequest(string message)
+        => throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.InvalidRequest).WithMessage(message).Build());
 
     private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {
         try {
             var deleted = await fileStorage.DeleteFileAsync(id, ct: ct);
-            return deleted ? Results.Ok() : Results.NotFound();
+            if (!deleted)
+                throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+
+            return Results.Ok();
         }
         catch (FileNotFoundException) {
-            return Results.NotFound();
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
         }
     }
 

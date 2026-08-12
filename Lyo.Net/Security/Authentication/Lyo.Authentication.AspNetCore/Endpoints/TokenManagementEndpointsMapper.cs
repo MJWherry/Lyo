@@ -1,3 +1,6 @@
+using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
@@ -59,9 +62,8 @@ public static class TokenManagementEndpointsMapper
     private static async Task<IResult> CreateAsync(HttpContext ctx, IApiTokenIssuer issuer, CreateTokenRequest? body)
     {
         if (body is null || body.DisplayName.IsNullOrWhitespace()) {
-            return Results.Problem(
-                "A display name is required to create a token.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
-                extensions: new Dictionary<string, object?> { ["error"] = "missing_display_name" });
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "A display name is required to create a token.", 
+                extensions: new() { ["error"] = "missing_display_name" }));
         }
 
         if (!TryResolveUser(ctx, out var userId))
@@ -69,25 +71,22 @@ public static class TokenManagementEndpointsMapper
 
         var kind = NormalizeKind(body.Kind);
         if (!IssuableKinds.Contains(kind, StringComparer.Ordinal)) {
-            return Results.Problem(
-                $"Token kind '{kind}' is not supported.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
-                extensions: new Dictionary<string, object?> { ["error"] = "unsupported_kind", ["supported"] = IssuableKinds });
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, $"Token kind '{kind}' is not supported.", 
+                extensions: new() { ["error"] = "unsupported_kind", ["supported"] = IssuableKinds }));
         }
 
         var callerScopes = ExtractScopes(ctx);
         if (!KindIsAllowed(kind, callerScopes)) {
-            return Results.Problem(
-                $"Creating '{kind}' tokens requires the '{KindScopePrefix + kind}' scope.", statusCode: StatusCodes.Status403Forbidden, title: "Forbidden",
-                extensions: new Dictionary<string, object?> { ["error"] = "kind_not_permitted", ["kind"] = kind, ["required_scope"] = KindScopePrefix + kind });
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Forbidden, $"Creating '{kind}' tokens requires the '{KindScopePrefix + kind}' scope.", 
+                extensions: new() { ["error"] = "kind_not_permitted", ["kind"] = kind, ["required_scope"] = KindScopePrefix + kind }));
         }
 
         var requestedScopes = body.Scopes ?? [];
         var grantedScopes = requestedScopes.Where(callerScopes.Contains).ToArray();
         // Webhook tokens are signature-only and conventionally carry no scopes; for every other kind we require at least one grantable scope so the token does something.
         if (grantedScopes.Length == 0 && kind != ApiTokenKind.Webhook) {
-            return Results.Problem(
-                "None of the requested scopes can be granted by the caller.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
-                extensions: new Dictionary<string, object?> { ["error"] = "no_grantable_scopes" });
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "None of the requested scopes can be granted by the caller.", 
+                extensions: new() { ["error"] = "no_grantable_scopes" }));
         }
 
         var issued = await issuer.IssueAsync(
@@ -125,7 +124,7 @@ public static class TokenManagementEndpointsMapper
 
         var record = await store.GetByIdAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
         if (record is null)
-            return Results.Problem($"Token '{id}' was not found.", statusCode: StatusCodes.Status404NotFound, title: "Not Found");
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, $"Token '{id}' was not found."));
 
         if (record.UserId != userId)
             return Results.Forbid();

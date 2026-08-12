@@ -1,3 +1,5 @@
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Cache;
 using Lyo.Common.Records;
 using Lyo.FileMetadataStore.Models;
@@ -160,12 +162,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                     "direct-upload/{fileId:guid}/put", async (Guid fileId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
                         var fileStorage = GetFileStorage(services);
                         if (fileStorage is not LocalFileStorageService local) {
-                            return Results.Json(
-                                new ProblemDetails {
-                                    Title = "Direct upload PUT not supported",
-                                    Detail = "PUT receiver is only available when the keyed IFileStorageService is LocalFileStorageService.",
-                                    Status = StatusCodes.Status501NotImplemented
-                                }, statusCode: StatusCodes.Status501NotImplemented);
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
                         }
 
                         await local.ReceiveWorkbenchDirectPutAsync(fileId, http.Request.Body, ct).ConfigureAwait(false);
@@ -184,12 +181,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                     "stage/{stageId:guid}/put", async (Guid stageId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
                         var staged = GetStagedFileUploadService(services);
                         if (staged is not LocalStagedFileUploadService local) {
-                            return Results.Json(
-                                new ProblemDetails {
-                                    Title = "Staged upload PUT not supported",
-                                    Detail = "PUT receiver is only available when the keyed IStagedFileUploadService is LocalStagedFileUploadService.",
-                                    Status = StatusCodes.Status501NotImplemented
-                                }, statusCode: StatusCodes.Status501NotImplemented);
+                            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
                         }
 
                         await local.ReceiveWorkbenchStagePutAsync(stageId, http.Request.Body, ct).ConfigureAwait(false);
@@ -255,12 +247,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "diagnostics/keys", async (string? prefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
                     if (fileStorage is not IFileStorageDiagnosticsService dx) {
-                        return Results.Json(
-                            new ProblemDetails {
-                                Title = "Diagnostics not supported",
-                                Detail = "The registered IFileStorageService does not implement IFileStorageDiagnosticsService.",
-                                Status = StatusCodes.Status501NotImplemented
-                            }, statusCode: StatusCodes.Status501NotImplemented);
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
                     }
 
                     var cap = Math.Clamp(maxKeys ?? 1000, 1, 10_000);
@@ -318,7 +305,8 @@ public static class SetupFileStorageWorkbenchEndpoints
                     if (includeDeleted == true) {
                         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                         var entity = await db.FileMetadata.AsNoTracking().FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
-                        return entity == null ? Results.NotFound() : Results.Ok(entity.ToFileStoreResult());
+                        if (entity == null) throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+                        return Results.Ok(entity.ToFileStoreResult());
                     }
 
                     var fileStorage = GetFileStorage(services);
@@ -344,7 +332,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                     // Encrypted/compressed or no presigned support: stream decrypted bytes from storage.
                     var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct);
                     if (stream == null)
-                        return Results.NotFound();
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
                     if (metadata.OriginalFileSize > 0)
                         http.Response.ContentLength = metadata.OriginalFileSize;
@@ -373,7 +361,7 @@ public static class SetupFileStorageWorkbenchEndpoints
 
                     var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct);
                     if (stream == null)
-                        return Results.NotFound();
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
                     if (metadata.OriginalFileSize > 0)
                         http.Response.ContentLength = metadata.OriginalFileSize;
@@ -496,7 +484,8 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "keys/{keyId}/raw", async (string keyId, string? version, IServiceProvider services, CancellationToken ct) => {
                     var keyStore = GetKeyStore(services);
                     var key = await keyStore.GetKeyAsync(keyId, version, ct);
-                    return key == null ? Results.NotFound() : Results.Ok(key);
+                    if (key == null) throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+                    return Results.Ok(key);
                 });
 
             group.MapGet(
@@ -515,7 +504,8 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "keys/{keyId}/metadata/{version}", async (string keyId, string version, IServiceProvider services, CancellationToken ct) => {
                     var keyStore = GetKeyStore(services);
                     var metadata = await keyStore.GetKeyMetadataAsync(keyId, version, ct);
-                    return metadata == null ? Results.NotFound() : Results.Ok(metadata);
+                    if (metadata == null) throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+                    return Results.Ok(metadata);
                 });
 
             group.MapPut(
@@ -529,7 +519,8 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "keys/{keyId}/salt/{version}", async (string keyId, string version, IServiceProvider services, CancellationToken ct) => {
                     var keyStore = GetKeyStore(services);
                     var salt = await keyStore.GetSaltForVersionAsync(keyId, version, ct);
-                    return salt == null ? Results.NotFound() : Results.Ok(salt);
+                    if (salt == null) throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+                    return Results.Ok(salt);
                 });
 
             group.MapPost(

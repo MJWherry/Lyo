@@ -6,6 +6,8 @@ using Lyo.Favorite;
 using Lyo.Rating;
 using Lyo.Tag;
 using Microsoft.AspNetCore.Mvc;
+using Lyo.Api.Models.Error;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Comic.Api.Endpoints;
 
@@ -37,7 +39,10 @@ public static class ChapterEndpoints
     private static async Task<IResult> GetChapterById(Guid id, IComicStore store, ComicEnrichmentService enricher, CancellationToken ct = default)
     {
         var chapter = await store.GetChapterByIdAsync(id, ct);
-        return chapter == null ? Results.NotFound() : Results.Ok(await enricher.EnrichChapterAsync(chapter, ct: ct));
+        if (chapter == null)
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+
+        return Results.Ok(await enricher.EnrichChapterAsync(chapter, ct: ct));
     }
 
     private static async Task<IResult> GetPages(Guid id, IComicStore store, CancellationToken ct = default)

@@ -16,7 +16,7 @@ public sealed record LyoProblemDetails(
     string? TraceId = null,
     string? SpanId = null,
     string? Stacktrace = null,
-    Dictionary<string, object?>? Extensions = null) : ILyoProblemDetails
+    Dictionary<string, object?>? Extensions = null)
 {
     /// <summary>
     /// Root <see cref="Detail" /> plus structured <see cref="Errors" /> descriptions when present. Prefer this for exception/UI surfaces so callers see validation entries, not
@@ -37,8 +37,6 @@ public sealed record LyoProblemDetails(
 
         return $"{Detail} {errorText}";
     }
-
-    public int GetErrorDepth() => Math.Max(1, Errors.Count);
 
     public override string ToString() => $"{TraceId} - {Detail}, Stacktrace Available={!string.IsNullOrEmpty(Stacktrace)} {Timestamp:G}";
 

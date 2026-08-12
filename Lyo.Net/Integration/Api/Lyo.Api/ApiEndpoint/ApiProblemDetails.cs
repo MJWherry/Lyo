@@ -28,6 +28,16 @@ public static class ApiErrorResponseFactory
             Constants.ApiErrorCodes.NotFound, detail ?? "Resource was not found.", DateTime.UtcNow, httpContext.TraceIdentifier, instance, extensions);
     }
 
+    /// <summary>Builds a problem via <see cref="CreateForError" /> and throws <see cref="ApiErrorException" /> for middleware to write and log.</summary>
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static IResult ThrowForError(HttpContext httpContext, LyoProblemDetails? error, IEnumerable<object?>? keys = null)
+        => throw ApiErrorException.From(CreateForError(httpContext, error, keys));
+
+    /// <summary>Builds a not-found problem and throws <see cref="ApiErrorException" /> for middleware to write and log.</summary>
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    public static IResult ThrowNotFound(HttpContext httpContext, IEnumerable<object?>? keys = null, string? detail = null)
+        => throw ApiErrorException.From(CreateNotFound(httpContext, keys, detail));
+
     private static void AddKeysExtension(IDictionary<string, object?> extensions, IEnumerable<object?>? keys)
     {
         if (keys is null)

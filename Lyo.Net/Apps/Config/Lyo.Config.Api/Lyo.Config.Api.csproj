@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>

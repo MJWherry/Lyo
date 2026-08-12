@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Api.Models.Error;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Authentication.Client;
 
@@ -29,9 +31,10 @@ public static class LyoAuthClientEndpointsMapper
         var opts = options.Value;
         var logger = loggerFactory.CreateLogger(typeof(LyoAuthClientEndpointsMapper));
         if (!ctx.Request.Query.TryGetValue(HandoffQueryParameter, out var raw) || raw.Count == 0 || raw[0].IsNullOrWhitespace()) {
-            return Results.Problem(
-                $"The '{HandoffQueryParameter}' query parameter is missing.", statusCode: StatusCodes.Status400BadRequest, title: "Invalid request",
-                extensions: new Dictionary<string, object?> { ["error"] = "missing_handoff_code" });
+            throw ApiErrorException.From(
+                LyoProblemDetails.FromCode(
+                    ApiErrorCodes.InvalidRequest, $"The '{HandoffQueryParameter}' query parameter is missing.",
+                    extensions: new Dictionary<string, object?> { ["error"] = "missing_handoff_code" }));
         }
 
         // The API stamped the consumer's own origin onto the code at issuance time (derived from the returnUrl on /auth/login).

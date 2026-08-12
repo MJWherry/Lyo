@@ -184,9 +184,8 @@ builder.Services.AddLyoOpenIdConnect(builder.Configuration);
 if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("GoogleAuth")["ClientId"]))
     builder.Services.AddGoogleProviderFromConfiguration(builder.Configuration);
 
-builder.Services.AddProblemDetails();
 var app = builder.Build();
-app.UseStatusCodePages();
+app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
     app.MapScalarApiReference();
