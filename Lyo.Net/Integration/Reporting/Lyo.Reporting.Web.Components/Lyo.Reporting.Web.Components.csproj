@@ -10,6 +10,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Reporting.Client\Lyo.Reporting.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Data\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>

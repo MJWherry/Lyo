@@ -1,5 +1,6 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JsRuntime
+@inject IDialogService DialogService
 
 <MudDialog>
     <DialogContent>
@@ -63,7 +64,7 @@
     <DialogActions>
         <MudButton OnClick="ViewAsync"
                    StartIcon="@Icons.Material.Filled.OpenInNew"
-                   Disabled="@(Generation.OutputFileId is null || ViewFileUrlAsync is null)">
+                   Disabled="@(!CanView)">
             View
         </MudButton>
         <MudButton OnClick="DownloadAsync"
@@ -90,8 +91,37 @@
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
 
+    private bool CanView
+        => Generation.Format is ReportFormat.Csv or ReportFormat.Xlsx
+            ? !string.IsNullOrWhiteSpace(Generation.ReportDataJson)
+            : Generation.OutputFileId is not null && ViewFileUrlAsync is not null;
+
     private async Task ViewAsync()
     {
+        if (Generation.Format is ReportFormat.Csv or ReportFormat.Xlsx) {
+            try {
+                var sheets = ReportGridDataTableMapper.FromReportDataJson(Generation.ReportDataJson);
+                if (Generation.Format == ReportFormat.Csv && sheets.Count > 1)
+                    sheets = [sheets[0]];
+
+                if (sheets.Count == 0) {
+                    Snackbar.Add("No grids found to preview.", Severity.Warning);
+                    return;
+                }
+
+                var title = string.IsNullOrWhiteSpace(Generation.OriginalFileName)
+                    ? $"{Generation.Format} preview"
+                    : Generation.OriginalFileName!;
+                var parameters = new DialogParameters<ReportTabularPreviewDialog> { { d => d.Sheets, sheets } };
+                await DialogService.ShowAsync<ReportTabularPreviewDialog>(title, parameters, LyoDialogPresets.Large);
+            }
+            catch (Exception ex) {
+                Snackbar.Add($"Preview failed: {ex.Message}", Severity.Error);
+            }
+
+            return;
+        }
+
         if (Generation.OutputFileId is not Guid fileId || ViewFileUrlAsync is null) {
             Snackbar.Add("View is unavailable for this generation.", Severity.Info);
             return;

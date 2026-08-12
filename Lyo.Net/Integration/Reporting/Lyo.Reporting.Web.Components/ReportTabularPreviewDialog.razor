@@ -1,0 +1,44 @@
+@using Lyo.DataTable.Models
+@using Lyo.Web.Components.DataTablePreview
+
+<MudDialog>
+    <DialogContent>
+        @if (_sheets.Count == 0) {
+            <MudAlert Severity="Severity.Warning" Dense="true">No grids found in this report.</MudAlert>
+        }
+        else if (_sheets.Count == 1) {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">@_sheets[0].Title</MudText>
+            <DataTablePreview Table="@_sheets[0].Table" MaxHeightCss="60vh"/>
+        }
+        else {
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+                @foreach (var sheet in _sheets) {
+                    <MudTabPanel Text="@sheet.Title">
+                        <div class="pa-2">
+                            <DataTablePreview Table="@sheet.Table" MaxHeightCss="55vh"/>
+                        </div>
+                    </MudTabPanel>
+                }
+            </MudTabs>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    /// <summary>Pre-built sheet previews (title + table).</summary>
+    [Parameter]
+    [EditorRequired]
+    public IReadOnlyList<(string Title, DataTable Table)> Sheets { get; set; } = [];
+
+    private IReadOnlyList<(string Title, DataTable Table)> _sheets = [];
+
+    protected override void OnParametersSet() => _sheets = Sheets ?? [];
+
+}

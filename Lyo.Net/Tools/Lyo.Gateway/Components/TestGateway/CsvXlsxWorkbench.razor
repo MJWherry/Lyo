@@ -7,6 +7,7 @@
 @using Lyo.DataTable.Models
 @using Lyo.Result
 @using Lyo.Web.Components
+@using Lyo.Web.Components.DataTablePreview
 @using Lyo.Web.Components.FileUpload
 @using Lyo.Web.Components.JsonEditor
 @using Lyo.Web.Components.Models
@@ -31,7 +32,10 @@
                 <MudStack Spacing="3" Class="mt-3">
                     <MudGrid>
                         <MudItem xs="12" md="6">
-                            <MudSwitch @bind-Value="_csvHasHeader" Color="Color.Primary" Label="First row is header"/>
+                            <MudSwitch @bind-Value="_csvHasHeader"
+                                       @bind-Value:after="OnCsvHasHeaderChangedAsync"
+                                       Color="Color.Primary"
+                                       Label="First row is header"/>
                         </MudItem>
                     </MudGrid>
 
@@ -45,24 +49,49 @@
                                            InlineLayout="true"
                                            OnClientFileReady="OnCsvUploadReadyAsync"/>
                             @if (!string.IsNullOrEmpty(_csvUploadName)) {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Loaded: @_csvUploadName</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Loaded: @_csvUploadName
+                                    @if (_csvBytes != null) {
+                                        <text> (@_csvBytes.Length.ToString("N0") bytes)</text>
+                                    }
+                                    @if (_csvTextEditDisabled) {
+                                        <text> — text edit disabled for large uploads; preview uses uploaded bytes</text>
+                                    }
+                                </MudText>
                             }
                         </MudStack>
                     </MudPaper>
 
-                    <MudTextField T="string"
-                                  @bind-Value="_csvText"
-                                  Label="CSV text (paste or edit; Parse applies this)"
-                                  Lines="10"
-                                  FullWidth="true"
-                                  Variant="Variant.Outlined"
-                                  Style="font-family: ui-monospace, monospace;"/>
+                    @if (_csvTextEditDisabled) {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-0">
+                            CSV is larger than @(MaxCsvTextEditBytes / 1024) KiB, so the paste editor is hidden to avoid Blazor lag.
+                            Toggle “First row is header” and click Re-parse upload to refresh the preview.
+                        </MudAlert>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvBytesAsync" Disabled="@(_csvBytes == null)">
+                            Re-parse upload
+                        </MudButton>
+                    }
+                    else {
+                        <MudTextField T="string"
+                                      @bind-Value="_csvText"
+                                      Label="CSV text (paste or edit; Parse applies this)"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      Variant="Variant.Outlined"
+                                      Style="font-family: ui-monospace, monospace;"/>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvTextAsync">Parse text</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                        </MudStack>
+                    }
 
-                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvTextAsync">Parse text</MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
-                    </MudStack>
+                    @if (_csvTextEditDisabled) {
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                        </MudStack>
+                    }
 
                     @if (!string.IsNullOrWhiteSpace(_csvError)) {
                         <MudAlert Severity="Severity.Error" Dense="true">@_csvError</MudAlert>
@@ -333,6 +362,7 @@
 
 @code {
     private const long MaxUploadBytes = 16 * 1024 * 1024;
+    private const int MaxCsvTextEditBytes = 256 * 1024;
 
     /// <summary>Initial tab: <c>csv</c>, <c>xlsx</c>, <c>split</c>, <c>merge</c>, or <c>more</c>.</summary>
     [Parameter]
@@ -345,6 +375,7 @@
     private string _csvUploadName = string.Empty;
     private byte[]? _csvBytes;
     private DataTable? _csvTable;
+    private bool _csvTextEditDisabled;
 
     private bool _xlsxUseHeaderRow = true;
     private string _xlsxError = string.Empty;
@@ -399,10 +430,25 @@
             var _ => 0
         };
 
+    private Task OnCsvHasHeaderChangedAsync()
+    {
+        if (_csvBytes is not { Length: > 0 } && string.IsNullOrEmpty(_csvText))
+            return Task.CompletedTask;
+
+        return _csvTextEditDisabled ? ParseCsvBytesAsync() : ParseCsvTextAsync();
+    }
+
     private Task OnCsvUploadReadyAsync(LocalBrowserFile file)
     {
         _csvUploadName = file.FileName;
         _csvBytes = file.Content;
+        if (file.Content.Length > MaxCsvTextEditBytes) {
+            _csvTextEditDisabled = true;
+            _csvText = string.Empty;
+            return ParseCsvBytesAsync();
+        }
+
+        _csvTextEditDisabled = false;
         _csvText = Encoding.UTF8.GetString(file.Content);
         return ParseCsvTextAsync();
     }
@@ -412,8 +458,26 @@
         _csvError = string.Empty;
         _csvTable = null;
         _csvBytes = Encoding.UTF8.GetBytes(_csvText ?? string.Empty);
+        _csvTextEditDisabled = false;
+        return ApplyCsvParse(_csvBytes);
+    }
+
+    private Task ParseCsvBytesAsync()
+    {
+        _csvError = string.Empty;
+        _csvTable = null;
+        if (_csvBytes == null || _csvBytes.Length == 0) {
+            _csvError = "No uploaded CSV bytes to parse.";
+            return Task.CompletedTask;
+        }
+
+        return ApplyCsvParse(_csvBytes);
+    }
+
+    private Task ApplyCsvParse(byte[] bytes)
+    {
         try {
-            var result = CsvService.ParseBytesAsDataTable(_csvBytes, _csvHasHeader);
+            var result = CsvService.ParseBytesAsDataTable(bytes, _csvHasHeader);
             if (result.IsSuccess && result.Data != null)
                 _csvTable = result.Data;
             else

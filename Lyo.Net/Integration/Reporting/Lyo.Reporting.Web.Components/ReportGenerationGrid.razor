@@ -162,6 +162,19 @@
 
     private async Task ViewOutput(object? item)
     {
+        var formatText = ProjectedValueHelper.GetDisplayValue(item, "Format");
+        if (Enum.TryParse<ReportFormat>(formatText, out var format) && format is ReportFormat.Csv or ReportFormat.Xlsx) {
+            var id = ProjectedValueHelper.GetValue(item, "Id");
+            var gen = await FetchGeneration(id);
+            if (gen is null) {
+                Snackbar.Add("Generation not found.", Severity.Warning);
+                return;
+            }
+
+            await ShowTabularPreviewAsync(gen);
+            return;
+        }
+
         var fileId = ProjectedValueHelper.GetValue(item, "OutputFileId");
         if (!ProjectedValueHelper.TryGetGuid(fileId, out var guid)) {
             Snackbar.Add("No output file on this generation.", Severity.Info);
@@ -180,6 +193,27 @@
         }
 
         await JsRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private async Task ShowTabularPreviewAsync(ReportGenerationRes gen)
+    {
+        try {
+            var sheets = ReportGridDataTableMapper.FromReportDataJson(gen.ReportDataJson);
+            if (gen.Format == ReportFormat.Csv && sheets.Count > 1)
+                sheets = [sheets[0]];
+
+            if (sheets.Count == 0) {
+                Snackbar.Add("No grids found to preview.", Severity.Warning);
+                return;
+            }
+
+            var title = string.IsNullOrWhiteSpace(gen.OriginalFileName) ? $"{gen.Format} preview" : gen.OriginalFileName!;
+            var parameters = new DialogParameters<ReportTabularPreviewDialog> { { d => d.Sheets, sheets } };
+            await DialogService.ShowAsync<ReportTabularPreviewDialog>(title, parameters, LyoDialogPresets.Large);
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Preview failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task DownloadOutput(object? item)
