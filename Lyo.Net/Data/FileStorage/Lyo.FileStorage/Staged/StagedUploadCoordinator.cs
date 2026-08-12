@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.FileStorage.Staged;
 
 /// <summary>
-/// Shared orchestration for staged uploads; backend packages supply <see cref="IStagedFilePhysicalIo" /> and delegate public <see cref="IStagedFileUploadService" /> methods
+/// Shared orchestration for staged uploads; backend packages supply <see cref="IStagedFilePhysicalIO" /> and delegate public <see cref="IStagedFileUploadService" /> methods
 /// here. Not intended for direct use by application code.
 /// </summary>
 public sealed class StagedUploadCoordinator
@@ -29,13 +29,13 @@ public sealed class StagedUploadCoordinator
     private readonly IMetrics _metrics;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
-    private readonly IStagedFilePhysicalIo _physicalIo;
+    private readonly IStagedFilePhysicalIO _physicalIO;
     private readonly IFileStorageService _storage;
     private readonly IStagedFileUploadStore _store;
 
     public StagedUploadCoordinator(
         IStagedFileUploadStore store,
-        IStagedFilePhysicalIo physicalIo,
+        IStagedFilePhysicalIO physicalIO,
         IFileStorageService storage,
         FileStorageServiceBaseOptions options,
         IFileContentPolicy? contentPolicy = null,
@@ -48,7 +48,7 @@ public sealed class StagedUploadCoordinator
         int copyToBufferSizeBytes = 81920)
     {
         _store = ArgumentHelpers.ThrowIfNullReturn(store);
-        _physicalIo = ArgumentHelpers.ThrowIfNullReturn(physicalIo);
+        _physicalIO = ArgumentHelpers.ThrowIfNullReturn(physicalIO);
         _storage = ArgumentHelpers.ThrowIfNullReturn(storage);
         _options = ArgumentHelpers.ThrowIfNullReturn(options);
         _logger = logger ?? NullLogger.Instance;
@@ -96,14 +96,14 @@ public sealed class StagedUploadCoordinator
         var urlExpiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         ArgumentHelpers.ThrowIfNotInRange(urlExpiry, TimeSpan.Zero, TimeSpan.FromDays(7));
         var urlExpiresUtc = DateTimeOffset.UtcNow.Add(urlExpiry);
-        var storageLocation = _physicalIo.BuildStageStorageLocation(stageId, normalizedPrefix);
+        var storageLocation = _physicalIO.BuildStageStorageLocation(stageId, normalizedPrefix);
         var record = new StagedFileUploadRecord(
             stageId, tenant, _operationContextAccessor.Current?.ActorId is { } actor && Guid.TryParse(actor, out var ownerId) ? ownerId : null, now, now.Add(sessionTtl),
             StagedUploadStatus.PendingUpload, storageLocation, normalizedPrefix, request.OriginalFileName ?? stageId.ToString(), contentType, request.DeclaredMaxSizeBytes, null,
-            null, _options.HashAlgorithm, _physicalIo.ProviderKind, "{}", null, null);
+            null, _options.HashAlgorithm, _physicalIO.ProviderKind, "{}", null, null);
 
         await _store.CreateAsync(record, ct).ConfigureAwait(false);
-        var presigned = await _physicalIo.GeneratePresignedPutUrlAsync(stageId, normalizedPrefix, request, urlExpiresUtc, ct).ConfigureAwait(false);
+        var presigned = await _physicalIO.GeneratePresignedPutUrlAsync(stageId, normalizedPrefix, request, urlExpiresUtc, ct).ConfigureAwait(false);
         await PublishAuditAsync(FileAuditEventType.StagedUploadBegin, stageId, tenant, FileAuditOutcome.Success, ct: ct).ConfigureAwait(false);
         var snapshot = StagedFileUploadMappings.ToResult(record);
         var eventArgs = new StagedUploadPresignedCreatedEventArgs { StageId = stageId, TenantId = tenant, Snapshot = snapshot };
@@ -115,7 +115,7 @@ public sealed class StagedUploadCoordinator
             UrlExpiresUtc = urlExpiresUtc,
             StorageLocation = storageLocation,
             RequiredPutHeaders = presigned.RequiredPutHeaders,
-            ProviderKind = _physicalIo.ProviderKind
+            ProviderKind = _physicalIO.ProviderKind
         }, record);
     }
 
@@ -132,10 +132,10 @@ public sealed class StagedUploadCoordinator
         OperationHelpers.ThrowIf(record.Status != StagedUploadStatus.PendingUpload, $"Stage {stageId} is not pending upload (status={record.Status}).");
         EnsureScanRequirementSatisfied();
         try {
-            if (!await _physicalIo.ObjectExistsAsync(record, ct).ConfigureAwait(false))
+            if (!await _physicalIO.ObjectExistsAsync(record, ct).ConfigureAwait(false))
                 throw new FileNotFoundException($"No backing object exists for staged upload {stageId}");
 
-            var observedLength = await _physicalIo.GetObjectSizeAsync(record, ct).ConfigureAwait(false);
+            var observedLength = await _physicalIO.GetObjectSizeAsync(record, ct).ConfigureAwait(false);
             OperationHelpers.ThrowIfLessThan(observedLength, 1, "Staged uploaded object was empty.");
             OperationHelpers.ThrowIf(
                 _options.MaxUploadSizeBytes.HasValue && observedLength > _options.MaxUploadSizeBytes.Value,
@@ -147,7 +147,7 @@ public sealed class StagedUploadCoordinator
 
             byte[] contentHash;
 #if NETSTANDARD2_0
-            using (var readStream = await _physicalIo.OpenReadStreamAsync(record, ct).ConfigureAwait(false)) {
+            using (var readStream = await _physicalIO.OpenReadStreamAsync(record, ct).ConfigureAwait(false)) {
                 var spoolPath = Path.Combine(Path.GetTempPath(), $"lyo-fs-stage-{stageId:N}.tmp");
                 try {
                     using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
@@ -175,7 +175,7 @@ public sealed class StagedUploadCoordinator
                 }
             }
 #else
-            await using (var readStream = await _physicalIo.OpenReadStreamAsync(record, ct).ConfigureAwait(false)) {
+            await using (var readStream = await _physicalIO.OpenReadStreamAsync(record, ct).ConfigureAwait(false)) {
                 var spoolPath = Path.Combine(Path.GetTempPath(), $"lyo-fs-stage-{stageId:N}.tmp");
                 try {
                     await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
@@ -240,9 +240,9 @@ public sealed class StagedUploadCoordinator
         try {
             record = (await _store.GetAsync(stageId, ct).ConfigureAwait(false))!;
 #if NETSTANDARD2_0
-            using var input = await _physicalIo.OpenReadStreamAsync(record, ct).ConfigureAwait(false);
+            using var input = await _physicalIO.OpenReadStreamAsync(record, ct).ConfigureAwait(false);
 #else
-            await using var input = await _physicalIo.OpenReadStreamAsync(record, ct).ConfigureAwait(false);
+            await using var input = await _physicalIO.OpenReadStreamAsync(record, ct).ConfigureAwait(false);
 #endif
             var destPrefix = FileHelpers.NormalizePathPrefix(request.PathPrefix ?? record.PathPrefix);
             var fileResult = await _storage.SaveFromStreamAsync(
@@ -251,7 +251,7 @@ public sealed class StagedUploadCoordinator
                     record.TenantId, ct: ct)
                 .ConfigureAwait(false);
 
-            await _physicalIo.DeleteStageObjectAsync(record, ct).ConfigureAwait(false);
+            await _physicalIO.DeleteStageObjectAsync(record, ct).ConfigureAwait(false);
             var committed = record with { Status = StagedUploadStatus.Committed, CommittedFileId = fileResult.Id, FailureReason = null };
             await _store.UpdateAsync(committed, ct).ConfigureAwait(false);
             await PublishAuditAsync(FileAuditEventType.StagedUploadCommit, stageId, committed.TenantId, FileAuditOutcome.Success, correlationId: fileResult.Id, ct: ct)
@@ -303,8 +303,8 @@ public sealed class StagedUploadCoordinator
             return;
 
         try {
-            if (await _physicalIo.ObjectExistsAsync(record, ct).ConfigureAwait(false))
-                await _physicalIo.DeleteStageObjectAsync(record, ct).ConfigureAwait(false);
+            if (await _physicalIO.ObjectExistsAsync(record, ct).ConfigureAwait(false))
+                await _physicalIO.DeleteStageObjectAsync(record, ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, "Best-effort stage object delete failed for {StageId}", stageId);

@@ -1,10 +1,10 @@
 using Lyo.Common.Records;
 using Lyo.Compression.BZip2;
-using Lyo.Compression.LZ4;
-using Lyo.Compression.LZMA;
+using Lyo.Compression.Lz4;
+using Lyo.Compression.Lzma;
 using Lyo.Compression.Models;
 using Lyo.Compression.Snappier;
-using Lyo.Compression.XZ;
+using Lyo.Compression.Xz;
 using Lyo.Compression.Zstd;
 
 namespace Lyo.Compression.Tests;

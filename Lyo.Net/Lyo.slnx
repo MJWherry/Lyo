@@ -25,9 +25,9 @@
         <Project Path="Core/Result/Lyo.Result/Lyo.Result.csproj"/>
         <Project Path="Core/Result/Lyo.Result.Tests/Lyo.Result.Tests.csproj"/>
     </Folder>
-    <Folder Name="/Core/">
-        <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj"/>
-        <Project Path="Core/Lyo.Testing.Containers/Lyo.Testing.Containers.csproj"/>
+    <Folder Name="/Core/Testing/">
+        <Project Path="Core/Testing/Lyo.Testing/Lyo.Testing.csproj"/>
+        <Project Path="Core/Testing/Lyo.Testing.Containers/Lyo.Testing.Containers.csproj"/>
     </Folder>
     <Folder Name="/Core/Exceptions/">
         <Project Path="Core/Exceptions/Lyo.Exceptions/Lyo.Exceptions.csproj"/>
@@ -35,7 +35,7 @@
     </Folder>
     <Folder Name="/Core/Benchmark/">
         <Project Path="Core/Benchmark/Lyo.Benchmark.Models/Lyo.Benchmark.Models.csproj"/>
-        <Project Path="Core/Benchmark/Lyo.Benchmarking/Lyo.Benchmarking.csproj"/>
+        <Project Path="Core/Benchmark/Lyo.Benchmark/Lyo.Benchmark.csproj"/>
     </Folder>
     <Folder Name="/Core/Mathematics/">
         <Project Path="Core/Mathematics/Lyo.Mathematics/Lyo.Mathematics.csproj"/>
@@ -80,6 +80,8 @@
     </Folder>
     <Folder Name="/Core/Diagnostic/">
         <Project Path="Core/Diagnostic/Lyo.Diagnostic/Lyo.Diagnostic.csproj"/>
+        <Project Path="Core/Diagnostic/Lyo.Diagnostic.AspNetCore/Lyo.Diagnostic.AspNetCore.csproj"/>
+        <Project Path="Core/Diagnostic/Lyo.Diagnostic.Tests/Lyo.Diagnostic.Tests.csproj"/>
         <Project Path="Core/Diagnostic/Lyo.Diagnostic.Web.Components/Lyo.Diagnostic.Web.Components.csproj"/>
     </Folder>
     <Folder Name="/Core/PackageMetadata/">
@@ -151,11 +153,11 @@
         <Project Path="Data/Compression/Lyo.Compression/Lyo.Compression.csproj"/>
         <Project Path="Data/Compression/Lyo.Compression.Benchmarks/Lyo.Compression.Benchmarks.csproj"/>
         <Project Path="Data/Compression/Lyo.Compression.BZip2/Lyo.Compression.BZip2.csproj"/>
-        <Project Path="Data/Compression/Lyo.Compression.LZ4/Lyo.Compression.LZ4.csproj"/>
-        <Project Path="Data/Compression/Lyo.Compression.LZMA/Lyo.Compression.LZMA.csproj"/>
+        <Project Path="Data/Compression/Lyo.Compression.Lz4/Lyo.Compression.Lz4.csproj"/>
+        <Project Path="Data/Compression/Lyo.Compression.Lzma/Lyo.Compression.Lzma.csproj"/>
         <Project Path="Data/Compression/Lyo.Compression.Snappier/Lyo.Compression.Snappier.csproj"/>
         <Project Path="Data/Compression/Lyo.Compression.Tests/Lyo.Compression.Tests.csproj"/>
-        <Project Path="Data/Compression/Lyo.Compression.XZ/Lyo.Compression.XZ.csproj"/>
+        <Project Path="Data/Compression/Lyo.Compression.Xz/Lyo.Compression.Xz.csproj"/>
         <Project Path="Data/Compression/Lyo.Compression.Zstd/Lyo.Compression.Zstd.csproj"/>
     </Folder>
     <Folder Name="/Data/Csv/">
@@ -221,6 +223,7 @@
         <Project Path="Data/Query/Lyo.Query.Web.Components/Lyo.Query.Web.Components.csproj"/>
     </Folder>
     <Folder Name="/Data/DataTable/">
+        <Project Path="Data/DataTable/Lyo.DataTable/Lyo.DataTable.csproj"/>
         <Project Path="Data/DataTable/Lyo.DataTable.Models/Lyo.DataTable.Models.csproj"/>
         <Project Path="Data/DataTable/Lyo.DataTable.Models.Tests/Lyo.DataTable.Models.Tests.csproj"/>
     </Folder>
@@ -232,8 +235,8 @@
     </Folder>
     <Folder Name="/Data/FileStorage/">
         <Project Path="Data/FileStorage/Lyo.FileStorage.Benchmarks/Lyo.FileStorage.Benchmarks.csproj"/>
-        <Project Path="Data/FileStorage/Lyo.FileStorage.Blob/Lyo.FileStorage.Blob.csproj"/>
-        <Project Path="Data/FileStorage/Lyo.FileStorage.Blob.Tests/Lyo.FileStorage.Blob.Tests.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.AzureBlob/Lyo.FileStorage.AzureBlob.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.AzureBlob.Tests/Lyo.FileStorage.AzureBlob.Tests.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.S3/Lyo.FileStorage.S3.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.S3.Tests/Lyo.FileStorage.S3.Tests.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.Ftp/Lyo.FileStorage.Ftp.csproj"/>
@@ -318,10 +321,10 @@
         <Project Path="Features/ShortUrl/Lyo.ShortUrl.Tests/Lyo.ShortUrl.Tests.csproj"/>
         <Project Path="Features/ShortUrl/Lyo.ShortUrl/Lyo.ShortUrl.csproj"/>
     </Folder>
-    <Folder Name="/Data/Ffmpeg/">
-        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg.Models/Lyo.Ffmpeg.Models.csproj"/>
-        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg/Lyo.Ffmpeg.csproj"/>
-        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg.Tests/Lyo.Ffmpeg.Tests.csproj"/>
+    <Folder Name="/Data/FFmpeg/">
+        <Project Path="Data/FFmpeg/Lyo.FFmpeg.Models/Lyo.FFmpeg.Models.csproj"/>
+        <Project Path="Data/FFmpeg/Lyo.FFmpeg/Lyo.FFmpeg.csproj"/>
+        <Project Path="Data/FFmpeg/Lyo.FFmpeg.Tests/Lyo.FFmpeg.Tests.csproj"/>
     </Folder>
     <Folder Name="/Data/Formatter/">
         <Project Path="Data/Formatter/Lyo.Formatter.Tests/Lyo.Formatter.Tests.csproj"/>
@@ -386,10 +389,10 @@
         <Project Path="Security/Hashing/Lyo.Hashing.Benchmarks/Lyo.Hashing.Benchmarks.csproj"/>
         <Project Path="Security/Hashing/Lyo.Hashing.Tests/Lyo.Hashing.Tests.csproj"/>
     </Folder>
-    <Folder Name="/Security/ContentThreat/">
-        <Project Path="Security/ContentThreat/Lyo.ContentThreatScan.Intel/Lyo.ContentThreatScan.Intel.csproj"/>
-        <Project Path="Security/ContentThreat/Lyo.ContentThreatScan.Tests/Lyo.ContentThreatScan.Tests.csproj"/>
-        <Project Path="Security/ContentThreat/Lyo.ContentThreatScan/Lyo.ContentThreatScan.csproj"/>
+    <Folder Name="/Security/ContentThreatScan/">
+        <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/Lyo.ContentThreatScan.Intel.csproj"/>
+        <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.Tests/Lyo.ContentThreatScan.Tests.csproj"/>
+        <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan/Lyo.ContentThreatScan.csproj"/>
     </Folder>
     <Folder Name="/Security/Encryption/">
         <Project Path="Security/Encryption/Lyo.Encryption/Lyo.Encryption.csproj"/>
@@ -399,8 +402,10 @@
         <Project Path="Security/Encryption/Lyo.Encryption.XChaCha20Poly1305/Lyo.Encryption.XChaCha20Poly1305.csproj"/>
         <Project Path="Security/Encryption/Lyo.Encryption.Benchmarks/Lyo.Encryption.Benchmarks.csproj"/>
         <Project Path="Security/Encryption/Lyo.Encryption.Tests/Lyo.Encryption.Tests.csproj"/>
-        <Project Path="Security/Encryption/Lyo.Keystore.Aws/Lyo.Keystore.Aws.csproj"/>
-        <Project Path="Security/Encryption/Lyo.Keystore/Lyo.Keystore.csproj"/>
+    </Folder>
+    <Folder Name="/Security/KeyStore/">
+        <Project Path="Security/KeyStore/Lyo.KeyStore/Lyo.KeyStore.csproj"/>
+        <Project Path="Security/KeyStore/Lyo.KeyStore.Aws/Lyo.KeyStore.Aws.csproj"/>
     </Folder>
     <Folder Name="/Security/Authentication/">
         <Project Path="Security/Authentication/Lyo.Authentication.Models/Lyo.Authentication.Models.csproj"/>
@@ -462,7 +467,7 @@
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Tests/Lyo.Web.Automation.Tests.csproj"/>
     </Folder>
     <Folder Name="/Integration/Espn/">
-        <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football/Lyo.Espn.Fantasy.Football.csproj"/>
+        <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football.Client/Lyo.Espn.Fantasy.Football.Client.csproj"/>
     </Folder>
     <Folder Name="/Integration/Job/">
         <Project Path="Integration/Job/Lyo.Job.Alerts/Lyo.Job.Alerts.csproj"/>
@@ -489,6 +494,7 @@
     <Folder Name="/Tools/">
         <Project Path="Tools/Lyo.Cli/Lyo.Cli.csproj"/>
         <Project Path="Tools/Lyo.Gateway/Lyo.Gateway.csproj"/>
+        <Project Path="Tools/Lyo.Job.Scheduler.Host/Lyo.Job.Scheduler.Host.csproj"/>
         <Project Path="Tools/Lyo.Preview/Lyo.Preview.csproj"/>
         <Project Path="Tools/Lyo.TestApi/Lyo.TestApi.csproj"/>
         <Project Path="Tools/Lyo.TestConsole/Lyo.TestConsole.csproj"/>

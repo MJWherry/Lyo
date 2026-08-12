@@ -7,7 +7,7 @@ namespace Lyo.Compression.Models;
 
 /// <summary>
 /// Extensible identifier for a stream compression algorithm. Use the built-in static fields (<see cref="GZip" />, <see cref="Deflate" />, <see cref="Brotli" />,
-/// <see cref="ZLib" />) for algorithms shipped in the base <c>Lyo.Compression</c> package; addon packages (e.g. <c>Lyo.Compression.LZ4</c>) define their own subclass and a
+/// <see cref="ZLib" />) for algorithms shipped in the base <c>Lyo.Compression</c> package; addon packages (e.g. <c>Lyo.Compression.Lz4</c>) define their own subclass and a
 /// <c>static readonly Instance</c> singleton.
 /// </summary>
 /// <remarks>

@@ -78,7 +78,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` — (direct, microsoft)
 - `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
 - `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)

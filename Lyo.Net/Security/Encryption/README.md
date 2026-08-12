@@ -9,8 +9,8 @@ algorithms, key management, and envelope encryption patterns.
 |----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **`README.md` (this file)** | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions. |
 | **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)** | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
-| **[`Lyo.Keystore/README.md`](Lyo.Keystore/README.md)** | **`Lyo.Keystore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts. |
-| **[`Lyo.Keystore.Aws/README.md`](Lyo.Keystore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation. |
+| **[`Lyo.KeyStore/README.md`](Lyo.KeyStore/README.md)** | **`Lyo.KeyStore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts. |
+| **[`Lyo.KeyStore.Aws/README.md`](Lyo.KeyStore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation. |
 
 Start here for narrative and threat-modeling context; use the per-project READMEs when you only care about one package’s surface area.
 
@@ -107,7 +107,7 @@ target decrypt on the other when keys and formats match.
 
 ```csharp
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 // Create a key store and add a key
 var keyStore = new LocalKeyStore();
@@ -162,7 +162,7 @@ AES-GCM is recommended for most use cases - it provides excellent performance an
 
 ```csharp
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 // Setup
 const string keyId = "my-app-key";
@@ -199,7 +199,7 @@ ChaCha20Poly1305 offers excellent performance and is a modern alternative to AES
 
 ```csharp
 using Lyo.Encryption.ChaCha20Poly1305;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 const string keyId = "my-app-key";
 var keyStore = new LocalKeyStore();
@@ -264,7 +264,7 @@ Encryption Key (KEK) from the KeyStore.
 ```csharp
 using Lyo.Encryption.TwoKey;
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 // Setup KeyStore with KEK
 const string keyId = "my-app-key";
@@ -321,7 +321,7 @@ var decrypted1 = service.Decrypt(encrypted1);
 #### Using LocalKeyStore (Development/Local Apps)
 
 ```csharp
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 var keyStore = new LocalKeyStore();
 const string keyId = "my-app-key";
@@ -369,7 +369,7 @@ var decrypted = service.Decrypt(encrypted, keyId: "client-1-key");
 #### Key Metadata
 
 ```csharp
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 const string keyId = "my-app-key";
 var keyStore = new LocalKeyStore();
@@ -406,7 +406,7 @@ For large files, use stream operations to avoid loading everything into memory. 
 
 ```csharp
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 const string keyId = "my-app-key";
 var keyStore = new LocalKeyStore();
@@ -432,7 +432,7 @@ Two-key encryption streams include a structured header with key metadata:
 ```csharp
 using Lyo.Encryption.TwoKey;
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 const string keyId = "my-app-key";
 var keyStore = new LocalKeyStore();
@@ -478,7 +478,7 @@ You can also provide keys directly without using a KeyStore:
 
 ```csharp
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using System.Security.Cryptography;
 
 // KeyStore is still required for initialization, but you can pass keys directly
@@ -501,7 +501,7 @@ var decrypted = service.Decrypt(encrypted, key: key);
 ### 8a. Secure Key Generation
 
 ```csharp
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 // Generate secure random key (32 bytes = 256 bits)
 var key = SecureKeyGenerator.GenerateKey(32);
@@ -523,7 +523,7 @@ keyStore.UpdateKey(keyId, key);
 For production, implement `IKeyStore` for your key management system:
 
 ```csharp
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using System.Threading.Tasks;
 
 // Example: Azure Key Vault KeyStore (pseudo-code)
@@ -596,7 +596,7 @@ The library throws specific exceptions for different error conditions. Always ha
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 try
 {
@@ -683,9 +683,9 @@ catch (OperationCanceledException ex)
 - `DecryptionFailedException` - Thrown when decryption fails due to wrong key, corrupted data, authentication failure, or tampered data
 - `InvalidDataException` - Thrown when encrypted data format is invalid, unsupported format version, or corrupted
 - `InvalidOperationException` - Thrown when no encryption/decryption key is available (neither keyId nor key provided, or keyId not found in KeyStore)
-- `KeyNotFoundException` (`Lyo.Keystore`) - Thrown by TwoKey envelope decryption when the Key Encryption Key is missing from the KeyStore
+- `KeyNotFoundException` (`Lyo.KeyStore`) - Thrown by TwoKey envelope decryption when the Key Encryption Key is missing from the KeyStore
 - `ConfigurationException` (`Lyo.Exceptions`) - Thrown by `RsaEncryptor`/`RsaDecryptor`/`AesGcmRsaEncryptionService` when no RSA key configuration is provided
-- `InvalidKeyException` (`Lyo.Keystore`) - Thrown when key material is unusable (e.g. PFX without a private key, wrong Ed25519 seed length)
+- `InvalidKeyException` (`Lyo.KeyStore`) - Thrown when key material is unusable (e.g. PFX without a private key, wrong Ed25519 seed length)
 - `InvalidFormatException` (`Lyo.Exceptions`) - Thrown by `RsaKeyLoader` for malformed or non-RSA PEM content
 - `FileNotFoundException` - Thrown when a required file does not exist
 - `EndOfStreamException` - Thrown when a stream ends unexpectedly while reading encrypted data
@@ -694,7 +694,7 @@ catch (OperationCanceledException ex)
 
 ### 12. Dependency Injection (ASP.NET Core)
 
-Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.Keystore`](Lyo.Keystore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [
+Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.KeyStore`](Lyo.KeyStore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [
 `AesSiv`](Lyo.Encryption.AesSiv/README.md), [`XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md)). For compression, see [
 `Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md).
 
@@ -708,7 +708,7 @@ Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.Keysto
 | Interface default | `AddDefaultEncryptionService<T>()` | Unkeyed `IEncryptionService` → `T` |
 
 Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship
-`AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.Keystore` DI section](Lyo.Keystore/README.md#dependency-injection)).
+`AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.KeyStore` DI section](Lyo.KeyStore/README.md#dependency-injection)).
 
 #### Keyed two-key (file storage, Comic.Api, etc.)
 
@@ -719,7 +719,7 @@ using Lyo.Encryption.Extensions;
 using Lyo.Encryption.Symmetric.Aes.AesCcm;
 using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -797,7 +797,7 @@ The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305En
 
 3. **Key Generation**
    ```csharp
-   using Lyo.Keystore;
+   using Lyo.KeyStore;
    
    const string keyId = "my-app-key";
    
@@ -1195,4 +1195,4 @@ Built with security best practices in mind, following:
 - [`Lyo.Result`](../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Streams`](../../Core/Streams/Lyo.Streams/README.md)
 - [`Lyo.Hashing`](../Hashing/Lyo.Hashing/README.md)
-- [`Lyo.Keystore`](Lyo.Keystore/README.md)
+- [`Lyo.KeyStore`](Lyo.KeyStore/README.md)

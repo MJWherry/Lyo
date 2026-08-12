@@ -33,7 +33,7 @@ using Lyo.Formatter;
 using Lyo.IO.Temp;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.People.Postgres;

@@ -4,7 +4,7 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Rsa;
 using Lyo.IO.Temp.Models;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Encryption.Tests;
 

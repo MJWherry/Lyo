@@ -107,7 +107,7 @@
       ]
     },
     {
-      "name": "Lyo.Compression.LZ4",
+      "name": "Lyo.Compression.Lz4",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -115,7 +115,7 @@
       ]
     },
     {
-      "name": "Lyo.Compression.LZMA",
+      "name": "Lyo.Compression.Lzma",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "name": "Lyo.Compression.XZ",
+      "name": "Lyo.Compression.Xz",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -211,7 +211,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "direct",

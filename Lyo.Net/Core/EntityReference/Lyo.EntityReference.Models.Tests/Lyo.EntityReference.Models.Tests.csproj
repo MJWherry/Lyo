@@ -12,7 +12,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
     </ItemGroup>
 
 </Project>

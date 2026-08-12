@@ -11,7 +11,7 @@ using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Options;
 using Lyo.Common.Extensions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;

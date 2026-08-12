@@ -10,7 +10,7 @@ namespace Lyo.Encryption;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Pass <c>keyId</c> to resolve key material from <see cref="Lyo.Keystore.IKeyStore" /> when the implementation is constructed with a store; pass <c>key</c> for inline
+/// Pass <c>keyId</c> to resolve key material from <see cref="Lyo.KeyStore.IKeyStore" /> when the implementation is constructed with a store; pass <c>key</c> for inline
 /// symmetric keys.
 /// </para>
 /// </remarks>

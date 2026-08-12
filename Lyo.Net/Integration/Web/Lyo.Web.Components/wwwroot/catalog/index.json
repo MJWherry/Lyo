@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-11T23:37:58.752152+00:00",
+  "generatedAt": "2026-08-12T00:30:41.051021+00:00",
   "packageCount": 219,
   "packages": [
     {
@@ -300,6 +300,16 @@
       ]
     },
     {
+      "id": "Lyo.Benchmark",
+      "area": "Core",
+      "topic": "Lyo.Benchmark",
+      "name": "Lyo.Benchmark",
+      "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Benchmark.Models",
       "area": "Core",
       "topic": "Lyo.Benchmark",
@@ -307,16 +317,6 @@
       "tagline": "Consumer-facing models and builders for the **unified Lyo benchmark report schema** (`lyo.bench/v1`).",
       "targetFrameworks": [
         "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Benchmarking",
-      "area": "Core",
-      "topic": "Lyo.Benchmarking",
-      "name": "Lyo.Benchmarking",
-      "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
-      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -864,10 +864,10 @@
       ]
     },
     {
-      "id": "Lyo.Compression.LZ4",
+      "id": "Lyo.Compression.Lz4",
       "area": "Data",
       "topic": "Lyo.Compression",
-      "name": "Lyo.Compression.LZ4",
+      "name": "Lyo.Compression.Lz4",
       "tagline": "LZ4 compression addon for `Lyo.Compression`. Registers an `LZ4` `ICompressorFactory` backed by `EasyCompressor.LZ4`.",
       "targetFrameworks": [
         "netstandard2.0",
@@ -875,10 +875,10 @@
       ]
     },
     {
-      "id": "Lyo.Compression.LZMA",
+      "id": "Lyo.Compression.Lzma",
       "area": "Data",
       "topic": "Lyo.Compression",
-      "name": "Lyo.Compression.LZMA",
+      "name": "Lyo.Compression.Lzma",
       "tagline": "LZMA compression addon for `Lyo.Compression`. Registers an LZMA `ICompressorFactory`.",
       "targetFrameworks": [
         "netstandard2.0",
@@ -897,10 +897,10 @@
       ]
     },
     {
-      "id": "Lyo.Compression.XZ",
+      "id": "Lyo.Compression.Xz",
       "area": "Data",
       "topic": "Lyo.Compression",
-      "name": "Lyo.Compression.XZ",
+      "name": "Lyo.Compression.Xz",
       "tagline": "XZ / LZMA2 compression addon for `Lyo.Compression`. Registers an XZ `ICompressorFactory`.",
       "targetFrameworks": [
         "netstandard2.0",
@@ -963,21 +963,21 @@
       ]
     },
     {
-      "id": "Lyo.Ffmpeg",
+      "id": "Lyo.FFmpeg",
       "area": "Data",
-      "topic": "Lyo.Ffmpeg",
-      "name": "Lyo.Ffmpeg",
-      "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.Ffmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
+      "topic": "Lyo.FFmpeg",
+      "name": "Lyo.FFmpeg",
+      "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.FFmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
       "targetFrameworks": [
         "net10.0"
       ]
     },
     {
-      "id": "Lyo.Ffmpeg.Models",
+      "id": "Lyo.FFmpeg.Models",
       "area": "Data",
-      "topic": "Lyo.Ffmpeg",
-      "name": "Lyo.Ffmpeg.Models",
-      "tagline": "Engine-neutral **contracts and models** for `Lyo.Ffmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
+      "topic": "Lyo.FFmpeg",
+      "name": "Lyo.FFmpeg.Models",
+      "tagline": "Engine-neutral **contracts and models** for `Lyo.FFmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1025,10 +1025,10 @@
       ]
     },
     {
-      "id": "Lyo.FileStorage.Blob",
+      "id": "Lyo.FileStorage.AzureBlob",
       "area": "Data",
       "topic": "Lyo.FileStorage",
-      "name": "Lyo.FileStorage.Blob",
+      "name": "Lyo.FileStorage.AzureBlob",
       "tagline": "**Azure Blob Storage** implementation of `IFileStorageService` using **`Azure.Storage.Blobs`**.",
       "targetFrameworks": [
         "net10.0"
@@ -1724,10 +1724,10 @@
       ]
     },
     {
-      "id": "Lyo.Espn.Fantasy.Football",
+      "id": "Lyo.Espn.Fantasy.Football.Client",
       "area": "Integration",
       "topic": "Lyo.Espn",
-      "name": "Lyo.Espn.Fantasy.Football",
+      "name": "Lyo.Espn.Fantasy.Football.Client",
       "tagline": "Typed read-only client for the ESPN fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`).",
       "targetFrameworks": [
         "netstandard2.0",
@@ -2177,7 +2177,7 @@
       "area": "Security",
       "topic": "Lyo.Encryption",
       "name": "Lyo.Encryption",
-      "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.Keystore lookup.",
+      "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.KeyStore lookup.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -2228,10 +2228,10 @@
       ]
     },
     {
-      "id": "Lyo.Keystore",
+      "id": "Lyo.KeyStore",
       "area": "Security",
-      "topic": "Lyo.Keystore",
-      "name": "Lyo.Keystore",
+      "topic": "Lyo.KeyStore",
+      "name": "Lyo.KeyStore",
       "tagline": "**Key Encryption Key (KEK)** storage and rotation contracts for `Lyo.Encryption`.",
       "targetFrameworks": [
         "netstandard2.0",
@@ -2239,11 +2239,11 @@
       ]
     },
     {
-      "id": "Lyo.Keystore.Aws",
+      "id": "Lyo.KeyStore.Aws",
       "area": "Security",
-      "topic": "Lyo.Keystore",
-      "name": "Lyo.Keystore.Aws",
-      "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
+      "topic": "Lyo.KeyStore",
+      "name": "Lyo.KeyStore.Aws",
+      "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.KeyStore.IKeyStore`** and **`Lyo.KeyStore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
       "targetFrameworks": [
         "net10.0"
       ]

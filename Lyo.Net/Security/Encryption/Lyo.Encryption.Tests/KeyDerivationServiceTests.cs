@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using Lyo.Exceptions.Models;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore.KeyDerivation;
 
 namespace Lyo.Encryption.Tests;
 

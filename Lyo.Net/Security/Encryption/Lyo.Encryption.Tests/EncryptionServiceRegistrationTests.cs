@@ -2,7 +2,7 @@ using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
 using Lyo.Encryption.XChaCha20Poly1305;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Encryption.Tests;

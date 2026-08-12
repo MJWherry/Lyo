@@ -44,7 +44,7 @@
           "**`IFileStorageService`** contract, disk backend, **`FileStorageServiceBaseOptions`**, DTOs"
         ],
         [
-          "**`Lyo.FileStorage.Blob/README.md`**",
+          "**`Lyo.FileStorage.AzureBlob/README.md`**",
           "Azure Blob analogue for SAS/direct-upload/copy"
         ],
         [
@@ -198,7 +198,7 @@
         ],
         [
           "`UseKeyStore(keyName)` / `ConfigureKeyStore(configSectionName)`",
-          "Reference an existing key store — actual key-store registration is performed by `Lyo.Keystore` extensions."
+          "Reference an existing key store — actual key-store registration is performed by `Lyo.KeyStore` extensions."
         ],
         [
           "`Build(IConfiguration configuration)`",
@@ -416,7 +416,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

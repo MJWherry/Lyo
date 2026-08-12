@@ -1,6 +1,6 @@
 using System.Reflection;
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 
 namespace Lyo.Csv.Benchmarks;
 

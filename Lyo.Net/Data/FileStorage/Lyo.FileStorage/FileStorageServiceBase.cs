@@ -35,12 +35,12 @@ namespace Lyo.FileStorage;
 /// <para>
 /// Members are grouped with <c>#region</c> slices (core wiring, save, retrieve, delete/metadata, DEK, direct upload/copy façade) within this single compilation unit. Heavy
 /// logic delegates to internal types wired in the ctor: <see cref="FileStorageStreamingPipelines" />, <see cref="FileStorageDekOperations" />, and
-/// <see cref="PlainDirectUploadCoordinator" />, which depend on narrow internal interfaces implemented explicitly by this class (<see cref="IFileStoragePhysicalIo" />,
+/// <see cref="PlainDirectUploadCoordinator" />, which depend on narrow internal interfaces implemented explicitly by this class (<see cref="IFileStoragePhysicalIO" />,
 /// <see cref="IFileAuditPublisher" />, etc.).
 /// </para>
 /// </remarks>
 public abstract class FileStorageServiceBase
-    : IFileStorageService, IDisposable, IFileStoragePhysicalIo, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
+    : IFileStorageService, IDisposable, IFileStoragePhysicalIO, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
 {
 #region Core
 
@@ -360,18 +360,18 @@ public abstract class FileStorageServiceBase
         string? DataEncryptionKeyVersion,
         byte DekKeyMaterialBytes);
 
-    Task<Stream?> IFileStoragePhysicalIo.ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct) => ReadFromStorageAsync(fileId, pathPrefix, ct);
+    Task<Stream?> IFileStoragePhysicalIO.ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct) => ReadFromStorageAsync(fileId, pathPrefix, ct);
 
-    Task<Stream> IFileStoragePhysicalIo.CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    Task<Stream> IFileStoragePhysicalIO.CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
         => CreateOutputStreamAsync(fileId, extension, pathPrefix, ct);
 
-    Task<long> IFileStoragePhysicalIo.GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    Task<long> IFileStoragePhysicalIO.GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
         => GetStorageSizeAsync(fileId, extension, pathPrefix, ct);
 
-    Task<EncryptionHeaderInfo> IFileStoragePhysicalIo.ExtractEncryptionHeaderAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    Task<EncryptionHeaderInfo> IFileStoragePhysicalIO.ExtractEncryptionHeaderAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
         => ExtractEncryptionHeaderAsync(fileId, extension, pathPrefix, ct);
 
-    Task IFileStoragePhysicalIo.UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct)
+    Task IFileStoragePhysicalIO.UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct)
         => UpdateFileHeaderAsync(fileId, pathPrefix, targetKeyId, targetKeyVersion, newEncryptedDek, ct);
 
     Task IFileAuditPublisher.PublishAuditAsync(FileAuditEvent auditEvent, CancellationToken ct) => RaiseFileAuditAsync(auditEvent, ct);

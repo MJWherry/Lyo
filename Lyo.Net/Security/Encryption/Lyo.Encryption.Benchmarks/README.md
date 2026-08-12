@@ -97,4 +97,4 @@ Optional future runs may add `--exporters json`; v1 reads CSV reports.
 | `BenchmarkDotNet` | `0.15.8` |
 
 **Project references:** `Lyo.Encryption`, `Lyo.Encryption.AesCcm`, `Lyo.Encryption.AesSiv`, `Lyo.Encryption.XChaCha20Poly1305`, `Lyo.Encryption.Rsa`, `Lyo.Encryption.AesGcmRsa`,
-`Lyo.Keystore`
+`Lyo.KeyStore`

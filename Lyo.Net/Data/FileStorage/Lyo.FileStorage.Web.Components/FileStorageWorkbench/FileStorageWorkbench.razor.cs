@@ -2,7 +2,7 @@ using Lyo.Api.Client;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Web.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;

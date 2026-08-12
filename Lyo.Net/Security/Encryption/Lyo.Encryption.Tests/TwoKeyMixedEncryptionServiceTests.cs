@@ -8,7 +8,7 @@ using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.TwoKey;
 using Lyo.Encryption.XChaCha20Poly1305;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;

@@ -64,14 +64,14 @@ var service = new S3FileStorageService(options, metadataStore);
 | **This README** | Core **`IFileStorageService`**, **`LocalFileStorageService`**, options/DTOs, backend capability matrix |
 | [`FileStorageArchitecture.drawio`](FileStorageArchitecture.drawio) | Multi-page diagram: **overview**, upload (general), **save (compress·encrypt)**, **staged upload**, **read**, **copy**, **DEK migrate**, **DEK rotate**, delete |
 | **`Lyo.FileStorage.S3/README.md`**: S3-compatible storage (AWS, B2, MinIO, …) | [`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), **`S3FileStorageOptions`**, DI builders |
-| **`Lyo.FileStorage.Blob/README.md`**: Azure Blob | [`BlobFileStorageService.cs`](../Lyo.FileStorage.Blob/BlobFileStorageService.cs), **`BlobFileStorageOptions`**, SAS / SSE notes |
+| **`Lyo.FileStorage.AzureBlob/README.md`**: Azure Blob | [`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), **`AzureBlobFileStorageOptions`**, SAS / SSE notes |
 | **`Lyo.FileStorage.Web.Components`**: Workbench UI | Blazor grids and dialogs that call a configured Test API |
 
 For multipart session stores and Postgres metadata, follow references from your host registration (e.g. **`Lyo.FileMetadataStore.Postgres`**).
 
 ## Backend capability matrix
 
-| Capability | Local disk (**`LocalFileStorageService`**) | S3 (**`S3FileStorageService`**) | Blob (**`BlobFileStorageService`**) |
+| Capability | Local disk (**`LocalFileStorageService`**) | S3 (**`S3FileStorageService`**) | Blob (**`AzureBlobFileStorageService`**) |
 | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
 | **Presigned GET** | Only when **`DiskFileStorageOptions.AllowFileUriPresignedUrls`** (returns **`file://`**, dev-only); no response-header overrides | Yes (incl. **`PreSignedReadUrlOptions`**) | Yes (SAS + optional response headers) |
 | **Direct PUT upload** (**`BeginDirectUpload` / `CompleteDirectUpload`**) | Yes when **`DirectUploadReceiveBaseUri`** is set (PUT URL hits Test API / host receiver); otherwise **`ConfigurationException`** | Yes | Yes |
@@ -127,7 +127,7 @@ compress/encrypt into canonical storage). Session state lives in **`IStagedFileU
 | — | **`AbortAsync`** | Deletes staging object best-effort. |
 | — | **`GetAsync`** | Current stage snapshot. |
 
-Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register *
+Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddAzureBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register *
 *`PostgresStagedFileUploadStore`** / **`SqliteStagedFileUploadStore`** when no store is present. Hook **`IStagedFileUploadEventHandler`** (or service events) to enqueue async
 commit workers after **`UploadCompleted`**.
 
@@ -156,7 +156,7 @@ commit workers after **`UploadCompleted`**.
 - **`FileStorageDekOperations`** — implements **`MigrateDeksAsync`** and **`RotateDeksAsync`** uniformly across backends, including short-encryption-header detection and per-file failure isolation.
 - **`FileStorageStreamingPipelines`** — composes compression / encryption / hash / max-size guards over streamed save and read paths.
 - **`PlainDirectUploadCoordinator`** — finalizes plaintext direct-upload PUTs into a normal **`SaveFileAsync`** outcome (policy, scan, availability) and runs only when the caller used **`BeginDirectUploadAsync`** without compression/encryption hints.
-- **`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIo`** ( presigned PUT, stat, read, delete).
+- **`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIO`** ( presigned PUT, stat, read, delete).
 
 ## Options — **`FileStorageServiceBaseOptions`** / **`DiskFileStorageOptions`**
 
@@ -219,7 +219,7 @@ reuse or define the encryption key:
 | `(keyName, configSectionName, configureMetadataStore, configEncryptionService)` | Local disk bound from configuration; encryption inline. |
 
 For cloud backends, use the package-specific keyed entry points: **`AddS3FileStorageServiceKeyed(keyName)`** in **`Lyo.FileStorage.S3`** (fluent builder) and the non-keyed *
-*`AddBlobFileStorageService(...)`** in **`Lyo.FileStorage.Blob`** (keyed Blob is an open item — see that README).
+*`AddAzureBlobFileStorageService(...)`** in **`Lyo.FileStorage.AzureBlob`** (keyed Blob is an open item — see that README).
 
 ## DTO highlights
 
@@ -239,7 +239,7 @@ Dependency injection for disk is usually **`Extensions.AddFileStorageServiceKeye
 
 ## Features (overview)
 
-- **Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.Blob`**
+- **Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.AzureBlob`**
 - **Compression & encryption** — Optional **`ICompressionService`** (exposes **`Resolver`** and **`ResolveForCompress`**; policy via **`AddCompressionPolicySelector`**), * *`ITwoKeyEncryptionService`**
 - **Metadata** — **`IFileMetadataStore`** (**`FileStoreResult`**)
 - **Duplicate detection** — Configurable hashing strategies (**`DuplicateHandlingStrategy`**)
@@ -271,10 +271,10 @@ Use **`await fileStorage.CheckHealthAsync(ct)`**; backends choose lightweight vs
 ## Tests
 
 | Project | Scope |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`Lyo.FileStorage.Tests`** | Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes) plus `FileHelpers` path-prefix coverage |
 | **`Lyo.FileStorage.S3.Tests`** | Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream`, **`S3StagedFileUploadService`** (presigned PUT via `FakeAmazonS3`), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants |
-| **`Lyo.FileStorage.Blob.Tests`** | Isolated coverage for `BlobFileStorageOptions`, **`BlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder` |
+| **`Lyo.FileStorage.AzureBlob.Tests`** | Isolated coverage for `AzureBlobFileStorageOptions`, **`AzureBlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder` |
 
 Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; deeper end-to-end coverage would need LocalStack/Azurite.
 
@@ -295,7 +295,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (direct, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
 - `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
 - `EasyCompressor` `2.1.0` — (transitive, third-party)

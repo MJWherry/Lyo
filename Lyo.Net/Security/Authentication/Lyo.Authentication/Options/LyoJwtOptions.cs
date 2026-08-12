@@ -18,7 +18,7 @@ public sealed class LyoJwtOptions
     /// <summary>How long a freshly-minted refresh token is valid (delivered as <c>lyo_refresh</c> cookie). Default = 30 days.</summary>
     public TimeSpan RefreshTokenLifetime { get; set; } = TimeSpan.FromDays(30);
 
-    /// <summary>The key id under which the signing key is stored in <see cref="Lyo.Keystore.IKeyStore" />. Default = <c>lyo-sig</c>.</summary>
+    /// <summary>The key id under which the signing key is stored in <see cref="Lyo.KeyStore.IKeyStore" />. Default = <c>lyo-sig</c>.</summary>
     public string SigningKeyId { get; set; } = "lyo-sig";
 
     /// <summary>Signing algorithm. Currently only <c>EdDSA</c> (Ed25519) is supported.</summary>

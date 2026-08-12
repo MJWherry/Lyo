@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Lyo.FileStorage.Abstractions;
-using Lyo.Reporting.Builders;
+using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres;

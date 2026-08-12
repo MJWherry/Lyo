@@ -98,7 +98,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` — (direct, third-party)
 - `Lyo.Authentication.Models` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)

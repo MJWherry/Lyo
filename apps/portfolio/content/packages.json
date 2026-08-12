@@ -325,6 +325,17 @@
     ]
   },
   {
+    "id": "Lyo.Benchmark",
+    "name": "Lyo.Benchmark",
+    "area": "Core",
+    "topic": "Lyo.Benchmark",
+    "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
+    "readme": "Lyo.Net/Core/Benchmark/Lyo.Benchmark/README.md",
+    "targetFrameworks": [
+      "net10.0"
+    ]
+  },
+  {
     "id": "Lyo.Benchmark.Models",
     "name": "Lyo.Benchmark.Models",
     "area": "Core",
@@ -333,17 +344,6 @@
     "readme": "Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md",
     "targetFrameworks": [
       "netstandard2.0",
-      "net10.0"
-    ]
-  },
-  {
-    "id": "Lyo.Benchmarking",
-    "name": "Lyo.Benchmarking",
-    "area": "Core",
-    "topic": "Lyo.Benchmarking",
-    "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
-    "readme": "Lyo.Net/Core/Benchmark/Lyo.Benchmarking/README.md",
-    "targetFrameworks": [
       "net10.0"
     ]
   },
@@ -811,7 +811,7 @@
     "area": "Core",
     "topic": "Lyo.Testing",
     "tagline": "Part of the Lyo workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an…",
-    "readme": "Lyo.Net/Core/Lyo.Testing/README.md",
+    "readme": "Lyo.Net/Core/Testing/Lyo.Testing/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
@@ -822,7 +822,7 @@
     "area": "Core",
     "topic": "Lyo.Testing",
     "tagline": "xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing.",
-    "readme": "Lyo.Net/Core/Lyo.Testing.Containers/README.md",
+    "readme": "Lyo.Net/Core/Testing/Lyo.Testing.Containers/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
@@ -942,24 +942,24 @@
     ]
   },
   {
-    "id": "Lyo.Compression.LZ4",
-    "name": "Lyo.Compression.LZ4",
+    "id": "Lyo.Compression.Lz4",
+    "name": "Lyo.Compression.Lz4",
     "area": "Data",
     "topic": "Lyo.Compression",
     "tagline": "LZ4 compression addon for `Lyo.Compression`. Registers an `LZ4` `ICompressorFactory` backed by `EasyCompressor.LZ4`.",
-    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.LZ4/README.md",
+    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.Lz4/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
     ]
   },
   {
-    "id": "Lyo.Compression.LZMA",
-    "name": "Lyo.Compression.LZMA",
+    "id": "Lyo.Compression.Lzma",
+    "name": "Lyo.Compression.Lzma",
     "area": "Data",
     "topic": "Lyo.Compression",
     "tagline": "LZMA compression addon for `Lyo.Compression`. Registers an LZMA `ICompressorFactory`.",
-    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.LZMA/README.md",
+    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.Lzma/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -978,12 +978,12 @@
     ]
   },
   {
-    "id": "Lyo.Compression.XZ",
-    "name": "Lyo.Compression.XZ",
+    "id": "Lyo.Compression.Xz",
+    "name": "Lyo.Compression.Xz",
     "area": "Data",
     "topic": "Lyo.Compression",
     "tagline": "XZ / LZMA2 compression addon for `Lyo.Compression`. Registers an XZ `ICompressorFactory`.",
-    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.XZ/README.md",
+    "readme": "Lyo.Net/Data/Compression/Lyo.Compression.Xz/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -1050,23 +1050,23 @@
     ]
   },
   {
-    "id": "Lyo.Ffmpeg",
-    "name": "Lyo.Ffmpeg",
+    "id": "Lyo.FFmpeg",
+    "name": "Lyo.FFmpeg",
     "area": "Data",
-    "topic": "Lyo.Ffmpeg",
-    "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.Ffmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
-    "readme": "Lyo.Net/Data/Ffmpeg/Lyo.Ffmpeg/README.md",
+    "topic": "Lyo.FFmpeg",
+    "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.FFmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
+    "readme": "Lyo.Net/Data/FFmpeg/Lyo.FFmpeg/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
   },
   {
-    "id": "Lyo.Ffmpeg.Models",
-    "name": "Lyo.Ffmpeg.Models",
+    "id": "Lyo.FFmpeg.Models",
+    "name": "Lyo.FFmpeg.Models",
     "area": "Data",
-    "topic": "Lyo.Ffmpeg",
-    "tagline": "Engine-neutral **contracts and models** for `Lyo.Ffmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
-    "readme": "Lyo.Net/Data/Ffmpeg/Lyo.Ffmpeg.Models/README.md",
+    "topic": "Lyo.FFmpeg",
+    "tagline": "Engine-neutral **contracts and models** for `Lyo.FFmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
+    "readme": "Lyo.Net/Data/FFmpeg/Lyo.FFmpeg.Models/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
@@ -1118,12 +1118,12 @@
     ]
   },
   {
-    "id": "Lyo.FileStorage.Blob",
-    "name": "Lyo.FileStorage.Blob",
+    "id": "Lyo.FileStorage.AzureBlob",
+    "name": "Lyo.FileStorage.AzureBlob",
     "area": "Data",
     "topic": "Lyo.FileStorage",
     "tagline": "**Azure Blob Storage** implementation of `IFileStorageService` using **`Azure.Storage.Blobs`**.",
-    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.Blob/README.md",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.AzureBlob/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
@@ -1884,12 +1884,12 @@
     ]
   },
   {
-    "id": "Lyo.Espn.Fantasy.Football",
-    "name": "Lyo.Espn.Fantasy.Football",
+    "id": "Lyo.Espn.Fantasy.Football.Client",
+    "name": "Lyo.Espn.Fantasy.Football.Client",
     "area": "Integration",
     "topic": "Lyo.Espn",
     "tagline": "Typed read-only client for the ESPN fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`).",
-    "readme": "Lyo.Net/Integration/Espn/Lyo.Espn.Fantasy.Football/README.md",
+    "readme": "Lyo.Net/Integration/Espn/Lyo.Espn.Fantasy.Football.Client/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -2357,7 +2357,7 @@
     "area": "Security",
     "topic": "Lyo.ContentThreatScan",
     "tagline": "Heuristic scanning and numeric disposition scoring for **readable text** payloads (scripts, markup, suspicious SQL-ish patterns).",
-    "readme": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan/README.md",
+    "readme": "Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -2369,7 +2369,7 @@
     "area": "Security",
     "topic": "Lyo.ContentThreatScan",
     "tagline": "Optional **`DefaultContentThreatReputationPipeline`** for Malware Bazaar, VirusTotal, and **`clamd` INSTREAM** (TCP).",
-    "readme": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md",
+    "readme": "Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -2380,7 +2380,7 @@
     "name": "Lyo.Encryption",
     "area": "Security",
     "topic": "Lyo.Encryption",
-    "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.Keystore lookup.",
+    "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.KeyStore lookup.",
     "readme": "Lyo.Net/Security/Encryption/Lyo.Encryption/README.md",
     "targetFrameworks": [
       "netstandard2.0",
@@ -2436,24 +2436,24 @@
     ]
   },
   {
-    "id": "Lyo.Keystore",
-    "name": "Lyo.Keystore",
+    "id": "Lyo.KeyStore",
+    "name": "Lyo.KeyStore",
     "area": "Security",
-    "topic": "Lyo.Keystore",
+    "topic": "Lyo.KeyStore",
     "tagline": "**Key Encryption Key (KEK)** storage and rotation contracts for `Lyo.Encryption`.",
-    "readme": "Lyo.Net/Security/Encryption/Lyo.Keystore/README.md",
+    "readme": "Lyo.Net/Security/KeyStore/Lyo.KeyStore/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
     ]
   },
   {
-    "id": "Lyo.Keystore.Aws",
-    "name": "Lyo.Keystore.Aws",
+    "id": "Lyo.KeyStore.Aws",
+    "name": "Lyo.KeyStore.Aws",
     "area": "Security",
-    "topic": "Lyo.Keystore",
-    "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.Keystore.IKeyStore`** and **`Lyo.Keystore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
-    "readme": "Lyo.Net/Security/Encryption/Lyo.Keystore.Aws/README.md",
+    "topic": "Lyo.KeyStore",
+    "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.KeyStore.IKeyStore`** and **`Lyo.KeyStore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
+    "readme": "Lyo.Net/Security/KeyStore/Lyo.KeyStore.Aws/README.md",
     "targetFrameworks": [
       "net10.0"
     ]

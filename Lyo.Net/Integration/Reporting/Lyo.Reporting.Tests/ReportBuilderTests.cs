@@ -1,4 +1,4 @@
-using Lyo.Reporting.Builders;
+using Lyo.Reporting.Models.Builders;
 
 namespace Lyo.Reporting.Tests;
 

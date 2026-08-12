@@ -191,7 +191,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)
 - `Lyo.Postgres` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)

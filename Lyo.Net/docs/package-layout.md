@@ -41,7 +41,7 @@ Answer in order:
 | **When** | Calls an external API; maps to Core at **host/worker** ingest, or supplies an Archetype B adapter. |
 | **Path** | `Integration/{Vendor}/` |
 | **Name** | `Lyo.{Vendor}.{Domain}.Client` or `Lyo.{Vendor}.{Product}.Client` |
-| **Examples** | `Lyo.Endato.Client`, `Lyo.Google.Geolocation.Client`, `Lyo.Typecast.Client`, `Lyo.Espn.Fantasy.Football` |
+| **Examples** | `Lyo.Endato.Client`, `Lyo.Google.Geolocation.Client`, `Lyo.Typecast.Client`, `Lyo.Espn.Fantasy.Football.Client` |
 
 Geolocation is **not** Communication: Google Maps lives here (Archetype C), not beside `Lyo.Translation.Google` (Archetype B).
 
@@ -131,7 +131,7 @@ Stays under `Communication/Translation/`.
 
 | Package | Archetype | Role |
 |---------|-----------|------|
-| `Lyo.Espn.Fantasy.Football` | C | Fantasy API client; no Core domain DB |
+| `Lyo.Espn.Fantasy.Football.Client` | C | Fantasy API client; no Core domain DB |
 
 ### Discord (D)
 
@@ -149,7 +149,7 @@ Stays under `Communication/Translation/`.
 | `Lyo.Endato.Postgres` | D | `Integration/Endato/` | — | — | Vendor DB, not `people` |
 | `Lyo.Google.Geolocation.Client` | C | `Integration/Google/` | — | 1 | Also implements `IGeolocationService`; split deferred |
 | `Lyo.Typecast.Client` | C | `Integration/Typecast/` | — | — | Used by `Lyo.Tts.Typecast` |
-| `Lyo.Espn.Fantasy.Football` | C | `Integration/Espn/` | — | 2 | Name lacks `.Client` suffix; acceptable |
+| `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | — | 2 | Name lacks `.Client` suffix; acceptable |
 | `Lyo.Discord.Models` | D | `Integration/Discord/` | — | — | |
 | `Lyo.Discord.Client` | D | `Integration/Discord/` | — | — | |
 | `Lyo.Discord.Postgres` | D | `Integration/Discord/` | — | — | |
@@ -191,9 +191,10 @@ Stays under `Communication/Translation/`.
 | `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | — | — | |
 | `Lyo.Authentication.Postgres` | A-like | `Security/Authentication/` | — | — | Identity store |
 | `Lyo.Encryption` + algorithm packages | E/B | `Security/Encryption/` | — | — | |
-| `Lyo.Keystore.Aws` | B | `Security/Encryption/` | — | — | AWS KMS provider |
-| `Lyo.ContentThreatScan` | B | `Security/ContentThreat/` | — | — | |
-| `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreat/` | — | — | |
+| `Lyo.KeyStore` | E/B | `Security/KeyStore/` | — | — | |
+| `Lyo.KeyStore.Aws` | B | `Security/KeyStore/` | — | — | AWS Secrets Manager provider |
+| `Lyo.ContentThreatScan` | B | `Security/ContentThreatScan/` | — | — | |
+| `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreatScan/` | — | — | |
 
 ## Inventory — Core domains (reference)
 
@@ -225,7 +226,7 @@ Domain modules (People, Geolocation, Favorite, …) subclass these bases and own
 | Item | Status | Action |
 |------|--------|--------|
 | `Lyo.Google.Geolocation.Client` | OK | Matches `Lyo.{Vendor}.{Domain}.Client` |
-| `Lyo.Espn.Fantasy.Football` | Minor | Product name; `.Client` optional |
+| `Lyo.Espn.Fantasy.Football.Client` | Minor | Product name; `.Client` optional |
 | `Lyo.Endato.Client` | OK | Vendor-first segment |
 | `Lyo.Sms.Twilio` | OK | Monolithic B; rename not worth churn |
 | Split Google geolocation client / adapter | Deferred | Only if second maps vendor added (Typecast pattern) |

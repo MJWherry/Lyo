@@ -53,7 +53,7 @@ key storage):
 
 ```csharp
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 var keyStore = new LocalKeyStore();
 const string keyId = "my-app-key";
@@ -69,7 +69,7 @@ Wired through DI in an ASP.NET Core app:
 
 ```csharp
 using Lyo.Encryption.Extensions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 const string keyName = "primary";
 

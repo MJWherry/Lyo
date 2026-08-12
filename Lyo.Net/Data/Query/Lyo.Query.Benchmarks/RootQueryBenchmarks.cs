@@ -2,7 +2,7 @@ using BenchmarkDotNet.Attributes;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query.Root;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Cache;
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Enums;

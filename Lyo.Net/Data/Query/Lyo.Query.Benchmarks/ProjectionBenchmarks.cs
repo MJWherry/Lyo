@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Api.Services.Crud.Read.Project;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Benchmarks;

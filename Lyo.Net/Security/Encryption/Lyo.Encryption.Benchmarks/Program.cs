@@ -1,4 +1,4 @@
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 
 [assembly:
     BenchmarkReport(

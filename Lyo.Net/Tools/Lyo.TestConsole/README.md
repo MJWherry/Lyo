@@ -14,7 +14,7 @@ Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.E
 - **Infra / format** — Logging (simple console, UTC), `AddIOTempService`, `AddPreviewService`, `AddLyoMetrics`, `AddCompressionService`, `AddLyoDiffServices`, `AddPdfServiceFromConfiguration`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddSkiaImageServiceFromConfiguration`, `AddScheduler(o => o.CheckIntervalMs = 1000)`, `AddFusionCacheFromConfiguration`.
 - **Browser automation** — `AddSeleniumBrowserService`, `AddPlaywrightBrowserService`, `AddWebRendererServiceFromConfiguration` (HTML → PDF via headless browser).
 - **Speech** — Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` if you want Polly there.
-- **Communication** — `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFfmpegServicesFromConfiguration`.
+- **Communication** — `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.
 - **Integrations** — `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.
 - **AWS file storage (S3 + two-key)** — `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed("two-key-aws", "dev/CourtCanary/FileStore")`, then `AddPostgresFileMetadataStoreKeyed("postgres-filemetadatastore")` and `AddS3FileStorageServiceKeyed("client-files")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.
 - **Local file storage (alt key)** — `AddFileStorageServiceKeyed("two-key-local-filestore", …, "two-key-aws")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.
@@ -31,7 +31,7 @@ Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.E
 | Key | Purpose |
 | ------------------------------------------ | ---------------------------------------------------------------------------- |
 | `ConnectionString` | Root-level Postgres connection string used by every `AddXxxDbContextFactory` |
-| `AwsKeystore`, `S3FileStorageOptions` | Two-key encryption + S3 file storage (`client-files`) |
+| `AwsKeyStore`, `S3FileStorageOptions` | Two-key encryption + S3 file storage (`client-files`) |
 | `AwsPollyOptions`, `AwsTranslationOptions` | AWS Polly TTS / Translate |
 | `TypecastClient` | Typecast TTS API key + base URL |
 | `EmailServiceOptions` | SMTP host/port/credentials |
@@ -62,8 +62,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Encryption` — (direct, lyo)
 - `Lyo.Endato.Client` — (direct, lyo)
 - `Lyo.Endato.Postgres` — (direct, lyo)
-- `Lyo.Espn.Fantasy.Football` — (direct, lyo)
-- `Lyo.Ffmpeg` — (direct, lyo)
+- `Lyo.Espn.Fantasy.Football.Client` — (direct, lyo)
+- `Lyo.FFmpeg` — (direct, lyo)
 - `Lyo.FileMetadataStore` — (direct, lyo)
 - `Lyo.FileMetadataStore.Postgres` — (direct, lyo)
 - `Lyo.FileStorage.S3` — (direct, lyo)
@@ -75,7 +75,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Job.Models` — (direct, lyo)
 - `Lyo.Job.Postgres` — (direct, lyo)
 - `Lyo.Job.Scheduler` — (direct, lyo)
-- `Lyo.Keystore.Aws` — (direct, lyo)
+- `Lyo.KeyStore.Aws` — (direct, lyo)
 - `Lyo.MessageQueue` — (direct, lyo)
 - `Lyo.MessageQueue.RabbitMq` — (direct, lyo)
 - `Lyo.Pdf` — (direct, lyo)
@@ -113,6 +113,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
+- `Lyo.Diagnostic.AspNetCore` — (transitive, lyo)
 - `Lyo.Diff` — (transitive, lyo)
 - `Lyo.Discord.Client` — (transitive, lyo)
 - `Lyo.Discord.Models` — (transitive, lyo)
@@ -120,14 +121,14 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.EntityReference.Models` — (transitive, lyo)
 - `Lyo.EntityReference.Postgres` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Ffmpeg.Models` — (transitive, lyo)
+- `Lyo.FFmpeg.Models` — (transitive, lyo)
 - `Lyo.FileStorage` — (transitive, lyo)
 - `Lyo.Geolocation.Models` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
 - `Lyo.HomeInventory` — (transitive, lyo)
 - `Lyo.Images` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Lock` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.Notification` — (transitive, lyo)

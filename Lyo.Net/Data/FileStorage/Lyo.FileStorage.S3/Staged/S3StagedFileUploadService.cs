@@ -19,7 +19,7 @@ namespace Lyo.FileStorage.S3.Staged;
 public sealed class S3StagedFileUploadService : IStagedFileUploadService
 {
     private readonly StagedUploadCoordinator _coordinator;
-    private readonly S3StagedFilePhysicalIo _physicalIo;
+    private readonly S3StagedFilePhysicalIO _physicalIO;
     private readonly IStagedFileUploadStore _store;
 
     public S3StagedFileUploadService(
@@ -40,9 +40,9 @@ public sealed class S3StagedFileUploadService : IStagedFileUploadService
         ArgumentHelpers.ThrowIfNull(s3);
         ArgumentHelpers.ThrowIfNull(store);
         _store = store;
-        _physicalIo = new(options, s3);
+        _physicalIO = new(options, s3);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<S3StagedFileUploadService>();
-        _coordinator = new(store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
+        _coordinator = new(store, _physicalIO, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);
@@ -79,12 +79,12 @@ public sealed class S3StagedFileUploadService : IStagedFileUploadService
         return StagedFileUploadMappings.ToResult(record);
     }
 
-    private sealed class S3StagedFilePhysicalIo : IStagedFilePhysicalIo
+    private sealed class S3StagedFilePhysicalIO : IStagedFilePhysicalIO
     {
         private readonly S3FileStorageOptions _options;
         private readonly IAmazonS3 _s3;
 
-        internal S3StagedFilePhysicalIo(S3FileStorageOptions options, IAmazonS3 s3)
+        internal S3StagedFilePhysicalIO(S3FileStorageOptions options, IAmazonS3 s3)
         {
             _options = options;
             _s3 = s3;

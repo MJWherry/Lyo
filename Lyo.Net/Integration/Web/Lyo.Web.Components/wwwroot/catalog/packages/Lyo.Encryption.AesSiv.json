@@ -9,7 +9,7 @@
     {
       "title": "Unkeyed",
       "language": "csharp",
-      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesSiv;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.Aes.AesSiv;\nusing Lyo.Keystore;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLocalKeyStore(ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddAesSivEncryption(AesSivKeySizeBits.Bits256); // or Bits384 / Bits512\nservices.AddDefaultEncryptionService<AesSivEncryptionService>();"
+      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesSiv;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.Aes.AesSiv;\nusing Lyo.KeyStore;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLocalKeyStore(ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddAesSivEncryption(AesSivKeySizeBits.Bits256); // or Bits384 / Bits512\nservices.AddDefaultEncryptionService<AesSivEncryptionService>();"
     },
     {
       "title": "Keyed two-key",
@@ -21,7 +21,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.Keystore`](../Lyo.Keystore/README.md))."
+      "text": "Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
@@ -87,7 +87,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

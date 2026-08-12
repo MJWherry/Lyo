@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Hashing;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;

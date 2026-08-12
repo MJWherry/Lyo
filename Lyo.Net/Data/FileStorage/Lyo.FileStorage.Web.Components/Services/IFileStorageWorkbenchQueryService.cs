@@ -1,5 +1,5 @@
 using Lyo.FileMetadataStore.Models;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.FileStorage.Web.Components.Services;
 

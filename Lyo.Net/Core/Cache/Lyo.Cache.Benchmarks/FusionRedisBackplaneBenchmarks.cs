@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Cache.Fusion;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Redis;

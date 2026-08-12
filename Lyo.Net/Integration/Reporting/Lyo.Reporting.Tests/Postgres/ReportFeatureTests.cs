@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Lyo.Api.Reporting;
-using Lyo.Reporting.Builders;
+using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;

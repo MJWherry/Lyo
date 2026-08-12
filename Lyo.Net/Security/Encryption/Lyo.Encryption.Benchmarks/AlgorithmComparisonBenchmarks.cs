@@ -1,11 +1,11 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
-using Lyo.Benchmarking.Data;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.XChaCha20Poly1305;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Encryption.Benchmarks;
 

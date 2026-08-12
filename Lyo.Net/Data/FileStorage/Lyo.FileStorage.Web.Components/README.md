@@ -66,7 +66,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.FileStorage` — (direct, lyo)
 - `Lyo.Hashing` — (direct, lyo)
 - `Lyo.IO.Temp` — (direct, lyo)
-- `Lyo.Keystore` — (direct, lyo)
+- `Lyo.KeyStore` — (direct, lyo)
 - `Lyo.Web.Components` — (direct, lyo)
 - `MudBlazor` `9.3` — (direct, third-party)
 - `Lyo.Api.Models` — (transitive, lyo)

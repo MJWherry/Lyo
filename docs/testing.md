@@ -30,7 +30,7 @@ need a reachable Docker daemon to spin up sibling Redis/Postgres containers.
 Do **not** use unseeded `new Random()`, `RandomNumberGenerator.GetBytes` / `Fill`, or other
 crypto RNG for test *payloads* (plaintexts, keys, nonces under test). Use
 [`Lyo.Testing.TestData`](../Lyo.Net/Core/Lyo.Testing/TestData.cs) (`Create` / `Fill`,
-`TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmarking/Data/BenchmarkData.cs)
+`TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmark/Data/BenchmarkData.cs)
 (`PayloadSeed` / `DeterministicBytes`) — **same seed value** as `TestData.Seed` and
 `DeterministicPayloadStream.DefaultSeed`. Distinct values → distinct seeds (e.g. `TestData.Seed + i`,
 or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use `Guid.NewGuid()`.

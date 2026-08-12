@@ -1,8 +1,8 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
-using Lyo.Benchmarking.Data;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
 using Lyo.FileStorage.Models;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Streams;
 
 namespace Lyo.FileStorage.Benchmarks;

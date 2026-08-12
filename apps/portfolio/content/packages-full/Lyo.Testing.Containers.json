@@ -77,7 +77,7 @@
     }
   ],
   "links": [],
-  "readmePath": "Lyo.Net/Core/Lyo.Testing.Containers/README.md",
+  "readmePath": "Lyo.Net/Core/Testing/Lyo.Testing.Containers/README.md",
   "dependencies": [
     {
       "name": "Lyo.Common",

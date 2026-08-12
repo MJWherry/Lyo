@@ -24,7 +24,7 @@
         "**Infra / format** — Logging (simple console, UTC), `AddIOTempService`, `AddPreviewService`, `AddLyoMetrics`, `AddCompressionService`, `AddLyoDiffServices`, `AddPdfServiceFromConfiguration`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddSkiaImageServiceFromConfiguration`, `AddScheduler(o => o.CheckIntervalMs = 1000)`, `AddFusionCacheFromConfiguration`.",
         "**Browser automation** — `AddSeleniumBrowserService`, `AddPlaywrightBrowserService`, `AddWebRendererServiceFromConfiguration` (HTML → PDF via headless browser).",
         "**Speech** — Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` if you want Polly there.",
-        "**Communication** — `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFfmpegServicesFromConfiguration`.",
+        "**Communication** — `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.",
         "**Integrations** — `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.",
         "**AWS file storage (S3 + two-key)** — `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed(\"two-key-aws\", \"dev/CourtCanary/FileStore\")`, then `AddPostgresFileMetadataStoreKeyed(\"postgres-filemetadatastore\")` and `AddS3FileStorageServiceKeyed(\"client-files\")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.",
         "**Local file storage (alt key)** — `AddFileStorageServiceKeyed(\"two-key-local-filestore\", …, \"two-key-aws\")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.",
@@ -48,7 +48,7 @@
           "Root-level Postgres connection string used by every `AddXxxDbContextFactory`"
         ],
         [
-          "`AwsKeystore`, `S3FileStorageOptions`",
+          "`AwsKeyStore`, `S3FileStorageOptions`",
           "Two-key encryption + S3 file storage (`client-files`)"
         ],
         [
@@ -216,7 +216,7 @@
       ]
     },
     {
-      "name": "Lyo.Espn.Fantasy.Football",
+      "name": "Lyo.Espn.Fantasy.Football.Client",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -224,7 +224,7 @@
       ]
     },
     {
-      "name": "Lyo.Ffmpeg",
+      "name": "Lyo.FFmpeg",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -320,7 +320,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore.Aws",
+      "name": "Lyo.KeyStore.Aws",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -627,6 +627,14 @@
       ]
     },
     {
+      "name": "Lyo.Diagnostic.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Diff",
       "kind": "lyo",
       "tags": [
@@ -683,7 +691,7 @@
       ]
     },
     {
-      "name": "Lyo.Ffmpeg.Models",
+      "name": "Lyo.FFmpeg.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -739,7 +747,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

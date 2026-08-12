@@ -39,7 +39,7 @@ internal static class ServiceBleedProbe
 ## What's in it
 
 > The minting/hashing parts of `ApiTokenCodec`, every `IApiTokenStore` / `IUserStore` / `ILyoJwtIssuer` / `ILyoJwtValidator`, the scope registry runtime, and the audit recorder
-> live in **`Lyo.Authentication`** — not here. They depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle.
+> live in **`Lyo.Authentication`** — not here. They depend on `Lyo.KeyStore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle.
 
 ## When to reference it
 

@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 #endif
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Lyo.Keystore.Exceptions;
+using Lyo.KeyStore.Exceptions;
 
 namespace Lyo.Encryption.Rsa;
 

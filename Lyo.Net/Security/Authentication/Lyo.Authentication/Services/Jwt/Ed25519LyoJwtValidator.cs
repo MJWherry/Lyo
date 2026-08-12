@@ -7,7 +7,7 @@ using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Crypto.Parameters;

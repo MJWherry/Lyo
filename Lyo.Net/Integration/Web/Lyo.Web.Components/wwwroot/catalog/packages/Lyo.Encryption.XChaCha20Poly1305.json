@@ -9,7 +9,7 @@
     {
       "title": "Unkeyed",
       "language": "csharp",
-      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;\nusing Lyo.Encryption.XChaCha20Poly1305;\nusing Lyo.Keystore;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLocalKeyStore(ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddXChaCha20Poly1305Encryption();\nservices.AddDefaultEncryptionService<XChaCha20Poly1305EncryptionService>();"
+      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;\nusing Lyo.Encryption.XChaCha20Poly1305;\nusing Lyo.KeyStore;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLocalKeyStore(ks => ks.UpdateKeyFromString(\"k\", \"secret\"));\nservices.AddXChaCha20Poly1305Encryption();\nservices.AddDefaultEncryptionService<XChaCha20Poly1305EncryptionService>();"
     },
     {
       "title": "Keyed two-key",
@@ -26,7 +26,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md))."
+      "text": "Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
@@ -92,7 +92,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

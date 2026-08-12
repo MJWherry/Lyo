@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -2,7 +2,7 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Options;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Crypto.Parameters;
 

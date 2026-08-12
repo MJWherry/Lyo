@@ -1,6 +1,6 @@
 using System.Text;
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Xlsx.Models;
 
 namespace Lyo.Xlsx.Benchmarks;

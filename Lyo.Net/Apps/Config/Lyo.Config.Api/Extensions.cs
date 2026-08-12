@@ -7,7 +7,7 @@ using Lyo.Authentication.Scopes;
 using Lyo.Config.Api.Endpoints;
 using Lyo.Config.Api.Security;
 using Lyo.Config.Postgres;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Config.Api;
 

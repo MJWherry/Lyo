@@ -1,5 +1,5 @@
-using Lyo.Keystore;
-using Lyo.Keystore.Exceptions;
+using Lyo.KeyStore;
+using Lyo.KeyStore.Exceptions;
 
 namespace Lyo.Encryption.Tests;
 

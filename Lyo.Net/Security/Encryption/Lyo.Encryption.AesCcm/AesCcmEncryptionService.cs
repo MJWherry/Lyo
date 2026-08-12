@@ -5,7 +5,7 @@ using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Encryption.AesCcm;
 

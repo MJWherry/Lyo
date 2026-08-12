@@ -4,7 +4,7 @@ using Lyo.Compression.Models;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.FileStorage.Benchmarks;
 

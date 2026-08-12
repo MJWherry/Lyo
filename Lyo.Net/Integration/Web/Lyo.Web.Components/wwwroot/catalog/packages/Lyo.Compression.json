@@ -70,7 +70,7 @@
     {
       "title": "8. Dependency Injection (ASP.NET Core) (3)",
       "language": "csharp",
-      "code": "services.AddLz4Compressor(); // Lyo.Compression.LZ4\nservices.AddZstdCompressor(); // Lyo.Compression.Zstd\n// Then set DefaultAlgorithm on options (lambda, config file, or keyed configure)."
+      "code": "services.AddLz4Compressor(); // Lyo.Compression.Lz4\nservices.AddZstdCompressor(); // Lyo.Compression.Zstd\n// Then set DefaultAlgorithm on options (lambda, config file, or keyed configure)."
     },
     {
       "title": "8. Dependency Injection (ASP.NET Core) (4)",

@@ -99,7 +99,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)

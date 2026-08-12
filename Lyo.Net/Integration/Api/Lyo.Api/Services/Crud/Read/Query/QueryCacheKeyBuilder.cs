@@ -120,12 +120,12 @@ public static class QueryCacheKeyBuilder
         keyBuilder.Append($"rootquery:{NormalizePathValue(contextName)}");
         keyBuilder.Append($":from={NormalizePathValue(queryRequest.From.EntityType)}:{NormalizePathValue(queryRequest.From.Alias)}");
         if (queryRequest.From.Query?.WhereClause != null)
-            keyBuilder.Append($":fromTree={WhereClauseUtils.GetWhereClauseTreeHash(queryRequest.From.Query.WhereClause)}");
+            keyBuilder.Append($":fromTree={WhereClauseHelpers.GetWhereClauseTreeHash(queryRequest.From.Query.WhereClause)}");
 
         if (queryRequest.Joins.Count != 0) {
             var joinParts = queryRequest.Joins.Select(j => {
                 var on = string.Join("&", j.On.Select(o => $"{NormalizePathValue(o.From)}={NormalizePathValue(o.To)}"));
-                var nested = j.Query?.WhereClause != null ? $":jt={WhereClauseUtils.GetWhereClauseTreeHash(j.Query.WhereClause)}" : "";
+                var nested = j.Query?.WhereClause != null ? $":jt={WhereClauseHelpers.GetWhereClauseTreeHash(j.Query.WhereClause)}" : "";
                 return $"{j.Type}:{NormalizePathValue(j.EntityType)}:{NormalizePathValue(j.Alias)}:as={NormalizePathValue(j.As ?? j.Alias)}:on={on}{nested}";
             });
 
@@ -139,7 +139,7 @@ public static class QueryCacheKeyBuilder
             keyBuilder.Append($":sortBy={BuildSortKey(queryRequest.SortBy)}");
 
         if (queryRequest.WhereClause != null)
-            keyBuilder.Append($":tree={WhereClauseUtils.GetWhereClauseTreeHash(queryRequest.WhereClause)}");
+            keyBuilder.Append($":tree={WhereClauseHelpers.GetWhereClauseTreeHash(queryRequest.WhereClause)}");
 
         if (queryRequest.Select.Count != 0)
             keyBuilder.Append($":select={CompactCacheSegment(string.Join("|", NormalizePathValues(queryRequest.Select)))}");
@@ -162,7 +162,7 @@ public static class QueryCacheKeyBuilder
     {
         var typeName = typeof(TDbModel).Name;
         var resultName = typeof(TResult).Name;
-        var treeHash = queryTree != null ? WhereClauseUtils.GetWhereClauseTreeHash(queryTree) : "null";
+        var treeHash = queryTree != null ? WhereClauseHelpers.GetWhereClauseTreeHash(queryTree) : "null";
         var includeArray = includes as string[] ?? [..NormalizePathValues(includes)];
         var includeStr = includeArray.Length != 0 ? $":include={CompactCacheSegment(string.Join("|", includeArray))}" : "";
         var sortStr = sortBy.Length > 0 ? $":sortBy={BuildSortKey(sortBy)}" : "";

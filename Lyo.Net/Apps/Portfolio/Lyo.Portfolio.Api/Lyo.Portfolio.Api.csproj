@@ -41,7 +41,7 @@
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Google\Lyo.Authentication.Google.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
-        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
     </ItemGroup>
 
 </Project>

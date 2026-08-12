@@ -20,7 +20,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
 {
     private readonly StagedUploadCoordinator _coordinator;
     private readonly DiskFileStorageOptions _options;
-    private readonly LocalStagedFilePhysicalIo _physicalIo;
+    private readonly LocalStagedFilePhysicalIO _physicalIO;
     private readonly IStagedFileUploadStore _store;
 
     public LocalStagedFileUploadService(
@@ -40,9 +40,9 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
         ArgumentHelpers.ThrowIfNull(options);
         _store = store;
         _options = options;
-        _physicalIo = new(options);
+        _physicalIO = new(options);
         var logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalStagedFileUploadService>();
-        _coordinator = new(store, _physicalIo, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
+        _coordinator = new(store, _physicalIO, storage, options, contentPolicy, malwareScanner, operationContextAccessor, logger, metrics, auditHandlers, eventHandlers);
         _coordinator.PresignedCreated += (_, args) => PresignedCreated?.Invoke(this, args);
         _coordinator.UploadCompleted += (_, args) => UploadCompleted?.Invoke(this, args);
         _coordinator.UploadFailed += (_, args) => UploadFailed?.Invoke(this, args);
@@ -94,7 +94,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
         if (record.Status != StagedUploadStatus.PendingUpload)
             throw new ConflictException($"Stage {stageId} is not pending upload (status={record.Status}).");
 
-        var path = _physicalIo.GetAbsolutePath(record);
+        var path = _physicalIO.GetAbsolutePath(record);
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
@@ -151,11 +151,11 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
 #endif
     }
 
-    private sealed class LocalStagedFilePhysicalIo : IStagedFilePhysicalIo
+    private sealed class LocalStagedFilePhysicalIO : IStagedFilePhysicalIO
     {
         private readonly DiskFileStorageOptions _options;
 
-        internal LocalStagedFilePhysicalIo(DiskFileStorageOptions options) => _options = options;
+        internal LocalStagedFilePhysicalIO(DiskFileStorageOptions options) => _options = options;
 
         public MultipartUploadProviderKind ProviderKind => MultipartUploadProviderKind.Local;
 

@@ -57,7 +57,7 @@ services
 | Document | Scope |
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **[`Lyo.FileStorage/README.md`](../Lyo.FileStorage/README.md)** | **`IFileStorageService`** contract, disk backend, **`FileStorageServiceBaseOptions`**, DTOs |
-| **`Lyo.FileStorage.Blob/README.md`** | Azure Blob analogue for SAS/direct-upload/copy |
+| **`Lyo.FileStorage.AzureBlob/README.md`** | Azure Blob analogue for SAS/direct-upload/copy |
 | **This file** | **`S3FileStorageService`**, **`S3FileStorageOptions`**, DI builders (**`AddS3FileStorageServiceKeyed*`**), SSE helpers |
 
 Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICompressionResolver`** (metadata-driven decompress on read; see [
@@ -136,7 +136,7 @@ it touches:
 | `ConfigureEncryptionService(Func<IServiceProvider, ITwoKeyEncryptionService>)` | Inline encryption-service factory (registered as keyed singleton under the file-storage key). |
 | `ConfigureS3FileStorage(string configSectionName = S3FileStorageOptions.SectionName)` | Bind `S3FileStorageOptions` from configuration (singleton). |
 | `ConfigureS3FileStorage(Action<S3FileStorageOptions>)` | Configure options inline. |
-| `UseKeyStore(keyName)` / `ConfigureKeyStore(configSectionName)` | Reference an existing key store — actual key-store registration is performed by `Lyo.Keystore` extensions. |
+| `UseKeyStore(keyName)` / `ConfigureKeyStore(configSectionName)` | Reference an existing key store — actual key-store registration is performed by `Lyo.KeyStore` extensions. |
 | `Build(IConfiguration configuration)` | Finalizes registration: ensures `IAmazonS3` (via `AddAmazonS3FromConfiguration`), an `IMultipartUploadSessionStore` (in-memory fallback), keyed `S3MultipartUploadService`, and keyed `S3StagedFileUploadService` when not already registered. |
 
 ## Other DI entry points
@@ -207,7 +207,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.ContentThreatScan` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)

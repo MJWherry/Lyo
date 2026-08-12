@@ -49,9 +49,9 @@
       "code": "if (!whereClauseService.TryValidatePropertyPath<Person>(\"Addresses.City\", out var err))\n    throw new InvalidOperationException(err);\n\nforeach (var path in whereClauseService.GetCollectionIncludePathsForWhereClause<Person>(where))\n    query = query.Include(path); // e.g. \"Addresses\" for \"Addresses.City\""
     },
     {
-      "title": "WhereClauseUtils fingerprints",
+      "title": "WhereClauseHelpers fingerprints",
       "language": "csharp",
-      "code": "using Lyo.Query.Services.WhereClause;\n\nvar hash = WhereClauseUtils.GetWhereClauseTreeHash(where); // stable structural fingerprint\nvar hasSub = WhereClauseUtils.HasAnySubClause(where);\nif (WhereClauseUtils.TryExtractConditions(where, out var conditions, out var op))\n{\n    // flat And/Or leaves — false when SubClause or unsupported nesting present\n}"
+      "code": "using Lyo.Query.Services.WhereClause;\n\nvar hash = WhereClauseHelpers.GetWhereClauseTreeHash(where); // stable structural fingerprint\nvar hasSub = WhereClauseHelpers.HasAnySubClause(where);\nif (WhereClauseHelpers.TryExtractConditions(where, out var conditions, out var op))\n{\n    // flat And/Or leaves — false when SubClause or unsupported nesting present\n}"
     },
     {
       "title": "Property diff for patch",
@@ -78,7 +78,7 @@
     {
       "type": "markdown",
       "title": "Two-phase SubClause execution",
-      "body": "`WhereClause.SubClause` (on a condition or group) supports split execution — used heavily by `Lyo.Api` query pipelines:\n\n1. **Phase 1 (DB)** — `ApplyWhereClause(..., includeSubClauses: false)` so only the primary predicate becomes SQL.\n2. **Load** — `GetCollectionIncludePathsForWhereClause` → EF `Include` for collection segments referenced by the sub-tree.\n3. **Phase 2 (memory)** — `MatchesWhereClause` / `ExplainMatch` on materialized entities with the **full** tree (`includeSubClauses` default true).\n\nHelpers:\n\n- `WhereClauseUtils.HasAnySubClause(node)` — detect whether a two-phase path is needed\n- `WhereClauseUtils.TryExtractConditions` — flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`)\n- `WhereClauseUtils.GetWhereClauseTreeHash` — structural fingerprint for cache keys / logging (not cryptographic)\n\n```csharp\nvar where = WhereClauseBuilder.And()\n    .Equals(\"Age\", 10)\n    .AddSubClause(sub => sub.AddAnd(s => s.Equals(\"Name\", \"Alice\")))\n    .Build();\n```"
+      "body": "`WhereClause.SubClause` (on a condition or group) supports split execution — used heavily by `Lyo.Api` query pipelines:\n\n1. **Phase 1 (DB)** — `ApplyWhereClause(..., includeSubClauses: false)` so only the primary predicate becomes SQL.\n2. **Load** — `GetCollectionIncludePathsForWhereClause` → EF `Include` for collection segments referenced by the sub-tree.\n3. **Phase 2 (memory)** — `MatchesWhereClause` / `ExplainMatch` on materialized entities with the **full** tree (`includeSubClauses` default true).\n\nHelpers:\n\n- `WhereClauseHelpers.HasAnySubClause(node)` — detect whether a two-phase path is needed\n- `WhereClauseHelpers.TryExtractConditions` — flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`)\n- `WhereClauseHelpers.GetWhereClauseTreeHash` — structural fingerprint for cache keys / logging (not cryptographic)\n\n```csharp\nvar where = WhereClauseBuilder.And()\n    .Equals(\"Age\", 10)\n    .AddSubClause(sub => sub.AddAnd(s => s.Equals(\"Name\", \"Alice\")))\n    .Build();\n```"
     },
     {
       "type": "markdown",
@@ -264,7 +264,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

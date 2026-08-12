@@ -13,7 +13,7 @@ using Lyo.Encryption;
 using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -57,7 +57,7 @@ services.AddAesCcmEncryptionServiceKeyed(keyName, keyStoreName, AesGcmKeySizeBit
 
 ## Dependency injection
 
-Requires a registered **`IKeyStore`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md)).
+Requires a registered **`IKeyStore`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md)).
 
 ## Keyed two-key (recommended for file storage)
 
@@ -76,7 +76,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)

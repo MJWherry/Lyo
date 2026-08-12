@@ -1,0 +1,192 @@
+{
+  "id": "Lyo.FFmpeg",
+  "name": "Lyo.FFmpeg",
+  "area": "Data",
+  "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.FFmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
+  "description": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md):\n**`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream\ninputs (`FFmpegTempHelper`).",
+  "features": [],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "using Lyo.FFmpeg;\nusing Lyo.FFmpeg.Models;\nusing Microsoft.Extensions.DependencyInjection;\n\nvar services = new ServiceCollection();\nservices.AddFFmpegServices(o => {\n    o.FFmpegPath = \"/usr/bin/ffmpeg\";\n    o.FfprobePath = \"/usr/bin/ffprobe\";\n    o.DefaultFormat = \"wav\";\n    o.DefaultSampleRate = 44100;\n    o.DefaultChannels = 2;\n});\n\nawait using var sp = services.BuildServiceProvider();\nusing var scope = sp.CreateScope();\n\nvar prober = scope.ServiceProvider.GetRequiredService<IAudioProber>();\nvar probe = await prober.ProbeAsync(\"clip.mp3\");\nif (probe.IsSuccess) Console.WriteLine($\"{probe.Value.DurationSeconds}s {probe.Value.Codec}\");\n\nvar converter = scope.ServiceProvider.GetRequiredService<IAudioConverter>();\nawait converter.ConvertFileToFileAsync(\n    inputPath: \"clip.mp3\",\n    outputPath: \"clip.wav\",\n    options: new AudioConversionOptions { Codec = \"pcm_s16le\", SampleRate = 44100, Channels = 2 });"
+    },
+    {
+      "title": "Configuration binding",
+      "language": "json",
+      "code": "{\n  \"FFmpegOptions\": {\n    \"FFmpegPath\": \"/usr/bin/ffmpeg\",\n    \"FfprobePath\": \"/usr/bin/ffprobe\",\n    \"FfplayPath\": null,\n    \"DefaultCodec\": \"pcm_s16le\",\n    \"DefaultSampleRate\": 44100,\n    \"DefaultChannels\": 2,\n    \"DefaultFormat\": \"wav\",\n    \"DefaultOverwrite\": true,\n    \"DefaultNoVideo\": true,\n    \"EnableMetrics\": false,\n    \"SuppressFfplayOutput\": true,\n    \"ProcessOutputMode\": \"Suppress\",\n    \"GlobalArguments\": [\"-hide_banner\", \"-loglevel\", \"warning\"]\n  }\n}"
+    },
+    {
+      "title": "Configuration binding (2)",
+      "language": "csharp",
+      "code": "services.AddFFmpegServicesFromConfiguration(builder.Configuration);"
+    },
+    {
+      "title": "Building a command manually",
+      "language": "csharp",
+      "code": "var args = new FFmpegCommandBuilder()\n    .WithDefaults(options) // FFmpegOptions\n    .WithInput(\"clip.mp3\")\n    .WithOutput(\"clip.wav\")\n    .WithCodec(\"pcm_s16le\")\n    .WithSampleRate(44100)\n    .WithChannels(2)\n    .WithOverwrite(true)\n    .Build();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Public API",
+      "headers": [
+        "Type",
+        "Description"
+      ],
+      "rows": [
+        [
+          "**`FFmpegAudioPlayer`**",
+          "`IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`."
+        ],
+        [
+          "**`FFmpegAudioProber`**",
+          "`IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata)."
+        ],
+        [
+          "**`FFmpegAudioConverter`**",
+          "`IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`."
+        ],
+        [
+          "**`FFmpegCommandBuilder`**",
+          "Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FFmpegOptions)`, custom args."
+        ],
+        [
+          "**`FFmpegProcessRunner`**",
+          "Internal runner that executes the built command line through CliWrap, applying `FFmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`)."
+        ],
+        [
+          "**`FFmpegTempHelper`**",
+          "Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal)."
+        ],
+        [
+          "**`Extensions`**",
+          "DI: **`AddFFmpegServices()`**, **`AddFFmpegServices(Action<FFmpegOptions>)`**, **`AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)`**."
+        ]
+      ],
+      "trail": "Each `AddFFmpegServices*` overload registers `FFmpegAudioPlayer`/`FFmpegAudioProber`/`FFmpegAudioConverter` as **scoped** services and exposes them through both the concrete\ntype and their respective interfaces."
+    },
+    {
+      "type": "list",
+      "title": "Notes",
+      "items": [
+        "Requires `ffmpeg`, `ffprobe`, and (for playback) `ffplay` either on `PATH` or pointed to by `FFmpegOptions.FFmpegPath` / `FfprobePath` / `FfplayPath`.",
+        "All operations are async and return `Result<…>`; failures carry stable error codes from `Constants`.",
+        "Stream/bytes inputs are written to a temporary file managed by `FFmpegTempHelper` so the CLI can read them by path."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/FFmpeg/Lyo.FFmpeg/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FFmpeg.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "CliWrap",
+      "kind": "package",
+      "version": "3.10.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

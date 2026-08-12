@@ -1,4 +1,4 @@
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Encryption.Tests;
 

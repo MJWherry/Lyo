@@ -11,7 +11,7 @@ security model at the project level. For vulnerability reporting, see the root
 | Package(s)                                                                                                   | Role                                                                                                                       |
 |--------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | [`Lyo.Encryption`](../../Lyo.Net/Security/Encryption/README.md) (+ algorithm add-ons)                        | Authenticated encryption (AES-GCM, ChaCha20-Poly1305, AES-CCM, AES-SIV, XChaCha20-Poly1305), RSA/hybrid, envelope/two-key. |
-| `Lyo.Keystore` / `Lyo.Keystore.Aws`                                                                          | Key resolution by `keyId`/version; `LocalKeyStore` (dev) and AWS KMS-backed stores.                                        |
+| `Lyo.KeyStore` / `Lyo.KeyStore.Aws`                                                                          | Key resolution by `keyId`/version; `LocalKeyStore` (dev) and AWS KMS-backed stores.                                        |
 | [`Lyo.Hashing`](../../Lyo.Net/Security/Hashing/Lyo.Hashing/README.md)                                        | SHA-2 digests, stream hashing; MD5 only for non-security fingerprints.                                                     |
 | `Lyo.Authentication.*`                                                                                       | OpenID Connect / Keycloak / Google providers and identity persistence.                                                     |
 | [`Lyo.ContentThreatScan`](../../Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan/README.md) (+ `.Intel`) | Heuristic content scoring and optional reputation intel (Malware Bazaar, VirusTotal, `clamd`).                             |
@@ -44,7 +44,7 @@ against.
 ### What is the caller's responsibility
 
 - **Key custody.** `LocalKeyStore` is in-memory and for development only. In
-  production, use a managed `IKeyStore` (AWS KMS via `Lyo.Keystore.Aws`, Azure Key
+  production, use a managed `IKeyStore` (AWS KMS via `Lyo.KeyStore.Aws`, Azure Key
   Vault, HSM, or your own implementation) and never commit key material.
 - **Key rotation.** Rotate KEKs on a schedule; old key versions are retained so
   existing ciphertext stays decryptable.

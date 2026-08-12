@@ -28,7 +28,7 @@ internal sealed class PlainDirectUploadCoordinator
     private readonly IFileMetadataStore _metadataService;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
-    private readonly IFileStoragePhysicalIo _physicalIo;
+    private readonly IFileStoragePhysicalIO _physicalIO;
 
     /// <summary>Creates a coordinator with shared policy services, metadata store, polymorphic blob I/O, auditing, and field normalization supplied by concrete storage backends.</summary>
     internal PlainDirectUploadCoordinator(
@@ -38,7 +38,7 @@ internal sealed class PlainDirectUploadCoordinator
         IFileOperationContextAccessor operationContextAccessor,
         FileStorageServiceBaseOptions options,
         ILogger logger,
-        IFileStoragePhysicalIo physicalIo,
+        IFileStoragePhysicalIO physicalIO,
         IFileAuditPublisher auditPublisher,
         IFileStorageMetadataNormalization metadataNormalization,
         IFileStorageMetadataLookup metadataLookup,
@@ -51,7 +51,7 @@ internal sealed class PlainDirectUploadCoordinator
         _operationContextAccessor = operationContextAccessor;
         _options = options;
         _logger = logger;
-        _physicalIo = physicalIo;
+        _physicalIO = physicalIO;
         _auditPublisher = auditPublisher;
         _metadataNormalization = metadataNormalization;
         _copyToBufferSizeBytes = copyToBufferSizeBytes;
@@ -143,7 +143,7 @@ internal sealed class PlainDirectUploadCoordinator
 
             OperationHelpers.ThrowIf(meta.IsEncrypted || meta.IsCompressed, "Direct finalize only supports uncompressed, unencrypted placeholder metadata.");
             EnsureScanRequirementSatisfied();
-            var raw = await _physicalIo.ReadFromStorageAsync(fileId, meta.PathPrefix, ct).ConfigureAwait(false);
+            var raw = await _physicalIO.ReadFromStorageAsync(fileId, meta.PathPrefix, ct).ConfigureAwait(false);
             if (raw == null)
                 throw new FileNotFoundException($"No backing object exists for pending direct upload {fileId}");
 

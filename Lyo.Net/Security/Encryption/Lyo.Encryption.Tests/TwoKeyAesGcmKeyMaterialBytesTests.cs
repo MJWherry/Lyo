@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;

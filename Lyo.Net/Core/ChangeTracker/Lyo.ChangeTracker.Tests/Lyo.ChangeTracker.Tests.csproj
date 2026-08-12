@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.ChangeTracker\Lyo.ChangeTracker.csproj"/>
         <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
     </ItemGroup>

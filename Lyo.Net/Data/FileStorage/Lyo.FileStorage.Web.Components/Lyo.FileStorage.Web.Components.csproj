@@ -15,7 +15,7 @@
         <ProjectReference Include="..\..\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
         <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
-        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

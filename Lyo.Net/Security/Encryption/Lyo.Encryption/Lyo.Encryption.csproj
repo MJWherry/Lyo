@@ -11,7 +11,7 @@
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
         <ProjectReference Include="..\..\..\Core\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
         <ProjectReference Include="..\..\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
-        <ProjectReference Include="..\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>

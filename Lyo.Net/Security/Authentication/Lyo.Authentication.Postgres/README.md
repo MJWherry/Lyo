@@ -80,7 +80,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
 - `Lyo.Authentication.Models` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)

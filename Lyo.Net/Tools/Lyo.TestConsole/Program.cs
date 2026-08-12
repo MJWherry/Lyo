@@ -19,8 +19,8 @@ using Lyo.Email;
 using Lyo.Email.Postgres;
 using Lyo.Endato.Client;
 using Lyo.Endato.Postgres;
-using Lyo.Espn.Fantasy.Football;
-using Lyo.Ffmpeg;
+using Lyo.Espn.Fantasy.Football.Client;
+using Lyo.FFmpeg;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
@@ -32,7 +32,7 @@ using Lyo.Images.Skia;
 using Lyo.IO.Temp;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Keystore.Aws;
+using Lyo.KeyStore.Aws;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
 using Lyo.Pdf;
@@ -111,7 +111,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddQRCodeServiceFromConfiguration(context.Configuration); // qrcode (built-in encoder)
         services.AddWebRendererServiceFromConfiguration(context.Configuration); //web renderer
         services.SetupRabbitMqServiceFromConfiguration(context.Configuration, []); // RabbitMQ setup - using configuration binding
-        services.AddFfmpegServicesFromConfiguration(context.Configuration);
+        services.AddFFmpegServicesFromConfiguration(context.Configuration);
         services.AddFantasyFootballClientFromConfiguration(context.Configuration);
 
         //aws filestorage

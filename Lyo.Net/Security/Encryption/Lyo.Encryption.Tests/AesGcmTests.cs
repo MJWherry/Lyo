@@ -2,8 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Exceptions;
-using Lyo.Keystore;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore;
+using Lyo.KeyStore.KeyDerivation;
 using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;

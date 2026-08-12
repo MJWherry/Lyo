@@ -53,7 +53,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)

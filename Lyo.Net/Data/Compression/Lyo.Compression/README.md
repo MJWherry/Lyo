@@ -276,7 +276,7 @@ services.AddCompressionServiceKeyed("tenant-b", options =>
 ### 8. Dependency Injection (ASP.NET Core) (3)
 
 ```csharp
-services.AddLz4Compressor(); // Lyo.Compression.LZ4
+services.AddLz4Compressor(); // Lyo.Compression.Lz4
 services.AddZstdCompressor(); // Lyo.Compression.Zstd
 // Then set DefaultAlgorithm on options (lambda, config file, or keyed configure).
 ```

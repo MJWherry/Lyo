@@ -1,10 +1,10 @@
 using System.Text.Json;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
-using Lyo.Reporting.Builders;
+using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models;
 
-namespace Lyo.Reporting.Extensions;
+namespace Lyo.Reporting.Models.Extensions;
 
 /// <summary>Extension methods for adding metrics visualizations to reports.</summary>
 public static class MetricsExtensions

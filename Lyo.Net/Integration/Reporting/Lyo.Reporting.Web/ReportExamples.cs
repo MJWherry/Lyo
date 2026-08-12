@@ -1,6 +1,6 @@
 using Lyo.Metrics;
-using Lyo.Reporting.Builders;
-using Lyo.Reporting.Extensions;
+using Lyo.Reporting.Models.Builders;
+using Lyo.Reporting.Models.Extensions;
 using Lyo.Reporting.Models;
 
 namespace Lyo.Reporting.Web;

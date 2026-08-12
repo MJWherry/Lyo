@@ -58,7 +58,7 @@ Treat a Lyo-consuming service like any other .NET app:
 - **Health checks:** `Lyo.Health` provides `IHealth`/`HealthResult` for readiness
   and liveness endpoints.
 - **Encryption keys in production:** do not use `LocalKeyStore`. Use a managed
-  KeyStore (AWS KMS via `Lyo.Keystore.Aws`, or your own `IKeyStore`), and plan
+  KeyStore (AWS KMS via `Lyo.KeyStore.Aws`, or your own `IKeyStore`), and plan
   key rotation. See [Security](security/README.md) and
   [security/encryption.md](security/encryption.md).
 - **Benchmark comparability:** if you run the container suites in CI, keep

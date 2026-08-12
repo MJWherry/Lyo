@@ -13,7 +13,7 @@ using Lyo.Encryption;
 using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.Symmetric.Aes.AesSiv;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 
 services.AddLocalKeyStore(ks => ks.UpdateKeyFromString("k", "secret"));
@@ -34,7 +34,7 @@ services.AddAesSivEncryptionServiceKeyed("primary", "ks", AesSivKeySizeBits.Bits
 
 ## Dependency injection
 
-Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.Keystore`](../Lyo.Keystore/README.md)).
+Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.KeyStore`](../Lyo.KeyStore/README.md)).
 
 ## Keyed two-key
 
@@ -53,7 +53,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)

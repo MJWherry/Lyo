@@ -147,14 +147,14 @@ Pair with `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README
 
 ## Testing
 
-`Lyo.MessageQueue.RabbitMq.Tests` runs the service against a real broker using the `RabbitMqTestContainer` helper from [`Lyo.Testing.Containers`](../../../Core/Lyo.Testing.Containers/README.md) (management-enabled image, Docker required): connect/disconnect/reconnect, queue lifecycle + peek, publish→subscribe roundtrips, requeue/ack semantics, per-queue concurrency enforcement, publisher confirms, delayed delivery, DLQ auto-wiring, and queue statistics.
+`Lyo.MessageQueue.RabbitMq.Tests` runs the service against a real broker using the `RabbitMqTestContainer` helper from [`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md) (management-enabled image, Docker required): connect/disconnect/reconnect, queue lifecycle + peek, publish→subscribe roundtrips, requeue/ack semantics, per-queue concurrency enforcement, publisher confirms, delayed delivery, DLQ auto-wiring, and queue statistics.
 
 ## See also
 
 - [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md) — the underlying contract, envelopes, and worker base.
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md) — worker results and the `Metadata["requeue"]` pattern.
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md) — counters and timers emitted by the service and `QueueWorkerBase`.
-- [`Lyo.Testing.Containers`](../../../Core/Lyo.Testing.Containers/README.md) — RabbitMQ testcontainer + fixture for integration tests.
+- [`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md) — RabbitMQ testcontainer + fixture for integration tests.
 
 ## Dependencies
 

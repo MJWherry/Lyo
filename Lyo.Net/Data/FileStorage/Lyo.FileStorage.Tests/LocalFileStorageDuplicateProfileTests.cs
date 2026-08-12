@@ -6,7 +6,7 @@ using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Tests.Support;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.FileStorage.Tests;
 

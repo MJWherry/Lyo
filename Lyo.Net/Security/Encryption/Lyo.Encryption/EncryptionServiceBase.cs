@@ -4,7 +4,7 @@ using System.Text;
 using Lyo.Common.Extensions;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Streams;
 
 namespace Lyo.Encryption;

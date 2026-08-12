@@ -9,7 +9,7 @@
     {
       "title": "Unkeyed (concrete + optional interface default)",
       "language": "csharp",
-      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesCcm;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.Aes.AesCcm;\nusing Lyo.Keystore;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\n\n// Key store — configure via lambda (read IConfiguration inside configure)\nservices.AddLocalKeyStore(ks =>\n{\n    ks.UpdateKeyFromString(\"default-key\", \"dev-secret\");\n});\n\n// Algorithm — concrete only; optional AES key size parameter\nservices.AddAesCcmEncryption(AesGcmKeySizeBits.Bits256);\nservices.AddDefaultEncryptionService<AesCcmEncryptionService>();\n\n// Example: load secret from configuration\nservices.AddLocalKeyStore(ks =>\n{\n    var secret = configuration[\"Encryption:KekSecret\"]!;\n    ks.UpdateKeyFromString(\"default-key\", secret);\n});\nservices.AddAesCcmEncryption();\nservices.AddDefaultEncryptionService<AesCcmEncryptionService>();"
+      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesCcm;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.Symmetric.Aes.AesCcm;\nusing Lyo.KeyStore;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\n\n// Key store — configure via lambda (read IConfiguration inside configure)\nservices.AddLocalKeyStore(ks =>\n{\n    ks.UpdateKeyFromString(\"default-key\", \"dev-secret\");\n});\n\n// Algorithm — concrete only; optional AES key size parameter\nservices.AddAesCcmEncryption(AesGcmKeySizeBits.Bits256);\nservices.AddDefaultEncryptionService<AesCcmEncryptionService>();\n\n// Example: load secret from configuration\nservices.AddLocalKeyStore(ks =>\n{\n    var secret = configuration[\"Encryption:KekSecret\"]!;\n    ks.UpdateKeyFromString(\"default-key\", secret);\n});\nservices.AddAesCcmEncryption();\nservices.AddDefaultEncryptionService<AesCcmEncryptionService>();"
     },
     {
       "title": "Keyed two-key (recommended for file storage)",
@@ -21,7 +21,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires a registered **`IKeyStore`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md))."
+      "text": "Requires a registered **`IKeyStore`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
@@ -87,7 +87,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

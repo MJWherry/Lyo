@@ -2,8 +2,8 @@
   "id": "Lyo.Encryption",
   "name": "Lyo.Encryption",
   "area": "Security",
-  "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.Keystore lookup.",
-  "description": "Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and **AES-GCM + RSA** hybrids, plus envelope / two-key flows via **`ITwoKeyEncryptionService`**.\n\nPrimary contracts: **`IEncryptionService`** (single key), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`** (streaming, string, and file helpers). Keys can be inline or resolved from **`Lyo.Keystore`** by **`keyId`**.\n\nFor architecture, threat model, and operational checklists, see the **[Security/Encryption README](../README.md)** — this file covers this assembly’s API surface.",
+  "tagline": "Authenticated encryption for .NET — AEAD, RSA hybrids, and envelope (two-key) flows with optional Lyo.KeyStore lookup.",
+  "description": "Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and **AES-GCM + RSA** hybrids, plus envelope / two-key flows via **`ITwoKeyEncryptionService`**.\n\nPrimary contracts: **`IEncryptionService`** (single key), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`** (streaming, string, and file helpers). Keys can be inline or resolved from **`Lyo.KeyStore`** by **`keyId`**.\n\nFor architecture, threat model, and operational checklists, see the **[Security/Encryption README](../README.md)** — this file covers this assembly’s API surface.",
   "features": [
     {
       "title": "Algorithms",
@@ -44,7 +44,7 @@
         "DI helpers for RSA / AES-GCM+RSA, keyed **`ITwoKeyEncryptionService`** + **`IKeyStore`**",
         "Algorithm discovery via **`EncryptionAlgorithm`** / **`EncryptionAlgorithmDiscovery`**",
         "Non-throwing **`EncryptionResult`** / **`DecryptionResult`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))",
-        "**`SecurityUtilities`** for buffer zeroing and constant-time compare (not KDFs — see [`Lyo.Keystore`](../Lyo.Keystore/README.md))"
+        "**`SecurityUtilities`** for buffer zeroing and constant-time compare (not KDFs — see [`Lyo.KeyStore`](../Lyo.KeyStore/README.md))"
       ]
     }
   ],
@@ -52,7 +52,7 @@
     {
       "title": "Keyed two-key (recommended)",
       "language": "csharp",
-      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesGcm;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.TwoKey;\nusing Lyo.Keystore;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\n\nconst string keyName = \"primary\";\n\n// Configure key store via lambda (read secrets from IConfiguration inside configure)\nservices.AddKeyedLocalKeyStore(keyName, store =>\n{\n    store.UpdateKeyFromString(\"default-key\", \"replace-in-production\");\n});\n\n// Or inline factory with IConfiguration (custom IKeyStore types)\nservices.AddEncryptionServiceKeyed<MyKeyStore>(\n    keyName,\n    sp =>\n    {\n        var config = sp.GetRequiredService<IConfiguration>();\n        var ks = new MyKeyStore(sp);\n        ks.UpdateKeyFromString(\"default-key\", config[\"Encryption:KekSecret\"]!);\n        return ks;\n    },\n    aesGcmKeySize: AesGcmKeySizeBits.Bits256);\n\n// AES-GCM DEK + KEK (built into this package)\nservices.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);\n\n// Mixed algorithms (examples)\nservices.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);\n\n// Resolve\nvar envelope = serviceProvider.GetRequiredKeyedService<ITwoKeyEncryptionService>(keyName);"
+      "code": "using Lyo.Encryption;\nusing Lyo.Encryption.AesGcm;\nusing Lyo.Encryption.Extensions;\nusing Lyo.Encryption.TwoKey;\nusing Lyo.KeyStore;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\n\nconst string keyName = \"primary\";\n\n// Configure key store via lambda (read secrets from IConfiguration inside configure)\nservices.AddKeyedLocalKeyStore(keyName, store =>\n{\n    store.UpdateKeyFromString(\"default-key\", \"replace-in-production\");\n});\n\n// Or inline factory with IConfiguration (custom IKeyStore types)\nservices.AddEncryptionServiceKeyed<MyKeyStore>(\n    keyName,\n    sp =>\n    {\n        var config = sp.GetRequiredService<IConfiguration>();\n        var ks = new MyKeyStore(sp);\n        ks.UpdateKeyFromString(\"default-key\", config[\"Encryption:KekSecret\"]!);\n        return ks;\n    },\n    aesGcmKeySize: AesGcmKeySizeBits.Bits256);\n\n// AES-GCM DEK + KEK (built into this package)\nservices.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);\n\n// Mixed algorithms (examples)\nservices.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);\n\n// Resolve\nvar envelope = serviceProvider.GetRequiredKeyedService<ITwoKeyEncryptionService>(keyName);"
     },
     {
       "title": "Unkeyed (single algorithm / cache helper)",
@@ -137,7 +137,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection (this assembly)",
-      "text": "Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**). Algorithm addons ( `Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers; keys come from [`Lyo.Keystore`](../Lyo.Keystore/README.md)."
+      "text": "Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**). Algorithm addons ( `Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers; keys come from [`Lyo.KeyStore`](../Lyo.KeyStore/README.md)."
     },
     {
       "type": "table",
@@ -304,7 +304,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "direct",

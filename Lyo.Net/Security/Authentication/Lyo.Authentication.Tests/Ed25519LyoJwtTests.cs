@@ -6,7 +6,7 @@ using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Extensions;
 using Lyo.Common.Security;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Logging.Abstractions;
 using MsOptions = Microsoft.Extensions.Options.Options;
 

@@ -129,7 +129,7 @@ public sealed class QueryPathExecutor(
     {
         var totalCountMode = queryRequest.Options.TotalCountMode;
         var computeExactTotal = totalCountMode == QueryTotalCountMode.Exact;
-        var useTwoPhase = WhereClauseUtils.HasAnySubClause(queryRequest.WhereClause);
+        var useTwoPhase = WhereClauseHelpers.HasAnySubClause(queryRequest.WhereClause);
         if (useTwoPhase && queryRequest.WhereClause != null)
             return await ExecuteSubQueryPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, computeExactTotal, ct).ConfigureAwait(false);
 

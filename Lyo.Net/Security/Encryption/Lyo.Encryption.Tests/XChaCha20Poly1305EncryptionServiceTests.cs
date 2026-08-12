@@ -2,8 +2,8 @@ using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.XChaCha20Poly1305;
-using Lyo.Keystore;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore;
+using Lyo.KeyStore.KeyDerivation;
 
 namespace Lyo.Encryption.Tests;
 

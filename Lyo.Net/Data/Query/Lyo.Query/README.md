@@ -110,14 +110,14 @@ foreach (var path in whereClauseService.GetCollectionIncludePathsForWhereClause<
     query = query.Include(path); // e.g. "Addresses" for "Addresses.City"
 ```
 
-### WhereClauseUtils fingerprints
+### WhereClauseHelpers fingerprints
 
 ```csharp
 using Lyo.Query.Services.WhereClause;
 
-var hash = WhereClauseUtils.GetWhereClauseTreeHash(where); // stable structural fingerprint
-var hasSub = WhereClauseUtils.HasAnySubClause(where);
-if (WhereClauseUtils.TryExtractConditions(where, out var conditions, out var op))
+var hash = WhereClauseHelpers.GetWhereClauseTreeHash(where); // stable structural fingerprint
+var hasSub = WhereClauseHelpers.HasAnySubClause(where);
+if (WhereClauseHelpers.TryExtractConditions(where, out var conditions, out var op))
 {
     // flat And/Or leaves — false when SubClause or unsupported nesting present
 }
@@ -191,9 +191,9 @@ Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 
 Helpers:
 
-- `WhereClauseUtils.HasAnySubClause(node)` — detect whether a two-phase path is needed
-- `WhereClauseUtils.TryExtractConditions` — flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`)
-- `WhereClauseUtils.GetWhereClauseTreeHash` — structural fingerprint for cache keys / logging (not cryptographic)
+- `WhereClauseHelpers.HasAnySubClause(node)` — detect whether a two-phase path is needed
+- `WhereClauseHelpers.TryExtractConditions` — flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`)
+- `WhereClauseHelpers.GetWhereClauseTreeHash` — structural fingerprint for cache keys / logging (not cryptographic)
 
 ```csharp
 var where = WhereClauseBuilder.And()
@@ -300,7 +300,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Encryption` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)

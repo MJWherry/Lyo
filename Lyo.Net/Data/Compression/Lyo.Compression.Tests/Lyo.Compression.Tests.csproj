@@ -11,13 +11,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\Lyo.Compression.BZip2\Lyo.Compression.BZip2.csproj"/>
-        <ProjectReference Include="..\Lyo.Compression.LZ4\Lyo.Compression.LZ4.csproj"/>
-        <ProjectReference Include="..\Lyo.Compression.LZMA\Lyo.Compression.LZMA.csproj"/>
+        <ProjectReference Include="..\Lyo.Compression.Lz4\Lyo.Compression.Lz4.csproj"/>
+        <ProjectReference Include="..\Lyo.Compression.Lzma\Lyo.Compression.Lzma.csproj"/>
         <ProjectReference Include="..\Lyo.Compression.Snappier\Lyo.Compression.Snappier.csproj"/>
-        <ProjectReference Include="..\Lyo.Compression.XZ\Lyo.Compression.XZ.csproj"/>
+        <ProjectReference Include="..\Lyo.Compression.Xz\Lyo.Compression.Xz.csproj"/>
         <ProjectReference Include="..\Lyo.Compression.Zstd\Lyo.Compression.Zstd.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
     </ItemGroup>

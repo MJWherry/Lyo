@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmarking\Lyo.Benchmarking.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmark\Lyo.Benchmark.csproj"/>
         <ProjectReference Include="..\Lyo.Csv\Lyo.Csv.csproj"/>
         <ProjectReference Include="..\Lyo.Csv.Models\Lyo.Csv.Models.csproj"/>
     </ItemGroup>

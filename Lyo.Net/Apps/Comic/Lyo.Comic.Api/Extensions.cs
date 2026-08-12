@@ -21,7 +21,7 @@ using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Rating.Postgres;
 using Lyo.Rating.Postgres.Database;
 using Lyo.Tag;

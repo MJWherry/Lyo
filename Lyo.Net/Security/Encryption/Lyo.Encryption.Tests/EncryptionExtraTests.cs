@@ -4,8 +4,8 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
-using Lyo.Keystore;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore;
+using Lyo.KeyStore.KeyDerivation;
 using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;

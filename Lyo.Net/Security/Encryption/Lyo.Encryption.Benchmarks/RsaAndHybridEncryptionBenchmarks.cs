@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
-using Lyo.Benchmarking.Data;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Encryption.Rsa;
 

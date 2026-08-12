@@ -13,6 +13,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Scientific\Lyo.Scientific.csproj"/>
         <ProjectReference Include="..\Lyo.Scientific.Functions\Lyo.Scientific.Functions.fsproj"/>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
     </ItemGroup>
 </Project>

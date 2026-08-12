@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Cache.Fusion\Lyo.Cache.Fusion.csproj"/>
         <ProjectReference Include="..\Lyo.Cache\Lyo.Cache.csproj"/>
     </ItemGroup>

@@ -13,7 +13,7 @@ public static class CloudObjectKeyBuilder
     /// <param name="fileId">Logical file identifier.</param>
     /// <param name="extension">Optional file extension (including leading dot, e.g. <c>.gz</c> or <c>.enc</c>). Empty string when raw.</param>
     /// <param name="pathPrefix">Explicit caller-supplied prefix path; when null/whitespace the per-file shard pair is used instead.</param>
-    /// <param name="storagePrefix">Optional global storage prefix (e.g. <c>S3FileStorageOptions.KeyPrefix</c> or <c>BlobFileStorageOptions.BlobPrefix</c>).</param>
+    /// <param name="storagePrefix">Optional global storage prefix (e.g. <c>S3FileStorageOptions.KeyPrefix</c> or <c>AzureBlobFileStorageOptions.BlobPrefix</c>).</param>
     public static string Build(Guid fileId, string extension = "", string? pathPrefix = null, string? storagePrefix = null)
     {
         var idString = fileId.ToString("N");

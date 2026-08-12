@@ -22,7 +22,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Web.Automation.Tests\Lyo.Web.Automation.Tests.csproj"/>
         <ProjectReference Include="..\Lyo.Web.Automation.Selenium\Lyo.Web.Automation.Selenium.csproj"/>
-        <ProjectReference Include="..\..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -23,7 +23,7 @@ using DiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
 namespace Lyo.FileStorage;
 
 /// <summary>Filesystem-backed <see cref="IFileStorageService" /> under <see cref="DiskFileStorageOptions.RootDirectoryPath" />.</summary>
-public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService
+public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService
 {
     private readonly DiskFileStorageOptions _options;
     private readonly bool _ownsMetadataService;

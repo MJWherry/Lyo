@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Lyo.Reporting.Models;
 
-namespace Lyo.Reporting.Builders;
+namespace Lyo.Reporting.Models.Builders;
 
 /// <summary>Fluent builder for constructing report columns.</summary>
 [DebuggerDisplay("{ToString(),nq}")]

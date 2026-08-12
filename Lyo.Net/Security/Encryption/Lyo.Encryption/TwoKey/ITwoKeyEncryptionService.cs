@@ -69,7 +69,7 @@ public interface ITwoKeyEncryptionService
     /// <returns>Decrypted data</returns>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedData or encryptedDataEncryptionKey is empty (length is less than 1)</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided</exception>
-    /// <exception cref="Lyo.Keystore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
+    /// <exception cref="Lyo.KeyStore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong KEK, corrupted data, authentication failure, or tampered data</exception>
     byte[] Decrypt(byte[] encryptedData, byte[] encryptedDataEncryptionKey, string? keyId = null, byte[]? kek = null, string? keyVersion = null, byte[]? salt = null);
 
@@ -94,7 +94,7 @@ public interface ITwoKeyEncryptionService
     /// <returns>Decrypted string</returns>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedData or encryptedDataEncryptionKey is empty (length is less than 1)</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided</exception>
-    /// <exception cref="Lyo.Keystore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
+    /// <exception cref="Lyo.KeyStore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong KEK, corrupted data, authentication failure, or tampered data</exception>
     string DecryptString(
         byte[] encryptedData,
@@ -122,7 +122,7 @@ public interface ITwoKeyEncryptionService
     /// <param name="kek">Optional Key Encryption Key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <exception cref="InvalidDataException">Thrown when encrypted data format is invalid, invalid chunk length, or corrupted</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided and result.KeyId is empty</exception>
-    /// <exception cref="Lyo.Keystore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
+    /// <exception cref="Lyo.KeyStore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong KEK, corrupted data, authentication failure, or tampered data</exception>
     Task DecryptStreamAsync(TwoKeyEncryptionResult result, Stream output, string? keyId = null, byte[]? kek = null);
 
@@ -148,7 +148,7 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="EndOfStreamException">Thrown when the stream ends unexpectedly while reading encrypted data</exception>
     /// <exception cref="NotSupportedException">Thrown when the stream format version is not supported</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided</exception>
-    /// <exception cref="Lyo.Keystore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
+    /// <exception cref="Lyo.KeyStore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong KEK, corrupted data, authentication failure, or tampered data</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via ct</exception>
     Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default);
@@ -189,7 +189,7 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="EndOfStreamException">Thrown when the file stream ends unexpectedly while reading encrypted data</exception>
     /// <exception cref="NotSupportedException">Thrown when the stream format version is not supported</exception>
     /// <exception cref="InvalidOperationException">Thrown when neither keyId nor kek is provided</exception>
-    /// <exception cref="Lyo.Keystore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
+    /// <exception cref="Lyo.KeyStore.Exceptions.KeyNotFoundException">Thrown when keyId/keyVersion is not found in KeyStore</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong KEK, corrupted data, authentication failure, or tampered data</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via ct</exception>
     Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default);

@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
-        <ProjectReference Include="..\..\..\Security\ContentThreat\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
+        <ProjectReference Include="..\..\..\Security\ContentThreatScan\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
         <ProjectReference Include="..\..\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\Compression\Lyo.Compression\Lyo.Compression.csproj"/>

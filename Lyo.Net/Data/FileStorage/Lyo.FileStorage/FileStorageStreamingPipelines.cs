@@ -16,7 +16,7 @@ namespace Lyo.FileStorage;
 
 /// <summary>
 /// Encapsulates encode/decode streaming stages shared by every storage backend—single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted
-/// ciphertext dimensions and headers are read through <see cref="IFileStoragePhysicalIo" />.
+/// ciphertext dimensions and headers are read through <see cref="IFileStoragePhysicalIO" />.
 /// </summary>
 internal sealed class FileStorageStreamingPipelines
 {
@@ -24,19 +24,19 @@ internal sealed class FileStorageStreamingPipelines
     private readonly int _copyToBufferSizeBytes;
     private readonly ILogger _logger;
     private readonly FileStorageServiceBaseOptions _options;
-    private readonly IFileStoragePhysicalIo _physicalIo;
+    private readonly IFileStoragePhysicalIO _physicalIO;
     private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
 
     /// <summary>Initializes pipelines with polymorphic blob I/O and optional crypto services.</summary>
     internal FileStorageStreamingPipelines(
-        IFileStoragePhysicalIo physicalIo,
+        IFileStoragePhysicalIO physicalIO,
         ICompressionService? compressionService,
         ITwoKeyEncryptionService? twoKeyEncryptionService,
         FileStorageServiceBaseOptions options,
         ILogger logger,
         int copyToBufferSizeBytes)
     {
-        _physicalIo = physicalIo;
+        _physicalIO = physicalIO;
         _compressionService = compressionService;
         _twoKeyEncryptionService = twoKeyEncryptionService;
         _options = options;
@@ -186,10 +186,10 @@ internal sealed class FileStorageStreamingPipelines
         var compressedSize = countingStream.BytesWritten;
         var compressedHash = compressedHashStream.GetHash();
         var encryptedHash = encryptedHashStream.GetHash();
-        var encryptedSize = await _physicalIo.GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
+        var encryptedSize = await _physicalIO.GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
         var dataEncryptionKeyAlgorithm = EncryptionServiceExtensions.DetermineDekAlgorithm(_twoKeyEncryptionService);
         var keyEncryptionKeyAlgorithm = EncryptionServiceExtensions.DetermineKekAlgorithm(_twoKeyEncryptionService);
-        var headerInfo = await _physicalIo.ExtractEncryptionHeaderAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
+        var headerInfo = await _physicalIO.ExtractEncryptionHeaderAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
         var dataEncryptionKeyId = headerInfo.DataEncryptionKeyId ?? keyId;
         var dataEncryptionKeyVersion = headerInfo.DataEncryptionKeyVersion;
         var keyEncryptionKeySalt = dataEncryptionKeyVersion != null ? _twoKeyEncryptionService.GetSaltForVersion(dataEncryptionKeyId, dataEncryptionKeyVersion) : null;

@@ -11,8 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.Audit\Lyo.Audit.csproj"/>
     </ItemGroup>

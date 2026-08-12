@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Lyo.Compression.LZ4;
+using Lyo.Compression.Lz4;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Tests;

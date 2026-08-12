@@ -13,7 +13,7 @@ using Lyo.Encryption;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.XChaCha20Poly1305;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 
 services.AddLocalKeyStore(ks => ks.UpdateKeyFromString("k", "secret"));
@@ -41,7 +41,7 @@ services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEnc
 
 ## Dependency injection
 
-Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md)).
+Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md)).
 
 ## Mixed DEK / KEK (core package)
 
@@ -60,7 +60,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Streams` — (transitive, lyo)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)

@@ -6,7 +6,7 @@ using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Extensions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

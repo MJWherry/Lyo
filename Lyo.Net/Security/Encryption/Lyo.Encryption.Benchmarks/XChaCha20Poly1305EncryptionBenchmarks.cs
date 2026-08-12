@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
-using Lyo.Benchmarking.Data;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
 using Lyo.Encryption.XChaCha20Poly1305;
 
 namespace Lyo.Encryption.Benchmarks;

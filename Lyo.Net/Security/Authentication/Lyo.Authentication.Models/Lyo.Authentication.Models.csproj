@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>Wire-shape data for Lyo.Authentication: records returned over the API (`LyoUser`, `LinkedIdentity`, `IssuedLyoJwt`, `IssuedApiToken`, `ApiTokenRecord`, `ApiTokenPrincipal`, `ApiTokenIssueRequest`), JWT claim-name constants, the Lyo JWT parser, Format-B token format helpers (`Base64Url`, `Base32Crockford`, `ApiToken`, `ApiTokenKind`, `ApiTokenRing`), audit-event taxonomy (`AuthAuditEvent`, `AuthAuditEventKind`), and the `Scope` record. Safe to reference from consumer-side libraries — including Blazor WebAssembly clients — because it carries no server-side issuers / validators / stores and depends on neither `Lyo.Keystore`, `Lyo.Hashing`, nor BouncyCastle.</Description>
+        <Description>Wire-shape data for Lyo.Authentication: records returned over the API (`LyoUser`, `LinkedIdentity`, `IssuedLyoJwt`, `IssuedApiToken`, `ApiTokenRecord`, `ApiTokenPrincipal`, `ApiTokenIssueRequest`), JWT claim-name constants, the Lyo JWT parser, Format-B token format helpers (`Base64Url`, `Base32Crockford`, `ApiToken`, `ApiTokenKind`, `ApiTokenRing`), audit-event taxonomy (`AuthAuditEvent`, `AuthAuditEventKind`), and the `Scope` record. Safe to reference from consumer-side libraries — including Blazor WebAssembly clients — because it carries no server-side issuers / validators / stores and depends on neither `Lyo.KeyStore`, `Lyo.Hashing`, nor BouncyCastle.</Description>
         <PackageTags>authentication models records dtos jwt</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

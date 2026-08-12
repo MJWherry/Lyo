@@ -8,7 +8,7 @@ editing after a run.
 ## How it works
 
 - **Micro (BenchmarkDotNet):** each suite's in-process exporter
-  (`LyoBenchmarkExporter` in [`Lyo.Benchmarking`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmarking/README.md))
+  (`LyoBenchmarkExporter` in [`Lyo.Benchmark`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark/README.md))
   writes `<name>.lyobench.json` (`type: "micro"`) into its `BenchmarkDotNet.Artifacts`.
 - **Load (k6):** k6 cannot emit the schema, so `build_manifests.py` normalizes the raw
   `*.summary.json` files into a `LoadTestReport` (`type: "load"`).

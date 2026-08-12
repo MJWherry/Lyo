@@ -4,8 +4,8 @@ using Lyo.Common.Records;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions.Models;
-using Lyo.Keystore;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore;
+using Lyo.KeyStore.KeyDerivation;
 using Lyo.Testing;
 
 namespace Lyo.Encryption.Tests;

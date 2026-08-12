@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Api.Mapping;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Mapster;
 using MapsterMapper;
 

@@ -24,7 +24,7 @@ namespace Lyo.Compression;
 /// </para>
 /// <para>
 /// Algorithm resolution is dispatched through the injected <see cref="ICompressorFactory" /> collection: the base package registers GZip/Deflate (and Brotli/ZLib on net10+);
-/// addon packages such as <c>Lyo.Compression.LZ4</c> register their own factories via their <c>services.Add{Algo}Compressor()</c> extension.
+/// addon packages such as <c>Lyo.Compression.Lz4</c> register their own factories via their <c>services.Add{Algo}Compressor()</c> extension.
 /// </para>
 /// </remarks>
 public sealed class CompressionService : ICompressionService, ICompressionResolver

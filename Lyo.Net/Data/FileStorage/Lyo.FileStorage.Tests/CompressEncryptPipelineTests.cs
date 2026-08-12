@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Lyo.Compression;
 using Lyo.Compression.Compressors;
 using Lyo.Encryption.AesGcm;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Testing;
 
 namespace Lyo.FileStorage.Tests;

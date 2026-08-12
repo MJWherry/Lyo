@@ -7,9 +7,9 @@ using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
 using Lyo.Encryption.Streaming;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Lyo.Streams;
-using KeyNotFoundException = Lyo.Keystore.Exceptions.KeyNotFoundException;
+using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 
 namespace Lyo.Encryption.TwoKey;
 

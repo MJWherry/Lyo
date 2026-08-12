@@ -24,7 +24,7 @@
         <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
         <ProjectReference Include="..\..\Features\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
-        <ProjectReference Include="..\..\Data\Ffmpeg\Lyo.Ffmpeg\Lyo.Ffmpeg.csproj"/>
+        <ProjectReference Include="..\..\Data\FFmpeg\Lyo.FFmpeg\Lyo.FFmpeg.csproj"/>
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
         <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
         <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher.Tests\Lyo.FileSystemWatcher.Tests.csproj"/>
@@ -33,7 +33,7 @@
         <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Client\Lyo.Endato.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Integration\Espn\Lyo.Espn.Fantasy.Football\Lyo.Espn.Fantasy.Football.csproj"/>
+        <ProjectReference Include="..\..\Integration\Espn\Lyo.Espn.Fantasy.Football.Client\Lyo.Espn.Fantasy.Football.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
@@ -61,7 +61,7 @@
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode\Lyo.QRCode.csproj"/>
-        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+        <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore.Aws\Lyo.KeyStore.Aws.csproj"/>
         <ProjectReference Include="..\..\Data\Images\Lyo.Images.Skia\Lyo.Images.Skia.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
         <ProjectReference Include="..\Lyo.Preview\Lyo.Preview.csproj"/>

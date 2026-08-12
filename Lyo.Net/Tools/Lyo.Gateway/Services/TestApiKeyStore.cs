@@ -1,5 +1,5 @@
 using Lyo.Api.Client;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Gateway.Services;
 

@@ -3,7 +3,7 @@ using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Options;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Services.WhereClause;

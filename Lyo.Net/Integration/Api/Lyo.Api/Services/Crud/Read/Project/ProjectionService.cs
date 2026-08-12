@@ -276,7 +276,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         where TDbModel : class
     {
         var conditions = new List<ProjectedFilterCondition>();
-        if (!WhereClauseUtils.TryExtractConditions(queryNode, out var queryConditions, out var op))
+        if (!WhereClauseHelpers.TryExtractConditions(queryNode, out var queryConditions, out var op))
             return new(conditions, op);
 
         foreach (var condition in queryConditions) {

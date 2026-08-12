@@ -2,7 +2,7 @@ using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Services.Opaque;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.AspNetCore.TestHost;
 
 namespace Lyo.Authentication.AspNetCore.Tests;

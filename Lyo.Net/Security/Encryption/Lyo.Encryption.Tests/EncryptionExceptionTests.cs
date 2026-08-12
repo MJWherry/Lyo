@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Lyo.Encryption.Exceptions;
-using Lyo.Keystore.Exceptions;
-using KeyNotFoundException = Lyo.Keystore.Exceptions.KeyNotFoundException;
+using Lyo.KeyStore.Exceptions;
+using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 
 namespace Lyo.Encryption.Tests;
 

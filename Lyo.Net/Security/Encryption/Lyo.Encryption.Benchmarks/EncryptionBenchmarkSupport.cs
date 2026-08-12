@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using Lyo.IO.Temp.Models;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 
 namespace Lyo.Encryption.Benchmarks;
 

@@ -60,7 +60,7 @@
     }
   ],
   "links": [],
-  "readmePath": "Lyo.Net/Core/Lyo.Testing/README.md",
+  "readmePath": "Lyo.Net/Core/Testing/Lyo.Testing/README.md",
   "dependencies": [
     {
       "name": "Lyo.Exceptions",

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Lyo.Reporting.Models;
 
-namespace Lyo.Reporting.Builders;
+namespace Lyo.Reporting.Models.Builders;
 
 /// <summary>Fluent builder for constructing reports with support for sections, columns, grids, and content blocks.</summary>
 [DebuggerDisplay("{ToString(),nq}")]

@@ -52,8 +52,8 @@
         <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock.Redis\Lyo.Lock.Redis.csproj"/>
-        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
-        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+        <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore.Aws\Lyo.KeyStore.Aws.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>

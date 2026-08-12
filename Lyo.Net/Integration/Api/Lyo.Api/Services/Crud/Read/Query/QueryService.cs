@@ -518,7 +518,7 @@ public class QueryService<TContext>(
 
             var cacheKeyProjection = CloneProjectionQueryReq(queryRequest);
             cacheKeyProjection.Include = effectiveIncludes;
-            var hasSubQuery = WhereClauseUtils.HasAnySubClause(queryRequest.WhereClause);
+            var hasSubQuery = WhereClauseHelpers.HasAnySubClause(queryRequest.WhereClause);
             var includeFilterMode = queryRequest.Options.IncludeFilterMode;
             var useMatchedOnly = includeFilterMode == QueryIncludeFilterMode.MatchedOnly;
             var sqlBuild = projectionService.TryBuildSqlProjectionExpression<TDbModel>(projectedFieldSpecs, true);

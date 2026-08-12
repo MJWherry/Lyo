@@ -4,7 +4,7 @@ using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
-using Lyo.Benchmarking;
+using Lyo.Benchmark;
 using Lyo.Cache;
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Request;

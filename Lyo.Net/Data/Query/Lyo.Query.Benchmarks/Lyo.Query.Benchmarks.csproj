@@ -7,12 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmarking\Lyo.Benchmarking.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmark\Lyo.Benchmark.csproj"/>
         <ProjectReference Include="..\Lyo.Query\Lyo.Query.csproj"/>
         <ProjectReference Include="..\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>

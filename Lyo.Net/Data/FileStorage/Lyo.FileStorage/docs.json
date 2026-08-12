@@ -39,8 +39,8 @@
           "[`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), **`S3FileStorageOptions`**, DI builders"
         ],
         [
-          "**`Lyo.FileStorage.Blob/README.md`**: Azure Blob",
-          "[`BlobFileStorageService.cs`](../Lyo.FileStorage.Blob/BlobFileStorageService.cs), **`BlobFileStorageOptions`**, SAS / SSE notes"
+          "**`Lyo.FileStorage.AzureBlob/README.md`**: Azure Blob",
+          "[`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), **`AzureBlobFileStorageOptions`**, SAS / SSE notes"
         ],
         [
           "**`Lyo.FileStorage.Web.Components`**: Workbench UI",
@@ -56,7 +56,7 @@
         "Capability",
         "Local disk (**`LocalFileStorageService`**)",
         "S3 (**`S3FileStorageService`**)",
-        "Blob (**`BlobFileStorageService`**)"
+        "Blob (**`AzureBlobFileStorageService`**)"
       ],
       "rows": [
         [
@@ -182,7 +182,7 @@
         ]
       ],
       "lead": "Two-phase uploads for large or untrusted client payloads: **begin** → client PUT to a staging key (`…/.stage/{stageId}/object`) → **complete** (verify/hash) → **commit** (\ncompress/encrypt into canonical storage). Session state lives in **`IStagedFileUploadStore`** / **`staged_file_upload`** — not **`file_metadata`** until commit.",
-      "trail": "Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register *\n*`PostgresStagedFileUploadStore`** / **`SqliteStagedFileUploadStore`** when no store is present. Hook **`IStagedFileUploadEventHandler`** (or service events) to enqueue async\ncommit workers after **`UploadCompleted`**."
+      "trail": "Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddAzureBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register *\n*`PostgresStagedFileUploadStore`** / **`SqliteStagedFileUploadStore`** when no store is present. Hook **`IStagedFileUploadEventHandler`** (or service events) to enqueue async\ncommit workers after **`UploadCompleted`**."
     },
     {
       "type": "table",
@@ -259,7 +259,7 @@
         "**`FileStorageDekOperations`** — implements **`MigrateDeksAsync`** and **`RotateDeksAsync`** uniformly across backends, including short-encryption-header detection and per-file failure isolation.",
         "**`FileStorageStreamingPipelines`** — composes compression / encryption / hash / max-size guards over streamed save and read paths.",
         "**`PlainDirectUploadCoordinator`** — finalizes plaintext direct-upload PUTs into a normal **`SaveFileAsync`** outcome (policy, scan, availability) and runs only when the caller used **`BeginDirectUploadAsync`** without compression/encryption hints.",
-        "**`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIo`** ( presigned PUT, stat, read, delete)."
+        "**`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIO`** ( presigned PUT, stat, read, delete)."
       ]
     },
     {
@@ -409,7 +409,7 @@
         ]
       ],
       "lead": "`AddFileStorageServiceKeyed` ships in seven shapes so the same key can wire (a) an existing keyed file store, (b) a fresh `LocalFileStorageService` from options/section, and either\nreuse or define the encryption key:",
-      "trail": "For cloud backends, use the package-specific keyed entry points: **`AddS3FileStorageServiceKeyed(keyName)`** in **`Lyo.FileStorage.S3`** (fluent builder) and the non-keyed *\n*`AddBlobFileStorageService(...)`** in **`Lyo.FileStorage.Blob`** (keyed Blob is an open item — see that README)."
+      "trail": "For cloud backends, use the package-specific keyed entry points: **`AddS3FileStorageServiceKeyed(keyName)`** in **`Lyo.FileStorage.S3`** (fluent builder) and the non-keyed *\n*`AddAzureBlobFileStorageService(...)`** in **`Lyo.FileStorage.AzureBlob`** (keyed Blob is an open item — see that README)."
     },
     {
       "type": "table",
@@ -454,7 +454,7 @@
       "type": "list",
       "title": "Features (overview)",
       "items": [
-        "**Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.Blob`**",
+        "**Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.AzureBlob`**",
         "**Compression & encryption** — Optional **`ICompressionService`** (exposes **`Resolver`** and **`ResolveForCompress`**; policy via **`AddCompressionPolicySelector`**), * *`ITwoKeyEncryptionService`**",
         "**Metadata** — **`IFileMetadataStore`** (**`FileStoreResult`**)",
         "**Duplicate detection** — Configurable hashing strategies (**`DuplicateHandlingStrategy`**)",
@@ -506,8 +506,8 @@
           "Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream`, **`S3StagedFileUploadService`** (presigned PUT via `FakeAmazonS3`), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants"
         ],
         [
-          "**`Lyo.FileStorage.Blob.Tests`**",
-          "Isolated coverage for `BlobFileStorageOptions`, **`BlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder`"
+          "**`Lyo.FileStorage.AzureBlob.Tests`**",
+          "Isolated coverage for `AzureBlobFileStorageOptions`, **`AzureBlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder`"
         ]
       ],
       "trail": "Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; deeper end-to-end coverage would need LocalStack/Azurite."
@@ -626,7 +626,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

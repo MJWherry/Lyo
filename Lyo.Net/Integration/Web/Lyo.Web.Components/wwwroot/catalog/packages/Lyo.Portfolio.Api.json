@@ -174,7 +174,7 @@
       ]
     },
     {
-      "name": "Lyo.Keystore",
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -363,6 +363,14 @@
     },
     {
       "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic.AspNetCore",
       "kind": "lyo",
       "tags": [
         "transitive",

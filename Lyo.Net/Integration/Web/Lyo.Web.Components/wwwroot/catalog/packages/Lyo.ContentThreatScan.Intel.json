@@ -78,7 +78,7 @@
     }
   ],
   "links": [],
-  "readmePath": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md",
+  "readmePath": "Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/README.md",
   "dependencies": [
     {
       "name": "Lyo.Common",

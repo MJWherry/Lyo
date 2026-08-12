@@ -170,7 +170,7 @@
       "packages": [
         "Lyo.FileStorage",
         "Lyo.FileStorage.S3",
-        "Lyo.FileStorage.Blob"
+        "Lyo.FileStorage.AzureBlob"
       ],
       "sections": [
         {
@@ -413,7 +413,7 @@
       "summary": "AWS S3–compatible and Azure Blob Storage implementations for the file storage abstractions.",
       "packages": [
         "Lyo.FileStorage.S3",
-        "Lyo.FileStorage.Blob"
+        "Lyo.FileStorage.AzureBlob"
       ],
       "sections": []
     },

@@ -4,8 +4,8 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.S3;
 using Lyo.FileStorage.Staged;
 using Lyo.FileStorage.Web.Components.Services;
-using Lyo.Keystore;
-using Lyo.Keystore.Aws;
+using Lyo.KeyStore;
+using Lyo.KeyStore.Aws;
 
 namespace Lyo.Gateway.Services;
 

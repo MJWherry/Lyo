@@ -24,7 +24,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>S3-backed <see cref="IFileStorageService" /> supporting presigned URLs, multipart, server-side copy, and optional customer / KMS SSE.</summary>
-public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IAsyncDisposable
+public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IAsyncDisposable
 {
     private readonly S3FileStorageOptions _options;
     private readonly bool _ownsS3Client;

@@ -1,6 +1,6 @@
 using System.Text;
 using Lyo.Compression.Compressors;
-using Lyo.Compression.LZ4;
+using Lyo.Compression.Lz4;
 using Lyo.Compression.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 

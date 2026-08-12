@@ -32,7 +32,7 @@ public sealed class FileStorageWorkbenchOptions
     /// <summary>The keyed service name used when resolving <see cref="Lyo.FileStorage.IFileStorageService" />.</summary>
     public string? FileStorageServiceKey { get; set; } = "gateway-filestorage";
 
-    /// <summary>The keyed service name used when resolving <see cref="Lyo.Keystore.IKeyStore" />.</summary>
+    /// <summary>The keyed service name used when resolving <see cref="Lyo.KeyStore.IKeyStore" />.</summary>
     public string? KeyStoreServiceKey { get; set; } = "gateway-filestorage";
 
     /// <summary>The keyed metadata store used when auto-registering the S3 file storage stack.</summary>

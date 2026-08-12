@@ -26,7 +26,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Authentication.Models` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Keystore` — (transitive, lyo)
+- `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)

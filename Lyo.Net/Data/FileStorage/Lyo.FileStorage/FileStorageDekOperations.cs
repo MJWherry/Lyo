@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Implements batch-oriented DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, re-encrypt ciphertext) using <see cref="IFileStoragePhysicalIo" />
+/// Implements batch-oriented DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, re-encrypt ciphertext) using <see cref="IFileStoragePhysicalIO" />
 /// .
 /// </summary>
 internal sealed class FileStorageDekOperations
@@ -27,7 +27,7 @@ internal sealed class FileStorageDekOperations
     private readonly IFileMetadataStore _metadataService;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
-    private readonly IFileStoragePhysicalIo _physicalIo;
+    private readonly IFileStoragePhysicalIO _physicalIO;
     private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
 
     /// <summary>Initializes helpers with metadata services, optional encryption, storage I/O, and auditing facade.</summary>
@@ -37,7 +37,7 @@ internal sealed class FileStorageDekOperations
         IFileOperationContextAccessor operationContextAccessor,
         ILogger logger,
         FileStorageServiceBaseOptions options,
-        IFileStoragePhysicalIo physicalIo,
+        IFileStoragePhysicalIO physicalIO,
         IFileAuditPublisher auditPublisher,
         int copyToBufferSizeBytes)
     {
@@ -46,7 +46,7 @@ internal sealed class FileStorageDekOperations
         _operationContextAccessor = operationContextAccessor;
         _logger = logger;
         _options = options;
-        _physicalIo = physicalIo;
+        _physicalIO = physicalIO;
         _auditPublisher = auditPublisher;
         _copyToBufferSizeBytes = copyToBufferSizeBytes;
     }
@@ -132,7 +132,7 @@ internal sealed class FileStorageDekOperations
                     var newSalt = _twoKeyEncryptionService!.GetSaltForVersion(actualTargetKeyId, actualTargetVersion);
 
                     // If the blob is missing (or has a truncated header) the underlying UpdateFileHeaderAsync now throws; surface it as a failure rather than a silent skip.
-                    await _physicalIo.UpdateFileHeaderAsync(fileMetadata.Id, fileMetadata.PathPrefix, actualTargetKeyId, actualTargetVersion, newEncryptedDek, ct)
+                    await _physicalIO.UpdateFileHeaderAsync(fileMetadata.Id, fileMetadata.PathPrefix, actualTargetKeyId, actualTargetVersion, newEncryptedDek, ct)
                         .ConfigureAwait(false);
 
                     var updatedMetadata = fileMetadata with {
@@ -270,7 +270,7 @@ internal sealed class FileStorageDekOperations
     /// </summary>
     private async Task<Stream> ReadEncryptedPayloadAsync(FileStoreResult metadata, CancellationToken ct)
     {
-        using var storageStream = await _physicalIo.ReadFromStorageAsync(metadata.Id, metadata.PathPrefix, ct).ConfigureAwait(false);
+        using var storageStream = await _physicalIO.ReadFromStorageAsync(metadata.Id, metadata.PathPrefix, ct).ConfigureAwait(false);
         if (storageStream == null)
             throw new FileNotFoundException($"File with ID {metadata.Id} was not found in storage.", metadata.Id.ToString());
 
@@ -321,7 +321,7 @@ internal sealed class FileStorageDekOperations
         var fileExtension = _twoKeyEncryptionService!.FileExtension;
         var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize ?? metadata.OriginalFileSize);
         byte[] encryptedHash;
-        using (var outputStream = await _physicalIo.CreateOutputStreamAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false)) {
+        using (var outputStream = await _physicalIO.CreateOutputStreamAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false)) {
             using (var encryptedHashAlgo = _options.HashAlgorithm.Create()) {
                 using (var encryptedHashStream = new HashingStream(outputStream, encryptedHashAlgo)) {
                     decryptedPayloadStream.Position = 0;
@@ -333,11 +333,11 @@ internal sealed class FileStorageDekOperations
             }
         }
 
-        var headerInfo = await _physicalIo.ExtractEncryptionHeaderAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false);
+        var headerInfo = await _physicalIO.ExtractEncryptionHeaderAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false);
         var resolvedKeyId = headerInfo.DataEncryptionKeyId ?? targetKeyId;
         var resolvedKeyVersion = headerInfo.DataEncryptionKeyVersion ?? targetKeyVersion;
         OperationHelpers.ThrowIfNullOrWhiteSpace(resolvedKeyVersion, $"Unable to determine the target key version for file {metadata.Id} after rewriting its encrypted payload.");
-        var encryptedSize = await _physicalIo.GetStorageSizeAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false);
+        var encryptedSize = await _physicalIO.GetStorageSizeAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false);
         var keyEncryptionKeySalt = _twoKeyEncryptionService!.GetSaltForVersion(resolvedKeyId, resolvedKeyVersion);
         var updatedMetadata = metadata with {
             SourceFileName = metadata.Id + fileExtension,

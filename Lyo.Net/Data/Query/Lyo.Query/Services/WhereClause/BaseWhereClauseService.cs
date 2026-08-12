@@ -879,7 +879,7 @@ public class BaseWhereClauseService : IWhereClauseService
     {
         var sb = new StringBuilder(EfPredicateCachePrefix);
         sb.Append('_').Append(typeof(TEntity).FullName).Append('_').Append(includeSubClauses ? '1' : '0').Append('_');
-        sb.Append(WhereClauseUtils.GetWhereClauseTreeHash(queryNode));
+        sb.Append(WhereClauseHelpers.GetWhereClauseTreeHash(queryNode));
         return sb.ToString();
     }
 

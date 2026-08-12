@@ -1,5 +1,5 @@
 using Lyo.Common.Enums;
-using Lyo.Compression.LZ4;
+using Lyo.Compression.Lz4;
 using Lyo.Compression.Models;
 using Lyo.Compression.Policy;
 using Microsoft.Extensions.Logging.Abstractions;

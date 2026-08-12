@@ -4,8 +4,8 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.TwoKey;
-using Lyo.Keystore;
-using Lyo.Keystore.KeyDerivation;
+using Lyo.KeyStore;
+using Lyo.KeyStore.KeyDerivation;
 
 namespace Lyo.Encryption.Tests;
 

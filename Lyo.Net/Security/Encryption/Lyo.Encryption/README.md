@@ -2,7 +2,7 @@
 
 Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and **AES-GCM + RSA** hybrids, plus envelope / two-key flows via **`ITwoKeyEncryptionService`**.
 
-Primary contracts: **`IEncryptionService`** (single key), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`** (streaming, string, and file helpers). Keys can be inline or resolved from **`Lyo.Keystore`** by **`keyId`**.
+Primary contracts: **`IEncryptionService`** (single key), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`** (streaming, string, and file helpers). Keys can be inline or resolved from **`Lyo.KeyStore`** by **`keyId`**.
 
 For architecture, threat model, and operational checklists, see the **[Security/Encryption README](../README.md)** — this file covers this assembly’s API surface.
 
@@ -32,7 +32,7 @@ Confidentiality + integrity (authenticated tags); tampering surfaces as **`Decry
 - DI helpers for RSA / AES-GCM+RSA, keyed **`ITwoKeyEncryptionService`** + **`IKeyStore`**
 - Algorithm discovery via **`EncryptionAlgorithm`** / **`EncryptionAlgorithmDiscovery`**
 - Non-throwing **`EncryptionResult`** / **`DecryptionResult`** ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
-- **`SecurityUtilities`** for buffer zeroing and constant-time compare (not KDFs — see [`Lyo.Keystore`](../Lyo.Keystore/README.md))
+- **`SecurityUtilities`** for buffer zeroing and constant-time compare (not KDFs — see [`Lyo.KeyStore`](../Lyo.KeyStore/README.md))
 
 ## Examples
 
@@ -43,7 +43,7 @@ using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -136,7 +136,7 @@ Concrete types live under **`AesGcm/`**, **`ChaCha20Poly1305/`**, **`Symmetric/A
 
 ## Dependency injection (this assembly)
 
-Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**). Algorithm addons ( `Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers; keys come from [`Lyo.Keystore`](../Lyo.Keystore/README.md).
+Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**). Algorithm addons ( `Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers; keys come from [`Lyo.KeyStore`](../Lyo.KeyStore/README.md).
 
 ## Registration overview
 
@@ -204,7 +204,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common` — (direct, lyo)
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Hashing` — (direct, lyo)
-- `Lyo.Keystore` — (direct, lyo)
+- `Lyo.KeyStore` — (direct, lyo)
 - `Lyo.Result` — (direct, lyo)
 - `Lyo.Streams` — (direct, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` — (direct, third-party, netstandard2.0)

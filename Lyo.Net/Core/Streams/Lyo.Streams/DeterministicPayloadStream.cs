@@ -14,7 +14,7 @@ public sealed class DeterministicPayloadStream : Stream
 {
     /// <summary>
     /// Shared default seed (<c>0x4C594F42</c> / "LYOB") for reproducible payloads. Tests use <c>Lyo.Testing.TestData.Seed</c>; benchmarks use
-    /// <c>Lyo.Benchmarking.Data.BenchmarkData.PayloadSeed</c> — both alias this constant.
+    /// <c>Lyo.Benchmark.Data.BenchmarkData.PayloadSeed</c> — both alias this constant.
     /// </summary>
     public const int DefaultSeed = 0x4C594F42;
 

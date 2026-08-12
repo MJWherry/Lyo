@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
-using Lyo.Benchmarking;
-using Lyo.Benchmarking.Data;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 using Lyo.Compression.Zstd;

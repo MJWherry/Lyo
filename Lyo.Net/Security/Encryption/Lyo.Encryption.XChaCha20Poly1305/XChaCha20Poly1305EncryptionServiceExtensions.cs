@@ -1,6 +1,6 @@
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
-using Lyo.Keystore;
+using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Encryption.XChaCha20Poly1305;
