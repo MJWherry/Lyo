@@ -71,6 +71,15 @@ public partial class JsonEditor<T> : IAsyncDisposable
     [Parameter]
     public EventCallback<string> SearchTextChanged { get; set; }
 
+    /// <summary>
+    /// CSS height for the raw/tree surface (default fills most of the viewport under typical app chrome). Prefer a length such as
+    /// <c>50vh</c> or <c>480px</c> — percentage heights fail when ancestors do not have a definite height.
+    /// </summary>
+    [Parameter]
+    public string EditorSurfaceHeight { get; set; } = "min(55vh, 560px)";
+
+    private string EditorSurfaceHeightCss => string.IsNullOrWhiteSpace(EditorSurfaceHeight) ? "min(55vh, 560px)" : EditorSurfaceHeight.Trim();
+
     public async ValueTask DisposeAsync()
     {
         if (_jsInterop != null) {

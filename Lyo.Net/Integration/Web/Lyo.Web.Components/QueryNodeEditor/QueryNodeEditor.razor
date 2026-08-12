@@ -12,6 +12,8 @@
 
             @{
                 var logicalNode = (GroupClause)Node;
+                var hasSubQuery = logicalNode.SubClause != null;
+                var childCount = logicalNode.Children?.Count ?? 0;
             }
             <MudGrid Spacing="2">
                 <MudItem xs="12" md="4">
@@ -34,86 +36,89 @@
                 </MudItem>
             </MudGrid>
 
-            <MudDivider/>
-            <MudText Typo="Typo.subtitle2">SubQuery (optional)</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                When set, the API runs the group clause first (DB), then filters results in-memory with the subquery.
-            </MudText>
-            @if (logicalNode.SubClause != null) {
-                <MudPaper Elevation="1" Class="pa-2">
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(logicalNode.SubClause)</MudText>
-                        <MudButton Variant="Variant.Text"
-                                   Size="Size.Small"
-                                   Color="Color.Primary"
-                                   OnClick="@(() => SelectSubClause(logicalNode.SubClause))">
-                            Edit
-                        </MudButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error"
-                                       Size="Size.Small"
-                                       OnClick="@(() => RemoveSubClause(logicalNode))"/>
-                    </MudStack>
-                </MudPaper>
-            }
-            else {
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Tertiary"
-                           Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@(() => AddSubClause(logicalNode))">
-                    Add SubQuery
-                </MudButton>
-            }
-
-            <MudDivider/>
-
-            <MudText Typo="Typo.subtitle1">Children</MudText>
-
-            @if (logicalNode.Children != null && logicalNode.Children.Any()) {
-                <MudStack Spacing="2">
-                    @foreach (var child in logicalNode.Children.ToList()) {
+            <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true">
+                <MudExpansionPanel Text="@($"SubQuery (optional){(hasSubQuery ? " — set" : "")}")"
+                                   Expanded="@hasSubQuery">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        When set, the API runs the group clause first (DB), then filters results in-memory with the subquery.
+                    </MudText>
+                    @if (logicalNode.SubClause != null) {
                         <MudPaper Elevation="1" Class="pa-2">
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                                <MudText Typo="Typo.body2" Style="flex: 1;">
-                                    @GetNodeDisplayText(child)
-                                </MudText>
-                                <MudButton Size="Size.Small"
-                                           Variant="Variant.Text"
+                                <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(logicalNode.SubClause)</MudText>
+                                <MudButton Variant="Variant.Text"
+                                           Size="Size.Small"
                                            Color="Color.Primary"
-                                           OnClick="@(() => SelectChild(child))">
+                                           OnClick="@(() => SelectSubClause(logicalNode.SubClause))">
                                     Edit
                                 </MudButton>
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                Color="Color.Error"
                                                Size="Size.Small"
-                                               OnClick="@(() => RemoveChild(child))"/>
+                                               OnClick="@(() => RemoveSubClause(logicalNode))"/>
                             </MudStack>
                         </MudPaper>
                     }
-                </MudStack>
-            }
-            else {
-                <MudText Typo="Typo.body2" Color="Color.Secondary">No children. Add conditions or group clauses below.
-                </MudText>
-            }
+                    else {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@(() => AddSubClause(logicalNode))">
+                            Add SubQuery
+                        </MudButton>
+                    }
+                </MudExpansionPanel>
 
-            <MudStack Row="true" Spacing="2">
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Primary"
-                           Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@AddChildLogical">
-                    Add group
-                </MudButton>
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Secondary"
-                           Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@AddChildCondition">
-                    Add condition
-                </MudButton>
-            </MudStack>
+                <MudExpansionPanel Text="@($"Children ({childCount})")"
+                                   Expanded="true">
+                    @if (logicalNode.Children != null && logicalNode.Children.Any()) {
+                        <MudStack Spacing="2" Class="mb-2">
+                            @foreach (var child in logicalNode.Children.ToList()) {
+                                <MudPaper Elevation="1" Class="pa-2">
+                                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.body2" Style="flex: 1;">
+                                            @GetNodeDisplayText(child)
+                                        </MudText>
+                                        <MudButton Size="Size.Small"
+                                                   Variant="Variant.Text"
+                                                   Color="Color.Primary"
+                                                   OnClick="@(() => SelectChild(child))">
+                                            Edit
+                                        </MudButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => RemoveChild(child))"/>
+                                    </MudStack>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    }
+                    else {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                            No children. Add conditions or group clauses below.
+                        </MudText>
+                    }
+
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@AddChildLogical">
+                            Add group
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@AddChildCondition">
+                            Add condition
+                        </MudButton>
+                    </MudStack>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
         </MudStack>
     }
     else if (Node is ConditionClause conditionNode) {
@@ -121,6 +126,9 @@
         <MudStack Spacing="3">
             <MudText Typo="Typo.h6">Condition clause</MudText>
 
+            @{
+                var hasConditionSubQuery = conditionNode.SubClause != null;
+            }
             <MudGrid Spacing="2">
                 <MudItem xs="12" md="5">
                     <LyoValidationWrapper @ref="_fieldValidationRef" T="string" Value="@conditionNode.Field" Validator="@FieldValidator">
@@ -204,41 +212,41 @@
                 }
             }
 
-            @* SubQuery section - two-phase execution (root in DB, subquery in-memory) *@
-            <MudDivider/>
-            <MudText Typo="Typo.subtitle2">SubQuery (optional)</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                When set, the API runs the root condition first (DB), then filters results in-memory with the subquery.
-            </MudText>
-            @if (conditionNode.SubClause != null) {
-                <MudPaper Elevation="1" Class="pa-2">
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(conditionNode.SubClause)</MudText>
-                        <MudButton Variant="Variant.Text"
-                                   Size="Size.Small"
+            <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true">
+                <MudExpansionPanel Text="@($"SubQuery (optional){(hasConditionSubQuery ? " — set" : "")}")"
+                                   Expanded="@hasConditionSubQuery">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        When set, the API runs the root condition first (DB), then filters results in-memory with the subquery.
+                    </MudText>
+                    @if (conditionNode.SubClause != null) {
+                        <MudPaper Elevation="1" Class="pa-2">
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(conditionNode.SubClause)</MudText>
+                                <MudButton Variant="Variant.Text"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => SelectSubClause(conditionNode.SubClause))">
+                                    Edit
+                                </MudButton>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemoveSubClause(conditionNode))"/>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                    else {
+                        <MudButton Variant="Variant.Outlined"
                                    Color="Color.Primary"
-                                   OnClick="@(() => SelectSubClause(conditionNode.SubClause))">
-                            Edit
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@(() => AddSubClause(conditionNode))">
+                            Add SubQuery
                         </MudButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error"
-                                       Size="Size.Small"
-                                       OnClick="@(() => RemoveSubClause(conditionNode))"/>
-                    </MudStack>
-                </MudPaper>
-            }
-            else {
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Tertiary"
-                           Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@(() => AddSubClause(conditionNode))">
-                    Add SubQuery
-                </MudButton>
-            }
+                    }
+                </MudExpansionPanel>
+            </MudExpansionPanels>
         </MudStack>
     }
 
 </LyoElementRoot>
-
-

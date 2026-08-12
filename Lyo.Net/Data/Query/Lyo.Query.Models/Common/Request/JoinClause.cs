@@ -7,7 +7,7 @@ namespace Lyo.Query.Models.Common.Request;
 [DebuggerDisplay("{Type} {Alias}:{EntityType} as {As}")]
 public sealed class JoinClause : FromClause
 {
-    /// <summary>Join kind (v1: <see cref="JoinType.Inner" /> or <see cref="JoinType.Left" />).</summary>
+    /// <summary>Join kind (<see cref="JoinType.Inner" />, <see cref="JoinType.Left" />, <see cref="JoinType.Right" />, or <see cref="JoinType.FullOuter" />).</summary>
     public JoinType Type { get; set; } = JoinType.Left;
 
     /// <summary>Equality ON clauses (at least one required).</summary>

@@ -77,6 +77,47 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task RightJoin_KeepsOnlyPeopleWithContactAddressRows()
+    {
+        // Right on ContactAddress: Lonely (no contact) is dropped; Multi and Single remain.
+        var req = QueryReqBuilder.New()
+            .From("p", nameof(PersonEntity))
+            .Join(
+                "c", nameof(ContactAddressEntity), JoinType.Right, on => {
+                    on.Add(new() { From = "p.Id", To = "c.PersonId" });
+                }, "c")
+            .AddSelects("p.FirstName", "c.StartDate")
+            .SetPagination(0, 50)
+            .Build();
+        var res = await _service.QueryAsync(req, _registry, Ct);
+        Assert.True(res.IsSuccess, res.Error?.Detail);
+        Assert.Equal(2, res.Items!.Count);
+        Assert.Contains(res.Items, i => string.Equals(GetString(AsDict(i), "FirstName"), "Multi", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(res.Items, i => string.Equals(GetString(AsDict(i), "FirstName"), "Single", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(res.Items, i => string.Equals(GetString(AsDict(i), "FirstName"), "Lonely", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task FullOuterJoin_IncludesPeopleWithoutContactLikeLeft()
+    {
+        // Seed has no orphan contacts, so FullOuter matches Left for From-side people.
+        var req = QueryReqBuilder.New()
+            .From("p", nameof(PersonEntity))
+            .Join(
+                "c", nameof(ContactAddressEntity), JoinType.FullOuter, on => {
+                    on.Add(new() { From = "p.Id", To = "c.PersonId" });
+                }, "c")
+            .AddSelects("p.FirstName", "c.StartDate")
+            .SetPagination(0, 50)
+            .Build();
+        var res = await _service.QueryAsync(req, _registry, Ct);
+        Assert.True(res.IsSuccess, res.Error?.Detail);
+        Assert.Equal(3, res.Items!.Count);
+        var lonely = FindByFirstName(res.Items, "Lonely");
+        Assert.Empty(GetJoinList(lonely, "c"));
+    }
+
+    [Fact]
     public async Task InnerThenLeft_KeepsContactWithoutAddress_DropsPersonWithoutContact()
     {
         var req = QueryReqBuilder.New()

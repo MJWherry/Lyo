@@ -1,65 +1,91 @@
-::deep .lyo-json-editor-toolbar {
+.lyo-json-editor {
+    display: block;
+    width: 100%;
+}
+
+.lyo-json-editor-toolbar {
     padding: 4px 0;
 }
 
-::deep .lyo-json-editor-textarea {
-    font-family: ui-monospace, monospace !important;
-    min-height: 200px;
+.lyo-json-editor-body {
     width: 100%;
+    margin-top: 0.5rem;
+}
+
+.lyo-json-editor-textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: ui-monospace, monospace !important;
     padding: 12px 16px;
     border: 1px solid var(--mud-palette-lines-default);
     border-radius: 4px;
-    background: var(--mud-palette-background);
+    background-color: var(--mud-palette-surface);
     color: var(--mud-palette-text-primary);
+    caret-color: var(--mud-palette-text-primary);
     resize: vertical;
+    overflow: auto;
 }
 
-::deep .lyo-json-editor-textarea:focus {
+.lyo-json-editor-textarea:focus {
     outline: none;
     border-color: var(--mud-palette-primary);
     box-shadow: 0 0 0 2px rgba(var(--mud-palette-primary-rgb), 0.25);
 }
 
-::deep .lyo-json-editor-raw-readonly {
+.lyo-json-editor-raw-readonly {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0;
     padding: 8px 10px;
-    min-height: 200px;
-    max-height: 400px;
     overflow: auto;
     border: 1px solid var(--mud-palette-lines-default);
     border-radius: 4px;
-    background: color-mix(in srgb, var(--mud-palette-surface) 96%, var(--mud-palette-text-primary) 4%);
+    background-color: var(--mud-palette-surface);
+    color: var(--mud-palette-text-primary);
     font-family: ui-monospace, monospace;
     white-space: pre-wrap;
     word-break: break-word;
 }
 
-::deep .lyo-json-toolbar-row {
+.lyo-json-editor-tree-scroll {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background-color: var(--mud-palette-surface);
+}
+
+.lyo-json-toolbar-row {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-::deep .lyo-json-search-wrap {
+.lyo-json-search-wrap {
     position: relative;
     flex: 1;
     min-width: 120px;
 }
 
-::deep .lyo-json-search-wrap .lyo-json-search-field {
+.lyo-json-search-wrap ::deep .lyo-json-search-field {
     width: 100%;
 }
 
-::deep .lyo-json-search-wrap .lyo-json-search-field .mud-input-control {
+.lyo-json-search-wrap ::deep .lyo-json-search-field .mud-input-control {
     margin-top: 0;
 }
 
-::deep .lyo-json-search-wrap .lyo-json-search-field input {
+.lyo-json-search-wrap ::deep .lyo-json-search-field input {
     padding-right: 46px !important;
     font-size: 0.75rem;
 }
 
-::deep .lyo-json-search-nav {
+.lyo-json-search-nav {
     position: absolute;
     right: 4px;
     width: 18px;
@@ -67,32 +93,32 @@
     min-width: 18px;
 }
 
-::deep .lyo-json-search-nav-up {
+.lyo-json-search-nav-up {
     top: 4px;
 }
 
-::deep .lyo-json-search-nav-down {
+.lyo-json-search-nav-down {
     bottom: 4px;
 }
 
-::deep .lyo-json-search-count {
+.lyo-json-search-count {
     min-width: 40px;
     text-align: right;
     flex-shrink: 0;
 }
 
-::deep .lyo-json-toolbar-sep {
+.lyo-json-toolbar-sep {
     width: 1px;
     height: 24px;
     background: var(--mud-palette-lines-default);
     flex-shrink: 0;
 }
 
-::deep .lyo-json-toolbar-mode {
+.lyo-json-toolbar-mode {
     flex-shrink: 0;
 }
 
-::deep .lyo-json-toolbar-actions {
+.lyo-json-toolbar-actions {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;

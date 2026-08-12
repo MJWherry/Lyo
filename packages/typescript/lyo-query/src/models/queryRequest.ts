@@ -3,7 +3,7 @@ import type { WhereClause } from "./whereClause.js";
 export type QueryTotalCountMode = "None" | "HasMore" | "Exact";
 export type QueryIncludeFilterMode = "Full" | "MatchedOnly";
 export type SortDirection = "Asc" | "Desc";
-export type JoinType = "Inner" | "Left";
+export type JoinType = "Inner" | "Left" | "Right" | "FullOuter";
 
 export interface SortBy {
     PropertyName: string;

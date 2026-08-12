@@ -38,7 +38,7 @@ UNSET = _Unset()
 QueryTotalCountMode = Literal["None", "HasMore", "Exact"]
 QueryIncludeFilterMode = Literal["Full", "MatchedOnly"]
 SortDirection = Literal["Asc", "Desc"]
-JoinType = Literal["Inner", "Left"]
+JoinType = Literal["Inner", "Left", "Right", "FullOuter"]
 ComparisonOperator = Literal[
     "Equals",
     "NotEquals",

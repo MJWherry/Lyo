@@ -185,7 +185,23 @@ public sealed class RootQueryValidatorTests
             });
 
         var errors = RootQueryValidator.Validate(req, registry);
-        Assert.Contains(errors, e => e.Description.Contains("Inner or Left", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Description.Contains("Inner, Left, Right, or FullOuter", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData(JoinType.Right)]
+    [InlineData(JoinType.FullOuter)]
+    public void Validate_Accepts_RightAndFullOuterJoinTypes(JoinType joinType)
+    {
+        var registry = CreateRegistry();
+        var req = QueryReqBuilder.New()
+            .From("o", nameof(OrderEntity))
+            .Join("p", nameof(PersonEntity), joinType, on => on.Add(new() { From = "o.PersonId", To = "p.Id" }), "recipient")
+            .AddSelects("o.Id", "p.FirstName")
+            .Build();
+
+        var errors = RootQueryValidator.Validate(req, registry);
+        Assert.DoesNotContain(errors, e => e.Description.Contains(".Type", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

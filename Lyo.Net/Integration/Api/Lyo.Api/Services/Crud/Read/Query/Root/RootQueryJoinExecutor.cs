@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Api.Services.Crud.Read.Query.Root;
 
 /// <summary>
-/// Executes root From/Joins as EF-translatable joins (arbitrary ON columns, chained aliases). Left: <c>SelectMany(o =&gt; inner.Where(on).DefaultIfEmpty(), …)</c> — not
-/// GroupJoin+ValueTuple (untranslatable). Final Select is sparse only.
+/// Executes root From/Joins as EF-translatable joins (arbitrary ON columns, chained aliases). Left:
+/// <c>SelectMany(o =&gt; inner.Where(on).DefaultIfEmpty(), …)</c>; Right inverts the driver; FullOuter is Left
+/// concatenated with right-only rows. Final Select is sparse only.
 /// </summary>
 internal static class RootQueryJoinExecutor
 {
@@ -46,9 +47,11 @@ internal static class RootQueryJoinExecutor
         CancellationToken ct)
         where TFrom : class
     {
-        var carrier = ApplySkipTake((IQueryable<TFrom>)fromSet, start, amount);
+        var deferPaging = plan.Joins.Any(static j => j.Type is JoinType.Right or JoinType.FullOuter);
+        var carrier = deferPaging ? (IQueryable)(IQueryable<TFrom>)fromSet : ApplySkipTake((IQueryable<TFrom>)fromSet, start, amount);
         var carrierType = typeof(TFrom);
         var aliasAccess = new Dictionary<string, Func<Expression, Expression>>(StringComparer.OrdinalIgnoreCase) { [plan.FromAlias] = e => e };
+        var fromMayBeNull = false;
         for (var ji = 0; ji < plan.Joins.Count; ji++) {
             var joinPlan = plan.Joins[ji];
             var on = joinPlan.On[0];
@@ -58,47 +61,12 @@ internal static class RootQueryJoinExecutor
                 throw new InvalidQueryException($"Join ON left alias '{on.LeftAlias}' is unknown.");
 
             var pairType = typeof(RootJoinPair<,>).MakeGenericType(carrierType, joinClr);
-            var outerP = Expression.Parameter(carrierType, "outer");
-            var leftEntity = leftEntityAccess(outerP);
-            var innerP = Expression.Parameter(joinClr, "inner");
-
-            // ON: left.Prop == right.Prop (same CLR types — no Guid? casts; EF rejects those in GroupJoin)
-            Expression leftKey = Expression.Property(leftEntity, on.LeftProperty);
-            Expression rightKey = Expression.Property(innerP, on.RightProperty);
-            if (leftKey.Type != rightKey.Type) {
-                // Only convert when one side is nullable of the other
-                if (Nullable.GetUnderlyingType(leftKey.Type) == rightKey.Type)
-                    rightKey = Expression.Convert(rightKey, leftKey.Type);
-                else if (Nullable.GetUnderlyingType(rightKey.Type) == leftKey.Type)
-                    leftKey = Expression.Convert(leftKey, rightKey.Type);
-                else
-                    throw new InvalidQueryException($"Join ON key type mismatch: {leftKey.Type} vs {rightKey.Type}.");
-            }
-
-            Expression onEqual = Expression.Equal(leftKey, rightKey);
-            // When left entity can be null (prior left join), short-circuit: no match if left is null
-            if (!leftEntity.Type.IsValueType)
-                onEqual = Expression.AndAlso(Expression.NotEqual(leftEntity, Expression.Constant(null, leftEntity.Type)), onEqual);
-
-            var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [joinClr], joinSet.Expression, Expression.Quote(Expression.Lambda(onEqual, innerP)));
-            Expression collection;
-            if (joinPlan.Type == JoinType.Left)
-                collection = Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall);
-            else
-                collection = whereCall;
-
-            var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, typeof(IEnumerable<>).MakeGenericType(joinClr)), collection, outerP);
-            var resultOuterP = Expression.Parameter(carrierType, "o");
-            var resultInnerP = Expression.Parameter(joinClr, "j");
-            var pairNew = Expression.MemberInit(
-                Expression.New(pairType), Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Outer))!, resultOuterP),
-                Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Inner))!, resultInnerP));
-
-            var resultSel = Expression.Lambda(typeof(Func<,,>).MakeGenericType(carrierType, joinClr, pairType), pairNew, resultOuterP, resultInnerP);
-            carrier = carrier.Provider.CreateQuery(
-                Expression.Call(
-                    typeof(Queryable), nameof(Queryable.SelectMany), [carrierType, joinClr, pairType], carrier.Expression, Expression.Quote(collectionSel),
-                    Expression.Quote(resultSel)));
+            carrier = joinPlan.Type switch {
+                JoinType.Right => ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, ref fromMayBeNull),
+                JoinType.FullOuter => ApplyFullOuterJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, ref fromMayBeNull),
+                JoinType.Left => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, leftOuter: true),
+                var _ => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, leftOuter: false)
+            };
 
             carrierType = pairType;
             var prevAccess = new Dictionary<string, Func<Expression, Expression>>(aliasAccess, StringComparer.OrdinalIgnoreCase);
@@ -111,10 +79,11 @@ internal static class RootQueryJoinExecutor
 
         // Row = [FromPk, ...SelectSpecs] so we can collapse join fan-out to one item per From.
         var selectTypes = new Type[1 + plan.SelectSpecs.Count];
-        selectTypes[0] = plan.FromPrimaryKey.PropertyType;
+        selectTypes[0] = NullableIfNeeded(plan.FromPrimaryKey.PropertyType, fromMayBeNull);
         for (var s = 0; s < plan.SelectSpecs.Count; s++) {
             var t = plan.SelectSpecs[s].Property.PropertyType;
-            if (!plan.SelectSpecs[s].IsFromSide && t.IsValueType && Nullable.GetUnderlyingType(t) is null)
+            var mayBeNull = !plan.SelectSpecs[s].IsFromSide || fromMayBeNull;
+            if (mayBeNull && t.IsValueType && Nullable.GetUnderlyingType(t) is null)
                 t = typeof(Nullable<>).MakeGenericType(t);
 
             selectTypes[s + 1] = t;
@@ -124,28 +93,23 @@ internal static class RootQueryJoinExecutor
         var rowP = Expression.Parameter(carrierType, "row");
         var elems = new Expression[selectTypes.Length];
         var fromEntity = aliasAccess[plan.FromAlias](rowP);
-        elems[0] = AlignType(Expression.Property(fromEntity, plan.FromPrimaryKey), selectTypes[0]);
+        elems[0] = NullSafeProperty(fromEntity, plan.FromPrimaryKey, selectTypes[0]);
         for (var s = 0; s < plan.SelectSpecs.Count; s++) {
             var spec = plan.SelectSpecs[s];
             if (!aliasAccess.TryGetValue(spec.Alias, out var entityAccess))
                 throw new InvalidQueryException($"Select alias '{spec.Alias}' unknown.");
 
             var entity = entityAccess(rowP);
-            Expression value = Expression.Property(entity, spec.Property);
-            if (!spec.IsFromSide && !entity.Type.IsValueType) {
-                value = Expression.Condition(
-                    Expression.Equal(entity, Expression.Constant(null, entity.Type)), Expression.Default(selectTypes[s + 1]), AlignType(value, selectTypes[s + 1]));
-            }
-            else
-                value = AlignType(value, selectTypes[s + 1]);
-
-            elems[s + 1] = value;
+            elems[s + 1] = NullSafeProperty(entity, spec.Property, selectTypes[s + 1]);
         }
 
         var projected = carrier.Provider.CreateQuery(
             Expression.Call(
                 typeof(Queryable), nameof(Queryable.Select), [carrierType, rowType], carrier.Expression,
                 Expression.Quote(Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, rowType), Expression.New(rowType.GetConstructor(selectTypes)!, elems), rowP))));
+
+        if (deferPaging)
+            projected = ApplySkipTake(projected, start, amount);
 
         var list = await ToListAsync(projected, rowType, ct).ConfigureAwait(false);
         var fields = Enumerable.Range(0, selectTypes.Length).Select(i => rowType.GetField("Item" + (i + 1))!).ToArray();
@@ -159,6 +123,132 @@ internal static class RootQueryJoinExecutor
         }
 
         return result;
+    }
+
+    private static IQueryable ApplyLeftOrInnerJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        Func<Expression, Expression> leftEntityAccess,
+        RootQueryOnPlan on,
+        bool leftOuter)
+    {
+        var outerP = Expression.Parameter(carrierType, "outer");
+        var leftEntity = leftEntityAccess(outerP);
+        var innerP = Expression.Parameter(joinClr, "inner");
+        var onEqual = BuildOnEqual(leftEntity, innerP, on);
+        var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [joinClr], joinSet.Expression, Expression.Quote(Expression.Lambda(onEqual, innerP)));
+        Expression collection = leftOuter
+            ? Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall)
+            : whereCall;
+
+        var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, typeof(IEnumerable<>).MakeGenericType(joinClr)), collection, outerP);
+        var resultOuterP = Expression.Parameter(carrierType, "o");
+        var resultInnerP = Expression.Parameter(joinClr, "j");
+        var pairNew = CreatePairInit(pairType, resultOuterP, resultInnerP);
+        var resultSel = Expression.Lambda(typeof(Func<,,>).MakeGenericType(carrierType, joinClr, pairType), pairNew, resultOuterP, resultInnerP);
+        return carrier.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.SelectMany), [carrierType, joinClr, pairType], carrier.Expression, Expression.Quote(collectionSel),
+                Expression.Quote(resultSel)));
+    }
+
+    private static IQueryable ApplyRightJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        Func<Expression, Expression> leftEntityAccess,
+        RootQueryOnPlan on,
+        ref bool fromMayBeNull)
+    {
+        fromMayBeNull = true;
+        var joinP = Expression.Parameter(joinClr, "j");
+        var outerP = Expression.Parameter(carrierType, "outer");
+        var leftEntity = leftEntityAccess(outerP);
+        var onEqual = BuildOnEqual(leftEntity, joinP, on);
+        var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [carrierType], carrier.Expression, Expression.Quote(Expression.Lambda(onEqual, outerP)));
+        var defaultIfEmpty = Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [carrierType], whereCall);
+        var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(joinClr, typeof(IEnumerable<>).MakeGenericType(carrierType)), defaultIfEmpty, joinP);
+        var resultJoinP = Expression.Parameter(joinClr, "rj");
+        var resultOuterP = Expression.Parameter(carrierType, "ro");
+        var pairNew = CreatePairInit(pairType, resultOuterP, resultJoinP);
+        var resultSel = Expression.Lambda(typeof(Func<,,>).MakeGenericType(joinClr, carrierType, pairType), pairNew, resultJoinP, resultOuterP);
+        return joinSet.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.SelectMany), [joinClr, carrierType, pairType], joinSet.Expression, Expression.Quote(collectionSel),
+                Expression.Quote(resultSel)));
+    }
+
+    private static IQueryable ApplyFullOuterJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        Func<Expression, Expression> leftEntityAccess,
+        RootQueryOnPlan on,
+        ref bool fromMayBeNull)
+    {
+        fromMayBeNull = true;
+        var left = ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, leftOuter: true);
+        var right = ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, leftEntityAccess, on, ref fromMayBeNull);
+        var pairP = Expression.Parameter(pairType, "p");
+        var outerProp = Expression.Property(pairP, nameof(RootJoinPair<object, object>.Outer));
+        Expression outerIsNull = carrierType.IsValueType
+            ? Expression.Constant(false)
+            : Expression.Equal(outerProp, Expression.Constant(null, carrierType));
+        var rightOnly = right.Provider.CreateQuery(
+            Expression.Call(typeof(Queryable), nameof(Queryable.Where), [pairType], right.Expression, Expression.Quote(Expression.Lambda(outerIsNull, pairP))));
+        return left.Provider.CreateQuery(
+            Expression.Call(typeof(Queryable), nameof(Queryable.Concat), [pairType], left.Expression, rightOnly.Expression));
+    }
+
+    private static Expression BuildOnEqual(Expression leftEntity, Expression rightEntity, RootQueryOnPlan on)
+    {
+        Expression leftKey = Expression.Property(leftEntity, on.LeftProperty);
+        Expression rightKey = Expression.Property(rightEntity, on.RightProperty);
+        if (leftKey.Type != rightKey.Type) {
+            if (Nullable.GetUnderlyingType(leftKey.Type) == rightKey.Type)
+                rightKey = Expression.Convert(rightKey, leftKey.Type);
+            else if (Nullable.GetUnderlyingType(rightKey.Type) == leftKey.Type)
+                leftKey = Expression.Convert(leftKey, rightKey.Type);
+            else
+                throw new InvalidQueryException($"Join ON key type mismatch: {leftKey.Type} vs {rightKey.Type}.");
+        }
+
+        Expression onEqual = Expression.Equal(leftKey, rightKey);
+        if (!leftEntity.Type.IsValueType)
+            onEqual = Expression.AndAlso(Expression.NotEqual(leftEntity, Expression.Constant(null, leftEntity.Type)), onEqual);
+
+        return onEqual;
+    }
+
+    private static MemberInitExpression CreatePairInit(Type pairType, Expression outer, Expression inner)
+        => Expression.MemberInit(
+            Expression.New(pairType), Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Outer))!, outer),
+            Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Inner))!, inner));
+
+    private static Expression NullSafeProperty(Expression entity, PropertyInfo property, Type targetType)
+    {
+        Expression value = Expression.Property(entity, property);
+        value = AlignType(value, targetType);
+        if (entity.Type.IsValueType)
+            return value;
+
+        return Expression.Condition(
+            Expression.Equal(entity, Expression.Constant(null, entity.Type)), Expression.Default(targetType), value);
+    }
+
+    private static Type NullableIfNeeded(Type type, bool mayBeNull)
+    {
+        if (!mayBeNull || !type.IsValueType || Nullable.GetUnderlyingType(type) != null)
+            return type;
+
+        return typeof(Nullable<>).MakeGenericType(type);
     }
 
     private static Func<Expression, Expression> CaptureOuter(Func<Expression, Expression> prevAccess, Type pairType)

@@ -56,7 +56,24 @@ public partial class QueryNodeEditor
             var _ => node.ToString() ?? "Unknown"
         };
 
-    private static string GetConditionValueSuffix(object? value) => value != null ? $" {value}" : " null";
+    private static string GetConditionValueSuffix(object? value) => FormatConditionValue(value);
+
+    internal static string FormatConditionValue(object? value)
+    {
+        if (value is null)
+            return " null";
+
+        if (value is string)
+            return $" {value}";
+
+        if (value is System.Collections.IEnumerable and not byte[]
+            || value is System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array }) {
+            var multi = Extensions.ToMultiValueStrings(value);
+            return $" [{string.Join(", ", multi)}]";
+        }
+
+        return $" {value}";
+    }
 
     private static string GetDescriptionSuffix(string? description) => !string.IsNullOrWhiteSpace(description) ? $" - {description}" : "";
 

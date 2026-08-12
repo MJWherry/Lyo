@@ -80,10 +80,11 @@
                         <div class="query-structure-footer">
                             <MudDivider Class="my-3"/>
 
-                            <MudStack Row="true" Spacing="1" Class="query-structure-actions">
+                            <MudStack Spacing="1" Class="query-structure-actions">
                                 <MudButton Variant="Variant.Outlined"
                                            Color="Color.Primary"
                                            Size="Size.Small"
+                                           FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Add"
                                            OnClick="@(() => AddGroupClauseAtSelected())"
                                            Disabled="@(_selectedNode == null || _selectedNode is ConditionClause)">
@@ -92,6 +93,7 @@
                                 <MudButton Variant="Variant.Outlined"
                                            Color="Color.Secondary"
                                            Size="Size.Small"
+                                           FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Add"
                                            OnClick="@(() => AddConditionClauseAtSelected())"
                                            Disabled="@(_selectedNode == null || _selectedNode is ConditionClause)">
@@ -100,6 +102,7 @@
                                 <MudButton Variant="Variant.Outlined"
                                            Color="Color.Primary"
                                            Size="Size.Small"
+                                           FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Add"
                                            OnClick="@AddSubClauseAtSelected"
                                            Disabled="@(!CanAddSubClause(_selectedNode))">
@@ -215,15 +218,10 @@
         width: 100%;
     }
 
-    .query-structure-actions .mud-button-root {
-        flex: 1 1 0;
-        min-width: 0;
-    }
-
     .query-structure-actions .mud-button-root:disabled {
-        opacity: 0.7;
-        color: rgba(255, 255, 255, 0.7) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
+        opacity: 0.85;
+        color: var(--mud-palette-text-secondary) !important;
+        border-color: var(--mud-palette-lines-default) !important;
     }
 
     @@media (max-width: 960px) {

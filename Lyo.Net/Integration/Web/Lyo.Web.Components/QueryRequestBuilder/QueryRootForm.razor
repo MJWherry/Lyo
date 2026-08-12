@@ -72,21 +72,41 @@
             @foreach (var join in Request.Joins) {
                 <MudPaper Elevation="0" Outlined="true" Class="pa-3 mb-2">
                     <MudStack Spacing="2">
-                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
-                            <MudTextField T="string"
-                                          Value="@join.Alias"
-                                          ValueChanged="@(v => OnJoinAliasChanged(join, v))"
-                                          Label="Alias"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Style="min-width: 90px;"/>
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           Class="mt-1"
+                                           OnClick="@(() => RemoveJoin(join))"
+                                           aria-label="Remove join"/>
+                            <MudSelect T="JoinType"
+                                       Value="@join.Type"
+                                       ValueChanged="@(t => OnJoinTypeChanged(join, t))"
+                                       Label="Type"
+                                       HelperText="SQL join kind"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Style="min-width: 120px;">
+                                @foreach (var joinType in Enum.GetValues<JoinType>()) {
+                                    <MudSelectItem Value="@joinType">@joinType</MudSelectItem>
+                                }
+                            </MudSelect>
                             <MudTextField T="string"
                                           Value="@join.EntityType"
                                           ValueChanged="@(v => OnJoinEntityTypeChanged(join, v))"
                                           Label="EntityType"
+                                          HelperText="Registered entity type name"
                                           Variant="Variant.Outlined"
                                           Margin="Margin.Dense"
                                           Style="min-width: 160px;"/>
+                            <MudTextField T="string"
+                                          Value="@join.Alias"
+                                          ValueChanged="@(v => OnJoinAliasChanged(join, v))"
+                                          Label="Alias"
+                                          HelperText="Join alias used in Select/ON"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Style="min-width: 90px;"/>
                             <MudTextField T="string"
                                           Value="@(join.As ?? "")"
                                           ValueChanged="@(v => OnJoinAsChanged(join, v))"
@@ -95,40 +115,42 @@
                                           Variant="Variant.Outlined"
                                           Margin="Margin.Dense"
                                           Style="min-width: 120px;"/>
-                            <MudSelect T="JoinType"
-                                       Value="@join.Type"
-                                       ValueChanged="@(t => OnJoinTypeChanged(join, t))"
-                                       Label="Type"
-                                       Variant="Variant.Outlined"
-                                       Margin="Margin.Dense"
-                                       Style="min-width: 110px;">
-                                <MudSelectItem Value="@JoinType.Left">Left</MudSelectItem>
-                                <MudSelectItem Value="@JoinType.Inner">Inner</MudSelectItem>
-                            </MudSelect>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveJoin(join))" aria-label="Remove join"/>
+                            <MudButton Variant="Variant.Text"
+                                       Size="Size.Small"
+                                       Color="Color.Primary"
+                                       Class="mt-1"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="@(() => AddOn(join))">
+                                ON
+                            </MudButton>
                         </MudStack>
-                        <MudText Typo="Typo.caption">ON</MudText>
                         @foreach (var on in join.On.ToList()) {
-                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start">
+                                <MudText Typo="Typo.caption" Class="mt-4" Style="min-width: 28px;">ON</MudText>
                                 <MudTextField T="string"
                                               Value="@on.From"
                                               ValueChanged="@(v => OnOnFromChanged(on, v))"
                                               Label="From"
+                                              HelperText="alias.property path"
                                               Variant="Variant.Outlined"
                                               Margin="Margin.Dense"
                                               Style="min-width: 160px;"/>
-                                <MudText Typo="Typo.body2">=</MudText>
+                                <MudText Typo="Typo.body2" Class="mt-4">=</MudText>
                                 <MudTextField T="string"
                                               Value="@on.To"
                                               ValueChanged="@(v => OnOnToChanged(on, v))"
                                               Label="To"
+                                              HelperText="alias.property path"
                                               Variant="Variant.Outlined"
                                               Margin="Margin.Dense"
                                               Style="min-width: 160px;"/>
-                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="@(() => RemoveOn(join, on))"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                               Size="Size.Small"
+                                               Class="mt-1"
+                                               OnClick="@(() => RemoveOn(join, on))"
+                                               aria-label="Remove ON clause"/>
                             </MudStack>
                         }
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => AddOn(join))">Add ON</MudButton>
                     </MudStack>
                 </MudPaper>
             }

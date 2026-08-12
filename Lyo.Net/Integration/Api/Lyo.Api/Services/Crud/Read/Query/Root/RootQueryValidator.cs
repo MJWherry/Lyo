@@ -35,8 +35,8 @@ public static class RootQueryValidator
         for (var i = 0; i < request.Joins.Count; i++) {
             var join = request.Joins[i];
             var prefix = $"Joins[{i}]";
-            if (join.Type is not (JoinType.Inner or JoinType.Left))
-                errors.Add(Err($"{prefix}.Type must be Inner or Left."));
+            if (join.Type is not (JoinType.Inner or JoinType.Left or JoinType.Right or JoinType.FullOuter))
+                errors.Add(Err($"{prefix}.Type must be Inner, Left, Right, or FullOuter."));
 
             if (string.IsNullOrWhiteSpace(join.Alias))
                 errors.Add(Err($"{prefix}.Alias is required."));

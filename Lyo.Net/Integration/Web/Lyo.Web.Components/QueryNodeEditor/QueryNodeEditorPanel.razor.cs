@@ -276,7 +276,7 @@ public partial class QueryNodeEditorPanel
         }
 
         if (node is ConditionClause conditionClause) {
-            var valueStr = conditionClause.Value != null ? $" {conditionClause.Value}" : conditionClause.Value == null ? " null" : "";
+            var valueStr = QueryNodeEditor.FormatConditionValue(conditionClause.Value);
             var desc = !string.IsNullOrWhiteSpace(conditionClause.Description) ? $" - {conditionClause.Description}" : "";
             var subQueryHint = conditionClause.SubClause != null ? " [+SubQuery]" : "";
             return $"{conditionClause.Field} {conditionClause.Comparison}{valueStr}{desc}{subQueryHint}";

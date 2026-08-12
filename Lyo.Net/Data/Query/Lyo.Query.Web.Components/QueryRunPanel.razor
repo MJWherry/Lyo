@@ -120,11 +120,11 @@
              @onmouseleave="StopSplitResize">
             <MudPaper Elevation="1"
                       Class="pa-3 h-100 split-pane split-pane-left">
-                <div class="pane-content">
+                <div class="pane-content pane-content-editor">
                     @{
                         var score = GetCurrentScoreBreakdown();
                     }
-                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2 pane-content-header">
                         Request
                         <span class="panel-meta">(@GetSizeLabel(GetRequestSizeBytes()))</span>
                         <span class="panel-meta panel-score">@score.TotalScore QS</span>
@@ -153,44 +153,46 @@
                             </TooltipContent>
                         </MudTooltip>
                     </MudText>
-                    @if (Run.RunMode == QueryWorkbenchRunMode.Query) {
-                        <JsonEditor @key="@($"{_requestEditorRenderKey}-q")"
-                                    T="QueryConcreteReq"
-                                    Value="@EntityRequest"
-                                    ValueChanged="@OnEntityJsonChanged"
-                                    JsonOptions="@JsonOptions"
-                                    AllowTreeEditing="true"
-                                    DefaultViewMode="@Run.RequestEditorViewMode"
-                                    ViewModeChanged="@OnRequestEditorViewModeChanged"
-                                    ParseErrorChanged="@OnRequestEditorParseErrorChanged"
-                                    SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
-                    }
-                    else if (Run.RunMode == QueryWorkbenchRunMode.QueryProject) {
-                        <JsonEditor @key="@($"{_requestEditorRenderKey}-p")"
-                                    T="ProjectionQueryReq"
-                                    Value="@ProjectionRequest"
-                                    ValueChanged="@OnProjectionJsonChanged"
-                                    JsonOptions="@JsonOptions"
-                                    AllowTreeEditing="true"
-                                    DefaultViewMode="@Run.RequestEditorViewMode"
-                                    ViewModeChanged="@OnRequestEditorViewModeChanged"
-                                    ParseErrorChanged="@OnRequestEditorParseErrorChanged"
-                                    SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
-                    }
-                    else {
-                        <JsonEditor @key="@($"{_requestEditorRenderKey}-r")"
-                                    T="QueryReq"
-                                    Value="@RootRequest"
-                                    ValueChanged="@OnRootJsonChanged"
-                                    JsonOptions="@JsonOptions"
-                                    AllowTreeEditing="true"
-                                    DefaultViewMode="@Run.RequestEditorViewMode"
-                                    ViewModeChanged="@OnRequestEditorViewModeChanged"
-                                    ParseErrorChanged="@OnRequestEditorParseErrorChanged"
-                                    SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
-                    }
+                    <div class="pane-editor-host">
+                        @if (Run.RunMode == QueryWorkbenchRunMode.Query) {
+                            <JsonEditor @key="@($"{_requestEditorRenderKey}-q")"
+                                        T="QueryConcreteReq"
+                                        Value="@EntityRequest"
+                                        ValueChanged="@OnEntityJsonChanged"
+                                        JsonOptions="@JsonOptions"
+                                        AllowTreeEditing="true"
+                                        DefaultViewMode="@Run.RequestEditorViewMode"
+                                        ViewModeChanged="@OnRequestEditorViewModeChanged"
+                                        ParseErrorChanged="@OnRequestEditorParseErrorChanged"
+                                        SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
+                        }
+                        else if (Run.RunMode == QueryWorkbenchRunMode.QueryProject) {
+                            <JsonEditor @key="@($"{_requestEditorRenderKey}-p")"
+                                        T="ProjectionQueryReq"
+                                        Value="@ProjectionRequest"
+                                        ValueChanged="@OnProjectionJsonChanged"
+                                        JsonOptions="@JsonOptions"
+                                        AllowTreeEditing="true"
+                                        DefaultViewMode="@Run.RequestEditorViewMode"
+                                        ViewModeChanged="@OnRequestEditorViewModeChanged"
+                                        ParseErrorChanged="@OnRequestEditorParseErrorChanged"
+                                        SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
+                        }
+                        else {
+                            <JsonEditor @key="@($"{_requestEditorRenderKey}-r")"
+                                        T="QueryReq"
+                                        Value="@RootRequest"
+                                        ValueChanged="@OnRootJsonChanged"
+                                        JsonOptions="@JsonOptions"
+                                        AllowTreeEditing="true"
+                                        DefaultViewMode="@Run.RequestEditorViewMode"
+                                        ViewModeChanged="@OnRequestEditorViewModeChanged"
+                                        ParseErrorChanged="@OnRequestEditorParseErrorChanged"
+                                        SearchTextChanged="@OnRequestEditorSearchTextChanged"/>
+                        }
+                    </div>
                     @if (!string.IsNullOrWhiteSpace(_requestEditorParseError)) {
-                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2 pane-content-header">
                             @_requestEditorParseError
                         </MudAlert>
                     }
@@ -204,8 +206,8 @@
 
             <MudPaper Elevation="1"
                       Class="pa-3 h-100 split-pane split-pane-right">
-                <div class="pane-content">
-                    <div class="d-flex align-center justify-space-between mb-2">
+                <div class="pane-content pane-content-editor">
+                    <div class="d-flex align-center justify-space-between mb-2 pane-content-header">
                         <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
                             Response
                             @if (_lastResponseElapsedMs.HasValue || _lastResponseSizeBytes.HasValue) {
@@ -231,30 +233,32 @@
                                            Title="Clear response"/>
                         }
                     </div>
-                    @if (_resultJson.ValueKind != JsonValueKind.Undefined && !_loading) {
-                        <JsonEditor @key="_responseEditorRenderKey"
-                                    T="JsonElement"
-                                    Value="@_resultJson"
-                                    ValueChanged="@(_ => { })"
-                                    Editable="false"
-                                    AllowTreeEditing="false"
-                                    DefaultViewMode="@_responseEditorDefaultViewMode"
-                                    ViewModeChanged="@OnResponseEditorViewModeChanged"
-                                    ParseErrorChanged="@OnResponseEditorParseErrorChanged"
-                                    SearchTextChanged="@OnResponseEditorSearchTextChanged"/>
+                    <div class="pane-editor-host">
+                        @if (_resultJson.ValueKind != JsonValueKind.Undefined && !_loading) {
+                            <JsonEditor @key="_responseEditorRenderKey"
+                                        T="JsonElement"
+                                        Value="@_resultJson"
+                                        ValueChanged="@(_ => { })"
+                                        Editable="false"
+                                        AllowTreeEditing="false"
+                                        DefaultViewMode="@_responseEditorDefaultViewMode"
+                                        ViewModeChanged="@OnResponseEditorViewModeChanged"
+                                        ParseErrorChanged="@OnResponseEditorParseErrorChanged"
+                                        SearchTextChanged="@OnResponseEditorSearchTextChanged"/>
 
-                        @if (!string.IsNullOrWhiteSpace(_responseEditorParseError)) {
-                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
-                                @_responseEditorParseError
-                            </MudAlert>
+                            @if (!string.IsNullOrWhiteSpace(_responseEditorParseError)) {
+                                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                                    @_responseEditorParseError
+                                </MudAlert>
+                            }
                         }
-                    }
-                    else if (!string.IsNullOrEmpty(_resultRawText) && !_loading) {
-                        <pre class="response-raw-text">@_resultRawText</pre>
-                    }
-                    else {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Run query to see response.</MudText>
-                    }
+                        else if (!string.IsNullOrEmpty(_resultRawText) && !_loading) {
+                            <pre class="response-raw-text">@_resultRawText</pre>
+                        }
+                        else {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Run query to see response.</MudText>
+                        }
+                    </div>
                 </div>
             </MudPaper>
         </div>
@@ -278,7 +282,7 @@
         display: flex;
         align-items: stretch;
         gap: 4px;
-        min-height: 500px;
+        min-height: 420px;
     }
 
     .split-pane {
@@ -296,12 +300,18 @@
     .split-pane-right {
         flex: 1 1 0;
         min-width: 280px;
-        min-height: 0;
     }
 
     .pane-content {
-        height: 100%;
         overflow: auto;
+    }
+
+    .pane-content-header {
+        flex-shrink: 0;
+    }
+
+    .pane-editor-host {
+        width: 100%;
     }
 
     .splitter {
@@ -351,9 +361,7 @@
     @@media (max-width: 960px) {
         .req-resp-split {
             flex-direction: column;
-            /* Definite height so % flex-basis (--qrb-split) resolves on the column main axis */
-            height: min(75vh, 780px);
-            min-height: 620px;
+            min-height: 560px;
         }
 
         .split-pane-left {
