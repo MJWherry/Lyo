@@ -12,16 +12,20 @@
                        Class="lyo-upload-picker"
                        FilesChanged="OnFilesChanged"
                        Accept="@GetAcceptString()"
+                       DragAndDrop="@AllowDragDrop"
                        Disabled="@(IsDisabled || !slotsAvailable)"
                        Style="@(slotsAvailable ? null : "display:none")">
             @*
             The MudFileUpload MUST stay in the DOM while a file is being streamed so that Blazor's
             JS-side _blazorFilesById map remains alive. We hide it visually with display:none
             instead of removing it with @if, and re-show it once slots free up.
+
+            MudBlazor 9: CustomContent no longer auto-opens the picker — call OpenFilePickerAsync.
         *@
             <CustomContent>
                 @if (AllowDragDrop) {
                     <div class="lyo-drop-zone @(_isDragOver ? "lyo-drop-zone-active" : "")"
+                         @onclick="@context.OpenFilePickerAsync"
                          @ondragenter="OnDragEnter"
                          @ondragenter:preventDefault
                          @ondragleave="OnDragLeave"
@@ -40,11 +44,14 @@
                                Color="@ButtonColor"
                                StartIcon="@ButtonIcon"
                                Disabled="@IsDisabled"
-                               FullWidth="@ButtonFullWidth">
+                               FullWidth="@ButtonFullWidth"
+                               OnClick="@context.OpenFilePickerAsync">
                         @GetButtonText()
                     </MudButton>
                 }
             </CustomContent>
+            @* Suppress MudFileUpload's default chips; we render our own status chips. *@
+            <SelectedTemplate/>
         </MudFileUpload>
 
         <!-- Uploaded file chips (omit with ClientFileDisplay.ExternalList + parent list) -->
