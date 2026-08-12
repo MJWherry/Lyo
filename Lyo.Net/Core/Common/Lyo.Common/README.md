@@ -7,11 +7,12 @@ Cross-cutting primitives shared across the Lyo library suite: ID generators, fil
 ## Features
 
 - **ID generators** (`Identifiers/`) — `Ksuid`, `LyoGuid`, `NanoId`, `Snowflake`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.
-- **Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.
-- **Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, language and HTTP enums with metadata-attribute lookups.
+- **Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `PortInfo` (well-known ports + `PortCategory`, `FromPort`/`FromName`/`ByCategory`, implicit `int`), `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.
+- **Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, `PortCategory`, language and HTTP enums with metadata-attribute lookups.
 - **Typed extension classes** (`Extensions/`) — `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` ( `GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.
 - **`CollectionExtensions`** — materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that avoid redundant copies when the source is already the right shape.
 - **`Utilities`** — small shared helpers (`SafeDispose`, file-size conversions, expression-based property-path extraction).
+- **Pathing** (`Pathing/`) — `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).
 - **Cryptographic random** (`Security/CryptographicRandom`) — `RandomNumberGenerator`-backed byte / int / string helpers, used by other Lyo packages instead of `System.Random` for anything security-adjacent.
 - **`Disposable`** — convenience base / lambda disposable.
 - **`HashCodeHelpers`** — `HashCode.Combine`-style helpers for `netstandard2.0`.
@@ -86,6 +87,17 @@ int[] bulk = TypeConversion.ConvertToArray<int>(values)!;
 
 ```csharp
 TypeConversion.Logger = loggerFactory.CreateLogger("TypeConversion");
+```
+
+### Pathing
+
+```csharp
+using Lyo.Common.Pathing;
+
+var root = "/mem/lyo";
+var child = PathHelpers.Combine(PathStyle.Posix, root, "session", "file.txt");
+var full = PathHelpers.GetFullPath(PathStyle.Posix, child);
+PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, root, full);
 ```
 
 ## Identifier matrix

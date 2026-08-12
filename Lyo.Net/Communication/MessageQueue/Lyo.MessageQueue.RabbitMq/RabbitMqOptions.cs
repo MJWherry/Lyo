@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Lyo.Common.Records;
 
 namespace Lyo.MessageQueue.RabbitMq;
 
@@ -9,7 +10,8 @@ public sealed class RabbitMqOptions
 
     public string Host { get; init; } = null!;
 
-    public int Port { get; init; } = 5672;
+    /// <summary>AMQP port. Default: <see cref="PortInfo.Amqp" /> (5672).</summary>
+    public int Port { get; init; } = PortInfo.Amqp;
 
     public string VirtualHost { get; init; } = "/";
 

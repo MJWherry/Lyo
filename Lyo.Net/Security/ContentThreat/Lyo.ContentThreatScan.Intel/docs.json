@@ -81,6 +81,14 @@
   "readmePath": "Lyo.Net/Security/ContentThreat/Lyo.ContentThreatScan.Intel/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.ContentThreatScan",
       "kind": "lyo",
       "tags": [
@@ -122,14 +130,6 @@
       "tags": [
         "direct",
         "microsoft"
-      ]
-    },
-    {
-      "name": "Lyo.Common",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {

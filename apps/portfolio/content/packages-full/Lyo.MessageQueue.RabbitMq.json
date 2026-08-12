@@ -250,6 +250,14 @@
   "readmePath": "Lyo.Net/Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -299,14 +307,6 @@
         "direct",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Lyo.Common",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {

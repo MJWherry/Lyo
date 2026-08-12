@@ -16,6 +16,12 @@ namespace Lyo.Exceptions;
 /// </remarks>
 public static class FormatHelpers
 {
+    /// <summary>Minimum valid TCP/UDP port number (inclusive).</summary>
+    public const int MinPort = 1;
+
+    /// <summary>Maximum valid TCP/UDP port number (inclusive).</summary>
+    public const int MaxPort = 65535;
+
     private static readonly Regex HexColorRegex = new(@"^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$", RegexOptions.Compiled);
     private static readonly Regex AlphanumericRegex = new(@"^[a-zA-Z0-9]+$", RegexOptions.Compiled);
     private static readonly Regex AlphaRegex = new(@"^[a-zA-Z]+$", RegexOptions.Compiled);
@@ -283,6 +289,55 @@ public static class FormatHelpers
             ThrowInvalidFormat($"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName, value, $"Length between {minLength} and {maxLength}");
     }
 
+    /// <summary>Returns whether <paramref name="port" /> is a valid TCP/UDP port (<see cref="MinPort" />–<see cref="MaxPort" />).</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsValidPort(int port) => port is >= MinPort and <= MaxPort;
+
+    /// <summary>Throws an <see cref="InvalidFormatException" /> when <paramref name="port" /> is outside <see cref="MinPort" />–<see cref="MaxPort" />.</summary>
+    /// <param name="port">The port to validate.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <exception cref="InvalidFormatException">Thrown when <paramref name="port" /> is not in 1–65535.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfInvalidPort(int port, [CallerArgumentExpression("port")] string? paramName = null)
+    {
+        if (!IsValidPort(port))
+            ThrowInvalidFormat($"Invalid port: {port}", paramName, port.ToString(CultureInfo.InvariantCulture), $"{MinPort}-{MaxPort}");
+    }
+
+    /// <summary>Throws an <see cref="InvalidFormatException" /> when <paramref name="value" /> is outside the inclusive range [<paramref name="min" />, <paramref name="max" />].</summary>
+    /// <remarks>
+    /// Prefer this for options/config format checks that surface <see cref="InvalidFormatException" />. For call-site argument guards that should throw
+    /// <see cref="ArgumentOutsideRangeException" />, use <see cref="ArgumentHelpers.ThrowIfNotInRange{T}(T,T?,T?,string?,string?)" />.
+    /// </remarks>
+    /// <typeparam name="T">A comparable, convertible value type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="min">Inclusive minimum; omit or pass null to skip the minimum check.</param>
+    /// <param name="max">Inclusive maximum; omit or pass null to skip the maximum check.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="InvalidFormatException">Thrown when value is not in the range [min, max].</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotInRange<T>(
+        T value,
+        T? min = null,
+        T? max = null,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
+        where T : struct, IComparable<T>, IConvertible
+    {
+        if ((min.HasValue && value.CompareTo(min.Value) < 0) || (max.HasValue && value.CompareTo(max.Value) > 0)) {
+            var expected = FormatInclusiveRange(min, max);
+            ThrowInvalidFormat(
+                message ?? $"Value {value} is outside valid range {expected}.", paramName, Convert.ToString(value, CultureInfo.InvariantCulture), expected);
+        }
+    }
+
     /// <summary>Throws an InvalidFormatException if the condition is true.</summary>
     /// <param name="condition">The condition to check. If true, an InvalidFormatException is thrown.</param>
     /// <param name="message">The error message.</param>
@@ -298,5 +353,17 @@ public static class FormatHelpers
     {
         if (condition)
             ThrowInvalidFormat(message, paramName, invalidValue, validFormats);
+    }
+
+    private static string FormatInclusiveRange<T>(T? min, T? max)
+        where T : struct
+    {
+        if (min.HasValue && max.HasValue)
+            return $"{min.Value}-{max.Value}";
+        if (min.HasValue)
+            return $">= {min.Value}";
+        if (max.HasValue)
+            return $"<= {max.Value}";
+        return "any";
     }
 }

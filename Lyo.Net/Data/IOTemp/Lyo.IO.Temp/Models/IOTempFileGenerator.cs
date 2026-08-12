@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
+using Lyo.Common.Pathing;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
@@ -569,19 +570,22 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
                 }
             }
 
-            var dirName = targetDirName ?? Path.GetFileNameWithoutExtension(zipPath) + "_" + Guid.NewGuid().ToString("N")[..8];
+            var style = _ctx.Storage.PathStyle;
+            var dirName = targetDirName ?? PathHelpers.GetFileNameWithoutExtension(style, zipPath) + "_" + Guid.NewGuid().ToString("N")[..8];
             destDir = _ctx.ResolvePath(dirName, true);
             _ctx.Storage.CreateDirectory(destDir);
             using var zipStream = _ctx.Storage.OpenRead(zipPath);
             using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, false);
+            var sep = PathHelpers.GetDirectorySeparator(style);
             foreach (var entry in archive.Entries) {
-                var entryDest = Path.Combine(destDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
+                var relative = entry.FullName.Replace('\\', sep).Replace('/', sep);
+                var entryDest = PathHelpers.Combine(style, destDir, relative);
                 if (entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal)) {
                     _ctx.Storage.CreateDirectory(entryDest);
                     _ctx.RegisterDirectory(entryDest);
                 }
                 else {
-                    var parentDir = Path.GetDirectoryName(entryDest);
+                    var parentDir = PathHelpers.GetDirectoryName(style, entryDest);
                     if (!string.IsNullOrEmpty(parentDir))
                         _ctx.Storage.CreateDirectory(parentDir);
 
@@ -629,7 +633,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         for (var i = 0; i < spec.FileCount; i++) {
             var sizeBytes = spec.FileSizeSelector != null ? spec.FileSizeSelector(i) : spec.FileSizeBytes;
             var fileName = GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + _ctx.Options.FileExtension;
-            var filePath = _ctx.EnsureWithinSession(Path.Combine(dirPath, fileName));
+            var filePath = _ctx.EnsureWithinSession(PathHelpers.Combine(_ctx.Storage.PathStyle, dirPath, fileName));
             _ctx.ValidateSize(sizeBytes);
             using var stream = _ctx.Storage.OpenCreate(filePath);
             WriteRandomBytesToStream(stream, sizeBytes, GetRandom());
@@ -641,7 +645,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
         foreach (var subSpec in spec.Subdirectories) {
             var subDirName = GenerateName(_ctx.Options.DirectoryPrefix, _ctx.Options.DirectorySuffix, _ctx.Options.DirectoryNamingStrategy);
-            var subDirPath = _ctx.EnsureWithinSession(Path.Combine(dirPath, subDirName));
+            var subDirPath = _ctx.EnsureWithinSession(PathHelpers.Combine(_ctx.Storage.PathStyle, dirPath, subDirName));
             _ctx.Storage.CreateDirectory(subDirPath);
             _ctx.RegisterDirectory(subDirPath);
             PopulateDirectory(subDirPath, subSpec);
@@ -654,7 +658,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             ct.ThrowIfCancellationRequested();
             var sizeBytes = spec.FileSizeSelector != null ? spec.FileSizeSelector(i) : spec.FileSizeBytes;
             var fileName = GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + _ctx.Options.FileExtension;
-            var filePath = _ctx.EnsureWithinSession(Path.Combine(dirPath, fileName));
+            var filePath = _ctx.EnsureWithinSession(PathHelpers.Combine(_ctx.Storage.PathStyle, dirPath, fileName));
             _ctx.ValidateSize(sizeBytes);
             await WriteRandomBytesToStorageAsync(filePath, sizeBytes, ct).ConfigureAwait(false);
             _ctx.RegisterFile(filePath, sizeBytes);
@@ -666,7 +670,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         foreach (var subSpec in spec.Subdirectories) {
             ct.ThrowIfCancellationRequested();
             var subDirName = GenerateName(_ctx.Options.DirectoryPrefix, _ctx.Options.DirectorySuffix, _ctx.Options.DirectoryNamingStrategy);
-            var subDirPath = _ctx.EnsureWithinSession(Path.Combine(dirPath, subDirName));
+            var subDirPath = _ctx.EnsureWithinSession(PathHelpers.Combine(_ctx.Storage.PathStyle, dirPath, subDirName));
             _ctx.Storage.CreateDirectory(subDirPath);
             _ctx.RegisterDirectory(subDirPath);
             await PopulateDirectoryAsync(subDirPath, subSpec, ct).ConfigureAwait(false);

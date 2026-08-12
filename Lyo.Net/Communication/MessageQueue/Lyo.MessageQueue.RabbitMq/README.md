@@ -160,13 +160,13 @@ Pair with `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common` — (direct, lyo)
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.MessageQueue` — (direct, lyo)
 - `Lyo.Metrics` — (direct, lyo)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
 - `RabbitMQ.Client` `7.2.1` — (direct, third-party)
 - `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Common` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)

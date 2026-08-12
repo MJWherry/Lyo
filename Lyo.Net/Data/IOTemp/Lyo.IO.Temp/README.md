@@ -8,7 +8,7 @@ The public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempS
 
 - **Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose
 - **Standalone files/dirs** – One-off `CreateFile` / `CreateDirectory` without a session
-- **Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default) and `InMemoryIOTempStorageProvider` (WASM / tests)
+- **Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default, `PathStyle.Host`) and `InMemoryIOTempStorageProvider` (WASM / tests, `PathStyle.Posix`); path math uses `Lyo.Common.Pathing.PathHelpers`
 - **Naming strategies** – `Guid`, `Sequential`, `Timestamp`, `RandomChars`
 - **Overflow handling** – `ThrowException`, `DeleteOldest`, or `DeleteLargest` when per-file or total-size limits are exceeded
 - **File generator** – `session.Generator` produces random-bytes files, structured text/CSV/JSON, zip archives, and simulated directory trees
@@ -206,11 +206,11 @@ Describe a directory structure for simulation or zip creation:
 
 ## Storage Providers
 
-All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable. Two implementations are included; register a custom one via DI to use any other backend.
+All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable. Two implementations are included; register a custom one via DI to use any other backend. Each provider exposes `PathStyle` (`Host` for real disk, `Posix` for in-memory/remote); service/session/generator path combine, normalize, and jail checks go through `PathHelpers` with that style.
 
 ## Storage Providers — FileSystemIOTempStorageProvider (default)
 
-Delegates to `System.IO`. Used automatically when no `IIOTempStorageProvider` is registered.
+Delegates to `System.IO` with `PathStyle.Host`. Used automatically when no `IIOTempStorageProvider` is registered.
 
 ```csharp
 // Implicit — no registration needed
@@ -219,7 +219,7 @@ services.AddIOTempService();
 
 ## Storage Providers — InMemoryIOTempStorageProvider
 
-Backed by a `ConcurrentDictionary`. No filesystem access; suitable for Blazor WASM and unit tests.
+Backed by a `ConcurrentDictionary` with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; suitable for Blazor WASM and unit tests.
 All data lives for the lifetime of the provider instance.
 
 ```csharp
@@ -233,14 +233,33 @@ var options = new IOTempSessionOptions { RootDirectory = storage.RootPath };
 using var session = new IOTempSession(options, storageProvider: storage);
 ```
 
+## Storage Providers — SFTP (`Lyo.IO.Temp.Sftp`)
+
+Use the shipped SFTP provider for remote temp storage:
+
+```csharp
+services.AddIOTempSftpStorageProvider(o =>
+{
+    o.Host = "sftp.example.com";
+    o.Username = "lyo";
+    o.Password = secret;
+    o.RootRemoteDirectory = "/tmp/lyo";
+    o.HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList;
+    o.AllowedHostKeyFingerprints.Add("SHA256:...");
+});
+services.AddIOTempService();
+```
+
+See package `Lyo.IO.Temp.Sftp` (backed by `Lyo.Sftp.Client`).
+
 ## Storage Providers — Custom Provider
 
-Implement `IIOTempStorageProvider` once to use any backend (FTP, SFTP, Azure Blob, etc.):
+Implement `IIOTempStorageProvider` once to use any backend (FTP, Azure Blob, etc.):
 
 ```csharp
 public sealed class FtpIOTempStorageProvider : IIOTempStorageProvider
 {
-    // implement RootPath, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...
+    // implement RootPath, PathStyle, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...
 }
 
 // Register it before AddIOTempService
@@ -248,7 +267,7 @@ services.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...))
 services.AddIOTempService();
 ```
 
-The provider interface covers: directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,
+The provider interface covers: `PathStyle`, directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,
 creation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers).
 
 ## IOTempServiceOptions

@@ -166,11 +166,16 @@ top-level area.
 - [Lyo.FileMetadataStore.Sqlite](Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite/README.md): SQLite implementation of **`IFileMetadataStore`** using Entity Framework Core. Functional parity with `Lyo.FileMetadataStore.Postgres` for embedded, offline-first, and local-dev scenarios.
 - [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ( `Lyo.Compression`), **two-key encryption** (`Lyo.Encryption`), **duplicate…
 - [Lyo.FileStorage.Blob](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Blob/README.md): **Azure Blob Storage** implementation of `IFileStorageService` using **`Azure.Storage.Blobs`**.
+- [Lyo.FileStorage.Ftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md): FTP-backed IFileStorageService via Lyo.Ftp.Client.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.
+- [Lyo.FileStorage.Sftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Sftp/README.md): SFTP-backed IFileStorageService via Lyo.Sftp.Client.
 - [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.
 - [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md): A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.
 - [Lyo.Formatter](Lyo.Net/Data/Formatter/Lyo.Formatter/README.md): **SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting.
+- [Lyo.Ftp.Client](Lyo.Net/Data/Ftp/Lyo.Ftp.Client/README.md): Async-first pooled FluentFTP client with PathHelpers jail, logging, and Lyo.Metrics.
 - [Lyo.IO.Temp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md): Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.
+- [Lyo.IO.Temp.Ftp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Ftp/README.md): FTP-backed IIOTempStorageProvider for Lyo.IO.Temp.
+- [Lyo.IO.Temp.Sftp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Sftp/README.md): SFTP-backed IIOTempStorageProvider for Lyo.IO.Temp.
 - [Lyo.Images](Lyo.Net/Data/Images/Lyo.Images/README.md): Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**.
 - [Lyo.Images.Ocr](Lyo.Net/Data/Images/Lyo.Images.Ocr/README.md): Engine-agnostic **OCR contracts** for Lyo: **`IOcrEngine`**, request/response models, **Y-up pixel bounding boxes** (aligned with `BoundingBox2D`), coordinate helpers, and shared…
 - [Lyo.Images.Ocr.Tesseract](Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/README.md): **Tesseract** implementation of **`IOcrEngine`** from **`Lyo.Images.Ocr`**. Calls are **serialized** with an internal lock because native Tesseract instances are not safely concurrent.
@@ -189,6 +194,7 @@ top-level area.
 - [Lyo.Query](Lyo.Net/Data/Query/Lyo.Query/README.md): WhereClause AST → LINQ on IQueryable: filter, multi-key sort, in-memory match/explain, with ICache-backed compiled predicates.
 - [Lyo.Query.Models](Lyo.Net/Data/Query/Lyo.Query.Models/README.md): Filter / sort / projection DTOs and fluent builders (`WhereClause`, QueryConcrete / QueryProject / root Query) shared by Lyo.Query and Lyo.Api.
 - [Lyo.Query.Web.Components](Lyo.Net/Data/Query/Lyo.Query.Web.Components/README.md): Reusable Blazor / MudBlazor components for editing and running `Lyo.Query.Models` requests against any Lyo.Api host.
+- [Lyo.Sftp.Client](Lyo.Net/Data/Sftp/Lyo.Sftp.Client/README.md): Async-first pooled SSH.NET SFTP client with PathHelpers jail, logging, and Lyo.Metrics.
 - [Lyo.Sqlite](Lyo.Net/Data/Sqlite/Lyo.Sqlite/README.md): Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema.
 - [Lyo.Xlsx](Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md): Implementation of `Lyo.Xlsx.Models`. `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX…
 - [Lyo.Xlsx.Models](Lyo.Net/Data/Xlsx/Lyo.Xlsx.Models/README.md): Interfaces and value types for the Lyo XLSX stack. Defines the contract implemented by `Lyo.Xlsx` so consumers can depend on `IXlsxService` / `IXlsxReader` / `IXlsxWriter` without pulling in ClosedXML…

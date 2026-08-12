@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Lyo.Email.Models;
 using Microsoft.Extensions.Options;
 
@@ -20,7 +21,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = null!,
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         };
@@ -35,7 +36,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         };
@@ -50,7 +51,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "   ",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         };
@@ -110,7 +111,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = null!,
             DefaultFromName = "Test"
         };
@@ -125,7 +126,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "",
             DefaultFromName = "Test"
         };
@@ -140,7 +141,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = null!
         };
@@ -155,7 +156,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = ""
         };
@@ -170,7 +171,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             UseSsl = true,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test Sender",
@@ -216,7 +217,7 @@ public class EmailServiceOptionsValidatorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test",
             MaxAttachmentCountPerEmail = 0

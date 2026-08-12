@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using Lyo.Common.Pathing;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
@@ -8,9 +9,7 @@ using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-#if !NET5_0_OR_GREATER
-using System.Runtime.InteropServices;
-#endif
+
 
 namespace Lyo.IO.Temp;
 
@@ -265,7 +264,7 @@ public sealed class IOTempService : IIOTempService
     {
         var stopwatch = Stopwatch.StartNew();
         var serviceDirName = $"service-{Guid.NewGuid():N}";
-        var serviceDirectory = Path.Combine(_storage.RootPath, serviceDirName);
+        var serviceDirectory = PathHelpers.Combine(_storage.PathStyle, _storage.RootPath, serviceDirName);
         try {
             _storage.CreateDirectory(serviceDirectory);
             OperationHelpers.ThrowIf(!_storage.DirectoryExists(serviceDirectory), $"Failed to create IO temp service directory: {serviceDirectory}");
@@ -344,7 +343,7 @@ public sealed class IOTempService : IIOTempService
     {
         string path;
         if (!string.IsNullOrWhiteSpace(name)) {
-            var combined = Path.Combine(ServiceDirectory, name);
+            var combined = PathHelpers.Combine(_storage.PathStyle, ServiceDirectory, name);
             path = EnsurePathWithinDirectory(ServiceDirectory, combined, nameof(name));
         }
         else {
@@ -352,22 +351,19 @@ public sealed class IOTempService : IIOTempService
                 ? GenerateName(_options.DirectoryPrefix, _options.DirectorySuffix, _options.DirectoryNamingStrategy)
                 : GenerateName(_options.FilePrefix, _options.FileSuffix, _options.FileNamingStrategy) + _options.FileExtension;
 
-            path = Path.Combine(ServiceDirectory, generated);
+            path = PathHelpers.Combine(_storage.PathStyle, ServiceDirectory, generated);
         }
 
-        var parentDir = Path.GetDirectoryName(path);
+        var parentDir = PathHelpers.GetDirectoryName(_storage.PathStyle, path);
         OperationHelpers.ThrowIfNullOrWhiteSpace(parentDir, "Could not determine parent directory for service temp path.");
         _storage.CreateDirectory(parentDir);
         return path;
     }
 
-    private static string EnsurePathWithinDirectory(string baseDirectory, string candidatePath, string paramName)
+    private string EnsurePathWithinDirectory(string baseDirectory, string candidatePath, string paramName)
     {
-        var fullBase = Path.GetFullPath(baseDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var fullCandidate = Path.GetFullPath(candidatePath);
-        var comparison = GetPathComparison();
-        OperationHelpers.ThrowIf(!fullCandidate.StartsWith(fullBase, comparison), $"Path escapes the service directory: {candidatePath} paramName {paramName}");
-        return fullCandidate;
+        PathHelpers.ThrowIfEscapesRoot(_storage.PathStyle, baseDirectory, candidatePath, paramName);
+        return PathHelpers.GetFullPath(_storage.PathStyle, candidatePath);
     }
 
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
@@ -381,15 +377,6 @@ public sealed class IOTempService : IIOTempService
         };
 
         return $"{prefix}{middle}{suffix}";
-    }
-
-    private static StringComparison GetPathComparison()
-    {
-#if NET5_0_OR_GREATER
-        return OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-#else
-        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-#endif
     }
 
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(IOTempService));

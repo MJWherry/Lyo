@@ -80,6 +80,14 @@
       ]
     },
     {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -94,14 +102,6 @@
       "tags": [
         "direct",
         "microsoft"
-      ]
-    },
-    {
-      "name": "Lyo.Exceptions",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {

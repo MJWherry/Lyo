@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Lyo.Email.Models;
 using Lyo.Metrics;
 using Lyo.Testing;
@@ -11,7 +12,7 @@ public class EmailServiceConstructorTests
 
     private readonly EmailServiceOptions _validOptions = new() {
         Host = "smtp.example.com",
-        Port = 587,
+        Port = PortInfo.SmtpSubmission,
         UseSsl = true,
         DefaultFromAddress = "test@example.com",
         DefaultFromName = "Test Sender",
@@ -63,7 +64,7 @@ public class EmailServiceConstructorTests
     {
         var options = new EmailServiceOptions {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             UseSsl = true,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test Sender",

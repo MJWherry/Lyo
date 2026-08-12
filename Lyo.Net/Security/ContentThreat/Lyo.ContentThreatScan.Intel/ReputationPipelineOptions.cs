@@ -1,3 +1,5 @@
+using Lyo.Common.Records;
+
 namespace Lyo.ContentThreatScan.Intel;
 
 /// <summary>Configurable keys, quotas, weights, caches, ClamTCP and failure hooks for <see cref="DefaultContentThreatReputationPipeline" />.</summary>
@@ -45,7 +47,8 @@ public sealed class ClamdInstreamScanOptions
 
     public string Host { get; set; } = "127.0.0.1";
 
-    public int Port { get; set; } = 3310;
+    /// <summary>clamd TCP port. Default: <see cref="PortInfo.ClamAv" /> (3310).</summary>
+    public int Port { get; set; } = PortInfo.ClamAv;
 
     public int TcpConnectTimeoutMilliseconds { get; set; } = 5000;
 

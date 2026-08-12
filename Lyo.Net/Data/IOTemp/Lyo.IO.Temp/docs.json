@@ -7,7 +7,7 @@
   "features": [
     "**Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose",
     "**Standalone files/dirs** – One-off `CreateFile` / `CreateDirectory` without a session",
-    "**Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default) and `InMemoryIOTempStorageProvider` (WASM / tests)",
+    "**Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default, `PathStyle.Host`) and `InMemoryIOTempStorageProvider` (WASM / tests, `PathStyle.Posix`); path math uses `Lyo.Common.Pathing.PathHelpers`",
     "**Naming strategies** – `Guid`, `Sequential`, `Timestamp`, `RandomChars`",
     "**Overflow handling** – `ThrowException`, `DeleteOldest`, or `DeleteLargest` when per-file or total-size limits are exceeded",
     "**File generator** – `session.Generator` produces random-bytes files, structured text/CSV/JSON, zip archives, and simulated directory trees",
@@ -106,22 +106,27 @@
     {
       "type": "paragraph",
       "title": "Storage Providers",
-      "text": "All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable. Two implementations are included; register a custom one via DI to use any other backend."
+      "text": "All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable. Two implementations are included; register a custom one via DI to use any other backend. Each provider exposes `PathStyle` (`Host` for real disk, `Posix` for in-memory/remote); service/session/generator path combine, normalize, and jail checks go through `PathHelpers` with that style."
     },
     {
       "type": "markdown",
       "title": "Storage Providers — FileSystemIOTempStorageProvider (default)",
-      "body": "Delegates to `System.IO`. Used automatically when no `IIOTempStorageProvider` is registered.\n\n```csharp\n// Implicit — no registration needed\nservices.AddIOTempService();\n```"
+      "body": "Delegates to `System.IO` with `PathStyle.Host`. Used automatically when no `IIOTempStorageProvider` is registered.\n\n```csharp\n// Implicit — no registration needed\nservices.AddIOTempService();\n```"
     },
     {
       "type": "markdown",
       "title": "Storage Providers — InMemoryIOTempStorageProvider",
-      "body": "Backed by a `ConcurrentDictionary`. No filesystem access; suitable for Blazor WASM and unit tests.\nAll data lives for the lifetime of the provider instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddSingleton<IIOTempStorageProvider>(new InMemoryIOTempStorageProvider());\nbuilder.Services.AddIOTempService();\n\n// xUnit / NUnit — direct construction\nvar storage = new InMemoryIOTempStorageProvider();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
+      "body": "Backed by a `ConcurrentDictionary` with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; suitable for Blazor WASM and unit tests.\nAll data lives for the lifetime of the provider instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddSingleton<IIOTempStorageProvider>(new InMemoryIOTempStorageProvider());\nbuilder.Services.AddIOTempService();\n\n// xUnit / NUnit — direct construction\nvar storage = new InMemoryIOTempStorageProvider();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Storage Providers — SFTP (`Lyo.IO.Temp.Sftp`)",
+      "body": "Use the shipped SFTP provider for remote temp storage:\n\n```csharp\nservices.AddIOTempSftpStorageProvider(o =>\n{\n    o.Host = \"sftp.example.com\";\n    o.Username = \"lyo\";\n    o.Password = secret;\n    o.RootRemoteDirectory = \"/tmp/lyo\";\n    o.HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList;\n    o.AllowedHostKeyFingerprints.Add(\"SHA256:...\");\n});\nservices.AddIOTempService();\n```\n\nSee package `Lyo.IO.Temp.Sftp` (backed by `Lyo.Sftp.Client`)."
     },
     {
       "type": "markdown",
       "title": "Storage Providers — Custom Provider",
-      "body": "Implement `IIOTempStorageProvider` once to use any backend (FTP, SFTP, Azure Blob, etc.):\n\n```csharp\npublic sealed class FtpIOTempStorageProvider : IIOTempStorageProvider\n{\n    // implement RootPath, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...\n}\n\n// Register it before AddIOTempService\nservices.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...));\nservices.AddIOTempService();\n```\n\nThe provider interface covers: directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,\ncreation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers)."
+      "body": "Implement `IIOTempStorageProvider` once to use any backend (FTP, Azure Blob, etc.):\n\n```csharp\npublic sealed class FtpIOTempStorageProvider : IIOTempStorageProvider\n{\n    // implement RootPath, PathStyle, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...\n}\n\n// Register it before AddIOTempService\nservices.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...));\nservices.AddIOTempService();\n```\n\nThe provider interface covers: `PathStyle`, directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,\ncreation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers)."
     },
     {
       "type": "table",

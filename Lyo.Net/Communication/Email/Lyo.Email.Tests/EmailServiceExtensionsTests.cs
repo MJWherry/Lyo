@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,7 @@ public class EmailServiceExtensionsTests
         IServiceCollection? services = null;
         Assert.Throws<ArgumentNullException>(() => services!.AddEmailService(_ => new() {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         }));
@@ -31,7 +32,7 @@ public class EmailServiceExtensionsTests
         var services = new ServiceCollection();
         services.AddEmailService(_ => new() {
             Host = "smtp.example.com",
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         });
@@ -50,7 +51,7 @@ public class EmailServiceExtensionsTests
         var services = new ServiceCollection();
         services.AddEmailService(options => {
             options.Host = "smtp.example.com";
-            options.Port = 587;
+            options.Port = PortInfo.SmtpSubmission;
             options.DefaultFromAddress = "test@example.com";
             options.DefaultFromName = "Test";
         });
@@ -68,7 +69,7 @@ public class EmailServiceExtensionsTests
         var services = new ServiceCollection();
         services.AddEmailService((_, options) => {
             options.Host = "smtp.example.com";
-            options.Port = 587;
+            options.Port = PortInfo.SmtpSubmission;
             options.DefaultFromAddress = "test@example.com";
             options.DefaultFromName = "Test";
         });
@@ -86,7 +87,7 @@ public class EmailServiceExtensionsTests
         var services = new ServiceCollection();
         services.AddEmailService(_ => new() {
             Host = "", // Invalid
-            Port = 587,
+            Port = PortInfo.SmtpSubmission,
             DefaultFromAddress = "test@example.com",
             DefaultFromName = "Test"
         });
@@ -168,7 +169,7 @@ public class EmailServiceExtensionsTests
         services.AddLogging();
         services.AddEmailService(options => {
             options.Host = "smtp.example.com";
-            options.Port = 587;
+            options.Port = PortInfo.SmtpSubmission;
             options.DefaultFromAddress = "test@example.com";
             options.DefaultFromName = "Test";
         });
@@ -185,7 +186,7 @@ public class EmailServiceExtensionsTests
         services.AddSingleton<IMetrics>(NullMetrics.Instance);
         services.AddEmailService(options => {
             options.Host = "smtp.example.com";
-            options.Port = 587;
+            options.Port = PortInfo.SmtpSubmission;
             options.DefaultFromAddress = "test@example.com";
             options.DefaultFromName = "Test";
             options.EnableMetrics = true;

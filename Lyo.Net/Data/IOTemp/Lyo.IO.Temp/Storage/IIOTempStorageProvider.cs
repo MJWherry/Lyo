@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Common.Pathing;
 
 namespace Lyo.IO.Temp.Storage;
 
@@ -12,6 +13,9 @@ public interface IIOTempStorageProvider
 {
     /// <summary>The root path under which all service and session directories are created.</summary>
     string RootPath { get; }
+
+    /// <summary>Path separator / normalize rules for this backend. Host for real disk; Posix for in-memory / remote.</summary>
+    PathStyle PathStyle { get; }
 
     /// <summary>Returns whether <paramref name="path" /> exists and is a directory.</summary>
     bool DirectoryExists(string path);

@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Common.Pathing;
 using Lyo.Exceptions;
 
 namespace Lyo.IO.Temp.Storage;
@@ -16,6 +17,9 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 
     /// <inheritdoc />
     public string RootPath { get; }
+
+    /// <inheritdoc />
+    public PathStyle PathStyle => PathStyle.Host;
 
     /// <inheritdoc />
     public bool DirectoryExists(string path) => Directory.Exists(path);
@@ -48,7 +52,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
     public void EnsureDirectoryAccessible(string path)
     {
         ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
-        var probePath = Path.Combine(path, $".rw-check-{Guid.NewGuid():N}.tmp");
+        var probePath = PathHelpers.Combine(PathStyle, path, $".rw-check-{Guid.NewGuid():N}.tmp");
         try {
             File.WriteAllText(probePath, "rw");
             ExceptionThrower.ThrowIfFileNotAccessible(probePath);

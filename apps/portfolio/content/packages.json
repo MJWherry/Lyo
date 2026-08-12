@@ -1129,12 +1129,34 @@
     ]
   },
   {
+    "id": "Lyo.FileStorage.Ftp",
+    "name": "Lyo.FileStorage.Ftp",
+    "area": "Data",
+    "topic": "Lyo.FileStorage",
+    "tagline": "FTP-backed IFileStorageService via Lyo.Ftp.Client.",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md",
+    "targetFrameworks": [
+      "net10.0"
+    ]
+  },
+  {
     "id": "Lyo.FileStorage.S3",
     "name": "Lyo.FileStorage.S3",
     "area": "Data",
     "topic": "Lyo.FileStorage",
     "tagline": "S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.",
     "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md",
+    "targetFrameworks": [
+      "net10.0"
+    ]
+  },
+  {
+    "id": "Lyo.FileStorage.Sftp",
+    "name": "Lyo.FileStorage.Sftp",
+    "area": "Data",
+    "topic": "Lyo.FileStorage",
+    "tagline": "SFTP-backed IFileStorageService via Lyo.Sftp.Client.",
+    "readme": "Lyo.Net/Data/FileStorage/Lyo.FileStorage.Sftp/README.md",
     "targetFrameworks": [
       "net10.0"
     ]
@@ -1175,12 +1197,48 @@
     ]
   },
   {
+    "id": "Lyo.Ftp.Client",
+    "name": "Lyo.Ftp.Client",
+    "area": "Data",
+    "topic": "Lyo.Ftp",
+    "tagline": "Async-first pooled FluentFTP client with PathHelpers jail, logging, and Lyo.Metrics.",
+    "readme": "Lyo.Net/Data/Ftp/Lyo.Ftp.Client/README.md",
+    "targetFrameworks": [
+      "netstandard2.0",
+      "net10.0"
+    ]
+  },
+  {
     "id": "Lyo.IO.Temp",
     "name": "Lyo.IO.Temp",
     "area": "Data",
     "topic": "Lyo.IO",
     "tagline": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.",
     "readme": "Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md",
+    "targetFrameworks": [
+      "netstandard2.0",
+      "net10.0"
+    ]
+  },
+  {
+    "id": "Lyo.IO.Temp.Ftp",
+    "name": "Lyo.IO.Temp.Ftp",
+    "area": "Data",
+    "topic": "Lyo.IO",
+    "tagline": "FTP-backed IIOTempStorageProvider for Lyo.IO.Temp.",
+    "readme": "Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Ftp/README.md",
+    "targetFrameworks": [
+      "netstandard2.0",
+      "net10.0"
+    ]
+  },
+  {
+    "id": "Lyo.IO.Temp.Sftp",
+    "name": "Lyo.IO.Temp.Sftp",
+    "area": "Data",
+    "topic": "Lyo.IO",
+    "tagline": "SFTP-backed IIOTempStorageProvider for Lyo.IO.Temp.",
+    "readme": "Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Sftp/README.md",
     "targetFrameworks": [
       "netstandard2.0",
       "net10.0"
@@ -1384,6 +1442,18 @@
     "tagline": "Reusable Blazor / MudBlazor components for editing and running `Lyo.Query.Models` requests against any Lyo.Api host.",
     "readme": "Lyo.Net/Data/Query/Lyo.Query.Web.Components/README.md",
     "targetFrameworks": [
+      "net10.0"
+    ]
+  },
+  {
+    "id": "Lyo.Sftp.Client",
+    "name": "Lyo.Sftp.Client",
+    "area": "Data",
+    "topic": "Lyo.Sftp",
+    "tagline": "Async-first pooled SSH.NET SFTP client with PathHelpers jail, logging, and Lyo.Metrics.",
+    "readme": "Lyo.Net/Data/Sftp/Lyo.Sftp.Client/README.md",
+    "targetFrameworks": [
+      "netstandard2.0",
       "net10.0"
     ]
   },

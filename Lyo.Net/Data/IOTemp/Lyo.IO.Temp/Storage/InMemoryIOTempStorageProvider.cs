@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Lyo.Common.Pathing;
 
 namespace Lyo.IO.Temp.Storage;
 
@@ -21,6 +22,9 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
 
     /// <inheritdoc />
     public string RootPath { get; }
+
+    /// <inheritdoc />
+    public PathStyle PathStyle => PathStyle.Posix;
 
     /// <inheritdoc />
     public bool DirectoryExists(string path)
@@ -246,12 +250,9 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return Task.CompletedTask;
     }
 
-    private static string Normalize(string path)
-    {
-        // Collapse any ./ ../ and duplicate slashes so paths are canonical.
-        var uri = new Uri("file://" + path.Replace('\\', '/'));
-        return uri.AbsolutePath.TrimEnd('/');
-    }
+    private string Normalize(string path)
+        => PathHelpers.TrimTrailingSeparators(PathHelpers.GetFullPath(PathStyle, path), PathStyle);
+
 
     private static string? ParentOf(string normalizedPath)
     {

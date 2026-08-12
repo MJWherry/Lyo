@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Testcontainers.RabbitMq;
 
 namespace Lyo.Testing.Containers;
@@ -8,8 +9,8 @@ namespace Lyo.Testing.Containers;
 /// </summary>
 public sealed class RabbitMqTestContainer : IAsyncDisposable
 {
-    private const int AmqpPort = 5672;
-    private const int ManagementPort = 15672;
+    private static readonly int AmqpPort = PortInfo.Amqp;
+    private static readonly int ManagementPort = PortInfo.RabbitMqManagement;
 
     /// <summary>Username configured on the container.</summary>
     public const string DefaultUsername = "rabbitmq";

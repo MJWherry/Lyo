@@ -109,6 +109,11 @@ The management HTTP API (`AdminUrl`) is exposed so peek and queue-statistics ope
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common` — (direct, lyo)
 - `Testcontainers.PostgreSql` `4.13.0` — (direct, third-party)
 - `Testcontainers.RabbitMq` `4.13.0` — (direct, third-party)
 - `xunit.v3.extensibility.core` `3.2.2` — (direct, third-party)
+- `Lyo.Exceptions` — (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
+- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

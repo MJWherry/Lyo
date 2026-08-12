@@ -12,4 +12,8 @@
         <PackageReference Include="xunit.v3.extensibility.core"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Common\Lyo.Common\Lyo.Common.csproj"/>
+    </ItemGroup>
+
 </Project>

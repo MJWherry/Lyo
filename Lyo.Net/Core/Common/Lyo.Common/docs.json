@@ -6,11 +6,12 @@
   "description": "Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared\n`System.Text.Json` options.\n\n> **Note** — earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in *\n*[`Lyo.Result`](../../Result/Lyo.Result/README.md)**, not here. `Lyo.Common` has **no** dependency on results — it sits below them and provides primitives that the rest of the\n> framework composes.",
   "features": [
     "**ID generators** (`Identifiers/`) — `Ksuid`, `LyoGuid`, `NanoId`, `Snowflake`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.",
-    "**Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.",
-    "**Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, language and HTTP enums with metadata-attribute lookups.",
+    "**Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `PortInfo` (well-known ports + `PortCategory`, `FromPort`/`FromName`/`ByCategory`, implicit `int`), `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.",
+    "**Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, `PortCategory`, language and HTTP enums with metadata-attribute lookups.",
     "**Typed extension classes** (`Extensions/`) — `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` ( `GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.",
     "**`CollectionExtensions`** — materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that avoid redundant copies when the source is already the right shape.",
     "**`Utilities`** — small shared helpers (`SafeDispose`, file-size conversions, expression-based property-path extraction).",
+    "**Pathing** (`Pathing/`) — `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).",
     "**Cryptographic random** (`Security/CryptographicRandom`) — `RandomNumberGenerator`-backed byte / int / string helpers, used by other Lyo packages instead of `System.Random` for anything security-adjacent.",
     "**`Disposable`** — convenience base / lambda disposable.",
     "**`HashCodeHelpers`** — `HashCode.Combine`-style helpers for `netstandard2.0`.",
@@ -31,6 +32,11 @@
       "title": "Conversion",
       "language": "csharp",
       "code": "TypeConversion.Logger = loggerFactory.CreateLogger(\"TypeConversion\");"
+    },
+    {
+      "title": "Pathing",
+      "language": "csharp",
+      "code": "using Lyo.Common.Pathing;\n\nvar root = \"/mem/lyo\";\nvar child = PathHelpers.Combine(PathStyle.Posix, root, \"session\", \"file.txt\");\nvar full = PathHelpers.GetFullPath(PathStyle.Posix, child);\nPathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, root, full);"
     }
   ],
   "sections": [

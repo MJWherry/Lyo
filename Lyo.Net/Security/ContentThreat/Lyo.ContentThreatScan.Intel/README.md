@@ -35,12 +35,12 @@ Construct **`DefaultContentThreatReputationPipeline`** with a shared **`HttpClie
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common` — (direct, lyo)
 - `Lyo.ContentThreatScan` — (direct, lyo)
 - `Lyo.Exceptions` — (direct, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (direct, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
 - `System.Text.Json` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)

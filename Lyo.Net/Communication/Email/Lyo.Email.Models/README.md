@@ -40,9 +40,9 @@ Shared models, options, error codes, and event arguments for the [`Lyo.Email`](.
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Common` — (direct, lyo)
+- `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Result` — (direct, lyo)
 - `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
-- `Lyo.Exceptions` — (transitive, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

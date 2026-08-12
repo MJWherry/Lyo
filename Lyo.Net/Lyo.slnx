@@ -179,6 +179,18 @@
     <Folder Name="/Data/IOTemp/">
         <Project Path="Data/IOTemp/Lyo.IO.Temp/Lyo.IO.Temp.csproj"/>
         <Project Path="Data/IOTemp/Lyo.IO.Temp.Tests/Lyo.IO.Temp.Tests.csproj"/>
+        <Project Path="Data/IOTemp/Lyo.IO.Temp.Ftp/Lyo.IO.Temp.Ftp.csproj"/>
+        <Project Path="Data/IOTemp/Lyo.IO.Temp.Ftp.Tests/Lyo.IO.Temp.Ftp.Tests.csproj"/>
+        <Project Path="Data/IOTemp/Lyo.IO.Temp.Sftp/Lyo.IO.Temp.Sftp.csproj"/>
+        <Project Path="Data/IOTemp/Lyo.IO.Temp.Sftp.Tests/Lyo.IO.Temp.Sftp.Tests.csproj"/>
+    </Folder>
+    <Folder Name="/Data/Ftp/">
+        <Project Path="Data/Ftp/Lyo.Ftp.Client/Lyo.Ftp.Client.csproj"/>
+        <Project Path="Data/Ftp/Lyo.Ftp.Client.Tests/Lyo.Ftp.Client.Tests.csproj"/>
+    </Folder>
+    <Folder Name="/Data/Sftp/">
+        <Project Path="Data/Sftp/Lyo.Sftp.Client/Lyo.Sftp.Client.csproj"/>
+        <Project Path="Data/Sftp/Lyo.Sftp.Client.Tests/Lyo.Sftp.Client.Tests.csproj"/>
     </Folder>
     <Folder Name="/Data/Pdf/">
         <Project Path="Data/Pdf/Lyo.Pdf.Models/Lyo.Pdf.Models.csproj"/>
@@ -224,6 +236,10 @@
         <Project Path="Data/FileStorage/Lyo.FileStorage.Blob.Tests/Lyo.FileStorage.Blob.Tests.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.S3/Lyo.FileStorage.S3.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.S3.Tests/Lyo.FileStorage.S3.Tests.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Ftp/Lyo.FileStorage.Ftp.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Ftp.Tests/Lyo.FileStorage.Ftp.Tests.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Sftp/Lyo.FileStorage.Sftp.csproj"/>
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Sftp.Tests/Lyo.FileStorage.Sftp.Tests.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.Tests/Lyo.FileStorage.Tests.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage.Web.Components/Lyo.FileStorage.Web.Components.csproj"/>
         <Project Path="Data/FileStorage/Lyo.FileStorage/Lyo.FileStorage.csproj"/>

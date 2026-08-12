@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <PackageReference Include="System.Text.Json"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>

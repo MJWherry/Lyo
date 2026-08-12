@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using Lyo.Common.Extensions;
+using Lyo.Common.Pathing;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Storage;
@@ -112,7 +113,7 @@ public sealed class IOTempSession : IIOTempSession
 #endregion
 
     /// <inheritdoc />
-    public override string ToString() => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
+    public override string ToString() => $"Session: {PathHelpers.GetFileName(_storage.PathStyle, SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
 
     /// <summary>
     /// Convenience factory for tests: creates a session under <c>{TempPath}/lyo-io-temp-tests/{subdirectoryName ?? new Guid}</c>. The root is auto-created so test classes don't
@@ -155,7 +156,7 @@ public sealed class IOTempSession : IIOTempSession
     {
         ThrowIfDisposed();
         // Provider-level enumeration walks all descendants; apply glob pattern client-side if provided.
-        return EnumerateAllFiles(SessionDirectory).Where(f => pattern == null || MatchesGlob(Path.GetFileName(f), pattern));
+        return EnumerateAllFiles(SessionDirectory).Where(f => pattern == null || MatchesGlob(PathHelpers.GetFileName(_storage.PathStyle, f), pattern));
     }
 
     /// <inheritdoc />
@@ -259,10 +260,11 @@ public sealed class IOTempSession : IIOTempSession
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
+            var sep = PathHelpers.GetDirectorySeparator(_storage.PathStyle);
             OperationHelpers.ThrowIf(
                 string.Equals(
-                    safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-                    SessionDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), GetPathComparison()), "Cannot delete the session root directory.");
+                    PathHelpers.TrimTrailingSeparators(safePath, _storage.PathStyle),
+                    PathHelpers.TrimTrailingSeparators(SessionDirectory, _storage.PathStyle), GetPathComparison()), "Cannot delete the session root directory.");
 
             if (!_storage.DirectoryExists(safePath)) {
                 _directories.Remove(safePath);
@@ -270,7 +272,7 @@ public sealed class IOTempSession : IIOTempSession
                 return false;
             }
 
-            var prefix = safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            var prefix = PathHelpers.TrimTrailingSeparators(safePath, _storage.PathStyle) + sep;
             var comparison = GetPathComparison();
             var filesUnder = _files.Where(f => f.StartsWith(prefix, comparison)).ToList();
             var freedBytes = filesUnder.Sum(f => _storage.FileExists(f) ? _storage.GetFileLength(f) : 0L);
@@ -339,12 +341,12 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-        var destName = Path.GetFileName(sourcePath);
-        var dest = Path.Combine(SessionDirectory, destName);
+        var destName = PathHelpers.GetFileName(_storage.PathStyle, sourcePath);
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, destName);
         if (_storage.FileExists(dest)) {
-            var ext = Path.GetExtension(destName);
-            var stem = Path.GetFileNameWithoutExtension(destName);
-            dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
+            var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
@@ -357,10 +359,10 @@ public sealed class IOTempSession : IIOTempSession
 
     private string MoveDirectoryFrom(string sourcePath)
     {
-        var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var dest = Path.Combine(SessionDirectory, dirName);
+        var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
 
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
@@ -710,12 +712,12 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-        var destName = Path.GetFileName(sourcePath);
-        var dest = Path.Combine(SessionDirectory, destName);
+        var destName = PathHelpers.GetFileName(_storage.PathStyle, sourcePath);
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, destName);
         if (_storage.FileExists(dest)) {
-            var ext = Path.GetExtension(destName);
-            var stem = Path.GetFileNameWithoutExtension(destName);
-            dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
+            var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
@@ -728,10 +730,10 @@ public sealed class IOTempSession : IIOTempSession
 
     private string CopyDirectoryFrom(string sourcePath)
     {
-        var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var dest = Path.Combine(SessionDirectory, dirName);
+        var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
 
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
@@ -744,12 +746,12 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-        var destName = Path.GetFileName(sourcePath);
-        var dest = Path.Combine(SessionDirectory, destName);
+        var destName = PathHelpers.GetFileName(_storage.PathStyle, sourcePath);
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, destName);
         if (_storage.FileExists(dest)) {
-            var ext = Path.GetExtension(destName);
-            var stem = Path.GetFileNameWithoutExtension(destName);
-            dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
+            var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
@@ -762,10 +764,10 @@ public sealed class IOTempSession : IIOTempSession
 
     private async Task<string> CopyDirectoryFromAsync(string sourcePath, CancellationToken ct)
     {
-        var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var dest = Path.Combine(SessionDirectory, dirName);
+        var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
+        var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
 
         dest = EnsurePathWithinSession(dest);
         await CopyDirectoryRecursiveAsync(sourcePath, dest, ct).ConfigureAwait(false);
@@ -780,14 +782,14 @@ public sealed class IOTempSession : IIOTempSession
         foreach (var entry in _storage.EnumerateEntries(src)) {
             ct.ThrowIfCancellationRequested();
             if (entry.IsDirectory) {
-                var destSub = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                var destSub = PathHelpers.Combine(_storage.PathStyle, dst, PathHelpers.GetFileName(_storage.PathStyle, entry.FullPath));
                 _directories.Add(destSub);
                 DirectoryCreated?.Invoke(destSub);
                 await CopyDirectoryRecursiveAsync(entry.FullPath, destSub, ct).ConfigureAwait(false);
             }
             else {
                 ValidateFileSize(entry.Length);
-                var destFile = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                var destFile = PathHelpers.Combine(_storage.PathStyle, dst, PathHelpers.GetFileName(_storage.PathStyle, entry.FullPath));
                 await _storage.CopyFileAsync(entry.FullPath, destFile, ct).ConfigureAwait(false);
                 _files.Add(destFile);
                 Interlocked.Add(ref _totalBytesUsed, entry.Length);
@@ -801,14 +803,14 @@ public sealed class IOTempSession : IIOTempSession
         _storage.CreateDirectory(dst);
         foreach (var entry in _storage.EnumerateEntries(src)) {
             if (entry.IsDirectory) {
-                var destSub = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                var destSub = PathHelpers.Combine(_storage.PathStyle, dst, PathHelpers.GetFileName(_storage.PathStyle, entry.FullPath));
                 _directories.Add(destSub);
                 DirectoryCreated?.Invoke(destSub);
                 CopyDirectoryRecursive(entry.FullPath, destSub);
             }
             else {
                 ValidateFileSize(entry.Length);
-                var destFile = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                var destFile = PathHelpers.Combine(_storage.PathStyle, dst, PathHelpers.GetFileName(_storage.PathStyle, entry.FullPath));
                 _storage.CopyFile(entry.FullPath, destFile);
                 _files.Add(destFile);
                 Interlocked.Add(ref _totalBytesUsed, entry.Length);
@@ -1101,7 +1103,7 @@ public sealed class IOTempSession : IIOTempSession
     private string CreateSessionDirectory()
     {
         var name = GenerateName(_options.DirectoryPrefix, _options.DirectorySuffix, _options.DirectoryNamingStrategy);
-        var path = Path.Combine(_options.RootDirectory, name);
+        var path = PathHelpers.Combine(_storage.PathStyle, _options.RootDirectory, name);
         _storage.CreateDirectory(path);
         OperationHelpers.ThrowIf(!_storage.DirectoryExists(path), $"Failed to create IO temp session directory: {path}");
         _storage.EnsureDirectoryAccessible(path);
@@ -1112,7 +1114,7 @@ public sealed class IOTempSession : IIOTempSession
     {
         if (name is not null) {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
-            var combined = Path.Combine(SessionDirectory, name);
+            var combined = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, name);
             return EnsurePathWithinSession(combined);
         }
 
@@ -1120,7 +1122,7 @@ public sealed class IOTempSession : IIOTempSession
             ? GenerateName(_options.DirectoryPrefix, _options.DirectorySuffix, _options.DirectoryNamingStrategy)
             : GenerateName(_options.FilePrefix, _options.FileSuffix, _options.FileNamingStrategy) + _options.FileExtension;
 
-        return Path.Combine(SessionDirectory, generated);
+        return PathHelpers.Combine(_storage.PathStyle, SessionDirectory, generated);
     }
 
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
@@ -1138,11 +1140,8 @@ public sealed class IOTempSession : IIOTempSession
 
     private string EnsurePathWithinSession(string candidatePath)
     {
-        var fullBase = Path.GetFullPath(SessionDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var fullCandidate = Path.GetFullPath(candidatePath);
-        var comparison = GetPathComparison();
-        OperationHelpers.ThrowIf(!fullCandidate.StartsWith(fullBase, comparison), $"Path escapes the session directory: {candidatePath}");
-        return fullCandidate;
+        PathHelpers.ThrowIfEscapesRoot(_storage.PathStyle, SessionDirectory, candidatePath);
+        return PathHelpers.GetFullPath(_storage.PathStyle, candidatePath);
     }
 
     private void ValidateFileSize(long sizeBytes)
@@ -1314,8 +1313,11 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
-    private static StringComparison GetPathComparison()
+    private StringComparison GetPathComparison()
     {
+        if (_storage.PathStyle == PathStyle.Posix)
+            return StringComparison.Ordinal;
+
 #if NET5_0_OR_GREATER
         return OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 #else

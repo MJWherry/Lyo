@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Lyo.Common.Records;
+using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Email.Models;
@@ -13,8 +15,8 @@ public sealed class EmailServiceOptions
     /// <summary>Gets or sets the SMTP server hostname. Required.</summary>
     public string Host { get; set; } = null!;
 
-    /// <summary>Gets or sets the SMTP server port. Default: 587.</summary>
-    public int Port { get; set; } = 587;
+    /// <summary>Gets or sets the SMTP server port. Default: <see cref="PortInfo.SmtpSubmission" /> (587).</summary>
+    public int Port { get; set; } = PortInfo.SmtpSubmission;
 
     /// <summary>Gets or sets whether to use SSL/TLS for the SMTP connection. Default: false.</summary>
     public bool UseSsl { get; set; } = false;
@@ -64,8 +66,8 @@ public sealed class EmailServiceOptionsValidator : IValidateOptions<EmailService
         if (string.IsNullOrWhiteSpace(options.Host))
             return ValidateOptionsResult.Fail("EmailServiceOptions.Host is required.");
 
-        if (options.Port is <= 0 or > 65535)
-            return ValidateOptionsResult.Fail("EmailServiceOptions.Port must be between 1 and 65535.");
+        if (!FormatHelpers.IsValidPort(options.Port))
+            return ValidateOptionsResult.Fail($"EmailServiceOptions.Port must be between {FormatHelpers.MinPort} and {FormatHelpers.MaxPort}.");
 
         if (string.IsNullOrWhiteSpace(options.DefaultFromAddress))
             return ValidateOptionsResult.Fail("EmailServiceOptions.FromAddress is required.");

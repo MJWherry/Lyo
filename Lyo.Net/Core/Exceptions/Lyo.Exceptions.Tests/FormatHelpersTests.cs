@@ -131,6 +131,49 @@ public class FormatHelpersTests
     public void ThrowIfInvalidLength_OutOfRange_Throws(string value, int min, int max)
         => Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidLength(value, min, max));
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(22)]
+    [InlineData(65535)]
+    public void IsValidPort_Valid_ReturnsTrue(int port) => Assert.True(FormatHelpers.IsValidPort(port));
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(65536)]
+    public void IsValidPort_Invalid_ReturnsFalse(int port) => Assert.False(FormatHelpers.IsValidPort(port));
+
+    [Fact]
+    public void ThrowIfInvalidPort_Valid_DoesNotThrow() => FormatHelpers.ThrowIfInvalidPort(443);
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(65536)]
+    public void ThrowIfInvalidPort_Invalid_ThrowsWithDetails(int port)
+    {
+        var ex = Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfInvalidPort(port));
+        Assert.Equal(port.ToString(CultureInfo.InvariantCulture), ex.InvalidValue);
+        Assert.Contains("1-65535", ex.ValidFormats);
+    }
+
+    [Fact]
+    public void ThrowIfNotInRange_InRange_DoesNotThrow() => FormatHelpers.ThrowIfNotInRange(4, min: 1);
+
+    [Fact]
+    public void ThrowIfNotInRange_MinOnly_OutOfRange_ThrowsWithExpectedFormat()
+    {
+        var ex = Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotInRange(0, min: 1));
+        Assert.Equal("0", ex.InvalidValue);
+        Assert.Contains(">= 1", ex.ValidFormats);
+    }
+
+    [Fact]
+    public void ThrowIfNotInRange_Bounded_OutOfRange_Throws()
+    {
+        var ex = Assert.Throws<InvalidFormatException>(() => FormatHelpers.ThrowIfNotInRange(11, 1, 10));
+        Assert.Contains("1-10", ex.ValidFormats);
+    }
+
     [Fact]
     public void ThrowIf_False_DoesNotThrow() => FormatHelpers.ThrowIf(false, "unused");
 

@@ -166,6 +166,14 @@
       ]
     },
     {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Reporting.Models",
       "kind": "lyo",
       "tags": [
@@ -314,14 +322,6 @@
     },
     {
       "name": "Lyo.Query",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Query.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

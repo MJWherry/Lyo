@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ public class EmailServiceErrorHandlingTests
 
     private readonly EmailServiceOptions _options = new() {
         Host = "invalid-smtp-server-that-does-not-exist.local",
-        Port = 587,
+        Port = PortInfo.SmtpSubmission,
         UseSsl = false,
         DefaultFromAddress = "test@example.com",
         DefaultFromName = "Test Sender",
