@@ -1,0 +1,45 @@
+---
+description: C# API surface, builders, guards, performance, memory, and thread safety
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# C# API, performance, thread safety
+
+DI registration (`Add{Feature}` / `FromConfiguration` / `TryAdd*`) is in the core rules. This file is call-site shape and runtime behavior.
+
+## API surface
+
+- Return the widest-correct type: `IReadOnlyList<T>`, `IReadOnlyDictionary<K,V>`, `IAsyncEnumerable<T>`. Return `List<T>` or `T[]` only when mutation or a fixed buffer is the contract.
+- Accept the weakest input that is still correct (`IEnumerable<T>`, `Stream`, `IConfiguration`).
+- Prefer existing generic primitives (`Lyo.Result`, query builders, job/report runners) over a one-off type that does the same job.
+
+```csharp
+// ❌ public List<Row> GetRows() => query.ToList();
+// ✅ public IReadOnlyList<Row> GetRows() => query.ToArray();
+// ✅ public IAsyncEnumerable<Row> StreamRowsAsync(..., CancellationToken ct)
+```
+
+## Builders
+
+- Optional or multi-step construction uses a fluent builder (`WithX` / `From` / `Build()`), not telescoping constructors. Methods return `this` (or the built value from `Build()`).
+- Copy `ResultBuilder`, `QueryReqBuilder`, `LyoProblemDetailsBuilder`. Hosts already use the same shape for `Add{Feature}`.
+- Do not add a builder for a type that only has one or two required arguments — a constructor is enough.
+
+## Exception helpers
+
+- Public entry points: `ArgumentHelpers.ThrowIfNull` / `ThrowIfNullOrWhiteSpace` / `ThrowIfNullOrEmpty` / `ThrowIfNullReturn` (assignment). Range and enum checks use the matching `ThrowIf*` helpers on the same type.
+- Do not write `if (...) throw new ArgumentNullException(...)`. `CallerArgumentExpression` fills `paramName` — do not pass `nameof` unless you need a stable name instead of the expression.
+
+## Performance and memory
+
+- Do not materialize until a consumer needs a realized collection. Keep `IQueryable<T>` / `IAsyncEnumerable<T>` through the pipeline; no `ToList()` / `ToArray()` "just in case".
+- Reads: `AsNoTracking()`. Hot paths: watch allocations, extra copies, and per-item logging.
+- Stream large payloads (`Stream`, `IAsyncEnumerable<T>`). Do not buffer a whole file or result set in memory when the caller can consume incrementally.
+
+## Thread safety and lifetimes
+
+- Honor `CancellationToken` on every async public entry point.
+- `DbContext` is not thread-safe: resolve `IDbContextFactory<T>` and create per operation (never a shared context on a singleton).
+- Singletons must be immutable or use concurrent primitives. Do not capture scoped services (or `HttpContext` / a context instance) into a singleton.
+- No unsynchronized mutable instance state shared across requests or jobs.

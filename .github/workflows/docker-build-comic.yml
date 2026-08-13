@@ -1,0 +1,49 @@
+# Manual only: build one comic image and push to ECR.
+# Does not deploy. Copy the run title / step-summary tag into Deploy - Comic.
+
+name: Docker - Build Comic
+run-name: "${{ inputs.app }} ${{ github.run_id }}.${{ github.run_number }}.${{ github.run_attempt }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Image to build and push"
+        required: true
+        type: choice
+        options:
+          - api
+          - web
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      image_name: ${{ steps.m.outputs.image_name }}
+      dockerfile: ${{ steps.m.outputs.dockerfile }}
+    steps:
+      - id: m
+        run: |
+          case "${{ inputs.app }}" in
+            api)
+              echo "image_name=lyo-comic-api" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=deploy/comic/api/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            web)
+              echo "image_name=lyo-comic-web" >> "$GITHUB_OUTPUT"
+              echo "dockerfile=deploy/comic/web/Dockerfile" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Invalid app: ${{ inputs.app }}" >&2
+              exit 1
+              ;;
+          esac
+
+  build:
+    needs: [resolve]
+    uses: ./.github/workflows/docker-build-tag-push.yml
+    with:
+      IMAGE_NAME: ${{ needs.resolve.outputs.image_name }}
+      DOCKERFILE: ${{ needs.resolve.outputs.dockerfile }}
+      PUSH: true
+    secrets: inherit

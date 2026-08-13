@@ -352,9 +352,9 @@
       "type": "list",
       "title": "Limitations",
       "items": [
-        "**Authentication / authorization is not configured here.** Every `ApiEndpointBuilder` group in `BuildComicApiEndpoints` is registered with **`.AllowAnonymous()`**, and the endpoints in `Endpoints/*.cs` add no auth filters. The host application is expected to wrap the route group behind its own pipeline (e.g. an upstream JWT bearer scheme, policy-based authorization, an API-key middleware, or a reverse-proxy auth-gateway) **before exposing `/api/comic` or `/files` to the public internet**.",
-        "**No `IsFavorited` for the calling user.** All endpoints invoke `ComicEnrichmentService` with **`callerRef = null`**, because this project does not yet wire up a caller-ref accessor. To enable per-caller favorite state, the host must introduce an identity convention (for example, a `Lyo.HttpContext.ICallerRefAccessor`-style accessor populated from the auth middleware) and thread the resolved `EntityRef` into the `EnrichSeriesAsync` / `EnrichSeriesListAsync` / `EnrichVolumeAsync` / `EnrichVolumeListAsync` / `EnrichChapterAsync` / `EnrichChapterListAsync` calls. Until then, `IsFavorited` stays `null`, even when the user has favorited the entity.",
-        "**`/files/upload` has `DisableAntiforgery()`**. Combine with auth before exposing it externally."
+        "**Comic API requires authentication.** `BuildComicApiEndpoints` uses **`.RequireAuthorization()`**, and `/api/comic` plus `/files` are mapped with the same requirement. Anonymous endpoints are **`GET /health`**, JWKS, and **`/auth/*`** (Google OIDC BFF). Configure **`GoogleAuth`**, **`LyoJwt`**, and **`PostgresUser`** on the host.",
+        "**`IsFavorited`** is filled when the request carries a Lyo JWT (`lyo:user` / `sub`). Anonymous callers still see `null`.",
+        "**`/files/upload` has `DisableAntiforgery()`**. Combine with auth (already required) before exposing it externally."
       ]
     }
   ],
@@ -395,6 +395,46 @@
     },
     {
       "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Google",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.OpenIdConnect",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -513,6 +553,14 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
       ]
     },
     {

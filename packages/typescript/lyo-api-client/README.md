@@ -9,8 +9,11 @@ Core, reusable API client foundation for Lyo TypeScript consumers.
 - Request execution abstraction via transport adapters
 - Normalized API errors
 - Lyo.Api metadata helpers (`getMetadata` / `getCrudMetadata` / `getEntityMetadata`)
+- Generic CRUD / QueryProject helpers (`queryProject`, `create`, `update`, `deleteById`)
+- Query/CRUD result types (`QueryRes`, `ProjectedQueryRes`, `CreateResult`, …) and response guards
 
-Domain-specific Person endpoints live in `lyo-person-api-client`.
+Domain-specific Person endpoints live in `lyo-person-api-client`. Comic-specific
+reads (slug, nested lists, tags, files) live in `lyo-comic-api-client`.
 
 ## Usage
 
@@ -44,5 +47,11 @@ const meta = await asyncClient.getMetadata("person");
 // Dynamic CRUD registry / per-entity:
 // await asyncClient.getCrudMetadata("Twilio");
 // await asyncClient.getEntityMetadata("Twilio", "TwilioSmsLogEntity");
+
+// Generic Lyo.Api CRUD / QueryProject (domain clients wrap these):
+// await asyncClient.queryProject("/api/comic/series", projectionReq);
+// await asyncClient.create("/api/comic/chapters", body);
+// await asyncClient.update("/api/comic/chapters", [id], body);
+// await asyncClient.deleteById("/api/comic/series", id);
 ```
 

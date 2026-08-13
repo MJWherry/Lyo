@@ -16,7 +16,7 @@ public static class FilesEndpoints
 
     public static IEndpointRouteBuilder MapFilesEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/files").WithTags("Files");
+        var group = app.MapGroup("/files").WithTags("Files").RequireAuthorization();
         group.MapGet("/{id:guid}", GetFile);
         group.MapPost("/batch", GetFilesBatch);
         group.MapPost("/upload", UploadFile).DisableAntiforgery();

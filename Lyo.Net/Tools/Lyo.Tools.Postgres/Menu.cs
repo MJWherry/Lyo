@@ -123,13 +123,18 @@ internal static class Menu
         var count = AnsiConsole.Prompt(new TextPrompt<int>("Number of series to generate:").DefaultValue(20));
         var seedInput = AnsiConsole.Prompt(new TextPrompt<string>("[grey](Optional)[/] Random seed [grey](blank = random)[/]:").AllowEmpty());
         int? seed = int.TryParse(seedInput, out var s) ? s : null;
+        var replace = AnsiConsole.Confirm("Replace existing comic rows if the database already has series?", false);
         AnsiConsole.WriteLine();
+        var seeded = false;
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Star)
             .SpinnerStyle(Style.Parse("green"))
-            .StartAsync("Seeding comic database...", async _ => await sp.GetRequiredService<ComicDbSeeder>().SeedAsync(count, seed, ct));
+            .StartAsync("Seeding comic database...", async _ => seeded = await sp.GetRequiredService<ComicDbSeeder>().SeedAsync(count, seed, replace, ct));
 
-        AnsiConsole.MarkupLine("[green]Done![/]");
+        if (seeded)
+            AnsiConsole.MarkupLine("[green]Done![/]");
+        else
+            AnsiConsole.MarkupLine("[yellow]Skipped — comic.series already has rows. Re-run and confirm replace, or truncate the comic schema first.[/]");
         Pause();
     }
 

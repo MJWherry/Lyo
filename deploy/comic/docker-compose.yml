@@ -1,0 +1,102 @@
+# Laptop all-in-one: Postgres + Comic API + Next web.
+#   cd deploy/comic
+#   cp api/.env.example .env
+#   docker compose up --build
+# Web: http://localhost:3101   API: http://localhost:5000/health
+# Publish API :5000 so the browser can complete Google OIDC
+# (RedirectUri=http://localhost:5000/auth/callback/google).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lyo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-lyo}
+    volumes:
+      - lyo_comic_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - comic_net
+
+  api:
+    image: ${COMIC_API_IMAGE:-lyo-comic-api:latest}
+    build:
+      context: ../..
+      dockerfile: deploy/comic/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:5000
+      PostgresComic__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresTag__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresComment__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresRating__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresFavorite__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresFileMetadataStore__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      PostgresUser__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-lyo};Username=${POSTGRES_USER:-lyo};Password=${POSTGRES_PASSWORD}
+      ComicFileStorage__RootDirectoryPath: /var/lyo/comic-files
+      ComicFileEncryption__KeySecret: ${ComicFileEncryption__KeySecret:?set ComicFileEncryption__KeySecret}
+      ComicFileEncryption__KeyId: ${ComicFileEncryption__KeyId:-comic-images}
+      ComicFileEncryption__Encrypt: ${ComicFileEncryption__Encrypt:-true}
+      GoogleAuth__ClientId: ${GoogleAuth__ClientId:-}
+      GoogleAuth__ClientSecret: ${GoogleAuth__ClientSecret:-}
+      GoogleAuth__RedirectUri: ${GoogleAuth__RedirectUri:-http://localhost:5000/auth/callback/google}
+      LyoOidcBff__AllowedReturnOrigins: ${LyoOidcBff__AllowedReturnOrigins:-http://localhost:3101}
+      LyoJwt__Issuer: ${LyoJwt__Issuer:-http://localhost:5000}
+      LyoJwt__Audience: lyo-comic
+      LyoJwt__SigningKeyId: lyo-sig
+    ports:
+      - "${COMIC_API_HOST_PORT:-5000}:5000"
+    volumes:
+      - comic_files:/var/lyo/comic-files
+    networks:
+      - comic_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  web:
+    image: ${COMIC_WEB_IMAGE:-lyo-comic-web:latest}
+    build:
+      context: ../..
+      dockerfile: deploy/comic/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      LYO_COMIC_API_BASE_URL: http://api:5000
+      LYO_COMIC_PUBLIC_AUTH_URL: ${LYO_COMIC_PUBLIC_AUTH_URL:-http://localhost:5000}
+      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET:?set AUTH_COOKIE_SECRET}
+      PORT: "3101"
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "${WEB_HOST_PORT:-3101}:3101"
+    networks:
+      - comic_net
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3101/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+networks:
+  comic_net:
+    driver: bridge
+
+volumes:
+  lyo_comic_pg_data:
+  comic_files:

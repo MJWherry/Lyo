@@ -1,0 +1,8 @@
+aws_region        = "us-east-2"
+availability_zone = "us-east-2a"
+name_prefix       = "lyo-comic"
+app_instance_type = "t3.medium"
+db_instance_type  = "t3.small"
+admin_cidrs       = ["24.3.30.20/32"]
+# web_cidrs       = ["0.0.0.0/0"]  # later: public UI; API :5000 stays admin_cidrs
+# postgres_password = "set via TF_VAR_postgres_password"

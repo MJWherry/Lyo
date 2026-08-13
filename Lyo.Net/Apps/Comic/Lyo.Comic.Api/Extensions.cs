@@ -41,7 +41,7 @@ public static class Extensions
     /// <summary>Maps enriched/sub-resource Comic API route groups under the given prefix (default: /api/comic), and the file retrieval endpoints at /files.</summary>
     public static IEndpointRouteBuilder MapComicApi(this IEndpointRouteBuilder app, string prefix = "/api/comic")
     {
-        var group = app.MapGroup(prefix);
+        var group = app.MapGroup(prefix).RequireAuthorization();
         group.MapSeriesEndpoints();
         group.MapVolumeEndpoints();
         group.MapChapterEndpoints();
@@ -57,7 +57,7 @@ public static class Extensions
     {
         // Series: all operations except plain GET (enriched GET is in SeriesEndpoints)
         app.CreateBuilder<ComicDbContext, SeriesEntity, ComicSeriesReq, ComicSeriesRes>($"{prefix}/series", "ComicSeries")
-            .AllowAnonymous()
+            .RequireAuthorization()
             .WithCrud(
                 ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new() {
                     BeforeUpdate = ctx => {
@@ -93,25 +93,25 @@ public static class Extensions
 
         // Volumes: all operations except plain GET
         app.CreateBuilder<ComicDbContext, VolumeEntity, ComicVolumeReq, ComicVolumeRes>($"{prefix}/volumes", "ComicVolume")
-            .AllowAnonymous()
+            .RequireAuthorization()
             .WithCrud(ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new())
             .Build();
 
         // Chapters: all operations except plain GET
         app.CreateBuilder<ComicDbContext, ChapterEntity, ComicChapterReq, ComicChapterRes>($"{prefix}/chapters", "ComicChapter")
-            .AllowAnonymous()
+            .RequireAuthorization()
             .WithCrud(ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new())
             .Build();
 
         // Pages: all operations including plain GET (ComicPageRes has no async enrichment)
         app.CreateBuilder<ComicDbContext, PageEntity, ComicPageReq, ComicPageRes>($"{prefix}/pages", "ComicPage")
-            .AllowAnonymous()
+            .RequireAuthorization()
             .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new())
             .Build();
 
         // Characters: all CRUD + Query; volume appearances are managed via the join table
         app.CreateBuilder<ComicDbContext, CharacterEntity, ComicCharacterReq, ComicCharacterRes>($"{prefix}/characters", "ComicCharacter")
-            .AllowAnonymous()
+            .RequireAuthorization()
             .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new())
             .Build();
 

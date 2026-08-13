@@ -1,0 +1,45 @@
+# Manual only: deploy a previously built ECR image tag to the comic app EC2
+# (UI + API on one host). Terraform is local — this workflow never plans/applies infra.
+
+name: Deploy - Comic
+run-name: "deploy ${{ inputs.app }} ${{ inputs.image_tag }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Image to deploy on the app host"
+        required: true
+        type: choice
+        options:
+          - api
+          - web
+      image_tag:
+        description: "ECR image tag (from build run title, e.g. 12345.6.1)"
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-2
+  NAME_PREFIX: lyo-comic
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: AWS - Configure
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy via SSM
+        run: |
+          chmod +x deploy/comic/scripts/deploy-via-ssm.sh
+          deploy/comic/scripts/deploy-via-ssm.sh \
+            "${{ inputs.app }}" \
+            "${{ inputs.image_tag }}"

@@ -32,13 +32,27 @@ public sealed class ComicDbSeeder
         _logger = logger;
     }
 
-    /// <summary>Seeds the database with fake comic data. Skips seeding if series already exist.</summary>
-    public async Task SeedAsync(int seriesCount = 20, int? seed = null, CancellationToken ct = default)
+    /// <summary>
+    /// Seeds fake series, volumes, chapters, pages, characters (with volume appearances), and tags.
+    /// Returns <c>false</c> when series already exist and <paramref name="replaceExisting" /> is false.
+    /// </summary>
+    public async Task<bool> SeedAsync(int seriesCount = 20, int? seed = null, bool replaceExisting = false, CancellationToken ct = default)
     {
         await using var db = CreateComicContext();
         if (await db.Series.AnyAsync(ct)) {
-            _logger.LogInformation("Comic DB already has data — skipping seed.");
-            return;
+            if (!replaceExisting) {
+                _logger.LogInformation("Comic DB already has data — skipping seed.");
+                return false;
+            }
+
+            _logger.LogInformation("Replacing existing comic rows...");
+            await using var tagDb = CreateTagContext();
+            await tagDb.Tags.Where(t => t.SubjectEntityType == SeriesEntityType).ExecuteDeleteAsync(ct);
+            await db.Pages.ExecuteDeleteAsync(ct);
+            await db.Characters.ExecuteDeleteAsync(ct);
+            await db.Chapters.ExecuteDeleteAsync(ct);
+            await db.Volumes.ExecuteDeleteAsync(ct);
+            await db.Series.ExecuteDeleteAsync(ct);
         }
 
         _logger.LogInformation("Seeding {Count} comic series...", seriesCount);
@@ -46,29 +60,36 @@ public sealed class ComicDbSeeder
         var faker = seed.HasValue ? new Faker { Random = new(seed.Value) } : new Faker();
         db.Series.AddRange(series);
         await db.SaveChangesAsync(ct);
+
         var allChapters = series.SelectMany(s => s.Chapters).ToList();
         var allPages = allChapters.SelectMany(c => BuildPages(faker, c)).ToList();
         db.Pages.AddRange(allPages);
         await db.SaveChangesAsync(ct);
+
         var allCharacters = series.SelectMany(s => BuildCharacters(faker, s)).ToList();
-        db.Characters.AddRange(allCharacters);
-        await db.SaveChangesAsync(ct);
         foreach (var character in allCharacters) {
             var seriesVolumes = series.First(s => s.Id == character.SeriesId).Volumes.ToList();
             if (seriesVolumes.Count == 0)
                 continue;
 
-            var appearCount = faker.Random.Int(0, Math.Min(3, seriesVolumes.Count));
-            var picked = faker.Random.ListItems(seriesVolumes, appearCount);
-            foreach (var vol in picked)
+            var appearCount = faker.Random.Int(1, Math.Min(3, seriesVolumes.Count));
+            foreach (var vol in faker.Random.ListItems(seriesVolumes, appearCount))
                 character.Volumes.Add(vol);
         }
 
+        db.Characters.AddRange(allCharacters);
         await db.SaveChangesAsync(ct);
+
         var tagCount = await SeedTagsAsync(faker, series, ct);
         _logger.LogInformation(
-            "Seeded {SeriesCount} series, {VolumeCount} volumes, {ChapterCount} chapters, {PageCount} pages, {CharacterCount} characters, {TagCount} tags.", series.Count,
-            series.Sum(s => s.Volumes.Count), allChapters.Count, allPages.Count, allCharacters.Count, tagCount);
+            "Seeded {SeriesCount} series, {VolumeCount} volumes, {ChapterCount} chapters, {PageCount} pages, {CharacterCount} characters, {TagCount} tags.",
+            series.Count,
+            series.Sum(s => s.Volumes.Count),
+            allChapters.Count,
+            allPages.Count,
+            allCharacters.Count,
+            tagCount);
+        return true;
     }
 
     private ComicDbContext CreateComicContext()
@@ -111,7 +132,8 @@ public sealed class ComicDbSeeder
                         Name = tag,
                         TagType = "tag",
                         Slug = string.Empty,
-                        Visibility = EntityRefVisibility.Private
+                        Visibility = EntityRefVisibility.Private,
+                        CreatedAt = DateTime.UtcNow
                     });
 
                 totalTags++;
@@ -142,10 +164,12 @@ public sealed class ComicDbSeeder
             .RuleFor(s => s.Artist, f => f.Random.Bool(0.6f) ? f.Name.FullName() : null)
             .RuleFor(s => s.Publisher, f => f.Random.Bool(0.8f) ? f.Company.CompanyName() : null)
             .RuleFor(s => s.Source, f => f.Random.Bool(0.3f) ? f.Internet.Url() : null)
-            .RuleFor(s => s.CoverImageRef, f => f.Random.Bool(0.7f) ? f.Image.PicsumUrl() : null)
+            .RuleFor(s => s.CoverImageRef, f => f.Random.Bool(0.9f) ? f.Image.PicsumUrl() : null)
             .RuleFor(s => s.Demographic, f => f.Random.Bool(0.6f) ? f.PickRandom(Demographics) : null)
+            .RuleFor(s => s.CreatedTimestamp, f => f.Date.Past(2).ToUniversalTime())
+            .RuleFor(s => s.UpdatedTimestamp, (_, s) => s.CreatedTimestamp)
             .RuleFor(s => s.AlternateTitles, (f, s) => BuildAlternateTitles(f, s))
-            .RuleFor(s => s.Chapters, (f, s) => BuildChapters(f, s));
+            .FinishWith((f, s) => BuildVolumesAndChapters(f, s));
 
         return seriesFaker.Generate(count);
     }
@@ -163,26 +187,52 @@ public sealed class ComicDbSeeder
             .ToList();
     }
 
-    private static List<ChapterEntity> BuildChapters(Faker f, SeriesEntity series)
+    private static void BuildVolumesAndChapters(Faker f, SeriesEntity series)
     {
-        var chapterCount = f.Random.Int(1, 40);
-        var chapters = new List<ChapterEntity>(chapterCount);
-        for (var i = 0; i < chapterCount; i++) {
-            var pageCount = f.Random.Int(8, 50);
-            chapters.Add(
+        var volumeCount = f.Random.Int(2, 4);
+        var volumes = new List<VolumeEntity>(volumeCount);
+        for (var i = 0; i < volumeCount; i++) {
+            volumes.Add(
                 new() {
                     Id = Guid.NewGuid(),
                     SeriesId = series.Id,
-                    ChapterNumber = i + 1,
-                    Title = f.Random.Bool(0.5f) ? f.Lorem.Sentence(f.Random.Int(2, 5)).TrimEnd('.') : null,
-                    Language = f.PickRandom(Languages),
-                    PageCount = pageCount,
-                    PublishedDate = f.Random.Bool(0.8f) ? DateOnly.FromDateTime(f.Date.Between(new(2000, 1, 1), DateTime.UtcNow)) : null,
-                    Source = f.Random.Bool(0.2f) ? f.Internet.Url() : null
+                    Series = series,
+                    VolumeNumber = i + 1,
+                    Title = f.Random.Bool(0.4f) ? f.Lorem.Sentence(f.Random.Int(1, 3)).TrimEnd('.') : null,
+                    CoverImageRef = f.Random.Bool(0.8f) ? f.Image.PicsumUrl() : series.CoverImageRef,
+                    PublishedDate = f.Random.Bool(0.7f) ? DateOnly.FromDateTime(f.Date.Between(new(2000, 1, 1), DateTime.UtcNow)) : null,
+                    CreatedTimestamp = series.CreatedTimestamp.AddDays(i),
+                    UpdatedTimestamp = series.CreatedTimestamp.AddDays(i)
                 });
         }
 
-        return chapters;
+        var chapterCount = f.Random.Int(8, 16);
+        var chapters = new List<ChapterEntity>(chapterCount);
+        for (var i = 0; i < chapterCount; i++) {
+            var vol = volumes[Math.Min(i * volumeCount / chapterCount, volumeCount - 1)];
+            var pageCount = f.Random.Int(4, 8);
+            var chapter = new ChapterEntity {
+                Id = Guid.NewGuid(),
+                SeriesId = series.Id,
+                Series = series,
+                VolumeId = vol.Id,
+                Volume = vol,
+                ChapterNumber = i + 1,
+                Title = f.Random.Bool(0.5f) ? f.Lorem.Sentence(f.Random.Int(2, 5)).TrimEnd('.') : null,
+                Language = series.Language ?? f.PickRandom(Languages),
+                PageCount = pageCount,
+                PublishedDate = f.Random.Bool(0.8f) ? DateOnly.FromDateTime(f.Date.Between(new(2000, 1, 1), DateTime.UtcNow)) : null,
+                Source = f.Random.Bool(0.2f) ? f.Internet.Url() : null,
+                CoverImageRef = f.Random.Bool(0.6f) ? f.Image.PicsumUrl() : vol.CoverImageRef,
+                CreatedTimestamp = series.CreatedTimestamp.AddDays(i),
+                UpdatedTimestamp = series.CreatedTimestamp.AddDays(i)
+            };
+            vol.Chapters.Add(chapter);
+            chapters.Add(chapter);
+        }
+
+        series.Volumes = volumes;
+        series.Chapters = chapters;
     }
 
     private static List<PageEntity> BuildPages(Faker f, ChapterEntity chapter)
@@ -193,9 +243,11 @@ public sealed class ComicDbSeeder
                 Id = Guid.NewGuid(),
                 ChapterId = chapter.Id,
                 PageNumber = pageNum,
-                ImageRef = f.Random.Bool(0.6f) ? f.Image.PicsumUrl() : null,
-                Width = f.Random.Bool(0.5f) ? f.Random.Int(600, 1800) : null,
-                Height = f.Random.Bool(0.5f) ? f.Random.Int(800, 2400) : null
+                ImageRef = f.Image.PicsumUrl(),
+                Width = 640,
+                Height = 960,
+                CreatedTimestamp = chapter.CreatedTimestamp,
+                UpdatedTimestamp = chapter.UpdatedTimestamp
             })
             .ToList();
     }
@@ -207,10 +259,13 @@ public sealed class ComicDbSeeder
             .Select(_ => new CharacterEntity {
                 Id = Guid.NewGuid(),
                 SeriesId = series.Id,
+                Series = series,
                 Name = faker.Name.FirstName(),
                 Description = faker.Random.Bool(0.6f) ? faker.Lorem.Sentences(faker.Random.Int(1, 3)) : null,
-                ImageRef = faker.Random.Bool(0.4f) ? faker.Image.PicsumUrl() : null,
+                ImageRef = faker.Random.Bool(0.5f) ? faker.Image.PicsumUrl() : null,
                 Role = faker.PickRandom(CharacterRoles),
+                CreatedTimestamp = series.CreatedTimestamp,
+                UpdatedTimestamp = series.UpdatedTimestamp,
                 Volumes = []
             })
             .ToList();

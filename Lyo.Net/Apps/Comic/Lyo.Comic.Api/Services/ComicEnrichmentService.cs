@@ -40,6 +40,7 @@ public sealed class ComicEnrichmentService
     private readonly IRatingStore _ratingStore;
     private readonly IQueryService<TagDbContext> _tagQueryService;
     private readonly ITagStore _tagStore;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ComicEnrichmentService(
         ITagStore tagStore,
@@ -51,7 +52,8 @@ public sealed class ComicEnrichmentService
         IQueryService<CommentDbContext> commentQueryService,
         IQueryService<FavoriteDbContext> favoriteQueryService,
         IOptions<QueryOptions> queryOptions,
-        ILogger<ComicEnrichmentService> logger)
+        ILogger<ComicEnrichmentService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _tagStore = tagStore;
         _ratingStore = ratingStore;
@@ -63,11 +65,15 @@ public sealed class ComicEnrichmentService
         _favoriteQueryService = favoriteQueryService;
         _maxQueryPageSize = queryOptions.Value.MaxPageSize;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
+
+    private EntityRef? ResolveCaller(EntityRef? callerRef) => callerRef ?? ComicCallerRef.From(_httpContextAccessor.HttpContext?.User);
 
     /// <summary>Enriches a series domain model with cross-domain metadata.</summary>
     public async Task<ComicSeriesRes> EnrichSeriesAsync(ComicSeries series, EntityRef? callerRef = null, CancellationToken ct = default)
     {
+        callerRef = ResolveCaller(callerRef);
         var entityRef = EntityRef.ForGuid(SeriesEntityType, series.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
@@ -85,6 +91,7 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a volume domain model with cross-domain metadata.</summary>
     public async Task<ComicVolumeRes> EnrichVolumeAsync(ComicVolume volume, EntityRef? callerRef = null, CancellationToken ct = default)
     {
+        callerRef = ResolveCaller(callerRef);
         var entityRef = EntityRef.ForGuid(VolumeEntityType, volume.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
@@ -118,6 +125,7 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a chapter domain model with cross-domain metadata.</summary>
     public async Task<ComicChapterRes> EnrichChapterAsync(ComicChapter chapter, EntityRef? callerRef = null, CancellationToken ct = default)
     {
+        callerRef = ResolveCaller(callerRef);
         var entityRef = EntityRef.ForGuid(ChapterEntityType, chapter.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
@@ -155,6 +163,7 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a list of series using batched <see cref="IQueryService{TContext}" /> reads per schema (cached) plus aggregated favorite counts.</summary>
     public async Task<ComicSeriesRes[]> EnrichSeriesListAsync(IReadOnlyList<ComicSeries> items, EntityRef? callerRef = null, CancellationToken ct = default)
     {
+        callerRef = ResolveCaller(callerRef);
         if (items.Count == 0)
             return [];
 

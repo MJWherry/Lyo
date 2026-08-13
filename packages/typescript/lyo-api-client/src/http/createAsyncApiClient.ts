@@ -13,6 +13,11 @@ import type {
     EndpointMetadataResponse,
     EntityTypeMetadata,
 } from "../types/metadata.js";
+import type {CreateResult, DeleteResult, ProjectedQueryRes, UpdateRequest, UpdateResult} from "../types/results.js";
+
+function trimRoute(baseRoute: string): string {
+    return baseRoute.replace(/\/+$/, "");
+}
 
 /** Async API client for Promise-based transports (fetch, axios, undici). */
 export interface AsyncApiClient {
@@ -41,6 +46,31 @@ export interface AsyncApiClient {
         baseRoute: string,
         entityType: string
     ): Promise<ApiResponse<EntityTypeMetadata>>;
+
+    /** `POST {baseRoute}/QueryProject` */
+    queryProject<TRow = Record<string, unknown>, TBody = unknown>(
+        baseRoute: string,
+        body: TBody
+    ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
+
+    /** `POST {baseRoute}` → {@link CreateResult} */
+    create<TData = unknown, TResult = unknown>(
+        baseRoute: string,
+        body: TData
+    ): Promise<ApiResponse<CreateResult<TResult>>>;
+
+    /** `POST {baseRoute}/Update` with `{ keys, data }` */
+    update<TData = unknown, TResult = unknown>(
+        baseRoute: string,
+        keys: unknown[],
+        data: TData
+    ): Promise<ApiResponse<UpdateResult<TResult>>>;
+
+    /** `DELETE {baseRoute}/{id}` */
+    deleteById<TResult = unknown>(
+        baseRoute: string,
+        id: string
+    ): Promise<ApiResponse<DeleteResult<TResult>>>;
 }
 
 /**
@@ -103,6 +133,51 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
             return client.request<EntityTypeMetadata>({
                 method: "GET",
                 path: entityMetadataPath(baseRoute, entityType),
+            });
+        },
+
+        queryProject<TRow = Record<string, unknown>, TBody = unknown>(
+            baseRoute: string,
+            body: TBody
+        ): Promise<ApiResponse<ProjectedQueryRes<TRow>>> {
+            return client.request<ProjectedQueryRes<TRow>, TBody>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/QueryProject`,
+                body,
+            });
+        },
+
+        create<TData = unknown, TResult = unknown>(
+            baseRoute: string,
+            body: TData
+        ): Promise<ApiResponse<CreateResult<TResult>>> {
+            return client.request<CreateResult<TResult>, TData>({
+                method: "POST",
+                path: trimRoute(baseRoute),
+                body,
+            });
+        },
+
+        update<TData = unknown, TResult = unknown>(
+            baseRoute: string,
+            keys: unknown[],
+            data: TData
+        ): Promise<ApiResponse<UpdateResult<TResult>>> {
+            const body: UpdateRequest<TData> = {keys, data};
+            return client.request<UpdateResult<TResult>, UpdateRequest<TData>>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/Update`,
+                body,
+            });
+        },
+
+        deleteById<TResult = unknown>(
+            baseRoute: string,
+            id: string
+        ): Promise<ApiResponse<DeleteResult<TResult>>> {
+            return client.request<DeleteResult<TResult>>({
+                method: "DELETE",
+                path: `${trimRoute(baseRoute)}/${encodeURIComponent(id)}`,
             });
         },
     };
