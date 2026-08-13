@@ -1,8 +1,6 @@
 # Lyo.Result
 
-Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace
-and design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling
-the whole API layer.
+Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace and design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling the whole API layer.
 
 ## Concepts — `Result<T>` and `IResult<T>`
 
@@ -12,10 +10,7 @@ the whole API layer.
 
 ## Concepts — `Error`
 
-`Error` is an **immutable record** with: - **`Message`**, **`Code`**, **`Severity`**, **`Type`** (`ErrorType`: Generic, Validation, NotFound, Conflict, Unauthorized, …). - **
-`StackTrace`**, **`Exception`**, **`InnerError`** (chained errors mimic exception chains). - **`Metadata`**, **`Timestamp`**. **Factory helpers** on `Error` include **
-`FromException`**, **`Validation`**, **`NotFound`**, **`Conflict`**, **`Unauthorized`**, etc., so call sites do not hand-roll severity/type for common cases. Validation-specific
-codes often flow through **`ValidationErrorCodes`**.
+`Error` is an **immutable record** with: - **`Message`**, **`Code`**, **`Severity`**, **`Type`** (`ErrorType`: Generic, Validation, NotFound, Conflict, Unauthorized, …). - **`StackTrace`**, **`Exception`**, **`InnerError`** (chained errors mimic exception chains). - **`Metadata`**, **`Timestamp`**. **Factory helpers** on `Error` include **`FromException`**, **`Validation`**, **`NotFound`**, **`Conflict`**, **`Unauthorized`**, etc., so call sites do not hand-roll severity/type for common cases. Validation-specific codes often flow through **`ValidationErrorCodes`**.
 
 ## Concepts — Void and non-data success
 
@@ -34,24 +29,18 @@ Optional presence without conflating “failed operation” with “no value”.
 
 ## Concepts — Request-paired results
 
-- **`Result<TRequest, TResult>`** — extends `Result<TResult>` with the original `TRequest` payload, so failure paths can echo back the input that produced the error. Adds
-  `TryGetRequest`, a four-tuple `Deconstruct`, and request-aware `Success` / `Failure(Exception, …)` factories.
-- **`BulkResult<TRequest, TResult>`** — bulk variant whose `Results`, `SuccessfulResults`, and `FailedResults` collections are paired (`Result<TRequest, TResult>`), plus
-  `SuccessfulRequests` / `FailedRequests` projections for re-driving partial failures.
-- **`BulkResultFromRequest<TRequest, TResult>`** — a single request that expands into many per-item results (e.g. one upload → many row outcomes), with `FromData`, `FromResults`,
-  `FromErrors`, and `FromException` helpers.
+- **`Result<TRequest, TResult>`** — extends `Result<TResult>` with the original `TRequest` payload, so failure paths can echo back the input that produced the error. Adds `TryGetRequest`, a four-tuple `Deconstruct`, and request-aware `Success` / `Failure(Exception, …)` factories.
+- **`BulkResult<TRequest, TResult>`** — bulk variant whose `Results`, `SuccessfulResults`, and `FailedResults` collections are paired (`Result<TRequest, TResult>`), plus `SuccessfulRequests` / `FailedRequests` projections for re-driving partial failures.
+- **`BulkResultFromRequest<TRequest, TResult>`** — a single request that expands into many per-item results (e.g. one upload → many row outcomes), with `FromData`, `FromResults`, `FromErrors`, and `FromException` helpers.
 
 ## Concepts — Lists and paging
 
-- **`BulkResult<T>`** — many operations in one round-trip with cached `SuccessCount` / `FailureCount`, `IsCompleteSuccess` / `IsCompleteFailure` / `HasPartialSuccess` flags,
-  `ErrorCodes` / `ErrorMessages` (flattened over inner errors), `SuccessfulData` / `FailedData`, and `FromResults` / `FromData` / `FromErrors` factories.
+- **`BulkResult<T>`** — many operations in one round-trip with cached `SuccessCount` / `FailureCount`, `IsCompleteSuccess` / `IsCompleteFailure` / `HasPartialSuccess` flags, `ErrorCodes` / `ErrorMessages` (flattened over inner errors), `SuccessfulData` / `FailedData`, and `FromResults` / `FromData` / `FromErrors` factories.
 - **`PagedResult`** — page metadata + items as a **`Result`** envelope.
 
 ## Concepts — Async composition
 
-**`AsyncResultExtensions`** provides **`ThenAsync`** (chain `Task<Result<…>>` only on success), **`OnSuccessAsync` / `OnFailureAsync`**, overloads that propagate * *
-`CancellationToken`**, and adapters from **`Task`** + exceptions into **`Result`**. Use these to keep **async pipelines** linear without nested `if (!result.IsSuccess) return …`
-noise.
+**`AsyncResultExtensions`** provides **`ThenAsync`** (chain `Task<Result<…>>` only on success), **`OnSuccessAsync` / `OnFailureAsync`**, overloads that propagate * *`CancellationToken`**, and adapters from **`Task`** + exceptions into **`Result`**. Use these to keep **async pipelines** linear without nested `if (!result.IsSuccess) return …` noise.
 
 ## Concepts — Guards and validation
 
@@ -61,10 +50,10 @@ noise.
 
 **`ExceptionExtensions`** provides drop-in adapters for exception-throwing code:
 
-| Extension                                 | Purpose                                                                                  |
-|-------------------------------------------|------------------------------------------------------------------------------------------|
-| `Exception.ToResult<T>(code?)`            | Wraps an exception as `Result<T>.Failure(exception, code)`.                              |
-| `Task<T>.ToResultAsync<T>(code?)`         | Awaits the task; success → `Result<T>.Success`, exception → `Result<T>.Failure`.         |
+| Extension | Purpose |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `Exception.ToResult<T>(code?)` | Wraps an exception as `Result<T>.Failure(exception, code)`. |
+| `Task<T>.ToResultAsync<T>(code?)` | Awaits the task; success → `Result<T>.Success`, exception → `Result<T>.Failure`. |
 | `Task<Result<T>>.ToResultAsync<T>(code?)` | Awaits a result-returning task and converts thrown exceptions into a failed `Result<T>`. |
 
 ## Concepts — Logging
@@ -83,8 +72,7 @@ noise.
 ## When to choose this vs `Lyo.Common.Result`
 
 - Prefer **`Lyo.Result`** when you need **multiple errors**, **severity/type**, **bulk/paged wrappers**, or **async `ThenAsync` chains**.
-- Prefer **`Lyo.Common`** primitives when you are **only** inside code that already standardized on that **`Result`** surface and you do not want two result types in the same
-  boundary.
+- Prefer **`Lyo.Common`** primitives when you are **only** inside code that already standardized on that **`Result`** surface and you do not want two result types in the same boundary.
 
 ## See also
 

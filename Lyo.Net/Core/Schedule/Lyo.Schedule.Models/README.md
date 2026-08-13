@@ -1,7 +1,6 @@
 # Lyo.Schedule.Models
 
-DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a
-transport-friendly representation of "when does this run".
+DTO-only assembly that describes a schedule. Used by [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any consumer that needs a transport-friendly representation of "when does this run".
 
 ## Examples
 
@@ -28,12 +27,12 @@ var next = CronExpression
 
 ## Types
 
-| Type                                    | Role                                                                                                                                                                                                               |
-|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`ScheduleType`**                      | Enum: `SetTimes`, `Interval`, `OneShot`, `Cron`.                                                                                                                                                                   |
-| **`ScheduleDefinition`**                | Immutable record bundling `Type`, `DayFlags`, `MonthFlags`, set-times, interval bounds, one-shot timestamp, and `CronExpression`. `Validate()` throws when fields don't match the chosen `ScheduleType`.           |
-| **`ScheduleDefinitionBuilder`**         | Fluent builder — `SetTimes(...)`, `Interval(...)`, `OneShot(...)`, `SetCron(string)`, `OnDays(DayOfWeek)`, `InMonths(...)`. Calling a `Set*` mutator switches `Type` so callers can't combine inconsistent fields. |
-| **`CronExpression`** / **`CronFormat`** | Standalone cron parser/evaluator. `CronExpression.Parse(expression, CronFormat.Standard \                                                                                                                          |
+| Type | Role |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`ScheduleType`** | Enum: `SetTimes`, `Interval`, `OneShot`, `Cron`. |
+| **`ScheduleDefinition`** | Immutable record bundling `Type`, `DayFlags`, `MonthFlags`, set-times, interval bounds, one-shot timestamp, and `CronExpression`. `Validate()` throws when fields don't match the chosen `ScheduleType`. |
+| **`ScheduleDefinitionBuilder`** | Fluent builder — `SetTimes(...)`, `Interval(...)`, `OneShot(...)`, `SetCron(string)`, `OnDays(DayOfWeek)`, `InMonths(...)`. Calling a `Set*` mutator switches `Type` so callers can't combine inconsistent fields. |
+| **`CronExpression`** / **`CronFormat`** | Standalone cron parser/evaluator. `CronExpression.Parse(expression, CronFormat.Standard \ |
 
 ## Dependencies
 

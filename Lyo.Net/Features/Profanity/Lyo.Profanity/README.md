@@ -1,7 +1,6 @@
 # Lyo.Profanity
 
-File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement
-strategies.
+File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.
 
 ## Features
 
@@ -51,24 +50,22 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 `Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection` — pick exactly one when wiring up the host:
 
-| Entry point                                                                                                                                      | Behaviour                                                                                                                                                                                   |
-|--------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `services.AddProfanityFilterService()`                                                                                                           | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface. |
-| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)`                                                               | Same registration, with an inline options callback.                                                                                                                                         |
-| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | Same registration, binding options from the configuration section (default `"ProfanityFilter"`).                                                                                            |
+| Entry point | Behaviour |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services.AddProfanityFilterService()` | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface. |
+| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)` | Same registration, with an inline options callback. |
+| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | Same registration, binding options from the configuration section (default `"ProfanityFilter"`). |
 
-`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an optional
-`HttpClient` (used when `WordsUrl` is configured).
+`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an
+optional `HttpClient` (used when `WordsUrl` is configured).
 
 ## `IProfanityFilterService` surface
 
-- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult`
-  (`FilteredText`, `HasProfanity`, `Matches`).
+- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult` (`FilteredText`, `HasProfanity`, `Matches`).
 - `FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` — same as above, async.
 - `ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` — fast boolean check, no replacement.
 - `ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` — async variants.
-- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't
-  support refresh.
+- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't support refresh.
 
 ## Word list formats
 
@@ -78,14 +75,14 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 ## Replacement strategies
 
-| Strategy         | Example (input → output)    |
-|------------------|-----------------------------|
-| Remove           | "bad" → ""                  |
-| ReplaceWithChar  | "bad" → "***"               |
-| ReplaceWithWord  | "bad" → "***"               |
-| Mask             | "bad" → "***"               |
-| PreserveBoundary | "bad" → "b*d"               |
-| DetectOnly       | No replacement; only detect |
+| Strategy | Example (input → output) |
+| ---------------- | --------------------------- |
+| Remove | "bad" → "" |
+| ReplaceWithChar | "bad" → "***" |
+| ReplaceWithWord | "bad" → "***" |
+| Mask | "bad" → "***" |
+| PreserveBoundary | "bad" → "b*d" |
+| DetectOnly | No replacement; only detect |
 
 ## Dependencies
 

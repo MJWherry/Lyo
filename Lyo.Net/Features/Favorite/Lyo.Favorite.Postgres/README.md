@@ -1,11 +1,8 @@
 # Lyo.Favorite.Postgres
 
-PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant:
-`PostgresFavoriteOptions.Schema = "favorite"`) with migrations support. Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the
-same `(tenant, ForEntity, FromEntity, context)` tuple are prevented by the `SaveAsync` idempotency check.
+PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core. Persists favorites to the `favorite.favorite` table (schema constant: `PostgresFavoriteOptions.Schema = "favorite"`) with migrations support. Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same `(tenant, ForEntity, FromEntity, context)` tuple are prevented by the `SaveAsync` idempotency check.
 
-`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "favorite-postgres"`), so registering the store also exposes a database liveness
-probe.
+`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "favorite-postgres"`), so registering the store also exposes a database liveness probe.
 
 ## Examples
 
@@ -66,12 +63,9 @@ dotnet ef migrations add MigrationName --project Features/Favorite/Lyo.Favorite.
 
 ## DI extensions
 
-- `AddFavoriteDbContextFactory(Action<PostgresFavoriteOptions>)` / `AddFavoriteDbContextFactory(PostgresFavoriteOptions)` — register only the
-  `IDbContextFactory<FavoriteDbContext>`.
-- `AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` — same, bound from configuration (default section:
-  `PostgresFavorite`).
-- `AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` / `AddPostgresFavoriteStore(PostgresFavoriteOptions)` — register the DbContext factory **and** the `IFavoriteStore`
-  singleton.
+- `AddFavoriteDbContextFactory(Action<PostgresFavoriteOptions>)` / `AddFavoriteDbContextFactory(PostgresFavoriteOptions)` — register only the `IDbContextFactory<FavoriteDbContext>`.
+- `AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` — same, bound from configuration (default section: `PostgresFavorite`).
+- `AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` / `AddPostgresFavoriteStore(PostgresFavoriteOptions)` — register the DbContext factory **and** the `IFavoriteStore` singleton.
 - `AddPostgresFavoriteStoreFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` — register the store using configuration binding.
 
 ## Usage
@@ -94,10 +88,13 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Tenancy
 
-`PostgresFavoriteStore` accepts an optional `Guid? tenantId` on every read/write method and resolves it through `TenancyResolver` under the policy configured in
-`PostgresFavoriteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
-`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store construction. The store applies a `WhereTenant` filter on every query so favorites from one tenant cannot
-leak into another. See
+`PostgresFavoriteStore` accepts an optional `Guid? tenantId` on every read/write
+method and resolves it through `TenancyResolver` under the policy configured in
+`PostgresFavoriteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
+unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
+`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store
+construction. The store applies a `WhereTenant` filter on every query so
+favorites from one tenant cannot leak into another. See
 [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
 for the full policy matrix and `appsettings.json` snippet.
 
@@ -112,8 +109,7 @@ for the full policy matrix and `appsettings.json` snippet.
 
 ## Schema
 
-- **favorite.favorite** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable
-  varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, and `metadata` (jsonb).
+- **favorite.favorite** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, and `metadata` (jsonb).
 
 ## Dependencies
 

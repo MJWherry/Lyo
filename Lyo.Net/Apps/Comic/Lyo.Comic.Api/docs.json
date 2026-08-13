@@ -76,6 +76,14 @@
         [
           "**`ComicFileEncryption:KeySecret`**",
           "Passphrase material for **`AddKeyFromString`** (default **`change-me-in-production`** — **override in production**)."
+        ],
+        [
+          "**`FileStorageArchive:MaxFileCount`**",
+          "Max files per zip (Comic default **5000**)."
+        ],
+        [
+          "**`FileStorageArchive:MaxTotalUncompressedBytes`**",
+          "Max sum of original file sizes before spooling (Comic default **2 GiB**)."
         ]
       ],
       "trail": "The keyed **`IKeyStore`** / **`LocalKeyStore`** / encryption services isolate comic file crypto from any other keyed encryption in the same container (**`FileStorageKey`** = *\n*`\"comic-files\"`**)."
@@ -123,6 +131,12 @@
           "**`/api/comic/series/{id:guid}/chapters`**",
           "`SeriesEndpoints.GetChapters`",
           "`IComicStore.GetChaptersBySeriesAsync` (raw domain objects, no enrichment). Optional `?language=` filter."
+        ],
+        [
+          "GET",
+          "**`/api/comic/series/{id:guid}/archive`**",
+          "`SeriesEndpoints.GetSeriesArchive`",
+          "Nested zip of series/volume/chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{seriesTitle}.zip`**."
         ],
         [
           "GET",
@@ -287,6 +301,12 @@
           "Raw `ComicPage` list (no enrichment)."
         ],
         [
+          "GET",
+          "**`/api/comic/chapters/{id:guid}/archive`**",
+          "`ChapterEndpoints.GetChapterArchive`",
+          "Flat zip of chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{series} - Ch. {n}[ - {title}].zip`**."
+        ],
+        [
           "GET / POST / DELETE",
           "**`/api/comic/chapters/{id:guid}/{tags,ratings,comments,favorites}`**",
           "`ChapterEndpoints`",
@@ -326,6 +346,12 @@
           "**`/files/batch`**",
           "Body: **`FilesBatchReq { Ids: Guid[] }`**",
           "`List<FileBatchEntry>` with `{ Id, ContentType, Data (base64) }`. Missing IDs are silently omitted (no error per id)."
+        ],
+        [
+          "POST",
+          "**`/files/archive`**",
+          "Body: **`FilesArchiveReq { Entries: { Id, Path? }[], FileName? }`**",
+          "`application/zip` attachment. Spools through **`IFileStorageArchiveService`**. Optional **`Path`** is the zip entry path; omitted paths use the stored original name. Optional **`FileName`** is the download name (defaults to **`files.zip`**). Over-limit → 400; missing id → 404."
         ],
         [
           "POST",
@@ -709,6 +735,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
         "transitive",

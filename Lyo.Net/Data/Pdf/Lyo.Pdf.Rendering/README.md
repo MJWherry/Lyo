@@ -36,18 +36,19 @@ public sealed record PdfRasterPage(byte[] PngBytes, int WidthPx, int HeightPx);
 
 ## API
 
-`PdfToImagePageRasterizer` is the default implementation: it dispatches the CPU-bound PDFium call through `Task.Run`, probes the rendered bytes with `ImageSharp` to read the bitmap
-dimensions, and logs an elapsed-ms trace on success. Failures surface as
+`PdfToImagePageRasterizer` is the default implementation: it dispatches the CPU-bound
+PDFium call through `Task.Run`, probes the rendered bytes with `ImageSharp` to read
+the bitmap dimensions, and logs an elapsed-ms trace on success. Failures surface as
 `Result<PdfRasterPage>.Failure` tagged with:
 
 - `PdfRenderErrorCodes.PageOutOfRange` (`"PDF_RENDER_PAGE_OUT_OF_RANGE"`) when
   `pageNumber1Based > pageCount`.
-- `PdfRenderErrorCodes.RenderFailed` (`"PDF_RENDER_FAILED"`) for invalid PDFs, missing/incorrect passwords, or any PDFium error.
+- `PdfRenderErrorCodes.RenderFailed` (`"PDF_RENDER_FAILED"`) for invalid PDFs,
+  missing/incorrect passwords, or any PDFium error.
 
 ## Usage
 
-Pass the document `password` argument when the PDF is protected. Pages are 1-based. Prefer [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when you need to combine rasterization with
-`IOcrEngine` and project bounding boxes back into PDF coordinates.
+Pass the document `password` argument when the PDF is protected. Pages are 1-based. Prefer [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when you need to combine rasterization with `IOcrEngine` and project bounding boxes back into PDF coordinates.
 
 ## Dependencies
 

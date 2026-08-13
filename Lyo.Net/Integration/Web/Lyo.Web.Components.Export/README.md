@@ -41,6 +41,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `MudBlazor` `9.3` — (direct, third-party)
 - `Lyo.Api.Client` — (transitive, lyo)
 - `Lyo.Common` — (transitive, lyo)
+- `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Encryption` — (transitive, lyo)

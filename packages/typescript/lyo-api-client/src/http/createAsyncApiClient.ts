@@ -98,11 +98,13 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
             const body =
                 request.body === undefined ? undefined : JSON.stringify(request.body);
 
+            const signal = request.signal ?? options.signal;
             const response = await transport({
                 method: request.method,
                 url,
                 body,
                 headers,
+                ...(signal ? {signal} : {}),
             });
 
             if (!response.ok) {

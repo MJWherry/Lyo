@@ -7,8 +7,7 @@ A production-ready SMS library for .NET with extensible architecture for multipl
 - **Clean API** - Fluent builder pattern for constructing messages
 - **Phone Number Validation** - Automatic validation and normalization to E.164 format
 - **Bulk Messaging** - Efficient bulk SMS sending with rate limiting and BulkSmsBuilder
-- **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README
-  “Resilience”).
+- **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README “Resilience”).
 - **Custom Exceptions** - InvalidFormatException and ArgumentOutsideRangeException for better error messages
 - **Logging** - Built-in logging support via Microsoft.Extensions.Logging
 - **Dependency Injection** - Full support for .NET dependency injection
@@ -318,8 +317,7 @@ Register the provider-specific service using the provider's extension methods. E
 
 ## 3. Use the Service
 
-The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces * *
-`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
+The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces * *`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
 
 ## Sending Bulk Messages
 
@@ -349,7 +347,8 @@ Fired after a bulk send operation completes:
 
 #### Complete Event Example
 
-**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or failure.
+**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or
+failure.
 
 ## Phone Number Formats
 
@@ -374,15 +373,14 @@ The stack surfaces structured **`Result`** errors and validates inputs early (bu
 - **No built-in retries**: callers or HTTP layers should implement policy if needed
 - **Error codes**: `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
 
-| Constant             | Value                 | Raised when                                                    |
-|----------------------|-----------------------|----------------------------------------------------------------|
-| `BuildFailed`        | `BUILD_FAILED`        | A builder threw while constructing the request.                |
-| `MessageNotBuilt`    | `MESSAGE_NOT_BUILT`   | The bulk pipeline reached the send step with no built request. |
-| `OperationCancelled` | `OPERATION_CANCELLED` | The bulk send was cancelled via `CancellationToken`.           |
-| `MissingFromNumber`  | `MISSING_FROM_NUMBER` | No `From` number was provided or configured.                   |
+| Constant | Value | Raised when |
+| -------------------- | --------------------- | -------------------------------------------------------------- |
+| `BuildFailed` | `BUILD_FAILED` | A builder threw while constructing the request. |
+| `MessageNotBuilt` | `MESSAGE_NOT_BUILT` | The bulk pipeline reached the send step with no built request. |
+| `OperationCancelled` | `OPERATION_CANCELLED` | The bulk send was cancelled via `CancellationToken`. |
+| `MissingFromNumber` | `MISSING_FROM_NUMBER` | No `From` number was provided or configured. |
 
 Providers attach their own codes on derived result types (e.g. `TwilioSmsResult.TwilioErrorCode`).
-
 - **Exception Details**: Full exception information available in results
 - **Logging**: All operations are logged for debugging
 - **Custom Exceptions**:
@@ -445,16 +443,16 @@ Log levels:
 `SmsServiceBase` emits its counters/timers under the keys exposed by `Constants.Metrics`. Providers override
 `CreateMetricNamesDictionary()` to prefix these with their own namespace (Twilio uses `sms.twilio.*`).
 
-| Constant key (`Lyo.Sms.Constants.Metrics`) | Metric name                      | Kind    |
-|--------------------------------------------|----------------------------------|---------|
-| `SendDuration`                             | `sms.send.duration`              | Timer   |
-| `SendSuccess`                              | `sms.send.success`               | Counter |
-| `SendFailure`                              | `sms.send.failure`               | Counter |
-| `BulkSendDuration`                         | `sms.bulk.send.duration`         | Timer   |
-| `BulkSendTotal`                            | `sms.bulk.send.total`            | Counter |
-| `BulkSendSuccess`                          | `sms.bulk.send.success`          | Counter |
-| `BulkSendFailure`                          | `sms.bulk.send.failure`          | Counter |
-| `BulkSendLastDurationMs`                   | `sms.bulk.send.last_duration_ms` | Gauge   |
+| Constant key (`Lyo.Sms.Constants.Metrics`) | Metric name | Kind |
+| ------------------------------------------ | -------------------------------- | ------- |
+| `SendDuration` | `sms.send.duration` | Timer |
+| `SendSuccess` | `sms.send.success` | Counter |
+| `SendFailure` | `sms.send.failure` | Counter |
+| `BulkSendDuration` | `sms.bulk.send.duration` | Timer |
+| `BulkSendTotal` | `sms.bulk.send.total` | Counter |
+| `BulkSendSuccess` | `sms.bulk.send.success` | Counter |
+| `BulkSendFailure` | `sms.bulk.send.failure` | Counter |
+| `BulkSendLastDurationMs` | `sms.bulk.send.last_duration_ms` | Gauge |
 
 ## Convenience MMS overloads
 

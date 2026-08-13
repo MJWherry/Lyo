@@ -11,6 +11,14 @@
   "readmePath": "Lyo.Net/Security/Authentication/Lyo.Authentication.AspNetCore/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Authentication",
       "kind": "lyo",
       "tags": [
@@ -51,6 +59,14 @@
       ]
     },
     {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Hashing",
       "kind": "lyo",
       "tags": [
@@ -68,6 +84,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

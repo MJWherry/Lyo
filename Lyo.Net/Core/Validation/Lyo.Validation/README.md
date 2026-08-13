@@ -1,7 +1,6 @@
 # Lyo.Validation
 
-`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are
-populated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.
+`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are populated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.
 
 ## Examples
 
@@ -44,8 +43,7 @@ Result<CreateUserRequest> result = new CreateUserRequest { /* ... */ }.ValidateW
 ## What lives here
 
 - Fluent validator composition via `ValidatorBuilder<T>` and `PropertyValidatorBuilder<T, TProperty>`.
-- Attribute-based validation through built-in attributes such as `Required`, `NotEmpty`, `NotWhiteSpace`, `Length`, `Regex`, `Email`, `Phone`, `Uri`, and `Range` (in
-  `Lyo.Validation.Attributes`).
+- Attribute-based validation through built-in attributes such as `Required`, `NotEmpty`, `NotWhiteSpace`, `Length`, `Regex`, `Email`, `Phone`, `Uri`, and `Range` (in `Lyo.Validation.Attributes`).
 - `AttributeValidator<T>` for reflection-driven validation across both Lyo's `ValidationAttributeBase` and `System.ComponentModel.DataAnnotations` (including `IValidatableObject`).
 - Structured property metadata via `ValidationMetadataKeys` (`PropertyName`, `AttemptedValue`) attached to each failing `Error.Metadata`.
 - Stable error codes via `Lyo.Result.ValidationErrorCodes` (e.g. `NullValue`, `EmptyValue`, `InvalidLength`, `InvalidEmail`, `OutOfRange`, `ValidationFailed`).

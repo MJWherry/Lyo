@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { ComicChapterReq, ComicChapterRes, ComicPageReq, ComicPageRes } from "lyo-comic-api-client";
 import { getApi, apiFetch } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 import { isUnauthorized } from "@/lib/auth/unauthorized";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "seriesId, language, and chapterNumber are required." }, { status: 400 });
     }
 
-    const api = await getApi();
+    const api = await getApi(request.signal);
     const created = await api.create<ComicChapterReq, ComicChapterRes>("/api/comic/chapters", {
       seriesId: meta.seriesId,
       volumeId: meta.volumeId || null,
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         seriesId: meta.seriesId,
       });
       if (meta.volumeId) qs.set("volumeId", meta.volumeId);
-      const up = await apiFetch(`/files/upload?${qs.toString()}`, { method: "POST", body: uploadForm });
+      const up = await apiFetch(`/files/upload?${qs.toString()}`, { method: "POST", body: uploadForm, signal: request.signal });
       if (!up.ok) {
         return NextResponse.json({ error: `Upload failed for ${file.name}` }, { status: 502 });
       }
@@ -98,6 +99,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ isSuccess: true, chapter, pages });
   } catch (err) {
+    const aborted = abortedUpstreamResponse(err, request.signal);
+    if (aborted) return aborted;
     if (isUnauthorized(err)) {
       return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     }

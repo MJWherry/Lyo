@@ -1,5 +1,9 @@
 using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Services;
+using Lyo.Comic.Api.Storage;
+using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Models;
+using Lyo.Comic;
 using Lyo.Comment;
 using Lyo.EntityReference.Models;
 using Lyo.Favorite;
@@ -31,6 +35,7 @@ public static class SeriesEndpoints
 
         // Volumes by series
         group.MapGet("/{id:guid}/volumes", GetVolumes);
+        group.MapGet("/{id:guid}/archive", GetSeriesArchive);
 
         // Cross-domain sub-resources
         group.MapGet("/tags", GetAllTags);
@@ -96,6 +101,35 @@ public static class SeriesEndpoints
         var volumes = await store.GetVolumesBySeriesAsync(id, ct);
         var enriched = await enricher.EnrichVolumeListAsync(volumes, ct: ct);
         return Results.Ok(enriched);
+    }
+
+    private static async Task<IResult> GetSeriesArchive(
+        Guid id,
+        string? fileName,
+        IComicStore store,
+        [FromKeyedServices("comic-files")] IFileStorageArchiveService archive,
+        [FromKeyedServices("comic-files")] IFileStorageService files,
+        IHttpClientFactory http,
+        FileStorageArchiveOptions options,
+        CancellationToken ct = default)
+    {
+        var series = await store.GetSeriesByIdAsync(id, ct);
+        if (series is null)
+            ArchiveEndpointHelpers.ThrowNotFound();
+
+        var volumes = await store.GetVolumesBySeriesAsync(id, ct);
+        var chapters = await store.GetChaptersBySeriesAsync(id, ct: ct);
+        var pagesByChapter = new Dictionary<Guid, IReadOnlyList<ComicPage>>();
+        foreach (var chapter in chapters) {
+            var pages = await store.GetPagesByChapterAsync(chapter.Id, ct);
+            pagesByChapter[chapter.Id] = pages;
+        }
+
+        var entries = ComicArchiveLayout.SeriesEntries(series, volumes, chapters, pagesByChapter);
+        var zipName = string.IsNullOrWhiteSpace(fileName) ? ComicArchiveLayout.SeriesZipFileName(series.Title) : fileName;
+        return await ArchiveEndpointHelpers.StreamComicArchiveAsync(
+            entries, zipName, archive, files, http.CreateClient(ArchiveEndpointHelpers.HttpClientName), options,
+            "Series has no pages with images.", ct);
     }
 
     private static async Task<IResult> GetAllTags(ITagStore tagStore, CancellationToken ct = default)

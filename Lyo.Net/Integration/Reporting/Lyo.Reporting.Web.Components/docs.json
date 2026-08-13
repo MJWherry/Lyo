@@ -78,6 +78,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Reporting.Client",
       "kind": "lyo",
       "tags": [

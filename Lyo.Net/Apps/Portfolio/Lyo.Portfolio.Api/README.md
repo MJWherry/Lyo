@@ -1,7 +1,6 @@
 # Lyo.Portfolio.Api
 
-Dedicated API host for the public Next.js portfolio (`apps/portfolio`). Keeps `Lyo.TestApi` as a separate kitchen-sink host. A portfolio Gateway (Test Gateway-style) can point here
-later. Single Postgres (schemas for people/config/job/reporting/filestore/auth), local disk file storage, RabbitMQ for job events, and Google OIDC via Lyo authentication.
+Dedicated API host for the public Next.js portfolio (`apps/portfolio`). Keeps `Lyo.TestApi` as a separate kitchen-sink host. A portfolio Gateway (Test Gateway-style) can point here later. Single Postgres (schemas for people/config/job/reporting/filestore/auth), local disk file storage, RabbitMQ for job events, and Google OIDC via Lyo authentication.
 
 ## Features
 
@@ -32,8 +31,7 @@ later. Single Postgres (schemas for people/config/job/reporting/filestore/auth),
 
 ## Google Cloud setup
 
-Create an OAuth client on your Google Cloud console. Authorized redirect URI must match `GoogleAuth:RedirectUri` exactly (local: `http://localhost:5251/auth/callback/google`). Add
-production API callback when deploying. Whitelist portfolio and Gateway origins in `LyoOidcBff:AllowedReturnOrigins`. Seed domain data yourself via the HTTP APIs after deploy.
+Create an OAuth client on your Google Cloud console. Authorized redirect URI must match `GoogleAuth:RedirectUri` exactly (local: `http://localhost:5251/auth/callback/google`). Add production API callback when deploying. Whitelist portfolio and Gateway origins in `LyoOidcBff:AllowedReturnOrigins`. Seed domain data yourself via the HTTP APIs after deploy.
 
 ## Not included (stay on TestApi)
 

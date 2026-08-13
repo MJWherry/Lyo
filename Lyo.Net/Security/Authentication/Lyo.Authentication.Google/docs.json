@@ -208,6 +208,14 @@
       ]
     },
     {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Authentication",
       "kind": "lyo",
       "tags": [
@@ -224,6 +232,14 @@
       ]
     },
     {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Hashing",
       "kind": "lyo",
       "tags": [
@@ -233,6 +249,14 @@
     },
     {
       "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

@@ -6,6 +6,8 @@ export interface ApiRequest<TBody = unknown> {
     body?: TBody;
     headers?: Record<string, string>;
     query?: Record<string, string | number | boolean | null | undefined>;
+    /** Abort the underlying transport when the caller disconnects or navigates away. */
+    signal?: AbortSignal;
 }
 
 export interface ApiResponse<TData = unknown> {
@@ -16,20 +18,18 @@ export interface ApiResponse<TData = unknown> {
     rawBody?: string;
 }
 
-export type ApiTransport = (request: {
+export type TransportRequest = {
     method: HttpMethod;
     url: string;
     body?: string;
     headers: Record<string, string>;
-}) => ApiResponse<unknown>;
+    signal?: AbortSignal;
+};
+
+export type ApiTransport = (request: TransportRequest) => ApiResponse<unknown>;
 
 /** Promise-based transport for Node/Next.js/browsers (`fetch`, axios, undici). */
-export type AsyncApiTransport = (request: {
-    method: HttpMethod;
-    url: string;
-    body?: string;
-    headers: Record<string, string>;
-}) => Promise<ApiResponse<unknown>>;
+export type AsyncApiTransport = (request: TransportRequest) => Promise<ApiResponse<unknown>>;
 
 export interface ApiClientOptions {
     baseUrl: string;
@@ -43,4 +43,6 @@ export interface AsyncApiClientOptions {
     defaultHeaders?: Record<string, string>;
     token?: string;
     transport: AsyncApiTransport;
+    /** Applied to every request unless the request sets its own `signal`. */
+    signal?: AbortSignal;
 }

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Api.Tests.Middleware;
 
@@ -198,5 +199,19 @@ public class LoggingMiddlewareTests
         Assert.IsAssignableFrom<HttpException>(ex);
         Assert.NotNull(ex.ProblemDetails);
         Assert.Contains("Widget", ex.ProblemDetails.Detail);
+    }
+
+    [Fact]
+    public async Task RequestAborted_IsNotConvertedTo500()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var context = new DefaultHttpContext { RequestAborted = cts.Token };
+        context.Response.Body = new MemoryStream();
+        RequestDelegate next = _ => throw new OperationCanceledException(cts.Token);
+        var mw = new LoggingMiddleware(next, NullLogger<LoggingMiddleware>.Instance, null!);
+        await mw.Invoke(context);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        Assert.Equal(0, context.Response.Body.Length);
     }
 }

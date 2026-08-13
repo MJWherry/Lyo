@@ -87,34 +87,46 @@ const authedTransport: AsyncApiTransport = async (request) => {
 };
 
 /** Server-only base Lyo API client with the session Bearer. */
-export async function getApi(): Promise<AsyncApiClient> {
+export async function getApi(signal?: AbortSignal): Promise<AsyncApiClient> {
   return createAsyncApiClient({
     baseUrl: requireApiBaseUrl(),
     transport: authedTransport,
+    signal,
   });
 }
 
 /** Server-only Comic API client. Never import from Client Components. */
-export async function getComicApi() {
-  return createAsyncComicApiClient(await getApi());
+export async function getComicApi(signal?: AbortSignal) {
+  return createAsyncComicApiClient(await getApi(signal));
+}
+
+function throwIfAborted(signal?: AbortSignal | null): void {
+  if (!signal?.aborted)
+    return;
+  const err = new Error("This operation was aborted");
+  err.name = "AbortError";
+  throw err;
 }
 
 /** Raw fetch against the Comic API, attaching the session Bearer. Refreshes once on 401. */
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  throwIfAborted(init?.signal);
   const base = requireApiBaseUrl();
   const url = path.startsWith("http") ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`;
 
   const attempt = async (token?: string) => {
+    throwIfAborted(init?.signal);
     const headers = new Headers(init?.headers);
     if (token && !headers.has("Authorization")) {
       headers.set("Authorization", `Bearer ${token}`);
     }
-    return fetch(url, { ...init, headers, cache: "no-store" });
+    return fetch(url, { ...init, headers, cache: "no-store", keepalive: false });
   };
 
   let session = await readSession();
   let res = await attempt(session?.accessToken);
   if (res.status === 401 && session?.refreshToken) {
+    throwIfAborted(init?.signal);
     const refreshed = await refreshSession(session);
     if (refreshed) {
       session = refreshed;

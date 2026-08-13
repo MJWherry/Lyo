@@ -76,6 +76,14 @@
         [
           "**`ComicFileEncryption:KeySecret`**",
           "Passphrase material for **`AddKeyFromString`** (default **`change-me-in-production`** — **override in production**)."
+        ],
+        [
+          "**`FileStorageArchive:MaxFileCount`**",
+          "Max files per zip (Comic default **5000**)."
+        ],
+        [
+          "**`FileStorageArchive:MaxTotalUncompressedBytes`**",
+          "Max sum of original file sizes before spooling (Comic default **2 GiB**)."
         ]
       ],
       "trail": "The keyed **`IKeyStore`** / **`LocalKeyStore`** / encryption services isolate comic file crypto from any other keyed encryption in the same container (**`FileStorageKey`** = *\n*`\"comic-files\"`**)."
@@ -123,6 +131,12 @@
           "**`/api/comic/series/{id:guid}/chapters`**",
           "`SeriesEndpoints.GetChapters`",
           "`IComicStore.GetChaptersBySeriesAsync` (raw domain objects, no enrichment). Optional `?language=` filter."
+        ],
+        [
+          "GET",
+          "**`/api/comic/series/{id:guid}/archive`**",
+          "`SeriesEndpoints.GetSeriesArchive`",
+          "Nested zip of series/volume/chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{seriesTitle}.zip`**."
         ],
         [
           "GET",
@@ -287,6 +301,12 @@
           "Raw `ComicPage` list (no enrichment)."
         ],
         [
+          "GET",
+          "**`/api/comic/chapters/{id:guid}/archive`**",
+          "`ChapterEndpoints.GetChapterArchive`",
+          "Flat zip of chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{series} - Ch. {n}[ - {title}].zip`**."
+        ],
+        [
           "GET / POST / DELETE",
           "**`/api/comic/chapters/{id:guid}/{tags,ratings,comments,favorites}`**",
           "`ChapterEndpoints`",
@@ -329,6 +349,12 @@
         ],
         [
           "POST",
+          "**`/files/archive`**",
+          "Body: **`FilesArchiveReq { Entries: { Id, Path? }[], FileName? }`**",
+          "`application/zip` attachment. Spools through **`IFileStorageArchiveService`**. Optional **`Path`** is the zip entry path; omitted paths use the stored original name. Optional **`FileName`** is the download name (defaults to **`files.zip`**). Over-limit → 400; missing id → 404."
+        ],
+        [
+          "POST",
           "**`/files/upload`**",
           "`IFormFile` (multipart). Optional query: **`seriesId`**, **`volumeId`**, **`chapterId`**.",
           "`{ Id }`. **Antiforgery disabled.** Streamed via `SaveFromStreamAsync` using **`ComicFileUploadOptions.{Compress, Encrypt, KeyId}`** from the keyed singleton."
@@ -352,9 +378,9 @@
       "type": "list",
       "title": "Limitations",
       "items": [
-        "**Authentication / authorization is not configured here.** Every `ApiEndpointBuilder` group in `BuildComicApiEndpoints` is registered with **`.AllowAnonymous()`**, and the endpoints in `Endpoints/*.cs` add no auth filters. The host application is expected to wrap the route group behind its own pipeline (e.g. an upstream JWT bearer scheme, policy-based authorization, an API-key middleware, or a reverse-proxy auth-gateway) **before exposing `/api/comic` or `/files` to the public internet**.",
-        "**No `IsFavorited` for the calling user.** All endpoints invoke `ComicEnrichmentService` with **`callerRef = null`**, because this project does not yet wire up a caller-ref accessor. To enable per-caller favorite state, the host must introduce an identity convention (for example, a `Lyo.HttpContext.ICallerRefAccessor`-style accessor populated from the auth middleware) and thread the resolved `EntityRef` into the `EnrichSeriesAsync` / `EnrichSeriesListAsync` / `EnrichVolumeAsync` / `EnrichVolumeListAsync` / `EnrichChapterAsync` / `EnrichChapterListAsync` calls. Until then, `IsFavorited` stays `null`, even when the user has favorited the entity.",
-        "**`/files/upload` has `DisableAntiforgery()`**. Combine with auth before exposing it externally."
+        "**Comic API requires authentication.** `BuildComicApiEndpoints` uses **`.RequireAuthorization()`**, and `/api/comic` plus `/files` are mapped with the same requirement. Anonymous endpoints are **`GET /health`**, JWKS, and **`/auth/*`** (Google OIDC BFF). Configure **`GoogleAuth`**, **`LyoJwt`**, and **`PostgresUser`** on the host.",
+        "**`IsFavorited`** is filled when the request carries a Lyo JWT (`lyo:user` / `sub`). Anonymous callers still see `null`.",
+        "**`/files/upload` has `DisableAntiforgery()`**. Combine with auth (already required) before exposing it externally."
       ]
     }
   ],
@@ -395,6 +421,46 @@
     },
     {
       "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Google",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.OpenIdConnect",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -513,6 +579,14 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
       ]
     },
     {
@@ -661,6 +735,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
         "transitive",

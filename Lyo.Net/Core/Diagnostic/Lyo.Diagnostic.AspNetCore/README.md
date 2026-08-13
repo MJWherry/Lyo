@@ -1,7 +1,6 @@
 # Lyo.Diagnostic.AspNetCore
 
-ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without
-replacing your existing problem-details middleware.
+ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your existing problem-details middleware.
 
 ## Examples
 
@@ -43,13 +42,13 @@ public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
 
 ## Options (`DiagnosticWebOptions`)
 
-| Property                      | Purpose                                                                                      |
-|-------------------------------|----------------------------------------------------------------------------------------------|
-| `MinimumSeverity`             | Only occurrences at or above this severity are written to the inbox.                         |
-| `RecordExpectedControlFlow`   | When `false`, expected control-flow classifications are skipped.                             |
-| `BreadcrumbCapacity`          | Max breadcrumbs per request (`IBreadcrumbTrail`).                                            |
-| `InMemoryInboxMaxOccurrences` | Cap for the singleton `InMemoryErrorInbox`.                                                  |
-| `CorrelationIdHeaders`        | Headers tried in order for `RequestMetadata.CorrelationId`; falls back to `TraceIdentifier`. |
+| Property | Purpose |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `MinimumSeverity` | Only occurrences at or above this severity are written to the inbox. |
+| `RecordExpectedControlFlow` | When `false`, expected control-flow classifications are skipped. |
+| `BreadcrumbCapacity` | Max breadcrumbs per request (`IBreadcrumbTrail`). |
+| `InMemoryInboxMaxOccurrences` | Cap for the singleton `InMemoryErrorInbox`. |
+| `CorrelationIdHeaders` | Headers tried in order for `RequestMetadata.CorrelationId`; falls back to `TraceIdentifier`. |
 
 ## Breadcrumbs in a controller
 

@@ -18,6 +18,7 @@
         <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Core\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
+        <ProjectReference Include="..\..\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

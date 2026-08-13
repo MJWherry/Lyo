@@ -3,6 +3,7 @@ import { isWhereClause } from "lyo-query";
 import { isProjectedQueryRes } from "lyo-api-client";
 import { normalizeComicCardRows } from "lyo-comic-api-client";
 import { getComicApi } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 import { isUnauthorized } from "@/lib/auth/unauthorized";
 import { buildProjectionQuery, normalizeScope, type SearchBody } from "@/lib/search/buildQuery";
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid whereClause shape." }, { status: 400 });
   }
 
-  const comic = await getComicApi();
+  const comic = await getComicApi(request.signal);
   const tags = body.simple?.tags?.filter((t) => typeof t === "string" && t.trim()) ?? [];
   let keys: unknown[][] | undefined;
 
@@ -82,6 +83,8 @@ export async function POST(request: NextRequest) {
       error: response.data.error ?? null,
     });
   } catch (err) {
+    const aborted = abortedUpstreamResponse(err, request.signal);
+    if (aborted) return aborted;
     if (isUnauthorized(err)) {
       return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     }

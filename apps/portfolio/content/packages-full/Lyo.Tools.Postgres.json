@@ -10,7 +10,7 @@
     {
       "type": "paragraph",
       "title": "Entry point",
-      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, characters, tags, and authors. - `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc."
+      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, volumes, chapters (with `VolumeId`), pages, character–volume appearances, and tags. Prompts to replace existing rows. - `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc."
     },
     {
       "type": "list",

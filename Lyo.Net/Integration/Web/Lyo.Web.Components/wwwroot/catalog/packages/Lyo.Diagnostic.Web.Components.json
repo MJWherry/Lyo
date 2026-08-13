@@ -100,6 +100,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [

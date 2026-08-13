@@ -29,6 +29,9 @@ public sealed class DiagnosticExceptionRecordingMiddleware(RequestDelegate next)
         try {
             await next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) {
+            throw;
+        }
         catch (Exception ex) {
             await TryRecordAndLogAsync(ex);
             throw;

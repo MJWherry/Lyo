@@ -1,12 +1,11 @@
 # Lyo.Barcode.TestWorkbench.Web.Components
 
-Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo
-gateway test harness.
+Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo gateway test harness.
 
 ## Components
 
-| Component                      | Purpose                                                                                                                        |
-|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Component | Purpose |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | **`<BarcodeTestWorkbench />`** | Page-level wrapper that titles the surface ("Barcode test workbench") and renders `<BarcodeWorkbench />`. No extra parameters. |
 
 ## DI / required services
@@ -23,6 +22,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` — (transitive, lyo)
 - `Lyo.Barcode` — (transitive, lyo)
 - `Lyo.Common` — (transitive, lyo)
+- `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Encryption` — (transitive, lyo)

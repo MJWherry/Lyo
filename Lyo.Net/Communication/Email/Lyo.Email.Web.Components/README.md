@@ -25,6 +25,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` — (transitive, lyo)
 - `Lyo.Api.Models` — (transitive, lyo)
 - `Lyo.Common` — (transitive, lyo)
+- `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Email.Models` — (transitive, lyo)

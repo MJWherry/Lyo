@@ -10,7 +10,7 @@
     {
       "type": "markdown",
       "title": "Layout",
-      "body": "```text\nRequest/\n├── ComicSeriesReq.cs (also: ComicAlternateTitleReq)\n├── ComicVolumeReq.cs\n├── ComicChapterReq.cs\n├── ComicCharacterReq.cs\n├── ComicPageReq.cs\n└── CrossDomainReqs.cs (AddTagReq, AddRatingReq, AddCommentReq, AddFavoriteReq, RemoveFavoriteReq)\n\nResponse/\n├── ComicSeriesRes.cs (also: ComicAlternateTitleRes)\n├── ComicVolumeRes.cs\n├── ComicChapterRes.cs\n├── ComicCharacterRes.cs\n├── ComicPageRes.cs\n└── ComicFileBatchRes.cs (FilesBatchReq, FileBatchEntry)\n```\n\n> **Note:** there is no `Search/` directory. The search filter used by `POST /api/comic/series/search` is **`Lyo.Comic.ComicSeriesQuery`**, defined in\n> [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) and re-used by both the API and the client."
+      "body": "```text\nRequest/\n├── ComicSeriesReq.cs (also: ComicAlternateTitleReq)\n├── ComicVolumeReq.cs\n├── ComicChapterReq.cs\n├── ComicCharacterReq.cs\n├── ComicPageReq.cs\n├── FilesArchiveReq.cs (FilesArchiveReq, FilesArchiveEntryReq)\n└── CrossDomainReqs.cs (AddTagReq, AddRatingReq, AddCommentReq, AddFavoriteReq, RemoveFavoriteReq)\n\nResponse/\n├── ComicSeriesRes.cs (also: ComicAlternateTitleRes)\n├── ComicVolumeRes.cs\n├── ComicChapterRes.cs\n├── ComicCharacterRes.cs\n├── ComicPageRes.cs\n└── ComicFileBatchRes.cs (FilesBatchReq, FileBatchEntry)\n```\n\n> **Note:** there is no `Search/` directory. The search filter used by `POST /api/comic/series/search` is **`Lyo.Comic.ComicSeriesQuery`**, defined in\n> [`Lyo.Comic`](../../../Features/Comic/Lyo.Comic/README.md) and re-used by both the API and the client."
     },
     {
       "type": "table",
@@ -35,6 +35,11 @@
           "**Cross-domain writes**",
           "`AddTagReq`, `AddRatingReq`, `AddCommentReq`, `AddFavoriteReq`, `RemoveFavoriteReq`",
           "`series/volumes/chapters/{id}/{tags,ratings,comments,favorites}` POST/DELETE handlers in `SeriesEndpoints` / `VolumeEndpoints` / `ChapterEndpoints`."
+        ],
+        [
+          "**File archive**",
+          "`FilesArchiveReq`, `FilesArchiveEntryReq`",
+          "`POST /files/archive`. `FileName` is the zip download name; each entry `Path` is the relative zip path (optional)."
         ]
       ],
       "trail": "`AddTagReq` carries `Name`, `TagType` (defaults to `\"tag\"`), and an optional `Slug`. `AddRatingReq`, `AddCommentReq`, `AddFavoriteReq`, and `RemoveFavoriteReq` all carry\n**`FromEntityType` / `FromEntityId`** so the API can record who made the assertion — the server **never trusts** an authenticated identity here (see the *Limitations* section of\nthe Comic.Api README)."

@@ -166,7 +166,7 @@ export function SeriesForm({
         const pageRefs = await collectPageImageRefs((chapters ?? []).map((c) => c.id));
         await deleteCoverFileIfOrphan(previousCover, nextCover, pageRefs);
         patchProgressCover(series.id, nextCover);
-        await revalidateComicViews(series.slug);
+        await revalidateComicViews(series.id, series.slug);
         if (nextCover) patch("coverRef", nextCover);
         if (coverPreview) URL.revokeObjectURL(coverPreview);
         setCoverPreview(null);

@@ -414,8 +414,7 @@ dotnet test
 
 ## Multiple Attachments as ZIP
 
-`ZipFileBuilder` packages multiple files into a single ZIP byte array that can be attached like any other file: `ZipFileBuilder` is a one-shot builder. After calling `Build()`/
-`BuildToFile()`/`BuildToStream()` the archive is closed and the instance cannot be reused.
+`ZipFileBuilder` packages multiple files into a single ZIP byte array that can be attached like any other file: `ZipFileBuilder` is a one-shot builder. After calling `Build()`/`BuildToFile()`/`BuildToStream()` the archive is closed and the instance cannot be reused.
 
 ## Resilience
 
@@ -539,8 +538,7 @@ Log levels:
 
 ## API Reference — IEmailService
 
-- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)` - Send email with
-  custom from address
+- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)` - Send email with custom from address
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, CancellationToken ct = default)` - Send email with default from address
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequest request, CancellationToken ct = default)` - Send email using EmailRequest object
 - `Task<IReadOnlyList<Result<EmailRequest>>> SendBulkEmailAsync(IEnumerable<EmailRequestBuilder> builders, CancellationToken ct = default)` - Send multiple emails sequentially
@@ -613,8 +611,7 @@ Multiple threads can safely use the same instance concurrently.
 
 - `MaxBulkEmailLimit` (default `1000`) — `SendBulkEmailAsync` throws `ArgumentOutsideRangeException` if the input exceeds this count.
 - `MaxAttachmentCountPerEmail` (default `20`) — enforced per request on both single and bulk sends.
-- `BulkEmailConcurrencyLimit` (default `10`) — a soft cap used by callers planning concurrent bulk batches. The current implementation processes messages sequentially within a
-  single bulk call, so this value does not change the in-call behaviour.
+- `BulkEmailConcurrencyLimit` (default `10`) — a soft cap used by callers planning concurrent bulk batches. The current implementation processes messages sequentially within a single bulk call, so this value does not change the in-call behaviour.
 
 ## Important Notes — Cancellation
 

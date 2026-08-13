@@ -1,19 +1,14 @@
 # Lyo.Tools.Postgres
 
-Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Useful for spinning a
-fresh local database up to the latest schema or stepping a single schema back to a specific migration.
+Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Useful for spinning a fresh local database up to the latest schema or stepping a single schema back to a specific migration.
 
 ## Entry point
 
-`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in
-`appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are
-wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, characters, tags, and authors. -
-`PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc.
+`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, volumes, chapters (with `VolumeId`), pages, character–volume appearances, and tags. Prompts to replace existing rows. - `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc.
 
 ## Main menu
 
-- **Seeds** — Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already
-  has rows.
+- **Seeds** — Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already has rows.
 - **Migrations** — see below.
 - **Change Connection String** — accepts a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`).
 
@@ -21,29 +16,29 @@ wired: - `MigrationRunner` — drives EF migrations on demand for any registered
 
 `MigrationRunner` (see `MigrationRunner.cs`) knows about 21 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:
 
-| Label             | DbContext                    | Schema           |
-|-------------------|------------------------------|------------------|
-| Audit             | `AuditDbContext`             | `audit`          |
-| ChangeTracker     | `ChangeTrackerDbContext`     | `change_tracker` |
-| Comic             | `ComicDbContext`             | `comic`          |
-| Comment           | `CommentDbContext`           | `comment`        |
-| Config            | `ConfigDbContext`            | `config`         |
-| ContactUs         | `ContactUsDbContext`         | `contact`        |
-| Discord           | `DiscordDbContext`           | `discord`        |
-| Email             | `EmailDbContext`             | `email`          |
-| Endato            | `EndatoDbContext`            | `endato`         |
-| Favorite          | `FavoriteDbContext`          | `favorite`       |
-| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore`      |
-| HomeInventory     | `HomeInventoryDbContext`     | `home_inventory` |
-| Job               | `JobContext`                 | `job`            |
-| Note              | `NoteDbContext`              | `note`           |
-| People            | `PeopleDbContext`            | `people`         |
-| Rating            | `RatingDbContext`            | `rating`         |
-| Reporting         | `ReportingContext`           | `reporting`      |
-| ShortUrl          | `ShortUrlDbContext`          | `url`            |
-| Sms               | `SmsDbContext`               | `sms`            |
-| SmsTwilio         | `TwilioSmsDbContext`         | `sms`            |
-| Tag               | `TagDbContext`               | `tag`            |
+| Label | DbContext | Schema |
+| ----------------- | ---------------------------- | ---------------- |
+| Audit | `AuditDbContext` | `audit` |
+| ChangeTracker | `ChangeTrackerDbContext` | `change_tracker` |
+| Comic | `ComicDbContext` | `comic` |
+| Comment | `CommentDbContext` | `comment` |
+| Config | `ConfigDbContext` | `config` |
+| ContactUs | `ContactUsDbContext` | `contact` |
+| Discord | `DiscordDbContext` | `discord` |
+| Email | `EmailDbContext` | `email` |
+| Endato | `EndatoDbContext` | `endato` |
+| Favorite | `FavoriteDbContext` | `favorite` |
+| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore` |
+| HomeInventory | `HomeInventoryDbContext` | `home_inventory` |
+| Job | `JobContext` | `job` |
+| Note | `NoteDbContext` | `note` |
+| People | `PeopleDbContext` | `people` |
+| Rating | `RatingDbContext` | `rating` |
+| Reporting | `ReportingContext` | `reporting` |
+| ShortUrl | `ShortUrlDbContext` | `url` |
+| Sms | `SmsDbContext` | `sms` |
+| SmsTwilio | `TwilioSmsDbContext` | `sms` |
+| Tag | `TagDbContext` | `tag` |
 
 The menu offers **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:
 
@@ -66,8 +61,7 @@ call, so the "Change Connection String" menu option takes effect immediately.
 
 ## Configuration
 
-`appsettings.json` only declares `ConnectionString` (empty) and logging defaults. Override locally via `appsettings.Development.json`, environment variables (`ConnectionString=…`),
-or the interactive **Change Connection String** menu.
+`appsettings.json` only declares `ConnectionString` (empty) and logging defaults. Override locally via `appsettings.Development.json`, environment variables (`ConnectionString=…`), or the interactive **Change Connection String** menu.
 
 ## Dependencies
 

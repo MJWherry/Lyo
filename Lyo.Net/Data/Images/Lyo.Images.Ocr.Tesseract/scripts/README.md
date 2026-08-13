@@ -6,8 +6,7 @@ InteropDotNet looks under $(OutputPath)x64/ for versioned .so names. This script
 
 ## Commands
 
-- `python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py "$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0"` —
-  Link libs into a TFM output folder after dotnet build
+- `python3 Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/setup_linux_tesseract_nuget_libs.py "$PWD/Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract.Tests/bin/Debug/net10.0"` — Link libs into a TFM output folder after dotnet build
 - `python3 .../setup_linux_tesseract_nuget_libs.py .../net10.0 --also-system` — Also install symlinks under /usr/local/lib (sudo)
 
 ## Notes

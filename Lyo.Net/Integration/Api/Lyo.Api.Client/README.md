@@ -1,7 +1,6 @@
 # Lyo.Api.Client
 
-HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **
-`System.Text.Json`** parity with server options when you wire them.
+HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with server options when you wire them.
 
 Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—resolve via **`IHttpClientFactory`** so lifetimes stay correct in DI).
 
@@ -41,7 +40,7 @@ services.AddLyoApiClient(
 **Files**
 
 - **`GetFileAsync` / `GetFileWithTypeAsync`** buffer entire payload.
-- **`GetFileStreamAsync`** returns **`Stream` + filename + length** without forcing memory spikes— **caller disposes** underlying **`HttpResponseMessage`** per XML contract.
+- **`GetFileStreamAsync`** returns **`Stream` + filename + length** without forcing memory spikes—**caller disposes** underlying **`HttpResponseMessage`** per XML contract.
 - **`PostFileAsAsync`** overloads stream/byte[]/path + **`FileTypeInfo`** for MIME + extension hints.
 
 **Customization hook**
@@ -50,21 +49,22 @@ Each method accepts optional **`Action<HttpRequestMessage>`** to append auth hea
 
 Throws **`ApiException`** wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from
 `Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed
-`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504 — which lets `Lyo.Resilience` retry pipelines pick it up automatically.
+`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504 — which lets `Lyo.Resilience` retry pipelines pick it up
+automatically.
 
 ## Options ([`ApiClientOptions`](ApiClientOptions.cs))
 
 Configuration section: `ApiClientOptions.SectionName = "ApiClient"`. Integration-specific clients (Discord, Endato, ESPN, Typecast, …) subclass this type and shadow `SectionName`
 so all transport flags bind under their own section.
 
-| Property                          | Default                    | Description                                                                                                                                                            |
-|-----------------------------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `BaseUrl`                         | `null`                     | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it.                                                                  |
-| `EnsureStatusCode`                | `true`                     | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
-| `AcceptEncodings`                 | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase.             |
-| `EnableAutoResponseDecompression` | `true`                     | Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler.                                                 |
-| `RequestCompression`              | `None`                     | `ApiRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly.                                        |
-| `RequestCompressionMinBytes`      | `1024`                     | Minimum serialized payload size before compression kicks in (avoids spending CPU on tiny bodies).                                                                      |
+| Property | Default | Description |
+| --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseUrl` | `null` | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it. |
+| `EnsureStatusCode` | `true` | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
+| `AcceptEncodings` | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase. |
+| `EnableAutoResponseDecompression` | `true` | Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler. |
+| `RequestCompression` | `None` | `ApiRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly. |
+| `RequestCompressionMinBytes` | `1024` | Minimum serialized payload size before compression kicks in (avoids spending CPU on tiny bodies). |
 
 Pair request compression with a host that registers `AddRequestDecompression` (ASP.NET Core 7+) so the server can decode the body.
 
@@ -76,13 +76,11 @@ Pair request compression with a host that registers `AddRequestDecompression` (A
 
 ## DI registration
 
-`clientName` defaults to **`nameof(IApiClient)`** for named `HttpClientFactory` resolution. Bind from configuration with the standard
-`services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
+`clientName` defaults to **`nameof(IApiClient)`** for named `HttpClientFactory` resolution. Bind from configuration with the standard `services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
 
 ## Typical integration tests
 
-Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [
-`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
+Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [ `Lyo.Api.Models`](../Lyo.Api.Models/README.md).
 
 ## Related
 

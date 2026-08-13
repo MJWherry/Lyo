@@ -1,7 +1,6 @@
 # Lyo.ShortUrl
 
-Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default `ShortUrlService`
-that **generates** short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
+Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default `ShortUrlService` that **generates** short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
 
 ## Examples
 
@@ -60,27 +59,22 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 - Validates inputs (`longUrl` non-empty; `expirationDate` strictly in the future; HTTP → HTTPS rewrite when `Options.EnforceHttps == true`).
 - Wraps `ShortenAsync` / `ExpandAsync` in metrics timers + counters keyed off `MetricNames` (override `CreateMetricNamesDictionary()` to rebrand).
 - Maps `OperationCanceledException` → `SHORTURL_OPERATION_CANCELLED`, other exceptions → `SHORTURL_*_FAILED` codes.
-- Provides default `NotSupportedException` throws for `GetStatisticsAsync`, `DeleteAsync`, `UpdateAsync`, `TestConnectionAsync`, `ShortenCoreAsync`, and `ExpandCoreAsync` so
-  partial implementations only override what they support.
+- Provides default `NotSupportedException` throws for `GetStatisticsAsync`, `DeleteAsync`, `UpdateAsync`, `TestConnectionAsync`, `ShortenCoreAsync`, and `ExpandCoreAsync` so partial implementations only override what they support.
 
 ## Surface — `ShortUrlService` (in-box)
 
-- `ShortenCoreAsync` validates the custom alias against `Options.AllowCustomAliases` / `MinAliasLength` / `MaxAliasLength` and delegates to `IShortUrlGenerator.Generate` when none
-  is supplied, then returns `UrlShortenResult.FromSuccess(...)` with `BaseUrl/{id}` (or just `{id}` when `BaseUrl` is empty).
-- `ExpandCoreAsync`, `GetStatisticsAsync`, and `UpdateAsync` return an error result with `SHORTURL_EXPAND_FAILED` / `SHORTURL_GET_STATISTICS_FAILED` / `SHORTURL_UPDATE_FAILED` —
-  they explicitly require a storage-backed implementation.
+- `ShortenCoreAsync` validates the custom alias against `Options.AllowCustomAliases` / `MinAliasLength` / `MaxAliasLength` and delegates to `IShortUrlGenerator.Generate` when none is supplied, then returns `UrlShortenResult.FromSuccess(...)` with `BaseUrl/{id}` (or just `{id}` when `BaseUrl` is empty).
+- `ExpandCoreAsync`, `GetStatisticsAsync`, and `UpdateAsync` return an error result with `SHORTURL_EXPAND_FAILED` / `SHORTURL_GET_STATISTICS_FAILED` / `SHORTURL_UPDATE_FAILED` — they explicitly require a storage-backed implementation.
 - `DeleteAsync` throws `NotSupportedException` for the same reason.
 - `TestConnectionAsync` always returns `true` (no backend to probe).
 
 ## Surface — `IShortUrlGenerator` / `ShortUrlGenerator`
 
-- `string Generate(int? length = null)` — returns a base-62 string (`a-zA-Z0-9`) of the requested length. The default `ShortUrlGenerator` uses `RandomNumberGenerator` and an
-  8-character default length.
+- `string Generate(int? length = null)` — returns a base-62 string (`a-zA-Z0-9`) of the requested length. The default `ShortUrlGenerator` uses `RandomNumberGenerator` and an 8-character default length.
 
 ## Surface — `UrlShortenBuilder`
 
-- `SetLongUrl(string longUrl, bool enforceHttps = false)` — runs through `UriHelpers.GetValidWebUri` (throws `InvalidFormatException` on invalid URLs); when `enforceHttps`, HTTP
-  becomes HTTPS.
+- `SetLongUrl(string longUrl, bool enforceHttps = false)` — runs through `UriHelpers.GetValidWebUri` (throws `InvalidFormatException` on invalid URLs); when `enforceHttps`, HTTP becomes HTTPS.
 - `SetCustomAlias(string? alias)` — must match `^[a-zA-Z0-9\-]+$`; passing `null`/whitespace clears the alias.
 - `SetExpirationDate(DateTime? date)` — must be in the future (or `null`).
 - `Clear()` — resets the builder.
@@ -89,31 +83,30 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 
 ## Surface — Error codes (`ShortUrlErrorCodes`)
 
-`SHORTURL_SHORTEN_FAILED`, `SHORTURL_EXPAND_FAILED`, `SHORTURL_GET_STATISTICS_FAILED`, `SHORTURL_DELETE_FAILED`, `SHORTURL_UPDATE_FAILED`, `SHORTURL_OPERATION_CANCELLED`,
-`SHORTURL_URL_NOT_FOUND`, `SHORTURL_URL_EXPIRED`, `SHORTURL_INVALID_URL`, `SHORTURL_ALIAS_ALREADY_EXISTS`, `SHORTURL_CUSTOM_ALIAS_NOT_ALLOWED`, `SHORTURL_INVALID_ALIAS_LENGTH`.
+`SHORTURL_SHORTEN_FAILED`, `SHORTURL_EXPAND_FAILED`, `SHORTURL_GET_STATISTICS_FAILED`, `SHORTURL_DELETE_FAILED`, `SHORTURL_UPDATE_FAILED`, `SHORTURL_OPERATION_CANCELLED`, `SHORTURL_URL_NOT_FOUND`, `SHORTURL_URL_EXPIRED`, `SHORTURL_INVALID_URL`, `SHORTURL_ALIAS_ALREADY_EXISTS`, `SHORTURL_CUSTOM_ALIAS_NOT_ALLOWED`, `SHORTURL_INVALID_ALIAS_LENGTH`.
 
 ## Surface — `ShortUrlServiceOptions`
 
-| Member                  | Default             | Notes                                                                            |
-|-------------------------|---------------------|----------------------------------------------------------------------------------|
-| `BaseUrl`               | empty               | Prepended to generated ids (e.g. `https://short.ly`).                            |
-| `DefaultExpirationDays` | `null`              | Reserved for storage-backed implementations.                                     |
-| `MaxAliasLength`        | `50`                | Enforced by `ShortUrlService.ShortenCoreAsync`.                                  |
-| `MinAliasLength`        | `3`                 | Enforced by `ShortUrlService.ShortenCoreAsync`.                                  |
-| `AllowCustomAliases`    | `true`              | When `false`, custom aliases are rejected with `CUSTOM_ALIAS_NOT_ALLOWED`.       |
-| `EnableMetrics`         | `false`             | Gates the `IMetrics` integration in `ShortUrlServiceBase`.                       |
-| `EnforceHttps`          | `false`             | When `true`, HTTP URLs are rewritten to HTTPS before hitting `ShortenCoreAsync`. |
-| `SectionName` *(const)* | `"ShortUrlOptions"` | Default appsettings section for `AddShortUrlFromConfiguration`.                  |
+| Member | Default | Notes |
+| ----------------------- | ------------------- | -------------------------------------------------------------------------------- |
+| `BaseUrl` | empty | Prepended to generated ids (e.g. `https://short.ly`). |
+| `DefaultExpirationDays` | `null` | Reserved for storage-backed implementations. |
+| `MaxAliasLength` | `50` | Enforced by `ShortUrlService.ShortenCoreAsync`. |
+| `MinAliasLength` | `3` | Enforced by `ShortUrlService.ShortenCoreAsync`. |
+| `AllowCustomAliases` | `true` | When `false`, custom aliases are rejected with `CUSTOM_ALIAS_NOT_ALLOWED`. |
+| `EnableMetrics` | `false` | Gates the `IMetrics` integration in `ShortUrlServiceBase`. |
+| `EnforceHttps` | `false` | When `true`, HTTP URLs are rewritten to HTTPS before hitting `ShortenCoreAsync`. |
+| `SectionName` *(const)* | `"ShortUrlOptions"` | Default appsettings section for `AddShortUrlFromConfiguration`. |
 
 ## DI registration (`Extensions`)
 
-| Entry point                                                                                                                    | What it does                                                                                               |
-|--------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| `services.AddShortUrlGenerator()`                                                                                              | Registers singleton `IShortUrlGenerator` → `ShortUrlGenerator`.                                            |
-| `services.AddShortUrl(Action<ShortUrlServiceOptions>? configure = null)` *(plus an `(options)` overload)*                      | Registers `ShortUrlServiceOptions`, the generator, and singleton `IShortUrlService` → `ShortUrlService`.   |
+| Entry point | What it does |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `services.AddShortUrlGenerator()` | Registers singleton `IShortUrlGenerator` → `ShortUrlGenerator`. |
+| `services.AddShortUrl(Action<ShortUrlServiceOptions>? configure = null)` *(plus an `(options)` overload)* | Registers `ShortUrlServiceOptions`, the generator, and singleton `IShortUrlService` → `ShortUrlService`. |
 | `services.AddShortUrlFromConfiguration(IConfiguration configuration, string sectionName = ShortUrlServiceOptions.SectionName)` | Same as `AddShortUrl(...)` but binds options from the configuration section (default `"ShortUrlOptions"`). |
-| `services.AddShortUrlService<TService, TOptions>(Action<TOptions>? configure = null)`                                          | Generic registration for a custom `IShortUrlService` + `TOptions : ShortUrlServiceOptions, new()` pair.    |
-| `services.AddShortUrlService<TService>(ShortUrlServiceOptions options)`                                                        | Same with a pre-built options instance.                                                                    |
+| `services.AddShortUrlService<TService, TOptions>(Action<TOptions>? configure = null)` | Generic registration for a custom `IShortUrlService` + `TOptions : ShortUrlServiceOptions, new()` pair. |
+| `services.AddShortUrlService<TService>(ShortUrlServiceOptions options)` | Same with a pre-built options instance. |
 
 ## Dependencies
 

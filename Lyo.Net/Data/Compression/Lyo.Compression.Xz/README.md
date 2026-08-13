@@ -29,8 +29,7 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview, `ICompressionResolver`, and configuration file example. **File storage reads:** register
-`AddXzCompressor()` when stored metadata may reference XZ; reads dispatch through `ICompressionResolver` by `CompressionAlgorithm` metadata.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview, `ICompressionResolver`, and configuration file example. **File storage reads:** register `AddXzCompressor()` when stored metadata may reference XZ; reads dispatch through `ICompressionResolver` by `CompressionAlgorithm` metadata.
 
 ## Dependencies
 

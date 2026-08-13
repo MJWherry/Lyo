@@ -1,13 +1,8 @@
 # Lyo.Api
 
-Core API library for building RESTful minimal APIs with Entity Framework Core. Provides a fluent `ApiEndpointBuilder` to generate CRUD endpoints with caching, **`ILyoMapper`**
--based DTO mapping, validation, and per-endpoint authorization.
+Core API library for building RESTful minimal APIs with Entity Framework Core. Provides a fluent `ApiEndpointBuilder` to generate CRUD endpoints with caching, **`ILyoMapper`** -based DTO mapping, validation, and per-endpoint authorization.
 
-The public registration surface is **`ServiceCollectionExtensions`** (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Endpoint mapping uses **
-`ApiEndpointBuilder`** with **`ApiEndpointBuilderExtensions`** (`CreateBuilder`, `CreateReadOnlyBuilder`), or **`DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints`** for a single
-dynamic `{entityType}` route tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s README). With XML documentation generation enabled for the solution
-(`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense surfaces the same summaries as this README for documented APIs; CRUD service implementations use
-`<inheritdoc />` where they mirror the `I*Service` interfaces.
+The public registration surface is **`ServiceCollectionExtensions`** (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Endpoint mapping uses **`ApiEndpointBuilder`** with **`ApiEndpointBuilderExtensions`** (`CreateBuilder`, `CreateReadOnlyBuilder`), or **`DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints`** for a single dynamic `{entityType}` route tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s README). With XML documentation generation enabled for the solution (`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense surfaces the same summaries as this README for documented APIs; CRUD service implementations use `<inheritdoc />` where they mirror the `I*Service` interfaces.
 
 ## Features
 
@@ -15,7 +10,7 @@ dynamic `{entityType}` route tree. DTOs and HTTP contracts live in **`Lyo.Api.Mo
 - **SubQuery / two-phase** – Optional **`subClause`** on a node (or **`WhereClauseBuilder`** helpers such as **`AddSubClause`**) runs the root filter in the database and the nested
 - **16 comparators** – Equals, NotEquals, Contains, NotContains, StartsWith, EndsWith, NotStartsWith, NotEndsWith, GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual, In,
 - **Include** – Multi-hop navigation (`contactaddresses.address` traverses two tables)
-- **Keys** – Fetch by primary key (s): single `[[id]]` or composite `[[tenantId, id]]`
+- **Keys** – Fetch by primary key(s): single `[[id]]` or composite `[[tenantId, id]]`
 - **SortBy** – Multi-sort with direction and priority
 - **TotalCountMode** – `Exact`, `None`, or `HasMore` (pagination optimization)
 - **IncludeFilterMode** – `Full` (all related) or `MatchedOnly` (only items matching the filter)
@@ -335,63 +330,55 @@ DI navigations intentionally diverge from the EF migration snapshot (soft FKs / 
 
 ## `ApiClientOptions` and integration HTTP clients
 
-[`Lyo.Api.Client.ApiClientOptions`](../Lyo.Api.Client/ApiClientOptions.cs) is the shared configuration base for [`ApiClient`](../Lyo.Api.Client/ApiClient.cs) and for
-integration-specific option types (for example `LyoDiscordClientOptions`, `TypecastClientOptions`) so **`BaseUrl`**, **`EnsureStatusCode`**, **`AcceptEncodings`**, response
-decompression, and request compression bind under each integration’s configuration section with the same JSON shape as the top-level **`ApiClient`** section.
+[`Lyo.Api.Client.ApiClientOptions`](../Lyo.Api.Client/ApiClientOptions.cs) is the shared configuration base for [`ApiClient`](../Lyo.Api.Client/ApiClient.cs) and for integration-specific option types (for example `LyoDiscordClientOptions`, `TypecastClientOptions`) so **`BaseUrl`**, **`EnsureStatusCode`**, **`AcceptEncodings`**, response decompression, and request compression bind under each integration’s configuration section with the same JSON shape as the top-level **`ApiClient`** section.
 
 ## Host service registration ([`ServiceCollectionExtensions`](ServiceCollectionExtensions.cs))
 
 All registrations are extension methods on `IServiceCollection` (no `IServiceCollection` first parameter shown — they live inside `extension(IServiceCollection services)` blocks):
 
-| Method                                            | Registers                                                                                                                                                                                                                                                                                           |
-|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddLyoQueryServices()`                           | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.                      |
-| `AddCrossSchemaNavigations<TContext>(configure)`  | Registers same-context / cross-schema navigations applied after `OnModelCreating` (see [Cross-schema navigations](#cross-schema--same-context-navigations-di-no-onmodelcreating-edits)).                                                                                                            |
-| `AddDbContextFactoryWithLyoNavigations<TContext>` | `IDbContextFactory<TContext>` + `LyoComposingModelCustomizer` so cross-schema registrations take effect. Call after `AddCrossSchemaNavigations`.                                                                                                                                                    |
-| `AddLyoCrudServices<TContext>()`                  | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
-| `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`)  | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`.                                                                                                                                                                                |
-| `AddCsvExport()` / `AddXlsxExport()`              | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`).                                                                                                                                                                                                                                          |
-| `AddPostgresSprocService<TContext>()`             | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                                  |
-| `AddLyoDiffServices()`                            | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                                                   |
+| Method | Registers |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AddLyoQueryServices()` | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`. |
+| `AddCrossSchemaNavigations<TContext>(configure)` | Registers same-context / cross-schema navigations applied after `OnModelCreating` (see [Cross-schema navigations](#cross-schema--same-context-navigations-di-no-onmodelcreating-edits)). |
+| `AddDbContextFactoryWithLyoNavigations<TContext>` | `IDbContextFactory<TContext>` + `LyoComposingModelCustomizer` so cross-schema registrations take effect. Call after `AddCrossSchemaNavigations`. |
+| `AddLyoCrudServices<TContext>()` | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
+| `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`) | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`. |
+| `AddCsvExport()` / `AddXlsxExport()` | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`). |
+| `AddPostgresSprocService<TContext>()` | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`). |
+| `AddLyoDiffServices()` | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`). |
 
 ## Diagnostic recording ([`LyoApiDiagnosticExtensions`](LyoApiDiagnosticExtensions.cs))
 
-`services.AddLyoApiDiagnosticRecording(configure?)` is a thin alias over `Lyo.Diagnostic.AspNetCore.AddLyoDiagnosticsWeb` — registers the breadcrumb pipeline, in-memory inbox, and
-structured logging for ASP.NET Core hosts. Pass an optional `Action<DiagnosticWebOptions>` to override capture behavior.
+`services.AddLyoApiDiagnosticRecording(configure?)` is a thin alias over `Lyo.Diagnostic.AspNetCore.AddLyoDiagnosticsWeb` — registers the breadcrumb pipeline, in-memory inbox, and structured logging for ASP.NET Core hosts. Pass an optional `Action<DiagnosticWebOptions>` to override capture behavior.
 
 ## `LoggingMiddleware` ([`Middleware/LoggingMiddleware.cs`](Middleware/LoggingMiddleware.cs))
 
-**Source of truth** for writing and logging JSON API failures. JSON API hosts must register `app.UseMiddleware<LoggingMiddleware>()` and should **not** use `UseStatusCodePages()` (framework problem shape would bypass Lyo logging).
-
+- **Source of truth** for writing and logging JSON API failures. Hosts must register `app.UseMiddleware<LoggingMiddleware>()` and should **not** use `UseStatusCodePages()`.
 - **Per-request scope** with `Trace`, host, user-agent, **client IP**, **user id/name** (when authenticated), method, path, and sanitized query.
 - **Debug** request/response lines.
-- **Caught failures (Warn):** throw `ApiErrorException` (preferred), `HttpException`, or `ValidationException` — middleware writes `LyoProblemDetails` as `application/problem+json` and logs **Warn** with status, error codes, IP, user, and `GetFullMessage()` (field-level context).
-- **Uncaught (Error):** any other exception → 500 problem + **Error** log with the exception.
+- **Caught failures (Warn):** throw `ApiErrorException` (preferred), `HttpException`, or `ValidationException` — middleware writes `LyoProblemDetails` as `application/problem+json` and logs **Warn** with status, error codes, IP, user, and `GetFullMessage()`.
+- **Uncaught (Error):** any other exception → 500 problem + **Error** log with the exception. Client disconnect / abort (`OperationCanceledException` when `RequestAborted` is set) is **Debug** and is not turned into a 500.
 - **Empty-body fallback (Warn):** bare `Results.NotFound()` / empty 4xx/5xx get a synthesized Lyo problem.
-- Endpoints should **throw** `ApiErrorException.From(...)` / `ApiErrorResponseFactory.ThrowForError(...)` instead of returning problem JSON so middleware always owns write + log.
+- Endpoints should **throw** `ApiErrorException.From(...)` / `ApiErrorResponseFactory.ThrowForError(...)` instead of returning problem JSON.
 - Use **`Constants.ApiErrorCodes`** for `errors[].code`; put field/path names in `errors[].description`.
-
 
 ## Cross-cutting helpers in [`Extensions.cs`](Extensions.cs)
 
-- **`Extensions.ApiErrorFromException(ex, message?, errorCode?)`** — builds a `LyoProblemDetails` with `Activity.Current` trace/span ids; defaults to
-  `Constants.ApiErrorCodes.Unknown` and uses `ex.Message` when no message is supplied.
+- **`Extensions.ApiErrorFromException(ex, message?, errorCode?)`** — builds a `LyoProblemDetails` with `Activity.Current` trace/span ids; defaults to `Constants.ApiErrorCodes.Unknown` and uses `ex.Message` when no message is supplied.
 - **`IFormFile.HashAsync(ct)`** — async SHA-256 of an uploaded form file (32-byte digest); disposes the read stream.
-- **`Type` extensions** — `IsNumericType`, `IsNullable`, `GetUnderlyingType`, `GetCollectionElementType`, `GetFriendlyTypeName`, `IsCollectionType` (used by
-  `PatchRequestPropertyValidator` and friends).
-- **`object` extensions** — `IsObjectEnumerable`, `TryGetAsEnumerable<T>`, `ConvertToTargetType(targetType)`, `ConvertToType(targetType)` (single-value and collection coercion that
-  understands `JsonElement`, enums, `Guid`/`DateTime`/`DateOnly`/`TimeOnly`, booleans, and numerics).
+- **`Type` extensions** — `IsNumericType`, `IsNullable`, `GetUnderlyingType`, `GetCollectionElementType`, `GetFriendlyTypeName`, `IsCollectionType` (used by `PatchRequestPropertyValidator` and friends).
+- **`object` extensions** — `IsObjectEnumerable`, `TryGetAsEnumerable<T>`, `ConvertToTargetType(targetType)`, `ConvertToType(targetType)` (single-value and collection coercion that understands `JsonElement`, enums, `Guid`/`DateTime`/`DateOnly`/`TimeOnly`, booleans, and numerics).
 - **`JsonElement` extensions** — `ExtractValueFromJsonElement` and `ExtractArrayFromJsonElement` (safe value pull-out used by patch/dynamic-CRUD payloads).
 
 ## Validation
 
 Endpoints validate requests before running CRUD/query logic (failures surface as **`LyoProblemDetails`** with stable error codes):
 
-| Area                     | What is checked                                                                                                                                                                                           |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Paging**               | `Start` / `Amount` against **`QueryOptions`** (defaults and max page size; export uses max export size where applicable)                                                                                  |
-| **Bulk**                 | Number of items in bulk requests vs **`BulkOperationOptions.MaxAmount`**                                                                                                                                  |
-| **Patch**                | JSON property keys exist and are writable on **`TDbModel`**; values convert to the property type (`PatchRequestPropertyValidator`)                                                                        |
+| Area | What is checked |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Paging** | `Start` / `Amount` against **`QueryOptions`** (defaults and max page size; export uses max export size where applicable) |
+| **Bulk** | Number of items in bulk requests vs **`BulkOperationOptions.MaxAmount`** |
+| **Patch** | JSON property keys exist and are writable on **`TDbModel`**; values convert to the property type (`PatchRequestPropertyValidator`) |
 | **Query / QueryProject** | Filter **field** paths, **`Include`** segments, and projection **`Select`** paths against the EF model (cached **`QueryPathValidationCache`** + **`ProjectedQueryModelValidator`** for projected queries) |
 
 Authorization and **patch property allowlists** run after patch key/value validation.
@@ -404,32 +391,32 @@ You can still pass a `CrudConfiguration<...>` record: `.WithCrud(ApiFeatureSet.F
 
 Features are extensible records in a set (`features.Contains(ApiFeature.Query)`). **`Export`** lives in **`Lyo.Api.Export`** as `ExportApiFeature.Instance` — not in core presets.
 
-| Feature / preset                      | Endpoints                                                                                                                                |
-|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `ApiFeature.Query`                    | QueryConcrete, QueryProject, and (on dynamic CRUD) root `/Query`                                                                         |
-| `ApiFeature.Get`                      | Get                                                                                                                                      |
-| `ApiFeature.Create`                   | Create                                                                                                                                   |
-| `ApiFeature.CreateBulk`               | Bulk create                                                                                                                              |
-| `ApiFeature.Update`                   | Update                                                                                                                                   |
-| `ApiFeature.UpdateBulk`               | Bulk update                                                                                                                              |
-| `ApiFeature.Patch`                    | Patch                                                                                                                                    |
-| `ApiFeature.PatchBulk`                | Bulk patch                                                                                                                               |
-| `ApiFeature.Delete`                   | Delete                                                                                                                                   |
-| `ApiFeature.DeleteBulk`               | Bulk delete                                                                                                                              |
-| `ApiFeature.Upsert`                   | Upsert                                                                                                                                   |
-| `ApiFeature.UpsertBulk`               | Bulk upsert                                                                                                                              |
-| `ExportApiFeature.Instance`           | Export (`Lyo.Api.Export` + `AddLyoApiExport`)                                                                                            |
-| `ApiFeature.Metadata`                 | Metadata endpoint                                                                                                                        |
+| Feature / preset | Endpoints |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `ApiFeature.Query` | QueryConcrete, QueryProject, and (on dynamic CRUD) root `/Query` |
+| `ApiFeature.Get` | Get |
+| `ApiFeature.Create` | Create |
+| `ApiFeature.CreateBulk` | Bulk create |
+| `ApiFeature.Update` | Update |
+| `ApiFeature.UpdateBulk` | Bulk update |
+| `ApiFeature.Patch` | Patch |
+| `ApiFeature.PatchBulk` | Bulk patch |
+| `ApiFeature.Delete` | Delete |
+| `ApiFeature.DeleteBulk` | Bulk delete |
+| `ApiFeature.Upsert` | Upsert |
+| `ApiFeature.UpsertBulk` | Bulk upsert |
+| `ExportApiFeature.Instance` | Export (`Lyo.Api.Export` + `AddLyoApiExport`) |
+| `ApiFeature.Metadata` | Metadata endpoint |
 | `ApiFeature.ProjectionComputedFields` | Enables **`ComputedFields`** on **`ProjectionQueryReq`** for **`/QueryProject`** (requires `Query` + registered **`IFormatterService`**) |
-| `ApiFeatureSet.ReadOnly`              | Query + Get                                                                                                                              |
-| `ApiFeatureSet.BasicCrud`             | Query, Get, Create, Update, Patch, Delete                                                                                                |
-| `ApiFeatureSet.FullCrud`              | BasicCrud + Upsert                                                                                                                       |
-| `ApiFeatureSet.BulkOperations`        | All bulk variants                                                                                                                        |
-| `ApiFeatureSet.CoreAll`               | Standard CRUD + bulk (**no Export**, Metadata, or ProjectionComputedFields)                                                              |
-| `ApiFeatureSet.DefaultCrud`           | `CoreAll` + upsert/patch inheritance flags                                                                                               |
-| `ApiFeature.UpsertInheritCreate`      | Upsert uses Create hooks                                                                                                                 |
-| `ApiFeature.UpsertInheritUpdate`      | Upsert uses Update hooks                                                                                                                 |
-| `ApiFeature.PatchInheritsUpdate`      | Patch uses Update hooks                                                                                                                  |
+| `ApiFeatureSet.ReadOnly` | Query + Get |
+| `ApiFeatureSet.BasicCrud` | Query, Get, Create, Update, Patch, Delete |
+| `ApiFeatureSet.FullCrud` | BasicCrud + Upsert |
+| `ApiFeatureSet.BulkOperations` | All bulk variants |
+| `ApiFeatureSet.CoreAll` | Standard CRUD + bulk (**no Export**, Metadata, or ProjectionComputedFields) |
+| `ApiFeatureSet.DefaultCrud` | `CoreAll` + upsert/patch inheritance flags |
+| `ApiFeature.UpsertInheritCreate` | Upsert uses Create hooks |
+| `ApiFeature.UpsertInheritUpdate` | Upsert uses Update hooks |
+| `ApiFeature.PatchInheritsUpdate` | Patch uses Update hooks |
 
 ## Dynamic Endpoint Builder (MapDynamicCrudEndpoints)
 
@@ -475,31 +462,31 @@ app.MapDynamicCrudEndpoints<PeopleDbContext>(o => o.BaseRoute = "/api");
 
 ### DynamicEndpointDefaults (fluent config)
 
-| Property      | Default     | Description                                  |
+| Property | Default | Description |
 |---------------|-------------|----------------------------------------------|
-| BaseRoute     | ""          | Route prefix (e.g. "/api")                   |
-| Features      | DefaultCrud | `ApiFeatureSet` for each entity              |
-| IncludedTypes | []          | When non-empty, only these types (whitelist) |
-| ExcludedTypes | []          | Types to exclude (e.g. xref tables)          |
+| BaseRoute | "" | Route prefix (e.g. "/api") |
+| Features | DefaultCrud | `ApiFeatureSet` for each entity |
+| IncludedTypes | [] | When non-empty, only these types (whitelist) |
+| ExcludedTypes | [] | Types to exclude (e.g. xref tables) |
 
 ### Per-entity overrides (EntityEndpointConfigBuilder)
 
-| Method          | Description                           |
+| Method | Description |
 |-----------------|---------------------------------------|
-| `ExcludeCreate` | Exclude Create endpoint               |
-| `ExcludeUpdate` | Exclude Update, UpdateBulk            |
-| `ExcludePatch`  | Exclude Patch, PatchBulk              |
-| `ExcludeDelete` | Exclude Delete, DeleteBulk            |
-| `ExcludeUpsert` | Exclude Upsert, UpsertBulk            |
-| `ExcludeExport` | Exclude Export                        |
-| `ExcludeQuery`  | Exclude Query, QueryProject           |
-| `ExcludeGet`    | Exclude Get                           |
-| `ForCreate`     | Configure Create hooks (Before/After) |
-| `ForPatch`      | Configure Patch hooks                 |
-| `ForUpdate`     | Configure Update hooks                |
-| `ForDelete`     | Configure Delete hooks, Includes      |
-| `ForUpsert`     | Configure Upsert hooks                |
-| `ForExport`     | Configure Export (auth, etc.)         |
+| `ExcludeCreate` | Exclude Create endpoint |
+| `ExcludeUpdate` | Exclude Update, UpdateBulk |
+| `ExcludePatch` | Exclude Patch, PatchBulk |
+| `ExcludeDelete` | Exclude Delete, DeleteBulk |
+| `ExcludeUpsert` | Exclude Upsert, UpsertBulk |
+| `ExcludeExport` | Exclude Export |
+| `ExcludeQuery` | Exclude Query, QueryProject |
+| `ExcludeGet` | Exclude Get |
+| `ForCreate` | Configure Create hooks (Before/After) |
+| `ForPatch` | Configure Patch hooks |
+| `ForUpdate` | Configure Update hooks |
+| `ForDelete` | Configure Delete hooks, Includes |
+| `ForUpsert` | Configure Upsert hooks |
+| `ForExport` | Configure Export (auth, etc.) |
 
 Routes: `{baseRoute}/{entityType}/QueryConcrete`, `{baseRoute}/{entityType}/QueryProject`, `{baseRoute}/{entityType}/{id}`, etc. Entity type name is the route segment (e.g.
 `JobDefinition`). Unknown `{entityType}` returns 404. Entities with composite keys are skipped.
@@ -604,11 +591,11 @@ app.CreateBuilder<...>("/api/items", "Items")
 
 **Combined single/bulk helpers** (same hooks and auth wiring for both routes):
 
-| Method                                                        | Registers                                                                           |
+| Method | Registers |
 |---------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| `WithCreateAndBulk(Action<CreateEndpointConfigBuilder<...>>)` | Create + Bulk                                                                       |
-| `WithUpdateAndBulk(Action<UpdateEndpointConfigBuilder<...>>)` | Update + Bulk/Update                                                                |
-| `WithPatchAndBulk(Action<PatchEndpointConfigBuilder<...>>)`   | Patch + Bulk (auth, inherit-from-update, **property authorization**)                |
+| `WithCreateAndBulk(Action<CreateEndpointConfigBuilder<...>>)` | Create + Bulk |
+| `WithUpdateAndBulk(Action<UpdateEndpointConfigBuilder<...>>)` | Update + Bulk/Update |
+| `WithPatchAndBulk(Action<PatchEndpointConfigBuilder<...>>)` | Patch + Bulk (auth, inherit-from-update, **property authorization**) |
 | `WithUpsertAndBulk(Action<UpsertEndpointConfigBuilder<...>>)` | Upsert + Bulk/Upsert (`Auth` for single; **`BulkAuth`** optional override for bulk) |
 
 Patch-only example:
@@ -679,43 +666,44 @@ app.CreateBuilder<...>("/api/items", "Items")
 
 ### Per-endpoint (EndpointAuth)
 
-| Method                                                           | Description                 |
+| Method | Description |
 |------------------------------------------------------------------|-----------------------------|
-| `EndpointAuth.RequireAuthorization()`                            | Requires authenticated user |
-| `EndpointAuth.RequireAuthorization("Policy1", "Policy2")`        | Requires specified policies |
-| `EndpointAuth.RequireAuthorization(p => p.RequireRole("Admin"))` | Inline policy               |
-| `EndpointAuth.RequireRole("Admin", "Editor")`                    | Role-based                  |
-| `EndpointAuth.RequireClaim("scope", "write", "admin")`           | Claim-based                 |
-| `EndpointAuth.RequireAuthenticatedUser()`                        | Authenticated user          |
-| `EndpointAuth.RequireUserName("admin@example.com")`              | Specific user               |
-| `EndpointAuth.Anonymous()`                                       | Anonymous access            |
+| `EndpointAuth.RequireAuthorization()` | Requires authenticated user |
+| `EndpointAuth.RequireAuthorization("Policy1", "Policy2")` | Requires specified policies |
+| `EndpointAuth.RequireAuthorization(p => p.RequireRole("Admin"))` | Inline policy |
+| `EndpointAuth.RequireRole("Admin", "Editor")` | Role-based |
+| `EndpointAuth.RequireClaim("scope", "write", "admin")` | Claim-based |
+| `EndpointAuth.RequireAuthenticatedUser()` | Authenticated user |
+| `EndpointAuth.RequireUserName("admin@example.com")` | Specific user |
+| `EndpointAuth.Anonymous()` | Anonymous access |
 
 When `EndpointAuth` is null for an endpoint, builder-level auth is used.
 
 ## Endpoints
 
 Routes emitted by **CreateBuilder** / **CreateReadOnlyBuilder** when the matching `With*` / `ApiFeature / ApiFeatureSet` configuration is enabled (17 HTTP endpoints when everything
-below is turned on).
+below is
+turned on).
 
-| Method | Route                                        | Description                                                                                                                     |
+| Method | Route | Description |
 |--------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| POST   | `{baseRoute}/QueryConcrete`                  | Entity-graph query with filters, includes, sort, pagination (typed CreateBuilder)                                               |
-| POST   | `{baseRoute}/QueryProject`                   | Projected query (`Select`); SQL-level projection when possible; optional computed fields when `ProjectionComputedFields` is set |
-| POST   | `{dynamicBase}/Query`                        | **Root** From/Joins + Select (dynamic CRUD only); any allowlisted entity on that context; returns `ProjectedQueryRes`           |
-| POST   | `{baseRoute}/Export`                         | Export to CSV / XLSX / JSON (`IExportService` required)                                                                         |
-| GET    | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Get single entity (`?include=…`); route suffix is `/{id:guid}`, `/{id:int}`, `/{id}`, … depending on `TKey`                     |
-| POST   | `{baseRoute}`                                | Create                                                                                                                          |
-| POST   | `{baseRoute}/Bulk`                           | Bulk create                                                                                                                     |
-| POST   | `{baseRoute}/Update`                         | Full update                                                                                                                     |
-| POST   | `{baseRoute}/Bulk/Update`                    | Bulk update                                                                                                                     |
-| PATCH  | `{baseRoute}`                                | Property-level partial update                                                                                                   |
-| PATCH  | `{baseRoute}/Bulk`                           | Bulk patch                                                                                                                      |
-| POST   | `{baseRoute}/Upsert`                         | Upsert                                                                                                                          |
-| POST   | `{baseRoute}/Bulk/Upsert`                    | Bulk upsert                                                                                                                     |
-| DELETE | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Delete by primary key                                                                                                           |
-| DELETE | `{baseRoute}`                                | Delete by body (`DeleteRequest` with `Keys` or `Query`)                                                                         |
-| DELETE | `{baseRoute}/Bulk`                           | Bulk delete                                                                                                                     |
-| GET    | `{baseRoute}/Metadata`                       | OpenAPI-style metadata for this group (`WithMetadata` / `ApiFeature.Metadata`)                                                  |
+| POST | `{baseRoute}/QueryConcrete` | Entity-graph query with filters, includes, sort, pagination (typed CreateBuilder) |
+| POST | `{baseRoute}/QueryProject` | Projected query (`Select`); SQL-level projection when possible; optional computed fields when `ProjectionComputedFields` is set |
+| POST | `{dynamicBase}/Query` | **Root** From/Joins + Select (dynamic CRUD only); any allowlisted entity on that context; returns `ProjectedQueryRes` |
+| POST | `{baseRoute}/Export` | Export to CSV / XLSX / JSON (`IExportService` required) |
+| GET | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Get single entity (`?include=…`); route suffix is `/{id:guid}`, `/{id:int}`, `/{id}`, … depending on `TKey` |
+| POST | `{baseRoute}` | Create |
+| POST | `{baseRoute}/Bulk` | Bulk create |
+| POST | `{baseRoute}/Update` | Full update |
+| POST | `{baseRoute}/Bulk/Update` | Bulk update |
+| PATCH | `{baseRoute}` | Property-level partial update |
+| PATCH | `{baseRoute}/Bulk` | Bulk patch |
+| POST | `{baseRoute}/Upsert` | Upsert |
+| POST | `{baseRoute}/Bulk/Upsert` | Bulk upsert |
+| DELETE | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Delete by primary key |
+| DELETE | `{baseRoute}` | Delete by body (`DeleteRequest` with `Keys` or `Query`) |
+| DELETE | `{baseRoute}/Bulk` | Bulk delete |
+| GET | `{baseRoute}/Metadata` | OpenAPI-style metadata for this group (`WithMetadata` / `ApiFeature.Metadata`) |
 
 ## Query & Request Builders
 
@@ -757,8 +745,10 @@ Use **`ProjectionQueryReqBuilder`** when building **`ProjectionQueryReq`** (incl
 ### Projection (QueryProject)
 
 `POST {baseRoute}/QueryProject` accepts a **`ProjectionQueryReq`** body and returns a **`ProjectedQueryRes<T>`** envelope (not the same shape as **`QueryRes<T>`** from *
-*`/QueryConcrete`**). Navigation-based Select only — no From/Joins. The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field
-dependencies may have been merged server-side). On success, **`entityTypes`** lists CLR entity class names involved in the projection (root + navigations + template paths);
+*`/QueryConcrete`**).
+Navigation-based Select only — no From/Joins. The response echoes the request in **`queryRequest`** (including **`Select`** as executed—computed-field dependencies may have been
+merged server-side). On success,
+**`entityTypes`** lists CLR entity class names involved in the projection (root + navigations + template paths);
 see [Projection (QueryProject) & SQL-Level Query Generation](#projection-queryproject--sql-level-query-generation) above.
 
 ### Root Query (From / Joins)
@@ -893,16 +883,16 @@ Returns only emails matching `@gmail.com` or `@yahoo.com`; excludes `@charter.ne
 
 ### QueryRequestOptions
 
-| Property          | Default | Description                                                                                |
+| Property | Default | Description |
 |-------------------|---------|--------------------------------------------------------------------------------------------|
-| TotalCountMode    | Exact   | `Exact`, `None`, or `HasMore` (pagination optimization)                                    |
-| IncludeFilterMode | Full    | `Full` = all related items; `MatchedOnly` = only items matching the **whereClause** filter |
+| TotalCountMode | Exact | `Exact`, `None`, or `HasMore` (pagination optimization) |
+| IncludeFilterMode | Full | `Full` = all related items; `MatchedOnly` = only items matching the **whereClause** filter |
 
 **`ProjectionQueryReq`** uses **`ProjectedQueryRequestOptions`**, which adds:
 
-| Property                       | Default | Description                                                                                                                                                            |
+| Property | Default | Description |
 |--------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ZipSiblingCollectionSelections | `true`  | When `true`, sibling `Select` paths under the same collection are zipped into one array of objects; when `false`, each path stays a separate column (parallel arrays). |
+| ZipSiblingCollectionSelections | `true` | When `true`, sibling `Select` paths under the same collection are zipped into one array of objects; when `false`, each path stays a separate column (parallel arrays). |
 
 ### WhereClauseBuilder
 
@@ -996,8 +986,8 @@ Tags for invalidation are built with **`QueryCacheTagBuilder`** (scope tags such
 
 - **Default (`CacheQueryResultsAsUtf8Payload` = `false`)** — **`GetOrSetAsync`** stores **`QueryRes<T>`** / **`ProjectedQueryRes<T>`** with Fusion’s usual serialization for CLR
   graphs.
-- **Typed payload (`CacheQueryResultsAsUtf8Payload` = `true`)** — **`GetOrSetPayloadAsync<T>`** stores framed bytes via **`ICachePayloadSerializer`** and **`ICachePayloadCodec`**
-  (optional compress/encrypt under **`CacheOptions:Payload`**). The SQL-level QueryProject path and the load-then-project fallback both use this mode when enabled; fallback goes
+- **Typed payload (`CacheQueryResultsAsUtf8Payload` = `true`)** — **`GetOrSetPayloadAsync<T>`** stores framed bytes via **`ICachePayloadSerializer`** and **`ICachePayloadCodec`** (
+  optional compress/encrypt under **`CacheOptions:Payload`**). The SQL-level QueryProject path and the load-then-project fallback both use this mode when enabled; fallback goes
   through **`QueryCore`**, which already applies the same flag.
 
 With typed payloads, **`CacheOptions:Payload`** can **`AutoCompress`** (above **`AutoCompressMinSizeBytes`**) and, on supported targets, **`AutoEncrypt`** (with **`EncryptionKeyId`
@@ -1045,18 +1035,20 @@ How tags attach to cached reads (see **`QueryService.QueryCore`**, **`Get`** ove
 - **`GET …/{id}`** (mapped and raw overloads): cache **key** is **`BuildSingleEntityGetCacheKey`**; tags include **`entity:{type}`** and **`entity:{type}:{pk}`** (plus cascade tags
   when **`includes`** are used). **Patch** / **Update** **`cache.Set`** for the written DTO uses the **same key shape** and **instance tag** so post-write caches stay aligned.
 - **`POST …/QueryConcrete`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF
-  entity type from **`loaderService.GetReferencedTypes`**, and **instance tags** for entities in the result. **`InvalidateQueryCacheAsync<AddressEntity>()`** (broad) or **per-key**
+  entity type
+  from **`loaderService.GetReferencedTypes`**, and **instance tags** for entities in the result. **`InvalidateQueryCacheAsync<AddressEntity>()`** (broad) or **per-key**
   invalidation for Address rows clears cached parent reads (e.g. Person) that carried **`entity:address:…`** tags.
 - **`POST …/QueryProject`**: the **SQL projection** path adds **`projshape:…`**, **`queryproject`**, **`GetReferencedTypes`** type tags, **instance tags** from projected rows (root
   and include cascade where applicable), plus the same scope tags as **`/QueryConcrete`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type
-  still invalidates matching **`QueryProject`** entries via shared **`entity:{child}:…`** instance tags.
+  still
+  invalidates matching **`QueryProject`** entries via shared **`entity:{child}:…`** instance tags.
 
-| Concern                                           | Behavior                                                                                                                                                                                                                                     |
+| Concern | Behavior |
 |---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Patch / Update / Delete / Upsert** (known keys) | **`InvalidateQueryCachesForEntityKeysAsync`** — instance **tag** + **direct GET keys** (canonical mapped + `:raw` without includes); falls back to **`InvalidateQueryCacheAsync<T>()`** when key count exceeds the configured bulk threshold |
-| **Create**                                        | **`InvalidateQueryCacheAsync<T>()`** — broad **`entity:{T}`** (new rows have no prior instance tags)                                                                                                                                         |
-| **Unrelated root entity** (e.g. Order vs Person)  | **Not** invalidated by another type’s keys — different **`entity:`** tags / keys                                                                                                                                                             |
-| **Child entity** updated via **its** endpoint     | Instance tag **`entity:{child}:{pk}`** invalidates **parent** **`GET`/`Query`/`QueryProject`** entries that included that tag                                                                                                                |
+| **Create** | **`InvalidateQueryCacheAsync<T>()`** — broad **`entity:{T}`** (new rows have no prior instance tags) |
+| **Unrelated root entity** (e.g. Order vs Person) | **Not** invalidated by another type’s keys — different **`entity:`** tags / keys |
+| **Child entity** updated via **its** endpoint | Instance tag **`entity:{child}:{pk}`** invalidates **parent** **`GET`/`Query`/`QueryProject`** entries that included that tag |
 
 For extra fan-out (custom rules, raw SQL, or third-party writers), use **Before/After** hooks or **`InvalidateCacheItem`**, **`InvalidateCacheItemByTag`**, *
 *`InvalidateProjectedQueriesByProjShapeAsync`**, or **`InvalidateAllCachedQueriesAsync`** as needed.
@@ -1086,27 +1078,27 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 ### QueryOptions (singleton)
 
-| Property                            | Default  | Description                                                                                                |
+| Property | Default | Description |
 |-------------------------------------|----------|------------------------------------------------------------------------------------------------------------|
-| DefaultPageSize                     | 100      | Default page size                                                                                          |
-| MaxPageSize                         | 2000     | Max page size                                                                                              |
-| MinPagingStart                      | 0        | Minimum `Start` (inclusive)                                                                                |
-| MaxPagingStart                      | 10000000 | Maximum `Start` (inclusive)                                                                                |
-| MinPagingAmount                     | 1        | Minimum `Amount` when set                                                                                  |
-| MaxExportSize                       | 5000     | Max rows for export                                                                                        |
-| EnableSplitQueries                  | true     | Split queries for includes                                                                                 |
-| UseNoTrackingWithIdentityResolution | true     | NoTracking for reads                                                                                       |
-| AllowSelectWildcards                | true     | Allow terminal `*` in QueryProject `Select` paths                                                          |
-| CacheQueryResultsAsUtf8Payload      | false    | Use typed payload cache (`GetOrSetPayloadAsync`) for Query and QueryProject instead of CLR `GetOrSetAsync` |
+| DefaultPageSize | 100 | Default page size |
+| MaxPageSize | 2000 | Max page size |
+| MinPagingStart | 0 | Minimum `Start` (inclusive) |
+| MaxPagingStart | 10000000 | Maximum `Start` (inclusive) |
+| MinPagingAmount | 1 | Minimum `Amount` when set |
+| MaxExportSize | 5000 | Max rows for export |
+| EnableSplitQueries | true | Split queries for includes |
+| UseNoTrackingWithIdentityResolution | true | NoTracking for reads |
+| AllowSelectWildcards | true | Allow terminal `*` in QueryProject `Select` paths |
+| CacheQueryResultsAsUtf8Payload | false | Use typed payload cache (`GetOrSetPayloadAsync`) for Query and QueryProject instead of CLR `GetOrSetAsync` |
 
 ### BulkOperationOptions (singleton)
 
-| Property               | Default | Description             |
+| Property | Default | Description |
 |------------------------|---------|-------------------------|
-| MaxAmount              | 2000    | Max items per bulk      |
-| MaxDegreeOfParallelism | 10      | Parallelism             |
-| UseParallelProcessing  | true    | Use parallel processing |
-| Timeout                | 5 min   | Bulk timeout            |
+| MaxAmount | 2000 | Max items per bulk |
+| MaxDegreeOfParallelism | 10 | Parallelism |
+| UseParallelProcessing | true | Use parallel processing |
+| Timeout | 5 min | Bulk timeout |
 
 ## Dependencies
 
@@ -1116,13 +1108,13 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 ### NuGet packages
 
-| Package                                     | Version |
+| Package | Version |
 |---------------------------------------------|---------|
-| `Microsoft.AspNetCore.Authorization`        | `[10,)` |
-| `Microsoft.AspNetCore.Http.Abstractions`    | `2.*`   |
-| `Microsoft.AspNetCore.OpenApi`              | `[10,)` |
-| `Microsoft.EntityFrameworkCore.Analyzers`   | `[10,)` |
-| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)` |
+| `Microsoft.AspNetCore.Authorization` | `[10,)` |
+| `Microsoft.AspNetCore.Http.Abstractions` | `2.*` |
+| `Microsoft.AspNetCore.OpenApi` | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Analyzers` | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Relational` | `[10,)` |
 | `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |
 
 ### Project references

@@ -267,6 +267,7 @@
         <Project Path="Apps/Comic/Lyo.Comic.Api.Client/Lyo.Comic.Api.Client.csproj"/>
         <Project Path="Apps/Comic/Lyo.Comic.Api/Lyo.Comic.Api.csproj"/>
         <Project Path="Apps/Comic/Lyo.Comic.Api.Models/Lyo.Comic.Api.Models.csproj"/>
+        <Project Path="Apps/Comic/Lyo.Comic.Api.Tests/Lyo.Comic.Api.Tests.csproj"/>
     </Folder>
     <Folder Name="/Apps/Config/">
         <Project Path="Apps/Config/Lyo.Config.Api.Client/Lyo.Config.Api.Client.csproj"/>

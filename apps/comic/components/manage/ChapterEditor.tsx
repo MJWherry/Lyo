@@ -7,6 +7,7 @@ import type { ComicChapterRes, ComicPage, ComicVolumeRes } from "lyo-comic-api-c
 import { comicFileUrl } from "lyo-comic-api-client";
 import { bffFetch } from "@/lib/api/bffFetch";
 import { TrashIcon } from "./TrashIcon";
+import { ArchiveDownloadLink } from "@/components/ArchiveDownloadLink";
 
 const FORM_ID = "chapter-form";
 
@@ -114,6 +115,9 @@ export function ChapterEditor({
           </h1>
         </div>
         <div className="manage-header__actions">
+          <ArchiveDownloadLink href={`/api/comic/chapters/${encodeURIComponent(chapter.id)}/archive`} className="btn btn--ghost" label="Download chapter">
+            Download
+          </ArchiveDownloadLink>
           <button className="btn btn--ghost" type="reset" form={FORM_ID} disabled={pending}>
             Clear changes
           </button>

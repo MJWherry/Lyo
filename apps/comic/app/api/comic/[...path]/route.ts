@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiFetch } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ async function proxy(request: NextRequest, ctx: { params: Promise<{ path: string
       method: request.method,
       headers,
       body,
+      signal: request.signal,
     });
     const outHeaders = new Headers();
     const ct = res.headers.get("content-type");
@@ -60,6 +62,8 @@ async function proxy(request: NextRequest, ctx: { params: Promise<{ path: string
     const buf = await res.arrayBuffer();
     return new NextResponse(buf, { status: res.status, headers: outHeaders });
   } catch (err) {
+    const aborted = abortedUpstreamResponse(err, request.signal);
+    if (aborted) return aborted;
     const message = err instanceof Error ? err.message : "Upstream failed";
     return NextResponse.json({ error: message }, { status: 502 });
   }

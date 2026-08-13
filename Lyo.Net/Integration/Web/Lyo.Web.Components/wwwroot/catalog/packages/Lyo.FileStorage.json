@@ -121,6 +121,7 @@
       "items": [
         "**Writes** — **`SaveFileAsync`**, **`SaveFromStreamAsync`**",
         "**Reads** — **`GetFileAsync`**, **`GetFileStreamAsync`** (compressed payloads are decompressed via **`ICompressionService.Resolver`** using stored **`CompressionAlgorithm`** metadata; optional per-call **`compressionAlgorithmOverride`** or **`FileStorageServiceBaseOptions.DecompressionAlgorithmOverride`**; bounded by **`MaxDecompressedFileSize`** through **`MaxBytesWriteStream`**)",
+        "**Zip archive** — **`IFileStorageArchiveService.CreateArchiveAsync`** spools files through **`Lyo.IO.Temp`**, zips on disk (nested **`ZipPath`**, caller **`fileName`**), and returns a stream that deletes the temp session on dispose. Caps: **`FileStorageArchiveOptions.MaxFileCount`** / **`MaxTotalUncompressedBytes`**. DI: **`AddFileStorageArchiveServiceFromConfiguration`** + **`AddFileStorageArchiveServiceKeyed`**.",
         "**Metadata / delete** — **`GetMetadataAsync`**, **`DeleteFileAsync(Guid, FileDeletionMode, CancellationToken)`** (deletes the backing object then, depending on * *`FileDeletionMode`**, either *tombstones* metadata (`RemoveObjectAndTombstoneMetadata`, default) or *purges* it via **`IFileMetadataStore.PurgeMetadataAsync`** ( `RemoveObjectAndPurgeMetadata` — operator/governance flows only; never accept this mode from end-user input)",
         "**Temporary links** — **`GetPreSignedReadUrlAsync`** (with optional **`PreSignedReadUrlOptions`** overrides; both overloads accept **`CancellationToken`** with a default of `default`)",
         "**Direct single PUT** — **`BeginDirectUploadAsync`**, **`CompleteDirectUploadAsync`** (S3/Blob populate **`RequiredPutHeaders`** for SSE + signed `Content-Type` parity)",
@@ -202,7 +203,11 @@
         ],
         [
           "**`Extensions`** — namespace **`Lyo.FileStorage`**",
-          "Keyed **`IFileStorageService`** registration for disk, multipart session helpers, **`IFileOperationContextAccessor`**"
+          "Keyed **`IFileStorageService`** registration for disk, multipart session helpers, **`IFileOperationContextAccessor`**, **`IFileStorageArchiveService`**"
+        ],
+        [
+          "**`FileStorageArchiveService`**",
+          "**`IFileStorageArchiveService`**: spool via **`Lyo.IO.Temp`**, nested **`ZipPath`**, caller **`fileName`**, caps from **`FileStorageArchiveOptions`**"
         ]
       ]
     },
@@ -499,7 +504,7 @@
       "rows": [
         [
           "**`Lyo.FileStorage.Tests`**",
-          "Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes) plus `FileHelpers` path-prefix coverage"
+          "Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes), `FileHelpers` path-prefix coverage, and **zip archive** (flat/nested paths, names, limits, missing id, temp-session dispose)"
         ],
         [
           "**`Lyo.FileStorage.S3.Tests`**",
@@ -574,6 +579,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
         "direct",

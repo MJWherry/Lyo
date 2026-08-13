@@ -1,16 +1,12 @@
 # Lyo.Audit
 
-Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log). `AuditChange` and `AuditEvent` are immutable
-records—once created they do not change. Both carry an `EntityRef` for the thing they are about plus an optional `EntityRef` for the actor that caused them. Includes
-`IAuditRecorder` for pluggable storage.
+Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log). `AuditChange` and `AuditEvent` are immutable records—once created they do not change. Both carry an `EntityRef` for the thing they are about plus an optional `EntityRef` for the actor that caused them. Includes `IAuditRecorder` for pluggable storage.
 
 ## Features
 
-- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new
-  value), optional `Actor` (`EntityRef?`)
+- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new value), optional `Actor` (`EntityRef?`)
 - **AuditEvent** (record) – An event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`
-- **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`,
-  `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
+- **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
 - **NullAuditRecorder** – No-op implementation when auditing is not needed
 
 ## Examples

@@ -1,6 +1,8 @@
 import type { ComicCardRow } from "lyo-comic-api-client";
 import { comicFileUrl } from "lyo-comic-api-client";
 
+const COMIC_GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function nested(row: ComicCardRow, path: string): unknown {
   const dotted = row[path];
   if (dotted != null) return dotted;
@@ -13,9 +15,16 @@ function nested(row: ComicCardRow, path: string): unknown {
   return cur;
 }
 
-export function cardSlug(row: ComicCardRow): string | null {
-  const slug = row.slug ?? nested(row, "series.slug") ?? nested(row, "Series.Slug");
-  return typeof slug === "string" && slug ? slug : null;
+export function isComicGuid(value: string): boolean {
+  return COMIC_GUID.test(value);
+}
+
+export function seriesHref(seriesId: string): string {
+  return `/manga/${encodeURIComponent(seriesId)}`;
+}
+
+export function volumeHref(seriesId: string, volumeId: string): string {
+  return `/manga/${encodeURIComponent(seriesId)}/volume/${encodeURIComponent(volumeId)}`;
 }
 
 export function cardTitle(row: ComicCardRow): string {
@@ -50,13 +59,36 @@ export function readHref(seriesId: string, chapterId?: string | null, page?: num
   return `/read/${encodeURIComponent(seriesId)}${qs ? `?${qs}` : ""}`;
 }
 
+export function formatPageCount(count?: number | null): string | null {
+  if (count == null)
+    return null;
+  const n = Number(count);
+  if (!Number.isFinite(n) || n < 0)
+    return null;
+  return `${n}p`;
+}
+
+function cardSeriesId(row: ComicCardRow): string | null {
+  if (typeof row.seriesId === "string" && row.seriesId)
+    return row.seriesId;
+  const nestedId = nested(row, "series.id") ?? nested(row, "Series.Id");
+  if (typeof nestedId === "string" && nestedId)
+    return nestedId;
+  if (row.volumeNumber == null && row.chapterNumber == null && typeof row.id === "string" && row.id)
+    return row.id;
+  return null;
+}
+
 export function cardHref(row: ComicCardRow): string {
-  const slug = cardSlug(row);
   if (row.chapterNumber != null && row.id) {
-    const seriesId = typeof row.seriesId === "string" && row.seriesId ? row.seriesId : null;
-    if (seriesId) return readHref(seriesId, row.id);
+    const seriesId = cardSeriesId(row);
+    if (seriesId)
+      return readHref(seriesId, row.id);
   }
-  if (!slug) return "/search";
-  if (row.volumeNumber != null && row.id) return `/manga/${encodeURIComponent(slug)}/volume/${encodeURIComponent(row.id)}`;
-  return `/manga/${encodeURIComponent(slug)}`;
+  const seriesId = cardSeriesId(row);
+  if (!seriesId)
+    return "/search";
+  if (row.volumeNumber != null && row.id)
+    return volumeHref(seriesId, row.id);
+  return seriesHref(seriesId);
 }

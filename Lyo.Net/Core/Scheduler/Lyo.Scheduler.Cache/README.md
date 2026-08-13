@@ -1,8 +1,6 @@
 # Lyo.Scheduler.Cache
 
-Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Persists each schedule's `LastRunUtc` / `NextRunUtc` / state markers through [
-`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) so cron/interval/one-shot schedules survive process restarts without external infrastructure beyond whatever backs your cache (Fusion
-in-memory, Postgres, Redis, …).
+Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Persists each schedule's `LastRunUtc` / `NextRunUtc` / state markers through [ `Lyo.Cache`](../../Cache/Lyo.Cache/README.md) so cron/interval/one-shot schedules survive process restarts without external infrastructure beyond whatever backs your cache (Fusion in-memory, Postgres, Redis, …).
 
 ## Examples
 
@@ -23,15 +21,14 @@ services.AddSchedulerWithCache(o =>
 
 ## Types
 
-| Type                           | Role                                                                                                                                  |
-|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| Type | Role |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **`CacheSchedulerStateStore`** | `ISchedulerStateStore` implementation that reads and writes scheduler state through `ICacheService`. Keys are scoped per schedule id. |
-| **`SchedulerCacheExtensions`** | DI extensions.                                                                                                                        |
+| **`SchedulerCacheExtensions`** | DI extensions. |
 
 ## DI
 
-`AddSchedulerWithCache` is a convenience over `services.AddScheduler(sp => new CacheSchedulerStateStore(sp.GetRequiredService<ICacheService>()), ...)`. It requires `ICacheService`
-to be registered beforehand.
+`AddSchedulerWithCache` is a convenience over `services.AddScheduler(sp => new CacheSchedulerStateStore(sp.GetRequiredService<ICacheService>()), ...)`. It requires `ICacheService` to be registered beforehand.
 
 ## Dependencies
 

@@ -8,6 +8,7 @@ using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Staged;
+using Lyo.IO.Temp;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -359,6 +360,77 @@ public static class Extensions
             }
 
             return services;
+        }
+
+        /// <summary>Registers default <see cref="FileStorageArchiveOptions" /> and <see cref="IIOTempService" /> when missing.</summary>
+        public IServiceCollection AddFileStorageArchiveService() => services.AddFileStorageArchiveService(new FileStorageArchiveOptions());
+
+        /// <summary>Registers <see cref="FileStorageArchiveOptions" /> from a callback and <see cref="IIOTempService" /> when missing.</summary>
+        public IServiceCollection AddFileStorageArchiveService(Action<FileStorageArchiveOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new FileStorageArchiveOptions();
+            configure(options);
+            return services.AddFileStorageArchiveService(options);
+        }
+
+        /// <summary>Registers <see cref="FileStorageArchiveOptions" /> and <see cref="IIOTempService" /> when missing.</summary>
+        public IServiceCollection AddFileStorageArchiveService(FileStorageArchiveOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
+            if (!services.Any(s => s.ServiceType == typeof(FileStorageArchiveOptions)))
+                services.AddSingleton(options);
+
+            services.TryAddIOTempService();
+            return services;
+        }
+
+        /// <summary>Binds <see cref="FileStorageArchiveOptions" /> from configuration and registers <see cref="IIOTempService" /> when missing.</summary>
+        public IServiceCollection AddFileStorageArchiveServiceFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = FileStorageArchiveOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new FileStorageArchiveOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
+
+            return services.AddFileStorageArchiveService(options);
+        }
+
+        /// <summary>
+        /// Registers keyed <see cref="IFileStorageArchiveService" /> that reads the keyed <see cref="IFileStorageService" />. Call
+        /// <see cref="AddFileStorageArchiveServiceFromConfiguration" /> (or another options overload) first so archive caps are bound.
+        /// </summary>
+        public IServiceCollection AddFileStorageArchiveServiceKeyed(string keyName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            if (!services.Any(s => s.ServiceType == typeof(FileStorageArchiveOptions)))
+                services.AddFileStorageArchiveService();
+            else
+                services.TryAddIOTempService();
+
+            if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(IFileStorageArchiveService))) {
+                services.AddKeyedScoped<IFileStorageArchiveService>(
+                    keyName, (provider, _) => new FileStorageArchiveService(
+                        provider.GetRequiredKeyedService<IFileStorageService>(keyName), provider.GetRequiredService<IIOTempService>(),
+                        provider.GetRequiredService<FileStorageArchiveOptions>(), provider.GetService<ILogger<FileStorageArchiveService>>()));
+            }
+
+            return services;
+        }
+
+        private void TryAddIOTempService()
+        {
+            if (!services.Any(s => s.ServiceType == typeof(IIOTempService)))
+                services.AddIOTempService();
         }
     }
 

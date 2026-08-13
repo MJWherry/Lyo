@@ -54,6 +54,10 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
                 await WriteProblemAsync(context, error);
                 LogCaughtFailure(context, error, ex);
             }
+            catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) {
+                logger.LogDebug("{Trace} cancelled {RequestMethod} {RequestPath}", context.TraceIdentifier, context.Request.Method, context.Request.Path);
+                return;
+            }
             catch (Exception ex) {
                 var error = EnrichProblem(BuildProblem(ex, context).WithStatus(500).Build(), context);
                 await WriteProblemAsync(context, error);
@@ -156,18 +160,32 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
     private static (string? ClientIp, string? UserId, string? UserName, string PrimaryCode, string Codes) FailureLogContext(HttpContext context, LyoProblemDetails error)
     {
         var clientIp = context.Connection.RemoteIpAddress?.ToString();
-        var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var userName = context.User.FindFirst(ClaimTypes.Name)?.Value ?? context.User.FindFirst(ClaimTypes.Email)?.Value;
+        var (userId, userName) = ResolveUser(context.User);
         var primaryCode = error.Errors.Count > 0 ? error.Errors[0].Code : LyoProblemDetails.MapHttpStatusToErrorCode(error.Status);
         var codes = error.Errors.Count > 0 ? string.Join(",", error.Errors.Select(e => e.Code).Distinct()) : primaryCode;
         return (clientIp, userId, userName, primaryCode, codes);
     }
 
+    /// <summary>
+    /// Lyo JWTs use <c>lyo:user</c> / <c>sub</c> (not <see cref="ClaimTypes.NameIdentifier" />). <c>email</c> / <c>name</c> are the JWT claim names, not the SOAP URIs.
+    /// </summary>
+    private static (string? UserId, string? UserName) ResolveUser(ClaimsPrincipal user)
+    {
+        var userId = user.FindFirst("lyo:user")?.Value
+            ?? user.FindFirst("sub")?.Value
+            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? user.Identity?.Name;
+        var userName = user.FindFirst("email")?.Value
+            ?? user.FindFirst(ClaimTypes.Email)?.Value
+            ?? user.FindFirst("name")?.Value
+            ?? user.FindFirst(ClaimTypes.Name)?.Value;
+        return (userId, userName);
+    }
+
     private IDisposable? BeginRequestScope(HttpContext context)
     {
         var sanitizedQueryString = Utilities.SanitizeUri(context.Request.QueryString.Value);
-        var userName = context.User.FindFirst(ClaimTypes.Name)?.Value ?? context.User.FindFirst(ClaimTypes.Email)?.Value;
-        var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var (userId, userName) = ResolveUser(context.User);
         var clientIp = context.Connection.RemoteIpAddress?.ToString();
         return logger.BeginScope(
             new Dictionary<string, object?> {

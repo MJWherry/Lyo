@@ -11,7 +11,7 @@
     "**Typed extension classes** (`Extensions/`) — `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` ( `GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.",
     "**`CollectionExtensions`** — materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that avoid redundant copies when the source is already the right shape.",
     "**`Utilities`** — small shared helpers (`SafeDispose`, file-size conversions, expression-based property-path extraction).",
-    "**Pathing** (`Pathing/`) — `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).",
+    "**Pathing** (`Pathing/`) — `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, `SanitizeFileName`, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).",
     "**Cryptographic random** (`Security/CryptographicRandom`) — `RandomNumberGenerator`-backed byte / int / string helpers, used by other Lyo packages instead of `System.Random` for anything security-adjacent.",
     "**`Disposable`** — convenience base / lambda disposable.",
     "**`HashCodeHelpers`** — `HashCode.Combine`-style helpers for `netstandard2.0`.",

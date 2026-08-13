@@ -2,8 +2,7 @@
 
 People and person-related models for the Lyo library suite.
 
-**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C; map into `people.*` in the host.
-See [package layout](../../../docs/package-layout.md).
+**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C; map into `people.*` in the host. See [package layout](../../../docs/package-layout.md).
 
 ## Examples
 

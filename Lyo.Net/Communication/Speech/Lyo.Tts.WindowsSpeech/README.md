@@ -75,8 +75,8 @@ var ok = await ttsService.TestConnectionAsync();
 
 It does **not** register the non-generic `ITtsService` — there is no `WindowsSpeechTtsAppService`
 adapter in this package today, so callers that depend on `ITtsService` should depend on
-`ITtsService<WindowsTtsRequest>` instead (or wire up their own adapter). The other Lyo TTS providers ([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [
-`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))
+`ITtsService<WindowsTtsRequest>` instead (or wire up their own adapter). The other Lyo TTS providers
+([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))
 register both interfaces because they ship an `*TtsAppService` adapter.
 
 ## Requirements
@@ -99,7 +99,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` — (direct, lyo)
 - `Lyo.Tts` — (direct, lyo)
 - `Lyo.Tts.Models` — (direct, lyo)
-- `System.Speech` `10.0.5` — (direct, microsoft, $([MSBuild]::IsOSPlatform ('Windows')))
+- `System.Speech` `10.0.5` — (direct, microsoft, $([MSBuild]::IsOSPlatform('Windows')))
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)

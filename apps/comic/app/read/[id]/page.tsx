@@ -1,10 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getComicApi } from "@/lib/api/serverClient";
 import { ComicReader } from "@/components/ComicReader";
+import { isComicGuid, readHref } from "@/lib/comic/cards";
 
 export const dynamic = "force-dynamic";
-
-const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function ReadPage({
   params,
@@ -18,13 +17,15 @@ export default async function ReadPage({
   const comic = await getComicApi();
   let series;
   try {
-    series = GUID.test(id)
+    series = isComicGuid(id)
       ? (await comic.getSeries(id)).data
       : (await comic.getSeriesBySlug(id)).data;
   } catch {
     notFound();
   }
   if (!series) notFound();
+  if (!isComicGuid(id))
+    redirect(readHref(series.id, sp.chapter, Number(sp.page ?? 1) || 1));
   const [chaptersRes, volumesRes] = await Promise.all([comic.getSeriesChapters(series.id), comic.getSeriesVolumes(series.id)]);
   const chapters = chaptersRes.data ?? [];
   const volumes = volumesRes.data ?? [];

@@ -29,9 +29,7 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for keyed registration, `ICompressionResolver`, and appsettings examples. **File storage reads:** register
-`AddLzmaCompressor()` when stored metadata may reference LZMA; [ `ICompressionResolver`](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) handles read-time
-decompress.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for keyed registration, `ICompressionResolver`, and appsettings examples. **File storage reads:** register `AddLzmaCompressor()` when stored metadata may reference LZMA; [ `ICompressionResolver`](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) handles read-time decompress.
 
 ## Dependencies
 

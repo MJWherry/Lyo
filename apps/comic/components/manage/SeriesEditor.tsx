@@ -9,7 +9,10 @@ import { SeriesForm } from "./SeriesForm";
 import { CoverTile } from "./CoverTile";
 import { ChapterPagePicker } from "./ChapterPagePicker";
 import { TrashIcon } from "./TrashIcon";
+import { ArchiveDownloadLink } from "@/components/ArchiveDownloadLink";
+import { ChapterPager, CHAPTER_PAGE_SIZE } from "@/components/ChapterList";
 import { bffFetch } from "@/lib/api/bffFetch";
+import { seriesHref, formatPageCount } from "@/lib/comic/cards";
 import { chapterUpdateData } from "@/lib/comic/chapterUpdate";
 import { collectPageImageRefs, deleteCoverFileIfOrphan } from "@/lib/comic/pageRefs";
 import { volumeUpdateData } from "@/lib/comic/volumeUpdate";
@@ -37,6 +40,7 @@ export function SeriesEditor({
   const [localVolumes, setLocalVolumes] = useState(volumes);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pickerVolumeId, setPickerVolumeId] = useState<string | null>(null);
+  const [chapterPage, setChapterPage] = useState(1);
 
   useEffect(() => {
     setLocalChapters(chapters);
@@ -55,6 +59,13 @@ export function SeriesEditor({
     [localChapters]
   );
   const unassigned = sortedChapters.filter((ch) => !ch.volumeId);
+  const chapterPageCount = Math.max(1, Math.ceil(sortedChapters.length / CHAPTER_PAGE_SIZE));
+  const currentChapterPage = Math.min(chapterPage, chapterPageCount);
+  const pagedChapters = useMemo(() => {
+    const start = (currentChapterPage - 1) * CHAPTER_PAGE_SIZE;
+    return sortedChapters.slice(start, start + CHAPTER_PAGE_SIZE);
+  }, [sortedChapters, currentChapterPage]);
+  const pagedUnassigned = pagedChapters.filter((ch) => !ch.volumeId);
 
   async function addVolume(e: FormEvent) {
     e.preventDefault();
@@ -163,11 +174,16 @@ export function SeriesEditor({
       series={series}
       chapters={localChapters}
       heading={`Edit ${series.title}`}
-      subtitle={<Link href={`/manga/${encodeURIComponent(series.slug)}`}>View public page</Link>}
+      subtitle={<Link href={seriesHref(series.id)}>View public page</Link>}
       actions={
-        <Link className="btn btn--ghost" href={`/manage/series/${series.id}/split`}>
-          Split series
-        </Link>
+        <>
+          <ArchiveDownloadLink href={`/api/comic/series/${encodeURIComponent(series.id)}/archive`} className="btn btn--ghost" label="Download series">
+            Download series
+          </ArchiveDownloadLink>
+          <Link className="btn btn--ghost" href={`/manage/series/${series.id}/split`}>
+            Split series
+          </Link>
+        </>
       }
       below={
         <>
@@ -267,7 +283,10 @@ export function SeriesEditor({
             <li className="muted catalog-pane__empty">No chapters yet.</li>
           ) : null}
           {sortedVolumes.map((v) => {
-            const volChapters = chaptersForVolume(v.id);
+            const volChapters = pagedChapters.filter((ch) => ch.volumeId === v.id);
+            const totalInVol = chaptersForVolume(v.id).length;
+            if (volChapters.length === 0 && !(currentChapterPage === 1 && totalInVol === 0))
+              return null;
             const open = !collapsed[v.id];
             return (
               <DropTarget key={v.id} className="catalog-group" onDropId={(id) => void assignChapter(id, v.id)} active={draggingId != null}>
@@ -278,7 +297,7 @@ export function SeriesEditor({
                     </span>
                     <span>
                       {v.title || `Vol. ${v.volumeNumber}`}
-                      <span className="muted"> · {volChapters.length}</span>
+                      <span className="muted"> · {totalInVol}</span>
                     </span>
                   </button>
                 </div>
@@ -301,6 +320,7 @@ export function SeriesEditor({
               </DropTarget>
             );
           })}
+          {pagedUnassigned.length > 0 || (currentChapterPage === 1 && unassigned.length === 0) ? (
           <DropTarget className="catalog-group" onDropId={(id) => void assignChapter(id, null)} active={draggingId != null}>
             <div className="catalog-group__head">
               <button type="button" className="catalog-group__toggle" onClick={() => toggleGroup("none")} aria-expanded={!collapsed.none}>
@@ -314,8 +334,8 @@ export function SeriesEditor({
             </div>
             {!collapsed.none ? (
               <ul className="catalog-group__items">
-                {unassigned.length === 0 ? <li className="muted catalog-pane__empty">Drop chapters here to unassign</li> : null}
-                {unassigned.map((ch) => (
+                {pagedUnassigned.length === 0 ? <li className="muted catalog-pane__empty">Drop chapters here to unassign</li> : null}
+                {pagedUnassigned.map((ch) => (
                   <ChapterRow
                     key={ch.id}
                     seriesId={series.id}
@@ -329,7 +349,9 @@ export function SeriesEditor({
               </ul>
             ) : null}
           </DropTarget>
+          ) : null}
         </ul>
+        <ChapterPager page={currentChapterPage} pageCount={chapterPageCount} onPage={setChapterPage} />
       </section>
     </SeriesForm>
   );
@@ -394,6 +416,7 @@ function ChapterRow({
   onDragEnd: () => void;
   onDelete: (id: string) => void;
 }) {
+  const pages = formatPageCount(chapter.pageCount);
   return (
     <li
       className={`manage-list__row catalog-chapter catalog-chapter--drag${dragging ? " catalog-chapter--dragging" : ""}`}
@@ -412,7 +435,14 @@ function ChapterRow({
       <Link href={`/manage/series/${seriesId}/chapters/${chapter.id}`} draggable={false}>
         Ch. {chapter.chapterNumber}
         {chapter.title ? ` · ${chapter.title}` : ""}
+        {pages ? ` · ${pages}` : ""}
       </Link>
+      <ArchiveDownloadLink
+        className="icon-btn"
+        href={`/api/comic/chapters/${encodeURIComponent(chapter.id)}/archive`}
+        label={`Download chapter ${chapter.chapterNumber}`}
+        draggable={false}
+      />
       <button
         type="button"
         className="icon-btn icon-btn--danger"

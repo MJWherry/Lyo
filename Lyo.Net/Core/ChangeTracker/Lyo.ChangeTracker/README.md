@@ -1,7 +1,6 @@
 # Lyo.ChangeTracker
 
-Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific
-aggregate.
+Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.
 
 ## Features
 
@@ -35,14 +34,14 @@ var history = await changeTracker.GetForEntityAsync(orderRef);
 
 ## `IChangeTracker` surface
 
-| Method                                                                       | Purpose                                                           |
-|------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| `RecordChange` / `RecordChangeAsync`                                         | Record a single `ChangeRecord`.                                   |
-| `RecordChanges` / `RecordChangesAsync`                                       | Record many records in a single batch (skips empty collections).  |
-| `GetByIdAsync(Guid id, …)`                                                   | Look up a recorded change by its `ChangeRecord.Id`.               |
-| `GetForEntityAsync(EntityRef forEntity, …)`                                  | Returns history for a specific entity, newest first.              |
+| Method | Purpose |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `RecordChange` / `RecordChangeAsync` | Record a single `ChangeRecord`. |
+| `RecordChanges` / `RecordChangesAsync` | Record many records in a single batch (skips empty collections). |
+| `GetByIdAsync(Guid id, …)` | Look up a recorded change by its `ChangeRecord.Id`. |
+| `GetForEntityAsync(EntityRef forEntity, …)` | Returns history for a specific entity, newest first. |
 | `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | Returns history scoped by entity type, optionally filtered by id. |
-| `DeleteForEntityAsync(EntityRef forEntity, …)`                               | Deletes all history rows recorded against a specific entity.      |
+| `DeleteForEntityAsync(EntityRef forEntity, …)` | Deletes all history rows recorded against a specific entity. |
 
 The base abstraction is purely a contract — health/diagnostics are added by adapter packages (see `Lyo.ChangeTracker.Postgres`).
 

@@ -29,8 +29,7 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full DI, `ICompressionResolver`, and configuration guide. **File storage reads:** register `AddSnappierCompressor()`
-when stored metadata may reference Snappy; decompression uses `ICompressionResolver`, not only the service default codec.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full DI, `ICompressionResolver`, and configuration guide. **File storage reads:** register `AddSnappierCompressor()` when stored metadata may reference Snappy; decompression uses `ICompressionResolver`, not only the service default codec.
 
 ## Dependencies
 

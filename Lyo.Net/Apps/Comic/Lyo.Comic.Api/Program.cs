@@ -18,6 +18,11 @@ using Lyo.Xlsx;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddLogging(i => i.ClearProviders()
+    .AddSimpleConsole(c => {
+        c.SingleLine = true;
+        c.UseUtcTimestamp = true;
+    })); //logging
 builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
 builder.Services.AddOpenApi();
 builder.Services.AddCsvService();

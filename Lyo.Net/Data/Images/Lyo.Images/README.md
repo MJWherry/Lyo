@@ -1,8 +1,6 @@
 # Lyo.Images
 
-Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**. Implements **`IImageService`** (resize, crop, rotate, watermark, format conversion,
-thumbnails, compression, metadata, palette extraction, batch processing) plus a generic **image-decoration** surface (`IImageDecorationService`): centered/positioned **overlay**
-compositing (raster + SVG), stroked **frame** outlines, **caption** bands, and **outer padding/shadow** — all stream-based and chainable through **`IImageDecorationPipeline`**.
+Production-ready **raster image processing** for .NET using **SixLabors.ImageSharp**. Implements **`IImageService`** (resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata, palette extraction, batch processing) plus a generic **image-decoration** surface (`IImageDecorationService`): centered/positioned **overlay** compositing (raster + SVG), stroked **frame** outlines, **caption** bands, and **outer padding/shadow** — all stream-based and chainable through **`IImageDecorationPipeline`**.
 
 ## Features
 
@@ -11,9 +9,7 @@ compositing (raster + SVG), stroked **frame** outlines, **caption** bands, and *
 - **Metadata** — Dimensions, format, optional **EXIF** (device, GPS, date taken) via ImageSharp.
 - **Palette** — Dominant colors (`GetPaletteAsync`); optional ignore of transparent pixels (`ImageServiceOptions`).
 - **Batch** — `ProcessBatchAsync` with `ImageProcessRequest` / `ImageOperation` subclasses.
-- **Decoration primitives** — `OverlayAsync` (raster center/positioned pad + stroke; SVG documents get a base64 PNG `<image>` spliced before `</svg>`), `AddFrameAsync` (stroked
-  outline with optional rounded corners + fill), `AddCaptionAsync` (header/footer band, optional notch + rounded outside corners), `AddOuterPaddingAsync` (rounded card + canvas
-  margin + optional drop shadow). Each accepts a `Stream` in/out and an `ImageFormat?`. The pipeline (`IImageDecorationPipeline`) chains them without intermediate streams.
+- **Decoration primitives** — `OverlayAsync` (raster center/positioned pad + stroke; SVG documents get a base64 PNG `<image>` spliced before `</svg>`), `AddFrameAsync` (stroked outline with optional rounded corners + fill), `AddCaptionAsync` (header/footer band, optional notch + rounded outside corners), `AddOuterPaddingAsync` (rounded card + canvas margin + optional drop shadow). Each accepts a `Stream` in/out and an `ImageFormat?`. The pipeline (`IImageDecorationPipeline`) chains them without intermediate streams.
 - **Thread-safe**, **async**, **logging/metrics**, **cancellation**.
 
 ## Examples
@@ -73,22 +69,21 @@ File.WriteAllBytes("qr-badge.png", result.Data!);
 
 ## Public API overview
 
-| Type                                                                                                                | Description                                                                                                                                                       |
-|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`IImageService`** / **`ImageSharpImageService`** / **`ImageServiceBase`**                                         | Primary façade for stream-based image operations and file helpers; ImageSharp backend with full EXIF.                                                             |
-| **`IImageDecorationService`** / **`ImageDecorationService`**                                                        | Generic decoration primitives: `OverlayAsync`, `AddFrameAsync`, `AddCaptionAsync`, `AddOuterPaddingAsync`. `IImageService` inherits this interface.               |
-| **`IImageDecorationPipeline`** (via `IImageDecorationService.Pipeline(byte[]/Stream)`)                              | Fluent chain of primitives that keeps a single in-memory image between stages.                                                                                    |
+| Type | Description |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`IImageService`** / **`ImageSharpImageService`** / **`ImageServiceBase`** | Primary façade for stream-based image operations and file helpers; ImageSharp backend with full EXIF. |
+| **`IImageDecorationService`** / **`ImageDecorationService`** | Generic decoration primitives: `OverlayAsync`, `AddFrameAsync`, `AddCaptionAsync`, `AddOuterPaddingAsync`. `IImageService` inherits this interface. |
+| **`IImageDecorationPipeline`** (via `IImageDecorationService.Pipeline(byte[]/Stream)`) | Fluent chain of primitives that keeps a single in-memory image between stages. |
 | **`OverlayOptionsBuilder`** / **`FrameOptionsBuilder`** / **`CaptionOptionsBuilder`** / **`PaddingOptionsBuilder`** | Fluent option builders under `Lyo.Images.Builders`; also exposed as configurator overloads on the pipeline (e.g. `pipeline.AddFrame(b => b.WithStrokeWidth(2))`). |
-| **`ISpriteSheetExportService`** / **`SpriteSheetExportService`**                                                    | Spritesheet export, frame crops, animated GIF helpers (`Lyo.Images.Sprite`).                                                                                      |
-| **`Extensions`**                                                                                                    | DI registration: **`AddImageSharpImageService`** (options/action/`IConfiguration` overloads), **`AddSpriteSheetExportService`**.                                  |
+| **`ISpriteSheetExportService`** / **`SpriteSheetExportService`** | Spritesheet export, frame crops, animated GIF helpers (`Lyo.Images.Sprite`). |
+| **`Extensions`** | DI registration: **`AddImageSharpImageService`** (options/action/`IConfiguration` overloads), **`AddSpriteSheetExportService`**. |
 
 `AddImageSharpImageService` also registers **`IImageDecorationService`** if not already present, so consumers that resolve only the decoration interface still work.
 
 ## Public API overview — Namespaces
 
 - **`Lyo.Images`** — services, pipeline, DI extensions, error codes.
-- **`Lyo.Images.Models`** — **`ImageServiceOptions`**, **`ImageProcessRequest`**, **`WatermarkOptions`**, **`OverlayOptions`** / **`OverlayPosition`**, **`FrameOptions`**, **
-  `CaptionOptions`** / **`CaptionPlacement`**, **`PaddingOptions`**, **`ImageMetadata`**, enums such as **`ResizeMode`** and **`WatermarkPosition`**.
+- **`Lyo.Images.Models`** — **`ImageServiceOptions`**, **`ImageProcessRequest`**, **`WatermarkOptions`**, **`OverlayOptions`** / **`OverlayPosition`**, **`FrameOptions`**, **`CaptionOptions`** / **`CaptionPlacement`**, **`PaddingOptions`**, **`ImageMetadata`**, enums such as **`ResizeMode`** and **`WatermarkPosition`**.
 - **`Lyo.Images.Builders`** — fluent builders for the option types plus pipeline-builder extensions.
 - **`Lyo.Images.Decoration`** — internal per-primitive drawers (`OverlayDrawer`, `FrameDrawer`, `CaptionDrawer`, `OuterPaddingDrawer`) backing `ImageDecorationService`.
 - **`Lyo.Images.Sprite`** / **`Lyo.Images.Sprite.Models`** — spritesheet pipeline types.

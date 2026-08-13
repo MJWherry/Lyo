@@ -1,7 +1,6 @@
 # Lyo.Pdf.Web.Components
 
-Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users
-draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.
+Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.
 
 Targets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and `MudBlazor` 9.3+.
 
@@ -18,17 +17,13 @@ services.AddPdfAnnotatorInterop(); // LyoPdfAnnotatorController (scoped)
 
 - `HtmlToPdfWorkbench.razor` — paste HTML or upload an `.html` / `.htm` / `.txt` file, then convert it to a PDF via `IWebRendererService`.
 - `PdfAnnotationWorkbench.razor` — wraps `LyoPdfAnnotator` and renders a live table of saved annotations and their extracted payloads.
-- `PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`) — drawing surface and result list. Exposes `AnnotationsChanged` and
-  `AnnotationsSaved` callbacks.
+- `PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`) — drawing surface and result list. Exposes `AnnotationsChanged` and `AnnotationsSaved` callbacks.
 
 ## Annotator services
 
-- `IPdfAnnotatorService` (`BrowserPdfAnnotator` implementation) — returns `IReadOnlyDictionary<string, PdfBoundingBox>` after the user finishes annotating a PDF supplied as
-  `Stream`, `byte[]`, or file path (`AnnotateAsync` / `AnnotateFileAsync`).
+- `IPdfAnnotatorService` (`BrowserPdfAnnotator` implementation) — returns `IReadOnlyDictionary<string, PdfBoundingBox>` after the user finishes annotating a PDF supplied as `Stream`, `byte[]`, or file path (`AnnotateAsync` / `AnnotateFileAsync`).
 - `LyoPdfAnnotatorController` — scoped controller used by the Blazor components.
-- `LyoPdfAnnotationResult` — payload emitted per saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional
-  `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`),
-  `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`.
+- `LyoPdfAnnotationResult` — payload emitted per saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`), `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`.
 
 ## Dependency injection
 

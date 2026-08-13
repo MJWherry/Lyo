@@ -1,14 +1,10 @@
 # Lyo.Query
 
-Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` translates polymorphic `WhereClause` ASTs
-(`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded
-entity in memory.
+Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` translates polymorphic `WhereClause` ASTs (`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded entity in memory.
 
-**What this package is:** AST → expression / matcher. **What it is not:** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query- *result*
-caching — those live in Models + [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md).
+**What this package is:** AST → expression / matcher. **What it is not:** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query-*result* caching — those live in Models + [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md).
 
-EF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Requires `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata
-caches.
+EF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Requires `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata caches.
 
 Targets `net10.0`.
 
@@ -140,12 +136,12 @@ var diffs = propertyComparisonService.GetPropertyDifferences(entity, patchDto);
 
 ## Package map
 
-| Package                                                             | Responsibility                                                                                   |
-|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| **`Lyo.Query` (this)**                                              | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `ICache` for compiled trees        |
-| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md)                 | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums               |
-| [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md)             | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |
-| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench                                                                           |
+| Package | Responsibility |
+| --- | --- |
+| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `ICache` for compiled trees |
+| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums |
+| [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |
+| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |
 
 Builders and endpoint payloads are documented on **Models** / **Api**. This doc covers the runtime translator.
 
@@ -153,15 +149,15 @@ Builders and endpoint payloads are documented on **Models** / **Api**. This doc 
 
 `BaseWhereClauseService` is the default DI implementation.
 
-| Member                                                                 | Behavior                                                                                                                                                            |
-|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ApplyWhereClause<T>(source, where, includeSubClauses = true)`         | Compiles AST → `Expression<Func<T,bool>>`, caches under `filter_ef_predicate:…`, applies `.Where`. `includeSubClauses: false` skips `SubClause` chains (SQL phase). |
-| `SortByProperty<T>(source, propertyName, direction?)`                  | Single dotted path `OrderBy` / `OrderByDescending` (default Desc when null). Collections order by **count**.                                                        |
-| `ApplyOrdering<T>(…, sortByProps, defaultOrder, defaultSortDirection)` | Multi-key sort by `SortBy.Priority` then list order; always attaches default tie-break for stable paging.                                                           |
-| `MatchesWhereClause<T>(entity, where)`                                 | Compiled in-memory matcher (`filter_matcher:…` cache).                                                                                                              |
-| `ExplainMatch<T>(entity, where)`                                       | `WhereClauseExplainResult` — per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. **In-memory only** (default interface throws).             |
-| `GetCollectionIncludePathsForWhereClause<T>(where)`                    | Distinct navigation prefixes that cross collections (for EF `Include` before sub-clause match).                                                                     |
-| `TryValidatePropertyPath<T>(name, out error)`                          | Preflight for sort / filter fields.                                                                                                                                 |
+| Member | Behavior |
+| --- | --- |
+| `ApplyWhereClause<T>(source, where, includeSubClauses = true)` | Compiles AST → `Expression<Func<T,bool>>`, caches under `filter_ef_predicate:…`, applies `.Where`. `includeSubClauses: false` skips `SubClause` chains (SQL phase). |
+| `SortByProperty<T>(source, propertyName, direction?)` | Single dotted path `OrderBy` / `OrderByDescending` (default Desc when null). Collections order by **count**. |
+| `ApplyOrdering<T>(…, sortByProps, defaultOrder, defaultSortDirection)` | Multi-key sort by `SortBy.Priority` then list order; always attaches default tie-break for stable paging. |
+| `MatchesWhereClause<T>(entity, where)` | Compiled in-memory matcher (`filter_matcher:…` cache). |
+| `ExplainMatch<T>(entity, where)` | `WhereClauseExplainResult` — per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. **In-memory only** (default interface throws). |
+| `GetCollectionIncludePathsForWhereClause<T>(where)` | Distinct navigation prefixes that cross collections (for EF `Include` before sub-clause match). |
+| `TryValidatePropertyPath<T>(name, out error)` | Preflight for sort / filter fields. |
 
 Invalid paths / operators → `InvalidQueryException` (`Lyo.Query.Models.Exceptions`).
 
@@ -169,13 +165,13 @@ Invalid paths / operators → `InvalidQueryException` (`Lyo.Query.Models.Excepti
 
 Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 
-| Operator                                                              | Notes                                                                                          |
-|-----------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `Equals` / `NotEquals`                                                | Simple comparison; null-safe rules enforced                                                    |
+| Operator | Notes |
+| --- | --- |
+| `Equals` / `NotEquals` | Simple comparison; null-safe rules enforced |
 | `GreaterThan` / `GreaterThanOrEqual` / `LessThan` / `LessThanOrEqual` | On scalars: value compare. On **collection** navigations: compare against **collection count** |
-| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations    | String methods when the target type supports them                                              |
-| `In` / `NotIn`                                                        | Value may be a list or CSV string                                                              |
-| `Regex` / `NotRegex`                                                  | String regex; trivial patterns like `.*` short-circuit to `true`                               |
+| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations | String methods when the target type supports them |
+| `In` / `NotIn` | Value may be a list or CSV string |
+| `Regex` / `NotRegex` | String regex; trivial patterns like `.*` short-circuit to `true` |
 
 **Dotted paths**
 
@@ -183,8 +179,7 @@ Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 - Into collection: `Lines.Quantity` → `lines.Any(e => e.Quantity …)`
 - Collection count: path metadata `IsCountPath` builds `Enumerable.Count` then compares
 
-**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before
-expression build.
+**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before expression build.
 
 ## Two-phase SubClause execution
 
@@ -209,27 +204,24 @@ var where = WhereClauseBuilder.And()
 
 ## ICache usage (predicate / matcher cache)
 
-`AddLyoQueryServices` **requires** `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). This is **not** the same as `Lyo.Api` query- *result* caching
-(`QueryOptions.CacheQueryResultsAsUtf8Payload`).
+`AddLyoQueryServices` **requires** `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). This is **not** the same as `Lyo.Api` query-*result* caching (`QueryOptions.CacheQueryResultsAsUtf8Payload`).
 
-| Cache key prefix / pattern     | Stores                                                                                                  |
-|--------------------------------|---------------------------------------------------------------------------------------------------------|
-| `filter_ef_predicate:…`        | Compiled `Expression` / predicate for `ApplyWhereClause` (keyed by entity + tree + `includeSubClauses`) |
-| `filter_matcher:…`             | Compiled in-memory matcher for `MatchesWhereClause`                                                     |
-| Sort-key lambdas               | Per `(TEntity, propertyName)` order key selectors                                                       |
-| Property-path metadata         | Resolved dotted-path segments, collection indexes, final CLR types                                      |
-| `SubQueryIncludePaths_…`       | Include-path lists for a where tree                                                                     |
-| Property-comparison strategies | Per-property equality strategy for `IPropertyComparisonService`                                         |
+| Cache key prefix / pattern | Stores |
+| --- | --- |
+| `filter_ef_predicate:…` | Compiled `Expression` / predicate for `ApplyWhereClause` (keyed by entity + tree + `includeSubClauses`) |
+| `filter_matcher:…` | Compiled in-memory matcher for `MatchesWhereClause` |
+| Sort-key lambdas | Per `(TEntity, propertyName)` order key selectors |
+| Property-path metadata | Resolved dotted-path segments, collection indexes, final CLR types |
+| `SubQueryIncludePaths_…` | Include-path lists for a where tree |
+| Property-comparison strategies | Per-property equality strategy for `IPropertyComparisonService` |
 
 Tags typically include the entity CLR type so hosts can invalidate by type when schemas change.
 
-**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented
-under [Lyo.Api — Query result caching](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
+**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented under [Lyo.Api — Query result caching](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
 
 ## IPropertyComparisonService
 
-`GetPropertyDifferences<TEntity, TOther>(entity, newData)` walks public **writable** properties on `TEntity` that have a same-named **readable** property on `TOther`, compares with
-an inferred strategy (direct equality, enum/string coercion, or `Convert.ChangeType`), and returns `Dictionary<string, object?>` of **changed** property → proposed new value.
+`GetPropertyDifferences<TEntity, TOther>(entity, newData)` walks public **writable** properties on `TEntity` that have a same-named **readable** property on `TOther`, compares with an inferred strategy (direct equality, enum/string coercion, or `Convert.ChangeType`), and returns `Dictionary<string, object?>` of **changed** property → proposed new value.
 
 Used by patch/update pipelines (e.g. `Lyo.Api`) to build minimal diffs. Strategies are cached via `ICacheService`.
 
@@ -266,17 +258,17 @@ Optional: `IMetrics` / `ILogger` are taken from DI when present (`Constants.Metr
 
 When `IMetrics` is registered, `BaseWhereClauseService` emits under `Lyo.Query.Constants.Metrics`:
 
-| Name                                       | Kind            |
-|--------------------------------------------|-----------------|
-| `query.filter.apply_query_node.duration`   | histogram/timer |
-| `query.filter.apply_query_node.success`    | counter         |
-| `query.filter.sort_by_property.duration`   | histogram/timer |
-| `query.filter.sort_by_property.success`    | counter         |
-| `query.filter.apply_ordering.duration`     | histogram/timer |
-| `query.filter.apply_ordering.success`      | counter         |
+| Name | Kind |
+| ------------------------------------------ | --------------- |
+| `query.filter.apply_query_node.duration` | histogram/timer |
+| `query.filter.apply_query_node.success` | counter |
+| `query.filter.sort_by_property.duration` | histogram/timer |
+| `query.filter.sort_by_property.success` | counter |
+| `query.filter.apply_ordering.duration` | histogram/timer |
+| `query.filter.apply_ordering.success` | counter |
 | `query.filter.matches_query_node.duration` | histogram/timer |
-| `query.filter.matches_query_node.success`  | counter         |
-| `query.filter.sort_by_count`               | gauge           |
+| `query.filter.matches_query_node.success` | counter |
+| `query.filter.sort_by_count` | gauge |
 
 Tags: `entity_type`, `operation` (`Constants.Metrics.Tags`).
 

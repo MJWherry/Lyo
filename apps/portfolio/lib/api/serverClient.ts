@@ -15,17 +15,18 @@ function requireApiBaseUrl(): string {
 }
 
 /** Server-only base Lyo API client (metadata, health helpers, etc.). */
-export function getApi(): AsyncApiClient {
+export function getApi(signal?: AbortSignal): AsyncApiClient {
   return createAsyncApiClient({
     baseUrl: requireApiBaseUrl(),
     token: process.env.LYO_API_TOKEN?.trim() || undefined,
     transport: fetchTransport,
+    signal,
   });
 }
 
 /** Server-only Person API client. Never import from Client Components. */
-export function getPersonApi() {
-  return createAsyncPersonApiClient(getApi());
+export function getPersonApi(signal?: AbortSignal) {
+  return createAsyncPersonApiClient(getApi(signal));
 }
 
 /** Raw fetch against the internal API for health / non-Person routes. */

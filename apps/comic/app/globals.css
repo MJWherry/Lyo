@@ -207,14 +207,17 @@ textarea {
   cursor: pointer;
 }
 
-.btn:hover:not(:disabled) {
+.btn:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--accent-hover);
   color: #0b0e12;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled="true"],
+.icon-btn[aria-disabled="true"] {
   opacity: 0.55;
-  cursor: not-allowed;
+  cursor: wait;
+  pointer-events: none;
 }
 
 .btn--ghost {
@@ -361,8 +364,26 @@ textarea {
   cursor: pointer;
 }
 
-.icon-btn:hover {
+.spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.icon-btn:hover:not([aria-disabled="true"]) {
   background: var(--bg-soft);
+  color: var(--ink-muted);
 }
 
 .icon-btn--danger {
@@ -1196,7 +1217,18 @@ textarea {
   gap: 0.35rem;
 }
 
-.chapter-list a {
+.chapter-list__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chapter-list__row > a:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.chapter-list a:not(.icon-btn) {
   display: flex;
   justify-content: space-between;
   padding: 0.55rem 0.75rem;

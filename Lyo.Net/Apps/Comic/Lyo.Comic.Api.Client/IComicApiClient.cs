@@ -1,4 +1,5 @@
 using Lyo.Api.Client;
+using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.FileMetadataStore.Models;
 
@@ -12,6 +13,18 @@ public interface IComicApiClient : IApiClient
 
     /// <summary>Downloads multiple files by ID in a single request. Missing IDs are silently omitted from the result.</summary>
     Task<IReadOnlyList<FileBatchEntry>> GetFilesBatchAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default);
+
+    /// <summary>Downloads a zip of stored files. Disposing the stream completes the HTTP response. Optional <paramref name="fileName" /> sets the zip name.</summary>
+    Task<(Stream Content, string? FileName, long? ContentLength)> GetFilesArchiveAsync(
+        IReadOnlyList<FilesArchiveEntryReq> entries,
+        string? fileName = null,
+        CancellationToken ct = default);
+
+    /// <summary>Downloads a chapter as a zip named after the chapter. Optional <paramref name="fileName" /> overrides the default.</summary>
+    Task<(Stream Content, string? FileName, long? ContentLength)> GetChapterArchiveAsync(Guid chapterId, string? fileName = null, CancellationToken ct = default);
+
+    /// <summary>Downloads a series as a nested zip named after the series. Optional <paramref name="fileName" /> overrides the default.</summary>
+    Task<(Stream Content, string? FileName, long? ContentLength)> GetSeriesArchiveAsync(Guid seriesId, string? fileName = null, CancellationToken ct = default);
 
     /// <summary>
     /// Uploads a file to the Comic API's file storage and returns the stored file metadata. Optional <paramref name="seriesId" />, <paramref name="volumeId" />, and

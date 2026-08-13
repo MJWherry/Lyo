@@ -366,10 +366,11 @@ public class QueryService<TContext>(
                 return payloadCached ?? ResultFactory.QueryFailure<TDbModel>(
                     queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, "Query cache returned no payload.", DateTime.UtcNow));
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+                throw;
+            }
             catch (Exception ex) {
-                return ct.IsCancellationRequested
-                    ? ResultFactory.QueryFailure<TDbModel>(queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.Cancelled, "Request was cancelled.", DateTime.UtcNow))
-                    : ResultFactory.QueryFailure<TDbModel>(queryRequest, LogAndReturnApiError(ex, "Query Error", ApiErrorCodes.InvalidQuery));
+                return ResultFactory.QueryFailure<TDbModel>(queryRequest, LogAndReturnApiError(ex, "Query Error", ApiErrorCodes.InvalidQuery));
             }
 
             async Task<(QueryRes<TDbModel> value, string[]? tags)> BuildQueryResultsAsync(CancellationToken ct2)

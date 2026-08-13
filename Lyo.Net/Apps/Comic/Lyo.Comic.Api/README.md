@@ -36,12 +36,14 @@ Uses the same configuration patterns as other Lyo Postgres apps: **`AddPostgresC
 ## Comic file storage (`AddComicFileStorage`)
 
 | Key | Purpose |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **`ComicFileStorage:RootDirectoryPath`** | Root directory for **`LocalFileStorageService`** (default **`./comic-files`**). |
 | **`ComicFileEncryption:Encrypt`** | When true, files are stored through the **keyed** two-key encryption stack (default **true**). |
 | **`ComicFileEncryption:Compress`** | Passed to **`SaveFromStreamAsync`** (default **false**). |
 | **`ComicFileEncryption:KeyId`** | Logical key id in **`LocalKeyStore`** (default **`comic-images`**). |
 | **`ComicFileEncryption:KeySecret`** | Passphrase material for **`AddKeyFromString`** (default **`change-me-in-production`** — **override in production**). |
+| **`FileStorageArchive:MaxFileCount`** | Max files per zip (Comic default **5000**). |
+| **`FileStorageArchive:MaxTotalUncompressedBytes`** | Max sum of original file sizes before spooling (Comic default **2 GiB**). |
 
 The keyed **`IKeyStore`** / **`LocalKeyStore`** / encryption services isolate comic file crypto from any other keyed encryption in the same container (**`FileStorageKey`** = *
 *`"comic-files"`**).
@@ -62,6 +64,7 @@ Default prefix is **`/api/comic`**. CRUD and `POST /QueryConcrete` are generated
 | GET | **`/api/comic/series/slug/{slug}`** | `SeriesEndpoints.GetSeriesBySlug` | Enriched series fetch by URL-friendly slug. |
 | POST | **`/api/comic/series/search`** | `SeriesEndpoints.Search` | Body: **`Lyo.Comic.ComicSeriesQuery`**. When `Tags` are provided, they are AND-intersected through `ITagStore` before delegating to `IComicStore.SearchSeriesAsync`; results pass through **`EnrichSeriesListAsync`**. |
 | GET | **`/api/comic/series/{id:guid}/chapters`** | `SeriesEndpoints.GetChapters` | `IComicStore.GetChaptersBySeriesAsync` (raw domain objects, no enrichment). Optional `?language=` filter. |
+| GET | **`/api/comic/series/{id:guid}/archive`** | `SeriesEndpoints.GetSeriesArchive` | Nested zip of series/volume/chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{seriesTitle}.zip`**. |
 | GET | **`/api/comic/series/{id:guid}/volumes`** | `SeriesEndpoints.GetVolumes` | Volumes for the series, enriched via `EnrichVolumeListAsync`. |
 | GET | **`/api/comic/series/tags`** | `SeriesEndpoints.GetAllTags` | All tags applied to the `ComicSeries` entity type (`ITagStore.GetAllTagsForEntityTypeAsync`). |
 | GET | **`/api/comic/series/{id:guid}/tags`** | `SeriesEndpoints.GetTags` | Tag name list for one series. |
@@ -92,9 +95,10 @@ Default prefix is **`/api/comic`**. CRUD and `POST /QueryConcrete` are generated
 ## HTTP surface — Chapters (`MapChapterEndpoints` + builder, tagged **Chapters**)
 
 | Method | Path | Source | Description |
-| ------------------- | --------------------------------------------------------------------- | --------------------------------------- | ---------------------------------------- |
+| ------------------- | --------------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET | **`/api/comic/chapters/{id:guid}`** | `ChapterEndpoints.GetChapterById` | Enriched fetch via `EnrichChapterAsync`. |
 | GET | **`/api/comic/chapters/{id:guid}/pages`** | `ChapterEndpoints.GetPages` | Raw `ComicPage` list (no enrichment). |
+| GET | **`/api/comic/chapters/{id:guid}/archive`** | `ChapterEndpoints.GetChapterArchive` | Flat zip of chapter pages (file-storage ids or http(s) image refs; missing/dead refs are skipped). Optional `?fileName=`. Default name **`{series} - Ch. {n}[ - {title}].zip`**. |
 | GET / POST / DELETE | **`/api/comic/chapters/{id:guid}/{tags,ratings,comments,favorites}`** | `ChapterEndpoints` | Same cross-domain shape. |
 | POST / DELETE | **`/api/comic/chapters[, /Update, /Upsert, /QueryConcrete, /{id}]`** | `BuildComicApiEndpoints` (`All & ~Get`) | CRUD + Query (no special update hook). |
 
@@ -107,9 +111,10 @@ Default prefix is **`/api/comic`**. CRUD and `POST /QueryConcrete` are generated
 `/files` is mounted at the app root (not under `/api/comic`). All endpoints resolve **`IFileStorageService`** through the keyed registration **`"comic-files"`**.
 
 | Method | Path | Body / Query | Returns |
-| ------ | ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------ | ---------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET | **`/files/{id:guid}`** | — | Raw bytes with the stored `ContentType` (falls back to `application/octet-stream`). 404 on `FileNotFoundException`. |
 | POST | **`/files/batch`** | Body: **`FilesBatchReq { Ids: Guid[] }`** | `List<FileBatchEntry>` with `{ Id, ContentType, Data (base64) }`. Missing IDs are silently omitted (no error per id). |
+| POST | **`/files/archive`** | Body: **`FilesArchiveReq { Entries: { Id, Path? }[], FileName? }`** | `application/zip` attachment. Spools through **`IFileStorageArchiveService`**. Optional **`Path`** is the zip entry path; omitted paths use the stored original name. Optional **`FileName`** is the download name (defaults to **`files.zip`**). Over-limit → 400; missing id → 404. |
 | POST | **`/files/upload`** | `IFormFile` (multipart). Optional query: **`seriesId`**, **`volumeId`**, **`chapterId`**. | `{ Id }`. **Antiforgery disabled.** Streamed via `SaveFromStreamAsync` using **`ComicFileUploadOptions.{Compress, Encrypt, KeyId}`** from the keyed singleton. |
 | DELETE | **`/files/{id:guid}`** | — | `200` if deleted, `404` if not. |
 
@@ -186,6 +191,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
+- `Lyo.IO.Temp` — (transitive, lyo)
 - `Lyo.Lock` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)

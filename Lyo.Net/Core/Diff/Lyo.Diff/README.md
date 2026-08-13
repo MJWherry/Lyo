@@ -1,7 +1,6 @@
 # Lyo.Diff
 
-Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you
-can also inject independently.
+Side-by-side comparison utilities for **human-readable text** and **arbitrary object graphs**. The package exposes a small **`IDiffService` façade** backed by two subsystems you can also inject independently.
 
 ## Examples
 
@@ -15,16 +14,13 @@ builder.Services.AddLyoDiff(); // ITextTokenizer, ITextDiffService, IObjectGraph
 
 ## Components — Text diffing (`Lyo.Diff.Text`)
 
-- **`ITextTokenizer`** (**`TextTokenizer`**) — splits input into **`TextToken[]`** using **`TextDiffOptions`** (line vs word vs character modes in **`TextTokenizeMode`**, ignore
-  case, ignore whitespace, **`MaxTokensPerSide` safety cap**—exceeding the cap throws to avoid runaway memory on pathological input).
-- **`ITextDiffService`** (**`TextDiffService`**) — runs a **Myers** diff over parallel token streams, returns **`TextDiffResult`** with ordered **`TextDiffChunk`** segments tagged
-  **`TextDiffKind`** (equal, insert, delete).
+- **`ITextTokenizer`** (**`TextTokenizer`**) — splits input into **`TextToken[]`** using **`TextDiffOptions`** (line vs word vs character modes in **`TextTokenizeMode`**, ignore case, ignore whitespace, **`MaxTokensPerSide` safety cap**—exceeding the cap throws to avoid runaway memory on pathological input).
+- **`ITextDiffService`** (**`TextDiffService`**) — runs a **Myers** diff over parallel token streams, returns **`TextDiffResult`** with ordered **`TextDiffChunk`** segments tagged **`TextDiffKind`** (equal, insert, delete).
 - **`MyersDiffCalculator`** — core algorithm implementation over pre-tokenized spans.
 
 ## Components — Object graph diffing (`Lyo.Diff.ObjectGraph`)
 
-- **`IObjectGraphDiffService`** (**`ObjectGraphDiffService`**) — walks two object instances of the same nominal type (or compatible graphs), compares reachable **properties and
-  nested objects** according to **`ObjectGraphDiffOptions`**, and yields a list of **`ObjectGraphDifference`** entries (path/context + old/new values at leaves).
+- **`IObjectGraphDiffService`** (**`ObjectGraphDiffService`**) — walks two object instances of the same nominal type (or compatible graphs), compares reachable **properties and nested objects** according to **`ObjectGraphDiffOptions`**, and yields a list of **`ObjectGraphDifference`** entries (path/context + old/new values at leaves).
 - **`ObjectGraphLeafContext`** captures where in the graph the change occurred for UI or logging.
 
 ## Components — Facade

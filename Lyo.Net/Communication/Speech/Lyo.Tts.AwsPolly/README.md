@@ -1,7 +1,6 @@
 # Lyo.Tts.AwsPolly
 
-[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk
-synthesis, metrics, and DI helpers.
+[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -65,12 +64,12 @@ Prefer **IAM roles**, environment credentials, or the shared credentials file in
 
 ## Behaviour notes
 
-| Area     | Detail                                                                                                                                                                       |
-|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Voices   | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values                                                               |
-| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language                                                              |
-| Metrics  | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md))                                                                             |
-| Adapter  | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success |
+| Area | Detail |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Voices | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values |
+| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language |
+| Metrics | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md)) |
+| Adapter | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success |
 
 ## Dependencies
 

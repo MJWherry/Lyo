@@ -1,5 +1,9 @@
 using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Services;
+using Lyo.Comic.Api.Storage;
+using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Models;
+using Lyo.Comic;
 using Lyo.Comment;
 using Lyo.EntityReference.Models;
 using Lyo.Favorite;
@@ -22,6 +26,7 @@ public static class ChapterEndpoints
         // Enriched reads — builder handles Query (POST /QueryConcrete) and plain CRUD
         group.MapGet("/{id:guid}", GetChapterById);
         group.MapGet("/{id:guid}/pages", GetPages);
+        group.MapGet("/{id:guid}/archive", GetChapterArchive);
 
         // Cross-domain sub-resources
         group.MapGet("/{id:guid}/tags", GetTags);
@@ -49,6 +54,32 @@ public static class ChapterEndpoints
     {
         var pages = await store.GetPagesByChapterAsync(id, ct);
         return Results.Ok(pages);
+    }
+
+    private static async Task<IResult> GetChapterArchive(
+        Guid id,
+        string? fileName,
+        IComicStore store,
+        [FromKeyedServices("comic-files")] IFileStorageArchiveService archive,
+        [FromKeyedServices("comic-files")] IFileStorageService files,
+        IHttpClientFactory http,
+        FileStorageArchiveOptions options,
+        CancellationToken ct = default)
+    {
+        var chapter = await store.GetChapterByIdAsync(id, ct);
+        if (chapter is null)
+            ArchiveEndpointHelpers.ThrowNotFound();
+
+        var series = await store.GetSeriesByIdAsync(chapter.SeriesId, ct);
+        if (series is null)
+            ArchiveEndpointHelpers.ThrowNotFound();
+
+        var pages = await store.GetPagesByChapterAsync(id, ct);
+        var entries = ComicArchiveLayout.ChapterEntries(chapter, pages);
+        var zipName = string.IsNullOrWhiteSpace(fileName) ? ComicArchiveLayout.ChapterZipFileName(series.Title, chapter) : fileName;
+        return await ArchiveEndpointHelpers.StreamComicArchiveAsync(
+            entries, zipName, archive, files, http.CreateClient(ArchiveEndpointHelpers.HttpClientName), options,
+            pages.Count == 0 && string.IsNullOrWhiteSpace(chapter.CoverImageRef) ? "Chapter has no pages." : "Chapter has no pages with images.", ct);
     }
 
     private static async Task<IResult> GetTags(Guid id, ITagStore tagStore, CancellationToken ct = default)

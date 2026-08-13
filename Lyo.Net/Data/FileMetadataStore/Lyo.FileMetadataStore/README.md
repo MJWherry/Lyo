@@ -2,21 +2,20 @@
 
 **File identity without bytes.** Large systems split:
 
-1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs. 2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key
-   ids, multipart session pointers, archival flags.
+1. **Blob storage** (**`Lyo.FileStorage`**) — throughput, multipart uploads, scanners, CDN URLs. 2. **Metadata OLTP** (**this abstraction**) — dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.
 
 Clients depend on **`IFileMetadataStore`** only where they manipulate **canonical `Guid`** file identifiers.
 
 ## Methods
 
-| Operation                                                          | Responsibility                                                                                                                                                                                                                                             |
-|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`GetMetadataAsync(Guid fileId)`**                                | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing or logically deleted (**soft delete** hides tombstones here).                                                                                                                 |
-| **`SaveMetadataAsync(Guid, FileStoreResult)`**                     | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns).                                                                                            |
-| **`DeleteMetadataAsync(Guid)`**                                    | **Soft-delete** (sets **`DeletedAt`**, row retained): **`false`** if missing or already deleted; **`GetMetadataAsync`** / **`FindByHashAsync`** omit tombstones.                                                                                           |
-| **`PurgeMetadataAsync(Guid)`**                                     | **Hard-delete** the metadata row (or `.meta` JSON for the local store). Idempotent — returns `false` when there was no record. Used by **`Lyo.FileStorage.DeleteFileAsync(..., FileDeletionMode.RemoveObjectAndPurgeMetadata)`** for retention/governance. |
-| **`FindByHashAsync(byte[] hash)`**                                 | Duplicate detection shortcut — ignores soft-deleted rows (often combined with **`Lyo.Hashing`**).                                                                                                                                                          |
-| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits — active (non–soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair.                                                                                                                                             |
+| Operation | Responsibility |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`GetMetadataAsync(Guid fileId)`** | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing or logically deleted (**soft delete** hides tombstones here). |
+| **`SaveMetadataAsync(Guid, FileStoreResult)`** | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns). |
+| **`DeleteMetadataAsync(Guid)`** | **Soft-delete** (sets **`DeletedAt`**, row retained): **`false`** if missing or already deleted; **`GetMetadataAsync`** / **`FindByHashAsync`** omit tombstones. |
+| **`PurgeMetadataAsync(Guid)`** | **Hard-delete** the metadata row (or `.meta` JSON for the local store). Idempotent — returns `false` when there was no record. Used by **`Lyo.FileStorage.DeleteFileAsync(..., FileDeletionMode.RemoveObjectAndPurgeMetadata)`** for retention/governance. |
+| **`FindByHashAsync(byte[] hash)`** | Duplicate detection shortcut — ignores soft-deleted rows (often combined with **`Lyo.Hashing`**). |
+| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits — active (non–soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair. |
 
 `FileStoreResult` exposes optional **`DeletedAt`** (UTC) when present in storage; callers treat metadata without it as active. **`GetMetadataAsync`** and **`FindByHashAsync`** omit
 tombstones; admin grids and workbench **`QueryProject`** surfaces may include soft-deleted rows and should gate mutating actions on **`DeletedAt`**.
@@ -25,30 +24,29 @@ tombstones; admin grids and workbench **`QueryProject`** surfaces may include so
 
 `FileStoreResult.Availability` propagates content gating decisions from the storage pipeline:
 
-| State                     | Meaning                                                                                                                     |
-|---------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| **`Available`**           | Default; reads / presigned URLs / direct downloads are permitted.                                                           |
-| **`PendingScan`**         | Saved but awaiting a malware/policy scan; `FileNotAvailableException` on read unless `AllowReadQuarantinedForAdmin` is set. |
-| **`PendingDirectUpload`** | Direct-upload `BeginDirectUploadAsync` has issued a PUT URL but `CompleteDirectUploadAsync` has not finalized.              |
-| **`Quarantined`**         | A scan flagged the content. Admin-only read may be allowed by storage policy.                                               |
-| **`Rejected`**            | A scan or policy hard-rejected the content; reads always fail.                                                              |
+| State | Meaning |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **`Available`** | Default; reads / presigned URLs / direct downloads are permitted. |
+| **`PendingScan`** | Saved but awaiting a malware/policy scan; `FileNotAvailableException` on read unless `AllowReadQuarantinedForAdmin` is set. |
+| **`PendingDirectUpload`** | Direct-upload `BeginDirectUploadAsync` has issued a PUT URL but `CompleteDirectUploadAsync` has not finalized. |
+| **`Quarantined`** | A scan flagged the content. Admin-only read may be allowed by storage policy. |
+| **`Rejected`** | A scan or policy hard-rejected the content; reads always fail. |
 
 ## Methods — `DekMigrationResult`
 
-Returned by **`MigrateDeksAsync`** / **`RotateDeksAsync`** in **`Lyo.FileStorage`**. Records per-file outcomes including `Updated`, `Skipped`, and `Failed` counts plus the failure
-list, so operators can re-run a key rotation against only the failing subset.
+Returned by **`MigrateDeksAsync`** / **`RotateDeksAsync`** in **`Lyo.FileStorage`**. Records per-file outcomes including `Updated`, `Skipped`, and `Failed` counts plus the failure list, so operators can re-run a key rotation against only the failing subset.
 
 ## Local file metadata store DI
 
 `Lyo.FileMetadataStore.LocalFileMetadataStore` is a JSON-backed implementation for single-host scenarios. Registered through `Extensions`:
 
-| Extension                                                                                                                      | Notes                                                                                                                          |
-|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| `services.AddLocalFileMetadataStore(string rootDirectoryPath)`                                                                 | Direct path.                                                                                                                   |
-| `services.AddLocalFileMetadataStore(Func<IServiceProvider, string> resolveRoot)`                                               | Lazy path resolution (useful for tests or DI-derived paths).                                                                   |
-| `services.AddLocalFileMetadataStoreFromConfiguration(IConfiguration, sectionName = LocalFileMetadataStoreOptions.SectionName)` | Bind `LocalFileMetadataStoreOptions` (`RootDirectoryPath`).                                                                    |
-| `services.AddLocalFileMetadataStoreKeyed(string keyName, string rootDirectoryPath)`                                            | Keyed registration with both `LocalFileMetadataStore` and `IFileMetadataStore` exposed.                                        |
-| `services.AddLocalFileMetadataStoreKeyed(string keyName)`                                                                      | Returns a `LocalFileMetadataStoreBuilder` for fluent options/section-based wiring (`ConfigureLocalFileStore(...)`, `Build()`). |
+| Extension | Notes |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `services.AddLocalFileMetadataStore(string rootDirectoryPath)` | Direct path. |
+| `services.AddLocalFileMetadataStore(Func<IServiceProvider, string> resolveRoot)` | Lazy path resolution (useful for tests or DI-derived paths). |
+| `services.AddLocalFileMetadataStoreFromConfiguration(IConfiguration, sectionName = LocalFileMetadataStoreOptions.SectionName)` | Bind `LocalFileMetadataStoreOptions` (`RootDirectoryPath`). |
+| `services.AddLocalFileMetadataStoreKeyed(string keyName, string rootDirectoryPath)` | Keyed registration with both `LocalFileMetadataStore` and `IFileMetadataStore` exposed. |
+| `services.AddLocalFileMetadataStoreKeyed(string keyName)` | Returns a `LocalFileMetadataStoreBuilder` for fluent options/section-based wiring (`ConfigureLocalFileStore(...)`, `Build()`). |
 
 ## Architectural guidance
 
@@ -59,7 +57,7 @@ For multi-tenant systems, prepend tenant key to logical file ids **outside** int
 
 Concrete implementations:
 
-- [`FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) (**production OLTP schema** — includes optional audit/multipart/ **staged-upload** adjunct stores).
+- [`FileMetadataStore.Postgres`](../Lyo.FileMetadataStore.Postgres/README.md) (**production OLTP schema** — includes optional audit/multipart/**staged-upload** adjunct stores).
 - [`FileMetadataStore.Sqlite`](../Lyo.FileMetadataStore.Sqlite/README.md) (**embedded / local-dev SQLite** — same adjunct services as Postgres, including **`staged_file_upload`**).
 
 ## See also

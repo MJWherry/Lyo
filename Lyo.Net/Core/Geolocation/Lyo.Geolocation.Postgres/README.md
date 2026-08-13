@@ -2,8 +2,7 @@
 
 PostgreSQL persistence for canonical geolocation data using Entity Framework Core.
 
-**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md) persist via
-`IGeolocationStore` in the host. See [package layout](../../../docs/package-layout.md).
+**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md) persist via `IGeolocationStore` in the host. See [package layout](../../../docs/package-layout.md).
 
 ## Examples
 
@@ -15,9 +14,7 @@ services.AddPostgresGeolocationStoreFromConfiguration(configuration);
 
 ## Overview
 
-Schema **`geolocation`**: - **address** — Canonical normalized addresses (`Lyo.Geolocation.Models.Address`) - **address_source** — provenance per import (`source_entity_*` +
-`imported_at`; owner `address_id`; lookup index on `source_entity_*`) There is **no** `geocode_cache` table. This project references only **`Lyo.Geolocation`**, **
-`Lyo.Geolocation.Models`**, and **`Lyo.EntityReference.Postgres`** — not Google, Endato, or other vendors.
+Schema **`geolocation`**: - **address** — Canonical normalized addresses (`Lyo.Geolocation.Models.Address`) - **address_source** — provenance per import (`source_entity_*` + `imported_at`; owner `address_id`; lookup index on `source_entity_*`) There is **no** `geocode_cache` table. This project references only **`Lyo.Geolocation`**, **`Lyo.Geolocation.Models`**, and **`Lyo.EntityReference.Postgres`** — not Google, Endato, or other vendors.
 
 ## Usage
 

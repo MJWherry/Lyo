@@ -1,7 +1,6 @@
 # Lyo.Resilience
 
-A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions;
-pipelines are defined entirely via configuration.
+A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions; pipelines are defined entirely via configuration.
 
 ## Features
 
@@ -154,8 +153,7 @@ public class MyService
 
 ## Configuration
 
-- **Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use
-  `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
+- **Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
 - **Standalone section** – use `AddLyoResiliencePipelines("Lyo:ResiliencePipelines")` or any custom section path.
 
 ## Strategy subsections
@@ -170,10 +168,10 @@ public class MyService
 
 Apply resilience at **one level only** to avoid exponential retries:
 
-| Use case                         | Use this                                    | Do NOT                                                     |
-|----------------------------------|---------------------------------------------|------------------------------------------------------------|
-| **HTTP calls**                   | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
-| **Non-HTTP** (DB, SDK, file I/O) | `IResilientExecutor`                        | —                                                          |
+| Use case | Use this | Do NOT |
+| -------------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
+| **HTTP calls** | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
+| **Non-HTTP** (DB, SDK, file I/O) | `IResilientExecutor` | — |
 
 Wrapping HttpClient-using code with `IResilientExecutor` when that HttpClient already has `AddLyoResilienceHandler` causes nested resilience: each outer retry can trigger multiple
 inner retries, leading to exponential retry counts.
@@ -184,24 +182,23 @@ Use `IResilientExecutor` for work that does **not** go through HttpClient (e.g. 
 
 ## Resilience for HttpClient
 
-Use `AddLyoResilienceHandler` so resilience is applied at the HttpClient level. Call the client directly; do not wrap those calls with `IResilientExecutor`: The pipeline applies
-retry, timeout, and circuit breaker to each HTTP request (exception-based; retries on `HttpRequestException`, `TimeoutException`, etc.).
+Use `AddLyoResilienceHandler` so resilience is applied at the HttpClient level. Call the client directly; do not wrap those calls with `IResilientExecutor`: The pipeline applies retry, timeout, and circuit breaker to each HTTP request (exception-based; retries on `HttpRequestException`, `TimeoutException`, etc.).
 
 ## Metrics
 
 When `IMetrics` is registered (e.g. via `AddLyoMetrics`), the library records:
 
-| Metric                                       | Type    | Description                          |
-|----------------------------------------------|---------|--------------------------------------|
-| `lyo.resilience.retry`                       | Counter | Each retry attempt (tag: `pipeline`) |
-| `lyo.resilience.timeout`                     | Counter | Each timeout                         |
-| `lyo.resilience.circuit_breaker.opened`      | Counter | Circuit breaker opened               |
-| `lyo.resilience.circuit_breaker.closed`      | Counter | Circuit breaker closed               |
-| `lyo.resilience.circuit_breaker.half_opened` | Counter | Circuit breaker half-opened          |
-| `lyo.resilience.execution.duration`          | Timing  | Execution duration                   |
-| `lyo.resilience.execution.success`           | Counter | Successful executions                |
-| `lyo.resilience.execution.failure`           | Counter | Failed executions                    |
-| `lyo.resilience.execution.error`             | Error   | Exceptions                           |
+| Metric | Type | Description |
+| -------------------------------------------- | ------- | ------------------------------------ |
+| `lyo.resilience.retry` | Counter | Each retry attempt (tag: `pipeline`) |
+| `lyo.resilience.timeout` | Counter | Each timeout |
+| `lyo.resilience.circuit_breaker.opened` | Counter | Circuit breaker opened |
+| `lyo.resilience.circuit_breaker.closed` | Counter | Circuit breaker closed |
+| `lyo.resilience.circuit_breaker.half_opened` | Counter | Circuit breaker half-opened |
+| `lyo.resilience.execution.duration` | Timing | Execution duration |
+| `lyo.resilience.execution.success` | Counter | Successful executions |
+| `lyo.resilience.execution.failure` | Counter | Failed executions |
+| `lyo.resilience.execution.error` | Error | Exceptions |
 
 All metrics include a `pipeline` tag with the pipeline name.
 

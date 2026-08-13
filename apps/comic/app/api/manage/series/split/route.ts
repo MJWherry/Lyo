@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import type { ComicChapter, ComicChapterReq, ComicSeriesReq, ComicSeriesRes, ComicVolumeReq, ComicVolumeRes } from "lyo-comic-api-client";
 import { getApi, getComicApi } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 import { isUnauthorized } from "@/lib/auth/unauthorized";
 import { chapterUpdateData } from "@/lib/comic/chapterUpdate";
 
@@ -37,8 +38,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const comic = await getComicApi();
-    const api = await getApi();
+    const comic = await getComicApi(request.signal);
+    const api = await getApi(request.signal);
     const source = (await comic.getSeries(sourceId)).data;
     if (!source) return NextResponse.json({ error: "Source series not found." }, { status: 404 });
 
@@ -110,6 +111,8 @@ export async function POST(request: NextRequest) {
     revalidatePath("/");
     revalidatePath("/search");
     revalidatePath("/manage");
+    revalidatePath(`/manga/${source.id}`);
+    revalidatePath(`/manga/${createdSeries.id}`);
     revalidatePath(`/manga/${source.slug}`);
     revalidatePath(`/manga/${createdSeries.slug}`);
     revalidatePath(`/manage/series/${sourceId}`);
@@ -122,6 +125,8 @@ export async function POST(request: NextRequest) {
       createdVolumeCount: newVolumeBySource.size,
     });
   } catch (err) {
+    const aborted = abortedUpstreamResponse(err, request.signal);
+    if (aborted) return aborted;
     if (isUnauthorized(err)) {
       return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     }

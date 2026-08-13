@@ -10,6 +10,7 @@ import {
   type QueryReq,
 } from "lyo-person-api-client";
 import { getPersonApi } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const started = performance.now();
   try {
-    const personApi = getPersonApi();
+    const personApi = getPersonApi(request.signal);
 
     if (mode === "get") {
       const getReq = normalizeGet(body.request);
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
     return listPayload(mode, response.data, req.value, started);
   } catch (err) {
-    return errorResponse(err, started);
+    return errorResponse(err, started, request.signal);
   }
 }
 
@@ -251,7 +252,9 @@ function normalizeRoot(raw: unknown): NormOk<QueryReq> | NormErr {
   return { ok: true, value: req };
 }
 
-function errorResponse(err: unknown, started: number) {
+function errorResponse(err: unknown, started: number, signal?: AbortSignal) {
+  const aborted = abortedUpstreamResponse(err, signal);
+  if (aborted) return aborted;
   if (err instanceof ApiClientError) {
     const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 502;
     return NextResponse.json(

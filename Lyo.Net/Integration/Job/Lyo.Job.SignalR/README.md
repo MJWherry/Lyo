@@ -1,7 +1,6 @@
 # Lyo.Job.SignalR
 
-SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`**
-records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.
+SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.
 
 ## Examples
 
@@ -42,14 +41,14 @@ Connect to the hub and listen for **`JobEvent`**: `JobHub.Ping()` returns `"pong
 
 `JobEventBroadcaster` binds per-routing-key queues under `job.signalr.dashboard.*`:
 
-| Routing key                            | `JobHubEvent.EventType` | Payload         |
-|----------------------------------------|-------------------------|-----------------|
-| `job.notifications.run.created`        | `run.created`           | Run id (Guid)   |
-| `job.notifications.run.started`        | `run.started`           | Run id          |
-| `job.notifications.run.finished`       | `run.finished`          | Run id          |
-| `job.notifications.run.cancelled`      | `run.cancelled`         | Run id          |
-| `job.notifications.alert`              | `alert`                 | Alert JSON body |
-| `job.notifications.definition.updated` | `definition.updated`    | Definition id   |
+| Routing key | `JobHubEvent.EventType` | Payload |
+| -------------------------------------- | ----------------------- | --------------- |
+| `job.notifications.run.created` | `run.created` | Run id (Guid) |
+| `job.notifications.run.started` | `run.started` | Run id |
+| `job.notifications.run.finished` | `run.finished` | Run id |
+| `job.notifications.run.cancelled` | `run.cancelled` | Run id |
+| `job.notifications.alert` | `alert` | Alert JSON body |
+| `job.notifications.definition.updated` | `definition.updated` | Definition id |
 
 `JobHubEvent.WorkerType` is reserved for future filtering; the broadcaster currently passes `null`. Alert events carry the raw JSON alert body in `Message` when the routing-key
 payload is not a run Guid.
@@ -74,8 +73,7 @@ Pair with [`Lyo.Job.Web.Components`](../Lyo.Job.Web.Components/README.md) for th
 
 ## Configuration
 
-This package has no dedicated options type — it uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub
-path.
+This package has no dedicated options type — it uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path.
 
 ## Metrics
 

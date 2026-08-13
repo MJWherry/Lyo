@@ -6,7 +6,7 @@ import type { ComicChapter, ComicPage, ComicSeriesRes, ComicTypeValue, ComicVolu
 import { comicFileUrl, isVerticalDefault } from "lyo-comic-api-client";
 import { saveProgress } from "@/lib/reading/progress";
 import { bffFetch } from "@/lib/api/bffFetch";
-import { readHref } from "@/lib/comic/cards";
+import { readHref, seriesHref } from "@/lib/comic/cards";
 import { parsePageList } from "@/lib/comic/pageRefs";
 
 type Mode = "paged" | "vertical";
@@ -241,6 +241,9 @@ export function ComicReader({ series, chapters, volumes = [], initialChapterId, 
 
     const onKey = (e: KeyboardEvent) => {
       if (mode !== "paged") return;
+      const t = e.target;
+      if (t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable))
+        return;
       if (e.key === "ArrowRight") goPageRef.current(1);
       else if (e.key === "ArrowLeft") goPageRef.current(-1);
     };
@@ -346,7 +349,7 @@ export function ComicReader({ series, chapters, volumes = [], initialChapterId, 
 
       <div className={`comic-viewer__top-bar ${overlayClass}`} onPointerDown={(e) => e.stopPropagation()}>
         <div className="comic-viewer__top-inner">
-          <Link href={`/manga/${encodeURIComponent(series.slug)}`}>←</Link>
+          <Link href={seriesHref(series.id)}>←</Link>
           <span className="pill">{String(series.comicType)}</span>
           {showVolumeSelect ? (
             <select
@@ -507,17 +510,22 @@ const PageSlider = memo(
           disabled={disabled}
           list={tickId}
           aria-label="Page"
-          onPointerDown={(e) => {
+          onPointerDown={() => {
             draggingRef.current = true;
-            e.currentTarget.focus({ preventScroll: true });
           }}
           onInput={(e) => {
             const n = readValue(e.target);
             onPreview(n);
             scheduleLoad(n);
           }}
-          onPointerUp={(e) => flushLoad(readValue(e.target))}
-          onPointerCancel={() => flushLoad(readValue(inputRef.current))}
+          onPointerUp={(e) => {
+            flushLoad(readValue(e.target));
+            e.currentTarget.blur();
+          }}
+          onPointerCancel={(e) => {
+            flushLoad(readValue(inputRef.current));
+            e.currentTarget.blur();
+          }}
           onKeyUp={(e) => {
             if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Home" || e.key === "End") {
               flushLoad(readValue(e.target));

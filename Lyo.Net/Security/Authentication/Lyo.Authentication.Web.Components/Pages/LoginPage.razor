@@ -59,13 +59,21 @@
                     else {
                         <MudStack Spacing="2">
                             @foreach (var provider in _providers) {
+                                var thisBusy = _providerBusy && string.Equals(_busyProvider, provider.Name, StringComparison.Ordinal);
                                 <MudButton FullWidth="true"
                                            Variant="Variant.Outlined"
                                            Color="Color.Primary"
                                            Size="Size.Large"
-                                           StartIcon="@(provider.IconKey ?? Icons.Material.Filled.AccountCircle)"
+                                           Disabled="@(_providerBusy || _passwordBusy)"
+                                           StartIcon="@(thisBusy ? null : provider.IconKey ?? Icons.Material.Filled.AccountCircle)"
                                            OnClick="@(() => StartProviderSignInAsync(provider.Name))">
-                                    @provider.DisplayName
+                                    @if (thisBusy) {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                                        <span>Signing in...</span>
+                                    }
+                                    else {
+                                        @provider.DisplayName
+                                    }
                                 </MudButton>
                             }
                         </MudStack>
@@ -84,7 +92,7 @@
                                                   Variant="Variant.Outlined"
                                                   Required="true"
                                                   Margin="Margin.Dense"
-                                                  Disabled="_passwordBusy"/>
+                                                  Disabled="@(_passwordBusy || _providerBusy)"/>
 
                                     <MudTextField @bind-Value="_passwordForm.Password"
                                                   Label="Password"
@@ -95,13 +103,13 @@
                                                   OnAdornmentClick="TogglePasswordVisibility"
                                                   Required="true"
                                                   Margin="Margin.Dense"
-                                                  Disabled="_passwordBusy"/>
+                                                  Disabled="@(_passwordBusy || _providerBusy)"/>
 
                                     @if (Options.Value.ShowRememberMe) {
                                         <MudCheckBox @bind-Value="_passwordForm.RememberMe"
                                                      Color="Color.Primary"
                                                      Label="Remember me"
-                                                     Disabled="_passwordBusy"/>
+                                                     Disabled="@(_passwordBusy || _providerBusy)"/>
                                     }
 
                                     @if (!string.IsNullOrWhiteSpace(_passwordError)) {
@@ -114,9 +122,15 @@
                                                FullWidth="true"
                                                Variant="Variant.Filled"
                                                Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.Login"
-                                               Disabled="_passwordBusy">
-                                        @(_passwordBusy ? "Signing in..." : "Sign in")
+                                               Disabled="@(_passwordBusy || _providerBusy)"
+                                               StartIcon="@(_passwordBusy ? null : Icons.Material.Filled.Login)">
+                                        @if (_passwordBusy) {
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                                            <span>Signing in...</span>
+                                        }
+                                        else {
+                                            <span>Sign in</span>
+                                        }
                                     </MudButton>
                                 </MudStack>
                             </EditForm>
@@ -148,6 +162,10 @@
 
     private bool _passwordBusy;
 
+    private bool _providerBusy;
+
+    private string? _busyProvider;
+
     private string? _passwordError;
 
     private readonly PasswordFormModel _passwordForm = new();
@@ -168,11 +186,25 @@
         _loading = false;
     }
 
-    private Task StartProviderSignInAsync(string provider) => SignInLauncher.SignInAsync(provider, NormalizeReturnUrl(ReturnUrl));
+    private async Task StartProviderSignInAsync(string provider)
+    {
+        if (_providerBusy || _passwordBusy)
+            return;
+
+        _providerBusy = true;
+        _busyProvider = provider;
+        try {
+            await SignInLauncher.SignInAsync(provider, NormalizeReturnUrl(ReturnUrl));
+        }
+        finally {
+            _providerBusy = false;
+            _busyProvider = null;
+        }
+    }
 
     private async Task SubmitPasswordAsync()
     {
-        if (_passwordHandler is null)
+        if (_passwordHandler is null || _providerBusy)
             return;
 
         _passwordBusy = true;

@@ -67,6 +67,14 @@
   "readmePath": "Lyo.Net/Security/Authentication/Lyo.Authentication.Client/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Authentication.Models",
       "kind": "lyo",
       "tags": [
@@ -99,6 +107,14 @@
       ]
     },
     {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Diagnostic",
       "kind": "lyo",
       "tags": [
@@ -116,6 +132,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

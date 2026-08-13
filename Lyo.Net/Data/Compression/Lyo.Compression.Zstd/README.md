@@ -33,9 +33,7 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full registration tree, keyed services, `ICompressionResolver`, and `CompressionServiceOptions` binding. **File
-storage reads:** register `AddZstdCompressor()` when historical metadata may reference Zstd; decompression uses `ICompressionResolver`, not only
-`ICompressionService.DefaultAlgorithm`.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for the full registration tree, keyed services, `ICompressionResolver`, and `CompressionServiceOptions` binding. **File storage reads:** register `AddZstdCompressor()` when historical metadata may reference Zstd; decompression uses `ICompressionResolver`, not only `ICompressionService.DefaultAlgorithm`.
 
 ## Dependencies
 

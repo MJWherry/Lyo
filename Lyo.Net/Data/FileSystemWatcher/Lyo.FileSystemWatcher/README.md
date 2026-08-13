@@ -228,13 +228,13 @@ var watcher = new FileSystemWatcher("C:\\MyDirectory", options, logger, metrics)
 
 ## FileSystemWatcherOptions
 
-| Property                | Type               | Default             | Description                                                                          |
-|-------------------------|--------------------|---------------------|--------------------------------------------------------------------------------------|
-| `IncludeSubdirectories` | `bool`             | `false`             | Whether to watch subdirectories recursively                                          |
-| `DebounceTimerDelay`    | `int`              | `250`               | Debounce delay in milliseconds. Changes within this delay are batched together       |
-| `EnableFileHashing`     | `bool`             | `true`              | Enable file hashing for move/rename detection. Disable for better performance        |
-| `PathComparison`        | `StringComparison` | `OrdinalIgnoreCase` | String comparison for path operations. Use `Ordinal` for case-sensitive file systems |
-| `EnableMetrics`         | `bool`             | `false`             | Enable metrics collection (requires IMetrics instance)                               |
+| Property | Type | Default | Description |
+| ----------------------- | ------------------ | ------------------- | ------------------------------------------------------------------------------------ |
+| `IncludeSubdirectories` | `bool` | `false` | Whether to watch subdirectories recursively |
+| `DebounceTimerDelay` | `int` | `250` | Debounce delay in milliseconds. Changes within this delay are batched together |
+| `EnableFileHashing` | `bool` | `true` | Enable file hashing for move/rename detection. Disable for better performance |
+| `PathComparison` | `StringComparison` | `OrdinalIgnoreCase` | String comparison for path operations. Use `Ordinal` for case-sensitive file systems |
+| `EnableMetrics` | `bool` | `false` | Enable metrics collection (requires IMetrics instance) |
 
 ## File Events
 
@@ -436,8 +436,7 @@ There is a known bug where directory change events for the source directory when
 
 ## Architecture — Snapshot-Based Detection
 
-The watcher uses periodic snapshots of the directory structure, comparing them to detect changes. This provides more reliable change detection than relying solely on
-FileSystemWatcher events.
+The watcher uses periodic snapshots of the directory structure, comparing them to detect changes. This provides more reliable change detection than relying solely on FileSystemWatcher events.
 
 ## Architecture — Debouncing
 
@@ -455,16 +454,16 @@ File hashing (SHA256) is used to detect moves and renames even when the file sys
 
 ## Public surface
 
-| Type                                                   | Description                                                                                                                                                                                                            |
-|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`FileSystemWatcher`**                                | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
-| **`FileSystemWatcherOptions`**                         | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`.                                                                                                                 |
-| **`FileSystemChangeInfo`**                             | `record` payload emitted by every change event.                                                                                                                                                                        |
-| **`ChangeTypeEnum`**                                   | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`.                                                                                                                                                   |
-| **`DirectorySnapshotEntry`**                           | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`).                                                                                                                                        |
-| **`SnapshotTree`** / **`SnapshotDirectoryNode`**       | In-memory snapshot of the watched tree used for diffing.                                                                                                                                                               |
-| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above).                                                                                                                                                       |
-| **`Utilities`**                                        | Helpers shared by the watcher implementation.                                                                                                                                                                          |
+| Type | Description |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`FileSystemWatcher`** | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
+| **`FileSystemWatcherOptions`** | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`. |
+| **`FileSystemChangeInfo`** | `record` payload emitted by every change event. |
+| **`ChangeTypeEnum`** | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`. |
+| **`DirectorySnapshotEntry`** | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`). |
+| **`SnapshotTree`** / **`SnapshotDirectoryNode`** | In-memory snapshot of the watched tree used for diffing. |
+| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above). |
+| **`Utilities`** | Helpers shared by the watcher implementation. |
 
 <!-- LYO_README_SYNC:END -->
 

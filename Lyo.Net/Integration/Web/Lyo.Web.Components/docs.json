@@ -131,6 +131,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [

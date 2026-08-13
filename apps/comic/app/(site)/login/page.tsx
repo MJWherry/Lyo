@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export default function LoginPage({
   searchParams,
@@ -24,9 +24,7 @@ async function LoginInner({
         <h1>Sign in</h1>
         <p className="muted">Google login is required to browse and manage the library.</p>
         {sp.error ? <p className="error">Sign-in failed ({sp.error}). Try again.</p> : null}
-        <Link className="btn" href={href}>
-          Sign in with Google
-        </Link>
+        <GoogleSignInButton href={href} />
       </div>
     </div>
   );

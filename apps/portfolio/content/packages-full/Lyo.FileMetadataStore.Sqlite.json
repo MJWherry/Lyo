@@ -193,6 +193,14 @@
       ]
     },
     {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [

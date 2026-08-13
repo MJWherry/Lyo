@@ -9,6 +9,7 @@ import {
   type QueryTotalCountMode,
 } from "lyo-person-api-client";
 import { getPersonApi } from "@/lib/api/serverClient";
+import { abortedUpstreamResponse } from "@/lib/api/abortedResponse";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const start = Math.max(0, Number(searchParams.get("start") ?? "0") || 0);
   const amount = Math.min(50, Math.max(1, Number(searchParams.get("amount") ?? "10") || 10));
-  return runQuery(baselineQuery({ start, amount }));
+  return runQuery(baselineQuery({ start, amount }), request.signal);
 }
 
 export async function POST(request: NextRequest) {
@@ -55,13 +56,13 @@ export async function POST(request: NextRequest) {
     req.whereClause = body.whereClause;
   }
 
-  return runQuery(req);
+  return runQuery(req, request.signal);
 }
 
-async function runQuery(queryReq: QueryConcreteReq) {
+async function runQuery(queryReq: QueryConcreteReq, signal?: AbortSignal) {
   const started = performance.now();
   try {
-    const personApi = getPersonApi();
+    const personApi = getPersonApi(signal);
     const response = await personApi.queryPerson(queryReq);
     const elapsedMs = performance.now() - started;
 
@@ -82,6 +83,8 @@ async function runQuery(queryReq: QueryConcreteReq) {
       elapsedMs,
     });
   } catch (err) {
+    const aborted = abortedUpstreamResponse(err, signal);
+    if (aborted) return aborted;
     if (err instanceof ApiClientError) {
       const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 502;
       return NextResponse.json(

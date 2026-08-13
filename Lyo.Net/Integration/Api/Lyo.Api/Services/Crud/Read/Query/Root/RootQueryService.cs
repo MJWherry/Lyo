@@ -102,6 +102,9 @@ public sealed class RootQueryService<TContext>(
                     _metrics.IncrementCounter("api.queryroot.cache_path", 1, [("entity", fromEntityName), ("mode", "object")]);
                 }
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+                throw;
+            }
             catch (Exception ex) {
                 logger?.LogWarning(ex, "Root query cache failed; executing without cache");
                 _metrics.IncrementCounter("api.queryroot.cache_path", 1, [("entity", fromEntityName), ("mode", "bypass_error")]);

@@ -1,9 +1,11 @@
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Storage;
 using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Models;
 using Microsoft.AspNetCore.Mvc;
 using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
@@ -19,6 +21,7 @@ public static class FilesEndpoints
         var group = app.MapGroup("/files").WithTags("Files").RequireAuthorization();
         group.MapGet("/{id:guid}", GetFile);
         group.MapPost("/batch", GetFilesBatch);
+        group.MapPost("/archive", GetFilesArchive);
         group.MapPost("/upload", UploadFile).DisableAntiforgery();
         group.MapDelete("/{id:guid}", DeleteFile);
         return app;
@@ -52,6 +55,18 @@ public static class FilesEndpoints
         }
 
         return Results.Ok(entries);
+    }
+
+    private static Task<IResult> GetFilesArchive(
+        [FromBody] FilesArchiveReq req,
+        [FromKeyedServices(FileStorageKey)] IFileStorageArchiveService archive,
+        CancellationToken ct = default)
+    {
+        if (req.Entries is not { Count: > 0 })
+            ArchiveEndpointHelpers.ThrowBadRequest("At least one file entry is required.");
+
+        var entries = req.Entries.Select(e => new FileStorageArchiveEntry(e.Id, e.Path)).ToArray();
+        return ArchiveEndpointHelpers.StreamArchiveAsync(token => archive.CreateArchiveAsync(entries, req.FileName, token), ct);
     }
 
     private static async Task<IResult> UploadFile(

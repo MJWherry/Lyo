@@ -23,8 +23,7 @@ builder.Services.AddXlsxExport(); // Lyo.Api.Export.Xlsx
 
 ## Setup
 
-Enable export on endpoint builders with `ExportApiFeature.Instance`: JSON export is built into `Lyo.Api` via `AddBuiltInExportFormatHandlers()` (called from `AddLyoCrudServices`).
-CSV and XLSX require the respective format addon packages.
+Enable export on endpoint builders with `ExportApiFeature.Instance`: JSON export is built into `Lyo.Api` via `AddBuiltInExportFormatHandlers()` (called from `AddLyoCrudServices`). CSV and XLSX require the respective format addon packages.
 
 ## Dependencies
 

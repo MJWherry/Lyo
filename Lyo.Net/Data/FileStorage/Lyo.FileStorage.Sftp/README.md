@@ -1,7 +1,6 @@
 # Lyo.FileStorage.Sftp
 
-Physical-IO provider for Lyo.FileStorage over SFTP. Supports save/read/delete/copy/move and DEK header rotation. Presigned URLs, multipart, and staged upload are not supported in
-v1 (base NotSupportedException).
+Physical-IO provider for Lyo.FileStorage over SFTP. Supports save/read/delete/copy/move and DEK header rotation. Presigned URLs, multipart, and staged upload are not supported in v1 (base NotSupportedException).
 
 ## Features
 
@@ -41,6 +40,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.ContentThreatScan` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
 - `Lyo.Health` — (transitive, lyo)
+- `Lyo.IO.Temp` — (transitive, lyo)
 - `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)

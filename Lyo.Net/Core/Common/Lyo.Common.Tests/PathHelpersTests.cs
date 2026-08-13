@@ -21,6 +21,12 @@ public class PathHelpersTests
     public void GetFileName_Posix_ReturnsLeaf() => Assert.Equal("file.txt", PathHelpers.GetFileName(PathStyle.Posix, "/mem/lyo/file.txt"));
 
     [Fact]
+    public void SanitizeFileName_ReplacesSlashAndInvalidChars() => Assert.Equal("a_b", PathHelpers.SanitizeFileName("a/b"));
+
+    [Fact]
+    public void SanitizeFileName_NullOrWhitespace_ReturnsNull() => Assert.Null(PathHelpers.SanitizeFileName("  "));
+
+    [Fact]
     public void GetFileNameWithoutExtension_Posix() => Assert.Equal("file", PathHelpers.GetFileNameWithoutExtension(PathStyle.Posix, "/mem/lyo/file.txt"));
 
     [Fact]

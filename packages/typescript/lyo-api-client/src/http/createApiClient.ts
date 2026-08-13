@@ -55,6 +55,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
                 url,
                 body,
                 headers,
+                ...(request.signal ? {signal: request.signal} : {}),
             });
 
             if (!response.ok) {

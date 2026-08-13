@@ -25,31 +25,32 @@ Pair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the AP
 }
 ```
 
-| Parameter           | Notes                                                       |
-|---------------------|-------------------------------------------------------------|
-| `BaseRoute`         | Reporting route prefix (default `"Reporting"`).             |
-| `DownloadFileAsync` | Host callback for blob download by `OutputFileId`.          |
-| `ViewFileUrlAsync`  | Host callback returning a browser URL for HTML/PDF preview. |
+| Parameter | Notes |
+| ------------------- | ----------------------------------------------------------- |
+| `BaseRoute` | Reporting route prefix (default `"Reporting"`). |
+| `DownloadFileAsync` | Host callback for blob download by `OutputFileId`. |
+| `ViewFileUrlAsync` | Host callback returning a browser URL for HTML/PDF preview. |
 
 When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. Generations without `OutputFileId` (persist hook skipped) only
 support the Details dialog.
 
 ## Components
 
-| Component              | Role                                                                                                                               |
-|------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `ReportManagement`     | Tabs: Definitions / Generations                                                                                                    |
-| `ReportDefinitionGrid` | Definition list + Run                                                                                                              |
-| `ReportDefinitionView` | Definition detail / JSON preview                                                                                                   |
-| `RunReportDialog`      | Parameters + format override → `POST …/Generation/Generate`; Options / AllowedValues render as MudSelect with live sibling binding |
-| `ReportGenerationGrid` | Generation list + View/Download                                                                                                    |
-| `ReportGenerationView` | Generation detail + View/Download actions                                                                                          |
+| Component | Role |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `ReportManagement` | Tabs: Definitions / Generations |
+| `ReportDefinitionGrid` | Definition list + Run |
+| `ReportDefinitionView` | Definition detail / JSON preview |
+| `RunReportDialog` | Parameters + format override → `POST …/Generation/Generate`; Options / AllowedValues render as MudSelect with live sibling binding |
+| `ReportGenerationGrid` | Generation list + View/Download |
+| `ReportGenerationView` | Generation detail + View/Download actions |
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Client` — (direct, lyo)
+- `Lyo.DataTable.Models` — (direct, lyo)
 - `Lyo.Reporting.Client` — (direct, lyo)
 - `Lyo.Reporting.Models` — (direct, lyo)
 - `Lyo.Web.Components` — (direct, lyo)

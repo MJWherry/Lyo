@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Comic.Api.Models.Request;
@@ -24,6 +25,18 @@ public sealed class ComicApiClient(HttpClient httpClient, ComicApiClientOptions 
         var result = await PostAsAsync<FilesBatchReq, FileBatchEntry[]>("files/batch", new(ids), ct: ct);
         return result;
     }
+
+    public Task<(Stream Content, string? FileName, long? ContentLength)> GetFilesArchiveAsync(
+        IReadOnlyList<FilesArchiveEntryReq> entries,
+        string? fileName = null,
+        CancellationToken ct = default)
+        => PostArchiveStreamAsync("files/archive", new FilesArchiveReq(entries, fileName), ct);
+
+    public Task<(Stream Content, string? FileName, long? ContentLength)> GetChapterArchiveAsync(Guid chapterId, string? fileName = null, CancellationToken ct = default)
+        => GetFileStreamAsync(ArchiveUri($"{ComicApiPrefix}/chapters/{chapterId:D}/archive", fileName), ct: ct);
+
+    public Task<(Stream Content, string? FileName, long? ContentLength)> GetSeriesArchiveAsync(Guid seriesId, string? fileName = null, CancellationToken ct = default)
+        => GetFileStreamAsync(ArchiveUri($"{ComicApiPrefix}/series/{seriesId:D}/archive", fileName), ct: ct);
 
     public async Task<FileStoreResult?> UploadFileAsync(
         Stream data,
@@ -101,5 +114,37 @@ public sealed class ComicApiClient(HttpClient httpClient, ComicApiClientOptions 
     {
         var qs = $"tagType={Uri.EscapeDataString(tagType)}&slug={Uri.EscapeDataString(slug ?? string.Empty)}";
         return $"{ComicApiPrefix}/{segmentPrefix}/{entityId}/tags/{Uri.EscapeDataString(tag)}?{qs}";
+    }
+
+    private static string ArchiveUri(string path, string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            return path;
+
+        return $"{path}?fileName={Uri.EscapeDataString(fileName)}";
+    }
+
+    private async Task<(Stream Content, string? FileName, long? ContentLength)> PostArchiveStreamAsync<TRequest>(string uri, TRequest body, CancellationToken ct)
+    {
+        var json = JsonSerializer.Serialize(body, SerializerOptions);
+        var request = new HttpRequestMessage(HttpMethod.Post, uri) {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+        var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        try {
+            await EnsureSuccessStatusCodeOrThrowApiExceptionAsync(response, ct).ConfigureAwait(false);
+#if NET5_0_OR_GREATER
+            var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+#else
+            var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+#endif
+            var downloadName = response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"');
+            return (new HttpResponseStream(stream, response, request), downloadName, response.Content.Headers.ContentLength);
+        }
+        catch {
+            response.Dispose();
+            request.Dispose();
+            throw;
+        }
     }
 }

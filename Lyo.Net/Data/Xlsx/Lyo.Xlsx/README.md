@@ -1,36 +1,24 @@
 # Lyo.Xlsx
 
-Implementation of [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader`
-(ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams, and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`. Multi-targets
-`netstandard2.0;net10.0`; async, custom-header, and formatter export overloads are only available on `net10.0`.
+Implementation of [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an `XlsxWriter` (streaming `DocumentFormat.OpenXml` writer) and an `XlsxReader` (ExcelDataReader / ClosedXML) to read and write XLSX workbooks from files, streams, and byte arrays, with helpers for converting to CSV, HTML, and `Lyo.DataTable`. Multi-targets `netstandard2.0;net10.0`; async, custom-header, and formatter export overloads are only available on `net10.0`.
 
-Export streams rows straight into the worksheet part via `OpenXmlWriter`, keeping memory bounded regardless of row count. Column widths are approximated from a bounded sample of
-the leading rows rather than a full-workbook auto-fit pass.
+Export streams rows straight into the worksheet part via `OpenXmlWriter`, keeping memory bounded regardless of row count. Column widths are approximated from a bounded sample of the leading rows rather than a full-workbook auto-fit pass.
 
 ## Features
 
-- Strongly-typed read/write via `IEnumerable<T>`; on `net10.0`, `IAsyncEnumerable<T>` export and forward-only streaming reads (`ParseXlsx*RowsStreamingAsync` / typed
-  `ParseXlsx*StreamingAsync`) via ExcelDataReader.
+- Strongly-typed read/write via `IEnumerable<T>`; on `net10.0`, `IAsyncEnumerable<T>` export and forward-only streaming reads (`ParseXlsx*RowsStreamingAsync` / typed `ParseXlsx*StreamingAsync`) via ExcelDataReader.
 - Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet name → rows).
-- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` /
-  `ParseXlsx*AsDataTableWithFormatting`), or parse every sheet at once (`ParseXlsx*AsAllSheets` / `…WithFormatting`).
-- Thin vs formatted DataTable import: `AsDataTable` skips ClosedXML style reads (values + spans only); `AsDataTableWithFormatting` populates the sparse
-  `(row,col) → DataTableCellFormat` map (absent key = no format; default black/white/theme colors and font size/name are stripped so unstyled sheets stay empty). Export writes
-  styles for mapped cells (unique custom styles capped at 512). Skipping style reads does not remove ClosedXML workbook-load cost.
-- Configurable parse-scoped value/format pooling via `XlsxOptions.Pooling` (`PoolValues`, `PoolFormats`, `PoolingCellThreshold` default 512; one `DataTableValueInterner` per
-  parse).
-- Incremental multi-sheet writing sessions via `CreateDocumentWriter` / `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or row/column dictionary per sheet;
-  dispose finalizes the workbook).
+- Sheet control on read: `ListSheetNames`, parse a specific sheet by name or zero-based index (`ParseXlsx*AsDictionary` / `ParseXlsx*AsDataTable` / `ParseXlsx*AsDataTableWithFormatting`), or parse every sheet at once (`ParseXlsx*AsAllSheets` / `…WithFormatting`).
+- Thin vs formatted DataTable import: `AsDataTable` skips ClosedXML style reads (values + spans only); `AsDataTableWithFormatting` populates the sparse `(row,col) → DataTableCellFormat` map (absent key = no format; default black/white/theme colors and font size/name are stripped so unstyled sheets stay empty). Export writes styles for mapped cells (unique custom styles capped at 512). Skipping style reads does not remove ClosedXML workbook-load cost.
+- Configurable parse-scoped value/format pooling via `XlsxOptions.Pooling` (`PoolValues`, `PoolFormats`, `PoolingCellThreshold` default 512; one `DataTableValueInterner` per parse).
+- Incremental multi-sheet writing sessions via `CreateDocumentWriter` / `IXlsxDocumentWriter` (typed rows, selected properties, `DataTable`, or row/column dictionary per sheet; dispose finalizes the workbook).
 - Cell spanning: `DataTable` cells with `ColSpan`/`RowSpan` round-trip as XLSX merged ranges (`<mergeCells>` on write, `MergedRanges` on read).
-- Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter
-  (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
+- Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`, custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
 - Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.
-- `Lyo.DataTable.Models.DataTable` round-trip including `Footer` (export always appends footer when present; import peels the last body row when `useFooterRow: true`; formats on
-  map row `-2`) and HTML table export (`ExportToHtmlTable`).
+- `Lyo.DataTable.Models.DataTable` round-trip including `Footer` (export always appends footer when present; import peels the last body row when `useFooterRow: true`; formats on map row `-2`) and HTML table export (`ExportToHtmlTable`).
 - XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with optional `Encoding`.
 - Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one `Result<DataTable>` per input path.
-- `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping
-  failures in `Result<T>`.
+- `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`, `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`, `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
 
 ## Examples
 
@@ -139,8 +127,7 @@ Workbook export for 100,000 rows under a second on the async path.
 
 ## Dependency injection
 
-`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`, `IXlsxWriter`, and `IXlsxReader` to the same instance. Overloads accept `Action<XlsxOptions>`, an
-options instance, or `AddXlsxServiceFromConfiguration` (binds `Xlsx` and optional `DataTablePooling` sections).
+`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`, `IXlsxWriter`, and `IXlsxReader` to the same instance. Overloads accept `Action<XlsxOptions>`, an options instance, or `AddXlsxServiceFromConfiguration` (binds `Xlsx` and optional `DataTablePooling` sections).
 
 ## Multi-sheet workbooks
 
@@ -153,8 +140,9 @@ xlsx.ExportToXlsx(workbook, "people.xlsx");
 await xlsx.ExportToXlsxAsync(workbook, stream, ct);
 ```
 
-For heterogeneous sheets (different row types or sources per sheet), open an incremental writing session; each `AddSheet*` call streams one worksheet, and disposing the session
-finalizes the workbook:
+For heterogeneous sheets (different row types or sources per sheet), open an
+incremental writing session; each `AddSheet*` call streams one worksheet, and
+disposing the session finalizes the workbook:
 
 ```csharp
 using (var doc = xlsx.CreateDocumentWriter("report.xlsx"))
@@ -167,7 +155,8 @@ using (var doc = xlsx.CreateDocumentWriter("report.xlsx"))
 ```
 
 Duplicate sheet names (case-insensitive) are rejected. `CreateDocumentWriter(stream)`
-leaves the destination stream open for the caller; the file-path overload closes the file on dispose.
+leaves the destination stream open for the caller; the file-path overload closes the
+file on dispose.
 
 ## Sheet control (read)
 
@@ -183,14 +172,11 @@ Result<DataTable> styled = xlsx.ParseXlsxFileAsDataTableWithFormatting("in.xlsx"
 IReadOnlyDictionary<string, DataTable> all = xlsx.ParseXlsxStreamAsAllSheets(stream);
 ```
 
-The no-arg parse methods keep their first-sheet behavior. `AsDataTable` is thin (no styles); use `AsDataTableWithFormatting` when you need the sparse format map. Async variants of
-all sheet-control methods are available on `net10.0`.
+The no-arg parse methods keep their first-sheet behavior. `AsDataTable` is thin (no styles); use `AsDataTableWithFormatting` when you need the sparse format map. Async variants of all sheet-control methods are available on `net10.0`.
 
 ## Style export limits
 
-Dynamic OpenXML styles cover the fields on `DataTableCellFormat` (RGB colors, common borders/align/numFmt). Theme colors are not round-tripped on import (`TryGetColorHex` returns
-null for theme). Unique custom cell formats are capped at 512 per workbook; further formats fall back to the default style. FontSize/FontName are intentionally not imported
-(ClosedXML defaults would fill the sparse map).
+Dynamic OpenXML styles cover the fields on `DataTableCellFormat` (RGB colors, common borders/align/numFmt). Theme colors are not round-tripped on import (`TryGetColorHex` returns null for theme). Unique custom cell formats are capped at 512 per workbook; further formats fall back to the default style. FontSize/FontName are intentionally not imported (ClosedXML defaults would fill the sparse map).
 
 ## Public API (generated)
 

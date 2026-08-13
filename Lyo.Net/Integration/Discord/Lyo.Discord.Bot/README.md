@@ -1,8 +1,6 @@
 # Lyo.Discord.Bot
 
-Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints).
-Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve
-services from DI, and call `RunAsync`.
+Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints). Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve services from DI, and call `RunAsync`.
 
 ## Features
 
@@ -32,9 +30,9 @@ await bot.RunAsync(cancellationToken);
 
 **`DiscordBot`** (→ `LyoDiscordBotOptions`): Discord-only settings.
 
-| Property  | Description                                     |
-|-----------|-------------------------------------------------|
-| `Token`   | Discord bot token.                              |
+| Property | Description |
+| --------- | ----------------------------------------------- |
+| `Token` | Discord bot token. |
 | `Intents` | Optional. Gateway intents; default is `Guilds \ |
 
 **`LyoDiscordClient`** (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits *
@@ -49,8 +47,7 @@ await bot.RunAsync(cancellationToken);
 
 ## What gets synced
 
-- **Full guild sync** (owner user if needed, guild row, channels bulk, emojis via REST + bulk, users + members bulk): `GuildAvailable`, `GuildCreated`, `GuildDownloadCompleted`
-  (each guild in the download batch).
+- **Full guild sync** (owner user if needed, guild row, channels bulk, emojis via REST + bulk, users + members bulk): `GuildAvailable`, `GuildCreated`, `GuildDownloadCompleted` ( each guild in the download batch).
 - **Guild metadata only**: `GuildUpdated`.
 - **Single channel**: `ChannelCreated`, `ChannelUpdated`.
 - **User + member row**: `GuildMemberAdded`, `GuildMemberUpdated`.
@@ -61,13 +58,13 @@ await bot.RunAsync(cancellationToken);
 The package ships a built-in slash-command tree under [`Commands/Settings/`](Commands/Settings) that drives per-guild bot configuration through the Lyo API and the
 `DiscordGuildSettings` config-store document. Discord/DSharpPlus do not allow a slash group to mix direct subcommands and nested subgroups, so everything hangs off subgroups:
 
-| Command                                | Description                                                                   |
-|----------------------------------------|-------------------------------------------------------------------------------|
+| Command | Description |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
 | `/settings channels setcommandchannel` | Set the channel where the bot accepts commands (defaults to current channel). |
-| `/settings channels setlogchannel`     | Set the channel where the bot posts errors and operational notices.           |
-| `/settings roles setmodrole`           | Set the moderator role used by bot permission checks.                         |
-| `/settings roles setadminrole`         | Set the admin role used by bot permission checks.                             |
-| `/settings info …`                     | Display effective guild settings (subgroup defined in `GuildSlashSettings`).  |
+| `/settings channels setlogchannel` | Set the channel where the bot posts errors and operational notices. |
+| `/settings roles setmodrole` | Set the moderator role used by bot permission checks. |
+| `/settings roles setadminrole` | Set the admin role used by bot permission checks. |
+| `/settings info …` | Display effective guild settings (subgroup defined in `GuildSlashSettings`). |
 
 Centralized name/description constants live in [`GuildSlashSettings.cs`](Commands/Settings/GuildSlashSettings.cs); error responses are normalized via
 [`SlashCommandErrorResponder`](Commands/SlashCommandErrorResponder.cs) and `DiscordCommandException`. Register the command module on your DSharpPlus client in

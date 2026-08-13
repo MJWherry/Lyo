@@ -105,6 +105,24 @@
           "Body: `FilesBatchReq`. Each entry carries the file's base64 `Data` + `ContentType`. Missing IDs are silently omitted server-side."
         ],
         [
+          "`GetFilesArchiveAsync(entries, fileName, CancellationToken)`",
+          "`POST files/archive`",
+          "`Stream` + filename + length",
+          "Streaming zip. Caller disposes the stream. `FileName` is the zip name; entry `Path` is optional."
+        ],
+        [
+          "`GetChapterArchiveAsync(chapterId, fileName, CancellationToken)`",
+          "`GET api/comic/chapters/{id}/archive`",
+          "`Stream` + filename + length",
+          "Uses `GetFileStreamAsync`. Optional `fileName` query."
+        ],
+        [
+          "`GetSeriesArchiveAsync(seriesId, fileName, CancellationToken)`",
+          "`GET api/comic/series/{id}/archive`",
+          "`Stream` + filename + length",
+          "Nested series zip. Optional `fileName` query."
+        ],
+        [
           "`UploadFileAsync(Stream data, string fileName, Guid? seriesId, Guid? volumeId, Guid? chapterId, CancellationToken)`",
           "`POST files/upload?seriesId&volumeId&chapterId`",
           "`FileStoreResult?`",

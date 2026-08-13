@@ -16,6 +16,7 @@ namespace Lyo.Common.Pathing;
 public static class PathHelpers
 {
     private const char PosixSeparator = '/';
+    private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
 
     [DoesNotReturn]
 #if NET6_0_OR_GREATER
@@ -214,6 +215,26 @@ public static class PathHelpers
 
         var idx = name.LastIndexOf('.');
         return idx <= 0 ? string.Empty : name[idx..];
+    }
+
+    /// <summary>
+    /// Replaces invalid filename characters (including <c>/</c> and <c>\</c>) with <c>_</c> and trims dots/spaces. Does not strip directory segments — take the leaf first when
+    /// the input may be a path. Returns <see langword="null" /> when nothing usable remains.
+    /// </summary>
+    public static string? SanitizeFileName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+
+        var chars = name!.Trim().ToCharArray();
+        for (var i = 0; i < chars.Length; i++) {
+            var c = chars[i];
+            if (c is '/' or '\\' || Array.IndexOf(InvalidFileNameChars, c) >= 0)
+                chars[i] = '_';
+        }
+
+        var result = new string(chars).Trim().Trim('.');
+        return string.IsNullOrWhiteSpace(result) ? null : result;
     }
 
     /// <summary>Returns whether <paramref name="path" /> is rooted for <paramref name="style" />.</summary>

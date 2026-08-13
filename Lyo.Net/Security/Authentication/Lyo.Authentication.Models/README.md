@@ -1,7 +1,6 @@
 # Lyo.Authentication.Models
 
-Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material,
-no DI; just records, format helpers, and a JWT parser.
+Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material, no DI; just records, format helpers, and a JWT parser.
 
 ## Examples
 
@@ -50,8 +49,7 @@ internal static class ServiceBleedProbe
 
 ## When NOT to reference it
 
-- If you are the API/auth-server host, reference `Lyo.Authentication` directly. It transitively pulls Models in for you, and you'll need the service interfaces and DI helpers that
-  only live in the server package.
+- If you are the API/auth-server host, reference `Lyo.Authentication` directly. It transitively pulls Models in for you, and you'll need the service interfaces and DI helpers that only live in the server package.
 
 ## Verifying the boundary
 

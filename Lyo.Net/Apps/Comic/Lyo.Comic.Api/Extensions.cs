@@ -160,6 +160,10 @@ public static class Extensions
             services.AddLyoCrudServices<FavoriteDbContext>();
             services.AddSingleton<ILyoMapper, ComicLyoMapper>();
             services.AddComicFileStorage(configuration);
+            services.AddHttpClient(ArchiveEndpointHelpers.HttpClientName, client => {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Lyo.Comic.Api");
+            });
             return services;
         }
 
@@ -187,6 +191,8 @@ public static class Extensions
             services.AddFileStorageServiceKeyed(
                 FileStorageKey, opts => opts.RootDirectoryPath = configuration["ComicFileStorage:RootDirectoryPath"] ?? "./comic-files",
                 provider => provider.GetRequiredKeyedService<IFileMetadataStore>(FileStorageKey), FileStorageKey);
+            services.AddFileStorageArchiveServiceFromConfiguration(configuration);
+            services.AddFileStorageArchiveServiceKeyed(FileStorageKey);
 
             return services;
         }
