@@ -26,6 +26,25 @@ export default function DemosPage() {
               <span className="badge">lyo-query-components</span>
             </div>
           </Link>
+          <Link href="/demos/datagrid" className="card">
+            <strong>Person data grid</strong>
+            <span className="muted">
+              Root Query, Projection, and Concrete — search, filters, multi-sort, resizable columns.
+            </span>
+            <div className="card-meta">
+              <span className="badge badge-accent">Live</span>
+              <span className="badge">lyo-web-components</span>
+            </div>
+          </Link>
+          <Link href="/demos/components" className="card">
+            <strong>Component gallery</strong>
+            <span className="muted">
+              Buttons, form, upload, rich text, JSON editor, diff, and ID generator.
+            </span>
+            <div className="card-meta">
+              <span className="badge">lyo-web-components</span>
+            </div>
+          </Link>
         </div>
       </section>
     </>

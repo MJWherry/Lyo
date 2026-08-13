@@ -1,15 +1,18 @@
-export { WhereClauseBuilder } from "./WhereClauseBuilder.js";
-export type { WhereClauseBuilderProps } from "./WhereClauseBuilder.js";
-
-export { ChipInput } from "./ChipInput.js";
-export type { ChipInputProps } from "./ChipInput.js";
+"use client";
 
 export {
+  WhereClauseBuilder,
+  ChipInput,
   QueryBuilder,
   createDefaultQueryBuilderValue,
   activeRequestPreview,
-} from "./QueryBuilder.js";
-export type { QueryBuilderProps, QueryBuilderValue } from "./QueryBuilder.js";
+} from "lyo-web-components";
+export type {
+  WhereClauseBuilderProps,
+  ChipInputProps,
+  QueryBuilderProps,
+  QueryBuilderValue,
+} from "lyo-web-components";
 
 export {
   COMPARISON_OPERATORS,

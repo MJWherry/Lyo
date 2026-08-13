@@ -9,13 +9,17 @@ export type ComparisonOperator =
     | "In"
     | "NotIn"
     | "Contains"
+    | "NotContains"
     | "StartsWith"
+    | "NotStartsWith"
     | "EndsWith"
+    | "NotEndsWith"
     | "GreaterThan"
     | "GreaterThanOrEqual"
     | "LessThan"
     | "LessThanOrEqual"
-    | "Regex";
+    | "Regex"
+    | "NotRegex";
 
 export interface ConditionClause {
     $type: "condition";
@@ -39,11 +43,15 @@ export const COMPARISON_OPERATORS: readonly ComparisonOperator[] = [
     "In",
     "NotIn",
     "Contains",
+    "NotContains",
     "StartsWith",
+    "NotStartsWith",
     "EndsWith",
+    "NotEndsWith",
     "GreaterThan",
     "GreaterThanOrEqual",
     "LessThan",
     "LessThanOrEqual",
     "Regex",
+    "NotRegex",
 ] as const;

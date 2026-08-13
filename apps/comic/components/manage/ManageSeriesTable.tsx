@@ -2,66 +2,95 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import type { ComicCardRow } from "lyo-comic-api-client";
-import { comicCardRowKey, comicFileUrl, comicStatusLabel, comicTypeLabel } from "lyo-comic-api-client";
+import { comicFileUrl, comicStatusLabel, comicTypeLabel } from "lyo-comic-api-client";
+import { filterProperty } from "lyo-query";
+import {
+  LyoDataGridFeatureFlags,
+  LyoDataGridProjected,
+  createBffQueryClient,
+  createLyoColumn,
+} from "lyo-web-components";
 import { bffFetch } from "@/lib/api/bffFetch";
 import { TrashIcon } from "./TrashIcon";
 
-export function ManageSeriesTable({ initial }: { initial: ComicCardRow[] }) {
-  const router = useRouter();
-  const [q, setQ] = useState("");
-  const [rows, setRows] = useState(initial);
-  const filtered = rows.filter((r) => (r.title ?? "").toLowerCase().includes(q.toLowerCase()));
+const client = createBffQueryClient({
+  projectPath: "/api/comic/series/QueryProject",
+  fetchImpl: (input, init) => bffFetch(input, init),
+});
 
-  async function remove(id: string) {
-    if (!confirm("Delete this series?")) return;
-    const res = await bffFetch(`/api/comic/series/${encodeURIComponent(id)}`, { method: "DELETE" });
-    if (res.ok) {
-      setRows((cur) => cur.filter((r) => r.id !== id));
-      router.refresh();
-    }
-  }
+const FEATURES =
+  LyoDataGridFeatureFlags.Filterable |
+  LyoDataGridFeatureFlags.Searchable |
+  LyoDataGridFeatureFlags.BulkMenu;
+
+export function ManageSeriesTable() {
+  const router = useRouter();
 
   return (
-    <div>
-      <div className="field" style={{ maxWidth: "20rem", marginBottom: "1rem" }}>
-        <label htmlFor="filter">Filter</label>
-        <input id="filter" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
-      <table className="manage-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((r, i) => (
-            <tr key={comicCardRowKey(r, i)}>
-              <td style={{ width: "3rem" }}>
-                {comicFileUrl(r.coverImageRef, r.updatedTimestamp) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={comicFileUrl(r.coverImageRef, r.updatedTimestamp)!} alt="" width={36} height={54} style={{ objectFit: "cover" }} />
-                ) : null}
-              </td>
-              <td>
-                <Link href={`/manage/series/${r.id}`}>{r.title}</Link>
-              </td>
-              <td>{comicTypeLabel(r.comicType as never)}</td>
-              <td>{comicStatusLabel(r.status as never)}</td>
-              <td>
-                <button type="button" className="icon-btn icon-btn--danger" aria-label={`Delete ${r.title ?? "series"}`} onClick={() => r.id && remove(r.id)}>
-                  <TrashIcon />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <LyoDataGridProjected<ComicCardRow>
+      apiClient={client}
+      gridKey="ComicSeriesManage"
+      route="/api/comic/series"
+      columns={[
+        createLyoColumn<ComicCardRow>({
+          id: "cover",
+          field: "CoverImageRef",
+          header: "",
+          sortable: false,
+          filterable: false,
+          hideable: false,
+          cell: (r) =>
+            comicFileUrl(r.coverImageRef, r.updatedTimestamp) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={comicFileUrl(r.coverImageRef, r.updatedTimestamp)!}
+                alt=""
+                width={36}
+                height={54}
+                style={{ objectFit: "cover" }}
+              />
+            ) : null,
+        }),
+        createLyoColumn<ComicCardRow>({
+          id: "title",
+          field: "Title",
+          header: "Title",
+          quickSearch: true,
+          cell: (r) => <Link href={`/manage/series/${r.id}`}>{r.title}</Link>,
+        }),
+        createLyoColumn<ComicCardRow>({
+          id: "type",
+          field: "ComicType",
+          header: "Type",
+          cell: (r) => comicTypeLabel(r.comicType as never),
+        }),
+        createLyoColumn<ComicCardRow>({
+          id: "status",
+          field: "Status",
+          header: "Status",
+          cell: (r) => comicStatusLabel(r.status as never),
+        }),
+      ]}
+      keySelector={(r) => (r.id ? [r.id] : [])}
+      quickSearchProperties={["Title"]}
+      filterPropertyDefinitions={[filterProperty("Title"), filterProperty("ComicType"), filterProperty("Status")]}
+      features={FEATURES}
+      pageSizes={[25, 50, 100]}
+      rowMenu={(r) => (
+        <button
+          type="button"
+          className="icon-btn icon-btn--danger"
+          aria-label={`Delete ${r.title ?? "series"}`}
+          onClick={async () => {
+            if (!r.id || !confirm("Delete this series?")) return;
+            const res = await bffFetch(`/api/comic/series/${encodeURIComponent(r.id)}`, { method: "DELETE" });
+            if (res.ok) router.refresh();
+          }}
+        >
+          <TrashIcon />
+        </button>
+      )}
+    />
   );
 }

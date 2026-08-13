@@ -7,7 +7,7 @@ import {
   createDefaultQueryBuilderValue,
   type QueryBuilderValue,
 } from "lyo-query-components";
-import "lyo-query-components/styles.css";
+import { LyoAlert, LyoButton, LyoChip, LyoStack } from "lyo-web-components";
 import {
   DEFAULT_PERSON_INCLUDES,
   DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS,
@@ -45,7 +45,7 @@ type RunPayload = {
 function createPersonBuilder(): QueryBuilderValue {
   const builder = createDefaultQueryBuilderValue({
     defaultField: "FirstName",
-    entityType: "PersonEntity",
+    entityType: "Person",
     select: [...DEFAULT_PERSON_SELECT_FIELDS],
     include: [],
     amount: 10,
@@ -157,15 +157,15 @@ export function QueryDemo() {
           selectPresets={selectPresets}
           entityTypePresets={PERSON_ROOT_QUERY_ENTITY_TYPES}
         />
-        <div className="field-row" style={{ marginTop: "1rem" }}>
-          <button className="btn btn-primary" type="button" onClick={run} disabled={loading}>
+        <LyoStack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+          <LyoButton variant="contained" onClick={() => void run()} disabled={loading}>
             {loading ? "Running…" : runLabel}
-          </button>
+          </LyoButton>
           <span className="faint" style={{ fontSize: "0.85rem" }}>
             Mode: {builder.mode}
             {activeAmount != null ? ` · page ≤ ${activeAmount}` : ""}
           </span>
-        </div>
+        </LyoStack>
       </div>
 
       <div className="grid-2 query-demo-split">
@@ -176,9 +176,9 @@ export function QueryDemo() {
         <div className="panel query-demo-panel">
           <h2 style={{ fontSize: "1.15rem" }}>Results</h2>
           {error ? (
-            <p className="badge badge-warn" style={{ margin: "0 0 0.65rem" }}>
+            <LyoAlert severity="warning" sx={{ mb: 1 }}>
               {statusCode != null ? `${statusCode} · ${error}` : error}
-            </p>
+            </LyoAlert>
           ) : null}
           {problemJson ? (
             <>
@@ -193,27 +193,21 @@ export function QueryDemo() {
           ) : null}
           {data ? (
             <>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  marginBottom: "0.65rem",
-                  flexWrap: "wrap",
-                }}
-              >
-                <span className={`badge ${data.isSuccess ? "badge-ok" : "badge-warn"}`}>
-                  {data.isSuccess ? "Success" : "Failed"}
-                </span>
-                <span className="badge">{data.mode ?? builder.mode}</span>
-                <span className="badge">
-                  {data.items?.length ?? 0} rows
-                  {data.total != null ? ` · total ${data.total}` : ""}
-                  {data.hasMore ? " · has more" : ""}
-                </span>
+              <LyoStack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap">
+                <LyoChip
+                  size="small"
+                  color={data.isSuccess ? "success" : "warning"}
+                  label={data.isSuccess ? "Success" : "Failed"}
+                />
+                <LyoChip size="small" label={data.mode ?? builder.mode} />
+                <LyoChip
+                  size="small"
+                  label={`${data.items?.length ?? 0} rows${data.total != null ? ` · total ${data.total}` : ""}${data.hasMore ? " · has more" : ""}`}
+                />
                 {data.elapsedMs != null ? (
-                  <span className="badge badge-accent">{data.elapsedMs.toFixed(0)} ms</span>
+                  <LyoChip size="small" color="primary" label={`${data.elapsedMs.toFixed(0)} ms`} />
                 ) : null}
-              </div>
+              </LyoStack>
               {builder.mode === "get" && data.item ? (
                 <ClientCodeBlock code={JSON.stringify(data.item, null, 2)} language="json" />
               ) : (

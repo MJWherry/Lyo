@@ -26,13 +26,24 @@ export function createFetchTransport(options?: {cache?: RequestCache}): AsyncApi
             init.signal = request.signal;
 
         const res = await fetch(request.url, init);
-
-        const rawBody = await res.text();
-        const data = tryParseJson(rawBody);
         const headers: Record<string, string> = {};
         res.headers.forEach((value, key) => {
             headers[key] = value;
         });
+
+        if (request.responseType === "blob") {
+            const blob = await res.blob();
+            const response: ApiResponse<unknown> = {
+                status: res.status,
+                ok: res.ok,
+                headers,
+                blob,
+            };
+            return response;
+        }
+
+        const rawBody = await res.text();
+        const data = tryParseJson(rawBody);
 
         const response: ApiResponse<unknown> = {
             status: res.status,

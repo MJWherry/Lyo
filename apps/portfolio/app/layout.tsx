@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Syne, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { LyoProvider } from "lyo-web-components";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
+import "lyo-web-components/styles.css";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -60,9 +63,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <ThemeProvider>
-          <SiteHeader />
-          <main className="site-main">{children}</main>
-          <SiteFooter />
+          <AppRouterCacheProvider>
+            <LyoProvider>
+              <SiteHeader />
+              <main className="site-main">{children}</main>
+              <SiteFooter />
+            </LyoProvider>
+          </AppRouterCacheProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     "lyo-comic-api-client",
     "lyo-query",
     "lyo-query-components",
+    "lyo-web-components",
   ],
   experimental: {
     externalDir: true,

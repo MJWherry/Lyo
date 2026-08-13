@@ -13,7 +13,7 @@ models in `Lyo.Api` or `Lyo.Api.Models`), update **all three clients** in the sa
 2. **TypeScript** — `packages/typescript/lyo-api-client` (core),
    `packages/typescript/lyo-query` (shared where-clause models),
    `packages/typescript/lyo-person-api-client` (Person endpoints, builders, response guards),
-   and `packages/typescript/lyo-query-react` when the where-builder UI contract changes
+   `packages/typescript/lyo-query-components` when the where-builder UI contract changes
 3. **Python** — `packages/python/lyo-api-client` (`lyo_api_client` core and
    `lyo_person_api_client`: models, builders, guards, `PersonApiClient`)
 
@@ -29,7 +29,7 @@ models in `Lyo.Api` or `Lyo.Api.Models`), update **all three clients** in the sa
 
 ## Verify
 
-- TS: `npm run build` in `lyo-api-client`, `lyo-query`, `lyo-query-react`, and `lyo-person-api-client`.
+- TS: `npm run build` in `lyo-api-client`, `lyo-query`, `lyo-query-components`, `lyo-web-components`, and `lyo-person-api-client`.
 - Python: `pytest` in `packages/python/lyo-api-client` (tests assert TS/Python payload parity,
   so update the expected payloads in `tests/test_builders.py` alongside contract changes).
 - If a client can't be updated in the same change, say so explicitly rather than skipping it silently.

@@ -63,3 +63,37 @@ export interface UpdateRequest<T> {
     keys: unknown[];
     data: T;
 }
+
+export interface DeleteRequest {
+    keys?: unknown[][] | null;
+    query?: unknown;
+    allowMultiple?: boolean;
+}
+
+export interface DeleteBulkResult<T = unknown> {
+    results?: Array<DeleteResult<T>> | null;
+    deletedCount: number;
+    failedCount: number;
+}
+
+export type ExportFormat = "Csv" | "Xlsx" | "Json";
+
+export interface ExportColumnMapping {
+    /** Column header in the file. */
+    header: string;
+    /** Property path or SmartFormat template (C# `ExportColumnMapping.Value`). */
+    value: string;
+}
+
+export interface ExportRequest {
+    query: unknown;
+    format: ExportFormat;
+    columns?: Record<string, string> | null;
+    columnList?: ExportColumnMapping[] | null;
+}
+
+export interface ExportDownload {
+    blob: Blob;
+    fileName: string | null;
+    contentType: string;
+}

@@ -9,7 +9,7 @@ Core, reusable API client foundation for Lyo TypeScript consumers.
 - Request execution abstraction via transport adapters (`fetchTransport` forwards `AbortSignal`)
 - Normalized API errors (`isAbortError` / `CLIENT_CLOSED_REQUEST_STATUS` for client disconnect)
 - Lyo.Api metadata helpers (`getMetadata` / `getCrudMetadata` / `getEntityMetadata`)
-- Generic CRUD / QueryProject helpers (`queryProject`, `create`, `update`, `deleteById`)
+- Generic CRUD / Query helpers (`queryProject`, `queryConcrete`, `query`, `create`, `update`, `deleteById`, `bulkDelete`, `bulkPatch`, `export`)
 - Query/CRUD result types (`QueryRes`, `ProjectedQueryRes`, `CreateResult`, …) and response guards
 
 Domain-specific Person endpoints live in `lyo-person-api-client`. Comic-specific
@@ -49,10 +49,14 @@ const meta = await asyncClient.getMetadata("person");
 // await asyncClient.getCrudMetadata("Twilio");
 // await asyncClient.getEntityMetadata("Twilio", "TwilioSmsLogEntity");
 
-// Generic Lyo.Api CRUD / QueryProject (domain clients wrap these):
+// Generic Lyo.Api CRUD / Query (domain clients wrap these):
+// await asyncClient.queryConcrete("/person", concreteReq);
 // await asyncClient.queryProject("/api/comic/series", projectionReq);
+// await asyncClient.query("/Query", rootQueryReq);
 // await asyncClient.create("/api/comic/chapters", body);
 // await asyncClient.update("/api/comic/chapters", [id], body);
 // await asyncClient.deleteById("/api/comic/series", id);
+// await asyncClient.bulkDelete("/person", keys);
+// await asyncClient.export("/person", { query: projectionReq, format: "Csv" });
 ```
 

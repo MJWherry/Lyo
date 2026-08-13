@@ -2,8 +2,10 @@
 
 Shared Lyo Query **where-clause** models and helpers for TypeScript.
 
-Use this from API clients, BFFs, and UI packages (`lyo-query-components`). Domain clients
+Use this from API clients, BFFs, and UI packages (`lyo-query-components`, `lyo-web-components`). Domain clients
 (e.g. `lyo-person-api-client`) re-export these types on request models.
+
+Grid helpers: `mergeWhere`, `buildGridWhere`, `buildQuickSearchWhere`, `operatorsFor`, `FilterPropertyDefinition`.
 
 ## Usage
 

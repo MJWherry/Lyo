@@ -8,6 +8,8 @@ export interface ApiRequest<TBody = unknown> {
     query?: Record<string, string | number | boolean | null | undefined>;
     /** Abort the underlying transport when the caller disconnects or navigates away. */
     signal?: AbortSignal;
+    /** When `blob`, transports should return binary in {@link ApiResponse.blob}. */
+    responseType?: "json" | "blob";
 }
 
 export interface ApiResponse<TData = unknown> {
@@ -16,6 +18,7 @@ export interface ApiResponse<TData = unknown> {
     headers?: Record<string, string>;
     data?: TData;
     rawBody?: string;
+    blob?: Blob;
 }
 
 export type TransportRequest = {
@@ -24,6 +27,7 @@ export type TransportRequest = {
     body?: string;
     headers: Record<string, string>;
     signal?: AbortSignal;
+    responseType?: "json" | "blob";
 };
 
 export type ApiTransport = (request: TransportRequest) => ApiResponse<unknown>;

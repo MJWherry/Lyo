@@ -13,7 +13,7 @@ React UI for building Lyo.Query `whereClause` trees (And/Or groups + conditions)
 }
 ```
 
-Build order: `lyo-query` → `lyo-query-components`.
+Build order: `lyo-query` → `lyo-web-components` → `lyo-query-components`.
 
 ## Usage
 
@@ -40,4 +40,4 @@ export function Demo() {
 }
 ```
 
-Theme via CSS variables: `--lyo-qb-accent`, `--lyo-qb-line`, `--lyo-qb-bg`, `--lyo-qb-ink`, `--lyo-qb-muted`, `--lyo-qb-input-bg`, `--lyo-qb-soft`, `--lyo-qb-radius`.
+Theme via MUI (`lyo-web-components`). This package re-exports the query builders for existing imports. Build order: `lyo-query` → `lyo-web-components` → `lyo-query-components`.

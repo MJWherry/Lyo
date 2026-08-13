@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { LyoProvider } from "lyo-web-components";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
-import "lyo-query-components/styles.css";
+import "lyo-web-components/styles.css";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -43,7 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           ["--font-body" as string]: "var(--font-display-loaded), Outfit, sans-serif",
         }}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AppRouterCacheProvider>
+            <LyoProvider>{children}</LyoProvider>
+          </AppRouterCacheProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

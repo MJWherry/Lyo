@@ -13,10 +13,31 @@ import type {
     EndpointMetadataResponse,
     EntityTypeMetadata,
 } from "../types/metadata.js";
-import type {CreateResult, DeleteResult, ProjectedQueryRes, UpdateRequest, UpdateResult} from "../types/results.js";
+import type {
+    CreateResult,
+    DeleteBulkResult,
+    DeleteRequest,
+    DeleteResult,
+    ExportDownload,
+    ExportRequest,
+    ProjectedQueryRes,
+    QueryRes,
+    UpdateRequest,
+    UpdateResult,
+} from "../types/results.js";
 
 function trimRoute(baseRoute: string): string {
     return baseRoute.replace(/\/+$/, "");
+}
+
+function fileNameFromDisposition(header: string | undefined): string | null {
+    if (!header) return null;
+    const star = /filename\*=UTF-8''([^;]+)/i.exec(header);
+    if (star?.[1]) return decodeURIComponent(star[1]);
+    const quoted = /filename="([^"]+)"/i.exec(header);
+    if (quoted?.[1]) return quoted[1];
+    const plain = /filename=([^;]+)/i.exec(header);
+    return plain?.[1]?.trim() ?? null;
 }
 
 /** Async API client for Promise-based transports (fetch, axios, undici). */
@@ -53,6 +74,18 @@ export interface AsyncApiClient {
         body: TBody
     ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
 
+    /** `POST {baseRoute}/QueryConcrete` */
+    queryConcrete<TItem = unknown, TBody = unknown>(
+        baseRoute: string,
+        body: TBody
+    ): Promise<ApiResponse<QueryRes<TItem>>>;
+
+    /** `POST {baseRoute}/Query` (root From/Joins) */
+    query<TRow = Record<string, unknown>, TBody = unknown>(
+        baseRoute: string,
+        body: TBody
+    ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
+
     /** `POST {baseRoute}` → {@link CreateResult} */
     create<TData = unknown, TResult = unknown>(
         baseRoute: string,
@@ -71,6 +104,22 @@ export interface AsyncApiClient {
         baseRoute: string,
         id: string
     ): Promise<ApiResponse<DeleteResult<TResult>>>;
+
+    /** `DELETE {baseRoute}/Bulk` with `{ keys, allowMultiple }` */
+    bulkDelete<TResult = unknown>(
+        baseRoute: string,
+        keys: unknown[][]
+    ): Promise<ApiResponse<DeleteBulkResult<TResult>>>;
+
+    /** `POST {baseRoute}/Bulk` patch — `{ keys, data }` */
+    bulkPatch<TData = unknown, TResult = unknown>(
+        baseRoute: string,
+        keys: unknown[][],
+        data: TData
+    ): Promise<ApiResponse<UpdateResult<TResult>>>;
+
+    /** `POST {baseRoute}/Export` → file download */
+    export(baseRoute: string, body: ExportRequest): Promise<ExportDownload>;
 }
 
 /**
@@ -105,6 +154,7 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
                 body,
                 headers,
                 ...(signal ? {signal} : {}),
+                ...(request.responseType ? {responseType: request.responseType} : {}),
             });
 
             if (!response.ok) {
@@ -149,6 +199,28 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
             });
         },
 
+        queryConcrete<TItem = unknown, TBody = unknown>(
+            baseRoute: string,
+            body: TBody
+        ): Promise<ApiResponse<QueryRes<TItem>>> {
+            return client.request<QueryRes<TItem>, TBody>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/QueryConcrete`,
+                body,
+            });
+        },
+
+        query<TRow = Record<string, unknown>, TBody = unknown>(
+            baseRoute: string,
+            body: TBody
+        ): Promise<ApiResponse<ProjectedQueryRes<TRow>>> {
+            return client.request<ProjectedQueryRes<TRow>, TBody>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/Query`,
+                body,
+            });
+        },
+
         create<TData = unknown, TResult = unknown>(
             baseRoute: string,
             body: TData
@@ -181,6 +253,49 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
                 method: "DELETE",
                 path: `${trimRoute(baseRoute)}/${encodeURIComponent(id)}`,
             });
+        },
+
+        bulkDelete<TResult = unknown>(
+            baseRoute: string,
+            keys: unknown[][]
+        ): Promise<ApiResponse<DeleteBulkResult<TResult>>> {
+            const body: DeleteRequest[] = [{keys, allowMultiple: true}];
+            return client.request<DeleteBulkResult<TResult>, DeleteRequest[]>({
+                method: "DELETE",
+                path: `${trimRoute(baseRoute)}/Bulk`,
+                body,
+            });
+        },
+
+        bulkPatch<TData = unknown, TResult = unknown>(
+            baseRoute: string,
+            keys: unknown[][],
+            data: TData
+        ): Promise<ApiResponse<UpdateResult<TResult>>> {
+            return client.request<UpdateResult<TResult>, {keys: unknown[][]; data: TData}>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/Bulk`,
+                body: {keys, data},
+            });
+        },
+
+        async export(baseRoute: string, body: ExportRequest): Promise<ExportDownload> {
+            const response = await client.request<unknown, ExportRequest>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/Export`,
+                body,
+                responseType: "blob",
+            });
+            const blob =
+                response.blob ??
+                new Blob([response.rawBody ?? ""], {
+                    type: response.headers?.["content-type"] ?? "application/octet-stream",
+                });
+            return {
+                blob,
+                fileName: fileNameFromDisposition(response.headers?.["content-disposition"]),
+                contentType: response.headers?.["content-type"] ?? blob.type,
+            };
         },
     };
 

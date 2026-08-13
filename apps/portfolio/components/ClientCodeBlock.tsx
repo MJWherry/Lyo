@@ -33,6 +33,7 @@ function ensureLanguages() {
 function normalizeLang(language?: string): string {
   const key = (language ?? "csharp").trim().toLowerCase();
   if (key === "c#") return "csharp";
+  if (key === "tsx" || key === "jsx") return "typescript";
   return key || "csharp";
 }
 

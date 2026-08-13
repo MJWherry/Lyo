@@ -25,6 +25,7 @@ export const DEFAULT_PERSON_ROOT_QUERY_SELECT_FIELDS = [
 
 /** Common PeopleDbContext entity types for root Query From/Joins. */
 export const PERSON_ROOT_QUERY_ENTITY_TYPES = [
+    "Person",
     "PersonEntity",
     "ContactAddressEntity",
     "ContactEmailAddressEntity",

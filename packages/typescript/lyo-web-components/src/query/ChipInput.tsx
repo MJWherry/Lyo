@@ -1,4 +1,11 @@
+"use client";
+
 import { useCallback, useId, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import Clear from "@mui/icons-material/Clear";
 
 const VALUE_SEPARATORS = /[,;\t\n\r\uFF0C]+/;
 
@@ -6,11 +13,11 @@ export type ChipInputProps = {
   values: readonly string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
-  /** Allow Backspace on empty input to remove the last chip. */
   allowBackspaceDelete?: boolean;
   showClearButton?: boolean;
   classPrefix?: string;
   disabled?: boolean;
+  label?: string;
 };
 
 function parseValues(raw: string, splitSeparators: boolean): string[] {
@@ -23,20 +30,15 @@ function parseValues(raw: string, splitSeparators: boolean): string[] {
     .filter((v) => v.length > 0);
 }
 
-/**
- * Enter / comma chip list input (Blazor {@code LyoChipInput} parity).
- * Used for multi-value comparisons ({@code In}/{@code NotIn}) and Select/Include lists.
- */
 export function ChipInput({
   values,
   onChange,
   placeholder = "Type and press Enter to add",
   allowBackspaceDelete = true,
   showClearButton = true,
-  classPrefix = "lyo-chip",
   disabled = false,
+  label,
 }: ChipInputProps) {
-  const p = classPrefix;
   const inputId = useId();
   const [draft, setDraft] = useState("");
 
@@ -57,25 +59,13 @@ export function ChipInput({
     [onChange, values]
   );
 
-  const removeAt = useCallback(
-    (index: number) => {
-      onChange(values.filter((_, i) => i !== index));
-    },
-    [onChange, values]
-  );
-
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       if (draft.trim()) addFromRaw(draft, e.key === ",");
       return;
     }
-    if (
-      e.key === "Backspace" &&
-      allowBackspaceDelete &&
-      draft.length === 0 &&
-      values.length > 0
-    ) {
+    if (e.key === "Backspace" && allowBackspaceDelete && draft.length === 0 && values.length > 0) {
       e.preventDefault();
       onChange(values.slice(0, -1));
     }
@@ -89,25 +79,41 @@ export function ChipInput({
   };
 
   return (
-    <div className={`${p}`}>
-      <div className={`${p}__box`} aria-disabled={disabled || undefined}>
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "nowrap",
+        alignItems: "center",
+        gap: 0.25,
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1,
+        px: 1,
+        py: 0.5,
+        minHeight: 40,
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 0.5,
+          alignItems: "center",
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
         {values.map((item, index) => (
-          <span key={`${item}-${index}`} className={`${p}__chip`}>
-            <span className={`${p}__chip-text`}>{item}</span>
-            <button
-              type="button"
-              className={`${p}__chip-remove`}
-              aria-label={`Remove ${item}`}
-              disabled={disabled}
-              onClick={() => removeAt(index)}
-            >
-              ×
-            </button>
-          </span>
+          <Chip
+            key={`${item}-${index}`}
+            size="small"
+            label={item}
+            onDelete={disabled ? undefined : () => onChange(values.filter((_, i) => i !== index))}
+          />
         ))}
-        <input
+        <TextField
           id={inputId}
-          className={`${p}__input`}
+          variant="standard"
           value={draft}
           disabled={disabled}
           placeholder={values.length === 0 ? placeholder : ""}
@@ -117,23 +123,25 @@ export function ChipInput({
           onBlur={() => {
             if (draft.trim()) addFromRaw(draft, true);
           }}
+          slotProps={{ input: { disableUnderline: true } }}
+          sx={{ flex: "1 1 4rem", minWidth: "4rem" }}
+          label={values.length === 0 ? label : undefined}
         />
-        {showClearButton && values.length > 0 ? (
-          <button
-            type="button"
-            className={`${p}__clear`}
-            aria-label="Clear all"
-            title="Clear all"
-            disabled={disabled}
-            onClick={() => {
-              onChange([]);
-              setDraft("");
-            }}
-          >
-            Clear
-          </button>
-        ) : null}
-      </div>
-    </div>
+      </Box>
+      {showClearButton && values.length > 0 ? (
+        <IconButton
+          size="small"
+          aria-label="Clear all"
+          disabled={disabled}
+          sx={{ flexShrink: 0, alignSelf: "center" }}
+          onClick={() => {
+            onChange([]);
+            setDraft("");
+          }}
+        >
+          <Clear fontSize="small" />
+        </IconButton>
+      ) : null}
+    </Box>
   );
 }

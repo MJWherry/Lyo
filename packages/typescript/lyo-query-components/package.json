@@ -20,7 +20,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "lyo-query": "file:../lyo-query"
+    "lyo-query": "file:../lyo-query",
+    "lyo-web-components": "file:../lyo-web-components"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

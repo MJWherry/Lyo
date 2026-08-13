@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "lyo-person-api-client",
     "lyo-query",
     "lyo-query-components",
+    "lyo-web-components",
   ],
   experimental: {
     externalDir: true,
