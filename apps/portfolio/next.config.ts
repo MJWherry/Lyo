@@ -1,10 +1,15 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const repoRoot = path.join(__dirname, "../..");
+
 const nextConfig: NextConfig = {
   output: "standalone",
   // Allow importing benchmark JSON from the monorepo docs folder.
-  outputFileTracingRoot: path.join(__dirname, "../.."),
+  outputFileTracingRoot: repoRoot,
+  turbopack: {
+    root: repoRoot,
+  },
   transpilePackages: [
     "lyo-api-client",
     "lyo-person-api-client",
@@ -12,9 +17,6 @@ const nextConfig: NextConfig = {
     "lyo-query-components",
     "lyo-web-components",
   ],
-  experimental: {
-    externalDir: true,
-  },
 };
 
 export default nextConfig;

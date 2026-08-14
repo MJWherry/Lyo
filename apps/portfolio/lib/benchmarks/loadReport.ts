@@ -32,7 +32,7 @@ function historyJsonPath(suite: string, file: string): string {
     path.join(process.cwd(), "..", "..", "docs", "benchmarks", "history", suite, `${stem}.json`),
     path.join(process.cwd(), "docs", "benchmarks", "history", suite, `${stem}.json`),
   ];
-  return candidates.find((p) => existsSync(p)) ?? candidates[0];
+  return candidates.find((p) => existsSync(/* turbopackIgnore: true */ p)) ?? candidates[0];
 }
 
 export function loadLatestReport(name: string): BenchReport | null {
@@ -41,9 +41,9 @@ export function loadLatestReport(name: string): BenchReport | null {
 
 export function loadHistoryReport(name: string, file: string): BenchReport | null {
   const full = historyJsonPath(name, file);
-  if (!existsSync(full)) return null;
+  if (!existsSync(/* turbopackIgnore: true */ full)) return null;
   try {
-    return JSON.parse(readFileSync(full, "utf8")) as BenchReport;
+    return JSON.parse(readFileSync(/* turbopackIgnore: true */ full, "utf8")) as BenchReport;
   } catch {
     return null;
   }
