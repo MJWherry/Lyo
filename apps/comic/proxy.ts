@@ -4,7 +4,7 @@ import { SESSION_COOKIE } from "@/lib/auth/constants";
 const PUBLIC_PREFIXES = ["/login", "/auth"];
 const PUBLIC_EXACT = ["/api/health"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (PUBLIC_EXACT.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
