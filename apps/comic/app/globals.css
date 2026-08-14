@@ -1148,6 +1148,11 @@ textarea {
 
 .page-thumb--pick {
   appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
   border: none;
   background: transparent;
   padding: 0;
@@ -1159,9 +1164,53 @@ textarea {
 }
 
 .page-thumb--pick:hover .page-thumb__frame,
-.page-thumb--pick:focus-visible .page-thumb__frame {
+.page-thumb--pick:focus-visible .page-thumb__frame,
+.page-thumb--pick:has(input:focus-visible) .page-thumb__frame {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.page-thumb--selected .page-thumb__frame {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.page-thumb--pick input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page-thumb__from {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-align: center;
+}
+
+.page-thumb__from:hover,
+.page-thumb__from:focus-visible {
+  color: var(--accent);
+}
+
+.pick-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1rem;
 }
 
 .page-thumb__delete {

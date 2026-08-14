@@ -118,6 +118,9 @@ export function ChapterEditor({
           <ArchiveDownloadLink href={`/api/comic/chapters/${encodeURIComponent(chapter.id)}/archive`} className="btn btn--ghost" label="Download chapter">
             Download
           </ArchiveDownloadLink>
+          <Link className="btn btn--ghost" href={`/manage/series/${seriesId}/chapters/${chapter.id}/split`}>
+            Split chapter
+          </Link>
           <button className="btn btn--ghost" type="reset" form={FORM_ID} disabled={pending}>
             Clear changes
           </button>

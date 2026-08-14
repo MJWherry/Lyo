@@ -2,7 +2,7 @@ import type { ComicChapter, ComicChapterReq } from "lyo-comic-api-client";
 
 export function chapterUpdateData(
   chapter: ComicChapter,
-  patch: { seriesId?: string; volumeId?: string | null } = {}
+  patch: { seriesId?: string; volumeId?: string | null; pageCount?: number | null } = {}
 ): ComicChapterReq {
   return {
     seriesId: patch.seriesId ?? chapter.seriesId,
@@ -10,7 +10,7 @@ export function chapterUpdateData(
     chapterNumber: Number(chapter.chapterNumber),
     title: chapter.title ?? null,
     language: chapter.language || "en",
-    pageCount: chapter.pageCount ?? null,
+    pageCount: patch.pageCount !== undefined ? patch.pageCount : (chapter.pageCount ?? null),
     publishedDate: chapter.publishedDate ?? null,
     source: chapter.source ?? null,
     coverImageRef: chapter.coverImageRef ?? null,
