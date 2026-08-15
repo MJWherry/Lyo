@@ -81,7 +81,7 @@ dotnet user-secrets set "LyoJwt:SigningKeyId" "lyo-sig"
 ### 3. Point the Gateway at the TestApi (2)
 
 ```bash
-cd Lyo.Net/Tools/Lyo.Gateway
+cd Lyo.Net/Tools/Lyo.TestGateway
 dotnet user-secrets init
 dotnet user-secrets set "LyoJwt:Issuer" "http://localhost:5251"
 dotnet user-secrets set "LyoJwt:Audience" "lyo-test-api"
@@ -93,7 +93,7 @@ dotnet user-secrets set "LyoJwt:Audience" "lyo-test-api"
 # terminal 1
 cd Lyo.Net/Tools/Lyo.TestApi && dotnet run --launch-profile http
 # terminal 2
-cd Lyo.Net/Tools/Lyo.Gateway && dotnet run --launch-profile http
+cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 ```
 
 ## Usage
@@ -115,7 +115,7 @@ Google does not emit roles, so `LinkedIdentity.Scopes` is always empty here — 
 
 ## Local development setup
 
-End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.Gateway` as the browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or HTTPS cert for local dev.
+End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or HTTPS cert for local dev.
 
 ## 1. Create the OAuth client in Google Cloud
 

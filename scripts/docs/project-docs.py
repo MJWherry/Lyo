@@ -5,8 +5,8 @@ Per-project docs — docs.json is the ONLY source of truth.
   docs.json  (edit this)
       ↓ render
   README.md  (generated — never hand-edit as SoT)
-  apps/portfolio/content/{packages.json,packages-full/}
   Lyo.Web.Components/wwwroot/catalog/
+  apps/gateway/content/  (only if that tree still exists; marketing site lives in Lyo-Public)
 
 Commands:
   render      docs.json → README + portfolio + Blazor  (normal path)
@@ -30,7 +30,7 @@ if str(_SCRIPTS) not in sys.path:
 from lyo_tooling.deps import load_dependency_map  # noqa: E402
 from lyo_tooling.dotnet import find_project_csproj, read_target_frameworks  # noqa: E402
 LYO_NET = ROOT / "Lyo.Net"
-PORTFOLIO = ROOT / "apps" / "portfolio" / "content"
+PORTFOLIO = ROOT / "apps" / "gateway" / "content"
 PORTFOLIO_FULL = PORTFOLIO / "packages-full"
 BLAZOR = ROOT / "Lyo.Net/Integration/Web/Lyo.Web.Components/wwwroot/catalog"
 ROOT_README = ROOT / "README.md"
@@ -1022,29 +1022,32 @@ def cmd_render() -> None:
         except ValueError as err:
             print(f"warn: root README package list not updated: {err}", file=sys.stderr)
 
-    # Portfolio index + full docs (derived copies of project JSON)
-    PORTFOLIO.mkdir(parents=True, exist_ok=True)
-    if PORTFOLIO_FULL.exists():
-        for old in PORTFOLIO_FULL.glob("*.json"):
-            old.unlink()
-    else:
-        PORTFOLIO_FULL.mkdir(parents=True)
+    # Marketing-site package snapshot lives in Lyo-Public. Skip if that tree is gone.
+    if PORTFOLIO.parent.is_dir():
+        PORTFOLIO.mkdir(parents=True, exist_ok=True)
+        if PORTFOLIO_FULL.exists():
+            for old in PORTFOLIO_FULL.glob("*.json"):
+                old.unlink()
+        else:
+            PORTFOLIO_FULL.mkdir(parents=True)
 
-    index = [
-        {
-            "id": p["id"],
-            "name": p.get("name") or p["id"],
-            "area": p.get("area") or "Other",
-            "topic": package_topic(p["id"]),
-            "tagline": p.get("tagline") or "",
-            "readme": p["readmePath"],
-            "targetFrameworks": p.get("targetFrameworks") or [],
-        }
-        for p in emit_packages
-    ]
-    write_json(PORTFOLIO / "packages.json", index)
-    for p in emit_packages:
-        write_json(PORTFOLIO_FULL / f"{p['id']}.json", p)
+        index = [
+            {
+                "id": p["id"],
+                "name": p.get("name") or p["id"],
+                "area": p.get("area") or "Other",
+                "topic": package_topic(p["id"]),
+                "tagline": p.get("tagline") or "",
+                "readme": p["readmePath"],
+                "targetFrameworks": p.get("targetFrameworks") or [],
+            }
+            for p in emit_packages
+        ]
+        write_json(PORTFOLIO / "packages.json", index)
+        for p in emit_packages:
+            write_json(PORTFOLIO_FULL / f"{p['id']}.json", p)
+    else:
+        print("render: skip apps/gateway/content (not in this repo)")
 
     # Blazor catalog mirror
     blazor_packages = BLAZOR / "packages"
@@ -1072,7 +1075,7 @@ def cmd_render() -> None:
         },
     )
 
-    print(f"render: {len(emit_packages)} READMEs + root README + portfolio + Blazor from project {DOCS_FILENAME}")
+    print(f"render: {len(emit_packages)} READMEs + root README + Blazor catalog from project {DOCS_FILENAME}")
 
     # Adhoc tooling READMEs (scripts/*, k6 matrix, etc.) — same SoT rule via tooling-docs.
     tooling = Path(__file__).with_name("tooling-docs.py")

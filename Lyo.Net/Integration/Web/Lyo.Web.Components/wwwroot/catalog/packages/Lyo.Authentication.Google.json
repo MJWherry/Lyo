@@ -44,12 +44,12 @@
     {
       "title": "3. Point the Gateway at the TestApi (2)",
       "language": "bash",
-      "code": "cd Lyo.Net/Tools/Lyo.Gateway\ndotnet user-secrets init\ndotnet user-secrets set \"LyoJwt:Issuer\" \"http://localhost:5251\"\ndotnet user-secrets set \"LyoJwt:Audience\" \"lyo-test-api\""
+      "code": "cd Lyo.Net/Tools/Lyo.TestGateway\ndotnet user-secrets init\ndotnet user-secrets set \"LyoJwt:Issuer\" \"http://localhost:5251\"\ndotnet user-secrets set \"LyoJwt:Audience\" \"lyo-test-api\""
     },
     {
       "title": "4. Run both services and exercise the flow",
       "language": "bash",
-      "code": "# terminal 1\ncd Lyo.Net/Tools/Lyo.TestApi && dotnet run --launch-profile http\n# terminal 2\ncd Lyo.Net/Tools/Lyo.Gateway && dotnet run --launch-profile http"
+      "code": "# terminal 1\ncd Lyo.Net/Tools/Lyo.TestApi && dotnet run --launch-profile http\n# terminal 2\ncd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http"
     }
   ],
   "sections": [
@@ -96,7 +96,7 @@
     {
       "type": "paragraph",
       "title": "Local development setup",
-      "text": "End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.Gateway` as the browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or HTTPS cert for local dev."
+      "text": "End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or HTTPS cert for local dev."
     },
     {
       "type": "list",

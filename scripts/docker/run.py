@@ -3,7 +3,7 @@
 
 Derives a per-target image tag, then ``docker compose build`` / ``run`` the ``run`` service.
 Default: start detached and return immediately (true background). Mid-run mounts still
-update docs/benchmarks and portfolio history as suites finish.
+update docs/benchmarks as suites finish.
 
 Usage:
   python3 scripts/docker/run.py [options] <target...>
@@ -86,8 +86,11 @@ def main(argv: list[str] | None = None) -> int:
     env["BENCH_FILTER"] = args.bench_filter
     env["TEST_FILTER"] = args.test_filter
 
-    # Ensure portfolio history mount target exists on the host.
-    (REPO_ROOT / "apps" / "portfolio" / "public" / "benchmarks" / "history").mkdir(parents=True, exist_ok=True)
+    # Ensure benchmark data/history mount targets exist on the host.
+    (REPO_ROOT / "docs" / "benchmarks" / "data").mkdir(parents=True, exist_ok=True)
+    (REPO_ROOT / "docs" / "benchmarks" / "history").mkdir(parents=True, exist_ok=True)
+    if (REPO_ROOT / "apps" / "gateway").is_dir():
+        (REPO_ROOT / "apps" / "gateway" / "public" / "benchmarks" / "history").mkdir(parents=True, exist_ok=True)
 
     subprocess.run(["docker", "compose", "build", "run"], check=True, cwd=REPO_ROOT, env=env)
 
@@ -117,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"==> logs:  docker logs -f {name}", flush=True)
         print(f"==> status: docker ps -a --filter name={name}", flush=True)
         print(
-            "==> manifests update on-the-fly via mounts (docs/benchmarks + portfolio history)",
+            "==> manifests update on-the-fly via mounts (docs/benchmarks)",
             flush=True,
         )
         return 0

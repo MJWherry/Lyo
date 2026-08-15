@@ -1,3 +1,0 @@
-{$PORTFOLIO_DOMAIN:localhost} {
-	reverse_proxy web:3100
-}

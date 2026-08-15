@@ -14,7 +14,7 @@ For every report it writes ``<name>.json`` (portable) and ``<name>.js``
 snapshot under ``docs/benchmarks/history/<name>/``, attaches Δ-vs-prior-run fields and a
 run-history summary, then a ``registry.js`` listing all reports for the static
 ``docs/benchmarks/index.html`` hub. By default it also copies history into
-``apps/portfolio/public/benchmarks/history`` for the Next.js viewer.
+``apps/gateway/public/benchmarks/history`` when that tree exists (``--sync-portfolio-only`` is a local-dev alias; no-op after the marketing site moved to Lyo-Public).
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
 import re
 import shutil
 import sys
@@ -1411,12 +1412,22 @@ def main() -> None:
     parser.add_argument(
         "--sync-portfolio-only",
         action="store_true",
-        help="Only copy docs/benchmarks/history → apps/portfolio/public/benchmarks/history.",
+        help="Only copy docs/benchmarks/history → apps/gateway/public/benchmarks/history when that tree exists.",
     )
     parser.add_argument(
         "--no-sync-portfolio",
         action="store_true",
-        help="Skip copying history into the portfolio public tree (use in Docker; history is already mounted).",
+        help="Skip copying history into the Gateway public tree (use in Docker; history is already mounted).",
+    )
+    parser.add_argument(
+        "--publish-s3",
+        action="store_true",
+        help="After writing manifests, aws s3 sync data/ + history/ JSON (LYO_BENCH_S3_BUCKET or --bucket).",
+    )
+    parser.add_argument(
+        "--bucket",
+        default=os.environ.get("LYO_BENCH_S3_BUCKET", ""),
+        help="S3 bucket for --publish-s3 (or LYO_BENCH_S3_BUCKET).",
     )
     for category in BDN_CATEGORIES:
         parser.add_argument(f"--{category['name']}-only", action="store_true")
@@ -1424,6 +1435,10 @@ def main() -> None:
 
     if args.sync_portfolio_only:
         sync_portfolio_history()
+        if args.publish_s3:
+            from publish_s3 import publish as publish_s3
+
+            publish_s3(args.bucket)
         return
 
     if args.republish_history:
@@ -1431,6 +1446,10 @@ def main() -> None:
         write_registry()
         if not args.no_sync_portfolio:
             sync_portfolio_history()
+        if args.publish_s3:
+            from publish_s3 import publish as publish_s3
+
+            publish_s3(args.bucket)
         return
 
     category_flags = {c["name"]: getattr(args, f"{c['name']}_only") for c in BDN_CATEGORIES}
@@ -1446,6 +1465,10 @@ def main() -> None:
     write_registry()
     if not args.no_sync_portfolio:
         sync_portfolio_history()
+    if args.publish_s3:
+        from publish_s3 import publish as publish_s3
+
+        publish_s3(args.bucket)
 
 
 if __name__ == "__main__":

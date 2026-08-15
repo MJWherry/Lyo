@@ -37,9 +37,6 @@ apps/portfolio/.next/
 apps/portfolio/.env
 apps/portfolio/.env.local
 apps/portfolio/public/benchmarks/history/
-apps/comic/.next/
-apps/comic/.env
-apps/comic/.env.local
 
 # Editor directories and files
 .vscode/*

@@ -263,14 +263,9 @@
         <Project Path="Data/FileSystemWatcher/Lyo.FileSystemWatcher.Tests/Lyo.FileSystemWatcher.Tests.csproj"/>
     </Folder>
     <Folder Name="/Apps/"/>
-    <Folder Name="/Apps/Comic/">
-        <Project Path="Apps/Comic/Lyo.Comic.Api.Client/Lyo.Comic.Api.Client.csproj"/>
-        <Project Path="Apps/Comic/Lyo.Comic.Api/Lyo.Comic.Api.csproj"/>
-        <Project Path="Apps/Comic/Lyo.Comic.Api.Models/Lyo.Comic.Api.Models.csproj"/>
-        <Project Path="Apps/Comic/Lyo.Comic.Api.Tests/Lyo.Comic.Api.Tests.csproj"/>
-    </Folder>
     <Folder Name="/Apps/Config/">
         <Project Path="Apps/Config/Lyo.Config.Api.Client/Lyo.Config.Api.Client.csproj"/>
+        <Project Path="Apps/Config/Lyo.Config.Api.Host/Lyo.Config.Api.Host.csproj"/>
         <Project Path="Apps/Config/Lyo.Config.Api.Hosting/Lyo.Config.Api.Hosting.csproj"/>
         <Project Path="Apps/Config/Lyo.Config.Api/Lyo.Config.Api.csproj"/>
         <Project Path="Apps/Config/Lyo.Config.Api.Models/Lyo.Config.Api.Models.csproj"/>
@@ -343,9 +338,6 @@
         <File Path="Directory.Build.targets"/>
         <File Path="Directory.Packages.props"/>
         <File Path="Lyo.sln.DotSettings"/>
-    </Folder>
-    <Folder Name="/Apps/Portfolio/">
-        <Project Path="Apps/Portfolio/Lyo.Portfolio.Api/Lyo.Portfolio.Api.csproj"/>
     </Folder>
     <Folder Name="/Communication/"/>
     <Folder Name="/Communication/Email/">
@@ -494,7 +486,7 @@
     </Folder>
     <Folder Name="/Tools/">
         <Project Path="Tools/Lyo.Cli/Lyo.Cli.csproj"/>
-        <Project Path="Tools/Lyo.Gateway/Lyo.Gateway.csproj"/>
+        <Project Path="Tools/Lyo.TestGateway/Lyo.TestGateway.csproj"/>
         <Project Path="Tools/Lyo.Job.Scheduler.Host/Lyo.Job.Scheduler.Host.csproj"/>
         <Project Path="Tools/Lyo.Preview/Lyo.Preview.csproj"/>
         <Project Path="Tools/Lyo.TestApi/Lyo.TestApi.csproj"/>

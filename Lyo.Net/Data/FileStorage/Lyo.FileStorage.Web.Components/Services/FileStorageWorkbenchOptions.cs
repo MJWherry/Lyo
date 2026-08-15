@@ -5,7 +5,7 @@ public sealed class FileStorageWorkbenchOptions
     public const string SectionName = "FileStorageWorkbench";
 
     /// <summary>
-    /// When true, the host resolves the workbench through HTTP calls to a remote API (typically <c>Lyo.Portfolio.Api</c> or <c>Lyo.TestApi</c>) using the shared
+    /// When true, the host resolves the workbench through HTTP calls to a remote API (typically <c>Lyo.Gateway.Api</c> or <c>Lyo.TestApi</c>) using the shared
     /// <see cref="Lyo.Api.Client.IApiClient" />.
     /// </summary>
     public bool UseRemoteApiServices { get; set; } = true;

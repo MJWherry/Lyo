@@ -27,7 +27,7 @@
       "rows": [
         [
           "`Version`",
-          "Schema version (`CurrentSchemaVersion = 2`); bumped via `NormalizeForRead` / `NormalizeForPersistence`."
+          "Schema version (`CurrentSchemaVersion = 3`); bumped via `NormalizeForRead` / `NormalizeForPersistence`."
         ],
         [
           "`CommandChannelId`",
@@ -48,10 +48,22 @@
         [
           "`Revision`",
           "Monotonic config-binding revision; populated on read, cleared before write so it is never persisted."
+        ],
+        [
+          "`ComicReaderChannelId`",
+          "When set, comic reading is restricted to this channel."
+        ],
+        [
+          "`ComicDefaultLanguage`",
+          "Optional BCP-47 language filter for comic search and chapter lists."
+        ],
+        [
+          "`ComicNsfwAllowed`",
+          "When false (default), comic reading is rejected in NSFW channels."
         ]
       ],
       "lead": "`DiscordGuildSettings` is the document persisted by the config store under `EntityRef.For<DiscordGuild>(guildId)`. Versioned for forward-compatibility:",
-      "trail": "`NormalizeForRead()` upgrades older snapshots in-place (e.g. v1 → v2). `NormalizeForPersistence()` calls `NormalizeForRead()` and stamps `Version = CurrentSchemaVersion`\nbefore save."
+      "trail": "`NormalizeForRead()` upgrades older snapshots in-place (e.g. v1 → v2 → v3). `NormalizeForPersistence()` calls `NormalizeForRead()` and stamps `Version = CurrentSchemaVersion`\nbefore save."
     },
     {
       "type": "table",

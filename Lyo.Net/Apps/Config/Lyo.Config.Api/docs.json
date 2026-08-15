@@ -43,8 +43,8 @@
           "Path-scoped API-key gate (see below). **Must run before `MapConfigApiEndpoints`** in the request pipeline."
         ]
       ],
-      "lead": "`Lyo.Config.Api` is structured so it can run standalone (see `Program.cs`) **or** be embedded into another host that already owns the WebApplication pipeline. The full surface is\ntwo extensions plus one middleware, all in `Lyo.Config.Api`:",
-      "trail": "Composition in the standalone `Program.cs` (and the pattern any embedding host should follow):"
+      "lead": "`Lyo.Config.Api` is structured so it can run standalone (see [`Lyo.Config.Api.Host`](../Lyo.Config.Api.Host/README.md)) **or** be embedded into another host that already owns the WebApplication pipeline. The full surface is\ntwo extensions plus one middleware, all in `Lyo.Config.Api`:",
+      "trail": "Composition in the standalone host (and the pattern any embedding host should follow):"
     },
     {
       "type": "list",
@@ -305,24 +305,6 @@
       ]
     },
     {
-      "name": "Microsoft.AspNetCore.OpenApi",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "direct",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Scalar.AspNetCore",
-      "kind": "package",
-      "version": "2.16.11",
-      "tags": [
-        "direct",
-        "third-party"
-      ]
-    },
-    {
       "name": "Lyo.Api.Models",
       "kind": "lyo",
       "tags": [
@@ -555,6 +537,15 @@
       "name": "Microsoft.AspNetCore.Http.Abstractions",
       "kind": "package",
       "version": "2.*",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.OpenApi",
+      "kind": "package",
+      "version": "10.0.5",
       "tags": [
         "transitive",
         "microsoft"

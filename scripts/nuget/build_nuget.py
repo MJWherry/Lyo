@@ -135,7 +135,7 @@ def save_project_state(state_file: Path, project_name: str, src_hash: str, versi
 def _should_skip_project(path: Path) -> bool:
     name = get_project_name(path)
     parts = set(path.parts)
-    if ".Tests" in name or ".Benchmarks" in name or "TestConsole" in name:
+    if ".Tests" in name or ".Benchmarks" in name or "TestConsole" in name or name.endswith(".Host"):
         return True
     if name.startswith("Lyo.TestConsole"):
         return True
@@ -205,7 +205,8 @@ def build_project(csproj_file: Path, *, version: str, config: str, incremental: 
     print_info(f"Building {name} ({label})...")
     cmd = ["dotnet", "build", str(csproj_file), "-c", config, "/p:BuildProjectReferences=false", *_version_msbuild_props(version)]
     if not incremental:
-        cmd.insert(4, "--no-incremental")
+        # After the full argv — never insert next to -c or MSBuild treats the flag as Configuration.
+        cmd.append("--no-incremental")
     ok = subprocess.run(cmd, cwd=LYO_NET).returncode == 0
     if ok:
         print_success(f"Built {name}" + (" (incremental)" if incremental else ""))

@@ -17,11 +17,11 @@ Domain contracts for a **serialized fiction catalog**: series (**`ComicSeries`**
 ## Layering map
 
 | Assembly | Responsibility |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **`Lyo.Comic`** *(this)* | POCOs + **`IComicStore`** (`netstandard2.0;net10.0`). |
 | **`Lyo.Comic.Postgres`** | EF **`ComicDbContext`**, migrations, **`PostgresComicStore`**, DI extensions. |
 | **`Lyo.Comic.Web.Components`** | Reusable Blazor browse/search/reader components (cards, grid/list layouts, MangaFire-style tap-to-page). |
-| **`Apps/Comic/Lyo.Comic.Api*`** | Reference ASP.NET minimal API + client + DTO assemblies exposing this store over HTTP. |
+| **`Lyo-Comic`** *(separate repo)* | ASP.NET minimal API + client + DTO assemblies that consume this store over HTTP. |
 
 ## Testing strategy
 

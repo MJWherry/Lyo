@@ -8,11 +8,11 @@ Usage:
                  When omitted, every suite is run.
   --no-docker    Skip Testcontainers-backed classes via positive --filter globs.
   --filter GLOB  BenchmarkDotNet --filter (default '*').
-  --no-sync-portfolio  Skip copying history into apps/portfolio/public after export.
+  --no-sync-portfolio  Skip copying history into apps/gateway/public after export (no-op if that tree is gone).
 
 Each suite's LyoBenchmarkExporter writes <name>.lyobench.json into BenchmarkDotNet.Artifacts
 next to its project. After each suite, build_manifests.py exports that category (archives a
-history snapshot, updates data/<name>.{json,js}, syncs portfolio history).
+history snapshot, updates data/<name>.{json,js}; copies into apps/gateway only if present).
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--no-sync-portfolio",
         action="store_true",
-        help="Do not copy docs/benchmarks/history into apps/portfolio/public after each suite",
+        help="Do not copy docs/benchmarks/history into apps/gateway/public after each suite (no-op if absent)",
     )
     parser.add_argument(
         "categories",
@@ -98,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
             sync_portfolio=not args.no_sync_portfolio,
         )
 
-    print("Done. Open docs/benchmarks/index.html or apps/portfolio /benchmarks/<suite>.", flush=True)
+    print("Done. Open docs/benchmarks/index.html (S3 publish is separate).", flush=True)
     return 0
 
 

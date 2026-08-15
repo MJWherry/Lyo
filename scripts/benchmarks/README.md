@@ -1,16 +1,17 @@
 # Benchmark tooling
 
-Run BenchmarkDotNet suites and export static + portfolio manifests.
+Run BenchmarkDotNet suites and export static hub manifests.
 
-Host runners for Lyo microbenchmarks. After each suite finishes, manifests refresh on-the-fly (docs/benchmarks/data and apps/portfolio/public/benchmarks/history).
+Host runners for Lyo microbenchmarks. After each suite finishes, manifests refresh on-the-fly under docs/benchmarks/data. Publish to S3 with publish_s3.py for the Lyo-Public marketing site.
 
 ## Commands
 
 - `python3 scripts/benchmarks/run_dotnet.py [categories...]` — Run BDN suites in Release; rebuild category manifests after each suite
-- `python3 scripts/benchmarks/run_dotnet.py --no-sync-portfolio encryption` — Run one category without copying history into the portfolio app
-- `python3 scripts/benchmarks/build_manifests.py` — Rebuild all static hub data + portfolio history from artifacts/history
+- `python3 scripts/benchmarks/run_dotnet.py --no-sync-portfolio encryption` — Run one category without copying history into a local Gateway public tree
+- `python3 scripts/benchmarks/build_manifests.py` — Rebuild all static hub data from artifacts/history
 - `python3 scripts/benchmarks/build_manifests.py --encryption-only` — Refresh a single category (used by run_dotnet after each suite)
-- `python3 scripts/benchmarks/build_manifests.py --k6-only --k6-run-dir PATH` — Refresh load-test dashboard data from a k6 results directory
+- `python3 scripts/benchmarks/build_manifests.py --publish-s3` — Rebuild manifests then aws s3 sync data/ + history/ (LYO_BENCH_S3_BUCKET or --bucket)
+- `python3 scripts/benchmarks/publish_s3.py --bucket BUCKET` — Upload existing docs/benchmarks/{data,history} JSON to the Gateway S3 bucket
 
 ## Notes
 

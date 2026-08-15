@@ -5,8 +5,7 @@
 # exact project name (e.g. Lyo.Lock.Benchmarks), or a space/comma list. The same TARGET decides what
 # the image compiles AND what the container runs. The source is baked into the image, so the host tree
 # is NEVER mounted for building (the container can't touch your obj/bin). At runtime
-# docs/benchmarks/{data,history} and apps/portfolio/public/benchmarks/history are mounted out so
-# static + portfolio update on-the-fly after each suite.
+# docs/benchmarks/{data,history} are mounted out so the static hub updates on-the-fly after each suite.
 #
 # Easiest entrypoint is the wrapper, which auto-tags a per-target image:
 #   python3 scripts/docker/run.py Lyo.Lock.Benchmarks    # one suite
@@ -42,10 +41,9 @@ x-runner: &runner
     # Redis/Postgres containers for the Docker-backed suites.
     - /var/run/docker.sock:/var/run/docker.sock
     # Host mounts for dashboard output from build_manifests.py. Raw BenchmarkDotNet.Artifacts
-    # stay inside the container; history + portfolio history must be mounted or mid-run sync is lost.
+    # stay inside the container; history must be mounted or mid-run sync is lost.
     - ./docs/benchmarks/data:/src/docs/benchmarks/data
     - ./docs/benchmarks/history:/src/docs/benchmarks/history
-    - ./apps/portfolio/public/benchmarks/history:/src/apps/portfolio/public/benchmarks/history
   # Let Testcontainers reach host-published ports when running over the socket.
   extra_hosts:
     - "host.docker.internal:host-gateway"

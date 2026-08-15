@@ -28,7 +28,7 @@ from resolve_targets import resolve_targets  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "docs" / "benchmarks" / "data"
 HISTORY_DIR = REPO_ROOT / "docs" / "benchmarks" / "history"
-PORTFOLIO_HISTORY_DIR = REPO_ROOT / "apps" / "portfolio" / "public" / "benchmarks" / "history"
+PORTFOLIO_HISTORY_DIR = REPO_ROOT / "apps" / "gateway" / "public" / "benchmarks" / "history"
 RUN_DOTNET = REPO_ROOT / "scripts" / "benchmarks" / "run_dotnet.py"
 
 
@@ -41,7 +41,7 @@ def _chown_mounts() -> None:
 
 
 def _run_benchmarks(categories: list[str]) -> None:
-    # Portfolio history is bind-mounted; sync after every suite so both surfaces update on-the-fly.
+    # History is bind-mounted; sync after every suite so the static hub updates on-the-fly.
     args = [sys.executable, str(RUN_DOTNET)]
     if os.environ.get("NO_DOCKER", "0") == "1":
         args.append("--no-docker")
@@ -49,7 +49,8 @@ def _run_benchmarks(categories: list[str]) -> None:
     print(f"==> bench: {' '.join(args)}", flush=True)
     env = os.environ.copy()
     env["BENCH_NO_BUILD"] = "1"
-    PORTFOLIO_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    if (REPO_ROOT / "apps" / "gateway").is_dir():
+        PORTFOLIO_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
     subprocess.run(args, check=True, cwd=REPO_ROOT, env=env)
 
 

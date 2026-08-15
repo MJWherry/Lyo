@@ -1,0 +1,45 @@
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.TestGateway.Models.Constants
+@inject IApiClient ApiClient
+
+<LyoDataGridProjected ApiClient="ApiClient"
+                      GridKey="PersonAddressGrid"
+                      Route="@Constants.Person.Address"
+                      KeySelector="@GetKey"
+                      FilterPropertyDefinitions="@_propertyDefinitions">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="FullAddress" Title="Full Address" QuickSearchPropertyName="FullAddress"/>
+        <LyoProjectedColumn Field="HouseNumber" Title="House #" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="StreetName" Title="Street" QuickSearchPropertyName="StreetName"/>
+        <LyoProjectedColumn Field="City" Title="City" QuickSearchPropertyName="City"/>
+        <LyoProjectedColumn Field="State" Title="State"/>
+        <LyoProjectedColumn Field="Zipcode" Title="Zip"/>
+        <LyoProjectedColumn Field="CountryCode" Title="Country" HiddenByDefault="true"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FullAddress"), new("City"), new("State"), new("Zipcode")];
+
+    private static object[] GetKey(object? item)
+    {
+        if (item == null)
+            return [];
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return id != null ? [id] : [];
+    }
+
+}

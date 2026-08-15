@@ -1,0 +1,41 @@
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.TestGateway.Models.Constants
+@inject IApiClient ApiClient
+
+<LyoDataGridProjected ApiClient="ApiClient"
+                      GridKey="PersonEmailAddressGrid"
+                      Route="@Constants.Person.Email"
+                      KeySelector="@GetKey"
+                      FilterPropertyDefinitions="@_propertyDefinitions">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="Email" Title="Email" QuickSearchPropertyName="Email"/>
+        <LyoProjectedColumn Field="Label" Title="Label" QuickSearchPropertyName="Label"/>
+        <LyoProjectedColumn Field="VerifiedAt" Title="Verified" HiddenByDefault="true"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Email"), new("Label")];
+
+    private static object[] GetKey(object? item)
+    {
+        if (item == null)
+            return [];
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return id != null ? [id] : [];
+    }
+
+}

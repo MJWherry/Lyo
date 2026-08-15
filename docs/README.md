@@ -14,14 +14,14 @@ Each library owns a `docs.json` beside its `README.md`. That JSON drives:
 |--------------------|---------------------------------------------------------------|
 | Package README     | `{project}/README.md` (generated)                             |
 | Root package index | Marked region in [`/README.md`](../README.md)                 |
-| React portfolio    | `apps/portfolio/content/packages.json` + `packages-full/`     |
+| React Gateway      | `apps/gateway/content/packages.json` + `packages-full/`       |
 | Blazor             | `Lyo.Net/Integration/Web/Lyo.Web.Components/wwwroot/catalog/` |
 
 Shared schemas live under [`catalog/schema/`](catalog/schema/). See [`catalog/README.md`](catalog/README.md).
 
 ```bash
 python3 scripts/docs/project-docs.py render
-# or from apps/portfolio: npm run sync-docs
+# or from apps/gateway: npm run sync-docs
 ```
 
 Edit `docs.json`, then `render`. README is generated output — never the source of truth.

@@ -2,7 +2,7 @@
   "id": "scripts.docker",
   "name": "Docker benchmark runner",
   "tagline": "Resolve BDN targets and run suites inside the Lyo benchmarks container.",
-  "description": "Compose-backed runner. Default starts the container detached and returns immediately. Mid-run mounts update docs/benchmarks/data and portfolio history as each suite finishes.",
+  "description": "Compose-backed runner. Default starts the container detached and returns immediately. Mid-run mounts update docs/benchmarks/data as each suite finishes.",
   "commands": [
     {
       "cmd": "python3 scripts/docker/run.py Lyo.Encryption.Benchmarks",
@@ -14,7 +14,7 @@
     },
     {
       "cmd": "python3 scripts/docker/run.py --wait Lyo.Encryption.Benchmarks",
-      "blurb": "Detached run that blocks until the container exits (then host portfolio sync)"
+      "blurb": "Detached run that blocks until the container exits (then host history sync)"
     },
     {
       "cmd": "python3 scripts/docker/run.py --build-only",
@@ -26,10 +26,10 @@
     }
   ],
   "notes": [
-    "entrypoint.py runs run_dotnet.py inside the container with portfolio sync enabled",
-    "Compose mounts docs/benchmarks/{data,history} and apps/portfolio/public/benchmarks/history",
+    "entrypoint.py runs run_dotnet.py inside the container",
+    "Compose mounts docs/benchmarks/{data,history}",
     "Default is background; use --wait or --fg if you want the CLI to block",
-    "With --wait/--fg on success, run.py also calls build_manifests.py --sync-portfolio-only as a host safety net"
+    "With --wait/--fg on success, run.py also calls build_manifests.py --sync-portfolio-only as a host safety net (no-op if apps/gateway is absent)"
   ],
   "readmePath": "scripts/docker/README.md"
 }

@@ -263,14 +263,11 @@ top-level area.
 
 ### Apps
 
-- [Lyo.Comic.Api](Lyo.Net/Apps/Comic/Lyo.Comic.Api/README.md): ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with…
-- [Lyo.Comic.Api.Client](Lyo.Net/Apps/Comic/Lyo.Comic.Api.Client/README.md): Typed **`HttpClient`** for the `Lyo.Comic.Api` service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI…
-- [Lyo.Comic.Api.Models](Lyo.Net/Apps/Comic/Lyo.Comic.Api.Models/README.md): Request and response DTOs shared between `Lyo.Comic.Api` and `Lyo.Comic.Api.Client`.
 - [Lyo.Config.Api](Lyo.Net/Apps/Config/Lyo.Config.Api/README.md): HTTP host for central **app** configuration backed by PostgreSQL and `Lyo.Config`.
 - [Lyo.Config.Api.Client](Lyo.Net/Apps/Config/Lyo.Config.Api.Client/README.md): Typed HTTP client for the central `Lyo.Config.Api` — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an optional **`X-Api-Key`** header, and a single DI extension.
+- [Lyo.Config.Api.Host](Lyo.Net/Apps/Config/Lyo.Config.Api.Host/README.md): Standalone ASP.NET host for `Lyo.Config.Api`.
 - [Lyo.Config.Api.Hosting](Lyo.Net/Apps/Config/Lyo.Config.Api.Hosting/README.md): Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…
 - [Lyo.Config.Api.Models](Lyo.Net/Apps/Config/Lyo.Config.Api.Models/README.md): Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.
-- [Lyo.Portfolio.Api](Lyo.Net/Apps/Portfolio/Lyo.Portfolio.Api/README.md): Portfolio + Gateway backend API: People, Config, Job, Reporting, local file storage, Lyo auth with Google.
 
 ### Security
 
@@ -298,10 +295,10 @@ top-level area.
 ### Tools
 
 - [Lyo.Cli](Lyo.Net/Tools/Lyo.Cli/README.md): Installable `lyo` command-line tool for encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.
-- [Lyo.Gateway](Lyo.Net/Tools/Lyo.Gateway/README.md): Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page run against either…
 - [Lyo.Preview](Lyo.Net/Tools/Lyo.Preview/README.md): Cross-platform preview in the system default browser. The default implementation, `BrowserPreview`, spins up an `HttpListener` on `127.0.0.1` (random free port), registers one byte buffer per call…
-- [Lyo.TestApi](Lyo.Net/Tools/Lyo.TestApi/README.md): Minimal-API host that backs `Lyo.Gateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…
+- [Lyo.TestApi](Lyo.Net/Tools/Lyo.TestApi/README.md): Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…
 - [Lyo.TestConsole](Lyo.Net/Tools/Lyo.TestConsole/README.md): Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process.
+- [Lyo.TestGateway](Lyo.Net/Tools/Lyo.TestGateway/README.md): Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, etc.) and a thin proxy layer that lets every page run against either…
 - [Lyo.Tools.Postgres](Lyo.Net/Tools/Lyo.Tools.Postgres/README.md): Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders.
 
 <!-- catalog:packages:end -->

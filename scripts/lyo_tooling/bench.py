@@ -9,7 +9,7 @@ from lyo_tooling.dotnet import REPO_ROOT
 NET_DIR = REPO_ROOT / "Lyo.Net"
 BENCH_DATA_DIR = REPO_ROOT / "docs" / "benchmarks" / "data"
 BENCH_HISTORY_DIR = REPO_ROOT / "docs" / "benchmarks" / "history"
-PORTFOLIO_HISTORY_DIR = REPO_ROOT / "apps" / "portfolio" / "public" / "benchmarks" / "history"
+PORTFOLIO_HISTORY_DIR = REPO_ROOT / "apps" / "gateway" / "public" / "benchmarks" / "history"
 
 # category -> csproj path relative to Lyo.Net
 BDN_PROJECTS: dict[str, str] = {
@@ -68,9 +68,12 @@ def _clear_dir(path: Path) -> None:
 
 
 def sync_portfolio_history() -> None:
-    """Copy ``docs/benchmarks/history`` into the portfolio public tree for snapshot APIs."""
+    """Copy ``docs/benchmarks/history`` into the Next.js public tree when that tree is present."""
     import shutil
 
+    if not (REPO_ROOT / "apps" / "gateway").is_dir():
+        print("sync-portfolio: apps/gateway not present — skipping (S3 publish is separate)")
+        return
     if not BENCH_HISTORY_DIR.is_dir():
         print("sync-portfolio: no docs/benchmarks/history — skipping")
         return

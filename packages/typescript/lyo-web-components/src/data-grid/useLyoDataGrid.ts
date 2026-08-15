@@ -29,6 +29,8 @@ export type UseLyoDataGridOptions<T> = {
   filterPropertyDefinitions?: readonly FilterPropertyDefinition[];
   quickSearchProperties?: readonly string[];
   beforeQuery?: (req: Record<string, unknown>) => Record<string, unknown>;
+  /** Map QueryProject dictionaries (often CLR PascalCase) onto the row type used by cells. */
+  mapRows?: (items: unknown[]) => T[];
   autoRefreshIntervalsSeconds?: number[];
   searchDebounceMs?: number;
   entityType?: string;
@@ -49,6 +51,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     filterPropertyDefinitions = [],
     quickSearchProperties,
     beforeQuery,
+    mapRows,
     searchDebounceMs = 300,
     entityType = "Person",
     fromAlias,
@@ -189,8 +192,9 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
         return;
       }
       setCurrentResults(res.data);
-      setRows((res.data.items ?? []) as T[]);
-      setTotal(res.data.total ?? res.data.items?.length ?? 0);
+      const items = res.data.items ?? [];
+      setRows(mapRows ? mapRows(items) : (items as T[]));
+      setTotal(res.data.total ?? items.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Query failed");
       setRows([]);
@@ -213,6 +217,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     keyFields,
     keySelector,
     beforeQuery,
+    mapRows,
     entityType,
     fromAlias,
     tick,

@@ -93,7 +93,7 @@
       "type": "list",
       "title": "Per-provider knobs",
       "items": [
-        "**Google** — see [`Lyo.Authentication.Google/README.md`](../Lyo.Authentication.Google/README.md) (includes a full Google Cloud + `Lyo.TestApi` + `Lyo.Gateway` local walkthrough).",
+        "**Google** — see [`Lyo.Authentication.Google/README.md`](../Lyo.Authentication.Google/README.md) (includes a full Google Cloud + `Lyo.TestApi` + `Lyo.TestGateway` local walkthrough).",
         "**Keycloak** — see [`Lyo.Authentication.Keycloak/README.md`](../Lyo.Authentication.Keycloak/README.md) (includes a Docker-based local Keycloak walkthrough and the peer-vs-broker discussion).",
         "**Custom** — implement `IOpenIdConnectProvider` and register it as a singleton; `DefaultExternalLoginCoordinator` will pick it up by name."
       ]

@@ -184,7 +184,7 @@
         "**Per-request scope** with `Trace`, host, user-agent, **client IP**, **user id/name** (when authenticated), method, path, and sanitized query.",
         "**Debug** request/response lines.",
         "**Caught failures (Warn):** throw `ApiErrorException` (preferred), `HttpException`, or `ValidationException` — middleware writes `LyoProblemDetails` as `application/problem+json` and logs **Warn** with status, error codes, IP, user, and `GetFullMessage()`.",
-        "**Uncaught (Error):** any other exception → 500 problem + **Error** log with the exception. Client disconnect / abort (`OperationCanceledException` when `RequestAborted` is set) is **Debug** and is not turned into a 500.",
+        "**Uncaught (Error):** any other exception → 500 problem + **Error** log with the exception. Client disconnect / abort (`OperationCanceledException` when `RequestAborted` is set) is **Debug** and is not turned into a 500. Query cache misses on abort rethrow instead of returning `Cancelled` problem JSON.",
         "**Empty-body fallback (Warn):** bare `Results.NotFound()` / empty 4xx/5xx get a synthesized Lyo problem.",
         "Endpoints should **throw** `ApiErrorException.From(...)` / `ApiErrorResponseFactory.ThrowForError(...)` instead of returning problem JSON.",
         "Use **`Constants.ApiErrorCodes`** for `errors[].code`; put field/path names in `errors[].description`."

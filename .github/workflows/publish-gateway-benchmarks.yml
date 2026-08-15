@@ -1,0 +1,37 @@
+# Manual: publish docs/benchmarks/{data,history} to the Gateway S3 bucket.
+# Does not build or deploy apps. Set LYO_BENCH_S3_BUCKET or pass --bucket.
+
+name: Publish - Gateway Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      bucket:
+        description: "S3 bucket (empty = LYO_BENCH_S3_BUCKET secret / terraform output)"
+        required: false
+        type: string
+        default: ""
+
+env:
+  AWS_REGION: us-east-2
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: AWS - Configure
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build manifests + publish
+        env:
+          LYO_BENCH_S3_BUCKET: ${{ inputs.bucket || secrets.LYO_BENCH_S3_BUCKET }}
+        run: |
+          python3 scripts/benchmarks/build_manifests.py --no-sync-portfolio
+          python3 scripts/benchmarks/publish_s3.py

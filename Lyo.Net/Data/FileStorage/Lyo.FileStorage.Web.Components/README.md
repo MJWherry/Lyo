@@ -4,7 +4,7 @@ Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids a
 
 Two integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:
 
-1. **Proxy mode** — talks to a backend host (typically **`Lyo.Portfolio.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials. 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.
+1. **Proxy mode** — talks to a backend host (typically **`Lyo.Gateway.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials. 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.
 
 ## Components
 
@@ -22,8 +22,8 @@ Two integration modes are supported, controlled by **`FileStorageWorkbenchOption
 ## Services
 
 | Type | Purpose |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`IFileStorageWorkbenchQueryService`** | Searches files (`FileStorageWorkbenchFileQuery`) and keys (`FileStorageWorkbenchKeyQuery`) and projects to `FileStoreResult` / `FileStorageWorkbenchKeyRecord`. The Test API ships an HTTP-backed implementation in **`Lyo.Gateway`**. |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`IFileStorageWorkbenchQueryService`** | Searches files (`FileStorageWorkbenchFileQuery`) and keys (`FileStorageWorkbenchKeyQuery`) and projects to `FileStoreResult` / `FileStorageWorkbenchKeyRecord`. The Test Gateway ships an HTTP-backed implementation in **`Lyo.TestGateway`**. |
 | **`FileStorageWorkbenchServiceResolver`** | Centralises lookup of `IFileStorageService` and `IKeyStore` against the configured key names so the rest of the UI is decoupled from keyed-DI mechanics. |
 | **`FileStorageWorkbenchOptions`** | Binds the **`FileStorageWorkbench`** configuration section. |
 

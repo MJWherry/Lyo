@@ -32,7 +32,7 @@ All six entry points are exposed as `IServiceCollection` extensions in `Lyo.Comi
 
 ## Runtime expectations
 
-`PostgresComicStore` opens a fresh `ComicDbContext` per call via the registered `IDbContextFactory<ComicDbContext>`, so it is safe as a singleton under concurrent request load. Each `Save*Async` runs `SaveChangesAsync` inside the using-scope of that single context — callers that need cross-entity atomicity (for example saving a series together with its chapters) should orchestrate transactions above the store. When hosting under [`Lyo.Comic.Api`](../../../Apps/Comic/Lyo.Comic.Api/README.md): - Mapper layers translate HTTP DTO ↔ domain records. - Enrichment pipelines may batch external metadata — ensure those respect transaction boundaries imposed by callers around `Save*Async` groupings.
+`PostgresComicStore` opens a fresh `ComicDbContext` per call via the registered `IDbContextFactory<ComicDbContext>`, so it is safe as a singleton under concurrent request load. Each `Save*Async` runs `SaveChangesAsync` inside the using-scope of that single context — callers that need cross-entity atomicity (for example saving a series together with its chapters) should orchestrate transactions above the store. When hosting under `Lyo.Comic.Api` (Lyo-Comic repo): - Mapper layers translate HTTP DTO ↔ domain records. - Enrichment pipelines may batch external metadata — ensure those respect transaction boundaries imposed by callers around `Save*Async` groupings.
 
 ## See also
 

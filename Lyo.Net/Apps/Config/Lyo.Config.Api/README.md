@@ -40,7 +40,7 @@ curl -sSI "http://localhost:5088/api/config/gateway/prod-west?version=A1B2C3D4..
 
 ## Host embedding (DI + middleware pipeline)
 
-`Lyo.Config.Api` is structured so it can run standalone (see `Program.cs`) **or** be embedded into another host that already owns the WebApplication pipeline. The full surface is
+`Lyo.Config.Api` is structured so it can run standalone (see [`Lyo.Config.Api.Host`](../Lyo.Config.Api.Host/README.md)) **or** be embedded into another host that already owns the WebApplication pipeline. The full surface is
 two extensions plus one middleware, all in `Lyo.Config.Api`:
 
 | Member | Defined in | Purpose |
@@ -49,7 +49,7 @@ two extensions plus one middleware, all in `Lyo.Config.Api`:
 | **`app.MapConfigApiEndpoints(prefix = "/api/config")`** | [`Extensions.cs`](./Extensions.cs) | Returns a `RouteGroupBuilder` and mounts the `manage/*` and `{appKind}/{appId}` route groups under `prefix`. The default prefix is `/api/config`; pass another value to relocate the whole API. |
 | **`UseMiddleware<RequireConfigApiKeyMiddleware>()`** | [`Security/RequireConfigApiKeyMiddleware.cs`](./Security/RequireConfigApiKeyMiddleware.cs) | Path-scoped API-key gate (see below). **Must run before `MapConfigApiEndpoints`** in the request pipeline. |
 
-Composition in the standalone `Program.cs` (and the pattern any embedding host should follow):
+Composition in the standalone host (and the pattern any embedding host should follow):
 
 ## `RequireConfigApiKeyMiddleware` ordering and behavior
 
@@ -183,8 +183,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Config` — (direct, lyo)
 - `Lyo.Config.Postgres` — (direct, lyo)
 - `Lyo.EntityReference.Models` — (direct, lyo)
-- `Microsoft.AspNetCore.OpenApi` `10.0.5` — (direct, microsoft)
-- `Scalar.AspNetCore` `2.16.11` — (direct, third-party)
 - `Lyo.Api.Models` — (transitive, lyo)
 - `Lyo.Authentication.Models` — (transitive, lyo)
 - `Lyo.Cache` — (transitive, lyo)
@@ -214,6 +212,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.AspNetCore.Authorization` `10.0.5` — (transitive, microsoft)
 - `Microsoft.AspNetCore.Http.Abstractions` `2.*` — (transitive, microsoft)
+- `Microsoft.AspNetCore.OpenApi` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` — (transitive, microsoft)

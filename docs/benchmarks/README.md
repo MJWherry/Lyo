@@ -47,12 +47,13 @@ python3 scripts/benchmarks/run_dotnet.py --no-docker hashing csv
 python3 scripts/benchmarks/build_manifests.py               # micro + k6 (+ sync portfolio history)
 python3 scripts/benchmarks/build_manifests.py --k6-only
 python3 scripts/benchmarks/build_manifests.py --hashing-only
-python3 scripts/benchmarks/build_manifests.py --sync-portfolio-only   # history → apps/portfolio/public
+python3 scripts/benchmarks/build_manifests.py --sync-portfolio-only   # history → apps/gateway/public (alias)
+python3 scripts/benchmarks/build_manifests.py --publish-s3            # upload data/ + history/ to S3
 ```
 
 Each successful export appends to `history/<name>/` (unless that `runId` was already archived) and updates `data/<name>.{json,js}` + `registry.js` for the static
 [`index.html`](index.html) hub. By default history is also copied into
-`apps/portfolio/public/benchmarks/history` for the Next.js viewer. Re-open a report to use the **Snapshot** dropdown. **Δ** columns compare each snapshot to the immediately prior
+`apps/gateway/public/benchmarks/history` for the Next.js viewer (or fetch from `LYO_BENCH_BASE_URL` / S3). Re-open a report to use the **Snapshot** dropdown. **Δ** columns compare each snapshot to the immediately prior
 archived run (green = better; red = worse).
 
 ### Troubleshooting stale runs

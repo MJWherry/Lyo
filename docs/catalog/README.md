@@ -18,7 +18,7 @@ This folder only keeps shared **JSON Schema** for editors/validators.
 ```bash
 # Edit docs.json, then regenerate README + portfolio + Blazor
 python3 scripts/docs/project-docs.py render
-# or from apps/portfolio:
+# or from apps/gateway:
 npm run sync-docs
 ```
 

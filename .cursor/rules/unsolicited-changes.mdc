@@ -1,0 +1,34 @@
+---
+description: No unsolicited changes; questions get answers only; long answers start with a TLDR
+alwaysApply: true
+---
+
+# Unsolicited changes
+
+Do not change code, config, schema, docs, or git state unless the user explicitly asked for that change. Implied need, “while I’m here,” or making a Select/query compile is not permission.
+
+## Entity Framework
+
+Never modify the EF Core data model as a side effect of UI, QueryProject, API client, or similar work. If a navigation or column is missing, use what already exists or say so. Do not add it.
+
+Requires an **explicit** request (e.g. “add a Pages collection”, “create a migration”).
+
+Off limits unless asked: `*Entity` classes, CLR navigations / `ICollection<>` inverses, Fluent mappings, `OnModelCreating`, migrations, `*ContextModelSnapshot.cs`, `DbSet<>` additions, schema/index/rename changes.
+
+Allowed: reading the model to pick QueryProject `Select` paths; app/API/client code that consumes existing navigations and columns.
+
+```csharp
+// ❌ BAD — adding an inverse so Chapters.Pages.Count compiles
+builder.HasOne(e => e.Chapter).WithMany(c => c.Pages) …
+
+// ✅ GOOD — only collections that already exist on the queried entity
+Select: [ "Volumes.Count", "Chapters.Count" ]
+```
+
+## Questions: answer only
+
+If the user asked a question (why, what, how, which, should I, …), **do not edit files**. Do not “fix it while explaining.” Answer the question. Wait for them to ask for a change.
+
+## Long answers
+
+If the explanation is more than a short paragraph, lead with a **TLDR** of the key points (a few bullets), then the detail.

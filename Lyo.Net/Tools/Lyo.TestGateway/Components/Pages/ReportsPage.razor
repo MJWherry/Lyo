@@ -1,0 +1,15 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Reports)]
+@inherits AuthorizedPage
+
+<PageTitle>Reports</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <Lyo.TestGateway.Components.TestGateway.ReportWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Report Dashboard";
+
+}

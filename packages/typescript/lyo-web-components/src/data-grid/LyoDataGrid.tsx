@@ -54,6 +54,8 @@ export type LyoDataGridProps<T> = UseLyoDataGridOptions<T> & {
   elementId?: string;
   leftControls?: ReactNode;
   rowMenu?: (row: T) => ReactNode;
+  /** Pixel width of the trailing row-actions column. Default 56. */
+  rowMenuWidth?: number;
   bulkMenuItems?: ReactNode;
   noRecordsContent?: ReactNode;
 };
@@ -63,6 +65,7 @@ function GridInner<T>({
   elementId,
   leftControls,
   rowMenu,
+  rowMenuWidth = 56,
   bulkMenuItems,
   noRecordsContent,
 }: {
@@ -70,6 +73,7 @@ function GridInner<T>({
   elementId?: string;
   leftControls?: ReactNode;
   rowMenu?: (row: T) => ReactNode;
+  rowMenuWidth?: number;
   bulkMenuItems?: ReactNode;
   noRecordsContent?: ReactNode;
 }) {
@@ -216,6 +220,7 @@ function GridInner<T>({
         grid={grid}
         selectable={selectable}
         rowMenu={rowMenu}
+        rowMenuWidth={rowMenuWidth}
         noRecordsContent={noRecordsContent}
       />
       <TablePagination
@@ -265,15 +270,20 @@ function GridInner<T>({
   );
 }
 
+const SELECT_COL_SIZE = 36;
+const checkboxSx = { p: 0, m: 0, "& .MuiSvgIcon-root": { fontSize: 18 } };
+
 function GridTable<T>({
   grid,
   selectable,
   rowMenu,
+  rowMenuWidth,
   noRecordsContent,
 }: {
   grid: LyoDataGridController<T>;
   selectable: boolean;
   rowMenu?: (row: T) => ReactNode;
+  rowMenuWidth: number;
   noRecordsContent?: ReactNode;
 }) {
   const columns = useMemo<ColumnDef<T>[]>(() => {
@@ -283,12 +293,13 @@ function GridTable<T>({
         id: "__select",
         enableSorting: false,
         enableResizing: false,
-        size: 52,
-        minSize: 52,
-        maxSize: 52,
+        size: SELECT_COL_SIZE,
+        minSize: SELECT_COL_SIZE,
+        maxSize: SELECT_COL_SIZE,
         header: () => (
           <Checkbox
             size="small"
+            sx={checkboxSx}
             checked={grid.allPageSelected}
             indeterminate={grid.somePageSelected}
             onChange={() => grid.togglePage()}
@@ -299,6 +310,7 @@ function GridTable<T>({
         cell: ({ row }) => (
           <Checkbox
             size="small"
+            sx={checkboxSx}
             checked={grid.isSelected(row.original)}
             onChange={() => grid.toggleRow(row.original)}
             inputProps={{ "aria-label": "Select row" }}
@@ -314,7 +326,7 @@ function GridTable<T>({
         enableSorting: col.sortable !== false,
         size: col.size ?? 140,
         minSize: col.minSize ?? 64,
-        maxSize: col.maxSize ?? 640,
+        maxSize: col.maxSize,
         cell: ({ row, getValue }) => (col.cell ? col.cell(row.original) : formatCell(getValue())),
       });
     }
@@ -323,13 +335,15 @@ function GridTable<T>({
         id: "__menu",
         enableSorting: false,
         enableResizing: false,
-        size: 56,
+        size: rowMenuWidth,
+        minSize: rowMenuWidth,
+        maxSize: rowMenuWidth,
         header: "",
         cell: ({ row }) => rowMenu(row.original),
       });
     }
     return defs;
-  }, [grid, selectable, rowMenu]);
+  }, [grid, selectable, rowMenu, rowMenuWidth]);
 
   const sorting = useMemo<SortingState>(
     () =>
@@ -374,7 +388,15 @@ function GridTable<T>({
 
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
-      <Table size="small" sx={{ width: tableWidth, minWidth: "100%", tableLayout: "fixed" }}>
+      <Table size="small" sx={{ width: "100%", minWidth: tableWidth, tableLayout: "fixed" }}>
+        <colgroup>
+          {table.getAllLeafColumns().map((col) => {
+            const min = col.columnDef.minSize;
+            const max = col.columnDef.maxSize;
+            const fixed = min != null && min === max;
+            return <col key={col.id} style={fixed ? { width: col.getSize() } : undefined} />;
+          })}
+        </colgroup>
         <TableHead>
           {headerGroups.map((hg) => (
             <TableRow key={hg.id}>
@@ -385,10 +407,12 @@ function GridTable<T>({
                   : -1;
                 const sort = sortIndex >= 0 ? grid.sorts[sortIndex] : undefined;
                 const isSelect = header.column.id === "__select";
+                const isMenu = header.column.id === "__menu";
+                const fixed = isSelect || isMenu;
                 return (
                   <TableCell
                     key={header.id}
-                    padding={isSelect ? "none" : undefined}
+                    padding={fixed ? "none" : undefined}
                     onClick={() => {
                       if (header.column.getIsResizing() || isSelect) return;
                       if (sortable) grid.toggleSort(header.column.id);
@@ -399,14 +423,14 @@ function GridTable<T>({
                       fontWeight: 600,
                       width: header.getSize(),
                       minWidth: header.column.columnDef.minSize ?? header.getSize(),
-                      maxWidth: header.getSize(),
+                      maxWidth: header.column.columnDef.maxSize ?? (fixed ? header.getSize() : undefined),
                       overflow: isSelect ? "visible" : "hidden",
                       textAlign: isSelect ? "center" : "inherit",
-                      px: isSelect ? 0.5 : undefined,
+                      px: isSelect ? 0 : isMenu ? 0.5 : undefined,
                       userSelect: "none",
                     }}
                   >
-                    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ pr: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ pr: isSelect ? 0 : 1, minWidth: 0, justifyContent: isSelect ? "center" : undefined }}>
                       <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </Box>
@@ -464,19 +488,21 @@ function GridTable<T>({
               <TableRow key={row.id} hover selected={grid.isSelected(row.original)}>
                 {row.getVisibleCells().map((cell) => {
                   const isSelect = cell.column.id === "__select";
+                  const isMenu = cell.column.id === "__menu";
+                  const fixed = isSelect || isMenu;
                   return (
                     <TableCell
                       key={cell.id}
-                      padding={isSelect ? "none" : undefined}
+                      padding={fixed ? "none" : undefined}
                       sx={{
                         width: cell.column.getSize(),
                         minWidth: cell.column.columnDef.minSize ?? cell.column.getSize(),
-                        maxWidth: cell.column.getSize(),
-                        overflow: isSelect ? "visible" : "hidden",
-                        textOverflow: isSelect ? "clip" : "ellipsis",
-                        whiteSpace: "nowrap",
+                        maxWidth: cell.column.columnDef.maxSize ?? (fixed ? cell.column.getSize() : undefined),
+                        overflow: isSelect || isMenu ? "visible" : "hidden",
+                        textOverflow: isSelect || isMenu ? "clip" : "ellipsis",
+                        whiteSpace: isMenu ? "normal" : "nowrap",
                         textAlign: isSelect ? "center" : "inherit",
-                        px: isSelect ? 0.5 : undefined,
+                        px: isSelect ? 0 : isMenu ? 0.5 : undefined,
                       }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -499,7 +525,7 @@ function formatCell(value: unknown): string {
 }
 
 export function LyoDataGrid<T>(props: LyoDataGridProps<T>) {
-  const { elementId, leftControls, rowMenu, bulkMenuItems, noRecordsContent, ...opts } = props;
+  const { elementId, leftControls, rowMenu, rowMenuWidth, bulkMenuItems, noRecordsContent, ...opts } = props;
   const grid = useLyoDataGrid({ ...opts, mode: opts.mode ?? "concrete" });
   return (
     <GridInner
@@ -507,6 +533,7 @@ export function LyoDataGrid<T>(props: LyoDataGridProps<T>) {
       elementId={elementId}
       leftControls={leftControls}
       rowMenu={rowMenu}
+      rowMenuWidth={rowMenuWidth}
       bulkMenuItems={bulkMenuItems}
       noRecordsContent={noRecordsContent}
     />
@@ -514,7 +541,7 @@ export function LyoDataGrid<T>(props: LyoDataGridProps<T>) {
 }
 
 export function LyoDataGridProjected<T>(props: LyoDataGridProps<T>) {
-  const { elementId, leftControls, rowMenu, bulkMenuItems, noRecordsContent, ...opts } = props;
+  const { elementId, leftControls, rowMenu, rowMenuWidth, bulkMenuItems, noRecordsContent, ...opts } = props;
   const grid = useLyoDataGrid({ ...opts, mode: "project" });
   return (
     <GridInner
@@ -522,6 +549,7 @@ export function LyoDataGridProjected<T>(props: LyoDataGridProps<T>) {
       elementId={elementId}
       leftControls={leftControls}
       rowMenu={rowMenu}
+      rowMenuWidth={rowMenuWidth}
       bulkMenuItems={bulkMenuItems}
       noRecordsContent={noRecordsContent}
     />

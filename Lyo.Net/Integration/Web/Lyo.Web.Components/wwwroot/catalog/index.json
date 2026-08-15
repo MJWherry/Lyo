@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-13T05:13:22.271716+00:00",
-  "packageCount": 219,
+  "generatedAt": "2026-08-15T11:57:58.210861+00:00",
+  "packageCount": 216,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -1954,38 +1954,6 @@
       ]
     },
     {
-      "id": "Lyo.Comic.Api",
-      "area": "Apps",
-      "topic": "Lyo.Comic",
-      "name": "Lyo.Comic.Api",
-      "tagline": "ASP.NET Core **Minimal API** composition for the comic domain: **series, volumes, chapters, pages, characters**, plus **tags, ratings, comments, favorites**, **binary file upload/download** with…",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Comic.Api.Client",
-      "area": "Apps",
-      "topic": "Lyo.Comic",
-      "name": "Lyo.Comic.Api.Client",
-      "tagline": "Typed **`HttpClient`** for the `Lyo.Comic.Api` service. Wraps the upload / download / batch / tag endpoints behind **`IComicApiClient`** and a single **`AddComicApiClientFromConfiguration`** DI…",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Comic.Api.Models",
-      "area": "Apps",
-      "topic": "Lyo.Comic",
-      "name": "Lyo.Comic.Api.Models",
-      "tagline": "Request and response DTOs shared between `Lyo.Comic.Api` and `Lyo.Comic.Api.Client`.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Config.Api",
       "area": "Apps",
       "topic": "Lyo.Config",
@@ -2003,6 +1971,16 @@
       "tagline": "Typed HTTP client for the central `Lyo.Config.Api` — **conditional** app-config reads with **`If-None-Match`** / **`?version`** polling, an optional **`X-Api-Key`** header, and a single DI extension.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api.Host",
+      "area": "Apps",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api.Host",
+      "tagline": "Standalone ASP.NET host for `Lyo.Config.Api`.",
+      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -2025,16 +2003,6 @@
       "tagline": "Thin **contracts** for calling the central Config HTTP API: **`ConfigResolveOutcome`**, **`ConfigResolveConditionalResult`**, and **`HttpStatusDescriptor`**.",
       "targetFrameworks": [
         "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Portfolio.Api",
-      "area": "Apps",
-      "topic": "Lyo.Portfolio",
-      "name": "Lyo.Portfolio.Api",
-      "tagline": "Portfolio + Gateway backend API: People, Config, Job, Reporting, local file storage, Lyo auth with Google.",
-      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -2259,16 +2227,6 @@
       ]
     },
     {
-      "id": "Lyo.Gateway",
-      "area": "Tools",
-      "topic": "Lyo.Gateway",
-      "name": "Lyo.Gateway",
-      "tagline": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, comics, etc.) and a thin proxy layer that lets every page run against either…",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Preview",
       "area": "Tools",
       "topic": "Lyo.Preview",
@@ -2283,7 +2241,7 @@
       "area": "Tools",
       "topic": "Lyo.TestApi",
       "name": "Lyo.TestApi",
-      "tagline": "Minimal-API host that backs `Lyo.Gateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…",
+      "tagline": "Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2294,6 +2252,16 @@
       "topic": "Lyo.TestConsole",
       "name": "Lyo.TestConsole",
       "tagline": "Ad-hoc scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.TestGateway",
+      "area": "Tools",
+      "topic": "Lyo.TestGateway",
+      "name": "Lyo.TestGateway",
+      "tagline": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, etc.) and a thin proxy layer that lets every page run against either…",
       "targetFrameworks": [
         "net10.0"
       ]

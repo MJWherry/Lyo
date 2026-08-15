@@ -13,7 +13,7 @@ Core, reusable API client foundation for Lyo TypeScript consumers.
 - Query/CRUD result types (`QueryRes`, `ProjectedQueryRes`, `CreateResult`, …) and response guards
 
 Domain-specific Person endpoints live in `lyo-person-api-client`. Comic-specific
-reads (slug, nested lists, tags, files) live in `lyo-comic-api-client`.
+reads (slug, nested lists, tags, files) live in `lyo-comic-api-client` in the Lyo-Comic repo.
 
 ## Usage
 

@@ -71,7 +71,7 @@ dotnet user-secrets set "KeycloakAuth:RedirectUri" "http://localhost:5251/auth/c
 # terminal 2
 cd Lyo.Net/Tools/Lyo.TestApi && dotnet run --launch-profile http
 # terminal 3
-cd Lyo.Net/Tools/Lyo.Gateway && dotnet run --launch-profile http
+cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 ```
 
 ## Usage
@@ -89,7 +89,7 @@ Keycloak emits realm roles under `realm_access.roles` in the id_token. The Lyo p
 
 ## Local development setup
 
-End-to-end recipe for exercising the BFF flow against a Keycloak running on your laptop, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.Gateway` as the browser consumer (`http://localhost:5138`). Keycloak runs on `http://localhost:8080` and is reachable directly from both your browser and the TestApi.
+End-to-end recipe for exercising the BFF flow against a Keycloak running on your laptop, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the browser consumer (`http://localhost:5138`). Keycloak runs on `http://localhost:8080` and is reachable directly from both your browser and the TestApi.
 
 ## 1. Run Keycloak locally
 
