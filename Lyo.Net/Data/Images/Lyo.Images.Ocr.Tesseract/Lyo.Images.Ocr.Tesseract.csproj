@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <PrepareTesseractLinuxNativeLibs>true</PrepareTesseractLinuxNativeLibs>
         <Description>Tesseract-backed implementation of Lyo.Images.Ocr (local OCR).</Description>
         <PackageTags>ocr tesseract images</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>

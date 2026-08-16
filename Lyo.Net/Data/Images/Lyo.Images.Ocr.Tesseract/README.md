@@ -92,7 +92,7 @@ probes.
 
   Adjust the relative path from your **`.csproj`** to **`Data/Images/`** (three levels works from **`Apps/Comic/Lyo.Comic.Api/`**).
 
-**`Lyo.Images.Ocr.Tesseract`** and **`Lyo.Images.Ocr.Tesseract.Tests`** set the property; hosts outside **`Data/Images/`** need **`Import`** **plus** the property (otherwise the
+**`Lyo.Images.Ocr.Tesseract.Tests`** sets the property (the library does not — compile/pack must not require distro Tesseract); hosts outside **`Data/Images/`** need **`Import`** **plus** the property (otherwise the
 symlink step never runs).
 
 **Manual / CI-only:** run the script yourself after **`dotnet build`** / **`dotnet publish`** when you do not use that property:
