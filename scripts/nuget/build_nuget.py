@@ -4,14 +4,25 @@
 Usage:
   python3 scripts/nuget/build_nuget.py
   python3 scripts/nuget/build_nuget.py -v 2.0.0
+  python3 scripts/nuget/build_nuget.py --release
+  python3 scripts/nuget/build_nuget.py -v 2.0.0 --release
   python3 scripts/nuget/build_nuget.py Lyo.Encryption
   python3 scripts/nuget/build_nuget.py -v 1.5.0 Lyo.Encryption
   python3 scripts/nuget/build_nuget.py -f Lyo.Encryption
+  python3 scripts/nuget/build_nuget.py --release --changed-since
+  python3 scripts/nuget/build_nuget.py --release --changed-since v1.0.0
+
+Local packs append the SemVer prerelease label ``preview`` (e.g. 1.0.0-preview)
+so they are distinct from release packages. Pass --release when publishing so
+the version is used as-is (1.0.0).
 
 Change detection:
   Each project's source directory is fingerprinted using git (committed state +
   staged/unstaged diffs + untracked file contents). Matching fingerprints skip
   rebuild. Use -f / --force to always rebuild.
+  ``--changed-since [REF]`` selects packable projects whose directory changed
+  since REF (latest tag, or HEAD~1, when REF is omitted). Shared
+  Directory.Build.props / Directory.Packages.props changes select all packages.
 
 Environment:
   NUGET_OUTPUT_DIR  Output directory (default: ~/nuget-local)
@@ -155,7 +166,61 @@ def find_projects(pattern: str) -> list[Path]:
     return found
 
 
+SHARED_PACK_TRIGGERS = (
+    "Lyo.Net/Directory.Build.props",
+    "Lyo.Net/Directory.Build.targets",
+    "Lyo.Net/Directory.Packages.props",
+)
+
+
+def _git(args: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", "-C", str(REPO_ROOT), *args], capture_output=True, text=True, check=False)
+
+
+def default_changed_since() -> str:
+    tag = _git(["describe", "--tags", "--abbrev=0"]).stdout.strip()
+    if tag:
+        return tag
+    return "HEAD~1"
+
+
+def git_changed_paths(since: str) -> list[str]:
+    proc = _git(["diff", "--name-only", "--diff-filter=ACDMR", f"{since}...HEAD"])
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout).strip() or f"exit {proc.returncode}"
+        raise SystemExit(f"git diff failed for --changed-since {since!r}: {err}")
+    return [ln.strip().replace("\\", "/") for ln in proc.stdout.splitlines() if ln.strip()]
+
+
+def find_changed_projects(since: str) -> list[Path]:
+    paths = git_changed_paths(since)
+    if any(p in SHARED_PACK_TRIGGERS for p in paths):
+        print_warning(f"Shared Directory.Build/Packages.props changed since {since}; selecting all packages")
+        return find_projects("Lyo.*")
+    selected: list[Path] = []
+    for proj in find_projects("Lyo.*"):
+        rel_dir = proj.parent.relative_to(REPO_ROOT).as_posix()
+        rel_file = proj.relative_to(REPO_ROOT).as_posix()
+        if any(p == rel_file or p.startswith(rel_dir + "/") for p in paths):
+            selected.append(proj)
+    return selected
+
+
 _PROJECT_REF_RE = re.compile(r'ProjectReference\s+Include="([^"]+)"')
+PRERELEASE_LABEL = "preview"
+
+
+def resolve_package_version(version: str, *, release: bool) -> str:
+    """Return the NuGet version. Local packs get ``-preview`` unless already prerelease."""
+    version = version.strip()
+    if release or "-" in version:
+        return version
+    return f"{version}-{PRERELEASE_LABEL}"
+
+
+def file_version_from_package_version(version: str) -> str:
+    """Win32 FileVersion is numeric-only; drop any SemVer prerelease label."""
+    return version.split("-", 1)[0]
 
 
 def get_project_dependencies(csproj_file: Path) -> list[Path]:
@@ -195,7 +260,7 @@ def _version_msbuild_props(version: str) -> list[str]:
     return [
         f"/p:Version={version}",
         f"/p:InformationalVersion={version}",
-        f"/p:FileVersion={version}",
+        f"/p:FileVersion={file_version_from_package_version(version)}",
     ]
 
 
@@ -318,20 +383,37 @@ def _refresh_tooling_docs() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-v", "--version", default="1.0.0", help="Package version (default: 1.0.0)")
+    parser.add_argument("-v", "--version", default="1.0.0", help="Package version prefix (default: 1.0.0)")
+    parser.add_argument(
+        "--release",
+        action="store_true",
+        help="Pack a release version with no prerelease label (for deploy/publish). Local packs default to VERSION-preview.",
+    )
     parser.add_argument("-f", "--force", action="store_true", help="Force build ignoring change detection")
+    parser.add_argument(
+        "--changed-since",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="REF",
+        help="Only pack projects whose directory changed since REF. Omit REF to use the latest git tag, or HEAD~1 if untagged.",
+    )
     parser.add_argument("patterns", nargs="*", help="Project name patterns (glob-style *)")
     args = parser.parse_args(argv)
 
     output_dir = Path(os.environ.get("NUGET_OUTPUT_DIR", str(Path.home() / "nuget-local"))).expanduser()
     config = os.environ.get("BUILD_CONFIG", "Release")
+    version = resolve_package_version(args.version, release=args.release)
+    changed_since = None if args.changed_since is None else (args.changed_since.strip() or default_changed_since())
 
     _refresh_tooling_docs()
 
     print_info("Lyo NuGet Package Builder")
     print_info(f"Output directory: {output_dir}")
     print_info(f"Build configuration: {config}")
-    print_info(f"Package version: {args.version}")
+    print_info(f"Package version: {version}" + (" (release)" if args.release else " (local preview)"))
+    if changed_since:
+        print_info(f"Changed since: {changed_since}")
     if args.force:
         print_warning("Change detection disabled (--force)")
     print()
@@ -339,7 +421,20 @@ def main(argv: list[str] | None = None) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     projects_to_build: list[Path] = []
-    if not args.patterns:
+    if changed_since is not None:
+        print_info(f"Finding packable projects changed since {changed_since}...")
+        changed = find_changed_projects(changed_since)
+        if args.patterns:
+            wanted: set[Path] = set()
+            for pattern in args.patterns:
+                wanted.update(find_projects(pattern))
+            projects_to_build = [p for p in changed if p in wanted]
+        else:
+            projects_to_build = changed
+        if not projects_to_build:
+            print_warning(f"No packable packages changed since {changed_since}")
+            return 0
+    elif not args.patterns:
         print_info("No pattern specified, building all packages...")
         projects_to_build = find_projects("Lyo.*")
     else:
@@ -359,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  - {get_project_name(project)}")
     print()
 
-    builder = Builder(version=args.version, force=args.force, config=config, output_dir=output_dir)
+    builder = Builder(version=version, force=args.force, config=config, output_dir=output_dir)
     failed_projects: list[str] = []
     for project in projects_to_build:
         if project in builder.visited:

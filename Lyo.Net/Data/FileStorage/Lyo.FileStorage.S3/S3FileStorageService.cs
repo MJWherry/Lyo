@@ -723,9 +723,7 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
             config.ForcePathStyle = true; // Required for S3-compatible services
         }
 
-        if (S3AwsCredentialHelpers.TryGetExplicitCredentials(_options.AccessKeyId, _options.SecretAccessKey, out var credentials))
-            return new AmazonS3Client(credentials, config);
-
-        return new AmazonS3Client(config);
+        var credentials = S3AwsCredentialHelpers.Resolve(_options.AccessKeyId, _options.SecretAccessKey, _options.Profile);
+        return credentials is null ? new AmazonS3Client(config) : new AmazonS3Client(credentials, config);
     }
 }

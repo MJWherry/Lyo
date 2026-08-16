@@ -6,15 +6,23 @@
   "commands": [
     {
       "cmd": "python3 scripts/nuget/build_nuget.py",
-      "blurb": "Pack all Lyo.* packages (skips unchanged)"
+      "blurb": "Pack all Lyo.* packages as 1.0.0-preview (skips unchanged)"
     },
     {
       "cmd": "python3 scripts/nuget/build_nuget.py -v 2.0.0",
-      "blurb": "Pack all packages at a specific version"
+      "blurb": "Pack all packages as 2.0.0-preview"
     },
     {
-      "cmd": "python3 scripts/nuget/build_nuget.py Lyo.Encryption",
-      "blurb": "Pack one package and its Lyo ProjectReference deps"
+      "cmd": "python3 scripts/nuget/build_nuget.py --release",
+      "blurb": "Pack all packages as a release version (no preview label)"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py --release --changed-since",
+      "blurb": "Release-pack projects changed since the latest git tag (or HEAD~1)"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py --release -v 1.0.0 Lyo.Encryption",
+      "blurb": "Release-pack one package and its Lyo ProjectReference deps"
     },
     {
       "cmd": "python3 scripts/nuget/build_nuget.py -f Lyo.Encryption",
@@ -22,6 +30,9 @@
     }
   ],
   "notes": [
+    "Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when deploying so the version is used as-is",
+    "--changed-since [REF] packs only projects whose directory changed since REF (latest tag or HEAD~1 when omitted). Shared Directory.Build/Packages.props changes select all packages",
+    "Publish from GitHub Actions: Actions → Publish - NuGet. Repo setup is in docs/publishing.md (nuget.org Trusted Publishing + NUGET_USER secret)",
     "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
     "BUILD_CONFIG defaults to Release",
     "Directory.Build.targets runs tooling-docs on Pack when python3 is available"

@@ -12,19 +12,20 @@ The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-materi
 ## Options — `AwsKeyStoreOptions`
 
 | Property | Default | Notes |
-| --------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| --------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SectionName` | `AwsKeyStore` | Default appsettings subsection. |
-| `AccessKeyId` / `SecretAccessKey` | unset | Static credentials. Omit to fall through to the AWS default credential chain (IAM role, env vars, profile). |
+| `AccessKeyId` / `SecretAccessKey` | unset | Static credentials. When both are set they win over `Profile`. Omit to use `Profile` or the AWS default credential chain (IAM role, env vars, `default` profile). |
+| `Profile` | unset | Named profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, registration fails rather than falling back to `default`. |
 | `Region` | `us-east-2` (when unspecified) | Resolved via `RegionEndpoint.GetBySystemName`. |
 | `SecretNamePrefix` | `lyo/kek` fallback | Logical secret prefix used to scope keys across environments (`dev/MyApp/KeyStore`, `prod/MyApp/KeyStore`, …). |
 
 ## Dependency injection
 
 | Extension | Purpose |
-| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `services.AddAwsKeyStore(Func<IServiceProvider,string> resolvePrefix)` | Resolve the prefix from DI (multi-tenant hosts), register `AwsKeyStore` as a singleton. |
 | `services.AddAwsKeyStoreFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")` | Bind `AwsKeyStoreOptions` + register `IAmazonSecretsManager` (when missing) + register `AwsKeyStore` and `IKeyStore`. |
-| `services.AddAmazonSecretsManagerFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")` | Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, region, and falls through to the default credential chain when keys are omitted. |
+| `services.AddAmazonSecretsManagerFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")` | Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, then `Profile`, then the default credential chain; also honours region. |
 | `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix)` / `<TKeyStore>` | Register a full keyed `ITwoKeyEncryptionService` stack using `AwsKeyStore` + paired `AesGcmEncryptionService` for both DEK and KEK. |
 | `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix, AwsKeyStoreOptions?)` | Same, but with explicit AWS options (region/credentials) rather than configuration binding. |
 | `services.AddTwoKeyEncryptionFromConfiguration(IConfiguration, keyedServiceName, configSectionName)` / `<TKeyStore>` | Bind `AwsKeyStoreOptions` from configuration and wire the keyed two-key stack in one call. |

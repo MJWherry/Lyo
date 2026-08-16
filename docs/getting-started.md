@@ -24,18 +24,21 @@ dotnet build   Lyo.Net/Lyo.slnx -c Release
 The build script packs each library and its Lyo dependencies into a local feed (default `~/nuget-local`):
 
 ```bash
-# All packages
+# All packages (local packs are 1.0.0-preview)
 python3 scripts/nuget/build_nuget.py
 
 # A single package (plus its Lyo dependencies), pinned to a version
 python3 scripts/nuget/build_nuget.py -v 1.0.0 Lyo.Encryption
+
+# Release / deploy: no preview label
+python3 scripts/nuget/build_nuget.py --release
 ```
 
 Add the output directory as a NuGet source, then reference packages normally:
 
 ```bash
 dotnet nuget add source "$HOME/nuget-local" --name lyo-local
-dotnet add <your-project> package Lyo.Encryption --version 1.0.0
+dotnet add <your-project> package Lyo.Encryption --version 1.0.0-preview
 ```
 
 See [Publishing](publishing.md) for version/change-detection behavior.

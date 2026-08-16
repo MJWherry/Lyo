@@ -124,14 +124,8 @@ public static class Extensions
                         config.ForcePathStyle = true; // Required for S3-compatible services
                     }
 
-                    if (S3AwsCredentialHelpers.TryGetExplicitCredentials(options.AccessKeyId, options.SecretAccessKey, out var credentials)) {
-                        // Explicitly create client with credentials to avoid default credential chain
-                        var client = new AmazonS3Client(credentials, config);
-                        return client;
-                    }
-
-                    // If no credentials provided (null/empty/whitespace), use default credential chain
-                    return new AmazonS3Client(config);
+                    var credentials = S3AwsCredentialHelpers.Resolve(options.AccessKeyId, options.SecretAccessKey, options.Profile);
+                    return credentials is null ? new AmazonS3Client(config) : new AmazonS3Client(credentials, config);
                 });
             }
 

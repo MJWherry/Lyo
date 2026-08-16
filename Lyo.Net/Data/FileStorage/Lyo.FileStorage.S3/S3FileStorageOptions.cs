@@ -13,13 +13,19 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? Region { get; set; }
 
     /// <summary>
-    /// Optional AWS access key ID. When null or whitespace (and likewise for <see cref="SecretAccessKey" />), the default AWS credential chain is used (environment, shared
-    /// credentials file, IAM role).
+    /// Optional AWS access key ID. When set with <see cref="SecretAccessKey" />, used instead of <see cref="Profile" /> or the default credential chain. When both keys are null or
+    /// whitespace, <see cref="Profile" /> is used if set; otherwise the default AWS credential chain (environment, shared credentials file, IAM role).
     /// </summary>
     public string? AccessKeyId { get; set; }
 
-    /// <summary>Optional AWS secret access key. When null or whitespace (and likewise for <see cref="AccessKeyId" />), the default AWS credential chain is used.</summary>
+    /// <summary>Optional AWS secret access key. When set with <see cref="AccessKeyId" />, used instead of <see cref="Profile" /> or the default credential chain.</summary>
     public string? SecretAccessKey { get; set; }
+
+    /// <summary>
+    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS default
+    /// credential chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, client construction fails rather than falling back to <c>default</c>.
+    /// </summary>
+    public string? Profile { get; set; }
 
     /// <summary>Optional service URL for S3-compatible services (e.g., MinIO, LocalStack). If not specified, uses standard AWS S3 endpoints.</summary>
     public string? ServiceUrl { get; set; }

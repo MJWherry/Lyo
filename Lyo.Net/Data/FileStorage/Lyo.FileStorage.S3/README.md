@@ -66,10 +66,11 @@ Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICom
 ## **`S3FileStorageOptions`** (extends **`FileStorageServiceBaseOptions`**)
 
 | Property | Typical use |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`SectionName`** | Default appsettings subsection (`S3FileStorageOptions`) |
 | **`BucketName`**, **`Region`** | Target bucket / signing region |
-| **`AccessKeyId`**, **`SecretAccessKey`** | Static keys (optional). Omit or leave empty/whitespace to use the machine default credential chain (env / shared credentials / IAM) |
+| **`AccessKeyId`**, **`SecretAccessKey`** | Static keys (optional). When both are set they win over `Profile`. Omit or leave empty/whitespace to use `Profile` or the machine default credential chain (env / shared credentials / IAM) |
+| **`Profile`** | Named AWS profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, client construction fails rather than falling back to `default` |
 | **`ServiceUrl`** | S3-compatible API base URL |
 | **`ProviderAccountId`** | Compatibility helpers (e.g. Cloudflare R2 account id) |
 | **`KeyPrefix`** | Prepended logical folder for every object |
@@ -142,8 +143,8 @@ it touches:
 ## Other DI entry points
 
 | Extension | Purpose |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)` | Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey` when both are non-whitespace; otherwise uses the default credential chain. Also honours `Region`, `ServiceUrl` (forces path-style addressing when set). |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)` | Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey` when both are non-whitespace; otherwise `Profile` when set; otherwise the default credential chain. Also honours `Region`, `ServiceUrl` (forces path-style addressing when set). |
 | `services.AddKeyedS3MultipartUploadService(string serviceKey)` | Registers the keyed multipart service alone (e.g. when replacing the default registration created by `Build`). |
 | `services.AddKeyedS3StagedFileUploadService(string serviceKey)` | Registers keyed `S3StagedFileUploadService` + `IStagedFileUploadService` (also invoked automatically by `Build`). |
 | `services.AddKeyedAwsMultipartUploadService(string serviceKey)` | Alias for `AddKeyedS3MultipartUploadService`, named for callers thinking in terms of the AWS SDK. |
