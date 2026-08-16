@@ -1,4 +1,6 @@
 <Project>
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))"/>
+
     <!-- Linux: symlink distro .so names into $(OutputPath)x64 and libdl.so next to $(OutputPath) (InteropDotNet / glibc libdl.so.2). Opt in per project: PrepareTesseractLinuxNativeLibs=true -->
     <Target Name="PrepareTesseractLinuxNativeLibs"
             AfterTargets="Build"

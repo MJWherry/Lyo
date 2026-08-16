@@ -49,15 +49,10 @@ Folder mirrors assembly: `{Area}/{Group}/Lyo.{X}/Lyo.{X}.csproj`. Standard suffi
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <Description>One-sentence package description.</Description>
         <PackageTags>space separated tags</PackageTags>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="Lyo.{X}.Tests"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>
 ```

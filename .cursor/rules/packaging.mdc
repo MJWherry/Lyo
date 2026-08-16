@@ -20,11 +20,10 @@ alwaysApply: false
     <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <Description>...</Description>
     <PackageTags>...</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
 </PropertyGroup>
 ```
 
-plus references, `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals are tested, and `<None Include="README.md" Pack="true" PackagePath="\"/>`.
+plus references and `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals are tested. `Directory.Build.props` / `Directory.Build.targets` pack `README.md` automatically when that file exists — do not repeat `PackageReadmeFile` or a `None` pack item.
 
 ## Multi-targeting
 

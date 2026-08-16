@@ -18,5 +18,7 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <!-- Packed automatically from the project README when present; do not repeat in csproj. -->
+        <PackageReadmeFile Condition="Exists('$(MSBuildProjectDirectory)\README.md')">README.md</PackageReadmeFile>
     </PropertyGroup>
 </Project>

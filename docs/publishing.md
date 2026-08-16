@@ -15,6 +15,7 @@ Common package properties are set once in
 - `IncludeSymbols` = `true`, `SymbolPackageFormat` = `snupkg`
 - `GenerateDocumentationFile` = `true`
 - `Deterministic` = `true`, plus author/copyright fields
+- `PackageReadmeFile` = `README.md` when that file exists next to the csproj (`Directory.Build.targets` packs it)
 
 ## Usage
 
