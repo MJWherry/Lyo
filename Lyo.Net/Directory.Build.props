@@ -20,5 +20,7 @@
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
         <!-- Packed automatically from the project README when present; do not repeat in csproj. -->
         <PackageReadmeFile Condition="Exists('$(MSBuildProjectDirectory)\README.md')">README.md</PackageReadmeFile>
+        <!-- Shared NuGet gallery icon. Source SVG is assets/icon.svg; nuget.org requires PNG/JPEG. -->
+        <PackageIcon Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">icon.png</PackageIcon>
     </PropertyGroup>
 </Project>

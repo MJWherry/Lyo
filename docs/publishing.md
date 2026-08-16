@@ -16,6 +16,7 @@ Common package properties are set once in
 - `GenerateDocumentationFile` = `true`
 - `Deterministic` = `true`, plus author/copyright fields
 - `PackageReadmeFile` = `README.md` when that file exists next to the csproj (`Directory.Build.targets` packs it)
+- `PackageIcon` = `icon.png` from [`Lyo.Net/assets/icon.png`](../Lyo.Net/assets/icon.png) (nuget.org does not accept SVG; source is `assets/icon.svg`)
 
 ## Usage
 
@@ -78,7 +79,7 @@ Per project, three outcomes are possible:
 
 Use `-f`/`--force` to bypass fingerprint skip and always rebuild. Use `--changed-since` to *select* which projects to consider (git diff since a ref); that is independent of the fingerprint skip.
 
-`--changed-since` with no ref uses the latest git tag, or `HEAD~1` if the repo has no tags. A change to `Lyo.Net/Directory.Build.props`, `Directory.Build.targets`, or `Directory.Packages.props` selects every packable package.
+`--changed-since` with no ref uses the latest git tag, or `HEAD~1` if the repo has no tags. A change to `Lyo.Net/Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props`, or `Lyo.Net/assets/icon.{png,svg}` selects every packable package.
 
 ## Publish from GitHub Actions
 

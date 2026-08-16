@@ -13,6 +13,11 @@
         <None Include="README.md" Pack="true" PackagePath="README.md"/>
     </ItemGroup>
 
+    <!-- One icon for every packable Lyo.* package. PackagePath is the nupkg root name matching PackageIcon. -->
+    <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">
+        <None Include="$(MSBuildThisFileDirectory)assets/icon.png" Pack="true" PackagePath="icon.png" Visible="false"/>
+    </ItemGroup>
+
     <!-- Ad-hoc `dotnet pack` refreshes tooling READMEs. build_nuget.py does that once, then sets SkipToolingDocsOnPack. -->
     <Target Name="RenderToolingDocsOnPack" BeforeTargets="Pack" Condition="'$(SkipToolingDocsOnPack)' != 'true'">
         <PropertyGroup>

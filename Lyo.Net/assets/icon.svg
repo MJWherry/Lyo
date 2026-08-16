@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 1300" width="1300" height="1300">
+  <defs>
+    <linearGradient id="accent" gradientUnits="userSpaceOnUse" x1="34" y1="40" x2="806" y2="767">
+      <stop offset="0%" stop-color="#08A9F5"/>
+      <stop offset="52%" stop-color="#1769F5"/>
+      <stop offset="100%" stop-color="#6938EF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- White circular background -->
+  <circle cx="650" cy="650" r="650" fill="#FFFFFF"/>
+
+  <g transform="translate(202.5 247)">
+    <g transform="translate(48 0)">
+      <!-- Tall braces enclosing the whole mark -->
+      <path d="M96.5 40.0 C56.2 40.0 34.1 63.4 34.1 103.7 L34.1 347.6 C34.1 376.2 19.8 391.8 -6.2 403.5 C19.8 415.2 34.1 430.8 34.1 459.4 L34.1 703.3 C34.1 743.6 56.2 767.0 96.5 767.0"
+            fill="none" stroke="url(#accent)" stroke-width="44.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M703.5 40.0 C743.8 40.0 765.9 63.4 765.9 103.7 L765.9 347.6 C765.9 376.2 780.2 391.8 806.2 403.5 C780.2 415.2 765.9 430.8 765.9 459.4 L765.9 703.3 C765.9 743.6 743.8 767.0 703.5 767.0"
+            fill="none" stroke="url(#accent)" stroke-width="44.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- C# -->
+      <g transform="translate(-27.25 -98)">
+        <path d="M405 213 A54 54 0 1 0 405 295"
+              fill="none" stroke="url(#accent)" stroke-width="34"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M462 208 V300" fill="none" stroke="url(#accent)" stroke-width="17" stroke-linecap="round"/>
+        <path d="M496 208 V300" fill="none" stroke="url(#accent)" stroke-width="17" stroke-linecap="round"/>
+        <path d="M446 236 H512" fill="none" stroke="url(#accent)" stroke-width="17" stroke-linecap="round"/>
+        <path d="M446 272 H512" fill="none" stroke="url(#accent)" stroke-width="17" stroke-linecap="round"/>
+      </g>
+
+      <!-- Book -->
+      <g transform="translate(0.5 -165)">
+        <path d="M120 455
+                 C190 438 267 449 331 486
+                 L382 515 L382 590
+                 C305 540 211 523 120 540 Z"
+              fill="#082E86"/>
+        <path d="M680 455
+                 C610 438 533 449 469 486
+                 L418 515 L418 590
+                 C495 540 589 523 680 540 Z"
+              fill="#082E86"/>
+        <path d="M120 566 C211 548 305 563 382 614"
+              fill="none" stroke="#082E86" stroke-width="18" stroke-linecap="round"/>
+        <path d="M680 566 C589 548 495 563 418 614"
+              fill="none" stroke="#082E86" stroke-width="18" stroke-linecap="round"/>
+      </g>
+
+      <!-- Wordmark -->
+      <g fill="none" stroke="#082E86" stroke-width="30"
+         stroke-linecap="round" stroke-linejoin="round">
+        <g transform="translate(207.67 622)">
+          <path d="M-50 -85 V85 H50"/>
+        </g>
+        <g transform="translate(400 622)">
+          <path d="M-60 -85 L0 3 L60 -85 M0 3 V85"/>
+        </g>
+        <g transform="translate(592.33 622)">
+          <circle cx="0" cy="0" r="78"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

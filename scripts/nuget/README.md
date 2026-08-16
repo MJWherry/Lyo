@@ -16,7 +16,7 @@ SDK-style `dotnet pack` for libraries under Lyo.Net. Fingerprints each project d
 ## Notes
 
 - Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when deploying so the version is used as-is
-- --changed-since [REF] packs only projects whose directory changed since REF (latest tag or HEAD~1 when omitted). Shared Directory.Build/Packages.props changes select all packages
+- --changed-since [REF] packs only projects whose directory changed since REF (latest tag or HEAD~1 when omitted). Shared Directory.Build/Packages.props or Lyo.Net/assets/icon.{png,svg} changes select all packages
 - Publish from GitHub Actions: Actions → Publish - NuGet. Repo setup is in docs/publishing.md (nuget.org Trusted Publishing + NUGET_USER secret)
 - NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state
 - BUILD_CONFIG defaults to Release

@@ -22,7 +22,8 @@ Change detection:
   rebuild. Use -f / --force to always rebuild.
   ``--changed-since [REF]`` selects packable projects whose directory changed
   since REF (latest tag, or HEAD~1, when REF is omitted). Shared
-  Directory.Build.props / Directory.Packages.props changes select all packages.
+  Directory.Build.props / Directory.Packages.props / package icon changes
+  select all packages.
 
 Environment:
   NUGET_OUTPUT_DIR  Output directory (default: ~/nuget-local)
@@ -170,6 +171,8 @@ SHARED_PACK_TRIGGERS = (
     "Lyo.Net/Directory.Build.props",
     "Lyo.Net/Directory.Build.targets",
     "Lyo.Net/Directory.Packages.props",
+    "Lyo.Net/assets/icon.png",
+    "Lyo.Net/assets/icon.svg",
 )
 
 
@@ -195,7 +198,7 @@ def git_changed_paths(since: str) -> list[str]:
 def find_changed_projects(since: str) -> list[Path]:
     paths = git_changed_paths(since)
     if any(p in SHARED_PACK_TRIGGERS for p in paths):
-        print_warning(f"Shared Directory.Build/Packages.props changed since {since}; selecting all packages")
+        print_warning(f"Shared Directory.Build/Packages.props or package icon changed since {since}; selecting all packages")
         return find_projects("Lyo.*")
     selected: list[Path] = []
     for proj in find_projects("Lyo.*"):
