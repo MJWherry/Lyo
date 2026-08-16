@@ -1,26 +1,11 @@
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 
-namespace Lyo.FileStorage.S3;
+namespace Lyo.KeyStore.Aws;
 
-/// <summary>Shared rules for resolving AWS credentials from static keys, a named profile, or the default chain.</summary>
-internal static class S3AwsCredentialHelpers
+/// <summary>Resolves AWS credentials from static keys, a named shared-credentials profile, or the default chain.</summary>
+internal static class AwsKeyStoreCredentialHelpers
 {
-    /// <summary>
-    /// Returns <see langword="true" /> and a <see cref="BasicAWSCredentials" /> instance when both keys are non-whitespace; otherwise <see langword="false" /> (callers should
-    /// use a named profile or the default AWS credential chain).
-    /// </summary>
-    internal static bool TryGetExplicitCredentials(string? accessKeyId, string? secretAccessKey, out BasicAWSCredentials? credentials)
-    {
-        if (!string.IsNullOrWhiteSpace(accessKeyId) && !string.IsNullOrWhiteSpace(secretAccessKey)) {
-            credentials = new(accessKeyId, secretAccessKey);
-            return true;
-        }
-
-        credentials = null;
-        return false;
-    }
-
     /// <summary>
     /// Returns explicit <see cref="BasicAWSCredentials" /> when both keys are non-whitespace; otherwise a named-profile credential when <paramref name="profileName" /> is set;
     /// otherwise <see langword="null" /> so callers use the default AWS credential chain.
@@ -28,8 +13,8 @@ internal static class S3AwsCredentialHelpers
     /// <exception cref="InvalidOperationException">Thrown when <paramref name="profileName" /> is set but the profile is not in the shared credentials/config files.</exception>
     internal static AWSCredentials? Resolve(string? accessKeyId, string? secretAccessKey, string? profileName, string? profilesLocation = null)
     {
-        if (TryGetExplicitCredentials(accessKeyId, secretAccessKey, out var explicitCredentials))
-            return explicitCredentials;
+        if (!string.IsNullOrWhiteSpace(accessKeyId) && !string.IsNullOrWhiteSpace(secretAccessKey))
+            return new BasicAWSCredentials(accessKeyId, secretAccessKey);
 
         if (string.IsNullOrWhiteSpace(profileName))
             return null;

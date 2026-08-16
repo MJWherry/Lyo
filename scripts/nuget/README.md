@@ -6,13 +6,18 @@ SDK-style `dotnet pack` for libraries under Lyo.Net. Fingerprints each project d
 
 ## Commands
 
-- `python3 scripts/nuget/build_nuget.py` — Pack all Lyo.* packages (skips unchanged)
-- `python3 scripts/nuget/build_nuget.py -v 2.0.0` — Pack all packages at a specific version
-- `python3 scripts/nuget/build_nuget.py Lyo.Encryption` — Pack one package and its Lyo ProjectReference deps
+- `python3 scripts/nuget/build_nuget.py` — Pack all Lyo.* packages as 1.0.0-preview (skips unchanged)
+- `python3 scripts/nuget/build_nuget.py -v 2.0.0` — Pack all packages as 2.0.0-preview
+- `python3 scripts/nuget/build_nuget.py --release` — Pack all packages as a release version (no preview label)
+- `python3 scripts/nuget/build_nuget.py --release --changed-since` — Release-pack projects changed since the latest git tag (or HEAD~1)
+- `python3 scripts/nuget/build_nuget.py --release -v 1.0.0 Lyo.Encryption` — Release-pack one package and its Lyo ProjectReference deps
 - `python3 scripts/nuget/build_nuget.py -f Lyo.Encryption` — Force rebuild ignoring change detection
 
 ## Notes
 
+- Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when deploying so the version is used as-is
+- --changed-since [REF] packs only projects whose directory changed since REF (latest tag or HEAD~1 when omitted). Shared Directory.Build/Packages.props changes select all packages
+- Publish from GitHub Actions: Actions → Publish - NuGet. Repo setup is in docs/publishing.md (nuget.org Trusted Publishing + NUGET_USER secret)
 - NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state
 - BUILD_CONFIG defaults to Release
 - Directory.Build.targets runs tooling-docs on Pack when python3 is available

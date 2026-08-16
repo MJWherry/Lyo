@@ -32,7 +32,12 @@
         [
           "`AccessKeyId` / `SecretAccessKey`",
           "unset",
-          "Static credentials. Omit to fall through to the AWS default credential chain (IAM role, env vars, profile)."
+          "Static credentials. When both are set they win over `Profile`. Omit to use `Profile` or the AWS default credential chain (IAM role, env vars, `default` profile)."
+        ],
+        [
+          "`Profile`",
+          "unset",
+          "Named profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, registration fails rather than falling back to `default`."
         ],
         [
           "`Region`",
@@ -64,7 +69,7 @@
         ],
         [
           "`services.AddAmazonSecretsManagerFromConfiguration(IConfiguration, configSectionName = \"AwsKeyStore\")`",
-          "Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, region, and falls through to the default credential chain when keys are omitted."
+          "Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, then `Profile`, then the default credential chain; also honours region."
         ],
         [
           "`services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix)` / `<TKeyStore>`",

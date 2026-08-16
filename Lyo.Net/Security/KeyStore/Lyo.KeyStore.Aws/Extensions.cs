@@ -1,5 +1,4 @@
 using Amazon;
-using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
@@ -12,6 +11,24 @@ namespace Lyo.KeyStore.Aws;
 
 public static class Extensions
 {
+    private static AwsKeyStoreOptions BindOptions(IConfiguration configuration, string configSectionName)
+    {
+        var options = new AwsKeyStoreOptions();
+        var section = configuration.GetSection(configSectionName);
+        if (section.Exists())
+            section.Bind(options);
+
+        return options;
+    }
+
+    private static IAmazonSecretsManager CreateSecretsManagerClient(AwsKeyStoreOptions options)
+    {
+        var region = !string.IsNullOrEmpty(options.Region) ? RegionEndpoint.GetBySystemName(options.Region) : RegionEndpoint.USEast2;
+        var config = new AmazonSecretsManagerConfig { RegionEndpoint = region };
+        var credentials = AwsKeyStoreCredentialHelpers.Resolve(options.AccessKeyId, options.SecretAccessKey, options.Profile);
+        return credentials is null ? new AmazonSecretsManagerClient(config) : new AmazonSecretsManagerClient(credentials, config);
+    }
+
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
     {
@@ -63,33 +80,11 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
-            // Configure AwsKeyStoreOptions from configuration
-            services.AddSingleton<AwsKeyStoreOptions>(_ => {
-                var options = new AwsKeyStoreOptions();
-                var section = configuration.GetSection(configSectionName);
-                if (!section.Exists())
-                    return options;
-
-                options.AccessKeyId = section["AccessKeyId"];
-                options.SecretAccessKey = section["SecretAccessKey"];
-                options.Region = section["Region"];
-                options.SecretNamePrefix = section["SecretNamePrefix"];
-                return options;
-            });
+            services.AddSingleton<AwsKeyStoreOptions>(_ => BindOptions(configuration, configSectionName));
 
             // Register IAmazonSecretsManager if not already registered
-            if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager))) {
-                services.AddSingleton<IAmazonSecretsManager>(provider => {
-                    var options = provider.GetRequiredService<AwsKeyStoreOptions>();
-                    var region = !string.IsNullOrEmpty(options.Region) ? RegionEndpoint.GetBySystemName(options.Region) : RegionEndpoint.USEast2; // Default region
-                    var config = new AmazonSecretsManagerConfig { RegionEndpoint = region };
-                    if (!string.IsNullOrEmpty(options.AccessKeyId) && !string.IsNullOrEmpty(options.SecretAccessKey))
-                        return new AmazonSecretsManagerClient(new BasicAWSCredentials(options.AccessKeyId, options.SecretAccessKey), config);
-
-                    // If no credentials provided, use default credential chain
-                    return new AmazonSecretsManagerClient(config);
-                });
-            }
+            if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
+                services.AddSingleton<IAmazonSecretsManager>(provider => CreateSecretsManagerClient(provider.GetRequiredService<AwsKeyStoreOptions>()));
 
             return services;
         }
@@ -142,21 +137,8 @@ public static class Extensions
             if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
                 services.AddAmazonSecretsManagerFromConfiguration(configuration, configSectionName);
 
-            // Configure AwsKeyStoreOptions from configuration (if not already registered)
-            if (!services.Any(s => s.ServiceType == typeof(AwsKeyStoreOptions))) {
-                services.AddSingleton<AwsKeyStoreOptions>(_ => {
-                    var section = configuration.GetSection(configSectionName);
-                    var options = new AwsKeyStoreOptions();
-                    if (!section.Exists())
-                        return options;
-
-                    options.AccessKeyId = section["AccessKeyId"];
-                    options.SecretAccessKey = section["SecretAccessKey"];
-                    options.Region = section["Region"];
-                    options.SecretNamePrefix = section["SecretNamePrefix"];
-                    return options;
-                });
-            }
+            if (!services.Any(s => s.ServiceType == typeof(AwsKeyStoreOptions)))
+                services.AddSingleton<AwsKeyStoreOptions>(_ => BindOptions(configuration, configSectionName));
 
             // Register keyed AwsKeyStore - reads SecretNamePrefix from options at resolution time
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName) && s.ServiceType == typeof(AwsKeyStore))) {
@@ -220,17 +202,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(secretNamePrefix);
 
             // Register IAmazonSecretsManager if awsConfig is provided and not already registered
-            if (awsConfig != null && !services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager))) {
-                services.AddSingleton<IAmazonSecretsManager>(_ => {
-                    var region = !string.IsNullOrEmpty(awsConfig.Region) ? RegionEndpoint.GetBySystemName(awsConfig.Region) : RegionEndpoint.USEast2; // Default region
-                    var config = new AmazonSecretsManagerConfig { RegionEndpoint = region };
-                    if (!string.IsNullOrEmpty(awsConfig.AccessKeyId) && !string.IsNullOrEmpty(awsConfig.SecretAccessKey))
-                        return new AmazonSecretsManagerClient(new BasicAWSCredentials(awsConfig.AccessKeyId, awsConfig.SecretAccessKey), config);
-
-                    // If no credentials provided, use default credential chain
-                    return new AmazonSecretsManagerClient(config);
-                });
-            }
+            if (awsConfig != null && !services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
+                services.AddSingleton<IAmazonSecretsManager>(_ => CreateSecretsManagerClient(awsConfig));
 
             // Register keyed AwsKeyStore
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName) && s.ServiceType == typeof(AwsKeyStore))) {

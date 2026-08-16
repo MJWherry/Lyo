@@ -72,7 +72,11 @@
         ],
         [
           "**`AccessKeyId`**, **`SecretAccessKey`**",
-          "Static keys (optional). Omit or leave empty/whitespace to use the machine default credential chain (env / shared credentials / IAM)"
+          "Static keys (optional). When both are set they win over `Profile`. Omit or leave empty/whitespace to use `Profile` or the machine default credential chain (env / shared credentials / IAM)"
+        ],
+        [
+          "**`Profile`**",
+          "Named AWS profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, client construction fails rather than falling back to `default`"
         ],
         [
           "**`ServiceUrl`**",
@@ -217,7 +221,7 @@
       "rows": [
         [
           "`services.AddAmazonS3FromConfiguration(configuration, configSectionName = S3FileStorageOptions.SectionName)`",
-          "Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey` when both are non-whitespace; otherwise uses the default credential chain. Also honours `Region`, `ServiceUrl` (forces path-style addressing when set)."
+          "Standalone `IAmazonS3` registration (also called automatically by the builder). Honours `AccessKeyId`/`SecretAccessKey` when both are non-whitespace; otherwise `Profile` when set; otherwise the default credential chain. Also honours `Region`, `ServiceUrl` (forces path-style addressing when set)."
         ],
         [
           "`services.AddKeyedS3MultipartUploadService(string serviceKey)`",

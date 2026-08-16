@@ -31,4 +31,78 @@ public sealed class S3AwsCredentialHelpersTests
         Assert.NotNull(credentials);
         Assert.Equal("replace-me", credentials!.GetCredentials().AccessKey);
     }
+
+    [Fact]
+    public void Resolve_NoKeysNoProfile_ReturnsNull()
+        => Assert.Null(S3AwsCredentialHelpers.Resolve(null, null, null));
+
+    [Fact]
+    public void Resolve_NamedProfile_ReturnsProfileCredentials()
+    {
+        var credentialsFile = WriteTempCredentialsFile(
+            """
+            [work]
+            aws_access_key_id = AKIAPROFILE
+            aws_secret_access_key = profile-secret
+            """);
+
+        try {
+            var credentials = S3AwsCredentialHelpers.Resolve(null, null, "work", credentialsFile);
+            Assert.NotNull(credentials);
+            var immutable = credentials.GetCredentials();
+            Assert.Equal("AKIAPROFILE", immutable.AccessKey);
+            Assert.Equal("profile-secret", immutable.SecretKey);
+        }
+        finally {
+            File.Delete(credentialsFile);
+        }
+    }
+
+    [Fact]
+    public void Resolve_MissingProfile_Throws()
+    {
+        var credentialsFile = WriteTempCredentialsFile(
+            """
+            [other]
+            aws_access_key_id = AKIOTHER
+            aws_secret_access_key = other-secret
+            """);
+
+        try {
+            var ex = Assert.Throws<InvalidOperationException>(() => S3AwsCredentialHelpers.Resolve(null, null, "work", credentialsFile));
+            Assert.Contains("work", ex.Message);
+        }
+        finally {
+            File.Delete(credentialsFile);
+        }
+    }
+
+    [Fact]
+    public void Resolve_ExplicitKeys_BeatProfile()
+    {
+        var credentialsFile = WriteTempCredentialsFile(
+            """
+            [work]
+            aws_access_key_id = AKIAPROFILE
+            aws_secret_access_key = profile-secret
+            """);
+
+        try {
+            var credentials = S3AwsCredentialHelpers.Resolve("AKIAEXPLICIT", "explicit-secret", "work", credentialsFile);
+            Assert.NotNull(credentials);
+            var immutable = credentials.GetCredentials();
+            Assert.Equal("AKIAEXPLICIT", immutable.AccessKey);
+            Assert.Equal("explicit-secret", immutable.SecretKey);
+        }
+        finally {
+            File.Delete(credentialsFile);
+        }
+    }
+
+    private static string WriteTempCredentialsFile(string contents)
+    {
+        var path = Path.Combine(Path.GetTempPath(), "lyo-aws-creds-" + Guid.NewGuid().ToString("N"));
+        File.WriteAllText(path, contents);
+        return path;
+    }
 }
