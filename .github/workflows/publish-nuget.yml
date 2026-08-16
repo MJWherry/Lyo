@@ -1,0 +1,129 @@
+# Pack and push Lyo.* nupkgs to nuget.org.
+# Auth is NuGet Trusted Publishing (OIDC) — no long-lived API key in the repo.
+# Setup: docs/publishing.md
+
+name: Publish - NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "What to pack"
+        required: true
+        type: choice
+        options:
+          - changed
+          - named
+          - all
+        default: changed
+      packages:
+        description: "Package names or globs when scope=named (space-separated, e.g. Lyo.Encryption Lyo.Encryption.*)"
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "Release version (no preview suffix). Must be new on nuget.org for packages you intend to update."
+        required: true
+        type: string
+        default: "1.0.0"
+      since:
+        description: "Git ref for scope=changed (empty = latest tag, else HEAD~1)"
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Pack only; do not push to nuget.org"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NUGET_OUTPUT_DIR: ${{ github.workspace }}/artifacts/nuget
+      BUILD_CONFIG: Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Pack
+        env:
+          SCOPE: ${{ inputs.scope }}
+          PACKAGES: ${{ inputs.packages }}
+          VERSION: ${{ inputs.version }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          set -euo pipefail
+          cmd=(python3 scripts/nuget/build_nuget.py --release -f -v "$VERSION")
+          case "$SCOPE" in
+            all)
+              ;;
+            changed)
+              cmd+=(--changed-since)
+              if [ -n "$SINCE" ]; then
+                cmd+=("$SINCE")
+              fi
+              ;;
+            named)
+              if [ -z "${PACKAGES// }" ]; then
+                echo "scope=named requires the packages input" >&2
+                exit 1
+              fi
+              set -f
+              # shellcheck disable=SC2206
+              cmd+=($PACKAGES)
+              set +f
+              ;;
+            *)
+              echo "unknown scope: $SCOPE" >&2
+              exit 1
+              ;;
+          esac
+          printf 'Pack: %s\n' "${cmd[*]}"
+          "${cmd[@]}"
+
+      - name: Upload nupkgs
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/nuget/*.nupkg
+            artifacts/nuget/*.snupkg
+          if-no-files-found: warn
+
+      - name: NuGet login (OIDC)
+        if: ${{ !inputs.dry_run }}
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to nuget.org
+        if: ${{ !inputs.dry_run }}
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          pkgs=(artifacts/nuget/*.nupkg)
+          if [ ${#pkgs[@]} -eq 0 ]; then
+            echo "No nupkgs to push"
+            exit 0
+          fi
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
