@@ -294,6 +294,7 @@ def pack_project(csproj_file: Path, *, version: str, config: str, output_dir: Pa
         str(output_dir),
         *_version_msbuild_props(version),
         "/p:BuildProjectReferences=false",
+        "/p:SkipToolingDocsOnPack=true",
     ]
     ok = subprocess.run(cmd, cwd=LYO_NET).returncode == 0
     if ok:

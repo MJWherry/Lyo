@@ -13,8 +13,8 @@
         <None Include="README.md" Pack="true" PackagePath="README.md"/>
     </ItemGroup>
 
-    <!-- Refresh adhoc tooling READMEs from docs.json when packing (warn-only if python missing). -->
-    <Target Name="RenderToolingDocsOnPack" BeforeTargets="Pack">
+    <!-- Ad-hoc `dotnet pack` refreshes tooling READMEs. build_nuget.py does that once, then sets SkipToolingDocsOnPack. -->
+    <Target Name="RenderToolingDocsOnPack" BeforeTargets="Pack" Condition="'$(SkipToolingDocsOnPack)' != 'true'">
         <PropertyGroup>
             <_RepoRoot>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', '..'))))</_RepoRoot>
             <_ToolingDocs>$([System.IO.Path]::Combine('$(_RepoRoot)', 'scripts', 'docs', 'tooling-docs.py'))</_ToolingDocs>

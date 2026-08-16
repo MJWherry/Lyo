@@ -35,7 +35,7 @@
     "Publish from GitHub Actions: Actions → Publish - NuGet. Repo setup is in docs/publishing.md (nuget.org Trusted Publishing + NUGET_USER secret)",
     "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
     "BUILD_CONFIG defaults to Release",
-    "Directory.Build.targets runs tooling-docs on Pack when python3 is available"
+    "build_nuget.py renders tooling READMEs once, then packs with SkipToolingDocsOnPack so each nupkg does not re-run tooling-docs"
   ],
   "readmePath": "scripts/nuget/README.md"
 }
