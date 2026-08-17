@@ -1,44 +1,76 @@
 @using Lyo.DataTable.Models
-@using Lyo.Web.Components.DataTablePreview
 
-<MudDialog>
-    <DialogContent>
+<LyoDialog>
+    <ChildContent>
         @if (_sheets.Count == 0) {
             <MudAlert Severity="Severity.Warning" Dense="true">No grids found in this report.</MudAlert>
         }
         else if (_sheets.Count == 1) {
             <MudText Typo="Typo.subtitle2" Class="mb-2">@_sheets[0].Title</MudText>
-            <DataTablePreview Table="@_sheets[0].Table" MaxHeightCss="60vh"/>
+            @PreviewTable(_sheets[0])
         }
         else {
             <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
                 @foreach (var sheet in _sheets) {
                     <MudTabPanel Text="@sheet.Title">
-                        <div class="pa-2">
-                            <DataTablePreview Table="@sheet.Table" MaxHeightCss="55vh"/>
+                        <div class="pa-1">
+                            @PreviewTable(sheet)
                         </div>
                     </MudTabPanel>
                 }
             </MudTabs>
         }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
-    </DialogActions>
-</MudDialog>
+    </ChildContent>
+</LyoDialog>
 
 @code {
-
-    [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     /// <summary>Pre-built sheet previews (title + table).</summary>
     [Parameter]
     [EditorRequired]
     public IReadOnlyList<(string Title, DataTable Table)> Sheets { get; set; } = [];
 
-    private IReadOnlyList<(string Title, DataTable Table)> _sheets = [];
+    private IReadOnlyList<(string Title, IReadOnlyList<string> Headers, IReadOnlyList<string[]> Rows)> _sheets = [];
 
-    protected override void OnParametersSet() => _sheets = Sheets ?? [];
+    protected override void OnParametersSet()
+    {
+        if (Sheets is not { Count: > 0 }) {
+            _sheets = [];
+            return;
+        }
+
+        var mapped = new List<(string Title, IReadOnlyList<string> Headers, IReadOnlyList<string[]> Rows)>(Sheets.Count);
+        foreach (var sheet in Sheets) {
+            var (headers, rows) = ReportGridDataTableMapper.ToPreviewRows(sheet.Table);
+            mapped.Add((sheet.Title, headers, rows));
+        }
+
+        _sheets = mapped;
+    }
+
+    private static RenderFragment<(string Title, IReadOnlyList<string> Headers, IReadOnlyList<string[]> Rows)> PreviewTable
+        => sheet => __builder => {
+            if (sheet.Headers.Count == 0) {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Empty table.</MudText>
+                return;
+            }
+
+            <MudTable Items="@sheet.Rows" Dense Hover Striped Virtualize FixedHeader Height="60vh" Breakpoint="Breakpoint.None">
+                <HeaderContent>
+                    @foreach (var header in sheet.Headers) {
+                        <MudTh>@header</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    @for (var i = 0; i < context.Length; i++) {
+                        var col = i;
+                        <MudTd DataLabel="@(col < sheet.Headers.Count ? sheet.Headers[col] : null)" Style="white-space: nowrap;">
+                            <LyoTruncatedText Text="@context[col]" MaxLength="48"/>
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@sheet.Rows.Count.ToString("N0") row(s)</MudText>
+        };
 
 }

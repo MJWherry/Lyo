@@ -1,0 +1,110 @@
+@namespace Lyo.Web.Components.Form
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-id-field">
+    <MudStack Row Spacing="0" AlignItems="AlignItems.End">
+        <MudTextField T="string"
+                      Label="@Label"
+                      Value="@DisplayValue"
+                      ReadOnly="true"
+                      Variant="@Variant"
+                      Margin="@Margin"
+                      Class="flex-grow-1"
+                      Style="font-family: monospace;"
+                      Adornment="@CopyAdornment"
+                      AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                      AdornmentAriaLabel="Copy ID"
+                      OnAdornmentClick="CopyAsync"/>
+        <MudIconButton Icon="@ToggleIcon"
+                       Size="Size.Small"
+                       Disabled="@(!HasValue)"
+                       title="@ToggleTitle"
+                       Class="mb-1"
+                       OnClick="ToggleFull"/>
+    </MudStack>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    /// <summary>Field label (e.g. ID, Definition ID, File Id).</summary>
+    [Parameter]
+    public string? Label { get; set; }
+
+    /// <summary>Identifier to display. Null or empty renders <c>-</c> without copy/toggle.</summary>
+    [Parameter]
+    public Guid? Value { get; set; }
+
+    /// <summary>When <see cref="Value" /> is unset, optional raw id string (non-GUID identifiers).</summary>
+    [Parameter]
+    public string? Text { get; set; }
+
+    /// <summary>Fallback suffix length when the value is not hyphenated. Ignored for UUID last-group abbreviation.</summary>
+    [Parameter]
+    public int SuffixLength { get; set; } = 8;
+
+    [Parameter]
+    public Variant Variant { get; set; } = Variant.Outlined;
+
+    [Parameter]
+    public Margin Margin { get; set; } = Margin.Dense;
+
+    private bool _showFull;
+
+    private string? FullValue {
+        get {
+            if (Value is Guid guid)
+                return guid.ToString("D");
+
+            return string.IsNullOrWhiteSpace(Text) ? null : Text.Trim();
+        }
+    }
+
+    private bool HasValue => FullValue is not null;
+
+    private string DisplayValue
+        => FullValue is null ? "-" : _showFull ? FullValue : Abbreviate(FullValue, SuffixLength);
+
+    private Adornment CopyAdornment => HasValue ? Adornment.End : Adornment.None;
+
+    private string ToggleIcon => _showFull ? Icons.Material.Filled.Compress : Icons.Material.Filled.OpenInFull;
+
+    private string ToggleTitle => _showFull ? "Show suffix" : "Show full ID";
+
+    /// <summary>Last hyphen-separated segment (UUID tail). Otherwise the last <paramref name="suffixLength" /> characters.</summary>
+    public static string Abbreviate(string? value, int suffixLength = 8)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "-";
+
+        var text = value.Trim();
+        var lastHyphen = text.LastIndexOf('-');
+        if (lastHyphen >= 0 && lastHyphen < text.Length - 1)
+            return text[(lastHyphen + 1)..];
+
+        if (suffixLength < 1 || text.Length <= suffixLength)
+            return text;
+
+        return text[^suffixLength..];
+    }
+
+    private void ToggleFull()
+    {
+        if (HasValue)
+            _showFull = !_showFull;
+    }
+
+    private async Task CopyAsync()
+    {
+        if (FullValue is null)
+            return;
+
+        await Js.SendToClipboard(FullValue);
+        Snackbar.Add("Copied to clipboard", Severity.Info);
+    }
+
+}

@@ -16,9 +16,13 @@
         _baseRoute = $"{baseUrl}/Reporting";
     }
 
-    private Task DownloadFileAsync(Guid fileId, CancellationToken ct)
+    private Task DownloadFileAsync(Guid fileId, string? fileName, CancellationToken ct)
     {
-        Navigation.NavigateTo($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}", true);
+        var url = $"/{FsConstants.ProxyDownloadRoute}/{fileId:D}";
+        if (!string.IsNullOrWhiteSpace(fileName))
+            url += $"?fileName={Uri.EscapeDataString(fileName)}";
+
+        Navigation.NavigateTo(url, true);
         return Task.CompletedTask;
     }
 

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Formatter.Web.Components</RootNamespace>
+        <Description>WASM-safe Blazor components for live SmartFormat template editing and annotated preview using Lyo.Formatter.</Description>
+        <PackageTags>blazor components formatter smartformat mudblazor wasm</PackageTags>
+        <NoWarn>$(NoWarn);CS8669</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

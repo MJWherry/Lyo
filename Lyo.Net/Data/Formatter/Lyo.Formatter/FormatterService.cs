@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using Lyo.Exceptions;
 using SmartFormat;
+using SmartFormat.Core.Parsing;
 using SmartFormat.Core.Settings;
 
 namespace Lyo.Formatter;
@@ -153,6 +155,82 @@ public sealed class FormatterService : IFormatterService
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         return new Template(this, template);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<FormatterSegment> FormatSegments(string template, object? context)
+    {
+        if (string.IsNullOrEmpty(template))
+            return [];
+
+        try {
+            using var format = Formatter.Parser.ParseFormat(template);
+            var segments = new List<FormatterSegment>(format.Items.Count);
+            foreach (var item in format.Items) {
+                if (item is LiteralText literal) {
+                    var raw = literal.RawText;
+                    if (raw.Length == 0)
+                        continue;
+
+                    segments.Add(new(FormatterSegmentKind.Literal, literal.ToString(), null, raw));
+                    continue;
+                }
+
+                if (item is not Placeholder placeholder)
+                    continue;
+
+                var key = GetPlaceholderKey(placeholder);
+                var rawToken = placeholder.RawText;
+                if (key.Length == 0) {
+                    segments.Add(new(FormatterSegmentKind.Unresolved, rawToken, key, rawToken));
+                    continue;
+                }
+
+                string formatted;
+                try {
+                    formatted = Format(rawToken, context);
+                }
+                catch {
+                    formatted = rawToken;
+                }
+
+                var unresolved = IsUnresolvedPlaceholder(formatted, key);
+                segments.Add(new(unresolved ? FormatterSegmentKind.Unresolved : FormatterSegmentKind.Placeholder, formatted, key, rawToken));
+            }
+
+            return segments;
+        }
+        catch {
+            return [new(FormatterSegmentKind.Literal, template, null, template)];
+        }
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<FormatterSegment> FormatSegments(string template, IReadOnlyDictionary<string, object?> context)
+    {
+        ArgumentHelpers.ThrowIfNull(context);
+        return FormatSegments(template, (object?)context);
+    }
+
+    private static string GetPlaceholderKey(Placeholder placeholder)
+    {
+        var selectors = placeholder.GetSelectors();
+        if (selectors.Count == 0)
+            return string.Empty;
+
+        var builder = new StringBuilder();
+        foreach (var selector in selectors) {
+            var name = selector.RawText;
+            if (string.IsNullOrEmpty(name))
+                continue;
+
+            if (builder.Length > 0)
+                builder.Append('.');
+
+            builder.Append(name);
+        }
+
+        return builder.ToString();
     }
 
     private static bool IsUnresolvedPlaceholder(string output, string placeholder)

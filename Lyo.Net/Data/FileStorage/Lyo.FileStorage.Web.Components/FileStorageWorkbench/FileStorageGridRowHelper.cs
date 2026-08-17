@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Lyo.FileStorage;
 using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
@@ -78,4 +79,26 @@ public static class FileStorageGridRowHelper
     }
 
     public static object[] GetFileRowKey(object? item) => TryGetFileIdFromRow(item, out var id) ? [id.ToString()] : [];
+
+    /// <summary>Reads <c>PathPrefix</c> from a projected row, treating blank as unset (default shard layout).</summary>
+    public static string? GetPathPrefixFromRow(object? row)
+    {
+        var display = ProjectedValueHelper.GetDisplayValue(row, "PathPrefix");
+        return string.IsNullOrWhiteSpace(display) ? null : display;
+    }
+
+    /// <summary>Reads <c>SourceFileName</c> / stored object name from a projected row.</summary>
+    public static string GetSourceFileNameFromRow(object? row) => ProjectedValueHelper.GetDisplayValue(row, "SourceFileName");
+
+    /// <summary>Reads <c>OriginalFileName</c> from a projected row.</summary>
+    public static string GetOriginalFileNameFromRow(object? row) => ProjectedValueHelper.GetDisplayValue(row, "OriginalFileName");
+
+    /// <summary>Expected backend object key from metadata fields on the projected row (no global storage prefix).</summary>
+    public static string? GetExpectedStorageKey(object? row)
+    {
+        if (!TryGetFileIdFromRow(row, out var fileId))
+            return null;
+
+        return CloudObjectKeyBuilder.FromMetadata(fileId, GetSourceFileNameFromRow(row), GetPathPrefixFromRow(row));
+    }
 }

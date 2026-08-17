@@ -187,7 +187,7 @@
                      SelectedItemsChanged="OnGridSelectedItemsChanged">
             <Columns>
                 @if (IsSelectable) {
-                    <SelectColumn T="object?" Hideable="false"/>
+                    <SelectColumn T="object?" Hideable="false" HeaderStyle="@LyoDataGridColumnStyles.SelectHeaderStyle" CellStyle="@LyoDataGridColumnStyles.SelectCellStyle"/>
                 }
                 <CascadingValue Name="LyoDataGridProjectedColumnRegistry" Value="_columnRegistry">
                     <CascadingValue Name="LyoDataGridColumnVisibilityBinder" Value="_visibilityBinder">

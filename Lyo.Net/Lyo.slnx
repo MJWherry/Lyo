@@ -325,6 +325,7 @@
     <Folder Name="/Data/Formatter/">
         <Project Path="Data/Formatter/Lyo.Formatter.Tests/Lyo.Formatter.Tests.csproj"/>
         <Project Path="Data/Formatter/Lyo.Formatter/Lyo.Formatter.csproj"/>
+        <Project Path="Data/Formatter/Lyo.Formatter.Web.Components/Lyo.Formatter.Web.Components.csproj"/>
     </Folder>
     <Folder Name="/.SolutionItems/">
         <File Path="..\.gitignore"/>

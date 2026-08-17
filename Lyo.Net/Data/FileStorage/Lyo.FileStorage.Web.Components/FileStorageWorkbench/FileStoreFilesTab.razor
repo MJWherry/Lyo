@@ -1,11 +1,9 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
-@using Lyo.Common.Records
-@using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.FileUpload
 @implements IAsyncDisposable
 
 <MudGrid Class="mt-1">
-    <MudItem xs="12" lg="6">
+    <MudItem xs="12">
         <MudPaper Class="pa-4 mb-4" Outlined="true">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Upload &amp; save</MudText>
@@ -281,53 +279,4 @@
             </MudItem>
         </MudGrid>
     </MudItem>
-
-    <MudItem xs="12" lg="6">
-        <MudPaper Class="pa-4 mb-4" Outlined="true">
-            <MudStack Spacing="2">
-                <MudText Typo="Typo.h6">File metadata</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject), including soft-deleted tombstones.
-                    <strong>View</strong> works for deleted rows; other row actions are disabled when <strong>Deleted at</strong> is set.
-                </MudText>
-                <LyoDataGridProjected @ref="_fileMetadataGrid"
-                                      ApiClient="Workbench.ApiClient"
-                                      GridKey="FileStorageWorkbenchFileMetadata"
-                                      Route="@Workbench.FileMetadataQueryRoute"
-                                      Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh)"
-                                      GridClass="file-metadata-grid-dense"
-                                      KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
-                                      RowMenuControls="@GetFileRowMenuControls()">
-                    <Columns>
-                        <LyoProjectedColumn Field="DeletedAt" Title="Deleted at" FormattedValue="@FileStorageGridRowHelper.FormatDeletedAtCell"/>
-                        <LyoProjectedColumn Field="OriginalFileName" Title="Name" QuickSearchPropertyName="OriginalFileName"/>
-                        <LyoTypedProjectedColumn TValue="long" Field="OriginalFileSize" Title="Original size" Format="@(size => FileSizeUnitInfo.FormatBestFitAbbreviation(size))"/>
-                        <LyoProjectedColumn Field="DataEncryptionKeyAlgorithm" Title="Encryption"/>
-                        <LyoProjectedColumn Field="CompressionAlgorithm" Title="Compression"/>
-                        <LyoProjectedColumn Field="Id" Title="Id" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="SourceFileName" Title="Stored as" QuickSearchPropertyName="SourceFileName" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="Timestamp" Title="Timestamp" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="IsEncrypted" Title="Encrypted" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="DataEncryptionKeyId" Title="DEK id" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="PathPrefix" Title="Path prefix" HiddenByDefault="true"/>
-                    </Columns>
-                </LyoDataGridProjected>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
 </MudGrid>
-
-@code {
-
-    private RenderFragment<object?> GetFileRowMenuControls()
-        => row => {
-            var deleted = FileStorageGridRowHelper.IsRowDeleted(row);
-            return @<span style="display:contents">
-            <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewFileMetadataFromRowAsync(row))">View</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@deleted" OnClick="@(() => OpenAccessLinkDialogFromRowAsync(row))">Access link…</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" Disabled="@deleted" OnClick="@(() => DownloadFileFromRowAsync(row))">Download</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.Delete" Disabled="@deleted" OnClick="@(() => DeleteFileFromRowAsync(row))">Delete</MudMenuItem>
-        </span>;
-        };
-
-}

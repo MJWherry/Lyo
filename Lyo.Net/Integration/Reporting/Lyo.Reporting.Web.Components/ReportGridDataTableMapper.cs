@@ -57,6 +57,30 @@ public static class ReportGridDataTableMapper
         return builder.Build();
     }
 
+    /// <summary>Flattens a table into header labels and row cell strings for MudBlazor preview.</summary>
+    public static (IReadOnlyList<string> Headers, IReadOnlyList<string[]> Rows) ToPreviewRows(LyoDataTable table)
+    {
+        ArgumentHelpers.ThrowIfNull(table);
+        var maxCol = table.MaxColumn;
+        if (maxCol < 0)
+            return ([], []);
+
+        var headers = new string[maxCol + 1];
+        for (var c = 0; c <= maxCol; c++)
+            headers[c] = table.Headers.TryGetValue(c, out var h) && !string.IsNullOrWhiteSpace(h.DisplayValue) ? h.DisplayValue : $"Col {c + 1}";
+
+        var rows = new List<string[]>(table.Rows.Count);
+        foreach (var row in table.Rows) {
+            var cells = new string[maxCol + 1];
+            for (var c = 0; c <= maxCol; c++)
+                cells[c] = row[c].DisplayValue;
+
+            rows.Add(cells);
+        }
+
+        return (headers, rows);
+    }
+
     /// <summary>First grid only (matches CSV renderer behavior).</summary>
     public static LyoDataTable? FirstGridFromReportDataJson(string? reportDataJson)
     {

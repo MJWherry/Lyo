@@ -7,9 +7,12 @@
                                        FileStorageResolutionDescription="@DescribeFileStorageResolution()"
                                        KeyStoreImplementationName="@KeyStoreImplementationName"
                                        KeyStoreResolutionDescription="@DescribeKeyStoreResolution()"/>
-        <MudTabs Rounded="true">
+        <MudTabs Rounded="true" KeepPanelsAlive="true">
             <MudTabPanel Text="Files">
                 <FileStoreFilesTab/>
+            </MudTabPanel>
+            <MudTabPanel Text="Browser">
+                <FileStorageBrowser/>
             </MudTabPanel>
             <MudTabPanel Text="Keys">
                 <FileStoreKeysTab/>

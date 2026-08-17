@@ -10,7 +10,7 @@ using Lyo.Health;
 
 namespace Lyo.TestGateway.Services;
 
-public sealed class TestApiFileStorageService : IFileStorageService
+public sealed class TestApiFileStorageService : IFileStorageService, IFileStorageDiagnosticsService
 {
     private readonly IApiClient _apiClient;
     private readonly string _routePrefix;
@@ -213,6 +213,19 @@ public sealed class TestApiFileStorageService : IFileStorageService
         var result = await _apiClient.PostAsAsync<FileStorageRenameWorkbenchRequest, FileStoreResult>(BuildUri("files/rename"), new(fileId, request), ct: ct).ConfigureAwait(false);
         FileRenamed?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result), null));
         return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cap = Math.Min(maxKeys, 10_000);
+        var parts = new List<string> { $"maxKeys={cap.ToString(CultureInfo.InvariantCulture)}" };
+        if (!string.IsNullOrWhiteSpace(prefix))
+            parts.Add($"prefix={Uri.EscapeDataString(prefix)}");
+
+        var keys = await _apiClient.GetAsAsync<List<string>>(BuildUri($"diagnostics/keys?{string.Join("&", parts)}"), ct: ct).ConfigureAwait(false);
+        return keys ?? [];
     }
 
     private static void AppendPresignedReadQueryParams(List<string> parts, PreSignedReadUrlOptions? opts)

@@ -17,8 +17,8 @@ Pair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the AP
 
 @code {
     // Wire to your FileStorage (or Gateway) download/view endpoints.
-    private Task DownloadReportFileAsync(Guid fileId, CancellationToken ct)
-        => /* stream via IJsInterop.DownloadFileFromStream */ Task.CompletedTask;
+    private Task DownloadReportFileAsync(Guid fileId, string? fileName, CancellationToken ct)
+        => /* stream via IJsInterop.DownloadFileFromStream(stream, fileName ?? $"{fileId}", mime) */ Task.CompletedTask;
 
     private Task<string?> GetReportViewUrlAsync(Guid fileId, CancellationToken ct)
         => Task.FromResult<string?>($"/files/{fileId}");
@@ -26,13 +26,12 @@ Pair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the AP
 ```
 
 | Parameter | Notes |
-| ------------------- | ----------------------------------------------------------- |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
 | `BaseRoute` | Reporting route prefix (default `"Reporting"`). |
-| `DownloadFileAsync` | Host callback for blob download by `OutputFileId`. |
+| `DownloadFileAsync` | Host callback for blob download by `OutputFileId` and preferred file name (`OriginalFileName`). |
 | `ViewFileUrlAsync` | Host callback returning a browser URL for HTML/PDF preview. |
 
-When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. Generations without `OutputFileId` (persist hook skipped) only
-support the Details dialog.
+When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. CSV/XLSX generations can still preview grids from `ReportDataJson` without `OutputFileId`. Generations without `OutputFileId` (persist hook skipped) cannot download.
 
 ## Components
 

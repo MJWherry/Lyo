@@ -133,8 +133,15 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     /// <summary>Select fields derived from column Field values, filtered to visible columns, plus key paths when <see cref="KeySelector" /> is set.</summary>
     private IEnumerable<string> SelectFields => GetSelectFieldsForQuery();
 
-    /// <summary>Quick search properties derived from column QuickSearchPropertyName values. Override with explicit list when needed.</summary>
-    private IReadOnlyList<string> QuickSearchProperties => _columnRegistry.GetQuickSearchProperties();
+    /// <summary>
+    /// Property paths OR-ed into the quick-search filter. When null or empty, paths are taken from column <c>QuickSearchPropertyName</c> values.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<string>? QuickSearchProperties { get; init; }
+
+    /// <summary>Quick search properties from <see cref="QuickSearchProperties" />, or column <c>QuickSearchPropertyName</c> values when that list is empty.</summary>
+    private IReadOnlyList<string> EffectiveQuickSearchProperties
+        => QuickSearchProperties is { Count: > 0 } ? QuickSearchProperties : _columnRegistry.GetQuickSearchProperties();
 
     [Parameter]
     public IReadOnlyList<FilterPropertyDefinition> FilterPropertyDefinitions { get; init; } = [];
@@ -528,8 +535,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         var queryBuilder = LyoProjectionQueryReqBuilder.New().SetPagination(offset, pageSize).SetZipSiblingCollectionSelections(ZipSiblingCollectionSelections);
         var activeConditions = _filterStates.Where(f => f.IsEnabled).Select(f => f.Condition).ToList();
         WhereClause? queryNode = null;
-        if (!string.IsNullOrEmpty(_searchText) && QuickSearchProperties.Any()) {
-            var orChildren = QuickSearchProperties.Select(prop => WhereClauseBuilder.FromConditions(activeConditions, prop, _searchText))
+        if (!string.IsNullOrEmpty(_searchText) && EffectiveQuickSearchProperties.Any()) {
+            var orChildren = EffectiveQuickSearchProperties.Select(prop => WhereClauseBuilder.FromConditions(activeConditions, prop, _searchText))
                 .Where(n => n != null)
                 .Cast<WhereClause>()
                 .ToList();

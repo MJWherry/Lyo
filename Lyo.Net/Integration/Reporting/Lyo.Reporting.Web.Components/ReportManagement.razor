@@ -24,11 +24,11 @@
     public string BaseRoute { get; set; } = "Reporting";
 
     /// <summary>
-    /// Host callback to download a persisted output by opaque file id (typically FileStorage). When null, download actions show a snackbar that no download handler is
-    /// configured.
+    /// Host callback to download a persisted output by opaque file id (typically FileStorage). The second argument is the preferred download file name
+    /// (<c>OriginalFileName</c>). When null, download actions show a snackbar that no download handler is configured.
     /// </summary>
     [Parameter]
-    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+    public Func<Guid, string?, CancellationToken, Task>? DownloadFileAsync { get; set; }
 
     /// <summary>Host callback returning a browser URL to view HTML/PDF output. When null, View is disabled.</summary>
     [Parameter]

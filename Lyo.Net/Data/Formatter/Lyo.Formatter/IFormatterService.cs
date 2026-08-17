@@ -78,4 +78,19 @@ public interface IFormatterService
     /// <param name="formattedOutput">The result of formatting the template.</param>
     /// <returns>Placeholders that still appear as {Name} or {Name:...} in the output.</returns>
     IReadOnlyList<string> GetUnresolvedPlaceholders(string template, string formattedOutput);
+
+    /// <summary>
+    /// Formats a template into ordered spans (literals and per-placeholder replacements) so UIs can color-link keys to values. Empty templates return an empty list; invalid
+    /// syntax returns a single literal span of the original text. Nested or list placeholders are one outer span keyed by the selector path (e.g. <c>Items</c>).
+    /// </summary>
+    /// <param name="template">The template string with placeholders.</param>
+    /// <param name="context">The primary context object. Can be an anonymous object, DTO, dictionary, or null.</param>
+    /// <returns>Spans covering the whole template in order.</returns>
+    IReadOnlyList<FormatterSegment> FormatSegments(string template, object? context);
+
+    /// <summary>Formats a template into ordered spans using a dictionary of named context values.</summary>
+    /// <param name="template">The template string with placeholders.</param>
+    /// <param name="context">Dictionary of name-to-value mappings for placeholders.</param>
+    /// <returns>Spans covering the whole template in order.</returns>
+    IReadOnlyList<FormatterSegment> FormatSegments(string template, IReadOnlyDictionary<string, object?> context);
 }

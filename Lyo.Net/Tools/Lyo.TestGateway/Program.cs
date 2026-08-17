@@ -19,6 +19,7 @@ using Lyo.Email;
 using Lyo.Endato.Client;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Web.Components.Services;
+using Lyo.Formatter;
 using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Services;
 using Lyo.TestGateway.Stores;
@@ -77,6 +78,7 @@ builder.Services.AddTwilioSmsServiceFromConfiguration(builder.Configuration);
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, new());
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
+builder.Services.AddFormatterService();
 builder.Services.AddSingleton<IIOTempService>(new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
@@ -153,8 +155,8 @@ app.MapLyoAuthSignOut();
 // File Storage Workbench download: asks Test API for a time-limited storage URL when safe (plain files → e.g. S3 presigned), redirects the browser there so bytes never cross Gateway; otherwise streams decrypted output from Test API.
 app.MapGet(
         $"/{Constants.FileStorageWorkbench.ProxyDownloadRoute}/{{fileId:guid}}", async (
-            HttpContext http, Guid fileId, double? expiresHours, IApiClient apiClient, IHttpClientFactory httpClientFactory, IOptions<FileStorageWorkbenchOptions> fsw,
-            IOptions<ApiClientOptions> apiOptions, CancellationToken ct) => {
+            HttpContext http, Guid fileId, string? fileName, double? expiresHours, IApiClient apiClient, IHttpClientFactory httpClientFactory,
+            IOptions<FileStorageWorkbenchOptions> fsw, IOptions<ApiClientOptions> apiOptions, CancellationToken ct) => {
             if (!fsw.Value.UseRemoteApiServices) {
                 var workbenchMisconfigured = LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "File storage workbench is not configured to use Test API services.");
                 return Results.Json(workbenchMisconfigured, statusCode: workbenchMisconfigured.Status, contentType: "application/problem+json");
@@ -180,12 +182,18 @@ app.MapGet(
                 var notFound = LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found.");
                 return Results.Json(notFound, statusCode: notFound.Status, contentType: "application/problem+json");
             }
+
+            var downloadName = FirstNonEmpty(fileName, metadata.OriginalFileName, metadata.SourceFileName) ?? $"{fileId:D}";
+            var disposition = AttachmentContentDisposition(downloadName);
             // Plain objects: use IFileStorageService time-limited read URL (S3/Azure presigned, etc.) so the browser loads directly from storage.
             if (!metadata.IsEncrypted && !metadata.IsCompressed) {
-                var presignedRel = $"{prefix}/files/{fileId:D}/presigned-read";
+                var qs = new List<string> { $"contentDisposition={Uri.EscapeDataString(disposition)}" };
                 if (expiresHours.HasValue)
-                    presignedRel += $"?expiresHours={Uri.EscapeDataString(expiresHours.Value.ToString(CultureInfo.InvariantCulture))}";
+                    qs.Add($"expiresHours={Uri.EscapeDataString(expiresHours.Value.ToString(CultureInfo.InvariantCulture))}");
+                if (!string.IsNullOrWhiteSpace(metadata.ContentType))
+                    qs.Add($"contentType={Uri.EscapeDataString(metadata.ContentType)}");
 
+                var presignedRel = $"{prefix}/files/{fileId:D}/presigned-read?{string.Join("&", qs)}";
                 try {
                     var presigned = await apiClient.GetAsAsync<PresignedReadResponse>(presignedRel, ct: ct).ConfigureAwait(false);
                     if (presigned?.Url != null && Uri.TryCreate(presigned.Url, UriKind.Absolute, out var presignedUri) &&
@@ -208,16 +216,38 @@ app.MapGet(
             }
 
             var body = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? $"{fileId}";
+            var resolvedFileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                                   ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                                   ?? downloadName;
             var stream = new HttpResponseStream(body, response, request);
-            var mediaType = response.Content.Headers.ContentType?.MediaType ?? FileTypeInfo.Unknown.MimeType;
+            var mediaType = response.Content.Headers.ContentType?.MediaType ?? metadata.ContentType ?? FileTypeInfo.Unknown.MimeType;
             // Non-seekable proxy stream has no Length — set Content-Length from metadata so browsers show download progress / time remaining.
             if (metadata.OriginalFileSize > 0)
                 http.Response.ContentLength = metadata.OriginalFileSize;
 
-            return Results.Stream(stream, mediaType, fileName, enableRangeProcessing: true);
+            return Results.Stream(stream, mediaType, resolvedFileName, enableRangeProcessing: true);
         })
     .WithName("FileStorageWorkbenchProxyDownload");
+
+static string? FirstNonEmpty(params string?[] values)
+{
+    foreach (var value in values) {
+        if (!string.IsNullOrWhiteSpace(value))
+            return value.Trim();
+    }
+
+    return null;
+}
+
+static string AttachmentContentDisposition(string fileName)
+{
+    var leaf = Path.GetFileName(fileName.Replace('\\', '/'));
+    if (string.IsNullOrWhiteSpace(leaf))
+        leaf = "download";
+
+    var ascii = leaf.Replace("\"", "'", StringComparison.Ordinal);
+    return $"attachment; filename=\"{ascii}\"; filename*=UTF-8''{Uri.EscapeDataString(leaf)}";
+}
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.Run();

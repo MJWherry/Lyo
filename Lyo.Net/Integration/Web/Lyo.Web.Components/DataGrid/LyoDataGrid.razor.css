@@ -1,0 +1,8 @@
+::deep th.lyo-dg-align-center .column-header {
+    justify-content: center;
+    width: 100%;
+}
+
+::deep td.lyo-dg-align-center {
+    text-align: center;
+}

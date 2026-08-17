@@ -273,4 +273,89 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
         Assert.NotNull(formatter);
         Assert.Equal("Hello World", formatter.Format("Hello {Name}", new { Name = "World" }));
     }
+
+    [Fact]
+    public void FormatSegments_SimplePlaceholder_SplitsLiteralAndReplacement()
+    {
+        var segments = _service.FormatSegments("Hello, {Name}!", new { Name = "Ada" });
+        Assert.Equal(3, segments.Count);
+        Assert.Equal(FormatterSegmentKind.Literal, segments[0].Kind);
+        Assert.Equal("Hello, ", segments[0].Text);
+        Assert.Equal(FormatterSegmentKind.Placeholder, segments[1].Kind);
+        Assert.Equal("Ada", segments[1].Text);
+        Assert.Equal("Name", segments[1].PlaceholderKey);
+        Assert.Equal("{Name}", segments[1].RawToken);
+        Assert.Equal(FormatterSegmentKind.Literal, segments[2].Kind);
+        Assert.Equal("!", segments[2].Text);
+    }
+
+    [Fact]
+    public void FormatSegments_MissingKey_MarksUnresolved()
+    {
+        var segments = _service.FormatSegments("Hi {X}", new { Y = 1 });
+        var placeholder = Assert.Single(segments, s => s.Kind != FormatterSegmentKind.Literal);
+        Assert.Equal(FormatterSegmentKind.Unresolved, placeholder.Kind);
+        Assert.Equal("X", placeholder.PlaceholderKey);
+        Assert.Contains("{X}", placeholder.Text);
+    }
+
+    [Fact]
+    public void FormatSegments_RepeatedKeys_EmitsTwoPlaceholderSpans()
+    {
+        var segments = _service.FormatSegments("{Name} and {Name}", new { Name = "Ada" });
+        var placeholders = segments.Where(s => s.Kind == FormatterSegmentKind.Placeholder).ToList();
+        Assert.Equal(2, placeholders.Count);
+        Assert.All(placeholders, s => Assert.Equal("Ada", s.Text));
+        Assert.All(placeholders, s => Assert.Equal("Name", s.PlaceholderKey));
+    }
+
+    [Fact]
+    public void FormatSegments_FormatSpecifier_AppliesFormat()
+    {
+        _service.Culture = CultureInfo.InvariantCulture;
+        var segments = _service.FormatSegments("Count: {Count:N0}", new { Count = 1234 });
+        var placeholder = Assert.Single(segments, s => s.Kind == FormatterSegmentKind.Placeholder);
+        Assert.Equal("1,234", placeholder.Text);
+        Assert.Equal("Count", placeholder.PlaceholderKey);
+        Assert.Equal("{Count:N0}", placeholder.RawToken);
+    }
+
+    [Fact]
+    public void FormatSegments_EmptyTemplate_ReturnsEmpty()
+    {
+        var segments = _service.FormatSegments("", new { Name = "Ada" });
+        Assert.Empty(segments);
+    }
+
+    [Fact]
+    public void FormatSegments_InvalidTemplate_ReturnsSingleLiteral()
+    {
+        var template = "Hello {";
+        var segments = _service.FormatSegments(template, new { Name = "Ada" });
+        var segment = Assert.Single(segments);
+        Assert.Equal(FormatterSegmentKind.Literal, segment.Kind);
+        Assert.Equal(template, segment.Text);
+    }
+
+    [Fact]
+    public void FormatSegments_DictionaryContext_ReplacesPlaceholders()
+    {
+        IReadOnlyDictionary<string, object?> context = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["User"] = "Alice" };
+        var segments = _service.FormatSegments("User: {User}", context);
+        var placeholder = Assert.Single(segments, s => s.Kind == FormatterSegmentKind.Placeholder);
+        Assert.Equal("Alice", placeholder.Text);
+        Assert.Equal("User", placeholder.PlaceholderKey);
+    }
+
+    [Fact]
+    public void FormatSegments_EmptyPlaceholder_KeepsRawBraces()
+    {
+        var context = new { Name = "Ada", Nested = new { A = 1, B = 2 } };
+        var segments = _service.FormatSegments("{}", context);
+        var placeholder = Assert.Single(segments);
+        Assert.Equal(FormatterSegmentKind.Unresolved, placeholder.Kind);
+        Assert.Equal("{}", placeholder.Text);
+        Assert.Equal("{}", placeholder.RawToken);
+        Assert.Equal(string.Empty, placeholder.PlaceholderKey);
+    }
 }

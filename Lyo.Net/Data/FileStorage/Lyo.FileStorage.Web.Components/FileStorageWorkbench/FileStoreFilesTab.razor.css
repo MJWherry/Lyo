@@ -11,12 +11,3 @@
 .save-file-line2 {
     width: 100%;
 }
-
-.file-metadata-grid-dense ::deep .mud-table-cell {
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
-.file-metadata-grid-dense ::deep .mud-table-cell .mud-typography {
-    line-height: 1.25;
-}

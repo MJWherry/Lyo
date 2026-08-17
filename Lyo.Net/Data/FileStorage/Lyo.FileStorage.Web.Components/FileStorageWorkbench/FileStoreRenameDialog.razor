@@ -1,0 +1,45 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Updates the display name in metadata only. The stored object key is unchanged.
+            </MudText>
+            <MudTextField T="string"
+                          Label="Original file name"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Required="true"
+                          @bind-Value="_originalFileName"/>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm" Disabled="@string.IsNullOrWhiteSpace(_originalFileName)">Rename</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string? InitialOriginalFileName { get; set; }
+
+    private string _originalFileName = string.Empty;
+
+    protected override void OnParametersSet() => _originalFileName = InitialOriginalFileName ?? string.Empty;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Confirm()
+    {
+        if (string.IsNullOrWhiteSpace(_originalFileName))
+            return;
+
+        MudDialog.Close(DialogResult.Ok(new FileStoreRenameDialogResult(_originalFileName.Trim())));
+    }
+
+}

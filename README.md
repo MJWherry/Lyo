@@ -169,9 +169,10 @@ top-level area.
 - [Lyo.FileStorage.Ftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md): FTP-backed IFileStorageService via Lyo.Ftp.Client.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.
 - [Lyo.FileStorage.Sftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Sftp/README.md): SFTP-backed IFileStorageService via Lyo.Sftp.Client.
-- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.
+- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, expected storage keys, generating download access links, and managing two-key encryption keys.
 - [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md): A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.
 - [Lyo.Formatter](Lyo.Net/Data/Formatter/Lyo.Formatter/README.md): **SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting.
+- [Lyo.Formatter.Web.Components](Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md): WASM-safe Blazor pair for live SmartFormat editing: a debounced template box and a separate annotated preview that color-links `{keys}` to replacements.
 - [Lyo.Ftp.Client](Lyo.Net/Data/Ftp/Lyo.Ftp.Client/README.md): Async-first pooled FluentFTP client with PathHelpers jail, logging, and Lyo.Metrics.
 - [Lyo.IO.Temp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md): Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.
 - [Lyo.IO.Temp.Ftp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Ftp/README.md): FTP-backed IIOTempStorageProvider for Lyo.IO.Temp.

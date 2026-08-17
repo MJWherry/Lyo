@@ -1,7 +1,7 @@
 @inject ISnackbar Snackbar
 
-<MudStack Spacing="2">
-    <ReportParameterTable Title="Report Parameters"
+<MudStack Spacing="1">
+    <ReportParameterTable Title="Parameters"
                           Items="@_rows"
                           ApiClient="ApiClient"
                           OnChanged="@(() => _dirty = true)"/>

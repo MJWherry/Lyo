@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-15T20:16:09.024636+00:00",
-  "packageCount": 216,
+  "generatedAt": "2026-08-17T02:27:01.442531+00:00",
+  "packageCount": 217,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -1069,7 +1069,7 @@
       "area": "Data",
       "topic": "Lyo.FileStorage",
       "name": "Lyo.FileStorage.Web.Components",
-      "tagline": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.",
+      "tagline": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, expected storage keys, generating download access links, and managing two-key encryption keys.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1094,6 +1094,16 @@
       "targetFrameworks": [
         "net10.0",
         "netstandard2.0"
+      ]
+    },
+    {
+      "id": "Lyo.Formatter.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Formatter",
+      "name": "Lyo.Formatter.Web.Components",
+      "tagline": "WASM-safe Blazor pair for live SmartFormat editing: a debounced template box and a separate annotated preview that color-links `{keys}` to replacements.",
+      "targetFrameworks": [
+        "net10.0"
       ]
     },
     {

@@ -1,0 +1,387 @@
+{
+  "id": "Lyo.Formatter.Web.Components",
+  "name": "Lyo.Formatter.Web.Components",
+  "area": "Data",
+  "tagline": "WASM-safe Blazor pair for live SmartFormat editing: a debounced template box and a separate annotated preview that color-links `{keys}` to replacements.",
+  "description": "WASM-safe Blazor / MudBlazor components for [`Lyo.Formatter`](../Lyo.Formatter/README.md). Two components share a **`LyoFormatterLiveSession`** so a host can place the template text box in one region and the live preview in another. Formatting runs in-process via **`IFormatterService`** (no HTTP). Compatible with InteractiveWebAssembly and InteractiveServer; this package does **not** reference `Microsoft.AspNetCore.App`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Split editor and preview",
+      "language": "razor",
+      "code": "@inject IFormatterService Formatter\n\n<MudGrid>\n    <MudItem xs=\"12\" md=\"6\">\n        <LyoFormatterTemplateEditor Session=\"_session\" DebounceInterval=\"300\" />\n    </MudItem>\n    <MudItem xs=\"12\" md=\"6\">\n        <LyoFormatterPreview Session=\"_session\" />\n    </MudItem>\n</MudGrid>\n\n@code {\n    private LyoFormatterLiveSession _session = default!;\n\n    protected override void OnInitialized()\n    {\n        _session = new(Formatter) {\n            Template = \"Hello, {Name}! Count: {Count:N0}\",\n            Context = new Dictionary<string, object?> { [\"Name\"] = \"Ada\", [\"Count\"] = 42 }\n        };\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Components",
+      "headers": [
+        "Component",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "**`LyoFormatterTemplateEditor`**",
+          "Template textarea with an in-place colored overlay of `{placeholders}`. Typing `{` opens a dropdown of session context keys; object/dictionary values also list nested properties (`User.First`). Typing updates the overlay immediately; preview rebuilds after `DebounceInterval` (default 300 ms). Chip row under the field is hoverable so keys link to preview values. `Session` parameter wins over a cascaded session."
+        ],
+        [
+          "**`LyoFormatterPreview`**",
+          "Read-only annotated output. Each replacement is a span with the same per-key color as the editor token. Hover a replacement to emphasize the matching `{key}` (and vice versa via editor chips)."
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Session and highlighting",
+      "items": [
+        "**`LyoFormatterLiveSession`** — parent-owned `INotifyPropertyChanged` state: `Template`, `Context`, `HoveredPlaceholder`, `DebounceInterval`, `TemplateSegments`, `PreviewSegments`. Call `RefreshPreview()` after setting the initial template/context so the first paint is not empty. Dispose the session with the page.",
+        "**Stable colors** — `LyoFormatterPlaceholderPalette` hashes the placeholder key (ordinal ignore-case) to an HSL hue so `{Name}` and its replacement always match. Fills are `color-mix`ed into `--mud-palette-surface` so light and dark themes keep contrast. Not re-randomized per render.",
+        "**Hover** — sets `Session.HoveredPlaceholder`; matching spans get a stronger fill and outline.",
+        "**Unresolved** — missing context (`MaintainTokens`) uses a muted dashed underline instead of a key color.",
+        "**Autocomplete** — `LyoFormatterContextCatalog` walks `Session.Context` (dictionary keys or public properties, nested up to 3 levels). Typing `{` lists keys and nested object properties (`User`, `User.First`). Arrow/Enter/Tab/Escape move and insert.",
+        "Optional **`CascadingValue`** of the session so distant editor/preview pairs need not pass `Session` on every call; an explicit `Session` parameter still wins."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Host integration",
+      "text": "Call `services.AddFormatterService()` from [`Lyo.Formatter`](../Lyo.Formatter/README.md). Create one `LyoFormatterLiveSession` per editor/preview pair (inject `IFormatterService`). Supply `Context` as a DTO or `IReadOnlyDictionary<string, object?>`. There is no context editor in this package."
+    },
+    {
+      "type": "paragraph",
+      "title": "WASM",
+      "text": "No `IHttpContextAccessor`, no server-only framework reference, no formatting via HTTP. Overlay and textarea share a CSS grid cell so they scroll together. Caret position and the `{` autocomplete dropdown use a small JS module from this package's `wwwroot` (imported by the editor; no host `<script>` tag). Works under InteractiveWebAssembly when the host registers `IFormatterService` and references this package."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

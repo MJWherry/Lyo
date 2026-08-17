@@ -1,0 +1,31 @@
+.lyo-fmt-preview {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.lyo-fmt-preview-body {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    padding: 8px 12px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: var(--mud-default-borderradius);
+    background: var(--mud-palette-background-gray);
+    overflow: auto;
+}
+
+.lyo-fmt-preview-text {
+    margin: 0;
+    font-family: var(--mud-typography-default-family), ui-monospace, monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--mud-palette-text-primary);
+}
+
+.lyo-fmt-preview-text ::deep .lyo-fmt-token {
+    padding: 0 1px;
+    border-radius: 3px;
+}

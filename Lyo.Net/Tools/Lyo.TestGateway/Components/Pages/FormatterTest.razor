@@ -1,0 +1,100 @@
+@using Lyo.Formatter
+@using Lyo.Formatter.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Formatter)]
+@inherits AuthorizedPage
+@inject IFormatterService Formatter
+
+<PageTitle>Formatter</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MudText Typo="Typo.h4" Class="mb-2">Formatter</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+        Edit the template on the left. Type <code>{</code> to pick a context key (object values also list their properties). The preview on the right updates after a short pause. Matching colors — and hover — link template keys to the values that replaced them.
+    </MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Outlined="true">
+                <LyoFormatterTemplateEditor Session="_session" DebounceInterval="300" Lines="8"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Outlined="true">
+                <LyoFormatterPreview Session="_session"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Outlined="true">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Sample context</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    The preview formats against this dictionary (parent-supplied; this package has no context editor).
+                </MudText>
+                <MudSimpleTable Dense="true" Hover="true" Bordered="true" Striped="true">
+                    <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var pair in _context) {
+                        <tr>
+                            <td><code>@pair.Key</code></td>
+                            <td>@FormatContextValue(pair.Value)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private readonly Dictionary<string, object?> _context = new(StringComparer.OrdinalIgnoreCase) {
+        ["Name"] = "Ada",
+        ["Count"] = 1234,
+        ["Date"] = new DateTime(2026, 8, 16, 14, 30, 0),
+        ["User"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+            ["First"] = "Ada",
+            ["Last"] = "Lovelace",
+            ["Email"] = "ada@analytical.engine",
+            ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+                ["Line1"] = "12 Great College Street",
+                ["City"] = "London",
+                ["PostalCode"] = "SW1P 3SH",
+                ["Country"] = "UK"
+            }
+        },
+        ["Order"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+            ["Id"] = 1842,
+            ["Status"] = "Shipped",
+            ["Total"] = 99.50m,
+            ["ShipTo"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+                ["City"] = "London",
+                ["Country"] = "UK"
+            }
+        }
+    };
+
+    private LyoFormatterLiveSession _session = default!;
+
+    protected override string PageName { get; set; } = "Formatter";
+
+    protected override void OnPageInitialized()
+    {
+        _session = new(Formatter) {
+            Template = "Hello, {Name}!\nYou have {Count:N0} items as of {Date:yyyy-MM-dd}.\n{User.First} {User.Last} ({User.Email}) — {User.Address.City}, {User.Address.Country}\nOrder {Order.Id}: {Order.Status}, {Order.Total:N2}.",
+            Context = _context
+        };
+        _session.RefreshPreview();
+    }
+
+    private static string FormatContextValue(object? value) => value switch {
+        DateTime date => date.ToString("yyyy-MM-dd"),
+        IReadOnlyDictionary<string, object?> nested => "{ " + string.Join(", ", nested.Select(p => $"{p.Key} = {FormatContextValue(p.Value)}")) + " }",
+        null => "null",
+        _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? ""
+    };
+
+}

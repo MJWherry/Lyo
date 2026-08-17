@@ -164,7 +164,7 @@
         }
 
         var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, RunRoute } };
-        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Large);
+        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Medium);
         await dialog.Result;
     }
 

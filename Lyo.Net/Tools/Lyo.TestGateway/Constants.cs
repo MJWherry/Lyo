@@ -34,6 +34,8 @@ public static class Constants
 
         public const string TextDiff = "text-diff";
 
+        public const string Formatter = "formatter";
+
         public const string Translation = "translation";
 
         public const string Profanity = "profanity";

@@ -229,7 +229,7 @@
                      SelectedItemsChanged="OnGridSelectedItemsChanged">
             <Columns>
                 @if (IsSelectable) {
-                    <SelectColumn T="T" Hideable="false"/>
+                    <SelectColumn T="T" Hideable="false" HeaderStyle="@LyoDataGridColumnStyles.SelectHeaderStyle" CellStyle="@LyoDataGridColumnStyles.SelectCellStyle"/>
                 }
                 <CascadingValue Name="LyoDataGridPropertyColumnRegistry" Value="_propertyColumnRegistry">
                     <CascadingValue Name="LyoDataGridQuickSearchText" Value="CurrentQuickSearchText">

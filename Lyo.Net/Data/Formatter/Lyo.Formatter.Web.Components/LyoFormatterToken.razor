@@ -1,0 +1,2 @@
+@namespace Lyo.Formatter.Web.Components
+@if (Segment.Kind == FormatterSegmentKind.Literal) {@DisplayText} else {<span class="@TokenClass" style="@TokenStyle" @onmouseenter="OnEnter" @onmouseleave="OnLeave">@DisplayText</span>}

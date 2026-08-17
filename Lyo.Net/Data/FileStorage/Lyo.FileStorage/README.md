@@ -260,7 +260,7 @@ Detailed errors cover missing optional services, invalid prefixes, traversal att
 
 ## Security
 
-Path prefixes are normalised on cloud/local paths via shared helpers: **`Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`** for both listing prefixes and save/direct-upload entry points, and **`CloudObjectKeyBuilder`** for object/blob key shape. Save paths additionally apply **`EnsureUnderRoot`** before writing to disk. * *`HashVerifyingReadStream`** uses a fixed-time compare and only verifies on EOF. Pre-signed reads fall back to the metadata-recorded **`PathPrefix`** so SAS/GET URLs work even when the caller cannot supply the original prefix. **`DirectUploadReceiveBaseUri`** trusts the named host — use only inside controlled (**Test API**) topologies.
+Path prefixes are normalised on cloud/local paths via shared helpers: **`Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`** for both listing prefixes and save/direct-upload entry points, and **`CloudObjectKeyBuilder`** for object/blob key shape (**`Build`**, **`FromMetadata`** from `SourceFileName` + path prefix, **`InferTrailingSuffixAfterFileId`**). Save paths additionally apply **`EnsureUnderRoot`** before writing to disk. * *`HashVerifyingReadStream`** uses a fixed-time compare and only verifies on EOF. Pre-signed reads fall back to the metadata-recorded **`PathPrefix`** so SAS/GET URLs work even when the caller cannot supply the original prefix. **`DirectUploadReceiveBaseUri`** trusts the named host — use only inside controlled (**Test API**) topologies.
 
 ## Thread safety
 
@@ -273,8 +273,8 @@ Use **`await fileStorage.CheckHealthAsync(ct)`**; backends choose lightweight vs
 ## Tests
 
 | Project | Scope |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`Lyo.FileStorage.Tests`** | Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes), `FileHelpers` path-prefix coverage, and **zip archive** (flat/nested paths, names, limits, missing id, temp-session dispose) |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Lyo.FileStorage.Tests`** | Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes), `FileHelpers` path-prefix coverage, **`CloudObjectKeyBuilder.FromMetadata`**, and **zip archive** (flat/nested paths, names, limits, missing id, temp-session dispose) |
 | **`Lyo.FileStorage.S3.Tests`** | Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream`, **`S3StagedFileUploadService`** (presigned PUT via `FakeAmazonS3`), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants |
 | **`Lyo.FileStorage.AzureBlob.Tests`** | Isolated coverage for `AzureBlobFileStorageOptions`, **`AzureBlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder` |
 

@@ -62,18 +62,7 @@ internal sealed class PlainDirectUploadCoordinator
     /// <param name="sourceFileName">Upstream filename optionally beginning with the file id in <c>N</c> (no hyphens) or default <c>D</c> (with hyphens) format.</param>
     /// <returns>Suffix following the GUID prefix, or an empty string when indeterminate.</returns>
     internal static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName)
-    {
-        if (sourceFileName.IsNullOrEmpty())
-            return "";
-
-        var s = sourceFileName;
-        var n = id.ToString("N");
-        if (s.StartsWith(n, StringComparison.Ordinal))
-            return s[n.Length..];
-
-        var dash = id.ToString();
-        return s.StartsWith(dash, StringComparison.OrdinalIgnoreCase) ? s[dash.Length..] : "";
-    }
+        => CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(id, sourceFileName);
 
     /// <summary>
     /// Validates declarative upload metadata, clamps tenant/content-type fields, persists a <see cref="FileAvailability.PendingDirectUpload" /> row, and emits a begin audit

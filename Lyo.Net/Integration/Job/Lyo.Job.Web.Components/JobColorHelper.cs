@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
+using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.Job.Web.Components;
 
@@ -14,6 +15,9 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
+    public static Color ForState(string? text)
+        => Enum.TryParse<JobState>(text, out var state) ? ForState(state) : Color.Default;
+
     public static Color ForResult(JobRunResult? result)
         => result switch {
             JobRunResult.Success => Color.Success,
@@ -25,6 +29,11 @@ public static class JobColorHelper
             JobRunResult.Timeout => Color.Error,
             var _ => Color.Default
         };
+
+    public static Color ForResult(string? text)
+        => Enum.TryParse<JobRunResult>(text, out var result) ? ForResult(result) : Color.Default;
+
+    public static Color ForDuration(DateTime? started, DateTime? finished) => LyoDurationDisplay.ForDuration(started, finished);
 
     public static Color ForLogLevel(JobLogLevel level)
         => level switch {
@@ -58,27 +67,9 @@ public static class JobColorHelper
             var _ => Icons.Material.Filled.Help
         };
 
-    public static string FormatDuration(double? ms)
-    {
-        if (ms is null)
-            return "—";
+    public static string FormatDuration(double? ms) => LyoDurationDisplay.Format(ms);
 
-        if (ms < 1_000)
-            return $"{ms:F0} ms";
-
-        if (ms < 60_000)
-            return $"{ms / 1_000:F1} s";
-
-        return $"{ms / 60_000:F1} min";
-    }
-
-    public static string FormatDurationFromDates(DateTime? started, DateTime? finished)
-    {
-        if (started is null || finished is null)
-            return "—";
-
-        return FormatDuration((finished.Value - started.Value).TotalMilliseconds);
-    }
+    public static string FormatDurationFromDates(DateTime? started, DateTime? finished) => LyoDurationDisplay.FormatFromDates(started, finished);
 
     public static string GetEnumDescription<T>(T value)
         where T : Enum

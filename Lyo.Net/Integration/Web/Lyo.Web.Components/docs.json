@@ -12,7 +12,7 @@
       "title": "Data grid (`DataGrid/`)",
       "items": [
         "**`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.",
-        "**`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties.",
+        "**`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly-typed properties. `LyoDateTimeDisplay` formats UTC timestamps as local `g` values (including latest-of-collection for last-run columns); `LyoDurationDisplay` shares duration chip colors/text with reporting and jobs; `LyoDataGridColumnStyles` keeps the checkbox and inline action columns content-sized. `LyoTruncatedText` / `MaxDisplayLength` ellipsize long cells with a hover tooltip.",
         "**`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.",
         "**`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid."
       ]
@@ -31,7 +31,8 @@
       "items": [
         "**`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.",
         "**`LyoFormInput`** — change-tracked single-value input that participates in the cascaded form.",
-        "**`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker."
+        "**`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker.",
+        "**`LyoIdField`** — read-only identifier field: abbreviated UUID suffix by default, expand-to-full toggle, and copy-full-id adornment."
       ]
     },
     {

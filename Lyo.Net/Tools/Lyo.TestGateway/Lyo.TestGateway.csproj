@@ -27,6 +27,8 @@
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\Query\Lyo.Query.Web.Components\Lyo.Query.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter.Web.Components\Lyo.Formatter.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\Barcode\Lyo.Barcode.Native\Lyo.Barcode.Native.csproj"/>
         <ProjectReference Include="..\..\Data\Barcode\Lyo.Barcode.TestWorkbench.Web.Components\Lyo.Barcode.TestWorkbench.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode.Web.Components\Lyo.QRCode.Web.Components.csproj"/>

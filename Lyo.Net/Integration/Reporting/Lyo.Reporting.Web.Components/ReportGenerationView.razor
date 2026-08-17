@@ -2,43 +2,62 @@
 @inject IJSRuntime JsRuntime
 @inject IDialogService DialogService
 
-<MudDialog>
-    <DialogContent>
-        <MudGrid Class="pa-2">
-            <MudItem xs="12" md="6">
-                <MudTextField T="string" Label="ID" Value="@Generation.Id.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+<LyoDialog>
+    <TitleContent>
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Generation.OriginalFileName) ? "Report Generation" : Generation.OriginalFileName)</MudText>
+            <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(Generation.Format)">@Generation.Format</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForStatus(Generation.Status)">@Generation.Status</MudChip>
+            @if (Generation.StartedTimestamp is not null) {
+                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForDuration(Generation.StartedTimestamp, Generation.FinishedTimestamp)"
+                         Icon="@(Generation.FinishedTimestamp is null ? Icons.Material.Filled.Timer : null)">
+                    @DurationText
+                </MudChip>
+            }
+            @if (!string.IsNullOrWhiteSpace(Generation.ContentType)) {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@Generation.ContentType</MudChip>
+            }
+        </MudStack>
+    </TitleContent>
+    <ExtraActions>
+        <MudButton OnClick="ViewAsync" StartIcon="@Icons.Material.Filled.OpenInNew" Disabled="@(!CanView)">View</MudButton>
+        <MudButton OnClick="DownloadAsync" StartIcon="@Icons.Material.Filled.Download" Disabled="@(!CanDownload)">Download</MudButton>
+    </ExtraActions>
+    <ChildContent>
+        <MudGrid Class="pa-1" Spacing="2">
+            <MudItem xs="12" sm="6" md="3">
+                <LyoIdField Label="ID" Value="@Generation.Id"/>
             </MudItem>
-            <MudItem xs="12" md="6">
-                <MudTextField T="string" Label="Definition" Value="@(Generation.ReportDefinitionId?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            <MudItem xs="12" sm="6" md="3">
+                <LyoIdField Label="Definition ID" Value="@Generation.ReportDefinitionId"/>
             </MudItem>
-            <MudItem xs="12" md="4">
-                <MudTextField T="string" Label="Format" Value="@Generation.Format.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudTextField T="string" Label="Status" Value="@Generation.Status.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-            </MudItem>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" sm="6" md="3">
                 <MudTextField T="string" Label="Created By" Value="@Generation.CreatedBy" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
             </MudItem>
-            <MudItem xs="12" md="6">
-                <MudTextField T="string" Label="File Name" Value="@Generation.OriginalFileName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Created" Value="@Generation.CreatedTimestamp.ToString("g")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <LyoIdField Label="File Id" Value="@Generation.OutputFileId"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Path Prefix" Value="@(Generation.PathPrefix ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField T="string" Label="Output File Id" Value="@(Generation.OutputFileId?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudTextField T="string" Label="File Name" Value="@(Generation.OriginalFileName ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
             </MudItem>
             @if (!string.IsNullOrWhiteSpace(Generation.ErrorMessage)) {
                 <MudItem xs="12">
-                    <MudAlert Severity="Severity.Error">@Generation.ErrorMessage</MudAlert>
+                    <MudAlert Severity="Severity.Error" Dense="true">@Generation.ErrorMessage</MudAlert>
                 </MudItem>
             }
             <MudItem xs="12">
-                <MudText Typo="Typo.subtitle1" Class="mb-2">Parameters</MudText>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Parameters</MudText>
                 @if (Generation.Parameters is { Count: > 0 }) {
                     <MudSimpleTable Dense="true" Hover="true">
                         <thead>
                         <tr>
                             <th>Key</th>
-                            <th>Type</th>
                             <th>Value</th>
                             <th>Description</th>
                         </tr>
@@ -46,10 +65,14 @@
                         <tbody>
                         @foreach (var p in Generation.Parameters) {
                             <tr>
-                                <td>@p.Key</td>
-                                <td>@p.Type</td>
+                                <td>
+                                    <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                                        <span>@p.Key</span>
+                                        <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForParameterType(p.Type)">@p.Type</MudChip>
+                                    </MudStack>
+                                </td>
                                 <td>@p.Value</td>
-                                <td>@p.Description</td>
+                                <td><LyoTruncatedText Text="@p.Description"/></td>
                             </tr>
                         }
                         </tbody>
@@ -60,41 +83,29 @@
                 }
             </MudItem>
         </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="ViewAsync"
-                   StartIcon="@Icons.Material.Filled.OpenInNew"
-                   Disabled="@(!CanView)">
-            View
-        </MudButton>
-        <MudButton OnClick="DownloadAsync"
-                   StartIcon="@Icons.Material.Filled.Download"
-                   Disabled="@(Generation.OutputFileId is null || DownloadFileAsync is null)">
-            Download
-        </MudButton>
-        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
-    </DialogActions>
-</MudDialog>
+    </ChildContent>
+</LyoDialog>
 
 @code {
-
-    [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]
     public ReportGenerationRes Generation { get; set; } = null!;
 
     [Parameter]
-    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+    public Func<Guid, string?, CancellationToken, Task>? DownloadFileAsync { get; set; }
 
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
+
+    private string DurationText => ReportColorHelper.FormatDurationFromDates(Generation.StartedTimestamp, Generation.FinishedTimestamp);
 
     private bool CanView
         => Generation.Format is ReportFormat.Csv or ReportFormat.Xlsx
             ? !string.IsNullOrWhiteSpace(Generation.ReportDataJson)
             : Generation.OutputFileId is not null && ViewFileUrlAsync is not null;
+
+    private bool CanDownload => Generation.OutputFileId is not null && DownloadFileAsync is not null;
 
     private async Task ViewAsync()
     {
@@ -143,7 +154,7 @@
             return;
         }
 
-        await DownloadFileAsync(fileId, CancellationToken.None);
+        await DownloadFileAsync(fileId, Generation.OriginalFileName, CancellationToken.None);
         Snackbar.Add("Download started.", Severity.Success);
     }
 

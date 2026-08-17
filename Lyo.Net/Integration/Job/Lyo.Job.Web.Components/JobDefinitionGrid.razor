@@ -34,6 +34,30 @@
         <MudMenuItem OnClick="@(() => BulkToggle(false))">Disable</MudMenuItem>
     </BulkMenuItems>
     <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary" title="Run now"
+                                   OnClick="@(() => RunJob(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit definition"
+                                   OnClick="@(() => ViewDefinition(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Enabled" Title="Enabled" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var enabled = GetEnabled(item);
+                }
+                <MudChip T="string" Size="Size.Small" Color="@(enabled ? Color.Success : Color.Default)"
+                         Style="cursor: pointer;"
+                         OnClick="@(() => ToggleDefinition(item))">
+                    @(enabled ? "Enabled" : "Disabled")
+                </MudChip>
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{
@@ -46,33 +70,17 @@
                 </MudStack>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
-        <LyoProjectedColumn Field="Description" Title="Description" QuickSearchPropertyName="Description"/>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="Description" Title="Description" QuickSearchPropertyName="Description" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
         <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type"/>
         <LyoProjectedColumn Field="WorkerType" Title="Worker Type"/>
-        <LyoProjectedColumn Field="Enabled" Title="Enabled" Align="Align.Center" HeaderStyle="width: 90px;">
-            <CellContent Context="item">
-                <MudSwitch T="bool"
-                           Value="@GetEnabled(item)"
-                           ValueChanged="@(v => SetEnabledAsync(item, v))"
-                           Color="Color.Success"
-                           Size="Size.Small"
-                           Class="ma-0"/>
-            </CellContent>
-        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="JobRuns.CreatedTimestamp" Title="Last Run" Sortable="false" CellStyle="white-space: nowrap;"
+                            FormattedValue="@LyoDateTimeDisplay.FormatLatestProjected"/>
         <LyoProjectedColumn Field="JobSchedules.Count" Title="Schedules" Align="Align.Center" HeaderStyle="width: 90px;"/>
         <LyoProjectedColumn Field="JobParameters.Count" Title="Parameters" Align="Align.Center" HeaderStyle="width: 90px;"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" HiddenByDefault="true" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
         <LyoProjectedColumn Field="MaxRetryCount" Title="Max Retries" Align="Align.Center" HeaderStyle="width: 90px;" HiddenByDefault="true"/>
-        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false" HeaderStyle="width: 80px;" CellStyle="white-space: nowrap;">
-            <CellTemplate Context="cell">
-                <MudStack Row Spacing="0">
-                    <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary" title="Run now"
-                                   OnClick="@(() => RunJob(cell.Item))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit definition"
-                                   OnClick="@(() => ViewDefinition(cell.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
     </Columns>
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => ViewDefinition(item))">Edit</MudMenuItem>

@@ -22,13 +22,14 @@ Every workbench page lives under `Components/Pages/` and uses `@attribute [Route
 | `/messaging`, `/translation`, `/tts`, `/profanity` | Sms/Email, Translate, TTS, Profanity | `Lyo.Email`, `Lyo.Sms.Twilio`, `Lyo.Translation.Aws`, `Lyo.Tts.Typecast`, `Lyo.Profanity` |
 | `/csv-xlsx` (legacy `/csv`, `/xlsx`) | `CsvTest` (single workbench, two tabs) | `Lyo.Csv`, `Lyo.Xlsx` |
 | `/file-service` | `FileToolsTest` | In-process compression + encryption demos |
-| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Remote API workbench routes via `TestApi*` proxy services when `UseRemoteApiServices=true` (see below) |
+| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Remote API workbench routes via `TestApi*` proxy services when `UseRemoteApiServices=true`. Hosts Files (upload/crypto), **Browser** (metadata + expected storage grids), and Keys tabs. |
 | `/html-to-pdf` | `HtmlToPdfTest` | `Lyo.Web.WebRenderer` + `Lyo.Pdf` |
 | `/pdf-annotator` | `PdfAnnotationTest` | `Lyo.Pdf.Web.Components.PdfAnnotator` |
 | `/qr-code-generator`, `/barcode-generator` | `QrCodeTest`, `BarcodeTest` | `Lyo.QRCode`, `Lyo.Barcode.Native` |
 | `/spritesheet-animator` | `SpriteSheetTest` | `Lyo.Images` sprite sheet export |
 | `/image-workbench` | `ImageTest` | `Lyo.Images` (ImageSharp) |
 | `/text-diff` | `TextDiffTest` | `Lyo.Web.Components` diff viewer |
+| `/formatter` | `FormatterTest` | `Lyo.Formatter.Web.Components` live template editor + annotated preview (`AddFormatterService()`) |
 | `/rich-text-editor` | `RichTextEditorTest` | `Lyo.Web.Components` editor |
 | `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/privacy-redaction` | Infrastructure workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Privacy.Web.Components` |
 
@@ -40,7 +41,7 @@ Constants are defined in `Lyo.TestGateway.Constants.Page` (workbench routes) and
 
 ## File Storage Workbench wiring
 
-- **Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService`, keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Gateway.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
+- **Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService` (also implements **`IFileStorageDiagnosticsService`** via `GET diagnostics/keys` for the Browser Exists column), keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Gateway.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
 - **In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend.
 
 ## Other services in `Program.cs`
@@ -104,6 +105,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.FileStorage` — (direct, lyo)
 - `Lyo.FileStorage.S3` — (direct, lyo)
 - `Lyo.FileStorage.Web.Components` — (direct, lyo)
+- `Lyo.Formatter` — (direct, lyo)
+- `Lyo.Formatter.Web.Components` — (direct, lyo)
 - `Lyo.Hashing` — (direct, lyo)
 - `Lyo.IO.Temp` — (direct, lyo)
 - `Lyo.Images` — (direct, lyo)
@@ -224,6 +227,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `SixLabors.Fonts` `2.1.3` — (transitive, third-party)
 - `SixLabors.ImageSharp` `3.1.12` — (transitive, third-party)
 - `SixLabors.ImageSharp.Drawing` `2.1.7` — (transitive, third-party)
+- `SmartFormat.NET` `3.6.1` — (transitive, third-party)
 - `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
 - `System.Collections.Immutable` `10.0.5` — (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)

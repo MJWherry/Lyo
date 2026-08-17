@@ -21,15 +21,15 @@
         ],
         [
           "`DownloadFileAsync`",
-          "Host callback for blob download by `OutputFileId`."
+          "Host callback for blob download by `OutputFileId` and preferred file name (`OriginalFileName`)."
         ],
         [
           "`ViewFileUrlAsync`",
           "Host callback returning a browser URL for HTML/PDF preview."
         ]
       ],
-      "lead": "```razor\n@using Lyo.Reporting.Web.Components\n\n<ReportManagement BaseRoute=\"Reporting\"\n                  DownloadFileAsync=\"DownloadReportFileAsync\"\n                  ViewFileUrlAsync=\"GetReportViewUrlAsync\" />\n\n@code {\n    // Wire to your FileStorage (or Gateway) download/view endpoints.\n    private Task DownloadReportFileAsync(Guid fileId, CancellationToken ct)\n        => /* stream via IJsInterop.DownloadFileFromStream */ Task.CompletedTask;\n\n    private Task<string?> GetReportViewUrlAsync(Guid fileId, CancellationToken ct)\n        => Task.FromResult<string?>($\"/files/{fileId}\");\n}\n```",
-      "trail": "When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. Generations without `OutputFileId` (persist hook skipped) only\nsupport the Details dialog."
+      "lead": "```razor\n@using Lyo.Reporting.Web.Components\n\n<ReportManagement BaseRoute=\"Reporting\"\n                  DownloadFileAsync=\"DownloadReportFileAsync\"\n                  ViewFileUrlAsync=\"GetReportViewUrlAsync\" />\n\n@code {\n    // Wire to your FileStorage (or Gateway) download/view endpoints.\n    private Task DownloadReportFileAsync(Guid fileId, string? fileName, CancellationToken ct)\n        => /* stream via IJsInterop.DownloadFileFromStream(stream, fileName ?? $\"{fileId}\", mime) */ Task.CompletedTask;\n\n    private Task<string?> GetReportViewUrlAsync(Guid fileId, CancellationToken ct)\n        => Task.FromResult<string?>($\"/files/{fileId}\");\n}\n```",
+      "trail": "When download/view callbacks are omitted, those menu actions show a snackbar that the host has not configured them. CSV/XLSX generations can still preview grids from `ReportDataJson` without `OutputFileId`. Generations without `OutputFileId` (persist hook skipped) cannot download."
     },
     {
       "type": "table",

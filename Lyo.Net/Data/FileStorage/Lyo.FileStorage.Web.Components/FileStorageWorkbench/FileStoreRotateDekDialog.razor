@@ -1,0 +1,75 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Decrypts and re-encrypts each selected file with a fresh DEK. Optionally migrate to another key id or version at the same time.
+            </MudText>
+            @if (FileCount > 0) {
+                <MudText Typo="Typo.body2">@FileCount file@(FileCount == 1 ? "" : "s") selected.</MudText>
+            }
+            <MudSelect T="string"
+                       Label="Target key id"
+                       HelperText="Leave blank to keep each file on its current key id."
+                       Value="_targetKeyId"
+                       ValueChanged="OnTargetKeyIdChanged">
+                <MudSelectItem T="string" Value="@string.Empty">Keep current key</MudSelectItem>
+                @foreach (var keyId in Workbench.AvailableKeyIds) {
+                    <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="string"
+                       Label="Target key version"
+                       HelperText="Leave blank to keep each file's current version, or use the current version of the chosen target key."
+                       Value="_targetKeyVersion"
+                       ValueChanged="@(v => _targetKeyVersion = v ?? string.Empty)"
+                       Disabled="@string.IsNullOrWhiteSpace(_targetKeyId)">
+                <MudSelectItem T="string" Value="@string.Empty">Default</MudSelectItem>
+                @foreach (var version in Workbench.GetKnownVersionsForKey(_targetKeyId)) {
+                    <MudSelectItem T="string" Value="@version">@version</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_batchSize"/>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Rotate DEKs</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    [EditorRequired]
+    public FileStorageWorkbench Workbench { get; set; } = default!;
+
+    [Parameter]
+    public int FileCount { get; set; }
+
+    private string _targetKeyId = string.Empty;
+    private string _targetKeyVersion = string.Empty;
+    private int _batchSize = 100;
+
+    private Task OnTargetKeyIdChanged(string? value)
+    {
+        _targetKeyId = value ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(_targetKeyId) || !Workbench.GetKnownVersionsForKey(_targetKeyId).Contains(_targetKeyVersion, StringComparer.Ordinal))
+            _targetKeyVersion = string.Empty;
+
+        return Task.CompletedTask;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Confirm()
+        => MudDialog.Close(
+            DialogResult.Ok(
+                new FileStoreRotateDekDialogResult(
+                    string.IsNullOrWhiteSpace(_targetKeyId) ? null : _targetKeyId, string.IsNullOrWhiteSpace(_targetKeyVersion) ? null : _targetKeyVersion, _batchSize)));
+
+}

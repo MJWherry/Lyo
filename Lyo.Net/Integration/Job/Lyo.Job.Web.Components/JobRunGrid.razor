@@ -12,6 +12,7 @@
                       KeySelector="@GetKey"
                       FilterPropertyDefinitions="@_propertyDefinitions"
                       BeforeQuery="@ApplyQuery"
+                      KeySelectFields="@_keySelectFields"
                       Features="@LyoDataGridFeatureFlags.All">
     <BulkExportControls>
         <LyoDataGridExportMenu Host="context">
@@ -36,6 +37,20 @@
         }
     </LeftControls>
     <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                   OnClick="@(() => ViewRun(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Color="Color.Primary" title="Re-run"
+                                   OnClick="@(() => RerunJob(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" title="Cancel run"
+                                   OnClick="@(() => CancelRun(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{
@@ -48,20 +63,29 @@
                 </MudStack>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition"/>
+        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
         <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
             <CellContent Context="item">
                 @{
                     var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
+                    var parsed = Enum.TryParse<JobState>(stateText, out var state);
                 }
-                @if (Enum.TryParse<JobState>(stateText, out var state)) {
-                    <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForState(state)" Icon="@JobColorHelper.StateIcon(state)">@state</MudChip>
-                }
-                else {
-                    @stateText
-                }
+                <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForState(stateText)" Icon="@(parsed ? JobColorHelper.StateIcon(state) : null)">
+                    @(string.IsNullOrWhiteSpace(stateText) ? "—" : stateText)
+                </MudChip>
             </CellContent>
         </LyoProjectedColumn>
+        <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center" HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
+            <CellTemplate Context="cell">
+                @{
+                    var (started, finished) = GetTimestamps(cell.Item);
+                }
+                <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForDuration(started, finished)"
+                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)">
+                    @JobColorHelper.FormatDurationFromDates(started, finished)
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Result" Title="Result" Align="Align.Center" HeaderStyle="width: 110px;">
             <CellContent Context="item">
                 @{
@@ -71,45 +95,16 @@
                     <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)">@result</MudChip>
                 }
                 else {
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">-</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
                 }
             </CellContent>
         </LyoProjectedColumn>
-        <TemplateColumn T="object?" Title="Progress" Sortable="false" Hideable="true" HeaderStyle="width: 140px;">
-            <CellTemplate Context="cell">
-                @{
-                    var percent = ProjectedValueHelper.ConvertTo<int?>(ProjectedValueHelper.GetValue(cell.Item, "ProgressPercent"));
-                }
-                @if (percent is int p) {
-                    <MudStack Spacing="0">
-                        <MudProgressLinear Color="Color.Primary" Value="@p" Class="my-1"/>
-                        <MudText Typo="Typo.caption">@p% @(ProjectedValueHelper.GetDisplayValue(cell.Item, "ProgressMessage"))</MudText>
-                    </MudStack>
-                }
-                else {
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">-</MudText>
-                }
-            </CellTemplate>
-        </TemplateColumn>
-        <LyoProjectedColumn Field="ProgressPercent" Title="Progress %" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;"/>
-        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;"/>
-        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
         <LyoProjectedColumn Field="RetryAttempt" Title="Retry #" Align="Align.Center" HeaderStyle="width: 80px;" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="JobRunResults.Count" Title="Results" Align="Align.Center" HeaderStyle="width: 80px;"/>
         <LyoProjectedColumn Field="JobRunLogs.Count" Title="Logs" Align="Align.Center" HeaderStyle="width: 80px;"/>
-        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
-            <CellTemplate Context="cell">
-                <MudStack Row Spacing="0">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
-                                   OnClick="@(() => ViewRun(cell.Item))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Color="Color.Primary" title="Re-run"
-                                   OnClick="@(() => RerunJob(cell.Item))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" title="Cancel run"
-                                   OnClick="@(() => CancelRun(cell.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
     </Columns>
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewRun(item))">View Details</MudMenuItem>
@@ -150,6 +145,8 @@
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("JobDefinition.Name", "Definition"), new("State"), new("Result")];
 
+    private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp"];
+
     protected override async Task OnParametersSetAsync()
     {
         if (_appliedDefinitionId == DefinitionId)
@@ -186,6 +183,10 @@
 
     private static string Shorten(string id) => id.Length > 8 ? id[..8] : id;
 
+    private static (DateTime? Started, DateTime? Finished) GetTimestamps(object? item)
+        => (LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "StartedTimestamp")),
+            LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "FinishedTimestamp")));
+
     private async Task CopyToClipboard(string text)
     {
         await Js.SendToClipboard(text);
@@ -217,7 +218,7 @@
             return;
 
         var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, _runRoute } };
-        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Large);
+        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Medium);
         var r = await dialog.Result;
         if (r is { Canceled: false })
             await _dataGrid!.RefreshData();

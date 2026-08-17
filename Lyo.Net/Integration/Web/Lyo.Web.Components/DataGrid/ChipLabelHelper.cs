@@ -8,6 +8,9 @@ public static class ChipLabelHelper
 {
     public const int DefaultFilterChipMaxLength = 48;
 
+    /// <summary>Default max characters for definition names, descriptions, and similar grid cells before ellipsis + tooltip.</summary>
+    public const int DefaultGridCellMaxLength = 40;
+
     private const int MaxFilterListItemsShownCompact = 4;
 
     public static string TruncateLabel(string? text, int maxLength)

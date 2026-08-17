@@ -44,11 +44,12 @@ Register **`FormatterService`** as singleton and expose **`IFormatterService`**.
 ## Core types
 
 | Type | Role |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`IFormatterService`** | Format, validate, inspect placeholders, wrap templates as **`ITemplate`**. |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`IFormatterService`** | Format, validate, inspect placeholders, wrap templates as **`ITemplate`**, emit annotated **`FormatSegments`**. |
 | **`FormatterService`** | Default implementation: **`FormatErrorAction.MaintainTokens`** so missing data leaves `{tokens}` in output (enables unresolved-placeholder detection). Case-insensitive placeholder matching. |
 | **`ITemplate`** | Parse-once style workflow: **`WithContext`**, **`AddContext`**, **`TryValidateContext`**, then **`Format()`**. |
 | **`IContextBuilder`** | Fluent dictionary builder passed to **`Format(template, configure)`**. |
+| **`FormatterSegment`** / **`FormatterSegmentKind`** | Annotated span from **`FormatSegments`**: literal text, a resolved replacement, or an unresolved `{token}` plus the placeholder key and raw template substring. |
 
 ## Formatting overloads
 
@@ -63,6 +64,7 @@ Register **`FormatterService`** as singleton and expose **`IFormatterService`**.
 - **`TryFormat`** — swallows exceptions from SmartFormat and returns false (use sparingly; prefer validation + known context).
 - **`GetPlaceholders`** — lightweight regex-based names (first segment of each `{...}`); good for UI hints and **`entityTypes`**-style dependency lists.
 - **`AllPlaceholdersResolved` / `GetUnresolvedPlaceholders`** — compare template to formatted output; relies on **`MaintainTokens`** so missing keys stay visible as `{Name}`.
+- **`FormatSegments`** — walk the parsed template into ordered **`FormatterSegment`** spans (literal / placeholder / unresolved) so UIs can color-link `{Name}` to its replacement without a second parser.
 
 ## `ITemplate` workflow
 
@@ -81,6 +83,7 @@ This library does **not** fork SmartFormat; it configures a **`SmartFormatter`**
 
 - **`Lyo.Api`** — optional **`IFormatterService`** for **`ComputedFields`** on projection/query responses (SmartFormat templates over projected rows).
 - **`Lyo.Web.Automation`** — optional **`IFormatterService`** to validate automation plans before execution.
+- **`Lyo.Formatter.Web.Components`** — WASM-safe live template editor + annotated preview (`FormatSegments`).
 
 ## Thread safety
 

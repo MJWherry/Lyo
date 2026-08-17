@@ -1,6 +1,6 @@
 # Lyo.FileStorage.Web.Components
 
-Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.
+Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, expected storage keys, generating download access links, and managing two-key encryption keys.
 
 Two integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:
 
@@ -9,15 +9,18 @@ Two integration modes are supported, controlled by **`FileStorageWorkbenchOption
 ## Components
 
 | Component | Role |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`FileStorageWorkbench`** (`FileStorageWorkbench.razor` / `.razor.cs`) | Top-level workbench surface with Files / Keys tabs and registration sanity checks. |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`FileStorageWorkbench`** (`FileStorageWorkbench.razor` / `.razor.cs`) | Top-level workbench surface with Files / Browser / Keys tabs and registration sanity checks. |
 | **`FileStorageWorkbenchHeader`** | Title bar + tab selector. |
 | **`FileStorageRegistrationAlerts`** | Warns when required services (`IFileStorageService`, `IKeyStore`, `IFileStorageWorkbenchQueryService`, `IApiClient`) are missing or misconfigured. |
-| **`FileStoreFilesTab`** (`.razor`, `.razor.cs`, `.razor.css`) | Searchable file metadata grid with row actions (download via access link, view metadata dialog, copy, delete). |
+| **`FileStoreFilesTab`** (`.razor`, `.razor.cs`, `.razor.css`) | Upload/save plus DEK/KEK migrate and rotate. File listing lives on the Browser tab. |
+| **`FileStorageBrowser`** (`.razor`, `.razor.cs`, `.razor.css`) | Two **`LyoDataGridProjected`** views over QueryProject file metadata: operator columns, and expected storage keys from **`CloudObjectKeyBuilder.FromMetadata`**. Row and bulk actions (view, access link, download, move, copy, rename, rotate DEK, delete). Optional **Exists** chip when the storage service implements **`IFileStorageDiagnosticsService`**. |
+| **`FileStorageBrowserActions`** | Shared handlers and dialogs used by both Browser grids. |
 | **`FileStoreKeysTab`** (`.razor`, `.razor.cs`) | Keystore listing with current-version highlighting, file count per key, and **DEK migrate / rotate** controls. |
 | **`FileStoreAccessLinkDialog`** | Confirms link parameters and shows the issued token + expiry. |
 | **`FileStoreMetadataDialog`** | Read-only metadata viewer (encryption header, hashes, audit fields, deletion state). |
-| **`FileStorageGridRowHelper`** | Shared row formatter for both tabs. |
+| **`FileStoreMoveDialog`**, **`FileStoreCopyDialog`**, **`FileStoreRenameDialog`**, **`FileStoreRotateDekDialog`** | Path-prefix, display-name, and DEK rotation prompts for Browser row/bulk actions. |
+| **`FileStorageGridRowHelper`** | Projected-row helpers (file id, deleted-at, expected storage key) for the Browser grids. |
 
 ## Services
 

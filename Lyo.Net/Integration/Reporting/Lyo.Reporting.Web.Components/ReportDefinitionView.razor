@@ -1,69 +1,69 @@
 @inject IApiClient ApiClient
 
-<MudDialog>
-    <DialogContent>
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-2">
-            <MudTabPanel Text="Basic Info">
-                <MudGrid Class="pa-2">
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="ID" Value="@Definition.Id.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Name" Value="@Definition.Name" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudTextField T="string" Label="Description" Value="@Definition.Description" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudTextField T="string" Label="Default Format" Value="@(Definition.DefaultFormat?.ToString() ?? "-")" ReadOnly Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudTextField T="string" Label="Profile Key" Value="@Definition.GenerationProfileKey" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudTextField T="string" Label="Active" Value="@(Definition.IsActive ? "Yes" : "No")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudTextField T="string" Label="Created By" Value="@Definition.CreatedBy" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Default File Name" Value="@Definition.DefaultFileName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Default Path Prefix" Value="@Definition.DefaultPathPrefix" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudExpansionPanels>
-                            <MudExpansionPanel Text="ReportDataJson" TextTypo="Typo.subtitle2">
-                                <MudTextField T="string"
-                                              Value="@Definition.ReportDataJson"
-                                              ReadOnly
-                                              Variant="Variant.Outlined"
-                                              Lines="12"
-                                              Class="mud-width-full"/>
-                            </MudExpansionPanel>
-                        </MudExpansionPanels>
-                    </MudItem>
-                </MudGrid>
-            </MudTabPanel>
-            <MudTabPanel Text="Parameters">
+<LyoDialog>
+    <TitleContent>
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Definition.Name) ? "Report Definition" : Definition.Name)</MudText>
+            @if (Definition.DefaultFormat is { } format) {
+                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(format)">@format</MudChip>
+            }
+            <MudChip T="string" Size="Size.Small" Color="@(Definition.IsActive ? Color.Success : Color.Default)">@(Definition.IsActive ? "Active" : "Off")</MudChip>
+            @if (!string.IsNullOrWhiteSpace(Definition.GenerationProfileKey)) {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@Definition.GenerationProfileKey</MudChip>
+            }
+        </MudStack>
+    </TitleContent>
+    <ChildContent>
+        <MudGrid Class="pa-0" Spacing="1">
+            <MudItem xs="12" sm="6" md="3">
+                <LyoIdField Label="ID" Value="@Definition.Id"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Created By" Value="@(Definition.CreatedBy ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Created" Value="@Definition.CreatedTimestamp.ToString("g")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Updated" Value="@(Definition.UpdatedTimestamp?.ToString("g") ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Path Prefix" Value="@(Definition.DefaultPathPrefix ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="File Name" Value="@(Definition.DefaultFileName ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Tags" Value="@(Definition.Tags ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            @if (!string.IsNullOrWhiteSpace(Definition.Description)) {
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Description" Value="@Definition.Description" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudExpansionPanels Elevation="0" Dense="true">
+                    <MudExpansionPanel Text="ReportDataJson">
+                        <MudTextField T="string"
+                                      Value="@Definition.ReportDataJson"
+                                      ReadOnly
+                                      Variant="Variant.Outlined"
+                                      Lines="6"
+                                      Class="mud-width-full"/>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            </MudItem>
+            <MudItem xs="12">
                 <ReportParameterView Parameters="Definition.Parameters"
                                      ReportDefinitionId="Definition.Id"
                                      ApiClient="ApiClient"
                                      DefinitionRoute="@DefinitionRoute"/>
-            </MudTabPanel>
-        </MudTabs>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Text">Close</MudButton>
-    </DialogActions>
-</MudDialog>
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</LyoDialog>
 
 @code {
-
-    [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]

@@ -43,7 +43,7 @@
       "rows": [
         [
           "**`IFormatterService`**",
-          "Format, validate, inspect placeholders, wrap templates as **`ITemplate`**."
+          "Format, validate, inspect placeholders, wrap templates as **`ITemplate`**, emit annotated **`FormatSegments`**."
         ],
         [
           "**`FormatterService`**",
@@ -56,6 +56,10 @@
         [
           "**`IContextBuilder`**",
           "Fluent dictionary builder passed to **`Format(template, configure)`**."
+        ],
+        [
+          "**`FormatterSegment`** / **`FormatterSegmentKind`**",
+          "Annotated span from **`FormatSegments`**: literal text, a resolved replacement, or an unresolved `{token}` plus the placeholder key and raw template substring."
         ]
       ]
     },
@@ -76,7 +80,8 @@
         "**`ValidateTemplate` / `TryValidateTemplate`** — parser pass; catches syntax errors before you save a template.",
         "**`TryFormat`** — swallows exceptions from SmartFormat and returns false (use sparingly; prefer validation + known context).",
         "**`GetPlaceholders`** — lightweight regex-based names (first segment of each `{...}`); good for UI hints and **`entityTypes`**-style dependency lists.",
-        "**`AllPlaceholdersResolved` / `GetUnresolvedPlaceholders`** — compare template to formatted output; relies on **`MaintainTokens`** so missing keys stay visible as `{Name}`."
+        "**`AllPlaceholdersResolved` / `GetUnresolvedPlaceholders`** — compare template to formatted output; relies on **`MaintainTokens`** so missing keys stay visible as `{Name}`.",
+        "**`FormatSegments`** — walk the parsed template into ordered **`FormatterSegment`** spans (literal / placeholder / unresolved) so UIs can color-link `{Name}` to its replacement without a second parser."
       ]
     },
     {
@@ -94,7 +99,8 @@
       "title": "Integration points",
       "items": [
         "**`Lyo.Api`** — optional **`IFormatterService`** for **`ComputedFields`** on projection/query responses (SmartFormat templates over projected rows).",
-        "**`Lyo.Web.Automation`** — optional **`IFormatterService`** to validate automation plans before execution."
+        "**`Lyo.Web.Automation`** — optional **`IFormatterService`** to validate automation plans before execution.",
+        "**`Lyo.Formatter.Web.Components`** — WASM-safe live template editor + annotated preview (`FormatSegments`)."
       ]
     },
     {

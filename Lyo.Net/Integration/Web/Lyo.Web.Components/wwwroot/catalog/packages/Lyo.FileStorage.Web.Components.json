@@ -2,8 +2,8 @@
   "id": "Lyo.FileStorage.Web.Components",
   "name": "Lyo.FileStorage.Web.Components",
   "area": "Data",
-  "tagline": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.",
-  "description": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, generating download access links, and managing two-key encryption keys.\n\nTwo integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:\n\n1. **Proxy mode** — talks to a backend host (typically **`Lyo.Gateway.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials. 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.",
+  "tagline": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, expected storage keys, generating download access links, and managing two-key encryption keys.",
+  "description": "Blazor (Server / Interactive) UI for **`Lyo.FileStorage`** — workbench grids and dialogs for exploring file metadata, expected storage keys, generating download access links, and managing two-key encryption keys.\n\nTwo integration modes are supported, controlled by **`FileStorageWorkbenchOptions`**:\n\n1. **Proxy mode** — talks to a backend host (typically **`Lyo.Gateway.Api`**, or **`Lyo.TestApi`** for kitchen-sink) over **`Lyo.Api.Client.IApiClient`**. The workbench never sees raw storage credentials. 2. **In-process mode** — host auto-registers a keyed file-storage stack (S3 + AWS Secrets Manager keystore + Postgres metadata) directly inside the Blazor app.",
   "features": [],
   "examples": [],
   "sections": [
@@ -17,7 +17,7 @@
       "rows": [
         [
           "**`FileStorageWorkbench`** (`FileStorageWorkbench.razor` / `.razor.cs`)",
-          "Top-level workbench surface with Files / Keys tabs and registration sanity checks."
+          "Top-level workbench surface with Files / Browser / Keys tabs and registration sanity checks."
         ],
         [
           "**`FileStorageWorkbenchHeader`**",
@@ -29,7 +29,15 @@
         ],
         [
           "**`FileStoreFilesTab`** (`.razor`, `.razor.cs`, `.razor.css`)",
-          "Searchable file metadata grid with row actions (download via access link, view metadata dialog, copy, delete)."
+          "Upload/save plus DEK/KEK migrate and rotate. File listing lives on the Browser tab."
+        ],
+        [
+          "**`FileStorageBrowser`** (`.razor`, `.razor.cs`, `.razor.css`)",
+          "Two **`LyoDataGridProjected`** views over QueryProject file metadata: operator columns, and expected storage keys from **`CloudObjectKeyBuilder.FromMetadata`**. Row and bulk actions (view, access link, download, move, copy, rename, rotate DEK, delete). Optional **Exists** chip when the storage service implements **`IFileStorageDiagnosticsService`**."
+        ],
+        [
+          "**`FileStorageBrowserActions`**",
+          "Shared handlers and dialogs used by both Browser grids."
         ],
         [
           "**`FileStoreKeysTab`** (`.razor`, `.razor.cs`)",
@@ -44,8 +52,12 @@
           "Read-only metadata viewer (encryption header, hashes, audit fields, deletion state)."
         ],
         [
+          "**`FileStoreMoveDialog`**, **`FileStoreCopyDialog`**, **`FileStoreRenameDialog`**, **`FileStoreRotateDekDialog`**",
+          "Path-prefix, display-name, and DEK rotation prompts for Browser row/bulk actions."
+        ],
+        [
           "**`FileStorageGridRowHelper`**",
-          "Shared row formatter for both tabs."
+          "Projected-row helpers (file id, deleted-at, expected storage key) for the Browser grids."
         ]
       ]
     },

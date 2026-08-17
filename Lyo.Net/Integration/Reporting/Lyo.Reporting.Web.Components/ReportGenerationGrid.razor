@@ -11,7 +11,9 @@
                       GridKey="ReportGenerationGrid"
                       Route="@_generationRoute"
                       KeySelector="@GetKey"
+                      KeySelectFields="@_keySelectFields"
                       FilterPropertyDefinitions="@_propertyDefinitions"
+                      QuickSearchProperties="@_quickSearchProperties"
                       Features="@LyoDataGridFeatureFlags.All">
     <BulkExportControls>
         <LyoDataGridExportMenu Host="context">
@@ -21,6 +23,22 @@
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                   OnClick="@(() => ViewGeneration(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" Color="Color.Primary" title="Open output"
+                                   Disabled="@(!CanViewOutput(cell.Item))"
+                                   OnClick="@(() => ViewOutput(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" title="Download output"
+                                   Disabled="@(!CanDownloadOutput(cell.Item))"
+                                   OnClick="@(() => DownloadOutput(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{
@@ -33,25 +51,26 @@
                 </MudStack>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="ReportDefinitionId" Title="Definition" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
-            <CellContent Context="item">
+        <LyoProjectedColumn Field="ReportDefinition.Name" Title="Definition" QuickSearchPropertyName="ReportDefinition.Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center" HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
+            <CellTemplate Context="cell">
                 @{
-                    var defId = ProjectedValueHelper.GetDisplayValue(item, "ReportDefinitionId");
+                    var (started, finished) = GetTimestamps(cell.Item);
                 }
-                <MudText Typo="Typo.body2" Style="font-family: monospace;">@Shorten(defId)</MudText>
-            </CellContent>
-        </LyoProjectedColumn>
+                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForDuration(started, finished)"
+                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)">
+                    @ReportColorHelper.FormatDurationFromDates(started, finished)
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Format" Title="Format" Align="Align.Center" HeaderStyle="width: 90px;">
             <CellContent Context="item">
                 @{
                     var formatText = ProjectedValueHelper.GetDisplayValue(item, "Format");
                 }
-                @if (Enum.TryParse<ReportFormat>(formatText, out var format)) {
-                    <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(format)">@format</MudChip>
-                }
-                else {
-                    @formatText
-                }
+                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(formatText)">
+                    @(string.IsNullOrWhiteSpace(formatText) ? "—" : formatText)
+                </MudChip>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center" HeaderStyle="width: 110px;">
@@ -59,39 +78,21 @@
                 @{
                     var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
                 }
-                @if (Enum.TryParse<ReportGenerationStatus>(statusText, out var status)) {
-                    <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForStatus(status)">@status</MudChip>
-                }
-                else {
-                    @statusText
-                }
+                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForStatus(statusText)">
+                    @(string.IsNullOrWhiteSpace(statusText) ? "—" : statusText)
+                </MudChip>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="CreatedBy" Title="Created By"/>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created"/>
-        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
         <LyoProjectedColumn Field="OriginalFileName" Title="File"/>
+        <LyoProjectedColumn Field="ReportDefinitionId" Title="Definition ID" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="OutputFileId" Title="Output File" HiddenByDefault="true"/>
-        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false" HeaderStyle="width: 100px;" CellStyle="white-space: nowrap;">
-            <CellTemplate Context="cell">
-                <MudStack Row Spacing="0">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
-                                   OnClick="@(() => ViewGeneration(cell.Item))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" Color="Color.Primary" title="Open output"
-                                   Disabled="@(!HasOutput(cell.Item))"
-                                   OnClick="@(() => ViewOutput(cell.Item))"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" title="Download output"
-                                   Disabled="@(!HasOutput(cell.Item))"
-                                   OnClick="@(() => DownloadOutput(cell.Item))"/>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
     </Columns>
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewGeneration(item))">Details</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => ViewOutput(item))" Disabled="@(!HasOutput(item))">View</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="@(() => DownloadOutput(item))" Disabled="@(!HasOutput(item))">Download</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => ViewOutput(item))" Disabled="@(!CanViewOutput(item))">View</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="@(() => DownloadOutput(item))" Disabled="@(!CanDownloadOutput(item))">Download</MudMenuItem>
     </RowMenuControls>
 </LyoDataGridProjected>
 
@@ -106,7 +107,7 @@
     public string BaseRoute { get; set; } = "Reporting";
 
     [Parameter]
-    public Func<Guid, CancellationToken, Task>? DownloadFileAsync { get; set; }
+    public Func<Guid, string?, CancellationToken, Task>? DownloadFileAsync { get; set; }
 
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
@@ -115,7 +116,11 @@
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Status"), new("Format"), new("CreatedBy", "Created By")];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Status"), new("Format"), new("CreatedBy", "Created By"), new("ReportDefinition.Name", "Definition")];
+
+    private static readonly string[] _keySelectFields = ["Id", "OutputFileId", "StartedTimestamp", "FinishedTimestamp", "OriginalFileName", "ReportDefinitionId"];
+
+    private static readonly string[] _quickSearchProperties = ["Id", "ReportDefinitionId", "ReportDefinition.Name", "OriginalFileName", "OutputFileId"];
 
     private static object[] GetKey(object? item)
     {
@@ -131,11 +136,26 @@
         Snackbar.Add("Copied to clipboard", Severity.Info);
     }
 
+    private static (DateTime? Started, DateTime? Finished) GetTimestamps(object? item)
+        => (LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "StartedTimestamp")),
+            LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "FinishedTimestamp")));
+
     private static bool HasOutput(object? item)
     {
         var id = ProjectedValueHelper.GetValue(item, "OutputFileId");
         return ProjectedValueHelper.TryGetGuid(id, out var _);
     }
+
+    private bool CanViewOutput(object? item)
+    {
+        var formatText = ProjectedValueHelper.GetDisplayValue(item, "Format");
+        if (Enum.TryParse<ReportFormat>(formatText, out var format) && format is ReportFormat.Csv or ReportFormat.Xlsx)
+            return true;
+
+        return HasOutput(item) && ViewFileUrlAsync is not null;
+    }
+
+    private bool CanDownloadOutput(object? item) => HasOutput(item) && DownloadFileAsync is not null;
 
     private async Task<ReportGenerationRes?> FetchGeneration(object? id)
     {
@@ -157,7 +177,7 @@
         }
 
         var parameters = new DialogParameters<ReportGenerationView> { { d => d.Generation, gen }, { d => d.DownloadFileAsync, DownloadFileAsync }, { d => d.ViewFileUrlAsync, ViewFileUrlAsync } };
-        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Large);
+        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
     }
 
     private async Task ViewOutput(object? item)
@@ -229,7 +249,8 @@
             return;
         }
 
-        await DownloadFileAsync(guid, CancellationToken.None);
+        var fileName = ProjectedValueHelper.GetDisplayValue(item, "OriginalFileName");
+        await DownloadFileAsync(guid, string.IsNullOrWhiteSpace(fileName) ? null : fileName, CancellationToken.None);
         Snackbar.Add("Download started.", Severity.Success);
     }
 

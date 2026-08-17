@@ -9,9 +9,9 @@
                 Resizable="@Resizable"
                 Tag="@GetApiSortKey()"
                 HeaderStyle="@EffectiveHeaderStyle"
-                HeaderClass="@HeaderClass"
+                HeaderClass="@EffectiveHeaderClass"
                 CellStyle="@EffectiveCellStyle"
-                CellClass="@CellClass"
+                CellClass="@EffectiveCellClass"
                 Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
                 HiddenChanged="@OnHiddenChanged">
     <CellTemplate Context="cell">
@@ -127,6 +127,10 @@
 
     private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
 
+    private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
+
+    private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
+
     private static string MergeAlignStyle(string? style, Align align)
         => align switch {
             Align.Center => AppendStyle(style, "text-align: center;"),
@@ -135,6 +139,15 @@
             var _ => style ?? string.Empty
         };
 
+    private static string MergeAlignClass(string? cssClass, Align align)
+        => align switch {
+            Align.Center => AppendClass(cssClass, "lyo-dg-align-center"),
+            Align.Right => AppendClass(cssClass, "lyo-dg-align-right"),
+            var _ => cssClass ?? string.Empty
+        };
+
     private static string AppendStyle(string? style, string snippet) => string.IsNullOrEmpty(style) ? snippet : $"{style.TrimEnd()} {snippet}";
+
+    private static string AppendClass(string? cssClass, string extra) => string.IsNullOrWhiteSpace(cssClass) ? extra : $"{cssClass} {extra}";
 
 }

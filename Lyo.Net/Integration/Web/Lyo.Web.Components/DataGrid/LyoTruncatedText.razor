@@ -1,0 +1,22 @@
+@namespace Lyo.Web.Components.DataGrid
+
+@if (ChipLabelHelper.ShouldTruncate(Text, MaxLength)) {
+    <MudTooltip Text="@Text">
+        <span style="display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; vertical-align: bottom;">@ChipLabelHelper.TruncateLabel(Text, MaxLength)</span>
+    </MudTooltip>
+}
+else {
+    <span>@(string.IsNullOrEmpty(Text) ? "—" : Text)</span>
+}
+
+@code {
+
+    /// <summary>Full text. Truncated in-cell; hover shows this value in a tooltip when longer than <see cref="MaxLength" />.</summary>
+    [Parameter]
+    public string? Text { get; set; }
+
+    /// <summary>Visible character budget including the ellipsis. Defaults to <see cref="ChipLabelHelper.DefaultGridCellMaxLength" />.</summary>
+    [Parameter]
+    public int MaxLength { get; set; } = ChipLabelHelper.DefaultGridCellMaxLength;
+
+}

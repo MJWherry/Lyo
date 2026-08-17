@@ -60,6 +60,9 @@ public partial class FileStorageWorkbench : ComponentBase
 
     public IFileStorageService? FileStorage { get; private set; }
 
+    /// <summary>Diagnostics listing when the resolved storage service implements <see cref="IFileStorageDiagnosticsService" /> (local, S3, blob, or the Test Gateway proxy).</summary>
+    public IFileStorageDiagnosticsService? Diagnostics => FileStorage as IFileStorageDiagnosticsService;
+
     public IKeyStore? KeyStore { get; private set; }
 
     public IKeyInventoryStore? InventoryStore { get; private set; }
@@ -67,6 +70,9 @@ public partial class FileStorageWorkbench : ComponentBase
     public IFileStorageWorkbenchQueryService? QueryService { get; private set; }
 
     public LocalKeyStore? LocalKeyStore { get; private set; }
+
+    /// <summary>Raised after mutating file operations so the Browser tab can refresh QueryProject grids.</summary>
+    public event Func<Task>? FilesChanged;
 
     public IReadOnlyList<string> AvailableKeyIds => _availableKeyIds;
 
@@ -79,6 +85,9 @@ public partial class FileStorageWorkbench : ComponentBase
     public string DescribeKeyStoreResolution() => Resolver.DescribeKeyStoreResolution();
 
     public void SetStatus(string message, Severity severity) => Snackbar.Add(message, severity);
+
+    /// <summary>Notifies Browser grids that metadata or backing objects changed.</summary>
+    public Task NotifyFilesChangedAsync() => FilesChanged?.Invoke() ?? Task.CompletedTask;
 
     /// <summary>Resolves an API-relative path (e.g. <c>Workbench/FileStorage/files/...</c>) against the configured <see cref="IApiClient" /> base URL.</summary>
     /// <returns>Absolute URL when the client has <see cref="HttpClient.BaseAddress" /> set; otherwise <see langword="null" />.</returns>

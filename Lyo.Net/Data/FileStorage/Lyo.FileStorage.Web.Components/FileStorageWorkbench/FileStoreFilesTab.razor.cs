@@ -1,11 +1,8 @@
 using Lyo.FileMetadataStore.Models;
 using Lyo.IO.Temp.Models;
-using Lyo.Web.Components.DataGrid;
-using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
@@ -17,7 +14,6 @@ public partial class FileStoreFilesTab : ComponentBase
     private int _cryptoOpsTab;
 
     private bool _fileBusy;
-    private LyoDataGridProjected? _fileMetadataGrid;
     private int _migrationBatchSize = 100;
     private DekMigrationResult? _migrationResult;
 
@@ -143,8 +139,7 @@ public partial class FileStoreFilesTab : ComponentBase
                 _uploadedFile.FilePath, string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
                 _saveEncrypt ? _saveKeyId : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
 
-            if (_fileMetadataGrid != null)
-                await _fileMetadataGrid.RefreshData();
+            await Workbench.NotifyFilesChangedAsync();
 
             Workbench.SetStatus($"Uploaded file {result.Id}.", Severity.Success);
             _uploadStatus = $"Uploaded file {result.Id}.";
@@ -180,6 +175,7 @@ public partial class FileStoreFilesTab : ComponentBase
             Workbench.SetStatus(
                 _migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.",
                 _migrationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+            await Workbench.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
             Workbench.SetStatus(ex.Message, Severity.Error);
@@ -206,6 +202,7 @@ public partial class FileStoreFilesTab : ComponentBase
             Workbench.SetStatus(
                 _rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.",
                 _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+            await Workbench.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
             Workbench.SetStatus(ex.Message, Severity.Error);
@@ -219,135 +216,6 @@ public partial class FileStoreFilesTab : ComponentBase
     {
         _rotationFileIds = values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         return Task.CompletedTask;
-    }
-
-    private async Task OpenAccessLinkDialogFromRowAsync(object? row)
-    {
-        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
-            Workbench.SetStatus("Access links cannot be created for deleted files.", Severity.Info);
-            return;
-        }
-
-        if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
-            Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
-            return;
-        }
-
-        var parameters = new DialogParameters<FileStoreAccessLinkDialog> { { d => d.Workbench, Workbench }, { d => d.FileId, fileId } };
-        await Workbench.DialogService.ShowAsync<FileStoreAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
-    }
-
-    private async Task ViewFileMetadataFromRowAsync(object? row)
-    {
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            return;
-        }
-
-        if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
-            Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
-            return;
-        }
-
-        _fileBusy = true;
-        try {
-            FileStoreResult result;
-            if (FileStorageGridRowHelper.IsRowDeleted(row)) {
-                var uri = $"{Workbench.FileStorageApiRoutePrefix.TrimEnd('/')}/files/{fileId:D}/metadata?includeDeleted=true";
-                result = await Workbench.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false) ??
-                    throw new InvalidOperationException($"Metadata for deleted file {fileId} was not returned.");
-            }
-            else
-                result = await storage.GetMetadataAsync(fileId).ConfigureAwait(false);
-
-            await ShowFileMetadataDialogAsync(result);
-            Workbench.SetStatus($"Loaded metadata for {fileId}.", Severity.Success);
-        }
-        catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
-        }
-        finally {
-            _fileBusy = false;
-        }
-    }
-
-    private async Task DownloadFileFromRowAsync(object? row)
-    {
-        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
-            Workbench.SetStatus("Deleted files cannot be downloaded; the backing object was removed.", Severity.Info);
-            return;
-        }
-
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            return;
-        }
-
-        if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
-            Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
-            return;
-        }
-
-        _fileBusy = true;
-        try {
-            var meta = await storage.GetMetadataAsync(fileId);
-            if (!meta.IsEncrypted && !meta.IsCompressed) {
-                var url = await storage.GetPreSignedReadUrlAsync(fileId);
-                await Workbench.JsRuntime.InvokeVoidAsync("open", url, "_blank");
-                Workbench.SetStatus($"Opened presigned download for {fileId}.", Severity.Success);
-            }
-            else {
-                var url = Workbench.NavigationManager.ToAbsoluteUri($"/{Workbench.ProxyDownloadPath}/{fileId:D}").AbsoluteUri;
-                await Workbench.JsRuntime.InvokeVoidAsync("open", url, "_blank");
-                Workbench.SetStatus($"Started download for {fileId}.", Severity.Success);
-            }
-        }
-        catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
-        }
-        finally {
-            _fileBusy = false;
-        }
-    }
-
-    private async Task DeleteFileFromRowAsync(object? row)
-    {
-        if (FileStorageGridRowHelper.IsRowDeleted(row)) {
-            Workbench.SetStatus("This file is already deleted.", Severity.Info);
-            return;
-        }
-
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            return;
-        }
-
-        if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
-            Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
-            return;
-        }
-
-        var confirm = await Workbench.DialogService.ShowMessageBoxAsync("Delete file", $"Delete file {fileId}?", "Delete", cancelText: "Cancel");
-        if (confirm != true)
-            return;
-
-        _fileBusy = true;
-        try {
-            var deleted = await storage.DeleteFileAsync(fileId);
-            if (deleted && _fileMetadataGrid != null)
-                await _fileMetadataGrid.RefreshData();
-
-            Workbench.SetStatus(deleted ? $"Deleted file {fileId}." : $"File {fileId} was not deleted.", deleted ? Severity.Success : Severity.Warning);
-        }
-        catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
-        }
-        finally {
-            _fileBusy = false;
-        }
     }
 
     private Task OnSaveKeyIdChanged(string? value)
@@ -472,10 +340,4 @@ public partial class FileStoreFilesTab : ComponentBase
     }
 
     private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private async Task ShowFileMetadataDialogAsync(FileStoreResult metadata)
-    {
-        var parameters = new DialogParameters<FileStoreMetadataDialog> { { d => d.Metadata, metadata } };
-        await Workbench.DialogService.ShowAsync<FileStoreMetadataDialog>("File metadata", parameters, LyoDialogPresets.Medium);
-    }
 }

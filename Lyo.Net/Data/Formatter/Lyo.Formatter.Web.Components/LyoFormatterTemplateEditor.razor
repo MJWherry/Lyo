@@ -1,0 +1,58 @@
+@namespace Lyo.Formatter.Web.Components
+@implements IAsyncDisposable
+
+<div class="lyo-fmt-editor">
+    @if (!string.IsNullOrWhiteSpace(Label)) {
+        <MudText Typo="Typo.caption" Class="mb-1">@Label</MudText>
+    }
+    <div class="lyo-fmt-wrap" @ref="_wrap">
+        <div class="lyo-fmt-frame">
+            <pre class="lyo-fmt-highlight" aria-hidden="true">@foreach (var segment in Resolved.TemplateSegments) {<LyoFormatterToken Segment="segment" Session="Resolved" ShowRawToken="true"/>}</pre>
+            <textarea class="lyo-fmt-input"
+                      @ref="_textarea"
+                      value="@Resolved.Template"
+                      @oninput="OnInputFallbackAsync"
+                      @onclick="OnCaretMovedAsync"
+                      @onkeyup="OnKeyUpAsync"
+                      @onblur="OnBlurAsync"
+                      rows="@Lines"
+                      placeholder="@Placeholder"
+                      disabled="@Disabled"
+                      spellcheck="false"
+                      autocomplete="off"
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded="@(_suggestions.Count > 0)"/>
+        </div>
+    </div>
+    @if (_suggestions.Count > 0) {
+        <ul @ref="_suggestList" class="lyo-fmt-suggest" role="listbox">
+            @for (var i = 0; i < _suggestions.Count; i++) {
+                var index = i;
+                var item = _suggestions[i];
+                <li role="option"
+                    class="@(_activeIndex == index ? "lyo-fmt-suggest-active" : null)"
+                    aria-selected="@(_activeIndex == index)"
+                    @onmousedown:preventDefault="true"
+                    @onclick="() => InsertSuggestionAsync(item)">
+                    <code>@item.Path</code>
+                    <span class="lyo-fmt-suggest-preview">@item.Preview</span>
+                </li>
+            }
+        </ul>
+    }
+    @if (Resolved.PlaceholderKeys.Count > 0) {
+        <div class="lyo-fmt-chips">
+            @foreach (var key in Resolved.PlaceholderKeys) {
+                <button type="button"
+                        class="@ChipClass(key)"
+                        style="@ChipStyle(key)"
+                        @onmouseenter="() => Resolved.HoveredPlaceholder = key"
+                        @onmouseleave="() => ClearHover(key)">@key</button>
+            }
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Resolved.ValidationError)) {
+        <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">@Resolved.ValidationError</MudText>
+    }
+</div>
