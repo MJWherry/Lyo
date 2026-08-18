@@ -26,9 +26,13 @@ Outcome panel shows **`BulkResult<SmsRequest>`** summary (total/success/failure/
 
 ---
 
+## Component: **`TwilioSmsLogGrid`**
+
+Projected grid over **`POST {BaseRoute}/TwilioSmsLogEntity/QueryProject`** (default base **`Twilio`**). **Body** is truncated with ellipsis; hover shows the full text. Row menu **Open chat** queries **`To` or `From` = that person** (outbound → row **To**, inbound → row **From**) and pages until all matching log rows are loaded. Header **Refresh** re-runs that query. Composer sends via **`ISmsService.SendSmsAsync`**, then **`POST`**s the existing create route. Pass **`IApiClient`**; the host must also register **`ISmsService`**. ---
+
 ## Setup expectations
 
-In the consuming host's **`Program.cs`** / startup: 1. Register a real **`ISmsService`** (e.g. **`AddTwilioSmsService*`**). 2. Add MudBlazor + [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) services the host already uses internally. 3. Render **`<SmsWorkbench />`** inside an authenticated or internal-only area—this component has **no** rate limiting UI. Reminder from the Razor copy: MMS media must be **publicly reachable** by the SMS aggregator; unsupported providers quietly ignore attachments. ---
+In the consuming host's **`Program.cs`** / startup: 1. Register a real **`ISmsService`** (e.g. **`AddTwilioSmsService*`**). 2. Add MudBlazor + [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) services the host already uses internally. 3. Render **`<SmsWorkbench />`** and/or **`<TwilioSmsLogGrid ApiClient="…" />`** inside an authenticated or internal-only area—these components have **no** rate limiting UI. Reminder from the Razor copy: MMS media must be **publicly reachable** by the SMS aggregator; unsupported providers quietly ignore attachments. ---
 
 ## Dependencies
 
@@ -42,17 +46,21 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Web.Components.Export.Xlsx` — (direct, lyo)
 - `MudBlazor` `9.3` — (direct, third-party)
 - `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Cache` — (transitive, lyo)
 - `Lyo.Common` — (transitive, lyo)
+- `Lyo.Compression` — (transitive, lyo)
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Encryption` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Health` — (transitive, lyo)
 - `Lyo.IO.Temp` — (transitive, lyo)
 - `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Query` — (transitive, lyo)
 - `Lyo.Query.Models` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Sms.Models` — (transitive, lyo)
@@ -60,9 +68,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Validation` — (transitive, lyo)
 - `Blazored.LocalStorage` `4.5.0` — (transitive, third-party)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` — (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)

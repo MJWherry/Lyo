@@ -15,7 +15,7 @@ Targets `net10.0`.
 - **Collection paths** — `Lines.Quantity` → `Any(...)` on collection elements; bare collection / `.Count` style paths compare against count
 - **Two-phase SubClause** — `includeSubClauses: false` for SQL root pass; load includes then match sub-tree in memory
 - **Multi-key sort** — `SortByProperty` + `ApplyOrdering` with `Priority` and stable default tie-break
-- **In-memory match + explain** — `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail
+- **In-memory match + explain** — `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail; `ExplainMatch(...).ToErrors()` for structured validation errors
 - **ICache hot path** — compiled EF predicates (`filter_ef_predicate:*`), matchers (`filter_matcher:*`), sort keys, property-path metadata
 - **Path validation** — `TryValidatePropertyPath` / `InvalidQueryException` for bad dotted paths
 - **Contains→Regex coalesce** — adjacent `Contains` leaves on the same string field can merge into one `Regex` alternation
@@ -97,6 +97,7 @@ if (whereClauseService.MatchesWhereClause(entity, where))
     var explain = whereClauseService.ExplainMatch(entity, where);
     // explain.Passed, BlockingPath, FailureSummary, Nodes (per-condition ActualValueSummary)
     // In-memory only — not for SQL-only pipelines
+    IReadOnlyList<Error> errors = explain.ToErrors(); // structured validation errors; empty when Passed
 }
 ```
 

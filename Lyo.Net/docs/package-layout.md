@@ -207,6 +207,8 @@ Stays under `Communication/Translation/`.
 | `Lyo.Geolocation.Postgres` | A | `Core/Geolocation/` |
 | `Lyo.EntityReference.Models` | A | `Core/EntityReference/` |
 | `Lyo.EntityReference.Postgres` | A | `Core/EntityReference/` |
+| `Lyo.Validation` | A | `Core/Validation/` |
+| `Lyo.Validation.Postgres` | A | `Core/Validation/` |
 
 ### EntityReference (Archetype A)
 

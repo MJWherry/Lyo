@@ -210,7 +210,7 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
 
         var inserted = "{" + entry.Path + "}";
         Resolved.Template = template[..span.BraceIndex] + inserted + template[span.EndIndex..];
-        _caret = span.BraceIndex + inserted.Length;
+        _caret = LyoFormatterContextCatalog.CaretAfterInsert(span.BraceIndex, entry.Path, entry.HasChildren);
         _pendingCaret = _caret;
         _suggestions = [];
         _blurGeneration++;
@@ -232,13 +232,11 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
             return;
         }
 
-        var replaceExisting = span.Closed;
-        var prefix = replaceExisting ? string.Empty : span.Prefix;
-        var limit = replaceExisting ? 32 : LyoFormatterContextCatalog.DefaultSuggestLimit;
+        var limit = span.Closed ? 32 : LyoFormatterContextCatalog.DefaultSuggestLimit;
         var previous = (uint)_activeIndex < (uint)_suggestions.Count ? _suggestions[_activeIndex].Path : null;
-        _suggestions = LyoFormatterContextCatalog.Filter(Catalog, prefix, limit, listAllWhenEmpty: replaceExisting);
+        _suggestions = LyoFormatterContextCatalog.Suggest(Catalog, span, limit);
         _activeIndex = IndexOfPath(_suggestions, previous);
-        if (_activeIndex < 0 && replaceExisting && span.Key.Length > 0)
+        if (_activeIndex < 0 && span.Closed && span.Key.Length > 0)
             _activeIndex = IndexOfPath(_suggestions, span.Key);
         if (_activeIndex < 0)
             _activeIndex = 0;

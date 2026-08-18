@@ -10,7 +10,7 @@
     "**Collection paths** — `Lines.Quantity` → `Any(...)` on collection elements; bare collection / `.Count` style paths compare against count",
     "**Two-phase SubClause** — `includeSubClauses: false` for SQL root pass; load includes then match sub-tree in memory",
     "**Multi-key sort** — `SortByProperty` + `ApplyOrdering` with `Priority` and stable default tie-break",
-    "**In-memory match + explain** — `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail",
+    "**In-memory match + explain** — `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail; `ExplainMatch(...).ToErrors()` for structured validation errors",
     "**ICache hot path** — compiled EF predicates (`filter_ef_predicate:*`), matchers (`filter_matcher:*`), sort keys, property-path metadata",
     "**Path validation** — `TryValidatePropertyPath` / `InvalidQueryException` for bad dotted paths",
     "**Contains→Regex coalesce** — adjacent `Contains` leaves on the same string field can merge into one `Regex` alternation",
@@ -41,7 +41,7 @@
     {
       "title": "Match and ExplainMatch",
       "language": "csharp",
-      "code": "var entity = await db.People.AsNoTracking().FirstAsync(ct);\n\nif (whereClauseService.MatchesWhereClause(entity, where))\n{\n    var explain = whereClauseService.ExplainMatch(entity, where);\n    // explain.Passed, BlockingPath, FailureSummary, Nodes (per-condition ActualValueSummary)\n    // In-memory only — not for SQL-only pipelines\n}"
+      "code": "var entity = await db.People.AsNoTracking().FirstAsync(ct);\n\nif (whereClauseService.MatchesWhereClause(entity, where))\n{\n    var explain = whereClauseService.ExplainMatch(entity, where);\n    // explain.Passed, BlockingPath, FailureSummary, Nodes (per-condition ActualValueSummary)\n    // In-memory only — not for SQL-only pipelines\n    IReadOnlyList<Error> errors = explain.ToErrors(); // structured validation errors; empty when Passed\n}"
     },
     {
       "title": "Validate paths + collection includes",

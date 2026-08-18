@@ -39,7 +39,7 @@
         "**Stable colors** — `LyoFormatterPlaceholderPalette` hashes the placeholder key (ordinal ignore-case) to an HSL hue so `{Name}` and its replacement always match. Fills are `color-mix`ed into `--mud-palette-surface` so light and dark themes keep contrast. Not re-randomized per render.",
         "**Hover** — sets `Session.HoveredPlaceholder`; matching spans get a stronger fill and outline.",
         "**Unresolved** — missing context (`MaintainTokens`) uses a muted dashed underline instead of a key color.",
-        "**Autocomplete** — `LyoFormatterContextCatalog` walks `Session.Context` (dictionary keys or public properties, nested up to 3 levels). Typing `{` opens a floating list under the caret of keys and nested object properties (`User`, `User.Address.City`). Arrow/Enter/Tab/Escape move and insert; the active row scrolls into view.",
+        "**Autocomplete** — `LyoFormatterContextCatalog` walks `Session.Context` (dictionary keys or public properties, nested up to 3 levels). Typing `{` opens a floating list under the caret of keys and nested object properties (`User`, `User.Address.City`). Further typing filters the list (prefix match on the path or a dotted segment), including inside an already-closed `{key}`. Arrow/Enter/Tab/Escape move and insert; the active row scrolls into view.",
         "Optional **`CascadingValue`** of the session so distant editor/preview pairs need not pass `Session` on every call; an explicit `Session` parameter still wins."
       ]
     },
@@ -99,7 +99,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -155,6 +171,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -180,6 +204,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -238,6 +270,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -257,7 +298,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

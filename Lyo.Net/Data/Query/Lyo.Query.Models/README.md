@@ -6,7 +6,7 @@ Covers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryRe
 
 > **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
 
-Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
+Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions`, `Lyo.Common`, and `Lyo.Result`.
 
 ## Features
 
@@ -17,6 +17,7 @@ Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
 - **Fluent builders** — `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`
 - **ParameterOptions** — static key/label list or root `QueryReq` template for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`)
 - **Shared with Lyo.Query + Lyo.Api** — same DTOs for in-process LINQ and HTTP endpoints
+- **Explain → errors** — `WhereClauseExplainResult.ToErrors` maps a failed in-memory explain tree to `Lyo.Result.Error` (AND = per-leaf, OR = one summary). Used by validation schemas; not for SQL `ApplyWhereClause`.
 
 ## Examples
 
@@ -194,6 +195,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Common` — (direct, lyo)
 - `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Result` — (direct, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

@@ -138,7 +138,8 @@ top-level area.
 - [Lyo.Testing](Lyo.Net/Core/Testing/Lyo.Testing/README.md): Part of the Lyo workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an…
 - [Lyo.Testing.Containers](Lyo.Net/Core/Testing/Lyo.Testing.Containers/README.md): xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing.
 - [Lyo.TextEncoding](Lyo.Net/Core/Common/Lyo.TextEncoding/README.md): Binary codecs (Base64 / Base64Url / Hex) and charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable façades.
-- [Lyo.Validation](Lyo.Net/Core/Validation/Lyo.Validation/README.md): `Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures.
+- [Lyo.Validation](Lyo.Net/Core/Validation/Lyo.Validation/README.md): `Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and data-driven schemas that reuse the WhereClause engine.
+- [Lyo.Validation.Postgres](Lyo.Net/Core/Validation/Lyo.Validation.Postgres/README.md): PostgreSQL persistence for `ValidationSchema` documents (WhereClause JSONB) via `IValidationSchemaStore`.
 - [Lyo.Webhook](Lyo.Net/Core/Webhook/Lyo.Webhook/README.md): Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and…
 - [Lyo.Webhook.Twilio](Lyo.Net/Core/Webhook/Lyo.Webhook.Twilio/README.md): **Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value** form parameters…
 

@@ -40,6 +40,30 @@ public class ValidatorBuilder<T>
     /// <summary>Includes validation declared via attributes on the target type.</summary>
     public ValidatorBuilder<T> IncludeAttributes() => Include(AttributeValidator<T>.Shared);
 
+    /// <summary>Includes a loaded <see cref="ValidationSchema" /> evaluated by <paramref name="evaluator" />.</summary>
+    public ValidatorBuilder<T> IncludeSchema(ValidationSchema schema, IValidationClauseEvaluator evaluator)
+    {
+        ArgumentHelpers.ThrowIfNull(schema);
+        ArgumentHelpers.ThrowIfNull(evaluator);
+        ValidationSchemaCompiler.EnsureTargetType<T>(schema);
+        return Include(new WhereClauseValidator<T>(schema, evaluator));
+    }
+
+    /// <summary>
+    /// Loads <paramref name="key" /> from <paramref name="store" /> synchronously and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async hosts.
+    /// </summary>
+    public ValidatorBuilder<T> IncludeStore(IValidationSchemaStore store, string key, IValidationClauseEvaluator evaluator)
+    {
+        ArgumentHelpers.ThrowIfNull(store);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(evaluator);
+        var schema = store.GetAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
+        if (schema == null)
+            throw new InvalidOperationException($"Validation schema '{key}' was not found.");
+
+        return IncludeSchema(schema, evaluator);
+    }
+
     /// <summary>Adds a model-level predicate rule.</summary>
     public ValidatorBuilder<T> Must(Func<T, bool> predicate, string errorCode, string errorMessage, IReadOnlyDictionary<string, object>? metadata = null)
     {

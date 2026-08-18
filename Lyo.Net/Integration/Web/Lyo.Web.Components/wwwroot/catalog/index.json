@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-17T02:27:01.442531+00:00",
+  "generatedAt": "2026-08-18T17:34:29.954144+00:00",
   "packageCount": 217,
   "packages": [
     {
@@ -775,9 +775,19 @@
       "area": "Core",
       "topic": "Lyo.Validation",
       "name": "Lyo.Validation",
-      "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures.",
+      "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and data-driven schemas that reuse the WhereClause engine.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Validation.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Validation.Postgres",
+      "name": "Lyo.Validation.Postgres",
+      "tagline": "PostgreSQL persistence for `ValidationSchema` documents (WhereClause JSONB) via `IValidationSchemaStore`.",
+      "targetFrameworks": [
         "net10.0"
       ]
     },

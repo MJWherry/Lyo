@@ -128,6 +128,8 @@
     <Folder Name="/Core/Validation/">
         <Project Path="Core/Validation/Lyo.Validation.Tests/Lyo.Validation.Tests.csproj"/>
         <Project Path="Core/Validation/Lyo.Validation/Lyo.Validation.csproj"/>
+        <Project Path="Core/Validation/Lyo.Validation.Postgres/Lyo.Validation.Postgres.csproj"/>
+        <Project Path="Core/Validation/Lyo.Validation.Postgres.Tests/Lyo.Validation.Postgres.Tests.csproj"/>
     </Folder>
     <Folder Name="/Core/Webhook/">
         <Project Path="Core/Webhook/Lyo.Webhook/Lyo.Webhook.csproj"/>

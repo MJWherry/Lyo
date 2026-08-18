@@ -1,7 +1,8 @@
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
 @using Lyo.Web.Components.Export.Xlsx
-<LyoDataGridProjected ApiClient="ApiClient"
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
                       GridKey="TwilioSmsLogGrid"
                       Route="@_logRoute"
                       KeySelector="@GetKey"
@@ -17,7 +18,7 @@
         <LyoProjectedColumn Field="Id" Title="SID"/>
         <LyoProjectedColumn Field="To" Title="To" QuickSearchPropertyName="To"/>
         <LyoProjectedColumn Field="From" Title="From" QuickSearchPropertyName="From"/>
-        <LyoProjectedColumn Field="Body" Title="Body" QuickSearchPropertyName="Body"/>
+        <LyoProjectedColumn Field="Body" Title="Body" QuickSearchPropertyName="Body" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
         <LyoProjectedColumn Field="Status" Title="Status" QuickSearchPropertyName="Status"/>
         <LyoProjectedColumn Field="Direction" Title="Direction"/>
         <LyoProjectedColumn Field="IsSuccess" Title="Success"/>
@@ -31,29 +32,132 @@
         <LyoProjectedColumn Field="PriceUnit" Title="Price Unit" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="AccountSid" Title="Account SID" HiddenByDefault="true"/>
     </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Chat" OnClick="@(() => OpenChatAsync(item))">Open chat</MudMenuItem>
+    </RowMenuControls>
 </LyoDataGridProjected>
 
-@code {
-
-    [Parameter]
-    [EditorRequired]
-    public IApiClient ApiClient { get; set; } = null!;
-
-    /// <summary>Dynamic CRUD base route for the Twilio SMS DbContext (default: <c>Twilio</c>).</summary>
-    [Parameter]
-    public string BaseRoute { get; set; } = "Twilio";
-
-    private string _logRoute => $"{BaseRoute.TrimEnd('/')}/TwilioSmsLogEntity";
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Success"), new("Body")];
-
-    private static object[] GetKey(object? item)
-    {
-        if (item == null)
-            return [];
-
-        var id = ProjectedValueHelper.GetValue(item, "Id");
-        return id != null ? [id] : [];
-    }
-
-}
+<MudDialog @bind-Visible="_chatOpen" Options="_chatDialogOptions" Class="sms-thread-dialog">
+    <TitleContent>
+        <div class="sms-thread-title">
+            <MudText Typo="Typo.h6">@(_peer ?? "Conversation")</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           Size="Size.Small"
+                           Disabled="@_chatBusy"
+                           title="Refresh conversation"
+                           OnClick="@RefreshChatAsync"/>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="sms-thread-via">
+                @(string.IsNullOrWhiteSpace(_localNumber) ? "SMS thread" : $"via {_localNumber}")
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <style>
+            .sms-thread-dialog .mud-dialog-content { padding: 0 !important; }
+            .sms-thread-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; width: 100%; padding-right: 8px; }
+            .sms-thread-via { flex: 1 0 100%; }
+            .sms-thread {
+                display: flex;
+                flex-direction: column;
+                height: min(62vh, 560px);
+                background: var(--mud-palette-background);
+            }
+            .sms-thread-messages {
+                flex: 1;
+                min-height: 0;
+                overflow: auto;
+                padding: 16px 20px;
+                display: flex;
+                flex-direction: column-reverse;
+                gap: 12px;
+            }
+            .sms-thread-empty { color: var(--mud-palette-text-secondary); text-align: center; padding: 48px 16px; font-size: 0.875rem; }
+            .sms-thread-row { display: flex; }
+            .sms-thread-row.in { justify-content: flex-start; }
+            .sms-thread-row.out { justify-content: flex-end; }
+            .sms-thread-msg {
+                max-width: 72%;
+                padding: 10px 14px;
+                border-radius: 8px;
+                font-size: 0.875rem;
+                line-height: 1.45;
+                word-break: break-word;
+                white-space: pre-wrap;
+            }
+            .sms-thread-row.in .sms-thread-msg {
+                background: var(--mud-palette-surface);
+                border: 1px solid var(--mud-palette-lines-default);
+                color: var(--mud-palette-text-primary);
+            }
+            .sms-thread-row.out .sms-thread-msg {
+                background: var(--mud-palette-primary);
+                color: var(--mud-palette-primary-text);
+            }
+            .sms-thread-meta { margin-top: 6px; font-size: 0.7rem; opacity: 0.7; }
+            .sms-thread-media { display: block; margin-top: 6px; font-size: 0.8rem; }
+            .sms-thread-composer {
+                display: flex;
+                align-items: flex-end;
+                gap: 12px;
+                padding: 12px 16px 16px;
+                border-top: 1px solid var(--mud-palette-lines-default);
+                background: var(--mud-palette-surface);
+            }
+            .sms-thread-composer .mud-input-control { flex: 1; margin: 0; }
+        </style>
+        <div class="sms-thread">
+            <div class="sms-thread-messages">
+                @if (_chatBusy && _thread.Count == 0) {
+                    <div class="sms-thread-empty">Loading conversation…</div>
+                }
+                else if (_thread.Count == 0) {
+                    <div class="sms-thread-empty">No messages between these numbers yet.</div>
+                }
+                else {
+                    @foreach (var message in _thread.AsEnumerable().Reverse()) {
+                        <div class="sms-thread-row @(message.Inbound ? "in" : "out")">
+                            <div class="sms-thread-msg">
+                                @if (!string.IsNullOrWhiteSpace(message.Body)) {
+                                    <div>@message.Body</div>
+                                }
+                                @foreach (var media in message.MediaUrls) {
+                                    <a class="sms-thread-media" href="@media" target="_blank" rel="noopener noreferrer">@media</a>
+                                }
+                                <div class="sms-thread-meta">
+                                    @(message.Inbound ? "Inbound" : "Outbound")
+                                    @if (!string.IsNullOrWhiteSpace(FormatChatTime(message.At))) {
+                                        <span> · @FormatChatTime(message.At)</span>
+                                    }
+                                    @if (!message.Inbound && !string.IsNullOrWhiteSpace(message.Status)) {
+                                        <span> · @message.Status</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <footer class="sms-thread-composer">
+                <MudTextField T="string"
+                              @bind-Value="_draft"
+                              Immediate="true"
+                              Label="Message"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Lines="2"
+                              MaxLines="6"
+                              Disabled="@(_chatBusy || string.IsNullOrWhiteSpace(_peer))"
+                              OnKeyDown="OnDraftKeyDown"/>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@(_chatBusy || string.IsNullOrWhiteSpace(_peer) || string.IsNullOrWhiteSpace(_draft))"
+                           OnClick="@SendChatAsync">
+                    Send
+                </MudButton>
+            </footer>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_chatError)) {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="ma-3 mt-0">@_chatError</MudAlert>
+        }
+    </DialogContent>
+</MudDialog>

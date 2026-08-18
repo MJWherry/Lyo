@@ -13,6 +13,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\Lyo.Formatter.Web.Components\Lyo.Formatter.Web.Components.csproj"/>
         <ProjectReference Include="..\..\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
     </ItemGroup>
 

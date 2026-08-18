@@ -49,7 +49,10 @@ public static class LyoFormatterContextCatalog
         return items;
     }
 
-    /// <summary>Filters <paramref name="catalog" /> to paths that start with <paramref name="prefix" /> (ordinal ignore-case). Empty prefix keeps top-level keys plus one nested level unless <paramref name="listAllWhenEmpty" /> is true (replace-in-place on a closed <c>{key}</c>).</summary>
+    /// <summary>
+    /// Filters <paramref name="catalog" /> to paths that match <paramref name="prefix" /> (ordinal ignore-case): the full path or any dotted segment starts with the prefix.
+    /// Empty prefix keeps top-level keys plus one nested level unless <paramref name="listAllWhenEmpty" /> is true (click-to-replace on a closed <c>{key}</c> with nothing typed yet).
+    /// </summary>
     public static IReadOnlyList<LyoFormatterContextEntry> Filter(IReadOnlyList<LyoFormatterContextEntry> catalog, string prefix, int limit = DefaultSuggestLimit, bool listAllWhenEmpty = false)
     {
         ArgumentHelpers.ThrowIfNull(catalog);
@@ -63,7 +66,7 @@ public static class LyoFormatterContextCatalog
                 query = query.Where(e => DotCount(e.Path) <= 1);
         }
         else {
-            query = query.Where(e => e.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(e => PathMatchesPrefix(e.Path, prefix));
         }
 
         return query
@@ -71,6 +74,25 @@ public static class LyoFormatterContextCatalog
             .ThenBy(e => e.Path, StringComparer.OrdinalIgnoreCase)
             .Take(limit)
             .ToList();
+    }
+
+    /// <summary>
+    /// Dropdown rows for the placeholder at the caret. Always filters by <see cref="LyoFormatterPlaceholderSpan.Prefix"/> — including inside an already-closed <c>{key}</c>.
+    /// An empty prefix on a closed token lists all paths so the user can pick a replacement without typing.
+    /// </summary>
+    public static IReadOnlyList<LyoFormatterContextEntry> Suggest(IReadOnlyList<LyoFormatterContextEntry> catalog, in LyoFormatterPlaceholderSpan span, int limit = DefaultSuggestLimit)
+        => Filter(catalog, span.Prefix, limit, listAllWhenEmpty: span.Closed && span.Prefix.Length == 0);
+
+    /// <summary>
+    /// Caret index after inserting <c>{path}</c> at <paramref name="braceIndex"/>.
+    /// Nested values (list, dictionary, object) leave the caret before <c>}</c> so the user can type <c>.</c> and continue into a child.
+    /// Leaves place the caret after <c>}</c>.
+    /// </summary>
+    public static int CaretAfterInsert(int braceIndex, string path, bool hasChildren)
+    {
+        ArgumentHelpers.ThrowIfNull(path);
+        var afterClose = braceIndex + path.Length + 2;
+        return hasChildren ? afterClose - 1 : afterClose;
     }
 
     /// <summary>
@@ -287,6 +309,23 @@ public static class LyoFormatterContextCatalog
     }
 
     private static string Combine(string path, string segment) => path.Length == 0 ? segment : path + "." + segment;
+
+    private static bool PathMatchesPrefix(string path, string prefix)
+    {
+        if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var start = 0;
+        for (var i = 0; i < path.Length; i++) {
+            if (path[i] != '.')
+                continue;
+            if (start < i && path.AsSpan(start, i - start).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+            start = i + 1;
+        }
+
+        return start < path.Length && path.AsSpan(start).StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static int DotCount(string path)
     {

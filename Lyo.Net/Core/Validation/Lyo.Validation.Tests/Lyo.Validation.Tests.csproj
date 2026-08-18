@@ -13,6 +13,9 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Validation\Lyo.Validation.csproj"/>
         <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query\Lyo.Query.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
     </ItemGroup>
 
 </Project>

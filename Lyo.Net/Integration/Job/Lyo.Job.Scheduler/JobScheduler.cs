@@ -33,6 +33,11 @@ namespace Lyo.Job.Scheduler;
 /// </summary>
 public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 {
+    /// <summary>Maximum retries for a failing completion message before it is dropped. Bounded so a poison message cannot requeue forever.</summary>
+    internal const int MaxRequeueCount = 3;
+
+    private const int RequeueDelaySeconds = 2;
+
     private static readonly string[] JobRunIncludes = [
         "JobRunParameters", "JobRunLogs", "JobRunResults", "JobSchedule", "JobTrigger", "JobTrigger.JobTriggerParameters", "JobDefinition", "JobDefinition.JobParameters",
         "JobDefinition.JobTriggerJobDefinitions.JobTriggerParameters"
@@ -253,20 +258,78 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private async Task<bool> OnJobRunCompleteAsync(byte[] body)
     {
-        Guid? jobRunId;
-        try {
-            jobRunId = JsonSerializer.Deserialize<Guid>(body);
-        }
-        catch (Exception ex) {
-            _logger.LogError(ex, "Could not parse job run complete message");
+        if (!TryParseCompletion(body, out var jobRunId, out var envelope)) {
+            _logger.LogError("Could not parse job run complete message");
             return false;
         }
 
-        var run = await GetJobRunAsync(jobRunId!.Value).ConfigureAwait(false);
-        if (run != null)
-            return await ProcessCompletedJobRunAsync(run).ConfigureAwait(false);
+        try {
+            var run = await GetJobRunAsync(jobRunId).ConfigureAwait(false);
+            if (run != null)
+                return await ProcessCompletedJobRunAsync(run).ConfigureAwait(false);
 
-        _logger.LogWarning("Job run {JobRunId} not found", jobRunId);
+            _logger.LogWarning("Job run {JobRunId} not found", jobRunId);
+            return false;
+        }
+        catch (Exception ex) {
+            // Do not throw: RequeueOnException would nack-requeue the same bytes forever (e.g. API 500).
+            return await HandleCompletionFailureAsync(jobRunId, envelope, ex).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Parses a raw JSON <see cref="Guid" /> or a counted <see cref="QueueMessageEnvelope{T}" /> retry. Unparseable bytes are poison and must be acked.</summary>
+    private static bool TryParseCompletion(byte[] body, out Guid jobRunId, out QueueMessageEnvelope<Guid>? envelope)
+    {
+        jobRunId = default;
+        envelope = null;
+        try {
+            envelope = JsonSerializer.Deserialize<QueueMessageEnvelope<Guid>>(body);
+            if (envelope is not null && envelope.Payload != Guid.Empty) {
+                jobRunId = envelope.Payload;
+                return true;
+            }
+        }
+        catch (JsonException) {
+            // Producers publish a bare Guid; fall through.
+        }
+
+        envelope = null;
+        try {
+            var id = JsonSerializer.Deserialize<Guid>(body);
+            if (id == Guid.Empty)
+                return false;
+
+            jobRunId = id;
+            return true;
+        }
+        catch (JsonException) {
+            return false;
+        }
+    }
+
+    /// <summary>Acks the delivered message and republishes a counted envelope up to <see cref="MaxRequeueCount" />. Never throws.</summary>
+    private async Task<bool> HandleCompletionFailureAsync(Guid runId, QueueMessageEnvelope<Guid>? envelope, Exception ex)
+    {
+        var requeueCount = envelope?.RequeueCount ?? 0;
+        if (_mqService is null || requeueCount >= MaxRequeueCount) {
+            _logger.LogError(ex, "Scheduler giving up on run {RunId} after {Count} requeue(s)", runId, requeueCount);
+            return false;
+        }
+
+        var nextCount = requeueCount + 1;
+        _logger.LogWarning(ex, "Scheduler failed processing run {RunId}; requeue {Count}/{Max}", runId, nextCount, MaxRequeueCount);
+        var retry = new QueueMessageEnvelope<Guid>(runId, nextCount, envelope?.MessageId ?? Guid.NewGuid().ToString("D"), envelope?.EnqueuedAt ?? DateTime.UtcNow);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(retry);
+        try {
+            if (_mqService is IDelayedMqService delayedMq)
+                await delayedMq.SendToQueueDelayed(Constants.Mq.QueueJobRunFinish, bytes, TimeSpan.FromSeconds(nextCount * RequeueDelaySeconds)).ConfigureAwait(false);
+            else
+                await _mqService.SendToQueue(Constants.Mq.QueueJobRunFinish, bytes).ConfigureAwait(false);
+        }
+        catch (Exception publishEx) {
+            _logger.LogError(publishEx, "Scheduler failed to republish run {RunId} after processing error", runId);
+        }
+
         return false;
     }
 

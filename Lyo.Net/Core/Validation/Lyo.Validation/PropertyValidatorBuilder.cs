@@ -169,6 +169,58 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
         return this;
     }
 
+    /// <summary>Requires the property value to be one of <paramref name="allowed" />.</summary>
+    public PropertyValidatorBuilder<T, TProperty> In(
+        IEnumerable<TProperty> allowed,
+        IEqualityComparer<TProperty>? comparer = null,
+        string errorCode = ValidationErrorCodes.MissingItem,
+        string? errorMessage = null)
+    {
+        ArgumentHelpers.ThrowIfNull(allowed);
+        comparer ??= EqualityComparer<TProperty>.Default;
+        var items = allowed as IReadOnlyCollection<TProperty> ?? allowed.ToArray();
+        _builder.AddPropertyRule(
+            _selector, _propertyName, (_, value) => {
+                foreach (var item in items) {
+                    if (comparer.Equals(value, item))
+                        return [];
+                }
+
+                return [CreateError(value, errorCode, errorMessage ?? $"{_propertyName} must be one of: {string.Join(", ", items)}")];
+            });
+
+        return this;
+    }
+
+    /// <summary>Requires the property value to be one of <paramref name="allowed" />.</summary>
+    public PropertyValidatorBuilder<T, TProperty> In(params TProperty[] allowed) => In((IEnumerable<TProperty>)allowed);
+
+    /// <summary>Requires the property value to not be one of <paramref name="disallowed" />.</summary>
+    public PropertyValidatorBuilder<T, TProperty> NotIn(
+        IEnumerable<TProperty> disallowed,
+        IEqualityComparer<TProperty>? comparer = null,
+        string errorCode = ValidationErrorCodes.DisallowedItem,
+        string? errorMessage = null)
+    {
+        ArgumentHelpers.ThrowIfNull(disallowed);
+        comparer ??= EqualityComparer<TProperty>.Default;
+        var items = disallowed as IReadOnlyCollection<TProperty> ?? disallowed.ToArray();
+        _builder.AddPropertyRule(
+            _selector, _propertyName, (_, value) => {
+                foreach (var item in items) {
+                    if (comparer.Equals(value, item))
+                        return [CreateError(value, errorCode, errorMessage ?? $"{_propertyName} cannot be one of: {string.Join(", ", items)}")];
+                }
+
+                return [];
+            });
+
+        return this;
+    }
+
+    /// <summary>Requires the property value to not be one of <paramref name="disallowed" />.</summary>
+    public PropertyValidatorBuilder<T, TProperty> NotIn(params TProperty[] disallowed) => NotIn((IEnumerable<TProperty>)disallowed);
+
     /// <summary>Requires the enumerable property value to not contain the supplied item.</summary>
     public PropertyValidatorBuilder<T, TProperty> NotContains<TItem>(
         TItem disallowed,

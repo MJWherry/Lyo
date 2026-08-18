@@ -3,7 +3,7 @@
   "name": "Lyo.Query.Models",
   "area": "Data",
   "tagline": "Filter / sort / projection DTOs and fluent builders (`WhereClause`, QueryConcrete / QueryProject / root Query) shared by Lyo.Query and Lyo.Api.",
-  "description": "Filter / sort / projection DTOs and fluent builders for query requests. The same `WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints (`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests build queries the same way.\n\nCovers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`).\n\n> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).\n\nTargets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.",
+  "description": "Filter / sort / projection DTOs and fluent builders for query requests. The same `WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints (`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests build queries the same way.\n\nCovers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`).\n\n> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).\n\nTargets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions`, `Lyo.Common`, and `Lyo.Result`.",
   "features": [
     "**WhereClause AST** — polymorphic `condition` / `group` JSON tree with optional `SubClause` for two-phase filters",
     "**QueryConcreteReq** — full entity-graph body for `POST …/QueryConcrete` (includes, sort, keys, options)",
@@ -11,7 +11,8 @@
     "**QueryReq (root)** — `From` / `Joins` / `Select` for dynamic-context `POST …/Query`",
     "**Fluent builders** — `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`",
     "**ParameterOptions** — static key/label list or root `QueryReq` template for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`)",
-    "**Shared with Lyo.Query + Lyo.Api** — same DTOs for in-process LINQ and HTTP endpoints"
+    "**Shared with Lyo.Query + Lyo.Api** — same DTOs for in-process LINQ and HTTP endpoints",
+    "**Explain → errors** — `WhereClauseExplainResult.ToErrors` maps a failed in-memory explain tree to `Lyo.Result.Error` (AND = per-leaf, OR = one summary). Used by validation schemas; not for SQL `ApplyWhereClause`."
   ],
   "examples": [
     {
@@ -122,6 +123,14 @@
     },
     {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "direct",

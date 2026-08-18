@@ -20,6 +20,9 @@ internal sealed class FakeSchedulerApiClient : IApiClient
 
     public bool Return404ForDefinitionGet { get; set; }
 
+    /// <summary>When set, <c>GET Job/Run/{id}</c> throws <see cref="ApiException" /> with this status instead of returning null.</summary>
+    public int? ThrowStatusOnRunGet { get; set; }
+
     public FakeSchedulerApiClient(JobDefinitionRes definition) => _definition = definition;
 
     public void Dispose() { }
@@ -69,6 +72,9 @@ internal sealed class FakeSchedulerApiClient : IApiClient
 
             return Task.FromResult((TResult?)(object?)_definition);
         }
+
+        if (uri.Contains("Job/Run/", StringComparison.OrdinalIgnoreCase) && ThrowStatusOnRunGet is { } status)
+            throw new ApiException(status, $"Run GET failed: {status}");
 
         return Task.FromResult(default(TResult));
     }
@@ -164,11 +170,13 @@ internal sealed class FakeEventPublisher : IJobEventPublisher
 /// <summary>Fake MQ implementing <see cref="IDelayedMqService" /> so the scheduler chooses the delayed-envelope dispatch path; records the delayed sends.</summary>
 internal sealed class RecordingDelayedMqService : IMqService, IDelayedMqService
 {
-    public List<(string QueueName, TimeSpan Delay)> DelayedSends { get; } = [];
+    public List<(string QueueName, TimeSpan Delay, byte[] Data)> DelayedSends { get; } = [];
+
+    public List<(string QueueName, byte[] Data)> QueueSends { get; } = [];
 
     public Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
     {
-        DelayedSends.Add((queueName, delay));
+        DelayedSends.Add((queueName, delay, data));
         return Task.FromResult(true);
     }
 
@@ -193,7 +201,11 @@ internal sealed class RecordingDelayedMqService : IMqService, IDelayedMqService
 
     public Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default) => Task.FromResult(true);
 
-    public Task<bool> SendToQueue(string queueName, byte[] data) => Task.FromResult(true);
+    public Task<bool> SendToQueue(string queueName, byte[] data)
+    {
+        QueueSends.Add((queueName, data));
+        return Task.FromResult(true);
+    }
 
     public Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data) => Task.FromResult(true);
 
