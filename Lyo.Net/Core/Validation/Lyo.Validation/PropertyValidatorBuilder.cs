@@ -295,6 +295,15 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     /// <summary>Adds another model-level validator.</summary>
     public ValidatorBuilder<T> Include(IValidator<T> validator) => _builder.Include(validator);
 
+    /// <summary>Includes a loaded <see cref="ValidationSchema" /> evaluated by <paramref name="evaluator" />.</summary>
+    public ValidatorBuilder<T> IncludeSchema(ValidationSchema schema, IValidationClauseEvaluator evaluator) => _builder.IncludeSchema(schema, evaluator);
+
+    /// <summary>
+    /// Loads <paramref name="key" /> from <paramref name="store" /> synchronously and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async hosts.
+    /// </summary>
+    public ValidatorBuilder<T> IncludeStore(IValidationSchemaStore store, string key, IValidationClauseEvaluator evaluator)
+        => _builder.IncludeStore(store, key, evaluator);
+
     /// <summary>Starts another property rule chain.</summary>
     public PropertyValidatorBuilder<T, TNextProperty> RuleFor<TNextProperty>(Expression<Func<T, TNextProperty>> selector, string? propertyName = null)
         => _builder.RuleFor(selector, propertyName);
