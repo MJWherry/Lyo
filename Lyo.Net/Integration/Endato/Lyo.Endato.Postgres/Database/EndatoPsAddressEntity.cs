@@ -44,7 +44,7 @@ public sealed class EndatoPsAddressEntity
     [MaxLength(12)]
     public string? StreetType { get; set; }
 
-    [MaxLength(8)]
+    [MaxLength(32)]
     public string? Unit { get; set; }
 
     [MaxLength(12)]

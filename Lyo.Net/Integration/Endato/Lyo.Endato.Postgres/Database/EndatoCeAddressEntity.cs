@@ -19,7 +19,7 @@ public sealed class EndatoCeAddressEntity
     [MaxLength(75)]
     public string Street { get; set; } = null!;
 
-    [MaxLength(8)]
+    [MaxLength(32)]
     public string? Unit { get; set; }
 
     [MaxLength(25)]

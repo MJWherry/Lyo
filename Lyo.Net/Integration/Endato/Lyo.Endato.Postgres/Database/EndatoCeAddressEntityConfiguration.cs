@@ -12,7 +12,7 @@ public sealed class EndatoCeAddressEntityConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.Id).HasColumnName("id");
         builder.Property(e => e.EndatoCePersonId).IsRequired().HasColumnName("endato_ce_person_id");
         builder.Property(e => e.Street).HasMaxLength(75).IsRequired().HasColumnName("street");
-        builder.Property(e => e.Unit).HasMaxLength(8).HasColumnName("unit");
+        builder.Property(e => e.Unit).HasMaxLength(32).HasColumnName("unit");
         builder.Property(e => e.City).HasMaxLength(25).HasColumnName("city");
         builder.Property(e => e.State).HasMaxLength(2).HasColumnName("state");
         builder.Property(e => e.Zipcode).HasMaxLength(12).HasColumnName("zipcode");

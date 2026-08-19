@@ -60,8 +60,8 @@ namespace Lyo.Endato.Postgres.Migrations
                         .HasColumnName("street");
 
                     b.Property<string>("Unit")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("unit");
 
                     b.Property<string>("Zipcode")
@@ -357,8 +357,8 @@ namespace Lyo.Endato.Postgres.Migrations
                         .HasColumnName("total_first_seen_date");
 
                     b.Property<string>("Unit")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("unit");
 
                     b.Property<string>("UnitType")

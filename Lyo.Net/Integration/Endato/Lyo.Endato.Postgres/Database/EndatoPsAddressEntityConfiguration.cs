@@ -20,7 +20,7 @@ public sealed class EndatoPsAddressEntityConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.StreetName).HasMaxLength(50).HasColumnName("street_name");
         builder.Property(e => e.StreetPostDirection).HasMaxLength(12).HasColumnName("street_post_direction");
         builder.Property(e => e.StreetType).HasMaxLength(12).HasColumnName("street_type");
-        builder.Property(e => e.Unit).HasMaxLength(8).HasColumnName("unit");
+        builder.Property(e => e.Unit).HasMaxLength(32).HasColumnName("unit");
         builder.Property(e => e.UnitType).HasMaxLength(12).HasColumnName("unit_type");
         builder.Property(e => e.City).HasMaxLength(25).HasColumnName("city");
         builder.Property(e => e.State).HasMaxLength(2).HasColumnName("state");
