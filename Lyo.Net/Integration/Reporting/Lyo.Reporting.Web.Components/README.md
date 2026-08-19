@@ -37,11 +37,11 @@ When download/view callbacks are omitted, those menu actions show a snackbar tha
 
 | Component | Role |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `ReportManagement` | Tabs: Definitions / Generations |
-| `ReportDefinitionGrid` | Definition list + Run |
+| `ReportManagement` | Tabs: Definitions / Generations. After generate, switches to Generations and opens the generation view (and the report output when viewable). |
+| `ReportDefinitionGrid` | Definition list + Run / Delete (cascade + storage cleanup) |
 | `ReportDefinitionView` | Definition detail / JSON preview |
 | `RunReportDialog` | Parameters + format override → `POST …/Generation/Generate`; Options / AllowedValues render as MudSelect with live sibling binding |
-| `ReportGenerationGrid` | Generation list + View/Download |
+| `ReportGenerationGrid` | Generation list + View/Download/Delete (storage cleanup) |
 | `ReportGenerationView` | Generation detail + View/Download actions |
 
 ## Dependencies

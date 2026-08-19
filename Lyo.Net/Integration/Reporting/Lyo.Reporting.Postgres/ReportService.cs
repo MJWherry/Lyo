@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Cache;
 using Lyo.Common.Conversion;
 using Lyo.Common.Identifiers;
 using Lyo.Exceptions;
@@ -36,7 +38,9 @@ public sealed class ReportService(
     IOptions<PostgresReportingOptions> options,
     ILogger<ReportService> logger,
     ReportGenerationThrottle? throttle = null,
-    IMetrics? metrics = null)
+    IMetrics? metrics = null,
+    ICacheService? cache = null,
+    CacheOptions? cacheOptions = null)
 {
     /// <summary>Max staged output file name length (stem + extension), aligned with common filesystem limits.</summary>
     internal const int MaxFileNameLength = 255;
@@ -151,6 +155,7 @@ public sealed class ReportService(
         paramResList = generation.Parameters.Select(ReportingLyoMapper.ToRes).ToList();
         db.ReportGenerations.Add(generation);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await InvalidateGenerationCacheAsync(generation.Id).ConfigureAwait(false);
         var effectiveRequest = new GenerateReportReq {
             ReportDefinitionId = request.ReportDefinitionId,
             ReportDataJson = request.ReportDataJson,
@@ -269,6 +274,7 @@ public sealed class ReportService(
             generation.ReportDataJson = ctx.ReportDataJson;
             generation.ErrorMessage = null;
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InvalidateGenerationCacheAsync(generation.Id).ConfigureAwait(false);
             _metrics.IncrementCounter(ReportingConstants.Metrics.GenerationSucceeded, tags: [("format", format.ToString())]);
             ReportAuditHelper.RecordGenerated(services, generation.Id);
             return ReportingLyoMapper.ToRes(generation);
@@ -289,6 +295,7 @@ public sealed class ReportService(
                 generation.OutputFileId = ctx.OutputFileId;
                 // CancellationToken.None: a client disconnect must not strand the row in Running.
                 await db.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+                await InvalidateGenerationCacheAsync(generation.Id).ConfigureAwait(false);
             }
             catch (Exception persistEx) {
                 logger.LogError(persistEx, "Failed to persist Failed status for generation {GenerationId}", generation.Id);
@@ -352,6 +359,27 @@ public sealed class ReportService(
 
         // Reruns replay trusted stored snapshots, so they remain possible on hosts with AllowAdHocGeneration disabled.
         return await GenerateCoreAsync(request, hooks, true, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Generate writes via EF, not CRUD services, so list/GET query-cache tags are not busted automatically. Definition grids that project last-generation columns are tagged
+    /// as <c>entity:reportdefinition</c>, not <c>entity:reportgeneration</c>.
+    /// </summary>
+    private async Task InvalidateGenerationCacheAsync(Guid generationId)
+    {
+        if (cache is null)
+            return;
+
+        try {
+            var options = cacheOptions ?? new CacheOptions();
+            await Task.WhenAll(
+                    ReportGenerationQueryCache.InvalidateAsync(cache),
+                    QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, options, typeof(ReportGeneration), [new object?[] { generationId }]))
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            logger.LogWarning(ex, "Failed to invalidate reporting query cache after generation {GenerationId}", generationId);
+        }
     }
 
     /// <summary>Request values override definition defaults by Key; missing keys get default Value from definition.</summary>

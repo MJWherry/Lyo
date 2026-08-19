@@ -18,6 +18,15 @@ public sealed record QueryWorkbenchRunConfiguration
 
     public JsonEditorViewMode RequestEditorViewMode { get; init; } = JsonEditorViewMode.Tree;
 
+    /// <summary>Credential style for Run Query. Default is none.</summary>
+    public QueryWorkbenchAuthMode AuthMode { get; init; } = QueryWorkbenchAuthMode.None;
+
+    /// <summary>Header name when <see cref="AuthMode"/> is <see cref="QueryWorkbenchAuthMode.Header"/> (e.g. <c>Authorization</c>, <c>X-Api-Key</c>).</summary>
+    public string? AuthHeaderName { get; init; }
+
+    /// <summary>Bearer token or custom header value. Stored with workbench state in the browser.</summary>
+    public string? AuthHeaderValue { get; init; }
+
     public static Dictionary<string, List<string>> CloneHostEndpoints(Dictionary<string, List<string>> source)
         => source.ToDictionary(static kvp => kvp.Key, kvp => kvp.Value.ToList());
 }

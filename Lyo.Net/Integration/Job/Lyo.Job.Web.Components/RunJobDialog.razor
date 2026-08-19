@@ -1,7 +1,7 @@
 @using Lyo.Common.Extensions
 @inject ISnackbar Snackbar
 
-<LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel">
+<LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel" DebugData="@_selectedDef">
     <MudStack Spacing="2">
         <MudGrid Spacing="2">
             <MudItem xs="12">

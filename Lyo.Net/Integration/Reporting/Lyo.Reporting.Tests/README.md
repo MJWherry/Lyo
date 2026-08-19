@@ -21,7 +21,7 @@ dotnet build Integration/Reporting/Lyo.Reporting.Tests
 - **Sensitive fields** (`ReportingApiOptionsTests`): secure-by-default auth surfaces, `DeniedSelectFieldPolicy` blocking `EncryptedValue` selects/templates on QueryProject and
   Export (incl. nested paths).
 - **Features** (`ReportRendererTests`, `ReportFeatureTests`): Xlsx multi-worksheet round-trips with sheet-name dedupe/truncation, Json renderer verbatim output, `RerunAsync`
-  snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, definition-delete
+  snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, generation-delete / definition-delete
   cleanup hooks (`ReportGenerationCleanupTests`).
 
 ## Worker → API auth smoke (manual)

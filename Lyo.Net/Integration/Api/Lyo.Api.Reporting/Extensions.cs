@@ -84,7 +84,7 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps Definition CRUD (+ Export), Definition Parameter CRUD, Generation read-only, Generate, Rerun, and (when <see cref="ReportingApiOptions.DownloadStreamFactory" /> is
+    /// Maps Definition CRUD (+ Export), Definition Parameter CRUD, Generation query/get/delete, Generate, Rerun, and (when <see cref="ReportingApiOptions.DownloadStreamFactory" /> is
     /// set) Download. Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
     /// </summary>
     public static WebApplication BuildReportingGroup(this WebApplication app, ReportingApiOptions? options = null)
@@ -140,9 +140,7 @@ public static class Extensions
                     AfterPatch = ctx => ReportAuditHelper.RecordUpdated(ctx.Services, "ReportDefinition", ctx.Entity.Id),
                     // Cascade delete removes generation rows but not host-persisted outputs; give the host's
                     // OnCleanupAsync hook a chance to delete each stored blob first. A hook failure aborts the delete.
-                    BeforeDeleteAsync = (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync(
-                            ctx.Entity.Generations, ctx.Services.GetService<ReportGenerationHooks>(), ctx.Services, ct)
-                        .AsTask()
+                    BeforeDeleteAsync = (ctx, ct) => CleanupGenerationOutputsAsync(ctx.Entity.Generations, ctx.Services, ct)
                 })
             .Build();
 
@@ -184,11 +182,14 @@ public static class Extensions
 
         app.CreateBuilder<ReportingContext, ReportGeneration, ReportGenerationReq, ReportGenerationRes, Guid>(Constants.Rest.Reporting.Generations, "Reporting")
             .WithCrud(
-                ApiFeatureSet.ReadOnly, new() {
+                ApiFeatureSet.ReadOnly + ApiFeature.Delete + ApiFeature.DeleteBulk, new() {
                     QueryAuth = options.GenerationAuth,
                     GetAuth = options.GenerationAuth,
+                    DeleteAuth = options.GenerationAuth,
+                    DeleteBulkAuth = options.GenerationAuth,
                     MetadataAuth = options.GenerationAuth,
-                    DeniedSelectFields = ParameterDeniedSelectFields
+                    DeniedSelectFields = ParameterDeniedSelectFields,
+                    BeforeDeleteAsync = (ctx, ct) => CleanupGenerationOutputsAsync([ctx.Entity], ctx.Services, ct)
                 })
             .Build();
 
@@ -250,6 +251,9 @@ public static class Extensions
 
         return app;
     }
+
+    private static Task CleanupGenerationOutputsAsync(IEnumerable<ReportGeneration> generations, IServiceProvider services, CancellationToken ct)
+        => ReportGenerationCleanup.InvokeCleanupHooksAsync(generations, services.GetService<ReportGenerationHooks>(), services, ct).AsTask();
 
     /// <summary>Maps generation exceptions to HTTP: validation → 400, busy → 503, anything else bubbles as 500.</summary>
     private static async Task<IResult> ExecuteGenerationAsync(Func<Task<ReportGenerationRes>> action)

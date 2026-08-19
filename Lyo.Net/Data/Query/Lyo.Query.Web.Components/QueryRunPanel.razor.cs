@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lyo.Api.Models.Common;
@@ -166,8 +167,9 @@ public partial class QueryRunPanel : IAsyncDisposable
 
             var httpClient = HttpClientFactory.CreateClient();
             var json = JsonSerializer.Serialize(GetActiveRequestBody(), JsonOptions);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(uri, content);
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+            ApplyAuth(request, Run);
+            using var response = await httpClient.SendAsync(request);
             var responseJson = await response.Content.ReadAsStringAsync();
             stopwatch.Stop();
             _lastResponseElapsedMs = stopwatch.ElapsedMilliseconds;
@@ -391,6 +393,39 @@ public partial class QueryRunPanel : IAsyncDisposable
             QueryWorkbenchRunMode.RootQuery => "Query",
             var _ => "QueryConcrete"
         };
+
+    private static void ApplyAuth(HttpRequestMessage request, QueryWorkbenchRunConfiguration run)
+    {
+        switch (run.AuthMode) {
+            case QueryWorkbenchAuthMode.Bearer: {
+                var token = (run.AuthHeaderValue ?? "").Trim();
+                if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    token = token["Bearer ".Length..].Trim();
+
+                if (token.Length > 0)
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                break;
+            }
+            case QueryWorkbenchAuthMode.Header: {
+                var name = (run.AuthHeaderName ?? "").Trim();
+                var value = run.AuthHeaderValue ?? "";
+                if (name.Length > 0 && value.Length > 0)
+                    request.Headers.TryAddWithoutValidation(name, value);
+
+                break;
+            }
+        }
+    }
+
+    private Task OnAuthModeChanged(QueryWorkbenchAuthMode mode)
+        => NotifyRunChangedAsync(Run with { AuthMode = mode });
+
+    private Task OnAuthHeaderNameChanged(string? name)
+        => NotifyRunChangedAsync(Run with { AuthHeaderName = string.IsNullOrWhiteSpace(name) ? null : name.Trim() });
+
+    private Task OnAuthHeaderValueChanged(string? value)
+        => NotifyRunChangedAsync(Run with { AuthHeaderValue = string.IsNullOrWhiteSpace(value) ? null : value });
 
     private async Task OnSelectedHostChanged(string? host)
     {

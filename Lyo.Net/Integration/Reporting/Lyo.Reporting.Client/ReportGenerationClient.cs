@@ -28,4 +28,8 @@ public sealed class ReportGenerationClient(IApiClient client, string? routePrefi
     /// <summary>Streams a generation's persisted output. Requires the host to configure a download stream factory.</summary>
     public Task<(Stream Content, string? FileName, long? ContentLength)> DownloadAsync(Guid id, CancellationToken ct = default)
         => client.GetFileStreamAsync(ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Generations}/{id}/{ReportingRoutes.GenerationsDownloadSuffix}"), ct: ct);
+
+    /// <summary>Deletes a generation row. The host <c>OnCleanupAsync</c> hook runs first so persisted output is removed from storage.</summary>
+    public Task<object> DeleteAsync(Guid id, CancellationToken ct = default)
+        => client.DeleteAsAsync<object>(ReportingRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Generations}/{id}"), ct: ct);
 }

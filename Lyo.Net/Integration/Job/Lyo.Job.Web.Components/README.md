@@ -58,15 +58,15 @@ See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.crea
 ## Component catalog
 
 | Component | Role |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `JobManagement` | Tabbed dashboard shell. |
 | `JobStats` | Aggregated `SpJobStatistic` success rates and counts. |
 | `JobDefinitionGrid` | CRUD grid for definitions. |
 | `JobDefinitionView` | Editor: basic info with last/next/running activity, parameters, schedules, triggers. |
-| `JobDefinitionActivity` | Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots. |
-| `JobScheduleGrid` | Standalone schedule CRUD (misfire, calendar, cron fields via API). |
+| `JobDefinitionActivity` | Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots. Timestamps use `LyoTimestamp` (browser TZ shown); next runs are relative within ±24h. |
+| `JobScheduleGrid` | Standalone schedule grid with next/upcoming runs in the browser time zone (`LyoTimestamp`, relative within ±24h). |
 | `JobParameterView` | Definition parameter grid (including encrypted markers, AllowedValues, and Options editor). |
-| `JobScheduleView` | Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters). |
+| `JobScheduleView` | Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker (defaults to the browser IANA id), local start/end date pickers stored as UTC midnight in that zone, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters). Times stay wall-clock `TimeOnly` values. |
 | `JobBlackoutCalendarEditor` | Create/unlink a schedule blackout calendar and CRUD its windows (recurring days or dated range, Skip/Defer). |
 | `JobTriggerView` | Trigger relationships between definitions. |
 | `JobRunGrid` | Runs with state pills, **progress bar** column, drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker). |
@@ -80,14 +80,14 @@ Every grid / view accepts `IApiClient` and route parameters so components can be
 ## Production hardening in the UI
 
 | Feature | Where surfaced |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Progress | `JobRunGrid` progress column; `JobRunDetailView` linear bar + message |
 | SLA | `JobRunDetailView` breach indicator when `SlaBreached == true` |
 | Alerting | Definition/run alert flags in detail view |
 | Queue resync | `JobRunGrid` **Resync RabbitMQ** toolbar — `POST Job/Run/Resync` (scoped when a definition filter is set) |
 | Worker registry | **Workers** tab (`JobWorkerInstanceGrid`) |
 | Workflows | **Workflows** tab (`JobWorkflowView`) |
-| Schedules / blackout calendars | **Schedules** tab — add/remove schedules, enable toggle, timezone dropdown, inline blackout calendar/windows, misfire/cron fields |
+| Schedules / blackout calendars | **Schedules** tab — add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields |
 | Dry run | `RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch) |
 
 ## `JobColorHelper`

@@ -4,8 +4,8 @@ using Lyo.Reporting.Postgres.Database;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Runs the host <see cref="ReportGenerationHooks.OnCleanupAsync" /> hook for generations whose rows are about to be removed outside retention (e.g. definition delete
-/// cascades). A hook failure propagates so the delete aborts rather than orphaning the stored output.
+/// Runs the host <see cref="ReportGenerationHooks.OnCleanupAsync" /> hook for generations whose rows are about to be removed outside retention (generation delete or definition
+/// delete cascades). A hook failure propagates so the delete aborts rather than orphaning the stored output.
 /// </summary>
 public static class ReportGenerationCleanup
 {

@@ -40,7 +40,7 @@
         [
           "Generations",
           "`GenerationAuth`",
-          "Query / Get only (read-only; include `Parameters`)"
+          "Query / Get / Delete / DeleteBulk (include `Parameters`). Delete runs `OnCleanupAsync` so persisted output is removed from storage."
         ],
         [
           "Generate",

@@ -38,6 +38,8 @@
                                    OnClick="@(() => RunDefinition(cell.Item))"/>
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit definition"
                                    OnClick="@(() => ViewDefinition(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete definition"
+                                   OnClick="@(() => DeleteDefinition(cell.Item))"/>
                 </MudStack>
             </CellTemplate>
         </TemplateColumn>
@@ -88,6 +90,7 @@
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => ViewDefinition(item))">Edit</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.PlayArrow" OnClick="@(() => RunDefinition(item))">Run</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteDefinition(item))">Delete</MudMenuItem>
     </RowMenuControls>
 </LyoDataGridProjected>
 
@@ -103,6 +106,14 @@
 
     [Parameter]
     public Func<Guid, string?, CancellationToken, Task>? DownloadFileAsync { get; set; }
+
+    /// <summary>Host callback returning a browser URL to view HTML/PDF output. Forwarded when a generation view is opened after generate.</summary>
+    [Parameter]
+    public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
+
+    /// <summary>Raised after a successful generate so the host can switch tabs. When unset, this grid opens the generation view itself.</summary>
+    [Parameter]
+    public EventCallback<ReportGenerationRes> Generated { get; set; }
 
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
 
@@ -172,7 +183,9 @@
         var parameters = new DialogParameters<RunReportDialog> { { d => d.Definitions, res?.Items ?? [] }, { d => d.GenerateRoute, $"{_generationRoute}/Generate" }, { d => d.ApiClient, ApiClient } };
         var dialog = await DialogService.ShowAsync<RunReportDialog>("Run Report", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
-        if (result is { Canceled: false })
+        if (result is { Canceled: false, Data: ReportGenerationRes gen })
+            await AfterGeneratedAsync(gen);
+        else if (result is { Canceled: false })
             await _dataGrid!.RefreshData();
     }
 
@@ -212,7 +225,54 @@
         };
 
         var dialog = await DialogService.ShowAsync<RunReportDialog>("Run Report", parameters, LyoDialogPresets.Medium);
-        await dialog.Result;
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: ReportGenerationRes gen })
+            await AfterGeneratedAsync(gen);
+    }
+
+    private async Task AfterGeneratedAsync(ReportGenerationRes gen)
+    {
+        await _dataGrid!.RefreshData();
+        if (Generated.HasDelegate)
+            await Generated.InvokeAsync(gen);
+        else
+            await ShowGenerationViewAsync(gen);
+    }
+
+    private Task ShowGenerationViewAsync(ReportGenerationRes gen)
+    {
+        var parameters = new DialogParameters<ReportGenerationView> {
+            { d => d.Generation, gen },
+            { d => d.DownloadFileAsync, DownloadFileAsync },
+            { d => d.ViewFileUrlAsync, ViewFileUrlAsync },
+            { d => d.OpenOutput, true }
+        };
+        return DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
+    }
+
+    private async Task DeleteDefinition(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var name = ProjectedValueHelper.GetDisplayValue(item, "Name");
+        if (string.IsNullOrWhiteSpace(name))
+            name = Shorten(id.ToString() ?? string.Empty);
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Delete definition", $"Delete '{name}' and all of its generations? Stored output files are removed too.", "Delete", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        try {
+            await ApiClient.DeleteAsAsync<object>($"{_definitionRoute}/{id}");
+            Snackbar.Add("Definition deleted", Severity.Success);
+            await _dataGrid!.RefreshData();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
     }
 
 }

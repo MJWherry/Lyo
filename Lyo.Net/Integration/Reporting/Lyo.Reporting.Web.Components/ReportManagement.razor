@@ -6,7 +6,9 @@
     <MudTabPanel Text="Definitions">
         <ReportDefinitionGrid ApiClient="ApiClient"
                               BaseRoute="@BaseRoute"
-                              DownloadFileAsync="DownloadFileAsync"/>
+                              DownloadFileAsync="DownloadFileAsync"
+                              ViewFileUrlAsync="ViewFileUrlAsync"
+                              Generated="OnGenerated"/>
     </MudTabPanel>
     <MudTabPanel Text="Generations">
         <ReportGenerationGrid ApiClient="ApiClient"
@@ -71,6 +73,18 @@
             "generations" or "generation" => 1,
             var _ => 0
         };
+    }
+
+    private async Task OnGenerated(ReportGenerationRes gen)
+    {
+        _tabIndex = 1;
+        var parameters = new DialogParameters<ReportGenerationView> {
+            { d => d.Generation, gen },
+            { d => d.DownloadFileAsync, DownloadFileAsync },
+            { d => d.ViewFileUrlAsync, ViewFileUrlAsync },
+            { d => d.OpenOutput, true }
+        };
+        await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
     }
 
 }

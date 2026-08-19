@@ -36,6 +36,8 @@
                     <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" title="Download output"
                                    Disabled="@(!CanDownloadOutput(cell.Item))"
                                    OnClick="@(() => DownloadOutput(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete generation"
+                                   OnClick="@(() => DeleteGeneration(cell.Item))"/>
                 </MudStack>
             </CellTemplate>
         </TemplateColumn>
@@ -93,6 +95,7 @@
         <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewGeneration(item))">Details</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => ViewOutput(item))" Disabled="@(!CanViewOutput(item))">View</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="@(() => DownloadOutput(item))" Disabled="@(!CanDownloadOutput(item))">Download</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteGeneration(item))">Delete</MudMenuItem>
     </RowMenuControls>
 </LyoDataGridProjected>
 
@@ -252,6 +255,31 @@
         var fileName = ProjectedValueHelper.GetDisplayValue(item, "OriginalFileName");
         await DownloadFileAsync(guid, string.IsNullOrWhiteSpace(fileName) ? null : fileName, CancellationToken.None);
         Snackbar.Add("Download started.", Severity.Success);
+    }
+
+    private async Task DeleteGeneration(object? item)
+    {
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var label = ProjectedValueHelper.GetDisplayValue(item, "OriginalFileName");
+        if (string.IsNullOrWhiteSpace(label))
+            label = Shorten(id.ToString() ?? string.Empty);
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Delete generation", $"Delete '{label}'? The stored output file is removed too.", "Delete", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        try {
+            await ApiClient.DeleteAsAsync<object>($"{_generationRoute}/{id}");
+            Snackbar.Add("Generation deleted", Severity.Success);
+            await _dataGrid!.RefreshData();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
     }
 
 }

@@ -130,7 +130,7 @@ builder.Services.AddReportingGenerationHooks(
 
             ctx.OutputFileId = saved.Id;
         },
-        // Retention cleanup / definition delete: remove the persisted output before the generation row goes away.
+        // Retention cleanup / generation or definition delete: remove the persisted output before the generation row goes away.
         OnCleanupAsync = async (ctx, ct) => {
             if (ctx.OutputFileId is not Guid fileId)
                 return;

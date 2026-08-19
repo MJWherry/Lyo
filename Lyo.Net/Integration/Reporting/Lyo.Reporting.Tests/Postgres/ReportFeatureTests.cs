@@ -1,9 +1,11 @@
 using System.Text.Json;
 using Lyo.Api.Reporting;
+using Lyo.Api.Services.Crud.Delete;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
+using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.Xlsx.Models;
@@ -263,6 +265,36 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         Assert.Equal([9, 8, 7], ms.ToArray());
         var missingContext = new ReportDownloadContext { GenerationId = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), Services = fixture.ServiceProvider };
         Assert.Null(await factory(missingContext, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Delete_generation_invokes_cleanup_hook_and_removes_stored_file()
+    {
+        var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var outputFileId = Guid.NewGuid();
+        fixture.FakeFileStorage.Files[outputFileId] = [1, 2, 3];
+        var generation = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow, outputFileId);
+        db.ReportGenerations.Add(generation);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var hooks = new ReportGenerationHooks {
+            OnCleanupAsync = async (ctx, ct) => {
+                if (ctx.OutputFileId is Guid fileId)
+                    await fixture.FakeFileStorage.DeleteFileAsync(fileId, ct: ct);
+            }
+        };
+
+        await using var scope = fixture.ServiceProvider.CreateAsyncScope();
+        var delete = scope.ServiceProvider.GetRequiredService<IDeleteService<ReportingContext>>();
+        var result = await delete.DeleteAsync<ReportGeneration, ReportGenerationRes>(
+            [generation.Id], beforeAsync: (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync([ctx.Entity], hooks, ctx.Services, ct).AsTask(),
+            ct: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(fixture.FakeFileStorage.Files.ContainsKey(outputFileId));
+        await using var verify = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == generation.Id, TestContext.Current.CancellationToken));
     }
 
     private static ReportGeneration NewGeneration(string status, DateTime created, Guid? outputFileId = null)

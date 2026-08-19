@@ -12,7 +12,7 @@
       "title": "Data grid (`DataGrid/`)",
       "items": [
         "**`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.",
-        "**`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly typed properties. `LyoTimestamp` (via `LyoProjectedColumn.Timestamp` / `TimestampLatest`) converts UTC instants to the browser IANA zone; null/empty values render as an em dash. `Identifier` on `LyoProjectedColumn` / `LyoPropertyColumn` renders compact `LyoIdField` (copy + suffix). `LyoDateTimeDisplay` is the underlying parser/formatter (UTC when no zone is supplied). `LyoDurationDisplay` shares duration chip colors/text with reporting and jobs; `LyoDataGridColumnStyles` keeps the checkbox and inline action columns content-sized. `LyoTruncatedText` / `MaxDisplayLength` ellipsize long cells with a hover tooltip.",
+        "**`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly typed properties. `LyoTimestamp` (via `LyoProjectedColumn.Timestamp` / `TimestampLatest`) converts UTC instants to the browser IANA zone; null/empty values render as an em dash. `Identifier` on `LyoProjectedColumn` / `LyoPropertyColumn` renders compact `LyoIdField` (copy + suffix). Quick search ORs `QuickSearchPropertyName` columns and always includes leaf `Id` fields (Guid `Contains` matches the string form). `LyoDateTimeDisplay` is the underlying parser/formatter (UTC when no zone is supplied). `LyoDurationDisplay` shares duration chip colors/text with reporting and jobs; `LyoDataGridColumnStyles` keeps the checkbox and inline action columns content-sized. `LyoTruncatedText` / `MaxDisplayLength` ellipsize long cells with a hover tooltip.",
         "**`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.",
         "**`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid."
       ]
@@ -75,7 +75,8 @@
         "**`ParamOptions/LyoParameterOptionsEditor`** — edits static key/label lists or root `QueryReq` via `QueryRootForm` for the `Options` column.",
         "**`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.",
         "**`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [ `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
-        "**`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component."
+        "**`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component.",
+        "**`Dialog/LyoDialog`** — shared popup chrome (scrollable body, save/close). Header always has a raw-JSON debug button (`DebugData`); click opens `JsonViewDialog`. Use `LyoDialogPresets` for size."
       ]
     },
     {

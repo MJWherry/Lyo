@@ -37,7 +37,7 @@ services.AddReportingGenerationHooks(new ReportGenerationHooks {
             ct: ct);
         ctx.OutputFileId = saved.Id;
     },
-    // Called before a generation row is removed (retention cleanup or definition delete):
+    // Called before a generation row is removed (retention cleanup, generation delete, or definition delete):
     OnCleanupAsync = async (ctx, ct) => {
         if (ctx.OutputFileId is Guid fileId) {
             var storage = ctx.Services.GetRequiredService<IFileStorageService>();
@@ -94,7 +94,7 @@ Optional host `IReportDataProvider` / `ReportingGenerationProfile` (keyed by def
 
 - **Definition schema:** `report_definition_parameter` (Key, Type, default Value, Required, validation, EncryptedValue, Options JSON picker source)
 - **Generation instance:** `report_generation_parameter` (Key, Type, Value, EncryptedValue)
-- `ReportService.GenerateAsync` merges request `Parameters` over definition defaults, validates, persists generation rows, and passes typed params plus a synthesized Key→Value JSON map to providers/renderers for transition. `AllowMultiple` keys serialize as JSON arrays in that map, so no value is lost.
+- `ReportService.GenerateAsync` merges request `Parameters` over definition defaults, validates, persists generation rows, and passes typed params plus a synthesized Key→Value JSON map to providers/renderers for transition. `AllowMultiple` keys serialize as JSON arrays in that map, so no value is lost. Generate writes via EF (not CRUD), so it busts `entity:reportgeneration` and `entity:reportdefinition` query-cache tags after persist.
 
 ## Parameters — Validation semantics
 

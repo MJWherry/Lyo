@@ -1,6 +1,6 @@
 @inject ISnackbar Snackbar
 
-<LyoDialog Busy="@_busy" OnSave="Submit" SaveDisabled="@(_selected is null || !IsValid())" SaveText="Generate" CloseText="Cancel">
+<LyoDialog Busy="@_busy" OnSave="Submit" SaveDisabled="@(_selected is null || !IsValid())" SaveText="Generate" CloseText="Cancel" DebugData="@_selected">
     <MudStack Spacing="2">
         <MudGrid Spacing="2">
             <MudItem xs="12">

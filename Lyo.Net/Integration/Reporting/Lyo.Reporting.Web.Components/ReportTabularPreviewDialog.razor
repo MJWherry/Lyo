@@ -1,6 +1,6 @@
 @using Lyo.DataTable.Models
 
-<LyoDialog>
+<LyoDialog DebugData="@Sheets">
     <ChildContent>
         @if (_sheets.Count == 0) {
             <MudAlert Severity="Severity.Warning" Dense="true">No grids found in this report.</MudAlert>

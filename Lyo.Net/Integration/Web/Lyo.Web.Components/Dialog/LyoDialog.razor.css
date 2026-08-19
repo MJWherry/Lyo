@@ -1,3 +1,12 @@
+.lyo-dialog-title {
+    width: 100%;
+}
+
+.lyo-dialog-title-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .lyo-dialog-content {
     max-height: calc(100vh - 16rem);
     overflow-y: auto;

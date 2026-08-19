@@ -25,6 +25,27 @@ public sealed class ProjectedColumnRegistry
         return visible.Count == 0 ? all : all.Where(f => visible.Contains(f));
     }
 
-    public IReadOnlyList<string> GetQuickSearchProperties()
-        => _columns.Where(c => !string.IsNullOrWhiteSpace(c.QuickSearchPropertyName)).Select(c => c.QuickSearchPropertyName!.Trim()).Distinct().ToList();
+    /// <summary>
+    /// Property paths OR-ed into quick search. Uses <paramref name="explicitProperties" /> when that list is non-empty; otherwise column
+    /// <c>QuickSearchPropertyName</c> values. Always unions leaf <c>Id</c> fields so identifier paste-search works without per-grid wiring.
+    /// </summary>
+    public IReadOnlyList<string> GetQuickSearchProperties(IReadOnlyList<string>? explicitProperties = null)
+    {
+        var named = explicitProperties is { Count: > 0 }
+            ? explicitProperties
+            : _columns.Where(c => !string.IsNullOrWhiteSpace(c.QuickSearchPropertyName)).Select(c => c.QuickSearchPropertyName!.Trim());
+        var ids = _columns.Where(c => IsIdField(c.Field)).Select(c => c.Field.Trim());
+        return named.Concat(ids).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>True when the last dotted segment is <c>Id</c> (e.g. <c>Id</c>, <c>JobDefinition.Id</c>).</summary>
+    public static bool IsIdField(string? field)
+    {
+        if (string.IsNullOrWhiteSpace(field))
+            return false;
+
+        var name = field.Trim();
+        var leaf = name.LastIndexOf('.') is var dot and >= 0 ? name[(dot + 1)..] : name;
+        return leaf.Equals("Id", StringComparison.OrdinalIgnoreCase);
+    }
 }

@@ -23,6 +23,9 @@
     [CascadingParameter]
     IMudDialogInstance MudDialogInstance { get; set; } = null!;
 
+    [Inject]
+    IDialogService DialogService { get; set; } = null!;
+
     /// <summary>Optional title rendered inside the dialog header. When null (and <see cref="TitleContent" /> is null), the title passed to <c>ShowAsync</c> is used.</summary>
     [Parameter]
     public string? Title { get; set; }
@@ -30,6 +33,13 @@
     /// <summary>Custom header markup; takes precedence over <see cref="Title" />. Use for status chips next to the title.</summary>
     [Parameter]
     public RenderFragment? TitleContent { get; set; }
+
+    /// <summary>
+    /// Payload shown by the header debug button as pretty-printed JSON (typically the API response or row that opened this popup).
+    /// The button is always rendered; it is disabled when this is null.
+    /// </summary>
+    [Parameter]
+    public object? DebugData { get; set; }
 
     /// <summary>Dialog body. Rendered inside a scrollable region capped to the viewport height so long content never pushes the actions off-screen.</summary>
     [Parameter]
@@ -63,15 +73,32 @@
     [Parameter]
     public string SaveText { get; set; } = "Save";
 
-    private RenderFragment? GetTitleContent()
+    private RenderFragment GetTitleContent()
+        => @<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="lyo-dialog-title">
+               <div class="lyo-dialog-title-text">
+                   @if (TitleContent != null) {
+                       @TitleContent
+                   }
+                   else {
+                       <MudText Typo="Typo.h6">@(Title ?? MudDialogInstance.Title)</MudText>
+                   }
+               </div>
+               <MudTooltip Text="Raw response JSON">
+                   <MudIconButton Icon="@Icons.Material.Filled.DataObject"
+                                  Size="Size.Small"
+                                  Disabled="@(DebugData == null)"
+                                  OnClick="ShowDebugJson"
+                                  aria-label="Raw response JSON"/>
+               </MudTooltip>
+           </MudStack>;
+
+    private async Task ShowDebugJson()
     {
-        if (TitleContent != null)
-            return TitleContent;
+        if (DebugData == null)
+            return;
 
-        if (Title == null)
-            return null;
-
-        return @<MudText Typo="Typo.h6">@Title</MudText>;
+        var parameters = new DialogParameters<JsonViewDialog<object>> { { i => i.Data, DebugData } };
+        await DialogService.ShowAsync(typeof(JsonViewDialog<object>), "Raw response JSON", parameters, LyoDialogPresets.Medium);
     }
 
     private void Close() => MudDialogInstance.Cancel();

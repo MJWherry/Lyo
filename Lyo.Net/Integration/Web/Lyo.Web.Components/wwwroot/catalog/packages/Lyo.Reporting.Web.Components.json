@@ -41,11 +41,11 @@
       "rows": [
         [
           "`ReportManagement`",
-          "Tabs: Definitions / Generations"
+          "Tabs: Definitions / Generations. After generate, switches to Generations and opens the generation view (and the report output when viewable)."
         ],
         [
           "`ReportDefinitionGrid`",
-          "Definition list + Run"
+          "Definition list + Run / Delete (cascade + storage cleanup)"
         ],
         [
           "`ReportDefinitionView`",
@@ -57,7 +57,7 @@
         ],
         [
           "`ReportGenerationGrid`",
-          "Generation list + View/Download"
+          "Generation list + View/Download/Delete (storage cleanup)"
         ],
         [
           "`ReportGenerationView`",

@@ -2,7 +2,7 @@
 @inject IJSRuntime JsRuntime
 @inject IDialogService DialogService
 
-<LyoDialog>
+<LyoDialog DebugData="@Generation">
     <TitleContent>
         <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Generation.OriginalFileName) ? "Report Generation" : Generation.OriginalFileName)</MudText>
@@ -98,6 +98,12 @@
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
 
+    /// <summary>When true, opens the report output (tabular preview or view URL) after the dialog first renders.</summary>
+    [Parameter]
+    public bool OpenOutput { get; set; }
+
+    private bool _outputOpened;
+
     private string DurationText => ReportColorHelper.FormatDurationFromDates(Generation.StartedTimestamp, Generation.FinishedTimestamp);
 
     private bool CanView
@@ -106,6 +112,15 @@
             : Generation.OutputFileId is not null && ViewFileUrlAsync is not null;
 
     private bool CanDownload => Generation.OutputFileId is not null && DownloadFileAsync is not null;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !OpenOutput || _outputOpened || !CanView)
+            return;
+
+        _outputOpened = true;
+        await ViewAsync();
+    }
 
     private async Task ViewAsync()
     {

@@ -23,7 +23,7 @@ Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires th
 
 ```text
 BuildJobGroup ← from Lyo.Job.Postgres (full job/job-run CRUD)
-BuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations read-only, Generate/Rerun/Download; anonymous in this host)
+BuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)
 BuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts
 BuildDiscordGroup ← Discord dynamic CRUD
 BuildTwilioGroup ← Twilio dynamic CRUD (route prefix "Twilio")
@@ -33,7 +33,7 @@ BuildFileStorageWorkbenchFileMetadataQuery ← ReadOnly Lyo.Api builder over Fil
 ```
 
 Reporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (
-`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup or definition delete).
+`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).
 `ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.
 CSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is
 registered but not scheduled — set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.

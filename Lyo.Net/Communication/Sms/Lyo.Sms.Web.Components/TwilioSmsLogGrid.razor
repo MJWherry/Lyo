@@ -19,7 +19,7 @@
         <LyoProjectedColumn Field="To" Title="To" QuickSearchPropertyName="To"/>
         <LyoProjectedColumn Field="From" Title="From" QuickSearchPropertyName="From"/>
         <LyoProjectedColumn Field="Body" Title="Body" QuickSearchPropertyName="Body" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
-        <LyoProjectedColumn Field="Status" Title="Status" QuickSearchPropertyName="Status" Align="Align.Center" HeaderStyle="width: 120px;">
+        <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center" HeaderStyle="width: 120px;">
             <CellContent Context="item">
                 @{
                     var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");

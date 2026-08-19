@@ -97,11 +97,14 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private string ExportRoute => Route.TrimEnd('/') + "/Export";
 
+    /// <summary>
+    /// Property paths OR-ed into the quick-search filter. When null or empty, paths are taken from column <c>QuickSearchPropertyName</c> values.
+    /// Leaf <c>Id</c> columns are always included so pasting an identifier matches without listing it here.
+    /// </summary>
     [Parameter]
     public IReadOnlyList<string>? QuickSearchProperties { get; init; }
 
-    private IReadOnlyList<string> EffectiveQuickSearchProperties
-        => QuickSearchProperties is { Count: > 0 } ? QuickSearchProperties : _propertyColumnRegistry.GetQuickSearchProperties();
+    private IReadOnlyList<string> EffectiveQuickSearchProperties => _propertyColumnRegistry.GetQuickSearchProperties(QuickSearchProperties);
 
     [Parameter]
     public IReadOnlyList<FilterPropertyDefinition> FilterPropertyDefinitions { get; init; } = [];

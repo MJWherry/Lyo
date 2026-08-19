@@ -12,8 +12,8 @@ public sealed class ReportGenerationHooks
     public Func<ReportGenerateFailureContext, CancellationToken, ValueTask>? OnFailureAsync { get; init; }
 
     /// <summary>
-    /// Invoked before a generation row is removed (retention cleanup or definition delete) so hosts can delete the persisted output (e.g. FileStorage blob). Throwing skips
-    /// deletion of that row.
+    /// Invoked before a generation row is removed (retention cleanup, generation delete, or definition delete) so hosts can delete the persisted output (e.g. FileStorage blob).
+    /// Throwing skips deletion of that row.
     /// </summary>
     public Func<ReportCleanupContext, CancellationToken, ValueTask>? OnCleanupAsync { get; init; }
 }

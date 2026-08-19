@@ -80,7 +80,7 @@ Per-definition `RetentionDays` overrides the global default when &gt; 0.
 ## Run state machine
 
 All lifecycle transitions are compare-and-swap updates (`ExecuteUpdateAsync` with the expected state in the `WHERE` clause), so duplicate MQ deliveries and races between workers,
-the API, and maintenance resolve deterministically. Future endpoints that mutate `JobRun.State` must keep this CAS discipline.
+the API, and maintenance resolve deterministically. Future endpoints that mutate `JobRun.State` must keep this CAS discipline. Create, delete, CAS, log, dead-job timeout, and retention purge also bust `entity:jobrun` and `entity:jobdefinition` query-cache tags so run and last-run grid pages do not stay stale.
 
 | Transition | Performed by | Guard |
 | --------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

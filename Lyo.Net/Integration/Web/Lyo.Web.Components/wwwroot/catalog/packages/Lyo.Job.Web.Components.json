@@ -69,11 +69,11 @@
         ],
         [
           "`JobDefinitionActivity`",
-          "Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots."
+          "Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots. Timestamps use `LyoTimestamp` (browser TZ shown); next runs are relative within ±24h."
         ],
         [
           "`JobScheduleGrid`",
-          "Standalone schedule CRUD (misfire, calendar, cron fields via API)."
+          "Standalone schedule grid with next/upcoming runs in the browser time zone (`LyoTimestamp`, relative within ±24h)."
         ],
         [
           "`JobParameterView`",
@@ -81,7 +81,7 @@
         ],
         [
           "`JobScheduleView`",
-          "Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters)."
+          "Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker (defaults to the browser IANA id), local start/end date pickers stored as UTC midnight in that zone, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters). Times stay wall-clock `TimeOnly` values."
         ],
         [
           "`JobBlackoutCalendarEditor`",
@@ -148,7 +148,7 @@
         ],
         [
           "Schedules / blackout calendars",
-          "**Schedules** tab — add/remove schedules, enable toggle, timezone dropdown, inline blackout calendar/windows, misfire/cron fields"
+          "**Schedules** tab — add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields"
         ],
         [
           "Dry run",

@@ -1,6 +1,6 @@
 @inject ISnackbar Snackbar
 
-<LyoDialog Busy="@_saving" OnSave="Save" SaveDisabled="@(!_hasChanges)">
+<LyoDialog Busy="@_saving" OnSave="Save" SaveDisabled="@(!_hasChanges)" DebugData="@JobDefinition">
     <TitleContent>
         <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h6">@(JobDefinition?.Name ?? "Job Definition")</MudText>

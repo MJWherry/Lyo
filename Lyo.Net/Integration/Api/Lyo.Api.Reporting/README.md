@@ -64,7 +64,7 @@ var (stream, fileName, length) = await reporting.Generations.DownloadAsync(rerun
 | --------------------- | ---------------- | ------------------------------------------------------------------------------------------ |
 | Definitions | `DefinitionAuth` | CRUD + Export |
 | Definition parameters | `DefinitionAuth` | CRUD under `Reporting/Definition/Parameter` |
-| Generations | `GenerationAuth` | Query / Get only (read-only; include `Parameters`) |
+| Generations | `GenerationAuth` | Query / Get / Delete / DeleteBulk (include `Parameters`). Delete runs `OnCleanupAsync` so persisted output is removed from storage. |
 | Generate | `GenerateAuth` | `POST Reporting/Generation/Generate` (body `Parameters` list) |
 | Rerun | `GenerateAuth` | `POST Reporting/Generation/{id}/Rerun` |
 | Download | `DownloadAuth` | `GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set) |

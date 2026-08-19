@@ -7,7 +7,7 @@ Every visual component participates in the `LyoElementRoot` element-id scheme, s
 ## Data grid (`DataGrid/`)
 
 - **`LyoDataGrid<T>`** — wraps `MudDataGrid` with an opt-in feature toolbar driven by `LyoDataGridFeatureFlags`: bulk export (CSV / XLSX / PDF), bulk delete, column-visibility menu, refresh, query-builder integration, and per-grid persisted state. Backed by `LyoDataGridState` and `ColumnVisibilityBinder` so layouts survive reloads via `Blazored.LocalStorage`.
-- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly typed properties. `LyoTimestamp` (via `LyoProjectedColumn.Timestamp` / `TimestampLatest`) converts UTC instants to the browser IANA zone; null/empty values render as an em dash. `Identifier` on `LyoProjectedColumn` / `LyoPropertyColumn` renders compact `LyoIdField` (copy + suffix). `LyoDateTimeDisplay` is the underlying parser/formatter (UTC when no zone is supplied). `LyoDurationDisplay` shares duration chip colors/text with reporting and jobs; `LyoDataGridColumnStyles` keeps the checkbox and inline action columns content-sized. `LyoTruncatedText` / `MaxDisplayLength` ellipsize long cells with a hover tooltip.
+- **`LyoDataGridProjected<T>`** — variant for grids whose rows are projected from a query (sparse / wide datasets). Uses `LyoTypedProjectedColumn`, `LyoProjectedColumn`, and `ProjectedColumnRegistry` / `ProjectedValueHelper` to look up values without strongly typed properties. `LyoTimestamp` (via `LyoProjectedColumn.Timestamp` / `TimestampLatest`) converts UTC instants to the browser IANA zone; null/empty values render as an em dash. `Identifier` on `LyoProjectedColumn` / `LyoPropertyColumn` renders compact `LyoIdField` (copy + suffix). Quick search ORs `QuickSearchPropertyName` columns and always includes leaf `Id` fields (Guid `Contains` matches the string form). `LyoDateTimeDisplay` is the underlying parser/formatter (UTC when no zone is supplied). `LyoDurationDisplay` shares duration chip colors/text with reporting and jobs; `LyoDataGridColumnStyles` keeps the checkbox and inline action columns content-sized. `LyoTruncatedText` / `MaxDisplayLength` ellipsize long cells with a hover tooltip.
 - **`LyoPropertyColumn`** — column wrapper that integrates with the query builder for filtering / sorting metadata.
 - **`FilterChipLabel`** + **`ChipLabelHelper`** — chip-style filter readouts shown above the grid.
 
@@ -21,7 +21,7 @@ Every visual component participates in the `LyoElementRoot` element-id scheme, s
 - **`LyoForm<TModel>`** — `EditForm`-based change-tracking form. Renders Save/Reset actions, summarises pending property changes plus create/update/delete operations for collection-bound children, and cascades itself as `ChangeTrackingForm` so nested inputs can register themselves.
 - **`LyoFormInput`** — change-tracked single-value input that participates in the cascaded form.
 - **`LyoNullableTextField`** — text field with explicit nullable semantics for the change tracker.
-- **`LyoIdField`** — read-only identifier field: abbreviated UUID suffix by default, expand-to-full toggle, and copy-full-id adornment.
+- **`LyoIdField`** — read-only identifier field. Copy is the start adornment. UUID/string ids default to a 9-character suffix with expand/abbreviate at the end; digit-only ids stay full (copy only). `LyoIdAbbreviation` (`None` / `Prefix` / `Suffix`) and `AbbreviationLength` override the clip. `Compact` is the grid-cell variant.
 
 ## Rich text editor (`RichTextEditor/`)
 
@@ -68,7 +68,9 @@ Completed chips always render the shortened display name (not the raw full name 
 
 - **`ClientStore`** — `Blazored.LocalStorage`-backed key/value store used by the grid + form state binders.
 - **`LyoElementRoot`** — wraps a component and computes its DOM id from `ElementId` + a default, normalising the segment through `ElementIdSegmentNormalizer`. `GridRootElementId` and `ComponentTypeElementId` provide well-known prefixes (`DataGrid`, etc.).
-- **`IJsInterop` / `JsInterop`** — small JS bridge for clipboard / focus operations.
+- **`IJsInterop` / `JsInterop`** — small JS bridge for clipboard / focus / downloads, plus `GetClientTimeZoneInfo` which imports `wwwroot/scripts/lyoTimeZone.js` (`Intl.DateTimeFormat` IANA id).
+- **`ILyoTimeZone` / `LyoBrowserTimeZone`** — circuit-scoped cache of the browser time zone. Register with `TryAddScoped<ILyoTimeZone, LyoBrowserTimeZone>()` next to `IJsInterop`.
+- **`LyoTimestamp`** — UTC → browser-zone stamp (`LyoTimestampKind`: Absolute, Relative, TimeUntil, TimeSince). Absolute text uses a short zone abbrev (EST/EDT, or UTC±offset if the OS has no short name). Relative / until / since text has no zone (`in 2h 15m`). Tooltip is always the absolute local time plus abbrev. Relative kinds use `RelativeWindow` (±, default 24 hours); outside that window they fall back to absolute.
 - **`LyoResultErrorFormatter`** — renders `Lyo.Result` errors consistently across components.
 
 ## Models (`Models/`)

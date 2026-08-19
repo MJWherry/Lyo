@@ -102,6 +102,55 @@
                     Add host
                 </MudButton>
             </MudExpansionPanel>
+            <MudExpansionPanel Text="Auth header">
+                <MudStack Spacing="2">
+                    <MudSelect T="QueryWorkbenchAuthMode"
+                               Value="@Run.AuthMode"
+                               ValueChanged="@OnAuthModeChanged"
+                               Label="Auth"
+                               Variant="Variant.Outlined"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Style="max-width: 220px;">
+                        <MudSelectItem Value="@QueryWorkbenchAuthMode.None">None</MudSelectItem>
+                        <MudSelectItem Value="@QueryWorkbenchAuthMode.Bearer">Bearer token</MudSelectItem>
+                        <MudSelectItem Value="@QueryWorkbenchAuthMode.Header">Custom header</MudSelectItem>
+                    </MudSelect>
+                    @if (Run.AuthMode == QueryWorkbenchAuthMode.Bearer) {
+                        <MudTextField T="string"
+                                      Value="@Run.AuthHeaderValue"
+                                      ValueChanged="@OnAuthHeaderValueChanged"
+                                      Label="Bearer token"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Immediate="true"
+                                      InputType="InputType.Password"
+                                      HelperText="Sent as Authorization: Bearer …"/>
+                    }
+                    else if (Run.AuthMode == QueryWorkbenchAuthMode.Header) {
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            <MudTextField T="string"
+                                          Value="@Run.AuthHeaderName"
+                                          ValueChanged="@OnAuthHeaderNameChanged"
+                                          Label="Header name"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Immediate="true"
+                                          Style="min-width: 180px;"
+                                          Placeholder="Authorization"/>
+                            <MudTextField T="string"
+                                          Value="@Run.AuthHeaderValue"
+                                          ValueChanged="@OnAuthHeaderValueChanged"
+                                          Label="Header value"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Immediate="true"
+                                          Style="min-width: 280px;"
+                                          Placeholder="Bearer … or API key"/>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudExpansionPanel>
         </MudExpansionPanels>
 
         <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-family: ui-monospace, monospace;">

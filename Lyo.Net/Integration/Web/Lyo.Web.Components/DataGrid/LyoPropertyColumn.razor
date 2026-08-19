@@ -82,8 +82,27 @@
             _hiddenSeeded = true;
         }
 
-        if (!string.IsNullOrEmpty(QuickSearchPropertyName))
-            ColumnRegistry?.Register("", Title, QuickSearchPropertyName);
+        ColumnRegistry?.Register(PropertyPath(Property) ?? "", Title, QuickSearchPropertyName, HiddenByDefault);
+    }
+
+    private static string? PropertyPath(LambdaExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        var body = expr.Body;
+        if (body is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+            body = unary.Operand;
+
+        var parts = new List<string>();
+        while (body is MemberExpression member) {
+            parts.Insert(0, member.Member.Name);
+            body = member.Expression!;
+            if (body is UnaryExpression nested && nested.NodeType == ExpressionType.Convert)
+                body = nested.Operand;
+        }
+
+        return parts.Count == 0 ? null : string.Join(".", parts);
     }
 
     private string EffectiveHeaderStyle => MergeAlignStyle(null, Align);
