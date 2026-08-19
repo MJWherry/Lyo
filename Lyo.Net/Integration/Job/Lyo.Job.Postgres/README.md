@@ -115,6 +115,7 @@ Parameter values matching an encrypted definition parameter are encrypted at res
 | **Batch jobs** | `POST Job/Run/{parentId}/Children` creates fan-out child runs; scheduler aggregates parent progress when children finish. |
 | **Encryption** | Parameter create/update encrypts via `IJobParameterEncryptionService`; API masks encrypted values; `StartedJobRun` decrypts server-side for the executing worker (see [Encryption flow](#encryption-flow)). |
 | **Dry run** | When `JobRunReq.DryRun == true`, validates parameters and returns a synthetic `JobRunRes` without DB insert or MQ publish. |
+| **Queued-run resync** | `POST Job/Run/Resync` peeks `job.run.{workerType}` and `.wait`, then republishes due `Queued` runs that are missing. Manual counterpart of stuck-queued maintenance; duplicates are harmless (`StartedJobRun` CAS). |
 | **Parameter validation** | `ValidateRunParametersAsync` enforces definition schema: required, regex, min/max length, pipe-delimited `AllowedValues`. Definition `Options` (JSON text) is a UI picker source (static or root Query); not re-queried on create. |
 | **Race-safe concurrency** | `pg_advisory_xact_lock` per definition serializes create + `MaxConcurrentRuns` / rate-limit checks inside a transaction. |
 
@@ -133,6 +134,7 @@ Slot idempotency (`JobScheduleId` + `ScheduledSlotUtc` unique index) remains the
 | `job.service.run.finished` | `FinishedJobRun` |
 | `job.service.run.cancelled` | `CancelJobRun` |
 | `job.service.run.rerun` | `RerunJob` |
+| `job.service.run.resynced` | `ResyncQueuedRunsAsync` republished count |
 | `job.service.run.duration` | Finished run wall time |
 | `job.service.run.queue_latency` | Created → started |
 
@@ -189,7 +191,7 @@ flowchart LR
 Tag `"Job"`. CRUD + export on definitions; runs expose Query/Get/Delete/DeleteBulk + export.
 
 | Route prefix | Entity | Notes |
-| ---------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------ |
+| ---------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `Job/Definition` | `JobDefinition` | Version bump + audit on update |
 | `Job/Definition/Parameter` | `JobParameter` | Encryption on write |
 | `Job/Schedule` | `JobSchedule` | Misfire policy, calendar link, cron |
@@ -200,9 +202,11 @@ Tag `"Job"`. CRUD + export on definitions; runs expose Query/Get/Delete/DeleteBu
 | `Job/Run` | `JobRun` | Progress, SLA, idempotency fields |
 | `Job/Run/{id}/Children` | Batch fan-out | `JobCreateChildRunsReq` |
 | `POST Job/Definition/LatestRuns` | Batch latest-runs | Latest / latest-successful / latest-failed run per definition id (scheduler refresh) |
-| `GET Job/Definition/{id}/Stats` | Stats projection | Rolling window aggregates |
+| `GET Job/Definition/{id}/Stats` | Stats projection | Rolling window aggregates plus current `RunningCount` / `QueuedCount` |
+| `GET Job/Definition/{id}/NextRuns` | Upcoming slots | Merged next-run timestamps across enabled schedules (blackout-aware) |
+| `POST Job/Run/Resync` | Queued-run resync | Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`) |
 
-Lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunHeartbeat`, `RunLog`, …) are mapped alongside CRUD for scheduler/worker hosts.
+Lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunLog`, …) are mapped alongside CRUD for scheduler/worker hosts.
 
 ## Event publishers (`Events/`)
 

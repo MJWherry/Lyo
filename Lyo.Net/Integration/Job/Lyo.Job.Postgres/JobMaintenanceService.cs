@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Cache;
 using Lyo.Health;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -53,6 +54,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
     private readonly ILogger<JobMaintenanceService> _logger;
     private readonly IMetrics _metrics;
     private readonly JobMaintenanceOptions _options;
+    private readonly ICacheService? _cache;
 
     private DateTime? _lastSuccessfulTickUtc;
     private string? _lastTickError;
@@ -64,13 +66,15 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         ILogger<JobMaintenanceService> logger,
         IJobEventPublisher eventPublisher,
         JobMaintenanceOptions? options = null,
-        IMetrics? metrics = null)
+        IMetrics? metrics = null,
+        ICacheService? cache = null)
     {
         _dbFactory = dbFactory;
         _eventPublisher = eventPublisher;
         _logger = logger;
         _options = options ?? new JobMaintenanceOptions();
         _metrics = metrics ?? NullMetrics.Instance;
+        _cache = cache;
     }
 
     /// <inheritdoc />
@@ -134,6 +138,9 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         // Publish only after the state changes are committed, so consumers read the final state.
         await PublishRunsFinishedAsync(timedOutRunIds, ct).ConfigureAwait(false);
         await PublishDefinitionsUpdatedAsync(resetDefinitionIds, ct).ConfigureAwait(false);
+        if (timedOutRunIds.Count > 0)
+            await JobRunQueryCache.InvalidateAsync(_cache).ConfigureAwait(false);
+
         await PurgeExpiredRunsAsync(ct).ConfigureAwait(false);
     }
 
@@ -410,5 +417,6 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         _metrics.IncrementCounter(Constants.Metrics.Maintenance.RunsPurged, totalPurged);
         _logger.LogInformation("Purged {Count} expired job runs (retention policy)", totalPurged);
+        await JobRunQueryCache.InvalidateAsync(_cache).ConfigureAwait(false);
     }
 }

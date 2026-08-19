@@ -37,7 +37,7 @@ public partial class TwilioSmsLogGrid
     };
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Success"), new("Body")
+        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Received"), new("Body")
     ];
 
     private bool _chatBusy;
@@ -251,7 +251,7 @@ public partial class TwilioSmsLogGrid
         var fromRaw = ProjectedValueHelper.GetDisplayValue(item, "From");
         var to = PhoneNumber.Normalize(toRaw);
         var from = PhoneNumber.Normalize(fromRaw);
-        if (IsInbound(ProjectedValueHelper.GetDisplayValue(item, "Direction")))
+        if (SmsColorHelper.IsInbound(ProjectedValueHelper.GetDisplayValue(item, "Direction")))
             return (FirstNonEmpty(from, to), FirstNonEmpty(to, from), FirstNonEmpty(fromRaw, toRaw));
 
         return (FirstNonEmpty(to, from), FirstNonEmpty(from, to), FirstNonEmpty(toRaw, fromRaw));
@@ -264,15 +264,11 @@ public partial class TwilioSmsLogGrid
         return new(
             ProjectedValueHelper.GetDisplayValue(row, "Id"),
             ProjectedValueHelper.GetDisplayValue(row, "Body"),
-            IsInbound(ProjectedValueHelper.GetDisplayValue(row, "Direction")),
+            SmsColorHelper.IsInbound(ProjectedValueHelper.GetDisplayValue(row, "Direction")),
             at,
             ParseMedia(ProjectedValueHelper.GetDisplayValue(row, "MediaUrlsJson")),
             ProjectedValueHelper.GetDisplayValue(row, "Status"));
     }
-
-    private static bool IsInbound(string? direction)
-        => !string.IsNullOrWhiteSpace(direction)
-           && (direction.Equals("Inbound", StringComparison.OrdinalIgnoreCase) || direction == "1");
 
     private static IReadOnlyList<string> ParseMedia(string? json)
     {

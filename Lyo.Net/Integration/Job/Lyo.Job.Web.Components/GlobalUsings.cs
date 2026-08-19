@@ -3,6 +3,8 @@ global using Lyo.Api.Models.Builders;
 global using Lyo.Api.Models.Common.Request;
 global using Lyo.Api.Models.Common.Response;
 global using Lyo.Common;
+global using Lyo.Common.Enums;
+global using Lyo.Common.Extensions;
 global using Lyo.Job.Models;
 global using Lyo.Job.Models.Enums;
 global using Lyo.Job.Models.Request;

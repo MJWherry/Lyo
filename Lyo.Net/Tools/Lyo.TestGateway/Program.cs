@@ -41,6 +41,7 @@ using Lyo.Web.Components;
 using Lyo.Web.Components.Export;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Services;
@@ -106,6 +107,7 @@ builder.Services.AddSingleton(_ => {
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddPdfService();
 builder.Services.AddScoped<IJsInterop, JsInterop>();
+builder.Services.TryAddScoped<ILyoTimeZone, LyoBrowserTimeZone>();
 builder.Services.AddPdfAnnotatorInterop();
 builder.Services.AddScoped<TestGatewayFileTransformer>();
 builder.Services.AddSpriteSheetExportService();

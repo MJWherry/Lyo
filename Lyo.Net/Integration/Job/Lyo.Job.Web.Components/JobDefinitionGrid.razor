@@ -3,7 +3,6 @@
 @using Lyo.Web.Components.Export.Xlsx
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject IJsInterop Js
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -58,16 +57,9 @@
                 </MudChip>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
-                @{
-                    var idText = ProjectedValueHelper.GetDisplayValue(item, "Id");
-                }
-                <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@Shorten(idText)</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID"
-                                   OnClick="@(() => CopyToClipboard(idText))"/>
-                </MudStack>
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
@@ -75,11 +67,11 @@
         <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type"/>
         <LyoProjectedColumn Field="WorkerType" Title="Worker Type"/>
         <LyoProjectedColumn Field="JobRuns.CreatedTimestamp" Title="Last Run" Sortable="false" CellStyle="white-space: nowrap;"
-                            FormattedValue="@LyoDateTimeDisplay.FormatLatestProjected"/>
+                            Timestamp="LyoTimestampKind.Absolute" TimestampLatest="true"/>
         <LyoProjectedColumn Field="JobSchedules.Count" Title="Schedules" Align="Align.Center" HeaderStyle="width: 90px;"/>
         <LyoProjectedColumn Field="JobParameters.Count" Title="Parameters" Align="Align.Center" HeaderStyle="width: 90px;"/>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" HiddenByDefault="true" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
-        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="MaxRetryCount" Title="Max Retries" Align="Align.Center" HeaderStyle="width: 90px;" HiddenByDefault="true"/>
     </Columns>
     <RowMenuControls Context="item">
@@ -123,14 +115,6 @@
     {
         var id = ProjectedValueHelper.GetValue(item, "Id");
         return ProjectedValueHelper.TryGetGuid(id, out var guid) ? [guid] : id != null ? [id] : [];
-    }
-
-    private static string Shorten(string id) => id.Length > 8 ? id[..8] : id;
-
-    private async Task CopyToClipboard(string text)
-    {
-        await Js.SendToClipboard(text);
-        Snackbar.Add("Copied to clipboard", Severity.Info);
     }
 
     private bool GetEnabled(object? item)
@@ -192,7 +176,7 @@
         if (id == null)
             return;
 
-        var def = await FetchDefinition(id, ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]);
+        var def = await FetchDefinition(id, JobDefinitionEditorQuery.Includes);
         if (def == null)
             return;
 

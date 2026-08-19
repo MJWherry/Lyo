@@ -14,7 +14,7 @@
     {
       "title": "Sub-client on a host API client",
       "language": "csharp",
-      "code": "public class MyApiClient : ApiClient\n{\n    public JobClient Jobs { get; }\n\n    public MyApiClient(MyApiClientOptions options, ...) : base(...)\n    {\n        Jobs = new JobClient(this);\n    }\n}\n\n// Usage\nawait myClient.Jobs.Runs.StartAsync(runId);\nawait myClient.Jobs.Runs.LogAsync(runId, new JobRunLogReq(...));\nawait myClient.Jobs.Runs.FinishAsync(runId, results);\nawait myClient.Jobs.Runs.RequeueAsync(runId); // Running -> Queued hand-back (graceful worker shutdown)"
+      "code": "public class MyApiClient : ApiClient\n{\n    public JobClient Jobs { get; }\n\n    public MyApiClient(MyApiClientOptions options, ...) : base(...)\n    {\n        Jobs = new JobClient(this);\n    }\n}\n\n// Usage\nawait myClient.Jobs.Runs.StartAsync(runId);\nawait myClient.Jobs.Runs.LogAsync(runId, new JobRunLogReq(...));\nawait myClient.Jobs.Runs.FinishAsync(runId, results);\nawait myClient.Jobs.Runs.RequeueAsync(runId); // Running -> Queued hand-back (graceful worker shutdown)\nawait myClient.Jobs.Runs.ResyncQueuedAsync(); // republish due Queued runs missing from RabbitMQ"
     }
   ],
   "sections": [

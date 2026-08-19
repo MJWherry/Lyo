@@ -58,16 +58,18 @@ See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.crea
 ## Component catalog
 
 | Component | Role |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `JobManagement` | Tabbed dashboard shell. |
 | `JobStats` | Aggregated `SpJobStatistic` success rates and counts. |
 | `JobDefinitionGrid` | CRUD grid for definitions. |
-| `JobDefinitionView` | Editor: parameters, schedules, triggers. |
+| `JobDefinitionView` | Editor: basic info with last/next/running activity, parameters, schedules, triggers. |
+| `JobDefinitionActivity` | Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots. |
 | `JobScheduleGrid` | Standalone schedule CRUD (misfire, calendar, cron fields via API). |
 | `JobParameterView` | Definition parameter grid (including encrypted markers, AllowedValues, and Options editor). |
-| `JobScheduleView` | Inline schedule editor on definition view. |
+| `JobScheduleView` | Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters). |
+| `JobBlackoutCalendarEditor` | Create/unlink a schedule blackout calendar and CRUD its windows (recurring days or dated range, Skip/Defer). |
 | `JobTriggerView` | Trigger relationships between definitions. |
-| `JobRunGrid` | Runs with state pills, **progress bar** column, drill-down. |
+| `JobRunGrid` | Runs with state pills, **progress bar** column, drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker). |
 | `JobRunDetailView` | Parameters, results, logs, **progress**, **SLA breach** chip, alert flags, re-run. |
 | `JobWorkerInstanceGrid` | Live worker registry (type, machine, PID, in-flight, heartbeat). |
 | `JobWorkflowView` | Workflow picker + ordered step diagram. |
@@ -78,13 +80,14 @@ Every grid / view accepts `IApiClient` and route parameters so components can be
 ## Production hardening in the UI
 
 | Feature | Where surfaced |
-| ------------------------------ | --------------------------------------------------------------------------------------- |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | Progress | `JobRunGrid` progress column; `JobRunDetailView` linear bar + message |
 | SLA | `JobRunDetailView` breach indicator when `SlaBreached == true` |
 | Alerting | Definition/run alert flags in detail view |
+| Queue resync | `JobRunGrid` **Resync RabbitMQ** toolbar — `POST Job/Run/Resync` (scoped when a definition filter is set) |
 | Worker registry | **Workers** tab (`JobWorkerInstanceGrid`) |
 | Workflows | **Workflows** tab (`JobWorkflowView`) |
-| Schedules / blackout calendars | **Schedules** tab — misfire policy, linked `JobBlackoutCalendarId`, cron fields via API |
+| Schedules / blackout calendars | **Schedules** tab — add/remove schedules, enable toggle, timezone dropdown, inline blackout calendar/windows, misfire/cron fields |
 | Dry run | `RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch) |
 
 ## `JobColorHelper`
@@ -113,17 +116,21 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Web.Components.Export.Xlsx` — (direct, lyo)
 - `MudBlazor` `9.3` — (direct, third-party)
 - `Lyo.Api.Models` — (transitive, lyo)
+- `Lyo.Cache` — (transitive, lyo)
 - `Lyo.Common` — (transitive, lyo)
+- `Lyo.Compression` — (transitive, lyo)
 - `Lyo.DataTable.Models` — (transitive, lyo)
 - `Lyo.DateAndTime` — (transitive, lyo)
 - `Lyo.Diagnostic` — (transitive, lyo)
 - `Lyo.Encryption` — (transitive, lyo)
 - `Lyo.Exceptions` — (transitive, lyo)
 - `Lyo.Hashing` — (transitive, lyo)
+- `Lyo.Health` — (transitive, lyo)
 - `Lyo.IO.Temp` — (transitive, lyo)
 - `Lyo.KeyStore` — (transitive, lyo)
 - `Lyo.Metrics` — (transitive, lyo)
 - `Lyo.PackageMetadata` — (transitive, lyo)
+- `Lyo.Query` — (transitive, lyo)
 - `Lyo.Query.Models` — (transitive, lyo)
 - `Lyo.Result` — (transitive, lyo)
 - `Lyo.Schedule.Models` — (transitive, lyo)
@@ -131,9 +138,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Validation` — (transitive, lyo)
 - `Blazored.LocalStorage` `4.5.0` — (transitive, third-party)
 - `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` — (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)

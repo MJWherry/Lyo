@@ -58,6 +58,13 @@ public partial class LyoFormInput<TModel, TValue>
     [Parameter]
     public bool AllowMultiline { get; set; }
 
+    /// <summary>
+    /// Visible line count for multiline string fields. When set, the input is treated as multiline even if <see cref="AllowMultiline" /> is false.
+    /// Unset uses the default of 8 lines (rich text uses 10).
+    /// </summary>
+    [Parameter]
+    public int? Lines { get; set; }
+
     [Parameter]
     public bool UseRichTextEditor { get; set; }
 
@@ -656,7 +663,7 @@ public partial class LyoFormInput<TModel, TValue>
     private void RenderStringInput(RenderTreeBuilder builder, string label, bool isReadOnly)
     {
         var stringValue = _currentValue?.ToString() ?? string.Empty;
-        var shouldUseMultiline = AllowMultiline || stringValue.Length > 100 || stringValue.Contains('\n');
+        var shouldUseMultiline = AllowMultiline || Lines is > 0 || stringValue.Length > 100 || stringValue.Contains('\n');
         if (_isNullableProperty && !shouldUseMultiline && !UseRichTextEditor) {
             builder.OpenComponent<LyoNullableTextField>(0);
             builder.AddAttribute(1, "Label", label);
@@ -706,8 +713,9 @@ public partial class LyoFormInput<TModel, TValue>
             builder.AddAttribute(5, "Variant", Variant);
             builder.AddAttribute(6, "Margin", Margin);
             if (shouldUseMultiline) {
-                builder.AddAttribute(7, "Lines", 8);
-                builder.AddAttribute(8, "MaxLines", 15);
+                var lines = Lines is > 0 ? Lines.Value : 8;
+                builder.AddAttribute(7, "Lines", lines);
+                builder.AddAttribute(8, "MaxLines", Lines is > 0 ? lines : 15);
             }
 
             if (!isReadOnly) {
@@ -752,7 +760,7 @@ public partial class LyoFormInput<TModel, TValue>
 
     private LyoFieldSize DeriveAutoSize()
     {
-        if (AllowMultiline || UseRichTextEditor)
+        if (AllowMultiline || UseRichTextEditor || Lines is > 0)
             return LyoFieldSize.Full;
 
         if (_underlyingType == typeof(bool) || IsNumericType(_underlyingType) || _underlyingType == typeof(TimeOnly) || _underlyingType == typeof(DateOnly))

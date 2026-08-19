@@ -15,22 +15,58 @@
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>
-        <LyoProjectedColumn Field="Id" Title="SID"/>
+        <LyoProjectedColumn Field="Id" Title="SID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
         <LyoProjectedColumn Field="To" Title="To" QuickSearchPropertyName="To"/>
         <LyoProjectedColumn Field="From" Title="From" QuickSearchPropertyName="From"/>
         <LyoProjectedColumn Field="Body" Title="Body" QuickSearchPropertyName="Body" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
-        <LyoProjectedColumn Field="Status" Title="Status" QuickSearchPropertyName="Status"/>
-        <LyoProjectedColumn Field="Direction" Title="Direction"/>
-        <LyoProjectedColumn Field="IsSuccess" Title="Success"/>
-        <LyoProjectedColumn Field="DateSent" Title="Sent"/>
-        <LyoProjectedColumn Field="DateCreated" Title="Created" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Logged"/>
+        <LyoProjectedColumn Field="Status" Title="Status" QuickSearchPropertyName="Status" Align="Align.Center" HeaderStyle="width: 120px;">
+            <CellContent Context="item">
+                @{
+                    var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                @if (string.IsNullOrWhiteSpace(statusText)) {
+                    <span>—</span>
+                }
+                else {
+                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForStatus(statusText)">@statusText</MudChip>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Direction" Title="Direction" Align="Align.Center" HeaderStyle="width: 120px;">
+            <CellContent Context="item">
+                @{
+                    var directionText = ProjectedValueHelper.GetDisplayValue(item, "Direction");
+                }
+                @if (string.IsNullOrWhiteSpace(directionText)) {
+                    <span>—</span>
+                }
+                else {
+                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForDirection(directionText)">@directionText</MudChip>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="IsSuccess" Title="Received" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var success = SmsColorHelper.ToBool(ProjectedValueHelper.GetValue(item, "IsSuccess"));
+                }
+                @if (success is null) {
+                    <span>—</span>
+                }
+                else {
+                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForSuccess(success)">@(success.Value ? "Yes" : "No")</MudChip>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="DateSent" Title="Sent" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="DateCreated" Title="Created" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Logged" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="ErrorMessage" Title="Error" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="ErrorCode" Title="Error Code" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="NumSegments" Title="Segments" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="Price" Title="Price" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="PriceUnit" Title="Price Unit" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="AccountSid" Title="Account SID" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="AccountSid" Title="Account SID" HiddenByDefault="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
     </Columns>
     <RowMenuControls Context="item">
         <MudMenuItem Icon="@Icons.Material.Filled.Chat" OnClick="@(() => OpenChatAsync(item))">Open chat</MudMenuItem>

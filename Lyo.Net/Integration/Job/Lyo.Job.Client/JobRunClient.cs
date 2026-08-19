@@ -37,6 +37,19 @@ public sealed class JobRunClient(IApiClient client, string? routePrefix = null)
     public Task<CreateResult<JobRunRes>> RerunAsync(Guid runId, CancellationToken ct = default)
         => client.PostAsAsync<CreateResult<JobRunRes>>(JobRouteBuilder.Build(routePrefix, $"{JobRoutes.Runs}/{runId}/Rerun"), ct: ct);
 
+    /// <summary>
+    /// Republishes due <c>Queued</c> runs that are missing from the worker RabbitMQ queues. When <paramref name="definitionId" /> is set, only that definition's runs are
+    /// considered.
+    /// </summary>
+    public Task<JobRunResyncRes> ResyncQueuedAsync(Guid? definitionId = null, CancellationToken ct = default)
+    {
+        var route = JobRouteBuilder.Build(routePrefix, JobRoutes.RunsResync);
+        if (definitionId is { } id)
+            route = $"{route}?definitionId={id}";
+
+        return client.PostAsAsync<JobRunResyncRes>(route, ct: ct);
+    }
+
     public Task<CreateResult<JobRunLogRes>> LogAsync(Guid runId, JobRunLogReq request, CancellationToken ct = default)
         => client.PostAsAsync<JobRunLogReq, CreateResult<JobRunLogRes>>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunLog(runId)), request, ct: ct);
 

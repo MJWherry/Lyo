@@ -134,7 +134,7 @@
 
     private async Task OpenDefinitionAsync(Guid id)
     {
-        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"] };
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = [..JobDefinitionEditorQuery.Includes] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def is null) {

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Health;
 using Lyo.MessageQueue;
 
@@ -7,6 +8,7 @@ namespace Lyo.Job.Tests.Postgres;
 public sealed class FakeMqService : IMqService
 {
     private bool _connected = true;
+    private readonly Dictionary<string, List<QueuePeekMessage>> _peeked = new(StringComparer.Ordinal);
 
     public bool IsConnected() => _connected;
 
@@ -42,7 +44,22 @@ public sealed class FakeMqService : IMqService
     public Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data) => Task.FromResult(true);
 
     public Task<IReadOnlyList<QueuePeekMessage>> PeekQueueMessages(string queueName, int maxMessages = 10, CancellationToken ct = default)
-        => Task.FromResult<IReadOnlyList<QueuePeekMessage>>([]);
+    {
+        if (!_peeked.TryGetValue(queueName, out var messages))
+            return Task.FromResult<IReadOnlyList<QueuePeekMessage>>([]);
+
+        return Task.FromResult<IReadOnlyList<QueuePeekMessage>>(messages.Take(Math.Max(1, maxMessages)).ToArray());
+    }
+
+    /// <summary>Seeds peek results as enveloped run ids for the given queue (and optionally its <c>.wait</c> companion).</summary>
+    public void SeedPeek(string queueName, params Guid[] runIds)
+    {
+        _peeked[queueName] = runIds.Select(id => {
+                var envelope = new QueueMessageEnvelope<Guid>(id, 0, id.ToString("D"), DateTime.UtcNow);
+                return new QueuePeekMessage(JsonSerializer.Serialize(envelope));
+            })
+            .ToList();
+    }
 
     public Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default) => Task.FromResult(true);
 

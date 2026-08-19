@@ -226,6 +226,10 @@
           "When `JobRunReq.DryRun == true`, validates parameters and returns a synthetic `JobRunRes` without DB insert or MQ publish."
         ],
         [
+          "**Queued-run resync**",
+          "`POST Job/Run/Resync` peeks `job.run.{workerType}` and `.wait`, then republishes due `Queued` runs that are missing. Manual counterpart of stuck-queued maintenance; duplicates are harmless (`StartedJobRun` CAS)."
+        ],
+        [
           "**Parameter validation**",
           "`ValidateRunParametersAsync` enforces definition schema: required, regex, min/max length, pipe-delimited `AllowedValues`. Definition `Options` (JSON text) is a UI picker source (static or root Query); not re-queried on create."
         ],
@@ -279,6 +283,10 @@
         [
           "`job.service.run.rerun`",
           "`RerunJob`"
+        ],
+        [
+          "`job.service.run.resynced`",
+          "`ResyncQueuedRunsAsync` republished count"
         ],
         [
           "`job.service.run.duration`",
@@ -409,11 +417,21 @@
         [
           "`GET Job/Definition/{id}/Stats`",
           "Stats projection",
-          "Rolling window aggregates"
+          "Rolling window aggregates plus current `RunningCount` / `QueuedCount`"
+        ],
+        [
+          "`GET Job/Definition/{id}/NextRuns`",
+          "Upcoming slots",
+          "Merged next-run timestamps across enabled schedules (blackout-aware)"
+        ],
+        [
+          "`POST Job/Run/Resync`",
+          "Queued-run resync",
+          "Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`)"
         ]
       ],
       "lead": "Tag `\"Job\"`. CRUD + export on definitions; runs expose Query/Get/Delete/DeleteBulk + export.",
-      "trail": "Lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunHeartbeat`, `RunLog`, …) are mapped alongside CRUD for scheduler/worker hosts."
+      "trail": "Lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunLog`, …) are mapped alongside CRUD for scheduler/worker hosts."
     },
     {
       "type": "list",

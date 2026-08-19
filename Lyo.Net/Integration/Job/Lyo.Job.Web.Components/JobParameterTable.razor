@@ -39,8 +39,21 @@
                     </td>
                 }
                 <td>
-                    <MudTextField T="string" Value="@row.Key" ValueChanged="@(v => Set(() => row.Key = v))"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    @if (InheritFrom is { Count: > 0 }) {
+                        <MudSelect T="string" Value="@row.Key" ValueChanged="@(v => SetKey(row, v))"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                            @foreach (var p in InheritFrom) {
+                                <MudSelectItem Value="@p.Key">@p.Key</MudSelectItem>
+                            }
+                            @if (!string.IsNullOrEmpty(row.Key) && InheritFrom.All(p => !string.Equals(p.Key, row.Key, StringComparison.OrdinalIgnoreCase))) {
+                                <MudSelectItem Value="@row.Key">@row.Key</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    else {
+                        <MudTextField T="string" Value="@row.Key" ValueChanged="@(v => Set(() => row.Key = v))"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    }
                 </td>
                 <td>
                     <MudSelect T="JobParameterType" Value="@row.Type" ValueChanged="@(v => Set(() => row.Type = v))"
@@ -179,6 +192,13 @@
     [Parameter]
     public IApiClient? ApiClient { get; set; }
 
+    /// <summary>
+    /// Definition parameters whose Options / AllowedValues are copied onto a row when its Key matches. When set, the Key cell is a select of those keys so schedule
+    /// overrides pick up the same Static / root-query picker.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<JobParameterRes>? InheritFrom { get; set; }
+
     /// <summary>Raised after any edit, add, or delete so the parent can mark itself dirty.</summary>
     [Parameter]
     public EventCallback OnChanged { get; set; }
@@ -223,9 +243,32 @@
         return Set(() => row.Options = ParameterOptionsJson.CreateDefaultForKind(kind));
     }
 
+    private Task SetKey(JobParameterEditRow row, string? key)
+        => Set(() => {
+            row.Key = key ?? "";
+            ApplyInherit(row);
+        });
+
+    private void ApplyInherit(JobParameterEditRow row)
+    {
+        var src = InheritFrom?.FirstOrDefault(p => string.Equals(p.Key, row.Key, StringComparison.OrdinalIgnoreCase));
+        if (src is null)
+            return;
+
+        row.Type = src.Type;
+        row.Options = src.Options;
+        row.AllowedValues = src.AllowedValues;
+        row.AllowMultiple = src.AllowMultiple;
+        if (string.IsNullOrWhiteSpace(row.Description))
+            row.Description = src.Description;
+    }
+
     private async Task AddRow()
     {
-        var row = new JobParameterEditRow { IsNew = true, Key = $"Param{Items.Count + 1}", Type = JobParameterType.String };
+        var used = Items.Select(i => i.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var next = InheritFrom?.FirstOrDefault(p => !used.Contains(p.Key));
+        var row = new JobParameterEditRow { IsNew = true, Key = next?.Key ?? $"Param{Items.Count + 1}", Type = next?.Type ?? JobParameterType.String };
+        ApplyInherit(row);
         Items.Add(row);
         if (HasDetails)
             _expanded.Add(row);

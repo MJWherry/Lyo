@@ -18,8 +18,14 @@ public sealed class JsInterop(IJSRuntime js) : IJsInterop
     /// <inheritdoc />
     public async Task<TimeZoneInfo> GetClientTimeZoneInfo()
     {
-        var clientTimeZone = await js.InvokeAsync<string>("getClientTimeZone");
-        return TimeZoneInfo.FindSystemTimeZoneById(clientTimeZone);
+        await using var module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Lyo.Web.Components/scripts/lyoTimeZone.js");
+        var clientTimeZone = await module.InvokeAsync<string>("getClientTimeZone");
+        try {
+            return TimeZoneInfo.FindSystemTimeZoneById(clientTimeZone);
+        }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException) {
+            return TimeZoneInfo.Utc;
+        }
     }
 
     /// <inheritdoc />

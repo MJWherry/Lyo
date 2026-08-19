@@ -32,6 +32,12 @@ public sealed record JobDefinitionStatsRes
     /// <summary>Current consecutive failure streak at time of query. Reset to 0 when a successful run completes.</summary>
     public int ConsecutiveFailures { get; init; }
 
+    /// <summary>Runs currently in <c>Running</c> (not limited to the statistics window).</summary>
+    public int RunningCount { get; init; }
+
+    /// <summary>Runs currently in <c>Queued</c> (not limited to the statistics window).</summary>
+    public int QueuedCount { get; init; }
+
     /// <summary>Number of days the statistics window covers.</summary>
     public int WindowDays { get; init; }
 }

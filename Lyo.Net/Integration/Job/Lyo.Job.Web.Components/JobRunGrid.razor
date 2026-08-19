@@ -3,7 +3,6 @@
 @using Lyo.Web.Components.Export.Xlsx
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject IJsInterop Js
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -29,6 +28,13 @@
                    Color="Color.Default">
             Create Job Run
         </MudButton>
+        <MudButton OnClick="@ResyncQueued"
+                   StartIcon="@Icons.Material.Filled.Sync"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Color="Color.Default">
+            Resync RabbitMQ
+        </MudButton>
         @if (DefinitionId is { } defId) {
             <MudChip T="string" Size="Size.Small" Color="Color.Primary"
                      OnClose="@ClearDefinitionFilter" CloseIcon="@Icons.Material.Filled.Close">
@@ -51,16 +57,9 @@
                 </MudStack>
             </CellTemplate>
         </TemplateColumn>
-        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
-                @{
-                    var idText = ProjectedValueHelper.GetDisplayValue(item, "Id");
-                }
-                <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@Shorten(idText)</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID"
-                                   OnClick="@(() => CopyToClipboard(idText))"/>
-                </MudStack>
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
@@ -99,9 +98,9 @@
                 }
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
-        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
-        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="RetryAttempt" Title="Retry #" Align="Align.Center" HeaderStyle="width: 80px;" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="JobRunResults.Count" Title="Results" Align="Align.Center" HeaderStyle="width: 80px;"/>
         <LyoProjectedColumn Field="JobRunLogs.Count" Title="Logs" Align="Align.Center" HeaderStyle="width: 80px;"/>
@@ -181,16 +180,28 @@
         return id != null ? [id] : [];
     }
 
-    private static string Shorten(string id) => id.Length > 8 ? id[..8] : id;
-
     private static (DateTime? Started, DateTime? Finished) GetTimestamps(object? item)
         => (LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "StartedTimestamp")),
             LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "FinishedTimestamp")));
 
-    private async Task CopyToClipboard(string text)
+    private async Task ResyncQueued()
     {
-        await Js.SendToClipboard(text);
-        Snackbar.Add("Copied to clipboard", Severity.Info);
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Resync RabbitMQ", "Republish queued runs that are missing from RabbitMQ? Runs already in the queue are skipped.", "Resync", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        try {
+            var route = DefinitionId is { } defId ? $"{_runRoute}/Resync?definitionId={defId}" : $"{_runRoute}/Resync";
+            var result = await ApiClient.PostAsAsync<JobRunResyncRes>(route);
+            var severity = result.Failed > 0 ? Severity.Warning : Severity.Success;
+            var failed = result.Failed > 0 ? $", {result.Failed} failed" : "";
+            Snackbar.Add($"Resynced: {result.Republished} published, {result.AlreadyInQueue} already in queue{failed}", severity);
+            await _dataGrid!.RefreshData();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Resync failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task OpenCreateRunDialog()

@@ -30,7 +30,7 @@
     {
       "type": "paragraph",
       "title": "Component: **`TwilioSmsLogGrid`**",
-      "text": "Projected grid over **`POST {BaseRoute}/TwilioSmsLogEntity/QueryProject`** (default base **`Twilio`**). **Body** is truncated with ellipsis; hover shows the full text. Row menu **Open chat** queries **`To` or `From` = that person** (outbound → row **To**, inbound → row **From**) and pages until all matching log rows are loaded. Header **Refresh** re-runs that query. Composer sends via **`ISmsService.SendSmsAsync`**, then **`POST`**s the existing create route. Pass **`IApiClient`**; the host must also register **`ISmsService`**. ---"
+      "text": "Projected grid over **`POST {BaseRoute}/TwilioSmsLogEntity/QueryProject`** (default base **`Twilio`**). **SID** / **Account SID** use compact **`LyoIdField`**. **Sent** / **Logged** (and hidden **Created**) use **`LyoTimestamp`** (nullable). **Received**, **Direction**, and **Status** are color chips. **Body** is truncated with ellipsis; hover shows the full text. Row menu **Open chat** queries **`To` or `From` = that person** (outbound → row **To**, inbound → row **From**) and pages until all matching log rows are loaded. Header **Refresh** re-runs that query. Composer sends via **`ISmsService.SendSmsAsync`**, then **`POST`**s the existing create route. Pass **`IApiClient`**; the host must also register **`ISmsService`**. ---"
     },
     {
       "type": "paragraph",

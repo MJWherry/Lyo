@@ -1,3 +1,5 @@
+@using Lyo.Web.Components.Form
+
 <TemplateColumn T="object?"
                 Title="@Title"
                 Sortable="@Sortable"
@@ -15,6 +17,14 @@
     <CellTemplate Context="cell">
         @if (CellContent != null) {
             @CellContent(cell.Item)
+        }
+        else if (Timestamp is { } kind) {
+            var raw = ProjectedValueHelper.GetValue(cell.Item, Field);
+            var value = TimestampLatest ? LyoDateTimeDisplay.Latest(raw) : raw;
+            <LyoTimestamp Value="@value" Kind="@kind" RelativeWindow="@TimestampRelativeWindow"/>
+        }
+        else if (Identifier) {
+            <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(cell.Item, Field)"/>
         }
         else {
             string displayText;
@@ -107,6 +117,27 @@
     /// </summary>
     [Parameter]
     public Func<object?, object?, string>? FormattedValue { get; set; }
+
+    /// <summary>
+    /// When set, the cell renders <see cref="LyoTimestamp" /> for this field (UTC → browser time zone) instead of plain text / <see cref="FormattedValue" />.
+    /// </summary>
+    [Parameter]
+    public LyoTimestampKind? Timestamp { get; set; }
+
+    /// <summary>When true with <see cref="Timestamp" />, formats the latest value in a projected collection (e.g. last-run columns).</summary>
+    [Parameter]
+    public bool TimestampLatest { get; set; }
+
+    /// <summary>± window forwarded to <see cref="LyoTimestamp.RelativeWindow" />. Default 24 hours.</summary>
+    [Parameter]
+    public TimeSpan TimestampRelativeWindow { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>
+    /// When true, the cell renders compact <c>LyoIdField</c> (copy + suffix abbreviation) for this field instead of plain text.
+    /// Ignored when <see cref="CellContent" /> or <see cref="Timestamp" /> is set.
+    /// </summary>
+    [Parameter]
+    public bool Identifier { get; set; }
 
     /// <summary>
     /// Custom cell markup rendered instead of the default text (and instead of <see cref="FormattedValue" />). Receives the projected row object; read field values with

@@ -1,5 +1,6 @@
 @typeparam T
 @using System.Linq.Expressions
+@using Lyo.Web.Components.Form
 @typeparam TProperty
 
 <PropertyColumn T="T" TProperty="TProperty"
@@ -18,7 +19,10 @@
             object? rawValue = Property != null ? Property.Compile()!.Invoke(cell.Item) : null;
             var displayText = rawValue?.ToString() ?? string.Empty;
         }
-        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+        @if (Identifier) {
+            <LyoIdField Compact="true" Text="@displayText"/>
+        }
+        else if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
             <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
         }
         else {
@@ -57,6 +61,10 @@
     /// <summary>When true, the column starts hidden; the user can show it from the columns panel.</summary>
     [Parameter]
     public bool HiddenByDefault { get; set; }
+
+    /// <summary>When true, the cell renders compact <c>LyoIdField</c> instead of the property's default string.</summary>
+    [Parameter]
+    public bool Identifier { get; set; }
 
     [Parameter]
     public bool Resizable { get; set; } = true;

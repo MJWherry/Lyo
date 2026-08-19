@@ -17,27 +17,45 @@
                 @if (_edit != null) {
                     <div class="pa-4">
                         <LyoForm TModel="EditModel" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _hasChanges = v)" @ref="_form">
-                            <LyoFormGrid>
-                                <LyoFormInput TModel="EditModel" TValue="Guid" Model="_edit" PropertyExpression="@(m => m.Id)" Label="ID" AllowEditing="false"/>
-                                <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Name)" Label="Name" AllowEditing="true"
-                                              FieldSize="LyoFieldSize.Medium"/>
-                                <LyoFormInput TModel="EditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Description)" Label="Description" AllowEditing="true"
-                                              FieldSize="LyoFieldSize.Medium"/>
-                                <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Type)" Label="Type" AllowEditing="true"
-                                              FieldSize="LyoFieldSize.Medium"/>
-                                <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.WorkerType)" Label="Worker Type" AllowEditing="true"
-                                              FieldSize="LyoFieldSize.Medium"/>
-                                <LyoFormInput TModel="EditModel" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Enabled)" Label="Enabled" AllowEditing="true"
-                                              OnValueChanged="@(_ => StateHasChanged())"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxRetryCount)" Label="Max Retries" AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.RetryBackoffSeconds)" Label="Retry Backoff (s)"
-                                              AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.TimeoutMinutes)" Label="Timeout (min)"
-                                              AllowEditing="true"/>
-                                <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxConcurrentRuns)" Label="Max Concurrent"
-                                              AllowEditing="true"/>
-                            </LyoFormGrid>
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="2">
+                                    <LyoIdField Label="ID" Value="@_edit.Id"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Name)" Label="Name" AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="2">
+                                    <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Type)" Label="Type" AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.WorkerType)" Label="Worker Type" AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="2">
+                                    <LyoFormInput TModel="EditModel" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Enabled)" Label="Enabled" AllowEditing="true"
+                                                  OnValueChanged="@(_ => StateHasChanged())"/>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <LyoFormInput TModel="EditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Description)" Label="Description" AllowEditing="true"
+                                                  AllowMultiline="true" Lines="2"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxRetryCount)" Label="Max Retries" AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.RetryBackoffSeconds)" Label="Retry Backoff (s)"
+                                                  AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.TimeoutMinutes)" Label="Timeout (min)"
+                                                  AllowEditing="true"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <LyoFormInput TModel="EditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.MaxConcurrentRuns)" Label="Max Concurrent"
+                                                  AllowEditing="true"/>
+                                </MudItem>
+                            </MudGrid>
                         </LyoForm>
+                        <JobDefinitionActivity ApiClient="ApiClient" DefinitionRoute="@DefinitionRoute" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)"/>
                     </div>
                 }
             </MudTabPanel>
@@ -49,7 +67,8 @@
             </MudTabPanel>
             <MudTabPanel Text="Schedules">
                 <div class="pa-4">
-                    <JobScheduleView JobSchedules="JobDefinition?.JobSchedules" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient"
+                    <JobScheduleView JobSchedules="JobDefinition?.JobSchedules" JobParameters="JobDefinition?.JobParameters"
+                                     JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" DefinitionRoute="@DefinitionRoute"
                                      ScheduleRoute="@ScheduleRoute"/>
                 </div>
             </MudTabPanel>

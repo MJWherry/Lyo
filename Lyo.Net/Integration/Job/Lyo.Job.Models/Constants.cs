@@ -21,8 +21,14 @@ public static class Constants
         public const string JobRunFinishedRoutingKey = "job.notifications.run.finished";
         public const string JobAlertRoutingKey = "job.notifications.alert";
 
+        /// <summary>Suffix for the RabbitMQ delay wait queue companion of a worker dispatch queue (<c>job.run.{workerType}.wait</c>).</summary>
+        public const string WaitQueueSuffix = ".wait";
+
         //Multiple worker types, build queue based on worker type to simplify
         public static string QueueGetJobRunCreated(string workerType) => $"job.run.{workerType}";
+
+        /// <summary>Delay wait queue for a worker type — delayed retries sit here until TTL dead-letters them onto <see cref="QueueGetJobRunCreated" />.</summary>
+        public static string QueueGetJobRunCreatedWait(string workerType) => QueueGetJobRunCreated(workerType) + WaitQueueSuffix;
 
         /// <summary>Base name for cancellation queues of a worker type. Kept for backwards compatibility and as the prefix for per-instance queues.</summary>
         public static string QueueGetJobRunCancel(string workerType) => $"job.run.{workerType}.cancel";
@@ -55,6 +61,9 @@ public static class Constants
 
             /// <summary>POST endpoint that creates a run via <c>JobService.CreateJobRun</c> (not the generic CRUD create).</summary>
             public const string RunsCreate = $"{Runs}/Create";
+
+            /// <summary>POST endpoint that republishes due <c>Queued</c> runs missing from the worker RabbitMQ queues.</summary>
+            public const string RunsResync = $"{Runs}/Resync";
 
             public const string RunsQuery = $"{Runs}/QueryConcrete";
             public const string RunLogs = $"{Runs}/Log";
@@ -89,6 +98,9 @@ public static class Constants
 
             /// <summary>GET endpoint for aggregated run statistics on a definition.</summary>
             public static string DefinitionStats(Guid definitionId) => $"{Definitions}/{definitionId}/Stats";
+
+            /// <summary>GET endpoint for the next scheduled run timestamps on a definition.</summary>
+            public static string DefinitionNextRuns(Guid definitionId) => $"{Definitions}/{definitionId}/NextRuns";
         }
     }
 
@@ -125,6 +137,7 @@ public static class Constants
             public const string RunFinished = "job.service.run.finished";
             public const string RunCancelled = "job.service.run.cancelled";
             public const string RunRerun = "job.service.run.rerun";
+            public const string RunResynced = "job.service.run.resynced";
             public const string RunDuration = "job.service.run.duration";
             public const string RunQueueLatency = "job.service.run.queue_latency";
         }

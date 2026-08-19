@@ -1,5 +1,6 @@
 using Lyo.Common.Records;
 using Lyo.Job.Models.Builders;
+using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
@@ -66,6 +67,37 @@ public class JobServiceAdvancedTests
         Assert.NotEmpty(nextRuns);
         Assert.True(nextRuns.All(d => d > DateTime.UtcNow));
         Assert.Equal(nextRuns.OrderBy(d => d).ToList(), nextRuns.ToList());
+    }
+
+    [Fact]
+    public async Task GetDefinitionStats_WhenRunsAreActive_ReturnsRunningAndQueuedCounts()
+    {
+        var definitionId = await CreateDefinitionWithMaxRunsPerHourAsync(0);
+        var factory = GetDbContextFactory();
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        db.JobRuns.Add(
+            new() {
+                Id = Guid.NewGuid(),
+                JobDefinitionId = definitionId,
+                State = JobState.Running,
+                CreatedBy = "test",
+                CreatedTimestamp = DateTime.UtcNow,
+                StartedTimestamp = DateTime.UtcNow
+            });
+        db.JobRuns.Add(
+            new() {
+                Id = Guid.NewGuid(),
+                JobDefinitionId = definitionId,
+                State = JobState.Queued,
+                CreatedBy = "test",
+                CreatedTimestamp = DateTime.UtcNow
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var stats = await _fixture.JobService.GetDefinitionStats(definitionId, 30, TestContext.Current.CancellationToken);
+        Assert.NotNull(stats);
+        Assert.Equal(1, stats.RunningCount);
+        Assert.Equal(1, stats.QueuedCount);
     }
 
     private async Task<Guid> CreateDefinitionWithMaxRunsPerHourAsync(int maxRunsPerHour)

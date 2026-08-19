@@ -8,6 +8,7 @@ public interface IJsInterop
     /// <summary>Reads plain text from the browser clipboard (requires user gesture and permission).</summary>
     Task<string> ReadClipboardTextAsync();
 
+    /// <summary>Reads the browser IANA zone from <c>lyoTimeZone.js</c> (<c>Intl.DateTimeFormat</c>). Unknown ids fall back to UTC.</summary>
     Task<TimeZoneInfo> GetClientTimeZoneInfo();
 
     Task DownloadFileFromStream(Stream stream, string fileName, string fileType);

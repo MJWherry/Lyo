@@ -79,10 +79,10 @@
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="GenerationProfileKey" Title="Profile"/>
         <LyoProjectedColumn Field="Generations.CreatedTimestamp" Title="Last Generation" Sortable="false" CellStyle="white-space: nowrap;"
-                            FormattedValue="@LyoDateTimeDisplay.FormatLatestProjected"/>
+                            Timestamp="LyoTimestampKind.Absolute" TimestampLatest="true"/>
         <LyoProjectedColumn Field="CreatedBy" Title="Created By" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
-        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" FormattedValue="@LyoDateTimeDisplay.FormatProjected"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="Tags" Title="Tags" HiddenByDefault="true"/>
     </Columns>
     <RowMenuControls Context="item">

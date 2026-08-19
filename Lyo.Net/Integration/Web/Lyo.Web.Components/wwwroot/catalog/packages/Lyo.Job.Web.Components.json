@@ -65,7 +65,11 @@
         ],
         [
           "`JobDefinitionView`",
-          "Editor: parameters, schedules, triggers."
+          "Editor: basic info with last/next/running activity, parameters, schedules, triggers."
+        ],
+        [
+          "`JobDefinitionActivity`",
+          "Basic Info activity panel: running/queued counts, last run snapshots, next scheduled slots."
         ],
         [
           "`JobScheduleGrid`",
@@ -77,7 +81,11 @@
         ],
         [
           "`JobScheduleView`",
-          "Inline schedule editor on definition view."
+          "Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters)."
+        ],
+        [
+          "`JobBlackoutCalendarEditor`",
+          "Create/unlink a schedule blackout calendar and CRUD its windows (recurring days or dated range, Skip/Defer)."
         ],
         [
           "`JobTriggerView`",
@@ -85,7 +93,7 @@
         ],
         [
           "`JobRunGrid`",
-          "Runs with state pills, **progress bar** column, drill-down."
+          "Runs with state pills, **progress bar** column, drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker)."
         ],
         [
           "`JobRunDetailView`",
@@ -127,6 +135,10 @@
           "Definition/run alert flags in detail view"
         ],
         [
+          "Queue resync",
+          "`JobRunGrid` **Resync RabbitMQ** toolbar — `POST Job/Run/Resync` (scoped when a definition filter is set)"
+        ],
+        [
           "Worker registry",
           "**Workers** tab (`JobWorkerInstanceGrid`)"
         ],
@@ -136,7 +148,7 @@
         ],
         [
           "Schedules / blackout calendars",
-          "**Schedules** tab — misfire policy, linked `JobBlackoutCalendarId`, cron fields via API"
+          "**Schedules** tab — add/remove schedules, enable toggle, timezone dropdown, inline blackout calendar/windows, misfire/cron fields"
         ],
         [
           "Dry run",
@@ -257,7 +269,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -313,6 +341,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -338,6 +374,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -404,6 +448,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -423,7 +476,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

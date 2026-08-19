@@ -6,7 +6,7 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.h5">Job Schedules</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                All schedules across job definitions, ordered by next run (UTC).
+                All schedules across job definitions, ordered by next run.
             </MudText>
             <MudSpacer/>
             <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshAsync"
@@ -29,7 +29,7 @@
                     <th>Schedule</th>
                     <th>Type</th>
                     <th>Description</th>
-                    <th>Next Run (UTC)</th>
+                    <th>Next Run</th>
                     <th>Enabled</th>
                     <th></th>
                 </tr>
@@ -50,7 +50,7 @@
                         <td>@(row.Schedule.Description ?? "—")</td>
                         <td>
                             @if (row.NextRunUtc.HasValue) {
-                                <span>@row.NextRunUtc.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                <LyoTimestamp Value="@row.NextRunUtc.Value" Kind="LyoTimestampKind.Relative"/>
                             }
                             else {
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
@@ -88,7 +88,7 @@
                     <MudSimpleTable Dense="true" Hover="true">
                         <thead>
                         <tr>
-                            <th>Run At (UTC)</th>
+                            <th>Run At</th>
                             <th>Job Definition</th>
                             <th>Schedule</th>
                             <th>Type</th>
@@ -97,7 +97,7 @@
                         <tbody>
                         @foreach (var run in _upcomingRuns) {
                             <tr>
-                                <td>@run.RunAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td><LyoTimestamp Value="@run.RunAtUtc" Kind="LyoTimestampKind.Relative"/></td>
                                 <td>@run.DefinitionName</td>
                                 <td>@(run.ScheduleDescription ?? run.ScheduleId.ToString()[..8] + "…")</td>
                                 <td>@run.ScheduleType</td>
@@ -184,7 +184,7 @@
 
     private async Task ViewDefinitionAsync(Guid definitionId)
     {
-        var req = new QueryConcreteReq { Keys = [[definitionId]], Amount = 1, Include = ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"] };
+        var req = new QueryConcreteReq { Keys = [[definitionId]], Amount = 1, Include = [..JobDefinitionEditorQuery.Includes] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def == null)

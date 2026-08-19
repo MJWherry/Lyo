@@ -97,7 +97,7 @@ flowchart TB
 Located under `Request/` and `Response/`. Each lifecycle entity has a request DTO for create/update and a response DTO for reads:
 
 | Entity | Request | Response |
-| -------------------- | --------------------------- | ------------------------------------------------ |
+| -------------------- | --------------------------- | -------------------------------------------------------------------------------- |
 | Job definition | `JobDefinitionReq` | `JobDefinitionRes` |
 | Parameter | `JobParameterReq` | `JobParameterRes` |
 | Schedule | `JobScheduleReq` | `JobScheduleRes` |
@@ -115,7 +115,8 @@ Located under `Request/` and `Response/`. Each lifecycle entity has a request DT
 | Run log | `JobRunLogReq` | `JobRunLogRes` |
 | Batch children | `JobCreateChildRunsReq` | _(list of `JobRunRes`)_ |
 | File upload | _(N/A)_ | `JobFileUploadRes` |
-| Definition stats | _(N/A)_ | `JobDefinitionStatsRes`, `SpJobStatistic` |
+| Definition stats | _(N/A)_ | `JobDefinitionStatsRes` (incl. `RunningCount` / `QueuedCount`), `SpJobStatistic` |
+| Queued-run resync | _(N/A)_ | `JobRunResyncRes` |
 
 `JobInfo` bundles a `JobDefinitionRes` with its last / last successful / last failed runs for dashboards.
 
@@ -202,6 +203,7 @@ Recorded via `IMetrics` when registered in hosting packages:
 | `job.service.run.finished` | Transitions to Finished |
 | `job.service.run.cancelled` | Cancellation requested |
 | `job.service.run.rerun` | Manual reruns |
+| `job.service.run.resynced` | Queued runs republished by `POST Job/Run/Resync` |
 | `job.service.run.duration` | Run wall-clock duration |
 | `job.service.run.queue_latency` | Queued → started latency |
 
@@ -240,7 +242,7 @@ Workers also inherit `queue.worker.*` metrics from `QueueWorkerBase`.
 
 ## Constants
 
-`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`). `Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
+`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
 
 ## Parameter encryption (`Security/IJobParameterEncryptionService`)
 
@@ -262,6 +264,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Diagnostics.DiagnosticSource` `10.0.5` — (direct, microsoft, netstandard2.0)
 - `Lyo.Common` — (transitive, lyo)
 - `Lyo.Query.Models` — (transitive, lyo)
+- `Lyo.Result` — (transitive, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
 - `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)

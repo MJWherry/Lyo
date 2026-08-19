@@ -241,7 +241,12 @@
         [
           "Definition stats",
           "_(N/A)_",
-          "`JobDefinitionStatsRes`, `SpJobStatistic`"
+          "`JobDefinitionStatsRes` (incl. `RunningCount` / `QueuedCount`), `SpJobStatistic`"
+        ],
+        [
+          "Queued-run resync",
+          "_(N/A)_",
+          "`JobRunResyncRes`"
         ]
       ],
       "lead": "Located under `Request/` and `Response/`. Each lifecycle entity has a request DTO for create/update and a response DTO for reads:",
@@ -433,6 +438,10 @@
           "Manual reruns"
         ],
         [
+          "`job.service.run.resynced`",
+          "Queued runs republished by `POST Job/Run/Resync`"
+        ],
+        [
           "`job.service.run.duration`",
           "Run wall-clock duration"
         ],
@@ -540,7 +549,7 @@
     {
       "type": "paragraph",
       "title": "Constants",
-      "text": "`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`). `Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …)."
+      "text": "`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …)."
     },
     {
       "type": "paragraph",
@@ -611,6 +620,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

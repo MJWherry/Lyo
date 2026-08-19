@@ -4,6 +4,7 @@ using Lyo.Api.Export;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Cache;
 using Lyo.Common.Identifiers;
 using Lyo.Encryption;
 using Lyo.Exceptions;
@@ -96,7 +97,10 @@ public static class Extensions
                     },
                     // Query dependents by FK — do not rely on DeleteIncludes; unloaded navigations left job_parameter rows behind (23503).
                     BeforeDelete = ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id),
-                    AfterDelete = ctx => app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult()
+                    AfterDelete = ctx => {
+                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
+                        JobRunQueryCache.InvalidateAsync(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult();
+                    }
                 })
             .Build();
 
@@ -204,10 +208,12 @@ public static class Extensions
             .WithQuery()
             .WithGet()
             .WithDelete(
-                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity), null,
+                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
+                ctx => JobRunQueryCache.InvalidateAsync(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
                 ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
             .WithDeleteBulk(
-                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity), null,
+                ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
+                ctx => JobRunQueryCache.InvalidateAsync(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
                 ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
             .WithExport()
             .Build();
@@ -365,7 +371,7 @@ public static class Extensions
             .WithName("GetJobDefinitionLatestRuns");
 
     /// <summary>
-    /// Maps the run lifecycle endpoints that delegate to <see cref="JobService" /> (Create, Started, Finished, Cancel, Rerun, Log). These are required by
+    /// Maps the run lifecycle endpoints that delegate to <see cref="JobService" /> (Create, Started, Finished, Cancel, Rerun, Resync, Log). These are required by
     /// <c>Lyo.Job.Scheduler</c> and <c>Lyo.Job.Worker</c> and are mapped automatically by <see cref="BuildJobGroup" />.
     /// </summary>
     private static void MapLifecycleEndpoints(WebApplication app)
@@ -418,6 +424,14 @@ public static class Extensions
                 })
             .WithTags("Job")
             .WithName("RerunJob");
+
+        app.MapPost(
+                $"/{Constants.Rest.Job.RunsResync}", async (Guid? definitionId, JobService jobService, CancellationToken ct) => {
+                    var (result, error) = await jobService.ResyncQueuedRunsAsync(definitionId, ct).ConfigureAwait(false);
+                    return error is null ? Results.Ok(result) : ProblemResult(error);
+                })
+            .WithTags("Job")
+            .WithName("ResyncQueuedJobRuns");
 
         app.MapPost(
                 $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Log", async (Guid id, JobRunLogReq req, JobService jobService) => {

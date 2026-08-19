@@ -3,26 +3,40 @@
 @inject ISnackbar Snackbar
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-id-field">
-    <MudStack Row Spacing="0" AlignItems="AlignItems.End">
-        <MudTextField T="string"
-                      Label="@Label"
-                      Value="@DisplayValue"
-                      ReadOnly="true"
-                      Variant="@Variant"
-                      Margin="@Margin"
-                      Class="flex-grow-1"
-                      Style="font-family: monospace;"
-                      Adornment="@CopyAdornment"
-                      AdornmentIcon="@Icons.Material.Filled.ContentCopy"
-                      AdornmentAriaLabel="Copy ID"
-                      OnAdornmentClick="CopyAsync"/>
-        <MudIconButton Icon="@ToggleIcon"
-                       Size="Size.Small"
-                       Disabled="@(!HasValue)"
-                       title="@ToggleTitle"
-                       Class="mb-1"
-                       OnClick="ToggleFull"/>
-    </MudStack>
+    @if (Compact) {
+        <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
+            @if (HasValue) {
+                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID" OnClick="CopyAsync"/>
+            }
+            <MudText Typo="Typo.body2" Style="font-family: monospace;">@DisplayValue</MudText>
+            @if (ShowsToggle) {
+                <MudIconButton Icon="@ToggleIcon" Size="Size.Small" title="@ToggleTitle" OnClick="ToggleFull"/>
+            }
+        </MudStack>
+    }
+    else {
+        <MudStack Row Spacing="0" AlignItems="AlignItems.End">
+            <MudTextField T="string"
+                          Label="@Label"
+                          Value="@DisplayValue"
+                          ReadOnly="true"
+                          Variant="@Variant"
+                          Margin="@Margin"
+                          Class="flex-grow-1"
+                          Style="font-family: monospace;"
+                          Adornment="@StartAdornment"
+                          AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                          AdornmentAriaLabel="Copy ID"
+                          OnAdornmentClick="CopyAsync"/>
+            @if (ShowsToggle) {
+                <MudIconButton Icon="@ToggleIcon"
+                               Size="Size.Small"
+                               title="@ToggleTitle"
+                               Class="mb-1"
+                               OnClick="ToggleFull"/>
+            }
+        </MudStack>
+    }
 </LyoElementRoot>
 
 @code {
@@ -43,9 +57,17 @@
     [Parameter]
     public string? Text { get; set; }
 
-    /// <summary>Fallback suffix length when the value is not hyphenated. Ignored for UUID last-group abbreviation.</summary>
+    /// <summary>Which end to keep when abbreviating. Default is suffix. Digit-only values are never abbreviated.</summary>
     [Parameter]
-    public int SuffixLength { get; set; } = 8;
+    public LyoIdAbbreviation Abbreviation { get; set; } = LyoIdAbbreviation.Suffix;
+
+    /// <summary>Character count kept for prefix/suffix abbreviation. Default 9.</summary>
+    [Parameter]
+    public int AbbreviationLength { get; set; } = 9;
+
+    /// <summary>When true, renders a compact inline row (copy, value, optional expand) instead of a labeled text field. Use in grid cells.</summary>
+    [Parameter]
+    public bool Compact { get; set; }
 
     [Parameter]
     public Variant Variant { get; set; } = Variant.Outlined;
@@ -66,35 +88,46 @@
 
     private bool HasValue => FullValue is not null;
 
-    private string DisplayValue
-        => FullValue is null ? "-" : _showFull ? FullValue : Abbreviate(FullValue, SuffixLength);
+    private LyoIdAbbreviation EffectiveAbbreviation
+        => FullValue is { } text && IsNumericId(text) ? LyoIdAbbreviation.None : Abbreviation;
 
-    private Adornment CopyAdornment => HasValue ? Adornment.End : Adornment.None;
+    private bool ShowsToggle => HasValue && EffectiveAbbreviation != LyoIdAbbreviation.None && FullValue!.Length > Math.Max(1, AbbreviationLength);
+
+    private string DisplayValue
+        => FullValue is null ? "-" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
+
+    private Adornment StartAdornment => HasValue ? Adornment.Start : Adornment.None;
 
     private string ToggleIcon => _showFull ? Icons.Material.Filled.Compress : Icons.Material.Filled.OpenInFull;
 
-    private string ToggleTitle => _showFull ? "Show suffix" : "Show full ID";
+    private string ToggleTitle => _showFull ? "Show abbreviated ID" : "Show full ID";
 
-    /// <summary>Last hyphen-separated segment (UUID tail). Otherwise the last <paramref name="suffixLength" /> characters.</summary>
-    public static string Abbreviate(string? value, int suffixLength = 8)
+    /// <summary>Abbreviates <paramref name="value" /> to <paramref name="length" /> characters from the start or end.</summary>
+    public static string Abbreviate(string? value, LyoIdAbbreviation abbreviation = LyoIdAbbreviation.Suffix, int length = 9)
     {
         if (string.IsNullOrWhiteSpace(value))
             return "-";
 
         var text = value.Trim();
-        var lastHyphen = text.LastIndexOf('-');
-        if (lastHyphen >= 0 && lastHyphen < text.Length - 1)
-            return text[(lastHyphen + 1)..];
-
-        if (suffixLength < 1 || text.Length <= suffixLength)
+        if (abbreviation == LyoIdAbbreviation.None || length < 1 || text.Length <= length)
             return text;
 
-        return text[^suffixLength..];
+        return abbreviation == LyoIdAbbreviation.Prefix ? text[..length] : text[^length..];
+    }
+
+    private static bool IsNumericId(string value)
+    {
+        foreach (var c in value) {
+            if (!char.IsDigit(c))
+                return false;
+        }
+
+        return value.Length > 0;
     }
 
     private void ToggleFull()
     {
-        if (HasValue)
+        if (ShowsToggle)
             _showFull = !_showFull;
     }
 

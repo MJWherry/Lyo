@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
@@ -18,6 +20,7 @@ using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres.Database;
+using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Lyo.Query.Models.Parameters;
 using Lyo.Scheduler;
@@ -45,27 +48,41 @@ public class JobService(
     IMetrics? metrics = null,
     IJobParameterEncryptionService? parameterEncryption = null,
     ICacheService? cache = null,
-    CacheOptions? cacheOptions = null)
+    CacheOptions? cacheOptions = null,
+    IMqService? mqService = null)
 {
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
     private readonly IJobParameterEncryptionService? _parameterEncryption = parameterEncryption;
 
     /// <summary>
     /// The CAS transitions below use <c>ExecuteUpdateAsync</c>, which bypasses the CRUD services (and therefore their query-cache invalidation), so any cached
-    /// <see cref="JobRun" /> GET entries must be busted manually before re-reading through <c>queryService</c>.
+    /// <see cref="JobRun" /> GET and list entries must be busted manually. Definition grids that project last-run columns are tagged as
+    /// <c>entity:jobdefinition</c>, not <c>entity:jobrun</c>, so both type tags are cleared.
     /// </summary>
     private Task InvalidateRunCacheAsync(Guid jobRunId)
-        => cache is null
-            ? Task.CompletedTask
-            : QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions ?? new CacheOptions(), typeof(JobRun), [new object?[] { jobRunId }]);
+    {
+        if (cache is null)
+            return Task.CompletedTask;
+
+        var options = cacheOptions ?? new CacheOptions();
+        return Task.WhenAll(
+            JobRunQueryCache.InvalidateAsync(cache),
+            QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, options, typeof(JobRun), [new object?[] { jobRunId }]));
+    }
 
     public async Task<CreateResult<JobRunLogRes>> Log(Guid jobRunId, JobRunLogReq request)
-        => await createService.CreateAsync<JobRunLogReq, JobRunLog, JobRunLogRes>(
+    {
+        var result = await createService.CreateAsync<JobRunLogReq, JobRunLog, JobRunLogRes>(
                 request, ctx => {
                     ctx.Entity.Id = LyoGuid.CreateCombPostgres();
                     ctx.Entity.JobRunId = jobRunId;
                 })
             .ConfigureAwait(false);
+        if (result.IsSuccess)
+            await JobRunQueryCache.InvalidateAsync(cache).ConfigureAwait(false);
+
+        return result;
+    }
 
     public async Task<CreateResult<JobRunRes>> CreateJobRun(JobRunReq request, CancellationToken ct = default)
     {
@@ -176,6 +193,8 @@ public class JobService(
 
         if (!result.IsSuccess)
             return result;
+
+        await JobRunQueryCache.InvalidateAsync(cache).ConfigureAwait(false);
 
         activity?.SetTag("job.run.id", result.Data!.Id);
         _metrics.IncrementCounter(Constants.Metrics.Service.RunCreated, tags: [("definition", result.Data!.JobDefinition?.Name ?? "unknown")]);
@@ -518,6 +537,56 @@ public class JobService(
     }
 
     /// <summary>
+    /// Republishes due <c>Queued</c> runs whose dispatch message is not already on the worker queue. Used by the Runs grid when an operator needs to refill RabbitMQ after a
+    /// queue was emptied. Runs already present on <c>job.run.{workerType}</c> or its <c>.wait</c> delay queue are skipped. Duplicate publishes are harmless because
+    /// <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once.
+    /// </summary>
+    /// <param name="definitionId">When set, only runs of this definition are considered.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public async Task<(JobRunResyncRes? Result, LyoProblemDetails? Error)> ResyncQueuedRunsAsync(Guid? definitionId = null, CancellationToken ct = default)
+    {
+        if (!eventPublisher.IsConnected())
+            return (null, LogAndReturnApiError("Could not connect to Message Queue Service", ApiErrCodes.MessageQueueConnectionIssue));
+
+        var now = DateTime.UtcNow;
+        await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = db.JobRuns.AsNoTracking()
+            .Include(r => r.JobDefinition)
+            .Where(r => r.State == JobState.Queued && !r.DryRun && (r.ScheduledSlotUtc == null || r.ScheduledSlotUtc <= now));
+        if (definitionId is { } defId)
+            query = query.Where(r => r.JobDefinitionId == defId);
+
+        var candidates = await query.OrderBy(r => r.CreatedTimestamp).ToListAsync(ct).ConfigureAwait(false);
+        if (candidates.Count == 0)
+            return (new JobRunResyncRes(), null);
+
+        var alreadyQueued = await CollectQueuedRunIdsAsync(candidates, ct).ConfigureAwait(false);
+        var republished = 0;
+        var failed = 0;
+        var alreadyInQueue = 0;
+        foreach (var run in candidates) {
+            if (alreadyQueued.Contains(run.Id)) {
+                alreadyInQueue++;
+                continue;
+            }
+
+            try {
+                await eventPublisher.PublishRunCreatedAsync(run.Id, run.JobDefinition.WorkerType, run.Priority, ct).ConfigureAwait(false);
+                republished++;
+            }
+            catch (Exception ex) {
+                failed++;
+                logger.LogError(ex, "Failed to resync queued run {RunId}", run.Id);
+            }
+        }
+
+        if (republished > 0)
+            _metrics.IncrementCounter(Constants.Metrics.Service.RunResynced, republished);
+
+        return (new JobRunResyncRes { Queued = candidates.Count, AlreadyInQueue = alreadyInQueue, Republished = republished, Failed = failed }, null);
+    }
+
+    /// <summary>
     /// Returns the latest run, latest successful run, and latest failed run per definition in a single call. Used by the scheduler's definition refresh so it does not need three
     /// HTTP queries per definition.
     /// </summary>
@@ -654,7 +723,10 @@ public class JobService(
         return run with { JobRunParameters = parameters };
     }
 
-    /// <summary>Aggregates run statistics for a job definition over the last <paramref name="days" /> days. Returns null when the definition is not found.</summary>
+    /// <summary>
+    /// Aggregates run statistics for a job definition over the last <paramref name="days" /> days, plus current <c>Running</c> / <c>Queued</c> counts. Returns null when the
+    /// definition is not found.
+    /// </summary>
     public async Task<JobDefinitionStatsRes?> GetDefinitionStats(Guid definitionId, int days = 30, CancellationToken ct = default)
     {
         var since = DateTime.UtcNow.AddDays(-days);
@@ -706,6 +778,9 @@ public class JobService(
             .DefaultIfEmpty()
             .Max();
 
+        var runningCount = await db.JobRuns.CountAsync(r => r.JobDefinitionId == definitionId && r.State == JobState.Running, ct).ConfigureAwait(false);
+        var queuedCount = await db.JobRuns.CountAsync(r => r.JobDefinitionId == definitionId && r.State == JobState.Queued, ct).ConfigureAwait(false);
+
         return new() {
             JobDefinitionId = definitionId,
             TotalRuns = total,
@@ -717,6 +792,8 @@ public class JobService(
             LastRunAt = lastRun,
             LastSuccessAt = lastSuccess == default ? null : lastSuccess,
             ConsecutiveFailures = consecutiveFailures,
+            RunningCount = runningCount,
+            QueuedCount = queuedCount,
             WindowDays = days
         };
     }
@@ -883,6 +960,94 @@ public class JobService(
             return false;
 
         return finishedAt > run.StartedTimestamp.Value.AddMinutes(expectedMinutes);
+    }
+
+    private const int QueuePeekCap = 10_000;
+
+    private async Task<HashSet<Guid>> CollectQueuedRunIdsAsync(IReadOnlyList<JobRun> candidates, CancellationToken ct)
+    {
+        var ids = new HashSet<Guid>();
+        if (mqService is null || !mqService.IsConnected())
+            return ids;
+
+        var peekCount = Math.Clamp(candidates.Count, 1, QueuePeekCap);
+        foreach (var workerType in candidates.Select(r => r.JobDefinition.WorkerType).Distinct(StringComparer.Ordinal)) {
+            await AddPeekedRunIdsAsync(ids, Constants.Mq.QueueGetJobRunCreated(workerType), peekCount, ct).ConfigureAwait(false);
+            await AddPeekedRunIdsAsync(ids, Constants.Mq.QueueGetJobRunCreatedWait(workerType), peekCount, ct).ConfigureAwait(false);
+        }
+
+        return ids;
+    }
+
+    private async Task AddPeekedRunIdsAsync(HashSet<Guid> ids, string queueName, int peekCount, CancellationToken ct)
+    {
+        IReadOnlyList<QueuePeekMessage> messages;
+        try {
+            messages = await mqService!.PeekQueueMessages(queueName, peekCount, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            logger.LogWarning(ex, "Failed to peek queue {QueueName} during queued-run resync; treating as empty", queueName);
+            return;
+        }
+
+        foreach (var message in messages) {
+            if (TryParseQueuedRunId(message, out var runId))
+                ids.Add(runId);
+        }
+    }
+
+    private static bool TryParseQueuedRunId(QueuePeekMessage message, out Guid runId)
+    {
+        runId = default;
+        var payload = message.Payload;
+        if (string.IsNullOrWhiteSpace(payload))
+            return false;
+
+        if (string.Equals(message.PayloadEncoding, "base64", StringComparison.OrdinalIgnoreCase)) {
+            try {
+                payload = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            }
+            catch (FormatException) {
+                return false;
+            }
+        }
+
+        if (Guid.TryParse(payload.Trim('"'), out runId))
+            return true;
+
+        try {
+            var envelope = JsonSerializer.Deserialize<QueueMessageEnvelope<Guid>>(payload);
+            if (envelope is not null && envelope.Payload != Guid.Empty) {
+                runId = envelope.Payload;
+                return true;
+            }
+        }
+        catch (JsonException) {
+            /* Fall through to Payload-property parse. */
+        }
+
+        try {
+            using var doc = JsonDocument.Parse(payload);
+            if (!TryGetPayloadElement(doc.RootElement, out var payloadElement))
+                return false;
+
+            if (payloadElement.ValueKind == JsonValueKind.String)
+                return Guid.TryParse(payloadElement.GetString(), out runId);
+
+            return payloadElement.TryGetGuid(out runId);
+        }
+        catch (JsonException) {
+            return false;
+        }
+    }
+
+    private static bool TryGetPayloadElement(JsonElement root, out JsonElement payload)
+    {
+        if (root.TryGetProperty("Payload", out payload) || root.TryGetProperty("payload", out payload))
+            return true;
+
+        payload = default;
+        return false;
     }
 
     private Task PublishFailureAlertAsync(Guid definitionId, Guid runId, string? definitionName)

@@ -1,0 +1,58 @@
+<MudPaper Outlined="true" Class="pa-3 mt-4" Elevation="0">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle1">Activity</MudText>
+        @if (_loading) {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+        }
+        else if (_error != null) {
+            <MudAlert Severity="Severity.Warning" Dense="true">@_error</MudAlert>
+        }
+        else {
+            <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.PlayArrow">
+                    Running @(_stats?.RunningCount ?? 0)
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Schedule">
+                    Queued @(_stats?.QueuedCount ?? 0)
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@((_stats?.ConsecutiveFailures ?? 0) > 0 ? Color.Error : Color.Default)">
+                    @(_stats?.ConsecutiveFailures ?? 0) consecutive failures
+                </MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                    30d success @(_stats?.SuccessRate is { } rate ? $"{rate:0.#}%" : "—")
+                </MudChip>
+            </MudStack>
+
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+                <tbody>
+                <tr>
+                    <td style="width: 28%;"><MudText Typo="Typo.caption" Class="mud-text-secondary">Last run</MudText></td>
+                    <td>@RunStamp(_latest?.LastRun)</td>
+                </tr>
+                <tr>
+                    <td><MudText Typo="Typo.caption" Class="mud-text-secondary">Last success</MudText></td>
+                    <td>@RunStamp(_latest?.LastSuccessfulRun)</td>
+                </tr>
+                <tr>
+                    <td><MudText Typo="Typo.caption" Class="mud-text-secondary">Last failure</MudText></td>
+                    <td>@RunStamp(_latest?.LastFailedRun)</td>
+                </tr>
+                </tbody>
+            </MudSimpleTable>
+
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">Next runs</MudText>
+            @if (_nextRuns.Count == 0) {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">No upcoming slots</MudText>
+            }
+            else {
+                <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                    @foreach (var t in _nextRuns) {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                            <LyoTimestamp Value="@t" Kind="LyoTimestampKind.Relative"/>
+                        </MudChip>
+                    }
+                </MudStack>
+            }
+        }
+    </MudStack>
+</MudPaper>
