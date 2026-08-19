@@ -104,6 +104,29 @@ public class CachePayloadTests
         env.ShouldBeNull();
     }
 
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void SetPayload_WithSlidingExpiration_TryGetPayloadExtendsLifetime(string mode)
+    {
+        var cache = CreateCache(
+            mode, o => {
+                o.Enabled = true;
+                o.Payload.AutoCompress = false;
+            });
+
+        var key = $"payload-sliding-{mode}-{Guid.NewGuid():N}";
+        var bytes = new byte[] { 9, 8, 7 };
+        cache.SetPayload(key, bytes, o => o.SetSlidingExpiration(TimeSpan.FromMilliseconds(500)));
+        Thread.Sleep(150);
+        cache.TryGetPayload(key, out var first).ShouldBeTrue();
+        first.ShouldNotBeNull();
+        first.Payload.ToArray().ShouldBe(bytes);
+        Thread.Sleep(400);
+        cache.TryGetPayload(key, out var still).ShouldBeTrue();
+        still.ShouldNotBeNull();
+        still.Payload.ToArray().ShouldBe(bytes);
+    }
+
     [Fact]
     public void SetPayload_and_TryGetPayload_roundtrip_sync()
     {

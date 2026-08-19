@@ -16,6 +16,21 @@ Local and Fusion-backed **`ICacheService`** implementations with optional **type
 - **`AddLocalCache`** / **`AddLocalCacheFromConfiguration`** — in-process cache backed by `IMemoryCache`; wires **`ICachePayloadCodec`**, **`ICachePayloadSerializer`**, and the payload-aware **`ICacheService`** (singleton **`LocalCacheService`**). The serializer is registered with **`TryAddSingleton`** so hosts can pre-register their own **`ICachePayloadSerializer`** (e.g. one bound to the host's `JsonOptions`) before calling `AddLocalCache*`.
 - **`AddFusionCache`** (in **`Lyo.Cache.Fusion`**) — same payload services; **`FusionCacheService`** implements the byte and typed **`GetOrSetPayloadAsync`** / * *`GetOrSetPayloadAsync<T>`** overloads.
 
+## Expiration
+
+Entries have a **duration** and an **expiration mode**. Writes stamp the policy; reads honor it.
+
+| Mode | Meaning |
+| --- | --- |
+| **`Absolute`** (default) | Expire `Duration` after write. Successful reads do not extend lifetime. |
+| **`Sliding`** | Expire `Duration` after the last successful access. `TryGetValue` / `GetOrSet` / payload hits reset the clock. |
+
+- Existing `TimeSpan duration` overloads on `GetOrSet` / `GetOrSetPayload` / `Set(..., duration)` are **Absolute**.
+- `Set(key, value, tags)` remains **Absolute** + `CacheOptions.DefaultExpiration`.
+- Sliding is opt-in via `setupAction`: `o.SetSlidingExpiration(TimeSpan.FromHours(8))` (also `SetAbsoluteExpiration`).
+- `SetDuration` only sets the timespan; it does not change mode.
+- **Local** uses `IMemoryCache` sliding expiration. **Fusion** re-Sets on hit from a sidecar policy. Callers use only `ICacheService`.
+
 ## Bypass behavior
 
 When **`CacheOptions.Enabled`** is **`false`**, **`LocalCacheService`** skips storage entirely: factories run on every call, **`Set`** / **`SetPayload`** are no-ops, and **`TryGetValue`** / **`TryGetPayload`** return false. Invalidation calls return immediately. This is intended for tests, local diagnostics, and dynamic cache-off toggles.

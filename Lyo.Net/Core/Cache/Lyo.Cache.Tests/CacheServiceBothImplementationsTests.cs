@@ -168,6 +168,98 @@ public class CacheServiceBothImplementationsTests : IDisposable
 
     [Theory]
     [MemberData(nameof(CacheImplementations))]
+    public void Set_WithAbsoluteDuration_ExpiresWithoutRefresh(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key = $"both-absolute-set-{implementation}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMilliseconds(400);
+        service.Set(key, "value", ttl);
+        service.TryGetValue<string>(key, out var first).ShouldBeTrue();
+        first.ShouldBe("value");
+        Thread.Sleep(550);
+        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void Set_WithSlidingExpiration_TryGetValueExtendsLifetime(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key = $"both-sliding-set-{implementation}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMilliseconds(500);
+        service.Set(key, "value", o => o.SetSlidingExpiration(ttl));
+        Thread.Sleep(150);
+        service.TryGetValue<string>(key, out var hit).ShouldBeTrue();
+        hit.ShouldBe("value");
+        Thread.Sleep(400);
+        service.TryGetValue<string>(key, out var still).ShouldBeTrue();
+        still.ShouldBe("value");
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void GetOrSet_WithSlidingSetup_HitDoesNotCallFactoryAndExtendsLifetime(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key = $"both-sliding-getorset-{implementation}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMilliseconds(500);
+        var factoryCalls = 0;
+        service.GetOrSet(key, _ => {
+            factoryCalls++;
+            return "value";
+        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        factoryCalls.ShouldBe(1);
+        Thread.Sleep(150);
+        service.GetOrSet(key, _ => {
+            factoryCalls++;
+            return "other";
+        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        factoryCalls.ShouldBe(1);
+        Thread.Sleep(400);
+        service.TryGetValue<string>(key, out var still).ShouldBeTrue();
+        still.ShouldBe("value");
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void Set_WithAbsoluteDuration_TryGetValueDoesNotExtendLifetime(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key = $"both-absolute-norefresh-{implementation}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMilliseconds(400);
+        service.Set(key, "value", ttl);
+        Thread.Sleep(150);
+        service.TryGetValue<string>(key, out _).ShouldBeTrue();
+        Thread.Sleep(400);
+        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public async Task Set_WithSlidingExpiration_TagsSurviveRefresh(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key = $"both-sliding-tag-{implementation}-{Guid.NewGuid():N}";
+        var tag = $"both-sliding-tag-name-{implementation}-{Guid.NewGuid():N}";
+        service.Set(key, "value", o => o.SetSlidingExpiration(TimeSpan.FromMinutes(5)), [tag]);
+        service.TryGetValue<string>(key, out var hit).ShouldBeTrue();
+        hit.ShouldBe("value");
+        await service.InvalidateCacheItemByTag(tag);
+        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Set_WithSlidingExpiration_DisabledCache_TryGetReturnsFalse()
+    {
+        var disabled = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabled);
+        var key = $"both-sliding-disabled-{Guid.NewGuid():N}";
+        service.Set(key, "value", o => o.SetSlidingExpiration(TimeSpan.FromHours(1)));
+        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
     public void GetOrSet_WithDuration_UsesCustomExpiration(string implementation)
     {
         var service = CreateCacheService(implementation);

@@ -81,6 +81,17 @@ public interface ICacheService : IHealth
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default);
 
+    /// <summary>
+    /// Gets or sets a cached value. <paramref name="setupAction" /> stamps duration and
+    /// <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding entries reset TTL from the stored policy.
+    /// </summary>
+    ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default);
+
     /// <summary>Gets or sets a cached value (sync). Factory returns value only.</summary>
     /// <typeparam name="TValue">Cached value type.</typeparam>
     /// <param name="key">Cache key.</param>
@@ -111,6 +122,16 @@ public interface ICacheService : IHealth
     /// <param name="extraTags">Optional tags.</param>
     TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null);
 
+    /// <summary>
+    /// Gets or sets a cached value (sync). <paramref name="setupAction" /> stamps duration and
+    /// <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding entries reset TTL from the stored policy.
+    /// </summary>
+    TValue? GetOrSet<TValue>(
+        string key,
+        Func<CancellationToken, TValue?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null);
+
     /// <summary>If the key exists, returns the cached value; otherwise stores <paramref name="value" /> with optional <paramref name="setupAction" /> and tags.</summary>
     /// <typeparam name="TValue">Cached value type.</typeparam>
     /// <param name="key">Cache key.</param>
@@ -134,6 +155,12 @@ public interface ICacheService : IHealth
     /// <param name="obj">Value to store.</param>
     /// <param name="tags">Optional tags.</param>
     void Set<T>(string key, T obj, IEnumerable<string>? tags = null);
+
+    /// <summary>Unconditionally sets a cache entry with an absolute <paramref name="duration" />.</summary>
+    void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null);
+
+    /// <summary>Unconditionally sets a cache entry using <paramref name="setupAction" /> for duration and expiration mode.</summary>
+    void Set<T>(string key, T obj, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null);
 
     /// <summary>Tries to read a cached value without invoking a factory. Returns false when the key is missing, expired, or cache is disabled.</summary>
     bool TryGetValue<T>(string key, out T? value);
@@ -215,11 +242,35 @@ public interface ICacheService : IHealth
     /// <summary>Gets or sets framed byte payload with a custom duration (synchronous).</summary>
     CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null);
 
+    /// <summary>
+    /// Gets or sets framed byte payload. <paramref name="setupAction" /> stamps duration and expiration mode on miss.
+    /// Hits of sliding entries reset TTL from the stored policy.
+    /// </summary>
+    ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default);
+
+    /// <summary>Synchronous variant of the payload factory overload that accepts <see cref="ICacheEntryOptions" /> setup.</summary>
+    CacheEntryEnvelope? GetOrSetPayload(
+        string key,
+        Func<CancellationToken, byte[]?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null);
+
     /// <summary>Stores plaintext bytes using the payload codec (compress/encrypt per options).</summary>
     /// <param name="key">Cache key.</param>
     /// <param name="plaintext">Application plaintext before framing.</param>
     /// <param name="tags">Optional tags.</param>
     void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null);
+
+    /// <summary>Stores plaintext bytes with an absolute <paramref name="duration" />.</summary>
+    void SetPayload(string key, ReadOnlySpan<byte> plaintext, TimeSpan duration, IEnumerable<string>? tags = null);
+
+    /// <summary>Stores plaintext bytes using <paramref name="setupAction" /> for duration and expiration mode.</summary>
+    void SetPayload(string key, ReadOnlySpan<byte> plaintext, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null);
 
     /// <summary>Tries to read and decode a framed payload. Returns false when missing, disabled, or decode fails.</summary>
     /// <param name="key">Cache key.</param>

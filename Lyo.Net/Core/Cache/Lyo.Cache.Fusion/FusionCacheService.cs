@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Lyo.Cache;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -26,6 +27,7 @@ public sealed class FusionCacheService : ICacheService
     private readonly CacheOptions _options;
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
+    private readonly ConcurrentDictionary<string, EntryPolicy> _entryPolicies = new();
 
     public FusionCacheService(
         IFusionCache fusionCache,
@@ -72,6 +74,7 @@ public sealed class FusionCacheService : ICacheService
 
         _fusionCache.Events.Remove += (_, args) => {
             try {
+                ForgetPolicy(args.Key);
                 var item = args.Key.StartsWith(TagPrefix) ? CacheItem.Tag(args.Key) : CacheItem.Key(args.Key);
                 _items.TryRemove(item, out var _);
                 _logger.LogDebug("Removed {CacheType} {CacheKey}", item.Type, item.Name);
@@ -85,6 +88,7 @@ public sealed class FusionCacheService : ICacheService
 
         _fusionCache.Events.Expire += (_, args) => {
             try {
+                ForgetPolicy(args.Key);
                 var item = args.Key.StartsWith(TagPrefix) ? CacheItem.Tag(args.Key) : CacheItem.Key(args.Key);
                 _items.TryRemove(item, out var _);
                 _logger.LogDebug("Expired {CacheType} {CacheKey}", item.Type, item.Name);
@@ -98,6 +102,7 @@ public sealed class FusionCacheService : ICacheService
 
         _fusionCache.Events.RemoveByTag += (_, args) => {
             try {
+                ForgetPoliciesByTag(args.Tag);
                 var item = CacheItem.Tag(args.Tag);
                 _items.TryRemove(item, out var _);
                 _logger.LogDebug("Removed tag {CacheTag}", args.Tag);
@@ -113,6 +118,7 @@ public sealed class FusionCacheService : ICacheService
             try {
                 var count = _items.Count;
                 _items.Clear();
+                _entryPolicies.Clear();
                 _logger.LogInformation("Cleared {CacheKeyCount} cache items", count);
                 _metrics.RecordGauge(Constants.Metrics.CacheSize, 0);
                 _metrics.IncrementCounter(Constants.Metrics.ClearSuccess, count);
@@ -159,7 +165,9 @@ public sealed class FusionCacheService : ICacheService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var stopwatch = Stopwatch.StartNew();
         try {
-            await _fusionCache.RemoveAsync(key.ToLowerInvariant()).ConfigureAwait(false);
+            var normalizedKey = key.ToLowerInvariant();
+            ForgetPolicy(normalizedKey);
+            await _fusionCache.RemoveAsync(normalizedKey).ConfigureAwait(false);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.RemoveDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.RemoveSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -179,7 +187,9 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         try {
             var beforeCount = _items.Count;
-            await _fusionCache.RemoveByTagAsync(tag.ToLowerInvariant()).ConfigureAwait(false);
+            var normalizedTag = tag.ToLowerInvariant();
+            ForgetPoliciesByTag(normalizedTag);
+            await _fusionCache.RemoveByTagAsync(normalizedTag).ConfigureAwait(false);
             stopwatch.Stop();
             var itemsRemoved = Math.Max(0, beforeCount - _items.Count);
             var tags = new[] { (Constants.Metrics.Tags.Tag, tag) };
@@ -260,13 +270,15 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = await _fusionCache.GetOrSetAsync<TValue?>(
-                    key.ToLowerInvariant(), async (_, ct) => {
+                    normalizedKey, async (_, ct) => {
                         factoryCalled = true;
                         return await factory(ct).ConfigureAwait(false);
                     }, ((Action<FusionCacheEntryOptions>?)null)!, extraTags?.Select(i => i.ToLowerInvariant()), token)
                 .ConfigureAwait(false);
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, _options.DefaultExpiration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -292,13 +304,15 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = await _fusionCache.GetOrSetAsync<TValue?>(
-                    key.ToLowerInvariant(), async (_, ct) => {
+                    normalizedKey, async (_, ct) => {
                         factoryCalled = true;
                         return await factory(ct).ConfigureAwait(false);
                     }, opts => opts.Duration = effectiveDuration, extraTags?.Select(i => i.ToLowerInvariant()), token)
                 .ConfigureAwait(false);
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -324,16 +338,19 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
+            string[]? mergedTags = null;
             var result = await _fusionCache.GetOrSetAsync<TValue?>(
-                    key.ToLowerInvariant(), async (ctx, ct) => {
+                    normalizedKey, async (ctx, ct) => {
                         factoryCalled = true;
                         var (value, factoryTags) = await factory(ct).ConfigureAwait(false);
-                        var merged = MergeTags(factoryTags, extraTags);
-                        ctx.Tags = merged ?? [];
+                        mergedTags = MergeTags(factoryTags, extraTags);
+                        ctx.Tags = mergedTags ?? [];
                         return value;
                     }, ((Action<FusionCacheEntryOptions>?)null)!, null, token)
                 .ConfigureAwait(false);
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, _options.DefaultExpiration, CacheExpirationMode.Absolute, mergedTags ?? extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -360,13 +377,52 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = await _fusionCache.GetOrSetAsync<TValue?>(
-                    key.ToLowerInvariant(), async (_, ct) => {
+                    normalizedKey, async (_, ct) => {
                         factoryCalled = true;
                         return await factory(ct).ConfigureAwait(false);
                     }, opts => opts.Duration = typeExpiration, extraTags?.Select(i => i.ToLowerInvariant()), token)
                 .ConfigureAwait(false);
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, typeExpiration, CacheExpirationMode.Absolute, extraTags);
+            stopwatch.Stop();
+            RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
+            return result;
+        }
+        catch (Exception ex) {
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
+            return await factory(token).ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return await factory(token).ConfigureAwait(false);
+
+        var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+        var adapter = new FusionCacheEntryOptionsAdapter(opts);
+        setupAction(adapter);
+        var stopwatch = Stopwatch.StartNew();
+        var factoryCalled = false;
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            var result = await _fusionCache.GetOrSetAsync<TValue?>(
+                    normalizedKey, async (_, ct) => {
+                        factoryCalled = true;
+                        return await factory(ct).ConfigureAwait(false);
+                    }, o => o.Duration = opts.Duration, extraTags?.Select(i => i.ToLowerInvariant()), token)
+                .ConfigureAwait(false);
+
+            AfterGetOrSet(normalizedKey, result, factoryCalled, opts.Duration, adapter.ExpirationMode, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -386,12 +442,14 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = _fusionCache.GetOrSet<TValue?>(
-                key.ToLowerInvariant(), (_, ct) => {
+                normalizedKey, (_, ct) => {
                     factoryCalled = true;
                     return factory(ct);
                 }, ((Action<FusionCacheEntryOptions>?)null)!, extraTags?.Select(i => i.ToLowerInvariant()));
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, _options.DefaultExpiration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -412,12 +470,49 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = _fusionCache.GetOrSet<TValue?>(
-                key.ToLowerInvariant(), (_, ct) => {
+                normalizedKey, (_, ct) => {
                     factoryCalled = true;
                     return factory(ct);
                 }, opts => opts.Duration = effectiveDuration, extraTags?.Select(i => i.ToLowerInvariant()));
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
+            stopwatch.Stop();
+            RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
+            return result;
+        }
+        catch (Exception ex) {
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
+            return factory(CancellationToken.None);
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(
+        string key,
+        Func<CancellationToken, TValue?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return factory(CancellationToken.None);
+
+        var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+        var adapter = new FusionCacheEntryOptionsAdapter(opts);
+        setupAction(adapter);
+        var stopwatch = Stopwatch.StartNew();
+        var factoryCalled = false;
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            var result = _fusionCache.GetOrSet<TValue?>(
+                normalizedKey, (_, ct) => {
+                    factoryCalled = true;
+                    return factory(ct);
+                }, o => o.Duration = opts.Duration, extraTags?.Select(i => i.ToLowerInvariant()));
+
+            AfterGetOrSet(normalizedKey, result, factoryCalled, opts.Duration, adapter.ExpirationMode, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -439,15 +534,18 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
+            string[]? mergedTags = null;
             var result = _fusionCache.GetOrSet<TValue?>(
-                key.ToLowerInvariant(), (ctx, ct) => {
+                normalizedKey, (ctx, ct) => {
                     factoryCalled = true;
                     var (value, factoryTags) = factory(ct);
-                    var merged = MergeTags(factoryTags, extraTags);
-                    ctx.Tags = merged ?? [];
+                    mergedTags = MergeTags(factoryTags, extraTags);
+                    ctx.Tags = mergedTags ?? [];
                     return value;
                 }, ((Action<FusionCacheEntryOptions>?)null)!);
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, _options.DefaultExpiration, CacheExpirationMode.Absolute, mergedTags ?? extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -469,12 +567,14 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
         try {
+            var normalizedKey = key.ToLowerInvariant();
             var result = _fusionCache.GetOrSet<TValue?>(
-                key.ToLowerInvariant(), (_, ct) => {
+                normalizedKey, (_, ct) => {
                     factoryCalled = true;
                     return factory(ct);
                 }, opts => opts.Duration = typeExpiration, extraTags?.Select(i => i.ToLowerInvariant()));
 
+            AfterGetOrSet(normalizedKey, result, factoryCalled, typeExpiration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
@@ -496,6 +596,7 @@ public sealed class FusionCacheService : ICacheService
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = _fusionCache.TryGet<TValue>(normalizedKey);
             if (cachedValue.HasValue) {
+                RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -503,8 +604,10 @@ public sealed class FusionCacheService : ICacheService
             }
 
             var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
-            setupAction?.Invoke(new FusionCacheEntryOptionsAdapter(opts));
+            var adapter = new FusionCacheEntryOptionsAdapter(opts);
+            setupAction?.Invoke(adapter);
             _fusionCache.Set(normalizedKey, value, opts, tags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -532,6 +635,7 @@ public sealed class FusionCacheService : ICacheService
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = await _fusionCache.TryGetAsync<TValue>(normalizedKey, token: token).ConfigureAwait(false);
             if (cachedValue.HasValue) {
+                RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -539,8 +643,10 @@ public sealed class FusionCacheService : ICacheService
             }
 
             var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
-            setupAction?.Invoke(new FusionCacheEntryOptionsAdapter(opts));
+            var adapter = new FusionCacheEntryOptionsAdapter(opts);
+            setupAction?.Invoke(adapter);
             await _fusionCache.SetAsync(normalizedKey, value, opts, tags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -560,7 +666,39 @@ public sealed class FusionCacheService : ICacheService
 
         var stopwatch = Stopwatch.StartNew();
         try {
-            _fusionCache.Set(key.ToLowerInvariant(), obj, null, tags?.Select(i => i.ToLowerInvariant()));
+            var normalizedKey = key.ToLowerInvariant();
+            _fusionCache.Set(normalizedKey, obj, null, tags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, _options.DefaultExpiration, CacheExpirationMode.Absolute, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            RecordSetFailure(stopwatch, ex, key, false);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null)
+        => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
+
+    /// <inheritdoc />
+    public void Set<T>(string key, T obj, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+            var adapter = new FusionCacheEntryOptionsAdapter(opts);
+            setupAction(adapter);
+            var normalizedKey = key.ToLowerInvariant();
+            _fusionCache.Set(normalizedKey, obj, opts, tags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -581,10 +719,13 @@ public sealed class FusionCacheService : ICacheService
         try {
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = _fusionCache.TryGet<T>(normalizedKey);
-            if (!cachedValue.HasValue)
+            if (!cachedValue.HasValue) {
+                ForgetPolicy(normalizedKey);
                 return false;
+            }
 
             value = cachedValue.Value;
+            RefreshSlidingIfNeeded(normalizedKey, value);
             return true;
         }
         catch (Exception ex) {
@@ -599,7 +740,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<byte[]?>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
+        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
@@ -622,6 +763,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                     _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -640,6 +782,7 @@ public sealed class FusionCacheService : ICacheService
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -657,7 +800,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
+        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
@@ -680,6 +823,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                     _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -699,6 +843,7 @@ public sealed class FusionCacheService : ICacheService
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
             await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, mergedTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -716,7 +861,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<TValue?>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
 
     /// <inheritdoc />
     public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -737,7 +882,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
 
     /// <inheritdoc />
     public async ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -771,6 +916,7 @@ public sealed class FusionCacheService : ICacheService
                 if (decoded != null) {
                     try {
                         var deserialized = _payloadSerializer.Deserialize<TValue>(decoded.Payload);
+                        RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                         stopwatch.Stop();
                         _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                         _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -795,6 +941,7 @@ public sealed class FusionCacheService : ICacheService
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
             await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, mergedTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -808,7 +955,7 @@ public sealed class FusionCacheService : ICacheService
 
     /// <inheritdoc />
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, IEnumerable<string>? extraTags = null)
-        => GetOrSetPayload(key, factory, null, extraTags);
+        => GetOrSetPayload(key, factory, (TimeSpan?)null, extraTags);
 
     /// <inheritdoc />
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
@@ -826,6 +973,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                     _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -844,6 +992,114 @@ public sealed class FusionCacheService : ICacheService
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayload", key);
+            return PayloadFactoryOnlySync(factory);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
+        var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+        var adapter = new FusionCacheEntryOptionsAdapter(opts);
+        setupAction(adapter);
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = await _fusionCache.TryGetAsync<byte[]>(normalizedKey, token: token).ConfigureAwait(false);
+            if (cachedValue.HasValue) {
+                try {
+                    var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var plain = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayloadAsync", key);
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(
+        string key,
+        Func<CancellationToken, byte[]?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return PayloadFactoryOnlySync(factory);
+
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
+        var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+        var adapter = new FusionCacheEntryOptionsAdapter(opts);
+        setupAction(adapter);
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
+            if (cachedValue.HasValue) {
+                try {
+                    var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    InvalidateCacheItem(key).GetAwaiter().GetResult();
+                }
+            }
+
+            var plain = factory(CancellationToken.None);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -866,7 +1122,41 @@ public sealed class FusionCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         try {
             var framed = _payloadCodec.Encode(plaintext);
-            _fusionCache.Set(key.ToLowerInvariant(), framed, null, tags?.Select(i => i.ToLowerInvariant()));
+            var normalizedKey = key.ToLowerInvariant();
+            _fusionCache.Set(normalizedKey, framed, null, tags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, _options.DefaultExpiration, CacheExpirationMode.Absolute, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            RecordSetFailure(stopwatch, ex, key, true);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, TimeSpan duration, IEnumerable<string>? tags = null)
+        => SetPayload(key, plaintext, o => o.SetAbsoluteExpiration(duration), tags);
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return;
+
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var opts = new FusionCacheEntryOptions { Duration = _options.DefaultExpiration };
+            var adapter = new FusionCacheEntryOptionsAdapter(opts);
+            setupAction(adapter);
+            var framed = _payloadCodec.Encode(plaintext);
+            var normalizedKey = key.ToLowerInvariant();
+            _fusionCache.Set(normalizedKey, framed, opts, tags?.Select(i => i.ToLowerInvariant()));
+            RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -888,10 +1178,13 @@ public sealed class FusionCacheService : ICacheService
         try {
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
-            if (!cachedValue.HasValue)
+            if (!cachedValue.HasValue) {
+                ForgetPolicy(normalizedKey);
                 return false;
+            }
 
             envelope = _payloadCodec.Decode(cachedValue.Value);
+            RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
             return true;
         }
         catch (Exception ex) {
@@ -1011,6 +1304,57 @@ public sealed class FusionCacheService : ICacheService
         else {
             _metrics.RecordTiming(Constants.Metrics.HitDuration, elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+    }
+
+    private readonly record struct EntryPolicy(TimeSpan Duration, CacheExpirationMode Mode, string[] Tags);
+
+    private static string[] NormalizeTags(IEnumerable<string>? tags)
+        => tags?.Select(static t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
+
+    private void RememberPolicy(string normalizedKey, TimeSpan duration, CacheExpirationMode mode, IEnumerable<string>? tags)
+        => _entryPolicies[normalizedKey] = new(duration, mode, NormalizeTags(tags));
+
+    private void ForgetPolicy(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        _entryPolicies.TryRemove(key.ToLowerInvariant(), out var _);
+    }
+
+    private void ForgetPoliciesByTag(string tag)
+    {
+        if (string.IsNullOrWhiteSpace(tag))
+            return;
+
+        var normalizedTag = tag.ToLowerInvariant();
+        foreach (var kvp in _entryPolicies) {
+            if (kvp.Value.Tags.Contains(normalizedTag, StringComparer.Ordinal))
+                _entryPolicies.TryRemove(kvp.Key, out var _);
+        }
+    }
+
+    private void AfterGetOrSet<T>(string normalizedKey, T? value, bool factoryCalled, TimeSpan duration, CacheExpirationMode mode, IEnumerable<string>? tags)
+    {
+        if (factoryCalled)
+            RememberPolicy(normalizedKey, duration, mode, tags);
+        else
+            RefreshSlidingIfNeeded(normalizedKey, value);
+    }
+
+    private void RefreshSlidingIfNeeded<T>(string normalizedKey, T? value)
+    {
+        if (!_entryPolicies.TryGetValue(normalizedKey, out var policy) || policy.Mode != CacheExpirationMode.Sliding)
+            return;
+
+        try {
+            _fusionCache.Set(normalizedKey, value, new FusionCacheEntryOptions { Duration = policy.Duration }, policy.Tags);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Error refreshing sliding cache entry for key {CacheKey}", normalizedKey);
+            _metrics.RecordError(
+                Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "RefreshSliding"), (Constants.Metrics.Tags.Key, normalizedKey)]);
         }
     }
 }

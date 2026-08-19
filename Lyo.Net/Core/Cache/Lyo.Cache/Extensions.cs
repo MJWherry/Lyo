@@ -127,11 +127,30 @@ public static class CacheServiceExtensions
 /// <summary>Extension methods for ICacheEntryOptions.</summary>
 public static class CacheEntryOptionsExtensions
 {
-    /// <summary>Sets the cache entry duration.</summary>
-    /// <returns>The options instance for chaining</returns>
-    public static ICacheEntryOptions SetDuration(this ICacheEntryOptions options, TimeSpan duration)
+    extension(ICacheEntryOptions options)
     {
-        options.Duration = duration;
-        return options;
+        /// <summary>Sets the cache entry duration. Does not change <see cref="ICacheEntryOptions.ExpirationMode" />.</summary>
+        /// <returns>The options instance for chaining</returns>
+        public ICacheEntryOptions SetDuration(TimeSpan duration)
+        {
+            options.Duration = duration;
+            return options;
+        }
+
+        /// <summary>Sets <see cref="ICacheEntryOptions.Duration" /> and <see cref="CacheExpirationMode.Absolute" />.</summary>
+        public ICacheEntryOptions SetAbsoluteExpiration(TimeSpan duration)
+        {
+            options.Duration = duration;
+            options.ExpirationMode = CacheExpirationMode.Absolute;
+            return options;
+        }
+
+        /// <summary>Sets <see cref="ICacheEntryOptions.Duration" /> and <see cref="CacheExpirationMode.Sliding" />.</summary>
+        public ICacheEntryOptions SetSlidingExpiration(TimeSpan duration)
+        {
+            options.Duration = duration;
+            options.ExpirationMode = CacheExpirationMode.Sliding;
+            return options;
+        }
     }
 }

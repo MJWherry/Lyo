@@ -13,4 +13,6 @@ internal sealed class FusionCacheEntryOptionsAdapter : ICacheEntryOptions
         get => _inner.Duration;
         set => _inner.Duration = value;
     }
+
+    public CacheExpirationMode ExpirationMode { get; set; } = CacheExpirationMode.Absolute;
 }
