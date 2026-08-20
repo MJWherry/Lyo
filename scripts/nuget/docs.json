@@ -57,6 +57,7 @@
     "Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when publishing a stable version so the version is used as-is",
     "Selection is named patterns, --changed-since hits, or all packable Lyo.* projects. No upstream or downstream graph walk. Shared Directory.Build/Packages.props or Lyo.Net/assets/icon.{png,svg} changes select all packages",
     "Nupkg Lyo ProjectReferences are pinned to last published (.build-state, nuget.org, GitHub Packages) unless that project is also in the pack set",
+    "Subset packs compile those pinned ProjectReferences at the last published assembly version. A global /p:Version would stamp Fusion 1.0.5 against Exceptions 1.0.5.0 while NuGet restored Exceptions 1.0.4",
     "GitHub Actions: Actions → CI - Pipeline. Branch model and feeds are in docs/ci.md. nuget.org Trusted Publishing setup is in docs/publishing.md (workflow publish-nuget.yml, Environment empty, secret NUGET_USER)",
     "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
     "BUILD_CONFIG defaults to Release",

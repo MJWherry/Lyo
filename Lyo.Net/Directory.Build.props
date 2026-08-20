@@ -23,4 +23,5 @@
         <!-- Shared NuGet gallery icon. Source SVG is assets/icon.svg; nuget.org requires PNG/JPEG. -->
         <PackageIcon Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">icon.png</PackageIcon>
     </PropertyGroup>
+    <Import Project="$(LyoPackVersionProps)" Condition="'$(LyoPackVersionProps)' != '' AND Exists('$(LyoPackVersionProps)')"/>
 </Project>
