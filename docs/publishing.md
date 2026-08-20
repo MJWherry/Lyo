@@ -56,7 +56,7 @@ Test, benchmark, and tool projects (`*.Tests`, `*.Benchmarks`, `*TestConsole`, a
 
 - The default version prefix is `1.0.0`. Override with `-v/--version`.
 - Local packs append the SemVer prerelease label `preview` (for example `1.0.0-preview`) so NuGet treats them as prerelease and they cannot be confused with a published release of the same number. Pass `--release` when deploying so the version is used as-is (`1.0.0`). If `-v` already includes a prerelease label, it is left unchanged.
-- The same package version is passed to both `dotnet build` and `dotnet pack`. `FileVersion` uses the numeric prefix only (`1.0.0`), because Win32 file versions cannot carry a prerelease label. `AssemblyInformationalVersion` keeps the full NuGet version.
+- The pack version is applied only to projects in the pack set. Other Lyo ProjectReferences keep their last published `Version` / assembly version so the compiled DLL matches the nupkg pin. `FileVersion` uses the numeric prefix only (`1.0.0`), because Win32 file versions cannot carry a prerelease label. `AssemblyInformationalVersion` keeps the full NuGet version.
 - When you build a specific package with `-v`, only that package is packed. Upstream Lyo references in the nupkg are pinned to each dependency's last published version (`.build-state`, then nuget.org, then GitHub Packages). If a Common change breaks Encryption, edit Encryption too so it is in the pack set.
 
 ## Change detection
@@ -79,7 +79,7 @@ Use `-f`/`--force` to bypass fingerprint skip and always rebuild. Use `--changed
 
 Use **[CI - Pipeline](ci.md)** (`pipeline.yml`) for everyday pack and publish:
 
-- Push to `main`. Automatic stable release to nuget.org (`scope=changed`, version from the `v*` tag or a patch bump).
+- Push to `main`. Automatic stable release to nuget.org (`scope=changed`, version from the `v*` tag or a patch bump). After the nuget.org push succeeds, CI tags `HEAD` as `v{version}`.
 - Run workflow on `dev`. nuget.org **preview** (`1.2.0-preview.<run>`).
 - Run workflow on a feature branch. Artifacts only unless you set `destination`.
 
