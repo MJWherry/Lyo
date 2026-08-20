@@ -59,7 +59,7 @@ internal static class Extensions
                 ComparisonOperatorEnum.LessThan, ComparisonOperatorEnum.LessThanOrEqual, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
             ],
             FilterPropertyType.Enum => [ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn],
-            FilterPropertyType.DateTime => [
+            FilterPropertyType.DateTime or FilterPropertyType.DateOnly or FilterPropertyType.TimeOnly => [
                 ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual,
                 ComparisonOperatorEnum.LessThan, ComparisonOperatorEnum.LessThanOrEqual
             ],

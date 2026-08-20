@@ -37,7 +37,8 @@ public partial class TwilioSmsLogGrid
     };
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Received"), new("Body")
+        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Received"), new("Body"),
+        new("DateSent", "Sent", FilterPropertyType.DateTime), new("CreatedTimestamp", "Logged", FilterPropertyType.DateTime)
     ];
 
     private bool _chatBusy;

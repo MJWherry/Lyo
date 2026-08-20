@@ -53,6 +53,18 @@ public partial class QueryFilterComponent
             _currentComparison = availableComparisonOperators.First();
     }
 
+    private void OnPropertyChanged(FilterPropertyDefinition? property)
+    {
+        _currentProperty = property;
+        ClearInputs();
+        if (_currentProperty == null)
+            return;
+
+        var availableComparisonOperators = Extensions.GetAvailableComparisonOperators(_currentProperty.Type);
+        if (!availableComparisonOperators.Contains(_currentComparison))
+            _currentComparison = availableComparisonOperators[0];
+    }
+
     private static bool ShouldUseTextInput(FilterPropertyDefinition property, ComparisonOperatorEnum comparator)
         => property.Type is FilterPropertyType.String && comparator is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.Equals
             or ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.EndsWith
@@ -101,12 +113,14 @@ public partial class QueryFilterComponent
         }
         else {
             value = _currentProperty.Type switch {
-                FilterPropertyType.String => _currentStringValue,
+                FilterPropertyType.String => string.IsNullOrWhiteSpace(_currentStringValue) ? null : _currentStringValue,
                 FilterPropertyType.Number => _currentNumberValue,
                 FilterPropertyType.DateTime => _currentDateValue,
-                FilterPropertyType.Enum => _currentStringValue,
+                FilterPropertyType.DateOnly => _currentDateValue is { } date ? DateOnly.FromDateTime(date) : null,
+                FilterPropertyType.TimeOnly => _currentDateValue is { } date ? TimeOnly.FromDateTime(date) : null,
+                FilterPropertyType.Enum => string.IsNullOrWhiteSpace(_currentStringValue) ? null : _currentStringValue,
                 FilterPropertyType.Bool => _currentBoolValue,
-                var _ => _currentStringValue
+                var _ => string.IsNullOrWhiteSpace(_currentStringValue) ? null : _currentStringValue
             };
         }
 
@@ -127,13 +141,16 @@ public partial class QueryFilterComponent
             return !string.IsNullOrWhiteSpace(_currentCsvValue);
         }
 
+        if (_currentComparison is ComparisonOperatorEnum.Equals or ComparisonOperatorEnum.NotEquals)
+            return true;
+
         if (_currentProperty.Type == FilterPropertyType.String && _currentComparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains)
             return true;
 
         return _currentProperty.Type switch {
             FilterPropertyType.String => !string.IsNullOrWhiteSpace(_currentStringValue),
             FilterPropertyType.Number => _currentNumberValue.HasValue,
-            FilterPropertyType.DateTime => _currentDateValue.HasValue,
+            FilterPropertyType.DateTime or FilterPropertyType.DateOnly or FilterPropertyType.TimeOnly => _currentDateValue.HasValue,
             FilterPropertyType.Enum => !string.IsNullOrWhiteSpace(_currentStringValue),
             FilterPropertyType.Bool => _currentBoolValue.HasValue,
             var _ => !string.IsNullOrWhiteSpace(_currentStringValue)

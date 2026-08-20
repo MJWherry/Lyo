@@ -9,7 +9,8 @@
                 style="width: 100%; height: 100%; min-width: 0; box-sizing: border-box; column-gap: 8px;">
     <div class="lyo-filter-col">
         <MudSelect T="FilterPropertyDefinition"
-                   @bind-Value="@_currentProperty"
+                   Value="@_currentProperty"
+                   ValueChanged="OnPropertyChanged"
                    Label="Property"
                    Variant="Variant.Outlined"
                    Dense
@@ -42,7 +43,7 @@
     </div>
 
     @if (_currentProperty != null) {
-        <div class="lyo-filter-col">
+        <div class="lyo-filter-col" @key="@($"{_currentProperty.PropertyName}-{_currentComparison}")">
             @if (_currentComparison.IsMultiValueComparisonOperator()) {
                 @* Multi-value comparators (OneOf, NotOneOf) *@
                 @if (_currentProperty.HasDynamicUniqueValues || (_currentProperty.UniqueValues != null && _currentProperty.UniqueValues.Any())) {
@@ -163,8 +164,10 @@
 
                             break;
                         case FilterPropertyType.DateTime:
+                        case FilterPropertyType.DateOnly:
                             <MudDatePicker @bind-Date="@_currentDateValue" Label="Value" Variant="Variant.Outlined"
-                                           Margin="Margin.Dense" FullWidth="true"/>
+                                           HelperText="Leave blank for null"
+                                           Margin="Margin.Dense"/>
 
                             break;
                         case FilterPropertyType.Enum when _currentProperty.EnumValues != null:
