@@ -36,10 +36,10 @@
             Resync RabbitMQ
         </MudButton>
         @if (DefinitionId is { } defId) {
-            <MudChip T="string" Size="Size.Small" Color="Color.Primary"
+            <LyoChip Color="Color.Primary"
                      OnClose="@ClearDefinitionFilter" CloseIcon="@Icons.Material.Filled.Close">
                 Definition: @(DefinitionName ?? defId.ToString()[..8])
-            </MudChip>
+            </LyoChip>
         }
     </LeftControls>
     <Columns>
@@ -67,11 +67,8 @@
             <CellContent Context="item">
                 @{
                     var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
-                    var parsed = Enum.TryParse<JobState>(stateText, out var state);
                 }
-                <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForState(stateText)" Icon="@(parsed ? JobColorHelper.StateIcon(state) : null)">
-                    @(string.IsNullOrWhiteSpace(stateText) ? "—" : stateText)
-                </MudChip>
+                <LyoChip Spec="@(LyoChips.FromEnum<JobState>(stateText, JobColorHelper.ForState, JobColorHelper.StateIcon))"/>
             </CellContent>
         </LyoProjectedColumn>
         <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center" HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
@@ -79,10 +76,9 @@
                 @{
                     var (started, finished) = GetTimestamps(cell.Item);
                 }
-                <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForDuration(started, finished)"
-                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)">
-                    @JobColorHelper.FormatDurationFromDates(started, finished)
-                </MudChip>
+                <LyoChip Color="@JobColorHelper.ForDuration(started, finished)"
+                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)"
+                         Label="@JobColorHelper.FormatDurationFromDates(started, finished)"/>
             </CellTemplate>
         </TemplateColumn>
         <LyoProjectedColumn Field="Result" Title="Result" Align="Align.Center" HeaderStyle="width: 110px;">
@@ -91,7 +87,7 @@
                     var resultText = ProjectedValueHelper.GetDisplayValue(item, "Result");
                 }
                 @if (Enum.TryParse<JobRunResult>(resultText, out var result)) {
-                    <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)">@result</MudChip>
+                    <LyoChip Spec="@(LyoChips.FromEnum<JobRunResult>(resultText, JobColorHelper.ForResult, JobColorHelper.ResultIcon))"/>
                 }
                 else {
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>

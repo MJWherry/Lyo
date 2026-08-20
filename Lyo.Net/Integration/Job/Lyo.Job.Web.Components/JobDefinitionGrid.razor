@@ -50,11 +50,9 @@
                 @{
                     var enabled = GetEnabled(item);
                 }
-                <MudChip T="string" Size="Size.Small" Color="@(enabled ? Color.Success : Color.Default)"
+                <LyoChip Spec="@LyoChips.FromBool(enabled, "Enabled", "Disabled", Color.Success, Color.Default)"
                          Style="cursor: pointer;"
-                         OnClick="@(() => ToggleDefinition(item))">
-                    @(enabled ? "Enabled" : "Disabled")
-                </MudChip>
+                         OnClick="@(() => ToggleDefinition(item))"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;">

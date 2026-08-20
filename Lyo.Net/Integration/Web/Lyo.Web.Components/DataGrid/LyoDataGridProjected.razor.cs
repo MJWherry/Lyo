@@ -144,6 +144,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     /// <summary>Quick search properties from <see cref="QuickSearchProperties" /> or column names, always unioned with leaf <c>Id</c> fields.</summary>
     private IReadOnlyList<string> EffectiveQuickSearchProperties => _columnRegistry.GetQuickSearchProperties(QuickSearchProperties);
 
+    private string QuickSearchPlaceholder => _columnRegistry.GetQuickSearchPlaceholder(QuickSearchProperties);
+
     [Parameter]
     public IReadOnlyList<FilterPropertyDefinition> FilterPropertyDefinitions { get; init; } = [];
 

@@ -7,19 +7,16 @@
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-json-view-dialog">
     <LyoDialog Title="@ResolvedTitle">
-        <TitleContent>
-            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                <MudText Typo="Typo.h6">@ResolvedTitle</MudText>
-                @if (!string.IsNullOrWhiteSpace(Path)) {
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.AccountTree">@Path</MudChip>
+        <TitleChips>
+            @if (!string.IsNullOrWhiteSpace(Path)) {
+                <LyoChip Variant="Variant.Outlined" Icon="@Icons.Material.Filled.AccountTree" Label="@Path"/>
+            }
+            @if (Chips is { Count: > 0 }) {
+                @foreach (var chip in Chips) {
+                    <LyoChip Color="@chip.Color" Icon="@chip.Icon" Label="@chip.Label"/>
                 }
-                @if (Chips is { Count: > 0 }) {
-                    @foreach (var chip in Chips) {
-                        <MudChip T="string" Size="Size.Small" Color="@chip.Color" Icon="@chip.Icon">@chip.Label</MudChip>
-                    }
-                }
-            </MudStack>
-        </TitleContent>
+            }
+        </TitleChips>
         <ExtraActions>
             <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
                 Copy JSON

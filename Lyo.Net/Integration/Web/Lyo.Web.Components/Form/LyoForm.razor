@@ -33,24 +33,16 @@
                                     var deleteCount = _operations.Count(o => o.ChangeType == ChangeType.Delete);
                                 }
                                 @if (propertyChangeCount > 0) {
-                                    <MudChip T="string" Color="Color.Info" Size="Size.Small">
-                                        @propertyChangeCount change@(propertyChangeCount != 1 ? "s" : "")
-                                    </MudChip>
+                                    <LyoChip Color="Color.Info" Label="@($"{propertyChangeCount} change{(propertyChangeCount != 1 ? "s" : "")}")"/>
                                 }
                                 @if (createCount > 0) {
-                                    <MudChip T="string" Color="Color.Success" Size="Size.Small">
-                                        @createCount addition@(createCount != 1 ? "s" : "")
-                                    </MudChip>
+                                    <LyoChip Color="Color.Success" Label="@($"{createCount} addition{(createCount != 1 ? "s" : "")}")"/>
                                 }
                                 @if (updateCount > 0) {
-                                    <MudChip T="string" Color="Color.Warning" Size="Size.Small">
-                                        @updateCount update@(updateCount != 1 ? "s" : "")
-                                    </MudChip>
+                                    <LyoChip Color="Color.Warning" Label="@($"{updateCount} update{(updateCount != 1 ? "s" : "")}")"/>
                                 }
                                 @if (deleteCount > 0) {
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                                        @deleteCount deletion@(deleteCount != 1 ? "s" : "")
-                                    </MudChip>
+                                    <LyoChip Color="Color.Error" Label="@($"{deleteCount} deletion{(deleteCount != 1 ? "s" : "")}")"/>
                                 }
                             </MudStack>
                         }

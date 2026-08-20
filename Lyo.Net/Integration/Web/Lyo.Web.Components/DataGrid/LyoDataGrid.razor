@@ -139,7 +139,7 @@
                     @if (HasFeature(LyoDataGridFeatureFlags.Searchable)) {
                         <MudTextField @ref="_searchField"
                                       @bind-Value="_searchText"
-                                      Placeholder="Search users by name, email, user ID, session ID, or current page..."
+                                      Placeholder="@QuickSearchPlaceholder"
                                       Adornment="Adornment.Start"
                                       Style="flex: 1; min-width: 300px;"
                                       AdornmentIcon="@Icons.Material.Filled.Search"
@@ -181,9 +181,7 @@
 
                         @if (_filterStates.Any()) {
                             @foreach (var (filterState, index) in _filterStates.Select((f, i) => (f, i))) {
-                                <MudChip T="string"
-                                         Size="Size.Small"
-                                         Color="@(filterState.IsEnabled ? Color.Primary : Color.Default)"
+                                <LyoChip Color="@(filterState.IsEnabled ? Color.Primary : Color.Default)"
                                          Variant="@(filterState.IsEnabled ? Variant.Filled : Variant.Outlined)"
                                          OnClick="@(() => ToggleFilter(index))"
                                          OnClose="@(() => RemoveFilter(index))"
@@ -192,7 +190,7 @@
                                     <FilterChipLabel Text="@GetFilterDisplayText(filterState.Condition)"
                                                      DialogText="@GetFilterDisplayDetailText(filterState.Condition)"
                                                      MaxLength="@FilterChipLabelMaxLength"/>
-                                </MudChip>
+                                </LyoChip>
                             }
                         }
                         else {

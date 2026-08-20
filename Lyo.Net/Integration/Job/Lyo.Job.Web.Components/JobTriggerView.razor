@@ -12,11 +12,8 @@
                             <MudListItem T="JobTriggerRes" OnClick="@(() => _selected = t)"
                                          Class="@(_selected?.Id == t.Id ? "mud-primary" : "")" Style="cursor:pointer;">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
-                                    <MudChip T="string" Size="Size.Small"
-                                             Color="@(t.Enabled ? Color.Success : Color.Error)"
-                                             OnClick="@(() => ToggleTrigger(t))" Style="cursor:pointer;">
-                                        @(t.Enabled ? "On" : "Off")
-                                    </MudChip>
+                                    <LyoChip Spec="@LyoChips.FromBool(t.Enabled, "On", "Off", Color.Success, Color.Error)"
+                                             OnClick="@(() => ToggleTrigger(t))" Style="cursor:pointer;"/>
                                     <MudText Typo="Typo.body2">@(t.Description ?? t.ToString())</MudText>
                                 </MudStack>
                             </MudListItem>

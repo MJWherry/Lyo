@@ -24,12 +24,7 @@
                 @{
                     var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
                 }
-                @if (string.IsNullOrWhiteSpace(statusText)) {
-                    <span>—</span>
-                }
-                else {
-                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForStatus(statusText)">@statusText</MudChip>
-                }
+                <LyoChip Label="@statusText" Color="@SmsColorHelper.ForStatus(statusText)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Direction" Title="Direction" Align="Align.Center" HeaderStyle="width: 120px;">
@@ -37,12 +32,7 @@
                 @{
                     var directionText = ProjectedValueHelper.GetDisplayValue(item, "Direction");
                 }
-                @if (string.IsNullOrWhiteSpace(directionText)) {
-                    <span>—</span>
-                }
-                else {
-                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForDirection(directionText)">@directionText</MudChip>
-                }
+                <LyoChip Label="@directionText" Color="@SmsColorHelper.ForDirection(directionText)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="IsSuccess" Title="Received" Align="Align.Center" HeaderStyle="width: 110px;">
@@ -50,12 +40,7 @@
                 @{
                     var success = SmsColorHelper.ToBool(ProjectedValueHelper.GetValue(item, "IsSuccess"));
                 }
-                @if (success is null) {
-                    <span>—</span>
-                }
-                else {
-                    <MudChip T="string" Size="Size.Small" Color="@SmsColorHelper.ForSuccess(success)">@(success.Value ? "Yes" : "No")</MudChip>
-                }
+                <LyoChip Spec="@LyoChips.FromBool(success, "Yes", "No", Color.Success, Color.Error)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="DateSent" Title="Sent" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>

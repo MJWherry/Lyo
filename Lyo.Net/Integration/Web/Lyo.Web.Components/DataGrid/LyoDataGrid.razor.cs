@@ -106,6 +106,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private IReadOnlyList<string> EffectiveQuickSearchProperties => _propertyColumnRegistry.GetQuickSearchProperties(QuickSearchProperties);
 
+    private string QuickSearchPlaceholder => _propertyColumnRegistry.GetQuickSearchPlaceholder(QuickSearchProperties);
+
     [Parameter]
     public IReadOnlyList<FilterPropertyDefinition> FilterPropertyDefinitions { get; init; } = [];
 

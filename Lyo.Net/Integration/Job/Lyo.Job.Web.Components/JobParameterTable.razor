@@ -99,7 +99,7 @@
                 </td>
                 <td>
                     @if (row.IsEncrypted) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Encrypted</MudChip>
+                        <LyoChip Color="Color.Warning" Label="Encrypted"/>
                     }
                     else if (HasPicker(row) && ApiClient is not null) {
                         <LyoParameterOptionsSelect ApiClient="ApiClient"
@@ -125,7 +125,7 @@
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
                     @if (row.IsNew) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip>
+                        <LyoChip Color="Color.Success" Label="New"/>
                     }
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete parameter"
                                    OnClick="@(() => DeleteRow(row))"/>

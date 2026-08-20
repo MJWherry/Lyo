@@ -18,6 +18,8 @@ public static class JobColorHelper
     public static Color ForState(string? text)
         => Enum.TryParse<JobState>(text, out var state) ? ForState(state) : Color.Default;
 
+    public static Color ForResult(JobRunResult result) => ForResult((JobRunResult?)result);
+
     public static Color ForResult(JobRunResult? result)
         => result switch {
             JobRunResult.Success => Color.Success,
@@ -54,6 +56,8 @@ public static class JobColorHelper
             JobState.Cancelled => Icons.Material.Filled.Cancel,
             var _ => Icons.Material.Filled.Help
         };
+
+    public static string ResultIcon(JobRunResult result) => ResultIcon((JobRunResult?)result);
 
     public static string ResultIcon(JobRunResult? result)
         => result switch {

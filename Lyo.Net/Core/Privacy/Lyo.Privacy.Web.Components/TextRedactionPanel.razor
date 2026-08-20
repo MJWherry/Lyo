@@ -29,9 +29,9 @@ else {
                     </MudButton>
                     @if (_result is { } r) {
                         <MudStack Spacing="1">
-                            <MudChip T="string" Text="@($"Runs: {r.TotalRuns}")" Size="Size.Small" Color="@(r.HadRedactions ? Color.Warning : Color.Default)"/>
-                            <MudChip T="string" Text="@($"In: {r.InputUtf16Length?.ToString() ?? "—"}")" Size="Size.Small" Variant="Variant.Outlined"/>
-                            <MudChip T="string" Text="@($"Out: {r.OutputUtf16Length?.ToString() ?? "—"}")" Size="Size.Small" Variant="Variant.Outlined"/>
+                            <LyoChip Label="@($"Runs: {r.TotalRuns}")" Color="@(r.HadRedactions ? Color.Warning : Color.Default)"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"In: {r.InputUtf16Length?.ToString() ?? "—"}")"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"Out: {r.OutputUtf16Length?.ToString() ?? "—"}")"/>
                         </MudStack>
                     }
                     else {

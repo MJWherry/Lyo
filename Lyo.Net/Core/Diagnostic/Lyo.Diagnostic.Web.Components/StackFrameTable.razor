@@ -11,7 +11,7 @@ else {
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Category">
-                <MudChip T="string" Text="@context.Category.ToString()" Size="Size.Small"/>
+                <LyoChip Label="@context.Category.ToString()"/>
             </MudTd>
             <MudTd DataLabel="Method">
                 <MudText Typo="Typo.body2" Style="font-family: monospace; font-size: 0.85rem;">@context.ShortMethod</MudText>
@@ -19,10 +19,10 @@ else {
             <MudTd DataLabel="Location">@(context.LocationSummary ?? "—")</MudTd>
             <MudTd DataLabel="Flags">
                 @if (context.IsAsync) {
-                    <MudChip T="string" Text="async" Size="Size.Small" Variant="Variant.Text"/>
+                    <LyoChip Variant="Variant.Text" Label="async"/>
                 }
                 @if (context.IsLambda) {
-                    <MudChip T="string" Text="lambda" Size="Size.Small" Variant="Variant.Text"/>
+                    <LyoChip Variant="Variant.Text" Label="lambda"/>
                 }
                 @if (!context.IsAsync && !context.IsLambda) {
                     <span>—</span>

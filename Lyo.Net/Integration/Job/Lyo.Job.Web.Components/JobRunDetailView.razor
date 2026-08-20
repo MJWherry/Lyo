@@ -2,28 +2,27 @@
 
 <LyoDialog DebugData="@JobRun">
     <TitleContent>
-        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudText Typo="Typo.h6">@(JobRun?.JobDefinition?.Name ?? "Job run")</MudText>
-            @if (JobRun != null) {
-                <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForState(JobRun.State)" Icon="@JobColorHelper.StateIcon(JobRun.State)">@JobRun.State</MudChip>
-                @if (JobRun.Result is { } result) {
-                    <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)">@result</MudChip>
-                }
-                @if (JobRun.StartedTimestamp is not null) {
-                    <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForDuration(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"
-                             Icon="@(JobRun.FinishedTimestamp is null ? Icons.Material.Filled.Timer : null)">
-                        @JobColorHelper.FormatDurationFromDates(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)
-                    </MudChip>
-                }
-                @if (JobRun.SlaBreached) {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Error">SLA breached</MudChip>
-                }
-                @if (JobRun.DryRun) {
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Dry run</MudChip>
-                }
-            }
-        </MudStack>
+        <MudText Typo="Typo.h6">@(JobRun?.JobDefinition?.Name ?? "Job run")</MudText>
     </TitleContent>
+    <TitleChips>
+        @if (JobRun != null) {
+            <LyoChip Label="@JobRun.State.ToString()" Color="@JobColorHelper.ForState(JobRun.State)" Icon="@JobColorHelper.StateIcon(JobRun.State)"/>
+            @if (JobRun.Result is { } result) {
+                <LyoChip Label="@result.ToString()" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)"/>
+            }
+            @if (JobRun.StartedTimestamp is not null) {
+                <LyoChip Color="@JobColorHelper.ForDuration(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"
+                         Icon="@(JobRun.FinishedTimestamp is null ? Icons.Material.Filled.Timer : null)"
+                         Label="@JobColorHelper.FormatDurationFromDates(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"/>
+            }
+            @if (JobRun.SlaBreached) {
+                <LyoChip Color="Color.Error" Label="SLA breached"/>
+            }
+            @if (JobRun.DryRun) {
+                <LyoChip Variant="Variant.Outlined" Label="Dry run"/>
+            }
+        }
+    </TitleChips>
     <ExtraActions>
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Rerun" StartIcon="@Icons.Material.Filled.Refresh">Re-run</MudButton>
         @if (JobRun?.State == JobState.Running) {
@@ -85,20 +84,19 @@
                     <MudItem xs="12">
                         <MudText Typo="Typo.overline" Class="mud-text-secondary">Context</MudText>
                         <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-2">
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Priority @(JobRun?.Priority ?? 0)</MudChip>
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(JobRun?.SlaBreached == true ? Color.Error : Color.Success)">
-                                @(JobRun?.SlaBreached == true ? "SLA breached" : "SLA ok")
-                            </MudChip>
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@AlertText</MudChip>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"Priority {JobRun?.Priority ?? 0}")"/>
+                            <LyoChip Variant="Variant.Outlined" Color="@(JobRun?.SlaBreached == true ? Color.Error : Color.Success)"
+                                     Label="@(JobRun?.SlaBreached == true ? "SLA breached" : "SLA ok")"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@AlertText"/>
                             @if (JobRun?.AllowTriggers == true) {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Triggers allowed</MudChip>
+                                <LyoChip Variant="Variant.Outlined" Label="Triggers allowed"/>
                             }
                             @if (JobRun?.ParentJobRunId is { } parentId) {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Batch @(JobRun.BatchIndex is { } i ? $"{i + 1}" : "?") / @(JobRun.BatchTotal?.ToString() ?? "?")</MudChip>
+                                <LyoChip Variant="Variant.Outlined" Label="@($"Batch {(JobRun.BatchIndex is { } i ? $"{i + 1}" : "?")} / {JobRun.BatchTotal?.ToString() ?? "?"}")"/>
                                 <span class="job-run-parent-id"><LyoIdField Compact="true" Value="@parentId"/></span>
                             }
                             @if (JobRun?.DefinitionAuditVersion is { } version) {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Def v@version</MudChip>
+                                <LyoChip Variant="Variant.Outlined" Label="@($"Def v{version}")"/>
                             }
                         </MudStack>
                     </MudItem>
@@ -119,7 +117,7 @@
                         @foreach (var p in OrderedParameters) {
                             <tr>
                                 <td class="job-run-mono">@p.Key</td>
-                                <td><MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@p.Type</MudChip></td>
+                                <td><LyoChip Variant="Variant.Outlined" Label="@p.Type.ToString()"/></td>
                                 <td><LyoTruncatedText Text="@p.Value"/></td>
                                 <td><LyoTruncatedText Text="@p.Description"/></td>
                             </tr>
@@ -145,7 +143,7 @@
                         @foreach (var r in OrderedResults) {
                             <tr>
                                 <td class="job-run-mono">@r.Key</td>
-                                <td><MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@r.Type</MudChip></td>
+                                <td><LyoChip Variant="Variant.Outlined" Label="@r.Type.ToString()"/></td>
                                 <td><LyoTruncatedText Text="@r.Value"/></td>
                             </tr>
                         }
@@ -174,7 +172,7 @@
                                     <LyoTimestamp Value="@log.Timestamp" AbsoluteFormat="HH:mm:ss"/>
                                 </td>
                                 <td>
-                                    <MudChip T="string" Size="Size.Small" Color="@JobColorHelper.ForLogLevel(log.Level)">@log.Level</MudChip>
+                                    <LyoChip Color="@JobColorHelper.ForLogLevel(log.Level)" Label="@log.Level.ToString()"/>
                                 </td>
                                 <td>
                                     <MudText Typo="Typo.body2">@log.Message</MudText>

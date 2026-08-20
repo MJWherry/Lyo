@@ -198,10 +198,7 @@
             <MudTabPanel Text="@($"Live Schedules ({_liveSchedules.Count})")">
                 <MudStack Spacing="3">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
-                        <MudChip T="string"
-                                 Color="@(SchedulerService.IsRunning ? Color.Success : Color.Default)"
-                                 Size="Size.Small"
-                                 Text="@(SchedulerService.IsRunning ? "Scheduler Running" : "Scheduler Stopped")"/>
+                        <LyoChip Spec="@LyoChips.FromBool(SchedulerService.IsRunning, "Scheduler Running", "Scheduler Stopped", Color.Success, Color.Default)"/>
                         <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
                                    OnClick="StartSchedulerAsync"
                                    Disabled="@(SchedulerService.IsRunning || _busy)">Start
@@ -247,8 +244,7 @@
                                         }
                                     </td>
                                     <td>
-                                        <MudChip T="string" Text="@s.Schedule.Definition.Type.ToString()"
-                                                 Size="Size.Small" Color="Color.Primary"/>
+                                        <LyoChip Color="Color.Primary" Label="@s.Schedule.Definition.Type.ToString()"/>
                                     </td>
                                     <td>@(s.Schedule.Definition.Description ?? "—")</td>
                                     <td>

@@ -2,17 +2,17 @@
 
 <LyoDialog DebugData="@Definition">
     <TitleContent>
-        <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Definition.Name) ? "Report Definition" : Definition.Name)</MudText>
-            @if (Definition.DefaultFormat is { } format) {
-                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(format)">@format</MudChip>
-            }
-            <MudChip T="string" Size="Size.Small" Color="@(Definition.IsActive ? Color.Success : Color.Default)">@(Definition.IsActive ? "Active" : "Off")</MudChip>
-            @if (!string.IsNullOrWhiteSpace(Definition.GenerationProfileKey)) {
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@Definition.GenerationProfileKey</MudChip>
-            }
-        </MudStack>
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Definition.Name) ? "Report Definition" : Definition.Name)</MudText>
     </TitleContent>
+    <TitleChips>
+        @if (Definition.DefaultFormat is { } format) {
+            <LyoChip Label="@format.ToString()" Color="@ReportColorHelper.ForFormat(format)"/>
+        }
+        <LyoChip Spec="@LyoChips.FromBool(Definition.IsActive, "Active", "Off", Color.Success, Color.Default)"/>
+        @if (!string.IsNullOrWhiteSpace(Definition.GenerationProfileKey)) {
+            <LyoChip Variant="Variant.Outlined" Label="@Definition.GenerationProfileKey"/>
+        }
+    </TitleChips>
     <ChildContent>
         <MudGrid Class="pa-0" Spacing="1">
             <MudItem xs="12" sm="6" md="3">

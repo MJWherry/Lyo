@@ -48,20 +48,20 @@
 
                 <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
                     @if (!string.IsNullOrWhiteSpace(Demographic)) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@Demographic</MudChip>
+                        <LyoChip Color="Color.Primary" Variant="Variant.Outlined" Label="@Demographic"/>
                     }
                     @if (PublishedYear.HasValue) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@PublishedYear</MudChip>
+                        <LyoChip Variant="Variant.Outlined" Label="@PublishedYear.Value.ToString()"/>
                     }
                 </MudStack>
 
                 @if (HasAnyDisplayTags) {
                     <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
                         @foreach (var tag in VisibleTagChips) {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">@tag</MudChip>
+                            <LyoChip Color="Color.Secondary" Variant="Variant.Text" Label="@tag"/>
                         }
                         @if (OverflowTagCount > 0) {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">+@OverflowTagCount more</MudChip>
+                            <LyoChip Variant="Variant.Text" Label="@($"+{OverflowTagCount} more")"/>
                         }
                     </MudStack>
                 }

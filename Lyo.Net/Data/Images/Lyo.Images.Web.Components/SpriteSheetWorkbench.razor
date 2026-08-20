@@ -67,15 +67,10 @@
                             <MudPaper Class="pa-4" Outlined="true">
                                 <MudStack Spacing="2">
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                        <MudChip T="string" Color="@(_playing ? Color.Success : Color.Default)">
-                                            @(_playing ? "Playing" : "Paused")
-                                        </MudChip>
-                                        <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
-                                            @(_busy ? "Busy" : "Idle")
-                                        </MudChip>
-                                        <MudChip T="string" Color="@(HasIncludedFrames ? Color.Primary : Color.Default)">
-                                            @($"{_calculation.IncludedFrames.Count} Included")
-                                        </MudChip>
+                                        <LyoChip Spec="@LyoChips.FromBool(_playing, "Playing", "Paused", Color.Success, Color.Default)"/>
+                                        <LyoChip Spec="@LyoChips.FromBool(_busy, "Busy", "Idle", Color.Warning, Color.Success)"/>
+                                        <LyoChip Color="@(HasIncludedFrames ? Color.Primary : Color.Default)"
+                                                 Label="@($"{_calculation.IncludedFrames.Count} Included")"/>
                                     </MudStack>
                                 </MudStack>
                             </MudPaper>
@@ -145,7 +140,7 @@
                                     <TitleContent>
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudText Typo="Typo.h6">Frames</MudText>
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@_calculation.Frames.Count cells</MudChip>
+                                            <LyoChip Label="@($"{_calculation.Frames.Count} cells")"/>
                                         </MudStack>
                                     </TitleContent>
                                     <ChildContent>

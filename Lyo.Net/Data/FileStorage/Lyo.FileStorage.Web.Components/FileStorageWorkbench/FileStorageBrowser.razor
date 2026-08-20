@@ -1,5 +1,6 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
 @using Lyo.Common.Records
+@using Lyo.Web.Components
 @using Lyo.Web.Components.DataGrid
 @implements IDisposable
 
@@ -62,9 +63,7 @@
                                         var expected = FileStorageGridRowHelper.GetExpectedStorageKey(cell.Item);
                                         var exists = KeyExists(expected);
                                     }
-                                    <MudChip T="string" Size="Size.Small" Color="@(exists ? Color.Success : Color.Warning)">
-                                        @(exists ? "Yes" : "No")
-                                    </MudChip>
+                                    <LyoChip Spec="@LyoChips.FromBool(exists, "Yes", "No", Color.Success, Color.Warning)"/>
                                 </CellTemplate>
                             </TemplateColumn>
                         }

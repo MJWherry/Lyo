@@ -63,7 +63,7 @@
                 <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_doc.Benchmarks.Headline</MudText>
             }
             @if (!string.IsNullOrWhiteSpace(_doc.Benchmarks.Suite)) {
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">suite: @_doc.Benchmarks.Suite</MudChip>
+                <LyoChip Variant="Variant.Outlined" Label="@($"suite: {_doc.Benchmarks.Suite}")"/>
             }
             <ul class="lyo-catalog-list">
                 @foreach (var item in _doc.Benchmarks.Items) {

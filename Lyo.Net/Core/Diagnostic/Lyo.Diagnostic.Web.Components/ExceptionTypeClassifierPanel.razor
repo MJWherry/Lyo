@@ -11,10 +11,10 @@
         <MudPaper Outlined="true" Class="pa-3">
             <MudStack Spacing="2">
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                    <MudChip T="string" Text="@r.Kind.ToString()" Color="Color.Primary" Size="Size.Small"/>
-                    <MudChip T="string" Text="@r.Severity.ToString()" Size="Size.Small"/>
+                    <LyoChip Color="Color.Primary" Label="@r.Kind.ToString()"/>
+                    <LyoChip Label="@r.Severity.ToString()"/>
                     @if (r.IsExpectedControlFlow) {
-                        <MudChip T="string" Text="Expected control flow" Size="Size.Small" Color="Color.Info"/>
+                        <LyoChip Color="Color.Info" Label="Expected control flow"/>
                     }
                 </MudStack>
                 <MudText Typo="Typo.subtitle1">@r.Label</MudText>

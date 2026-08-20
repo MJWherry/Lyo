@@ -12,9 +12,7 @@
             @if (Node is GroupClause logicalNode) {
                 @* GroupClause editor *@
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                    <MudChip T="string" Size="Size.Small" Color="@GetOperatorColor(logicalNode)">
-                        @logicalNode.Operator.ToString()
-                    </MudChip>
+                    <LyoChip Color="@GetOperatorColor(logicalNode)" Label="@logicalNode.Operator.ToString()"/>
                     <MudSelect T="GroupOperatorEnum"
                                Value="@logicalNode.Operator"
                                ValueChanged="@OnGroupOperatorChanged"
@@ -72,7 +70,7 @@
             else if (Node is ConditionClause conditionNode) {
                 @* ConditionClause editor *@
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Condition clause</MudChip>
+                    <LyoChip Color="Color.Secondary" Label="Condition clause"/>
 
                     <MudAutocomplete T="string"
                                      Value="@conditionNode.Field"

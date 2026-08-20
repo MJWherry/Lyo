@@ -7,10 +7,10 @@
 else {
     <MudStack Spacing="2">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudChip T="string" Size="Size.Small" Color="Color.Primary">Identity score @Response.IdentityScore</MudChip>
-            <MudChip T="string" Size="Size.Small" Color="Color.Default">@Response.TotalRequestExecutionTimeMs ms</MudChip>
+            <LyoChip Color="Color.Primary" Label="@($"Identity score {Response.IdentityScore}")"/>
+            <LyoChip Label="@($"{Response.TotalRequestExecutionTimeMs} ms")"/>
             @if (Response.IsError) {
-                <MudChip T="string" Size="Size.Small" Color="Color.Error">Error</MudChip>
+                <LyoChip Color="Color.Error" Label="Error"/>
             }
             <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ShowResponseJson">View full response JSON</MudButton>
         </MudStack>

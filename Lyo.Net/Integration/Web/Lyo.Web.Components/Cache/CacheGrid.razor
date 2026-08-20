@@ -2,6 +2,7 @@
 @using Lyo.Api.Client
 @using Lyo.Api.Models.Common.Request
 @using Lyo.Api.Models.Common.Response
+@using Lyo.Api.Models.Enums
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Models
 @inject IDialogService DialogService
@@ -27,7 +28,14 @@
         </MudButton>
     </LeftControls>
     <Columns>
-        <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type"/>
+        <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type">
+            <CellContent Context="item">
+                @{
+                    var typeText = ProjectedValueHelper.GetDisplayValue(item, "Type");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<CacheItemTypeEnum>(typeText, CacheColorHelper.ForType, CacheColorHelper.TypeIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
         <LyoProjectedColumn Field="Created" Title="Created" Timestamp="LyoTimestampKind.Absolute"/>
     </Columns>

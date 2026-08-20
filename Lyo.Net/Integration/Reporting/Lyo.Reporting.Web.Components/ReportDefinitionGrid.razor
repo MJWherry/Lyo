@@ -48,11 +48,9 @@
                 @{
                     var active = GetActive(item);
                 }
-                <MudChip T="string" Size="Size.Small" Color="@(active ? Color.Success : Color.Default)"
+                <LyoChip Spec="@LyoChips.FromBool(active, "Active", "Off", Color.Success, Color.Default)"
                          Style="cursor: pointer;"
-                         OnClick="@(() => ToggleActiveAsync(item))">
-                    @(active ? "Active" : "Off")
-                </MudChip>
+                         OnClick="@(() => ToggleActiveAsync(item))"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
@@ -74,9 +72,7 @@
                 @{
                     var formatText = ProjectedValueHelper.GetDisplayValue(item, "DefaultFormat");
                 }
-                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(formatText)">
-                    @(string.IsNullOrWhiteSpace(formatText) ? "—" : formatText)
-                </MudChip>
+                <LyoChip Spec="@(LyoChips.FromEnum<ReportFormat>(formatText, ReportColorHelper.ForFormat))"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="GenerationProfileKey" Title="Profile"/>

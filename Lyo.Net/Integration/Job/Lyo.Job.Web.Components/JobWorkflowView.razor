@@ -34,7 +34,7 @@
                                     <span> · Depends on: @step.DependsOnStepIds</span>
                                 }
                             </MudText>
-                            <MudChip T="string" Size="Size.Small" Class="mt-1">@step.FailurePolicy on failure</MudChip>
+                            <LyoChip Class="mt-1" Label="@($"{step.FailurePolicy} on failure")"/>
                         </ItemContent>
                     </MudTimelineItem>
                 }

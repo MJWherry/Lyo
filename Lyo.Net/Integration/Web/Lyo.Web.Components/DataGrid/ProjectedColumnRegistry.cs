@@ -38,6 +38,34 @@ public sealed class ProjectedColumnRegistry
         return named.Concat(ids).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>
+    /// Placeholder listing the column titles (or property leaves) that quick search ORs, e.g. <c>Search Name, Type, Id</c>.
+    /// Falls back to <c>Search...</c> when no properties are known yet.
+    /// </summary>
+    public string GetQuickSearchPlaceholder(IReadOnlyList<string>? explicitProperties = null)
+    {
+        var labels = GetQuickSearchProperties(explicitProperties)
+            .Select(LabelForQuickSearch)
+            .Where(static l => !string.IsNullOrWhiteSpace(l))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return labels.Count == 0 ? "Search..." : "Search " + string.Join(", ", labels);
+    }
+
+    private string LabelForQuickSearch(string property)
+    {
+        var match = _columns.FirstOrDefault(c =>
+            c.Field.Equals(property, StringComparison.OrdinalIgnoreCase)
+            || (!string.IsNullOrWhiteSpace(c.QuickSearchPropertyName)
+                && c.QuickSearchPropertyName.Trim().Equals(property, StringComparison.OrdinalIgnoreCase)));
+        if (!string.IsNullOrWhiteSpace(match.Title))
+            return match.Title.Trim();
+
+        var name = property.Trim();
+        var dot = name.LastIndexOf('.');
+        return dot >= 0 ? name[(dot + 1)..] : name;
+    }
+
     /// <summary>True when the last dotted segment is <c>Id</c> (e.g. <c>Id</c>, <c>JobDefinition.Id</c>).</summary>
     public static bool IsIdField(string? field)
     {
