@@ -251,17 +251,10 @@
                 @if (NoRecordsContent != null) {
                     @NoRecordsContent
                 }
-                else if (QueryError is not null) {
-                    <div class="d-flex flex-column align-center pa-4">
-                        <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Class="mb-2"/>
-                        <MudText Typo="Typo.h6">@QueryError.Detail</MudText>
-                        <MudText Typo="Typo.body1">@QueryError.TraceId</MudText>
-                    </div>
-                }
                 else {
                     <div class="d-flex flex-column align-center pa-4">
                         <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
-                        <MudText Typo="Typo.h6">No records found</MudText>
+                        <MudText Typo="Typo.h6">@(QueryError is not null ? "Unable to connect to the database" : "No records found")</MudText>
                     </div>
                 }
             </NoRecordsContent>

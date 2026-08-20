@@ -102,6 +102,10 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     [Parameter]
     public int[] AutoRefreshIntervalsSeconds { get; init; } = [1, 3, 5, 10, 25, 30];
 
+    /// <summary>When true, AutoRefresh starts enabled (user can still stop it). Seeded once on first init.</summary>
+    [Parameter]
+    public bool AutoRefreshEnabled { get; set; }
+
     [Parameter]
     public required LyoDataGridFeatureFlags Features { get; init; } = LyoDataGridFeatureFlags.All;
 
@@ -261,7 +265,13 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         return fields.Concat(keyPaths).Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
-    protected override async Task OnInitializedAsync() => await LoadClientState();
+    protected override async Task OnInitializedAsync()
+    {
+        _autoRefreshEnabled = AutoRefreshEnabled;
+        await LoadClientState();
+        if (_autoRefreshEnabled)
+            StartAutoRefresh();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -503,7 +513,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost
             try {
                 CurrentResults = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, CurrentQuery, ct: _cts.Token);
                 _lastQueryStatusCode = 200;
-                QueryError = CurrentResults.Error;
+                QueryError = DataGridQueryError.FromQueryResult(CurrentResults.IsSuccess, CurrentResults.Error);
             }
             catch (ApiException ex) {
                 _lastQueryStatusCode = ex.StatusCode;
@@ -530,11 +540,12 @@ public partial class LyoDataGridProjected : IDataGridExportHost
 
             return gridData;
         }
-        catch (TaskCanceledException) {
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested) {
             return new() { Items = [], TotalItems = 0 };
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error running query");
+            QueryError = DataGridQueryError.FromException(ex);
             StopAutoRefresh();
             return new() { Items = [], TotalItems = 0 };
         }

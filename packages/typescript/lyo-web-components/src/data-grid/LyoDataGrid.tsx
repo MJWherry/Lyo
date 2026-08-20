@@ -478,7 +478,7 @@ function GridTable<T>({
               <TableCell colSpan={colSpan}>
                 {noRecordsContent ?? (
                   <Typography variant="body2" color="text.secondary">
-                    No records.
+                    {grid.error ? "Unable to connect to the database" : "No records."}
                   </Typography>
                 )}
               </TableCell>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ConditionClause, FilterPropertyDefinition, SortBy } from "lyo-query";
+import type { LyoProblemDetails } from "lyo-api-client";
 import type { LyoQueryClient } from "../client/LyoQueryClient.js";
 import { clientStore } from "../provider/clientStore.js";
 import { buildConcreteQuery, buildProjectedQuery, buildRootQuery } from "./buildQuery.js";
@@ -185,18 +186,19 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
           : mode === "query"
             ? await apiClient.query?.(route, body)
             : await apiClient.queryProject(route, body);
-      if (!res?.ok || !res.data) {
+      const payload = res?.data as QueryPayload<T> | undefined;
+      if (!res?.ok || !payload || payload.isSuccess === false || payload.error) {
         setRows([]);
         setTotal(0);
-        setError("Query failed");
+        setError(formatLoadError(undefined, payload));
         return;
       }
-      setCurrentResults(res.data);
-      const items = res.data.items ?? [];
+      setCurrentResults(payload);
+      const items = payload.items ?? [];
       setRows(mapRows ? mapRows(items) : (items as T[]));
-      setTotal(res.data.total ?? items.length);
+      setTotal(payload.total ?? items.length);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Query failed");
+      setError(formatLoadError(err));
       setRows([]);
       setTotal(0);
     } finally {
@@ -373,6 +375,46 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     apiClient,
     keySelector,
   };
+}
+
+type QueryPayload<T> = {
+  isSuccess?: boolean;
+  error?: LyoProblemDetails | null;
+  items?: T[] | null;
+  total?: number | null;
+  detail?: string;
+  title?: string;
+  errors?: LyoProblemDetails["errors"];
+};
+
+function isConnectivityText(text: string): boolean {
+  return /failed to fetch|networkerror|econnrefused|connection refused|could not connect|failed to connect|timeout|npgsql|postgres|database/i.test(
+    text
+  );
+}
+
+function problemDetail(problem: LyoProblemDetails | null | undefined): string | null {
+  if (!problem) return null;
+  const fromErrors = (problem.errors ?? []).map((e) => e.description).find(Boolean);
+  return problem.detail || problem.title || fromErrors || null;
+}
+
+function asProblem(data: QueryPayload<unknown> | null | undefined): LyoProblemDetails | null {
+  if (!data) return null;
+  if (data.error) return data.error;
+  if (data.detail || data.title || data.errors)
+    return { title: data.title, detail: data.detail, errors: data.errors };
+  return null;
+}
+
+function formatLoadError(err?: unknown, data?: QueryPayload<unknown> | null): string {
+  if (err instanceof TypeError)
+    return "Unable to connect.";
+  const detail = problemDetail(asProblem(data));
+  const raw = detail ?? (err instanceof Error ? err.message : null) ?? "The query failed.";
+  if (isConnectivityText(raw))
+    return raw.toLowerCase().startsWith("unable to connect") ? raw : `Unable to connect. ${raw}`;
+  return raw;
 }
 
 export type LyoDataGridController<T> = ReturnType<typeof useLyoDataGrid<T>>;

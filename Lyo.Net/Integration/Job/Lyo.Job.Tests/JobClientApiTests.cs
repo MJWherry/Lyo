@@ -37,6 +37,17 @@ public class JobRunClientTests
     }
 
     [Fact]
+    public async Task StartAsync_WhenRequestProvided_PostsStartedBody()
+    {
+        var runId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        await _relativeClient.StartAsync(runId, request: new JobRunStartedReq { WorkerInstanceId = instanceId }, ct: TestContext.Current.CancellationToken);
+        Assert.Equal($"Job/Run/{runId}/Started", _api.LastUri);
+        var body = Assert.IsType<JobRunStartedReq>(_api.LastBody);
+        Assert.Equal(instanceId, body.WorkerInstanceId);
+    }
+
+    [Fact]
     public async Task FinishAsync_PostsToFinishedRoute()
     {
         var runId = Guid.NewGuid();
@@ -97,6 +108,19 @@ public class JobWorkerInstanceClientTests
         Assert.NotNull(patch.Keys);
         Assert.Single(patch.Keys);
         Assert.Equal(id, patch.Keys[0][0]);
+        Assert.False(patch.Properties.ContainsKey("MetadataJson"));
+    }
+
+    [Fact]
+    public async Task HeartbeatAsync_WhenMetadataProvided_PatchesMetadataJson()
+    {
+        var api = new RecordingApiClient();
+        var client = new JobWorkerInstanceClient(api);
+        var id = Guid.NewGuid();
+        await client.HeartbeatAsync(id, 1, TestContext.Current.CancellationToken, new Dictionary<string, string?> { ["workingSetBytes"] = "2048" });
+        var patch = Assert.IsType<PatchRequest>(api.LastBody);
+        Assert.True(patch.Properties.ContainsKey("MetadataJson"));
+        Assert.Contains("workingSetBytes", Assert.IsType<string>(patch.Properties["MetadataJson"]), StringComparison.Ordinal);
     }
 }
 

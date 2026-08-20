@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>

@@ -88,6 +88,15 @@ public sealed record JobRunRes
     /// <summary>Snapshot of the definition version at run creation for audit correlation.</summary>
     public int? DefinitionAuditVersion { get; init; }
 
+    /// <summary>Worker instance that started this run. Null when the run has not started or the worker did not register.</summary>
+    public Guid? WorkerInstanceId { get; init; }
+
+    /// <summary>Machine name snapshotted from the worker instance at start.</summary>
+    public string? WorkerMachineName { get; init; }
+
+    /// <summary>Process id snapshotted from the worker instance at start.</summary>
+    public int? WorkerProcessId { get; init; }
+
     /// <summary>Returns the typed value of the result with the given key (case-insensitive) via <see cref="JobRunParameterExtensions" />, or default when absent / not convertible.</summary>
     public T? GetResultValueAs<T>(string key, string? format = null) => JobRunResults.GetAs<T>(key, format);
 

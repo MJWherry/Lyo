@@ -21,8 +21,15 @@ public sealed class JobRunClient(IApiClient client, string? routePrefix = null)
     public Task<QueryRes<JobRunRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
         => client.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunsQuery), request, ct: ct);
 
-    public Task<JobRunRes> StartAsync(Guid runId, IEnumerable<string>? includes = null, CancellationToken ct = default)
-        => client.PostAsAsync<JobRunRes>(JobRouteBuilder.WithIncludes(JobRouteBuilder.Build(routePrefix, JobRoutes.RunStarted(runId)), includes), ct: ct);
+    /// <summary>
+    /// Marks the run <c>Running</c>. Pass <paramref name="request" /> so the API can snapshot the worker instance that claimed the run.
+    /// An empty body is still accepted for older callers.
+    /// </summary>
+    public Task<JobRunRes> StartAsync(Guid runId, IEnumerable<string>? includes = null, CancellationToken ct = default, JobRunStartedReq? request = null)
+        => request is null
+            ? client.PostAsAsync<JobRunRes>(JobRouteBuilder.WithIncludes(JobRouteBuilder.Build(routePrefix, JobRoutes.RunStarted(runId)), includes), ct: ct)
+            : client.PostAsAsync<JobRunStartedReq, JobRunRes>(
+                JobRouteBuilder.WithIncludes(JobRouteBuilder.Build(routePrefix, JobRoutes.RunStarted(runId)), includes), request, ct: ct);
 
     public Task<JobRunRes> FinishAsync(Guid runId, IEnumerable<JobRunResultReq> results, CancellationToken ct = default)
         => client.PostAsAsync<IEnumerable<JobRunResultReq>, JobRunRes>(JobRouteBuilder.Build(routePrefix, JobRoutes.RunFinished(runId)), results, ct: ct);

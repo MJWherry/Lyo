@@ -1,3 +1,5 @@
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Query.Models.Common.Request
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
@@ -5,12 +7,14 @@
 @using Lyo.Web.Components.Models
 @using Constants = Lyo.TestGateway.Models.Constants
 @inject IApiClient ApiClient
+@inject IDialogService DialogService
 
 <LyoDataGridProjected ApiClient="ApiClient"
                       GridKey="EndatoPsPersonGrid"
                       Route="@Constants.EndatoPs.Person"
                       KeySelector="@GetKey"
-                      FilterPropertyDefinitions="@_propertyDefinitions">
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      RowMenuControls="@GetRowMenuControls()">
     <BulkExportControls>
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
@@ -19,6 +23,14 @@
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                               OnClick="@(() => ViewPerson(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
         <LyoProjectedColumn Field="FirstName" Title="First Name" QuickSearchPropertyName="FirstName"/>
         <LyoProjectedColumn Field="MiddleName" Title="Middle Name" HiddenByDefault="true"/>
@@ -34,6 +46,8 @@
 @code {
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FirstName"), new("LastName")];
 
+    private static readonly string[] Includes = ["Addresses", "EmailAddresses", "PhoneNumbers"];
+
     private static object[] GetKey(object? item)
     {
         if (item == null)
@@ -41,6 +55,29 @@
 
         var id = ProjectedValueHelper.GetValue(item, "Id");
         return id != null ? [id] : [];
+    }
+
+    private RenderFragment<object?> GetRowMenuControls()
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewPerson(person))">View</MudMenuItem>;
+
+    private async Task ViewPerson(object? item)
+    {
+        if (item == null)
+            return;
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<EndatoPsPersonRes>>(
+            $"{Constants.EndatoPs.Person}/QueryConcrete",
+            new() { Keys = [[id]], Amount = 1, Include = [..Includes] });
+        var person = res?.Items?.FirstOrDefault();
+        if (person == null)
+            return;
+
+        var parameters = new DialogParameters<EndatoPsPersonView> { { d => d.Person, person } };
+        await DialogService.ShowAsync<EndatoPsPersonView>(string.IsNullOrWhiteSpace(person.FullName) ? "Endato person" : person.FullName, parameters, LyoDialogPresets.Large);
     }
 
 }

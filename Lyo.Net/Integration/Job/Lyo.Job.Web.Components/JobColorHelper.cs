@@ -18,6 +18,36 @@ public static class JobColorHelper
     public static Color ForState(string? text)
         => Enum.TryParse<JobState>(text, out var state) ? ForState(state) : Color.Default;
 
+    /// <summary>Heartbeat older than this is treated as stale while the instance row still exists.</summary>
+    public static readonly TimeSpan WorkerHeartbeatStaleAfter = TimeSpan.FromSeconds(90);
+
+    /// <summary>MudBlazor color for a live worker instance state.</summary>
+    public static Color ForWorkerState(JobWorkerInstanceState state)
+        => state switch {
+            JobWorkerInstanceState.Running => Color.Success,
+            JobWorkerInstanceState.Draining => Color.Warning,
+            JobWorkerInstanceState.Stopped => Color.Default,
+            var _ => Color.Default
+        };
+
+    public static Color ForWorkerState(string? text)
+        => Enum.TryParse<JobWorkerInstanceState>(text, out var state) ? ForWorkerState(state) : Color.Default;
+
+    public static string WorkerStateIcon(JobWorkerInstanceState state)
+        => state switch {
+            JobWorkerInstanceState.Running => Icons.Material.Filled.PlayArrow,
+            JobWorkerInstanceState.Draining => Icons.Material.Filled.HourglassTop,
+            JobWorkerInstanceState.Stopped => Icons.Material.Filled.Stop,
+            var _ => Icons.Material.Filled.Help
+        };
+
+    public static string WorkerStateIcon(string? text)
+        => Enum.TryParse<JobWorkerInstanceState>(text, out var state) ? WorkerStateIcon(state) : Icons.Material.Filled.Help;
+
+    /// <summary>True when the last heartbeat is older than <paramref name="threshold" /> (default 90s).</summary>
+    public static bool IsHeartbeatStale(DateTime? lastHeartbeatUtc, TimeSpan? threshold = null)
+        => lastHeartbeatUtc is { } at && DateTime.UtcNow - at > (threshold ?? WorkerHeartbeatStaleAfter);
+
     public static Color ForResult(JobRunResult result) => ForResult((JobRunResult?)result);
 
     public static Color ForResult(JobRunResult? result)

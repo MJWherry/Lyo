@@ -85,6 +85,8 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
         if (AllowMultiple)
             return;
 
+        // MudSelect T=string treats an uncleared / never-picked item as "". Optional params must stay unset, not an empty token.
+        value = string.IsNullOrWhiteSpace(value) ? null : value;
         Value = value;
         if (ValueChanged.HasDelegate)
             await ValueChanged.InvokeAsync(value);

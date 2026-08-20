@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-20T02:21:32.373307+00:00",
-  "packageCount": 218,
+  "generatedAt": "2026-08-20T19:21:15.527018+00:00",
+  "packageCount": 217,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -1813,16 +1813,6 @@
       "topic": "Lyo.Job",
       "name": "Lyo.Job.Scheduler",
       "tagline": "Hosted `JobScheduler` that polls the Job API for enabled definitions, evaluates schedules (misfire catch-up, blackout calendars, per-schedule time zones), and creates job runs via `IApiClient`.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Job.SignalR",
-      "area": "Integration",
-      "topic": "Lyo.Job",
-      "name": "Lyo.Job.SignalR",
-      "tagline": "SignalR live job dashboard. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes `JobHubEvent` records to connected `JobHub` clients.",
       "targetFrameworks": [
         "net10.0"
       ]

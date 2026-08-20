@@ -442,7 +442,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             try {
                 CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
                 _lastQueryStatusCode = 200;
-                QueryError = CurrentResults.Error;
+                QueryError = DataGridQueryError.FromQueryResult(CurrentResults.IsSuccess, CurrentResults.Error);
             }
             catch (ApiException ex) {
                 _lastQueryStatusCode = ex.StatusCode;
@@ -474,12 +474,13 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
             return gridData;
         }
-        catch (TaskCanceledException) {
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested) {
             Logger.LogInformation("Request cancelled");
             return new() { Items = [], TotalItems = 0 };
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error running query");
+            QueryError = DataGridQueryError.FromException(ex);
             StopAutoRefresh();
             return new() { Items = [], TotalItems = 0 };
         }

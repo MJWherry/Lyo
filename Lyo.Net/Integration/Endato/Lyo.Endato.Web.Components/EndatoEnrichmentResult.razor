@@ -12,7 +12,6 @@ else {
             @if (Response.IsError) {
                 <LyoChip Color="Color.Error" Label="Error"/>
             }
-            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ShowResponseJson">View full response JSON</MudButton>
         </MudStack>
 
         @if (Response.Error?.InputErrors is { Count: > 0 }) {
@@ -28,29 +27,21 @@ else {
             var person = Response.Person;
             <MudPaper Elevation="0" Outlined="true" Class="pa-3">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">@person.Name.FirstName @person.Name.MiddleName @person.Name.LastName</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Age @person.Age</MudText>
-
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.h6">@person.Name.FirstName @person.Name.MiddleName @person.Name.LastName</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Age @person.Age · @person.Phones.Count phones · @person.Emails.Count emails · @person.Addresses.Count addresses</MudText>
+                        </MudStack>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Visibility" OnClick="ShowPerson">
+                            View
+                        </MudButton>
+                    </MudStack>
                     @if (person.Phones.Count > 0) {
-                        <MudText Typo="Typo.subtitle2">Phones</MudText>
-
-                        <MudText Typo="Typo.body2">@EndatoContactFormatter.FormatEnrichmentPhones(person.Phones)</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@EndatoContactFormatter.FormatEnrichmentPhones(person.Phones)</MudText>
                     }
-
                     @if (person.Emails.Count > 0) {
-                        <MudText Typo="Typo.subtitle2">Emails</MudText>
-
-                        <MudText Typo="Typo.body2">@EndatoContactFormatter.FormatEnrichmentEmails(person.Emails)</MudText>
-                    }
-
-                    @if (person.Addresses.Count > 0) {
-                        <MudText Typo="Typo.subtitle2">Addresses</MudText>
-
-                        <MudList T="string" Dense="true">
-                            @foreach (var address in person.Addresses) {
-                                <MudListItem T="string">@address.Street @address.Unit — @address.City, @address.State @address.Zip</MudListItem>
-                            }
-                        </MudList>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@EndatoContactFormatter.FormatEnrichmentEmails(person.Emails)</MudText>
                     }
                 </MudStack>
             </MudPaper>
@@ -63,14 +54,17 @@ else {
     [Parameter]
     public EnrichmentResponse? Response { get; set; }
 
-    private async Task ShowResponseJson()
+    private async Task ShowPerson()
     {
-        if (Response == null)
+        if (Response?.Person is null)
             return;
 
-        await Task.Yield();
-        var parameters = new DialogParameters<JsonViewDialog<EnrichmentResponse>> { { i => i.Data, Response } };
-        await DialogService.ShowAsync(typeof(JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, LyoDialogPresets.Medium);
+        var parameters = new DialogParameters<EndatoEnrichmentPersonView> {
+            { d => d.Person, Response.Person },
+            { d => d.IdentityScore, Response.IdentityScore },
+            { d => d.Response, Response }
+        };
+        await DialogService.ShowAsync<EndatoEnrichmentPersonView>("Enriched person", parameters, LyoDialogPresets.Large);
     }
 
 }

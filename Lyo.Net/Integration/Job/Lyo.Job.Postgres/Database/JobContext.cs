@@ -228,6 +228,10 @@ public partial class JobContext : DbContext
             entity.Property(e => e.BatchIndex).HasColumnName("batch_index");
             entity.Property(e => e.BatchTotal).HasColumnName("batch_total");
             entity.Property(e => e.DefinitionAuditVersion).HasColumnName("definition_audit_version");
+            entity.Property(e => e.WorkerInstanceId).HasColumnName("worker_instance_id");
+            entity.Property(e => e.WorkerMachineName).HasMaxLength(200).HasColumnName("worker_machine_name");
+            entity.Property(e => e.WorkerProcessId).HasColumnName("worker_process_id");
+            entity.HasIndex(e => e.WorkerInstanceId, "ix_job_run_worker_instance_id");
             entity.HasIndex(e => new { e.JobDefinitionId, e.IdempotencyKey })
                 .HasFilter("idempotency_key IS NOT NULL")
                 .IsUnique()
@@ -431,6 +435,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.InFlightCount).HasDefaultValue(0).HasColumnName("in_flight_count");
             entity.Property(e => e.StartedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("started_timestamp");
             entity.Property(e => e.LastHeartbeatUtc).HasColumnType("timestamp with time zone").HasColumnName("last_heartbeat_utc");
+            entity.Property(e => e.MetadataJson).HasColumnType("jsonb").HasColumnName("metadata_json");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         });

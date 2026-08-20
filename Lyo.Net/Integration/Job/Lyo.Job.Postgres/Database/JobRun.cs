@@ -86,6 +86,16 @@ public class JobRun
     /// <summary>Snapshot of <see cref="JobDefinition.DefinitionVersion" /> at run creation for audit correlation.</summary>
     public int? DefinitionAuditVersion { get; set; }
 
+    /// <summary>Worker instance that started this run. Not a FK — instances are pruned independently.</summary>
+    public Guid? WorkerInstanceId { get; set; }
+
+    /// <summary>Machine name snapshotted from the worker instance at start.</summary>
+    [MaxLength(200)]
+    public string? WorkerMachineName { get; set; }
+
+    /// <summary>Process id snapshotted from the worker instance at start.</summary>
+    public int? WorkerProcessId { get; set; }
+
     public virtual ICollection<JobRun> InverseReRanFromJobRun { get; set; } = new List<JobRun>();
 
     public virtual ICollection<JobRun> InverseTriggeredByJobRun { get; set; } = new List<JobRun>();

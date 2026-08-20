@@ -50,9 +50,8 @@ else {
                         @context.PhoneNumbers.Count phones, @context.EmailAddresses.Count emails, @context.Addresses.Count addresses
                     </MudTd>
                     <MudTd>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
-                            <MudMenuItem OnClick="@(() => ShowPersonJson(context))">View JSON</MudMenuItem>
-                        </MudMenu>
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                       OnClick="@(() => ShowPerson(context))"/>
                     </MudTd>
                 </RowTemplate>
                 <ChildRowContent>
@@ -88,11 +87,10 @@ else {
     [Parameter]
     public PersonQueryResponse? Response { get; set; }
 
-    private async Task ShowPersonJson(PersonResult person)
+    private async Task ShowPerson(PersonResult person)
     {
-        await Task.Yield();
-        var parameters = new DialogParameters<JsonViewDialog<PersonResult>> { { i => i.Data, person } };
-        await DialogService.ShowAsync(typeof(JsonViewDialog<PersonResult>), person.FullName, parameters, LyoDialogPresets.Medium);
+        var parameters = new DialogParameters<EndatoPersonView> { { d => d.Person, person } };
+        await DialogService.ShowAsync<EndatoPersonView>(person.FullName, parameters, LyoDialogPresets.Large);
     }
 
 }

@@ -21,6 +21,10 @@
             @if (JobRun.DryRun) {
                 <LyoChip Variant="Variant.Outlined" Label="Dry run"/>
             }
+            @if (!string.IsNullOrWhiteSpace(JobRun.WorkerMachineName)) {
+                <LyoChip Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Memory"
+                         Label="@(JobRun.WorkerProcessId is { } pid ? $"{JobRun.WorkerMachineName}:{pid}" : JobRun.WorkerMachineName)"/>
+            }
         }
     </TitleChips>
     <ExtraActions>
@@ -57,6 +61,18 @@
                                     <MudText Typo="Typo.body2">@(JobRun?.JobDefinition?.Name ?? "—")</MudText>
                                     <LyoIdField Compact="true" Value="@JobRun?.JobDefinitionId"/>
                                 </MudStack>
+                            </span>
+                            <span class="job-run-kv-label">Worker</span>
+                            <span class="job-run-kv-value">
+                                @if (JobRun?.WorkerInstanceId is { } workerId) {
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2">@(WorkerLabel)</MudText>
+                                        <LyoIdField Compact="true" Value="@workerId"/>
+                                    </MudStack>
+                                }
+                                else {
+                                    <MudText Typo="Typo.body2">—</MudText>
+                                }
                             </span>
                             <span class="job-run-kv-label">Trace</span>
                             <span class="job-run-kv-value"><LyoIdField Compact="true" Text="@JobRun?.TraceId"/></span>
@@ -219,6 +235,11 @@
     private string ScheduleText
         => JobRun?.JobSchedule?.Description
            ?? (JobRun?.JobSchedule is { } schedule ? schedule.Type.ToString() : "—");
+
+    private string WorkerLabel
+        => JobRun?.WorkerProcessId is { } pid && !string.IsNullOrWhiteSpace(JobRun.WorkerMachineName)
+            ? $"{JobRun.WorkerMachineName}:{pid}"
+            : (JobRun?.WorkerMachineName ?? "—");
 
     private IReadOnlyList<JobRunParameterRes> OrderedParameters
         => (JobRun?.JobRunParameters ?? []).OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToList();

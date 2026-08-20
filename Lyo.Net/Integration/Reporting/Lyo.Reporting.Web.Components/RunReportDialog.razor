@@ -158,9 +158,9 @@
         try {
             var parameters = new List<ReportGenerationParameterReq>();
             foreach (var p in _paramModels) {
-                var value = p.StringValue;
+                var value = string.IsNullOrWhiteSpace(p.StringValue) ? null : p.StringValue;
                 if (p.Param.AllowMultiple) {
-                    var parts = ParameterListJson.Parse(value);
+                    var parts = ParameterListJson.Parse(p.StringValue);
                     if (parts.Count > 0) {
                         foreach (var part in parts) {
                             parameters.Add(
@@ -175,6 +175,9 @@
                         continue;
                     }
                 }
+
+                if (value is null && !p.Param.Required && p.Param.Type != ReportParameterType.Bool)
+                    continue;
 
                 parameters.Add(
                     new() {

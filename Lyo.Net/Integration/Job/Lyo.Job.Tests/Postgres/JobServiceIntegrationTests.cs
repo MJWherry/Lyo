@@ -1,4 +1,5 @@
 using Lyo.Api;
+using Lyo.Api.Services.Crud.Create;
 using Lyo.Cache;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -101,6 +102,42 @@ public class JobServiceIntegrationTests
         Assert.Equal(JobState.Running, result.State);
         Assert.NotNull(result.JobDefinition);
         Assert.Equal(_fixture.JobDefinitionId, result.JobDefinition.Id);
+    }
+
+    [Fact]
+    public async Task StartedJobRun_WhenWorkerInstanceProvided_SnapshotsWorker()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var createService = scope.ServiceProvider.GetRequiredService<ICreateService<JobContext>>();
+        var now = DateTime.UtcNow;
+        var workerResult = await createService.CreateAsync<JobWorkerInstanceReq, JobWorkerInstance, JobWorkerInstanceRes>(
+            new() {
+                WorkerType = "cs",
+                MachineName = "snap-host",
+                ProcessId = 4242,
+                State = JobWorkerInstanceState.Running,
+                InFlightCount = 0,
+                StartedTimestamp = now,
+                LastHeartbeatUtc = now,
+                Metadata = new Dictionary<string, string?> { ["os"] = "test" }
+            }, ctx => ctx.Entity.Id = Guid.NewGuid(), ct: TestContext.Current.CancellationToken);
+        Assert.True(workerResult.IsSuccess);
+
+        var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
+            new JobRunReq(_fixture.JobDefinitionId, "test-user", false),
+            ctx => {
+                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.State = JobState.Queued;
+                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+        Assert.True(runResult.IsSuccess);
+
+        var (result, error) = await _fixture.JobService.StartedJobRun(runResult.Data!.Id, new JobRunStartedReq { WorkerInstanceId = workerResult.Data!.Id });
+        Assert.Null(error);
+        Assert.NotNull(result);
+        Assert.Equal(workerResult.Data.Id, result.WorkerInstanceId);
+        Assert.Equal("snap-host", result.WorkerMachineName);
+        Assert.Equal(4242, result.WorkerProcessId);
     }
 
     [Fact]

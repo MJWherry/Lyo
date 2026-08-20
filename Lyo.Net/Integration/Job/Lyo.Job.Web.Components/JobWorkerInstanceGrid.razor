@@ -1,5 +1,5 @@
 @inject ISnackbar Snackbar
-@inject IJsInterop Js
+@inject IDialogService DialogService
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -7,28 +7,56 @@
                       Route="@_route"
                       KeySelector="@GetKey"
                       FilterPropertyDefinitions="@_propertyDefinitions"
-                      Features="@LyoDataGridFeatureFlags.All">
+                      Features="@LyoDataGridFeatureFlags.All"
+                      AutoRefreshEnabled="true"
+                      QuickSearchProperties="@_quickSearchProperties">
     <Columns>
-        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                               OnClick="@(() => ViewInstance(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" QuickSearchPropertyName="Id"/>
+        <LyoProjectedColumn Field="WorkerType" Title="Worker Type" QuickSearchPropertyName="WorkerType"/>
+        <LyoProjectedColumn Field="MachineName" Title="Machine" QuickSearchPropertyName="MachineName"/>
+        <LyoProjectedColumn Field="ProcessId" Title="PID" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
             <CellContent Context="item">
                 @{
-                    var idText = ProjectedValueHelper.GetDisplayValue(item, "Id");
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
                 }
-                <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@(idText.Length > 8 ? idText[..8] : idText)</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID"
-                                   OnClick="@(() => CopyToClipboard(idText))"/>
+                <LyoChip Spec="@(LyoChips.FromEnum<JobWorkerInstanceState>(stateText, JobColorHelper.ForWorkerState, JobColorHelper.WorkerStateIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="InFlightCount" Title="In Flight" Align="Align.Center" HeaderStyle="width: 90px;">
+            <CellContent Context="item">
+                @{
+                    var count = ProjectedValueHelper.GetDisplayValue(item, "InFlightCount");
+                }
+                <LyoChip Color="@(count is "0" or "" ? Color.Default : Color.Info)" Label="@count"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var heartbeat = LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "LastHeartbeatUtc"));
+                }
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <LyoTimestamp Value="@heartbeat" Kind="LyoTimestampKind.Relative"/>
+                    @if (JobColorHelper.IsHeartbeatStale(heartbeat)) {
+                        <LyoChip Color="Color.Error" Label="Stale"/>
+                    }
                 </MudStack>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="WorkerType" Title="Worker Type"/>
-        <LyoProjectedColumn Field="MachineName" Title="Machine"/>
-        <LyoProjectedColumn Field="ProcessId" Title="PID" Align="Align.Center" HeaderStyle="width: 80px;"/>
-        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 100px;"/>
-        <LyoProjectedColumn Field="InFlightCount" Title="In Flight" Align="Align.Center" HeaderStyle="width: 80px;"/>
-        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;"/>
-        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat" CellStyle="white-space: nowrap;"/>
     </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewInstance(item))">View Details</MudMenuItem>
+    </RowMenuControls>
 </LyoDataGridProjected>
 
 @code {
@@ -45,6 +73,8 @@
 
     private LyoDataGridProjected? _dataGrid;
 
+    private static readonly string[] _quickSearchProperties = ["WorkerType", "MachineName"];
+
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WorkerType", "Worker Type"), new("MachineName", "Machine"), new("State")];
 
     private static object[] GetKey(object? item)
@@ -53,10 +83,23 @@
         return id != null ? [id] : [];
     }
 
-    private async Task CopyToClipboard(string text)
+    private async Task ViewInstance(object? item)
     {
-        await Js.SendToClipboard(text);
-        Snackbar.Add("Copied to clipboard", Severity.Info);
+        if (item == null)
+            return;
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkerInstanceRes>>(
+            $"{_route}/QueryConcrete", new() { Keys = [[id]], Amount = 1 });
+        var instance = res?.Items?.FirstOrDefault();
+        if (instance == null)
+            return;
+
+        var parameters = new DialogParameters<JobWorkerInstanceView> { { d => d.Instance, instance } };
+        await DialogService.ShowAsync<JobWorkerInstanceView>("Worker instance", parameters, LyoDialogPresets.Medium);
     }
 
 }

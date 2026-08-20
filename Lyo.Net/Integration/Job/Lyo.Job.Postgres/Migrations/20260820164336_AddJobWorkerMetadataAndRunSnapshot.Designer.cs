@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Lyo.Job.Postgres.Migrations
 {
     [DbContext(typeof(JobContext))]
-    partial class JobContextModelSnapshot : ModelSnapshot
+    [Migration("20260820164336_AddJobWorkerMetadataAndRunSnapshot")]
+    partial class AddJobWorkerMetadataAndRunSnapshot
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

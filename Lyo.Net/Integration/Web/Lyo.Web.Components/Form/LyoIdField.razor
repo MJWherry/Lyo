@@ -3,39 +3,41 @@
 @inject ISnackbar Snackbar
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-id-field">
+    @{
+        RenderFragment valueRow =
+            @<div class="lyo-id-field-row">
+                @if (HasValue) {
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                   Size="Size.Small"
+                                   Class="lyo-id-field-icon"
+                                   title="Copy ID"
+                                   aria-label="Copy ID"
+                                   OnClick="CopyAsync"/>
+                }
+                <MudText Typo="Typo.body2" Class="lyo-id-field-value">@DisplayValue</MudText>
+                @if (ShowsToggle) {
+                    <MudIconButton Icon="@ToggleIcon"
+                                   Size="Size.Small"
+                                   Class="lyo-id-field-icon"
+                                   title="@ToggleTitle"
+                                   aria-label="@ToggleTitle"
+                                   OnClick="ToggleFull"/>
+                }
+            </div>;
+    }
     @if (Compact) {
-        <MudStack Row Spacing="0" AlignItems="AlignItems.Center">
-            @if (HasValue) {
-                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" title="Copy ID" OnClick="CopyAsync"/>
-            }
-            <MudText Typo="Typo.body2" Style="font-family: monospace;">@DisplayValue</MudText>
-            @if (ShowsToggle) {
-                <MudIconButton Icon="@ToggleIcon" Size="Size.Small" title="@ToggleTitle" OnClick="ToggleFull"/>
-            }
-        </MudStack>
+        @valueRow
     }
     else {
-        <MudStack Row Spacing="0" AlignItems="AlignItems.End">
-            <MudTextField T="string"
-                          Label="@Label"
-                          Value="@DisplayValue"
-                          ReadOnly="true"
-                          Variant="@Variant"
-                          Margin="@Margin"
-                          Class="flex-grow-1"
-                          Style="font-family: monospace;"
-                          Adornment="@StartAdornment"
-                          AdornmentIcon="@Icons.Material.Filled.ContentCopy"
-                          AdornmentAriaLabel="Copy ID"
-                          OnAdornmentClick="CopyAsync"/>
-            @if (ShowsToggle) {
-                <MudIconButton Icon="@ToggleIcon"
-                               Size="Size.Small"
-                               title="@ToggleTitle"
-                               Class="mb-1"
-                               OnClick="ToggleFull"/>
-            }
-        </MudStack>
+        <MudField Label="@Label"
+                  Variant="@Variant"
+                  Margin="@Margin"
+                  Typo="Typo.body2"
+                  FullWidth="true"
+                  InnerPadding="false"
+                  Class="lyo-id-field">
+            @valueRow
+        </MudField>
     }
 </LyoElementRoot>
 
@@ -49,7 +51,7 @@
     [Parameter]
     public string? Label { get; set; }
 
-    /// <summary>Identifier to display. Null or empty renders <c>-</c> without copy/toggle.</summary>
+    /// <summary>Identifier to display. Null or empty renders <c>null</c> without copy/toggle.</summary>
     [Parameter]
     public Guid? Value { get; set; }
 
@@ -94,9 +96,7 @@
     private bool ShowsToggle => HasValue && EffectiveAbbreviation != LyoIdAbbreviation.None && FullValue!.Length > Math.Max(1, AbbreviationLength);
 
     private string DisplayValue
-        => FullValue is null ? "-" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
-
-    private Adornment StartAdornment => HasValue ? Adornment.Start : Adornment.None;
+        => FullValue is null ? "null" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
 
     private string ToggleIcon => _showFull ? Icons.Material.Filled.Compress : Icons.Material.Filled.OpenInFull;
 
@@ -106,7 +106,7 @@
     public static string Abbreviate(string? value, LyoIdAbbreviation abbreviation = LyoIdAbbreviation.Suffix, int length = 9)
     {
         if (string.IsNullOrWhiteSpace(value))
-            return "-";
+            return "null";
 
         var text = value.Trim();
         if (abbreviation == LyoIdAbbreviation.None || length < 1 || text.Length <= length)

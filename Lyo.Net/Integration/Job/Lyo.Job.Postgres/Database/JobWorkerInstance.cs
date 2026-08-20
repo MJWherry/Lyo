@@ -37,6 +37,9 @@ public class JobWorkerInstance
     /// <summary>UTC timestamp of the last heartbeat.</summary>
     public DateTime LastHeartbeatUtc { get; set; }
 
+    /// <summary>JSON object of worker-reported metadata keys (os, framework, host extras).</summary>
+    public string? MetadataJson { get; set; }
+
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }

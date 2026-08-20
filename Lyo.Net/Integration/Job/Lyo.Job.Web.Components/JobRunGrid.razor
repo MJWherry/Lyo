@@ -63,6 +63,28 @@
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="WorkerMachineName" Title="Worker" HeaderStyle="width: 180px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var machine = ProjectedValueHelper.GetDisplayValue(item, "WorkerMachineName");
+                    var pid = ProjectedValueHelper.GetDisplayValue(item, "WorkerProcessId");
+                    var workerId = ProjectedValueHelper.GetDisplayValue(item, "WorkerInstanceId");
+                }
+                @if (string.IsNullOrWhiteSpace(machine) && string.IsNullOrWhiteSpace(workerId)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    <MudStack Spacing="0">
+                        @if (!string.IsNullOrWhiteSpace(machine)) {
+                            <LyoChip Variant="Variant.Outlined" Label="@(string.IsNullOrWhiteSpace(pid) ? machine : $"{machine}:{pid}")"/>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(workerId)) {
+                            <LyoIdField Compact="true" Text="@workerId"/>
+                        }
+                    </MudStack>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
             <CellContent Context="item">
                 @{
@@ -97,6 +119,8 @@
         <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="WorkerInstanceId" Title="Worker ID" Identifier="true" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="WorkerProcessId" Title="Worker PID" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="RetryAttempt" Title="Retry #" Align="Align.Center" HeaderStyle="width: 80px;" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="JobRunResults.Count" Title="Results" Align="Align.Center" HeaderStyle="width: 80px;"/>
         <LyoProjectedColumn Field="JobRunLogs.Count" Title="Logs" Align="Align.Center" HeaderStyle="width: 80px;"/>
@@ -138,7 +162,9 @@
 
     private Guid? _appliedDefinitionId;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("JobDefinition.Name", "Definition"), new("State"), new("Result")];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("JobDefinition.Name", "Definition"), new("State"), new("Result"), new("WorkerMachineName", "Worker"), new("WorkerInstanceId", "Worker ID")
+    ];
 
     private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp"];
 

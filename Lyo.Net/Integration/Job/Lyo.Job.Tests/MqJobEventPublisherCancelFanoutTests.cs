@@ -31,6 +31,15 @@ public class MqJobEventPublisherCancelFanoutTests
     }
 
     [Fact]
+    public async Task SubscribeToRunCancellations_WhenInstanceSuffixProvided_UsesExactQueueName()
+    {
+        var mq = new RoutingFakeMqService();
+        var publisher = CreatePublisher(mq);
+        await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestContext.Current.CancellationToken, "abc123");
+        Assert.Equal(Constants.Mq.QueueGetJobRunCancelInstance("cs", "abc123"), Assert.Single(mq.CreatedQueues).Name);
+    }
+
+    [Fact]
     public async Task PublishRunCancelled_ReachesEverySubscribedInstance()
     {
         var mq = new RoutingFakeMqService();

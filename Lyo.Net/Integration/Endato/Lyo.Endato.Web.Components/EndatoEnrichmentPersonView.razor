@@ -1,0 +1,211 @@
+@using EnrichmentPerson = Lyo.Endato.Client.Models.Enrichment.Response.Person
+@using Lyo.Web.Components
+@inject IDialogService DialogService
+
+<LyoDialog DebugData="@Person">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@TitleName</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (!string.IsNullOrWhiteSpace(Person.Age)) {
+            <LyoChip Variant="Variant.Outlined" Label="@($"Age {Person.Age}")"/>
+        }
+        <LyoChip Color="Color.Primary" Label="@($"Identity score {IdentityScore}")"/>
+    </TitleChips>
+    <ExtraActions>
+        @if (Response is not null) {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DataObject" OnClick="ShowResponseJson">View JSON</MudButton>
+        }
+    </ExtraActions>
+    <ChildContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Overview">
+                <div class="pa-2">
+                    <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true" Dense="true">
+                        <MudExpansionPanel Text="Name" Expanded="true">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="First Name" Value="@EndatoViewHelpers.Field(Person.Name.FirstName)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="Middle Name" Value="@EndatoViewHelpers.Field(Person.Name.MiddleName)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="Last Name" Value="@EndatoViewHelpers.Field(Person.Name.LastName)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Info">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField T="string" Label="Age" Value="@EndatoViewHelpers.Field(Person.Age)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Metadata">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField T="string" Label="Identity Score" Value="@IdentityScore.ToString()" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Addresses ({Person.Addresses.Count})")">
+                <div class="pa-2">
+                    @if (Person.Addresses.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No addresses</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var address in Person.Addresses) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12">
+                                            <MudTextField T="string" Label="Street" Value="@EndatoViewHelpers.Field(address.Street)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="2">
+                                            <MudTextField T="string" Label="Unit" Value="@EndatoViewHelpers.Field(address.Unit)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudTextField T="string" Label="City" Value="@EndatoViewHelpers.Field(address.City)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3" md="1">
+                                            <MudTextField T="string" Label="State" Value="@EndatoViewHelpers.Field(address.State)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3" md="2">
+                                            <MudTextField T="string" Label="ZIP" Value="@EndatoViewHelpers.Field(address.Zip)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Reported" Value="@EndatoViewHelpers.FormatDateRange(address.FirstReportedDate, address.LastReportedDate)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Coordinates" Value="@EndatoViewHelpers.FormatCoordinates(address.Latitude, address.Longitude)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Source" Value="@EndatoViewHelpers.Field(address.SourceSummary)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Phones ({Person.Phones.Count})")">
+                <div class="pa-2">
+                    @if (Person.Phones.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No phone numbers</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var phone in Person.Phones) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <LyoIdField Label="ID" Text="@phone.Number"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="5">
+                                            <MudTextField T="string" Label="Number" Value="@EndatoViewHelpers.FormatPhone(phone.Number)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudSelect T="string" Label="Type" Value="@phone.Type" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @foreach (var type in PhoneTypes) {
+                                                    <MudSelectItem Value="@type">@type</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Reported" Value="@EndatoViewHelpers.FormatDateRange(phone.FirstReportedDate, phone.LastReportedDate)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Coordinates" Value="@EndatoViewHelpers.FormatCoordinates(phone.Latitude, phone.Longitude)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Source" Value="@EndatoViewHelpers.Field(phone.SourceSummary)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3" Class="d-flex align-end">
+                                            <LyoChip Spec="@LyoChips.FromBool(phone.IsConnected, "Connected", "Disconnected", Color.Success, Color.Default)" Variant="Variant.Outlined"/>
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Emails ({Person.Emails.Count})")">
+                <div class="pa-2">
+                    @if (Person.Emails.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No email addresses</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var email in Person.Emails) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <LyoIdField Label="ID" Text="@email.EmailAddress"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="9">
+                                            <MudTextField T="string" Label="Email" Value="@EndatoViewHelpers.Field(email.EmailAddress)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Reported" Value="@EndatoViewHelpers.FormatDateRange(email.FirstReportedDate, email.LastReportedDate)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="8">
+                                            <MudTextField T="string" Label="Source" Value="@EndatoViewHelpers.Field(email.SourceSummary)" Placeholder="@EndatoViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    /// <summary>Enriched person payload to display.</summary>
+    [Parameter]
+    [EditorRequired]
+    public EnrichmentPerson Person { get; set; } = null!;
+
+    /// <summary>Identity score from the enrichment envelope.</summary>
+    [Parameter]
+    public int IdentityScore { get; set; }
+
+    /// <summary>Optional full enrichment response for the View JSON action.</summary>
+    [Parameter]
+    public EnrichmentResponse? Response { get; set; }
+
+    private IReadOnlyList<string> PhoneTypes => EndatoViewHelpers.PhoneTypeOptions(null, Person.Phones.Select(p => p.Type));
+
+    private string TitleName
+    {
+        get {
+            var name = string.Join(" ", new[] { Person.Name.FirstName, Person.Name.MiddleName, Person.Name.LastName }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+            return string.IsNullOrWhiteSpace(name) ? "Enriched person" : name;
+        }
+    }
+
+    private async Task ShowResponseJson()
+    {
+        if (Response is null)
+            return;
+
+        var parameters = new DialogParameters<JsonViewDialog<EnrichmentResponse>> { { i => i.Data, Response } };
+        await DialogService.ShowAsync(typeof(JsonViewDialog<EnrichmentResponse>), "Enrichment Response", parameters, LyoDialogPresets.Medium);
+    }
+
+}

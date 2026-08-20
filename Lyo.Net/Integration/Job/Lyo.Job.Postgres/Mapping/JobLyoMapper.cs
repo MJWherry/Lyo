@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Lyo.Api.Mapping;
 using Lyo.Common.Enums;
 using Lyo.Job.Models.Enums;
@@ -389,6 +390,7 @@ public sealed class JobLyoMapper : ILyoMapper
             InFlightCount = r.InFlightCount,
             StartedTimestamp = ToUtcDateTime(r.StartedTimestamp),
             LastHeartbeatUtc = ToUtcDateTime(r.LastHeartbeatUtc),
+            MetadataJson = SerializeMetadata(r.Metadata),
             CreatedTimestamp = UtcNow()
         };
 
@@ -476,6 +478,9 @@ public sealed class JobLyoMapper : ILyoMapper
             BatchIndex = e.BatchIndex,
             BatchTotal = e.BatchTotal,
             DefinitionAuditVersion = e.DefinitionAuditVersion,
+            WorkerInstanceId = e.WorkerInstanceId,
+            WorkerMachineName = e.WorkerMachineName,
+            WorkerProcessId = e.WorkerProcessId,
             JobRunParameters = e.JobRunParameters.Select(ToRes).ToList(),
             JobRunResults = e.JobRunResults.Select(ToRes).ToList(),
             JobRunLogs = e.JobRunLogs.Select(ToRes).ToList()
@@ -491,7 +496,19 @@ public sealed class JobLyoMapper : ILyoMapper
     internal static JobRunLogRes ToRes(JobRunLog e) => new(e.Id, e.JobRunId, Enum.Parse<JobLogLevel>(e.Level), e.Message, e.Context, e.StackTrace, e.Timestamp);
 
     internal static JobWorkerInstanceRes ToRes(JobWorkerInstance e)
-        => new(e.Id, e.WorkerType, e.MachineName, e.ProcessId, Enum.Parse<JobWorkerInstanceState>(e.State), e.InFlightCount, e.StartedTimestamp, e.LastHeartbeatUtc);
+        => new() {
+            Id = e.Id,
+            WorkerType = e.WorkerType,
+            MachineName = e.MachineName,
+            ProcessId = e.ProcessId,
+            State = Enum.Parse<JobWorkerInstanceState>(e.State),
+            InFlightCount = e.InFlightCount,
+            StartedTimestamp = e.StartedTimestamp,
+            LastHeartbeatUtc = e.LastHeartbeatUtc,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp,
+            Metadata = DeserializeMetadata(e.MetadataJson)
+        };
 
     internal static JobRunReq ResToReq(JobRunRes r)
         => new() {
@@ -736,5 +753,18 @@ public sealed class JobLyoMapper : ILyoMapper
         e.InFlightCount = r.InFlightCount;
         e.StartedTimestamp = ToUtcDateTime(r.StartedTimestamp);
         e.LastHeartbeatUtc = ToUtcDateTime(r.LastHeartbeatUtc);
+        if (r.Metadata != null)
+            e.MetadataJson = SerializeMetadata(r.Metadata);
+    }
+
+    private static string? SerializeMetadata(IReadOnlyDictionary<string, string?>? metadata)
+        => metadata is { Count: > 0 } ? JsonSerializer.Serialize(metadata) : null;
+
+    private static IReadOnlyDictionary<string, string?>? DeserializeMetadata(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        return JsonSerializer.Deserialize<Dictionary<string, string?>>(json);
     }
 }

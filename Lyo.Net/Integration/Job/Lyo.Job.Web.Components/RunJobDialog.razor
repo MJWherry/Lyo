@@ -186,11 +186,15 @@
                     }
                 }
 
+                var value = string.IsNullOrWhiteSpace(p.Value) ? null : p.Value;
+                if (value is null && !p.Param.Required && p.Param.Type != JobParameterType.Bool)
+                    continue;
+
                 runParams.Add(
                     new() {
                         Key = p.Param.Key,
                         Type = p.Param.Type,
-                        Value = p.Value,
+                        Value = value,
                         Description = p.Param.Description
                     });
             }
