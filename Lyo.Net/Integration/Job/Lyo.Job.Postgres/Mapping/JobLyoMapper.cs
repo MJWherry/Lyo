@@ -195,6 +195,7 @@ public sealed class JobLyoMapper : ILyoMapper
             MaxLength = r.MaxLength,
             AllowedValues = r.AllowedValues,
             Options = r.Options,
+            Order = r.Order,
             CreatedTimestamp = UtcNow()
         };
 
@@ -395,7 +396,7 @@ public sealed class JobLyoMapper : ILyoMapper
 
     internal static JobDefinitionRes ToRes(JobDefinition e)
         => new(
-            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled, e.JobParameters.Select(ToRes).ToList(), e.JobSchedules.Select(ToRes).ToList(),
+            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled, e.JobParameters.OrderBy(p => p.Order).ThenBy(p => p.Key).Select(ToRes).ToList(), e.JobSchedules.Select(ToRes).ToList(),
             e.JobTriggerJobDefinitions.Select(ToRes).ToList(), e.JobParallelRestrictionBaseJobDefinitions.Select(ToRes).ToList(), e.MaxRetryCount, e.RetryBackoffSeconds,
             e.TimeoutMinutes, e.MaxConcurrentRuns, e.CircuitBreakerThreshold, e.CircuitBreakerResetMinutes, e.CircuitBreakerTrippedAt,
             Enum.Parse<JobRetryBackoffType>(e.RetryBackoffType), e.Priority, e.RetentionDays, e.MaxRunsPerHour, e.ExpectedDurationMinutes, e.MustStartByMinutes, e.AlertOnFailure,
@@ -404,7 +405,7 @@ public sealed class JobLyoMapper : ILyoMapper
     internal static JobParameterRes ToRes(JobParameter e)
         => new(
             e.Id, e.JobDefinitionId, e.Key, e.Description, Enum.Parse<JobParameterType>(e.Type), MaskParameterValue(e.Value, e.EncryptedValue),
-            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, true, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.Options);
+            MaskParameterEncryptedValue(e.EncryptedValue), e.AllowMultiple, true, e.Required, e.ValidationRegex, e.MinLength, e.MaxLength, e.AllowedValues, e.Options, e.Order);
 
     internal static JobScheduleRes ToRes(JobSchedule e)
         => new(
@@ -564,6 +565,7 @@ public sealed class JobLyoMapper : ILyoMapper
         e.MaxLength = r.MaxLength;
         e.AllowedValues = r.AllowedValues;
         e.Options = r.Options;
+        e.Order = r.Order;
     }
 
     private static void Apply(JobScheduleReq r, JobSchedule e)

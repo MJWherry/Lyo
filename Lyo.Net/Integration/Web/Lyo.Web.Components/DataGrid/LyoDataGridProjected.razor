@@ -65,8 +65,8 @@
                         </MudButton>
                     </ActivatorContent>
                     <ChildContent>
-                        <MudMenuItem OnClick="@(() => ShowInJsonDialog(CurrentQuery, "Request"))">View Request</MudMenuItem>
-                        <MudMenuItem OnClick="@(() => ShowInJsonDialog(CurrentResults, "Result"))">Show Result</MudMenuItem>
+                        <MudMenuItem OnClick="@ShowRequestDialog">View Request</MudMenuItem>
+                        <MudMenuItem OnClick="@ShowResponseDialog">View Response</MudMenuItem>
                     </ChildContent>
                 </MudMenu>
 

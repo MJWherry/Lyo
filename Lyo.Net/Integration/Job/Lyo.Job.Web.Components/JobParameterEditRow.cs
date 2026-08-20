@@ -32,4 +32,7 @@ public class JobParameterEditRow
 
     /// <summary>JSON picker source (static or root QueryReq).</summary>
     public string? Options { get; set; }
+
+    /// <summary>Display order among parameters on this definition. Lower values appear first.</summary>
+    public int Order { get; set; }
 }

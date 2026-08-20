@@ -10,6 +10,7 @@ Apt deps (example):
 Usage (pass the **TFM output folder**, i.e. .../bin/Debug/net10.0 — not .../x64):
   python3 scripts/setup_linux_tesseract_nuget_libs.py /path/to/bin/Debug/net10.0
   python3 scripts/setup_linux_tesseract_nuget_libs.py /path/to/bin/Debug/net10.0 --also-system
+  python3 scripts/setup_linux_tesseract_nuget_libs.py /path/to/bin/Debug/net10.0 --allow-missing
 
 If you still pass .../x64, it is treated as .../net10.0 (parent).
 
@@ -55,6 +56,15 @@ def resolve_libdl(arch: str) -> Path | None:
     return None
 
 
+def report_missing(message: str, allow_missing: bool) -> int:
+    kind = "warning" if allow_missing else "error"
+    print(f"{kind}: {message}", file=sys.stderr)
+    if allow_missing:
+        print("Skipping native lib setup.", file=sys.stderr)
+        return 0
+    return 1
+
+
 def symlink_pair_into_x64(dest_dir: Path, lep: Path, tes: Path) -> None:
     dest_dir.mkdir(parents=True, exist_ok=True)
     lep_link = dest_dir / "libleptonica-1.82.0.so"
@@ -74,29 +84,31 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("outdir", nargs="?", help="TFM output directory (.../bin/Debug/net10.0)")
     parser.add_argument("--also-system", action="store_true", help="Also link into /usr/local/lib (sudo)")
+    parser.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="Exit 0 if distro Leptonica/Tesseract are not installed (AfterBuild / compile-only CI)",
+    )
     args = parser.parse_args(argv)
+    allow_missing = args.allow_missing and not args.also_system
 
     arch = platform.machine()
     arch_libdir = Path(os.environ.get("ARCH_LIBDIR", f"/usr/lib/{arch}-linux-gnu"))
     if not arch_libdir.is_dir():
-        print(f"error: missing {arch_libdir}", file=sys.stderr)
-        return 1
+        return report_missing(f"missing {arch_libdir}", allow_missing)
 
     lep = resolve_leptonica(arch_libdir)
     if lep is None:
-        print(
-            f"error: no Leptonica library under {arch_libdir} (install libleptonica-dev or libleptonica6).",
-            file=sys.stderr,
+        return report_missing(
+            f"no Leptonica library under {arch_libdir} (install libleptonica-dev or libleptonica6).",
+            allow_missing,
         )
-        return 1
     tes = resolve_tesseract(arch_libdir)
     if tes is None:
-        print(f"error: no libtesseract under {arch_libdir} (install libtesseract5).", file=sys.stderr)
-        return 1
+        return report_missing(f"no libtesseract under {arch_libdir} (install libtesseract5).", allow_missing)
     dl = resolve_libdl(arch)
     if dl is None:
-        print(f"error: no libdl.so.2 under /lib or /usr/lib for {arch}-linux-gnu.", file=sys.stderr)
-        return 1
+        return report_missing(f"no libdl.so.2 under /lib or /usr/lib for {arch}-linux-gnu.", allow_missing)
 
     print(f"Using Leptonica: {lep}")
     print(f"Using Tesseract: {tes}")

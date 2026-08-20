@@ -12,12 +12,12 @@ public class JobWorkerInstance
 
     /// <summary>Worker type this instance consumes (matches <see cref="JobDefinition.WorkerType" />).</summary>
     [Required]
-    [MaxLength(50)]
+    [MaxLength(100)]
     public string WorkerType { get; set; } = null!;
 
     /// <summary>Machine (host) name the worker process is running on.</summary>
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string MachineName { get; set; } = null!;
 
     /// <summary>OS process id of the worker host.</summary>

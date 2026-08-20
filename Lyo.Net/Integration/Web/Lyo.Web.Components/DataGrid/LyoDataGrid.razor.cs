@@ -182,6 +182,12 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     public HashSet<T> SelectedItems { get; private set; } = [];
 
+    private string? _lastQueryPath;
+
+    private long? _lastQueryElapsedMs;
+
+    private int? _lastQueryStatusCode;
+
 #endregion
 
 #region Lifecycle Methods
@@ -429,10 +435,21 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             var offset = state.Page * pageSize;
             var queryBuilder = GetQuery(offset, pageSize);
             CurrentQuery = queryBuilder.Build();
+            _lastQueryPath = QueryRoute;
             var s = Stopwatch.StartNew();
-            CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
-            s.Stop();
-            QueryError = CurrentResults.Error;
+            try {
+                CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
+                _lastQueryStatusCode = 200;
+                QueryError = CurrentResults.Error;
+            }
+            catch (ApiException ex) {
+                _lastQueryStatusCode = ex.StatusCode;
+                throw;
+            }
+            finally {
+                s.Stop();
+                _lastQueryElapsedMs = s.ElapsedMilliseconds;
+            }
             var gridData = new GridData<T> { Items = CurrentResults.Items ?? [], TotalItems = CurrentResults.Total ?? 0 };
 
             // Restore selections after data loads if we have saved keys
@@ -841,13 +858,27 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             builder.CloseComponent();
         };
 
-    private async Task ShowInJsonDialog<TModel>(TModel data, string? title = "Json Viewer")
+    private async Task ShowRequestDialog()
+        => await ShowInJsonDialog(CurrentQuery, "Request", QueryRoute);
+
+    private async Task ShowResponseDialog()
+        => await ShowInJsonDialog(
+            CurrentResults, "Response", _lastQueryPath,
+            DataGridDevChips.ForResponse(
+                _lastQueryElapsedMs, _lastQueryStatusCode, CurrentResults?.Items?.Count, CurrentResults?.Total, CurrentResults?.QueryScore, CurrentResults?.HasMore));
+
+    private async Task ShowInJsonDialog<TModel>(TModel data, string? title = "Json Viewer", string? path = null, IReadOnlyList<JsonViewChip>? chips = null)
     {
         // Defer until after the menu popover closes; otherwise its overlay can sit above the
         // dialog and block expand / inline-edit clicks (MudMenu + MudDialog interaction).
         await Task.Yield();
         await Task.Delay(10);
-        var parameters = new DialogParameters<JsonViewDialog<TModel>> { { i => i.Data, data } };
+        var parameters = new DialogParameters<JsonViewDialog<TModel>> {
+            { i => i.Data, data },
+            { i => i.Title, title },
+            { i => i.Path, path },
+            { i => i.Chips, chips }
+        };
         await DialogService.ShowAsync(typeof(JsonViewDialog<TModel>), title, parameters, LyoDialogPresets.Medium);
     }
 

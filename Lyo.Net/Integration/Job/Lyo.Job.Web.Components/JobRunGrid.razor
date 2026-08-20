@@ -229,7 +229,7 @@
             return;
 
         var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, _runRoute } };
-        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Medium);
+        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job run", parameters, LyoDialogPresets.Large);
         var r = await dialog.Result;
         if (r is { Canceled: false })
             await _dataGrid!.RefreshData();

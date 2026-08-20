@@ -97,7 +97,7 @@
         ],
         [
           "`JobRunDetailView`",
-          "Parameters, results, logs, **progress**, **SLA breach** chip, alert flags, re-run."
+          "Overview (identity/timing/context), parameters, results, logs ordered by time, **progress**, **SLA** chip, re-run."
         ],
         [
           "`JobWorkerInstanceGrid`",

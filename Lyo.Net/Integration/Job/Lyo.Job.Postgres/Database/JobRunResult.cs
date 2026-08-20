@@ -9,7 +9,7 @@ public class JobRunResult
     public Guid JobRunId { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(100)]
     public string Key { get; set; } = null!;
 
     [Required]

@@ -1,12 +1,31 @@
 @inject IJsInterop Js
 @using System.Text.Json
 @using System.Text.Json.Nodes
+@using Lyo.Web.Components.Dialog
 @using Lyo.Web.Components.JsonEditor
 @typeparam T
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-json-view-dialog">
-    <MudDialog>
-        <DialogContent>
+    <LyoDialog Title="@ResolvedTitle">
+        <TitleContent>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.h6">@ResolvedTitle</MudText>
+                @if (!string.IsNullOrWhiteSpace(Path)) {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.AccountTree">@Path</MudChip>
+                }
+                @if (Chips is { Count: > 0 }) {
+                    @foreach (var chip in Chips) {
+                        <MudChip T="string" Size="Size.Small" Color="@chip.Color" Icon="@chip.Icon">@chip.Label</MudChip>
+                    }
+                }
+            </MudStack>
+        </TitleContent>
+        <ExtraActions>
+            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
+                Copy JSON
+            </MudButton>
+        </ExtraActions>
+        <ChildContent>
             @if (parseError != null) {
                 <MudAlert Severity="Severity.Error">
                     <MudText Typo="Typo.body2">Invalid JSON: @parseError</MudText>
@@ -18,14 +37,8 @@
             else {
                 <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display</MudText>
             }
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
-                Copy JSON
-            </MudButton>
-            <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
-        </DialogActions>
-    </MudDialog>
+        </ChildContent>
+    </LyoDialog>
 </LyoElementRoot>
 
 @code {
@@ -33,18 +46,31 @@
     [CascadingParameter]
     IMudDialogInstance MudDialog { get; set; } = default!;
 
+    /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
     [Parameter]
     public string? ElementId { get; set; }
 
+    /// <summary>Object serialized and shown as a JSON tree.</summary>
     [Parameter]
     public T Data { get; set; } = default!;
 
+    /// <summary>Dialog title. Falls back to the title passed to <c>ShowAsync</c>.</summary>
     [Parameter]
-    public string Title { get; set; } = "JSON Viewer";
+    public string? Title { get; set; }
+
+    /// <summary>Request path shown as a chip in the header (e.g. <c>Person/QueryConcrete</c>).</summary>
+    [Parameter]
+    public string? Path { get; set; }
+
+    /// <summary>Optional status chips (elapsed time, HTTP status, row counts) shown after the title.</summary>
+    [Parameter]
+    public IReadOnlyList<JsonViewChip>? Chips { get; set; }
 
     private JsonNode? rootNode;
     private string? parseError;
     private string? jsonString;
+
+    private string ResolvedTitle => !string.IsNullOrWhiteSpace(Title) ? Title : MudDialog.Title ?? "JSON Viewer";
 
     protected override void OnParametersSet()
     {
@@ -55,10 +81,7 @@
                 return;
             }
 
-            // Serialize the object to JSON string
             jsonString = JsonSerializer.Serialize(Data, new JsonSerializerOptions { WriteIndented = true });
-
-            // Parse into JsonNode for tree building
             rootNode = JsonNode.Parse(jsonString);
         }
         catch (Exception ex) {
@@ -68,7 +91,5 @@
     }
 
     private async Task CopyToClipboard() => await Js.SendToClipboard(jsonString ?? "");
-
-    private void Close() => MudDialog.Close();
 
 }

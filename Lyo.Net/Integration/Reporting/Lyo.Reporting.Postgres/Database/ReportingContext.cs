@@ -45,8 +45,8 @@ public sealed class ReportingContext : DbContext
             entity.HasKey(e => e.Id).HasName("pk_report_definition_parameter");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ReportDefinitionId).HasColumnName("report_definition_id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
-            entity.Property(e => e.Key).HasMaxLength(50).IsRequired().HasColumnName("key");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
+            entity.Property(e => e.Key).HasMaxLength(100).IsRequired().HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).IsRequired().HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
@@ -77,7 +77,7 @@ public sealed class ReportingContext : DbContext
             entity.Property(e => e.ContentType).HasMaxLength(200).HasColumnName("content_type");
             entity.Property(e => e.ErrorMessage).HasMaxLength(4000).HasColumnName("error_message");
             entity.Property(e => e.PathPrefix).HasMaxLength(500).HasColumnName("path_prefix");
-            entity.Property(e => e.CreatedBy).HasMaxLength(50).IsRequired().HasColumnName("created_by");
+            entity.Property(e => e.CreatedBy).HasMaxLength(128).IsRequired().HasColumnName("created_by");
             entity.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.StartedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("started_timestamp");
             entity.Property(e => e.FinishedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("finished_timestamp");
@@ -93,8 +93,8 @@ public sealed class ReportingContext : DbContext
             entity.HasKey(e => e.Id).HasName("pk_report_generation_parameter");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ReportGenerationId).HasColumnName("report_generation_id");
-            entity.Property(e => e.Description).HasMaxLength(100).HasColumnName("description");
-            entity.Property(e => e.Key).HasMaxLength(50).IsRequired().HasColumnName("key");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
+            entity.Property(e => e.Key).HasMaxLength(100).IsRequired().HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).IsRequired().HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");

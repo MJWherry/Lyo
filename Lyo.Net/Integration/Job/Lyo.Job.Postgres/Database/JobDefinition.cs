@@ -8,18 +8,18 @@ public class JobDefinition
     public Guid Id { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string Name { get; set; } = null!;
 
-    [MaxLength(100)]
+    [MaxLength(3000)]
     public string? Description { get; set; }
 
     [Required]
-    [MaxLength(25)]
+    [MaxLength(64)]
     public string Type { get; set; } = null!;
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(100)]
     public string WorkerType { get; set; } = null!;
 
     public bool Enabled { get; set; }

@@ -1,7 +1,7 @@
 <Project>
     <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))"/>
 
-    <!-- Linux: symlink distro .so names into $(OutputPath)x64 and libdl.so next to $(OutputPath) (InteropDotNet / glibc libdl.so.2). Opt in per project: PrepareTesseractLinuxNativeLibs=true. Skip packable libraries — native libs are a test/host runtime concern, not required to compile or pack. -->
+    <!-- Linux: symlink distro .so names into $(OutputPath)x64 and libdl.so next to $(OutputPath) (InteropDotNet / glibc libdl.so.2). Opt in per project: PrepareTesseractLinuxNativeLibs=true. Skip packable libraries. Native libs are a test/host runtime concern, not required to compile or pack. allow-missing keeps compile-only CI green when apt packages are not installed. -->
     <Target Name="PrepareTesseractLinuxNativeLibs"
             AfterTargets="Build"
             Condition="'$(PrepareTesseractLinuxNativeLibs)' == 'true' AND '$(IsPackable)' != 'true' AND $([MSBuild]::IsOSPlatform('Linux'))">
@@ -9,6 +9,6 @@
             <_TesseractSetupScript>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'Lyo.Images.Ocr.Tesseract', 'scripts', 'setup_linux_tesseract_nuget_libs.py'))))</_TesseractSetupScript>
             <_TesseractOutDir>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutputPath)'))))</_TesseractOutDir>
         </PropertyGroup>
-        <Exec Command="python3 &quot;$(_TesseractSetupScript)&quot; &quot;$(_TesseractOutDir)&quot;"/>
+        <Exec Command="python3 &quot;$(_TesseractSetupScript)&quot; &quot;$(_TesseractOutDir)&quot; --allow-missing"/>
     </Target>
 </Project>

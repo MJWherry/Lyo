@@ -18,7 +18,7 @@ public class JobRun
     public Guid? ReRanFromJobRunId { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(128)]
     public string CreatedBy { get; set; } = null!;
 
     public JobState State { get; set; }
@@ -57,7 +57,7 @@ public class JobRun
     public int? ProgressPercent { get; set; }
 
     /// <summary>Short human-readable progress message reported by the worker.</summary>
-    [MaxLength(500)]
+    [MaxLength(2000)]
     public string? ProgressMessage { get; set; }
 
     /// <summary>Caller-supplied key for idempotent run creation within a definition.</summary>

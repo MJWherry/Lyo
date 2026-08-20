@@ -41,7 +41,7 @@ public sealed class ReportGeneration
     public string? PathPrefix { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(128)]
     public string CreatedBy { get; set; } = "Unknown";
 
     public DateTime CreatedTimestamp { get; set; }
