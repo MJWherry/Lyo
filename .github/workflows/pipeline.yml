@@ -29,7 +29,7 @@ on:
         type: string
         default: ""
       version:
-        description: "SemVer (required off main). Preview gets -preview.<run_number> unless already labeled."
+        description: "SemVer. Empty = latest v* tag (patch-bump) or the tag on HEAD. Preview adds -preview.<run_number>."
         required: false
         type: string
         default: ""

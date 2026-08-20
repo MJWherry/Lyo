@@ -142,12 +142,11 @@ def emit_config(args: argparse.Namespace) -> int:
             destination = "nuget.org" if ref_name in {"main", "dev"} else "none"
         if channel == "release" and ref_name != "main":
             raise SystemExit("channel=release is only allowed on main")
-        if version_in:
-            version = apply_channel(version_in, channel=channel, run_number=run_number)
-        elif ref_name == "main":
-            version = apply_channel(resolve_main_release_version(), channel=channel, run_number=run_number)
-        else:
-            raise SystemExit("version is required for workflow_dispatch on non-main branches")
+        version = apply_channel(
+            version_in or resolve_main_release_version(),
+            channel=channel,
+            run_number=run_number,
+        )
 
     if destination not in {"none", "github", "nuget.org", "both"}:
         raise SystemExit(f"unknown destination: {destination}")
