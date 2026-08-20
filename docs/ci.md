@@ -48,7 +48,7 @@ Each packed nupkg pins Lyo `ProjectReference`s to the dependency's last publishe
 
 The slnx Build job runs only for `stages=build`. Pack/publish runs compile the selected libraries in the Pack job, then `dotnet pack --no-build`. Pipeline's nuget.org job pushes those artifacts. It does not pack again.
 
-Actions titles look like `Pack CI - dev - v1.2.0-preview.47`. The workflow `name` stays `CI - Pipeline`. The run list shows `CI - {branch} - {version or auto}` until resolve finishes.
+Job titles look like `Pack CI - dev - v1.2.0-preview.47`. The workflow `name` stays `CI - Pipeline` (the Actions sidebar). The run list uses the same `CI - {branch} - v{version}` shape: typed version plus `-preview.{run_number}` off main, or `preview.{run_number}` / `#{run_number}` when version is left empty. GitHub evaluates that title at dispatch, so it cannot wait for Resolve.
 
 ## Feeds
 
