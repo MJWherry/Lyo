@@ -36,7 +36,7 @@ Auto-`main` also defaults to `scope=changed` since that last tag. Use Run workfl
 | `packages` | Names or globs when `scope=named` (space-separated). |
 | `since` | Git ref for `scope=changed`. Empty = last `v*` tag, else `HEAD~1`. |
 | `version` | SemVer. Required off `main`. On `main`, empty uses the tag / patch-bump rule. |
-| `stages` | `build` / `pack` / `build-and-pack` / `pack-and-publish` / `all`. |
+| `stages` | `build` compiles `Lyo.slnx` only. `pack` / `build-and-pack` / `pack-and-publish` / `all` compile the selected pack set, then pack without rebuilding. Publish stages do not pack a second time. |
 | `destination` | `auto` (follows the branch table) / `none` / `github` / `nuget.org` / `both`. |
 | `channel` | `auto` (follows the branch table) / `preview` / `release`. |
 | `force` | Rebuild the selected pack set even if fingerprints match. |
@@ -46,12 +46,16 @@ Pack selection does **not** walk `ProjectReference`s. If you change Encryption, 
 
 Each packed nupkg pins Lyo `ProjectReference`s to the dependency's last published version (`.build-state`, then nuget.org, then GitHub Packages), unless that dependency is also in the same pack set.
 
+The slnx Build job runs only for `stages=build`. Pack/publish runs compile the selected libraries in the Pack job, then `dotnet pack --no-build`. Pipeline's nuget.org job pushes those artifacts. It does not pack again.
+
+Actions titles look like `Pack CI - dev - v1.2.0-preview.47`. The workflow `name` stays `CI - Pipeline`. The run list shows `CI - {branch} - {version or auto}` until resolve finishes.
+
 ## Feeds
 
 - **nuget.org release** (`1.2.0`). Auto-`main` or dispatch on `main` with `channel=release`. Publishes immediately (no approval environment). The OIDC login job has **no** GitHub Environment so the Trusted Publishing policy can keep Environment empty.
 - **nuget.org preview** (`1.2.0-preview.N`). Dispatch on `dev` (default). Apps must use `--prerelease` or an exact version.
 - **GitHub Packages.** Optional (`destination=github` or `both`).
-- **Actions artifacts.** Always uploaded after a successful pack.
+- **Actions artifacts.** Always uploaded after a successful pack. The nuget.org / GitHub Packages push fails if every nupkg already exists (409 Conflict) or any package hits a non-duplicate error.
 
 App repos typically need only nuget.org:
 
@@ -91,6 +95,8 @@ Uncomment the `test` job in `pipeline.yml` and drop `if: false`.
 ```bash
 python3 scripts/nuget/build_nuget.py -v 1.2.0 Lyo.Encryption
 python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview
+python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview --compile-only
+python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview --pack-only
 ```
 
 See [Publishing](publishing.md) for fingerprint skip, `--changed-since`, and `--release`.

@@ -7,6 +7,8 @@ Usage:
   python3 scripts/nuget/ci_pack.py --scope changed --since v1.0.0 --version 1.2.0 --channel release
   python3 scripts/nuget/ci_pack.py --emit-config
   python3 scripts/nuget/ci_pack.py --resolve-main-version --print-resolved-version
+  python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview --compile-only
+  python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview --pack-only
 """
 
 from __future__ import annotations
@@ -200,6 +202,12 @@ def pack(args: argparse.Namespace) -> int:
         cmd.append("--release")
     if args.force:
         cmd.append("--force")
+    if args.compile_only and args.pack_only:
+        raise SystemExit("--compile-only and --pack-only are mutually exclusive")
+    if args.compile_only:
+        cmd.append("--compile-only")
+    if args.pack_only:
+        cmd.append("--pack-only")
     if args.scope == "changed":
         cmd.append("--changed-since")
         if args.since:
@@ -212,7 +220,8 @@ def pack(args: argparse.Namespace) -> int:
     elif args.scope not in {None, "", "all"}:
         raise SystemExit(f"unknown scope: {args.scope}")
 
-    print("Pack:", " ".join(cmd), flush=True)
+    label = "Build" if args.compile_only else "Pack"
+    print(f"{label}:", " ".join(cmd), flush=True)
     return subprocess.call(cmd, cwd=REPO_ROOT)
 
 
@@ -229,6 +238,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ref-name", default="")
     parser.add_argument("--run-number", default="")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--compile-only", action="store_true")
+    parser.add_argument("--pack-only", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resolve-main-version", action="store_true")
     parser.add_argument("--print-resolved-version", action="store_true")

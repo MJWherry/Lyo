@@ -283,6 +283,35 @@ public class CacheServiceBothImplementationsTests : IDisposable
 
     [Theory]
     [MemberData(nameof(CacheImplementations))]
+    public async Task ClearAsync_RemovesAllKeysAndTags(string implementation)
+    {
+        var service = CreateCacheService(implementation);
+        var key1 = $"both-clear-key1-{implementation}-{Guid.NewGuid():N}";
+        var key2 = $"both-clear-key2-{implementation}-{Guid.NewGuid():N}";
+        var tag = $"both-clear-tag-{implementation}-{Guid.NewGuid():N}";
+        service.Set(key1, "v1", [tag]);
+        service.Set(key2, "v2", [tag]);
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("v1");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("v2");
+        service.Items.Count.ShouldBeGreaterThan(0);
+        await service.ClearAsync();
+        service.TryGetValue<string>(key1, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key2, out _).ShouldBeFalse();
+        service.Items.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task ClearAsync_WithDisabledCache_DoesNothing()
+    {
+        var disabled = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabled);
+        service.Set("both-clear-disabled", "value");
+        await service.ClearAsync();
+        service.Items.Count.ShouldBe(0);
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
     public async Task GetOrSetAsync_KeyNormalizedToLowercase(string implementation)
     {
         var service = CreateCacheService(implementation);

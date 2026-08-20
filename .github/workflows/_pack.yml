@@ -1,4 +1,4 @@
-# Reusable: pack selected Lyo.* nupkgs and upload artifacts.
+# Reusable: compile selected Lyo.* libraries, then pack --no-build.
 name: Pack
 
 on:
@@ -31,6 +31,7 @@ permissions:
 
 jobs:
   pack:
+    name: Pack CI - ${{ github.ref_name }} - v${{ inputs.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
@@ -45,6 +46,29 @@ jobs:
 
       - name: Setup Lyo
         uses: ./.github/actions/setup-lyo
+
+      - name: Build
+        env:
+          SCOPE: ${{ inputs.scope }}
+          PACKAGES: ${{ inputs.packages }}
+          SINCE: ${{ inputs.since }}
+          VERSION: ${{ inputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          extra=()
+          if [ "$FORCE" = "true" ]; then
+            extra+=(--force)
+          fi
+          python3 scripts/nuget/ci_pack.py \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --compile-only \
+            "${extra[@]}"
 
       - name: Pack
         env:
@@ -66,6 +90,7 @@ jobs:
             --since "$SINCE" \
             --version "$VERSION" \
             --channel "$CHANNEL" \
+            --pack-only \
             "${extra[@]}"
 
       - name: Upload nupkgs

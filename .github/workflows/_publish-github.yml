@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: nuget-packages
+      version:
+        description: Display version for the job title only
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -15,9 +20,13 @@ permissions:
 
 jobs:
   publish:
+    name: Publish GH CI - ${{ github.ref_name }} - v${{ inputs.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download nupkgs
         uses: actions/download-artifact@v4
         with:
@@ -31,18 +40,9 @@ jobs:
 
       - name: Push to GitHub Packages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUGET_API_KEY: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
-          shopt -s nullglob
-          pkgs=(artifacts/nuget/*.nupkg)
-          if [ ${#pkgs[@]} -eq 0 ]; then
-            echo "No nupkgs to push"
-            exit 0
-          fi
-          owner="${GITHUB_REPOSITORY_OWNER}"
-          source="https://nuget.pkg.github.com/${owner}/index.json"
-          dotnet nuget push "artifacts/nuget/*.nupkg" \
-            --api-key "${GITHUB_TOKEN}" \
-            --source "${source}" \
-            --skip-duplicate
+          python3 scripts/nuget/ci_push.py \
+            --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
+            --api-key "$NUGET_API_KEY" \
+            artifacts/nuget

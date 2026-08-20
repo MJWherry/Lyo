@@ -10,6 +10,7 @@
 # pushes to main publish without waiting.
 
 name: Publish - NuGet
+run-name: Publish - ${{ github.ref_name }} - v${{ inputs.version }}
 
 on:
   workflow_call:
@@ -24,6 +25,11 @@ on:
         required: false
         type: boolean
         default: false
+      version:
+        description: Display version for the push job title only. Not used to pack.
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
     inputs:
       scope:
@@ -62,7 +68,10 @@ permissions:
 
 jobs:
   pack-emergency:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    # github.event_name is the caller's event, so workflow_dispatch is true
+    # when CI - Pipeline is run manually. github.workflow is the caller name.
+    if: ${{ github.workflow == 'Publish - NuGet' }}
+    name: Pack CI - ${{ github.ref_name }} - v${{ inputs.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
@@ -104,12 +113,16 @@ jobs:
   push:
     needs: [pack-emergency]
     if: ${{ always() && !inputs.dry_run && (needs.pack-emergency.result == 'success' || needs.pack-emergency.result == 'skipped') }}
+    name: Publish CI - ${{ github.ref_name }} - v${{ inputs.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download nupkgs
         uses: actions/download-artifact@v4
         with:
@@ -131,14 +144,7 @@ jobs:
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
-          set -euo pipefail
-          shopt -s nullglob
-          pkgs=(artifacts/nuget/*.nupkg)
-          if [ ${#pkgs[@]} -eq 0 ]; then
-            echo "No nupkgs to push"
-            exit 0
-          fi
-          dotnet nuget push "artifacts/nuget/*.nupkg" \
-            --api-key "$NUGET_API_KEY" \
+          python3 scripts/nuget/ci_push.py \
             --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+            --api-key "$NUGET_API_KEY" \
+            artifacts/nuget

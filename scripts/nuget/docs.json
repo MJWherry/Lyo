@@ -31,6 +31,18 @@
     {
       "cmd": "python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview",
       "blurb": "CI helper: same pack with SemVer / preview suffix handling"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py --compile-only Lyo.Encryption",
+      "blurb": "Build Encryption only; do not pack"
+    },
+    {
+      "cmd": "python3 scripts/nuget/build_nuget.py --pack-only Lyo.Encryption",
+      "blurb": "Pack Encryption without compiling (needs a prior compile)"
+    },
+    {
+      "cmd": "python3 scripts/nuget/ci_push.py --source https://api.nuget.org/v3/index.json --api-key \"$NUGET_API_KEY\" artifacts/nuget",
+      "blurb": "Push nupkgs one at a time; fail if all are duplicates or any push errors"
     }
   ],
   "notes": [
@@ -40,7 +52,9 @@
     "GitHub Actions: Actions → CI - Pipeline. Branch model and feeds are in docs/ci.md. nuget.org Trusted Publishing setup is in docs/publishing.md (workflow publish-nuget.yml, Environment empty, secret NUGET_USER)",
     "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
     "BUILD_CONFIG defaults to Release",
-    "build_nuget.py renders tooling READMEs once, then packs with SkipToolingDocsOnPack so each nupkg does not re-run tooling-docs"
+    "build_nuget.py renders tooling READMEs once, then packs with SkipToolingDocsOnPack so each nupkg does not re-run tooling-docs",
+    "--compile-only and --pack-only are mutually exclusive. CI pack runs compile then pack --no-build on the same runner",
+    "ci_push.py skips a nupkg that already exists (409 Conflict) but fails the job if every package was a duplicate or any push hit a non-duplicate error"
   ],
   "readmePath": "scripts/nuget/README.md"
 }

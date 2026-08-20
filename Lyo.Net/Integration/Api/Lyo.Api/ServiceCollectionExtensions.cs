@@ -1,3 +1,4 @@
+using Lyo.Api.Services.Cache;
 using Lyo.Api.Services.Crud;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
@@ -42,6 +43,7 @@ public static partial class ServiceCollectionExtensions
                 .AddSingleton<IProjectionService, ProjectionService>()
                 .AddSingleton<IQueryPathExecutor, QueryPathExecutor>()
                 .AddSingleton<IQueryPagingHelper, QueryPagingHelper>()
+                .AddSingleton<CacheQueryService>()
                 .AddLyoQueryServices(false);
 
             return services;

@@ -257,6 +257,24 @@ public sealed class FusionCacheService : ICacheService
         await InvalidateAllCachedQueriesByTagAsync("queries").ConfigureAwait(false);
     }
 
+    public async Task ClearAsync()
+    {
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            await _fusionCache.ClearAsync().ConfigureAwait(false);
+            stopwatch.Stop();
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error clearing cache");
+            _metrics.RecordError(Constants.Metrics.ClearSuccess, ex, [(Constants.Metrics.Tags.Operation, "ClearAsync")]);
+            throw;
+        }
+    }
+
     public async ValueTask<TValue?> GetOrSetAsync<TValue>(
         string key,
         Func<CancellationToken, Task<TValue?>> factory,

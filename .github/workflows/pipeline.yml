@@ -3,6 +3,7 @@
 # Every other branch, including dev, is Actions → Run workflow.
 # Tests are scaffolded in _test.yml but not called (see commented job).
 name: CI - Pipeline
+run-name: CI - ${{ github.ref_name }} - ${{ inputs.version || 'auto' }}
 
 on:
   push:
@@ -84,6 +85,7 @@ permissions:
 
 jobs:
   resolve:
+    name: Resolve CI - ${{ github.ref_name }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.cfg.outputs.version }}
@@ -122,7 +124,8 @@ jobs:
 
   build:
     needs: resolve
-    if: ${{ needs.resolve.outputs.do_build == 'true' }}
+    if: ${{ needs.resolve.outputs.do_build == 'true' && needs.resolve.outputs.do_pack != 'true' }}
+    name: Build CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_build.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -142,6 +145,7 @@ jobs:
   pack:
     needs: [resolve, build]
     if: ${{ always() && needs.resolve.result == 'success' && needs.resolve.outputs.do_pack == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    name: Pack CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_pack.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -154,6 +158,7 @@ jobs:
   publish-nuget:
     needs: [resolve, pack]
     if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_nuget == 'true' }}
+    name: Publish CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/publish-nuget.yml
     permissions:
       contents: read
@@ -162,13 +167,16 @@ jobs:
     with:
       artifact_name: nuget-packages
       dry_run: false
+      version: ${{ needs.resolve.outputs.version }}
 
   publish-github:
     needs: [resolve, pack]
     if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_github == 'true' }}
+    name: Publish GH CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_publish-github.yml
     permissions:
       contents: read
       packages: write
     with:
       artifact_name: nuget-packages
+      version: ${{ needs.resolve.outputs.version }}
