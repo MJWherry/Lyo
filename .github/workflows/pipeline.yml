@@ -124,6 +124,30 @@ jobs:
             --channel "${{ github.event_name == 'workflow_dispatch' && inputs.channel || '' }}" \
             ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
 
+      - name: Plan summary
+        env:
+          VERSION: ${{ steps.cfg.outputs.version }}
+          CHANNEL: ${{ steps.cfg.outputs.channel }}
+          DESTINATION: ${{ steps.cfg.outputs.destination }}
+          SCOPE: ${{ steps.cfg.outputs.scope }}
+          STAGES: ${{ steps.cfg.outputs.stages }}
+          DRY_RUN: ${{ steps.cfg.outputs.dry_run }}
+          PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+          SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+        run: |
+          python3 scripts/nuget/ci_summary.py --phase plan \
+            --branch "${{ github.ref_name }}" \
+            --sha "${{ github.sha }}" \
+            --event "${{ github.event_name }}" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --destination "$DESTINATION" \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --stages "$STAGES" \
+            --dry-run "$DRY_RUN"
+
   build:
     needs: resolve
     if: ${{ needs.resolve.outputs.do_build == 'true' && needs.resolve.outputs.do_pack != 'true' }}
@@ -182,3 +206,61 @@ jobs:
     with:
       artifact_name: nuget-packages
       version: ${{ needs.resolve.outputs.version }}
+
+  # After nuget.org push succeeds. Tagging at push start would leave a v* tag
+  # for a version that never shipped if the push failed.
+  tag:
+    needs: [resolve, publish-nuget]
+    if: ${{ always() && needs.publish-nuget.result == 'success' && needs.resolve.outputs.channel == 'release' && github.ref_name == 'main' }}
+    name: Tag CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Tag release
+        run: python3 scripts/nuget/ci_tag.py --version "${{ needs.resolve.outputs.version }}"
+
+  summary:
+    needs: [resolve, build, pack, publish-nuget, publish-github, tag]
+    if: ${{ always() }}
+    name: Summary CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run summary
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          CHANNEL: ${{ needs.resolve.outputs.channel }}
+          DESTINATION: ${{ needs.resolve.outputs.destination }}
+          SCOPE: ${{ needs.resolve.outputs.scope }}
+          STAGES: ${{ needs.resolve.outputs.stages }}
+          DRY_RUN: ${{ needs.resolve.outputs.dry_run }}
+          PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+          SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+        run: |
+          python3 scripts/nuget/ci_summary.py --phase result \
+            --branch "${{ github.ref_name }}" \
+            --sha "${{ github.sha }}" \
+            --event "${{ github.event_name }}" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --destination "$DESTINATION" \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --stages "$STAGES" \
+            --dry-run "$DRY_RUN" \
+            --job "resolve=${{ needs.resolve.result }}" \
+            --job "build=${{ needs.build.result }}" \
+            --job "pack=${{ needs.pack.result }}" \
+            --job "publish-nuget=${{ needs.publish-nuget.result }}" \
+            --job "publish-github=${{ needs.publish-github.result }}" \
+            --job "tag=${{ needs.tag.result }}"

@@ -79,7 +79,7 @@ Use `-f`/`--force` to bypass fingerprint skip and always rebuild. Use `--changed
 
 Use **[CI - Pipeline](ci.md)** (`pipeline.yml`) for everyday pack and publish:
 
-- Push to `main`. Automatic stable release to nuget.org (`scope=changed`, version from the `v*` tag or a patch bump).
+- Push to `main`. Automatic stable release to nuget.org (`scope=changed`, version from the `v*` tag or a patch bump). After the nuget.org push succeeds, CI tags `HEAD` as `v{version}`.
 - Run workflow on `dev`. nuget.org **preview** (`1.2.0-preview.<run>`).
 - Run workflow on a feature branch. Artifacts only unless you set `destination`.
 

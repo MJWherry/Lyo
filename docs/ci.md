@@ -26,6 +26,10 @@ A push to `main` has no version text box. nuget.org versions are immutable, so t
 
 Auto-`main` also defaults to `scope=changed` since that last tag. Use Run workflow on `main` if you need `all` or `named`.
 
+After a successful nuget.org push on `main` (`channel=release`), the pipeline tags `HEAD` as `v{version}` so the next auto-`main` run patch-bumps from what actually shipped. It does not tag previews, dry runs, or a failed push. If `v{version}` already points at `HEAD`, the tag job is a no-op. It will not move a tag that points at another commit.
+
+Each run writes a Markdown overview to the Actions **Summary** tab: resolved version, channel, destination, scope, stages, and the result of Resolve / Build / Pack / Publish / Tag. Resolve posts the plan as soon as config is known; a final Summary job posts outcomes even if an earlier job failed.
+
 `channel=release` is rejected on any branch other than `main`. Preview on nuget.org from `dev` is the pre-release path (`1.2.0-preview.<run_number>`).
 
 ## Dispatch inputs
@@ -88,7 +92,7 @@ Uncomment the `test` job in `pipeline.yml` and drop `if: false`.
 
 1. Create a `dev` branch from `main` if it does not exist. Do **not** turn on required reviews, required status checks, or “no direct push” unless you want those later — this pipeline does not depend on them.
 2. Keep the nuget.org Trusted Publishing policy **Environment empty**, workflow file `publish-nuget.yml`, repository `mjwherry/Lyo`. Secret `NUGET_USER` is the nuget.org username. Details: [Publishing](publishing.md).
-3. Tag the current nuget.org line (`v1.0.0` or whatever is live) so auto-`main` can patch-bump.
+3. Tag the current nuget.org line (`v1.0.0` or whatever is live) once so auto-`main` can patch-bump. Later stable nuget.org pushes on `main` create `v{version}` themselves.
 
 ## Local pack
 
